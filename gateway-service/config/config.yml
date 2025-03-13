@@ -1,0 +1,6 @@
+server:
+  port: 8000
+
+eureka:
+  url: localhost
+  port: 8761
