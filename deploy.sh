@@ -15,6 +15,10 @@ case "$1" in
     service_path=gateway-service
     path_jar=main
     ;;
+  "file")
+    service_path=file-service
+    path_jar=main
+    ;;
   "map")
     service_path=map-service
     path_jar=target/map-service-1.0.jar

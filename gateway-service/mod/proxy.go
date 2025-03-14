@@ -2,11 +2,9 @@ package mod
 
 import (
 	"fmt"
-	"log"
 	"mime"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,20 +13,40 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	serviceName := c.Param("service")
 	path := c.Param("path")
 
-	serviceKey := strings.ToUpper(serviceName + "-service")
+	// serviceKey := strings.ToUpper(serviceName + "-service")
+
+	serviceIp := 0
 	if serviceName == "config" {
-		serviceKey = "CONFIG-SERVER"
+		// serviceKey = "CONFIG-SERVER"
+		serviceIp = 8003
+	} else if serviceName == "user" {
+		serviceIp = 8001
+	} else if serviceName == "file" {
+		serviceIp = 8002
+	} else if serviceName == "notification" {
+		serviceIp = 8004
+	} else if serviceName == "payment" {
+		serviceIp = 8005
+	} else if serviceName == "map" {
+		serviceIp = 8101
+	} else if serviceName == "bdspro" {
+		serviceIp = 8102
+	} else if serviceName == "tho247" {
+		serviceIp = 8103
+	} else if serviceName == "chat" {
+		serviceIp = 8104
 	}
 
-	serviceRaw, ok := g.Services.Load(serviceKey)
-	if !ok {
-		log.Printf("Service %s not found", serviceName)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
-		return
-	}
+	// serviceRaw, ok := g.Services.Load(serviceKey)
+	// if !ok {
+	// 	log.Printf("Service %s not found", serviceName)
+	// 	c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+	// 	return
+	// }
 
-	service, _ := serviceRaw.(EurekaService)
-	targetURL := fmt.Sprintf("http://%s:%d/%s%s", service.IP, service.Port, serviceName, path)
+	// service, _ := serviceRaw.(EurekaService)
+	// targetURL := fmt.Sprintf("http://%s/%s%s", serviceName, service.Port, serviceName, path)
+	targetURL := fmt.Sprintf("http://%s:%d/%s%s", serviceName, serviceIp, serviceName, path)
 
 	resp, err := g.Client.R().
 		SetHeaderMultiValues(c.Request.Header).
@@ -46,5 +64,25 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 		contentType = "application/json"
 	}
 
-	c.Data(resp.StatusCode(), contentType, resp.Body())
+	// ✅ Sao chép tất cả header từ BE -> FE (bao gồm Set-Cookie)
+	for key, values := range resp.Header() {
+		for _, value := range values {
+			c.Writer.Header().Add(key, value)
+		}
+	}
+
+	// ✅ Đảm bảo CORS cho phép gửi Cookie
+	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000") // Không được dùng "*"
+	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// ✅ Gửi dữ liệu về FE
+	c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
+
+	// target, _ := url.Parse("http://userservice:8080") // Đổi thành URL của User Service
+	// proxy := httputil.NewSingleHostReverseProxy(target)
+	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	// proxy.ServeHTTP(c.Writer, c.Request)
+
+	// c.Data(resp.StatusCode(), contentType, resp.Body())
 }
