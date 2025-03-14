@@ -3,6 +3,7 @@ package main
 import (
 	c_config "common/config"
 	cjwt "common/jwt"
+	"file/config"
 	_ "file/docs"
 	"file/services"
 	"log"
@@ -56,6 +57,7 @@ func NewConfigApp(db *gorm.DB, fileService *services.FileService) *ConfigApp {
 // @name Authorization
 func main() {
 	r := gin.Default()
+	config.LoadConfig()
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 	os.Setenv("TZ", "Europe/London")

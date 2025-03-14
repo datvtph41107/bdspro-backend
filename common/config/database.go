@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -15,8 +16,10 @@ type DatabaseConfig struct {
 
 // NewDatabaseConfig tạo cấu hình database
 func NewDatabaseConfig() *DatabaseConfig {
+	fmt.Printf("URL")
+	fmt.Printf(viper.GetString("database.dsn"))
 	return &DatabaseConfig{
-		DSN: "host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_file port=5432 sslmode=disable",
+		DSN: viper.GetString("database.dsn"),
 	}
 }
 

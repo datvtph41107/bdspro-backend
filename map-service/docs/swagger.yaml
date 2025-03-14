@@ -1,0 +1,117 @@
+basePath: /map
+definitions:
+  models.MapPointDTO:
+    description: Thông tin điểm trên bản đồ
+    properties:
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a sample API
+  title: Example API
+  version: "1.0"
+paths:
+  /locations/find-by-polygon:
+    post:
+      consumes:
+      - application/json
+      description: Tìm các điểm nằm trong một vùng đa giác
+      parameters:
+      - description: Danh sách tọa độ tạo thành vùng đa giác
+        in: body
+        name: polygon
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.MapPointDTO'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.MapPointDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tìm địa điểm theo vùng (polygon)
+      tags:
+      - Locations
+  /locations/nearby:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách các điểm gần tọa độ đã cho trong phạm vi bán kính
+      parameters:
+      - description: Vĩ độ
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Kinh độ
+        in: query
+        name: lng
+        required: true
+        type: number
+      - default: 5
+        description: 'Bán kính tìm kiếm (mặc định: 5km)'
+        in: query
+        name: radius
+        type: number
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm các địa điểm lân cận
+      tags:
+      - Locations
+  /locations/new:
+    post:
+      consumes:
+      - application/json
+      description: Thêm một điểm mới vào cơ sở dữ liệu
+      parameters:
+      - description: Thông tin địa điểm
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/models.MapPointDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Thêm địa điểm mới
+      tags:
+      - Locations
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

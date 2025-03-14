@@ -1,0 +1,9 @@
+server:
+  port: 8002
+
+eureka:
+  url: localhost
+  port: 8761
+  
+database:
+  dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_file port=5432 sslmode=disable

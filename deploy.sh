@@ -21,7 +21,7 @@ case "$1" in
     ;;
   "map")
     service_path=map-service
-    path_jar=target/map-service-1.0.jar
+    path_jar=main
     ;;
   *)
     echo "Tham số không hợp lệ."
