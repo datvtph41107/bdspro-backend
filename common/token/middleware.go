@@ -1,4 +1,4 @@
-package cjwt
+package token
 
 import (
 	"net/http"

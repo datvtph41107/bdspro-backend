@@ -1,4 +1,4 @@
-package mod
+package pkg
 
 import (
 	"fmt"
@@ -46,7 +46,16 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 
 	// service, _ := serviceRaw.(EurekaService)
 	// targetURL := fmt.Sprintf("http://%s/%s%s", serviceName, service.Port, serviceName, path)
-	targetURL := fmt.Sprintf("http://%s:%d/%s%s", serviceName, serviceIp, serviceName, path)
+	targetURL := fmt.Sprintf(
+		"http://%s:%d/%s%s?%s",
+		"localhost",
+		serviceIp,
+		serviceName,
+		path,
+		c.Request.URL.RawQuery,
+	)
+
+	fmt.Printf(targetURL)
 
 	resp, err := g.Client.R().
 		SetHeaderMultiValues(c.Request.Header).
@@ -54,7 +63,7 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 		Execute(c.Request.Method, targetURL)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to proxy request"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
@@ -70,13 +79,12 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 			c.Writer.Header().Add(key, value)
 		}
 	}
+	// ✅ Gửi dữ liệu về FE
+	c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
 
 	// ✅ Đảm bảo CORS cho phép gửi Cookie
 	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000") // Không được dùng "*"
 	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-
-	// ✅ Gửi dữ liệu về FE
-	c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
 
 	// target, _ := url.Parse("http://userservice:8080") // Đổi thành URL của User Service
 	// proxy := httputil.NewSingleHostReverseProxy(target)

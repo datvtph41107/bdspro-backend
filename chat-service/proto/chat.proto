@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "./chatpb";
+
+message ChatMessage {
+    string from = 1;
+    string to = 2;
+    string message = 3;
+}

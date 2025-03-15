@@ -13,7 +13,6 @@ import (
 
 // WireSet tập hợp các dependencies để inject
 var wireSet = wire.NewSet(
-	c_config.NewDatabaseConfig,
 	c_config.NewDB,
 	repositories.NewFileRepository,
 	repositories.NewFileAccessRepository,

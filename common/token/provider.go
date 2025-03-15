@@ -1,4 +1,4 @@
-package cjwt
+package token
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ var jwtSecret = []byte("key-generate-jwt-token-authentication")
 // Claims chứa payload của token
 type Claims struct {
 	UserID    string `json:"sub"`
-	ProfileId uint   `json:"profile"`
+	ProfileId uint64 `json:"profile"`
 	Type      string `json:"type"`
 	Role      string `json:"role"`
 	Session   uint   `json:"session"`
@@ -76,7 +76,7 @@ func ParseJWT(tokenStr string) (*Claims, error) {
 	return nil, fmt.Errorf("invalid token")
 }
 
-func GetProfileId(c *gin.Context) uint {
+func GetProfileId(c *gin.Context) uint64 {
 	clms, _ := c.Get("claims")
 	if claims, ok := clms.(*Claims); ok {
 		return claims.ProfileId

@@ -1,0 +1,72 @@
+info:
+  contact: {}
+paths:
+  /chat/group/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of groups the user is a member of
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of groups per page
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get user's group list
+      tags:
+      - Group
+  /chat/message/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve messages from a group chat
+      parameters:
+      - description: Group ID
+        in: query
+        name: group
+        required: true
+        type: string
+      - description: 'Filter messages from this time (ISO 8601 format: 2006-01-02T15:04:05)'
+        in: query
+        name: from_time
+        type: string
+      - description: Number of messages per page
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get chat history
+      tags:
+      - Chat
+swagger: "2.0"

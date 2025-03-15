@@ -23,6 +23,14 @@ case "$1" in
     service_path=map-service
     path_jar=main
     ;;
+  "chat")
+    service_path=chat-service
+    path_jar=main
+    ;;
+  "payment")
+    service_path=payment-service
+    path_jar=main
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -32,8 +40,8 @@ esac
 cd $service_path
 
 echo "--- GO BUILDING ---"
-
 GOOS=linux GOARCH=amd64 go build -o main .
+echo "--- FINISH BUILDING ---"
 
 # Cấu hình thông tin server
 REMOTE_USER="root"

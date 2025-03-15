@@ -5,6 +5,7 @@ import (
 )
 
 // BaseEntity chứa các trường dùng chung cho mọi entity
+// @swagger:model
 type BaseEntity struct {
 	AuditBase
 	ID        uint64    `gorm:"primaryKey" json:"id"`

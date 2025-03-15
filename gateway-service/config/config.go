@@ -24,9 +24,6 @@ type Config struct {
 	}
 }
 
-// Cấu hình toàn cục
-var AppConfig Config
-
 //go:embed config.yml
 var configFile []byte
 
@@ -45,9 +42,4 @@ func LoadConfig() {
 		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}
 
-	// Gán giá trị vào struct
-	err = viper.Unmarshal(&AppConfig)
-	if err != nil {
-		log.Fatalf("Lỗi khi parse file config: %v", err)
-	}
 }
