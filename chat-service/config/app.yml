@@ -6,7 +6,7 @@ eureka:
   port: 8761
 
 database:
-  dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_chat port=5432 sslmode=disable
+  dsn: host=14.225.205.222 user=chat password=chat123 dbname=db_chat port=5432 sslmode=disable
 
 chat:
   

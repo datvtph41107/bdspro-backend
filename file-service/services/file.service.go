@@ -1,8 +1,8 @@
 package services
 
 import (
-	cjwt "common/jwt"
-	c_action "common/models/action"
+	_db "common/db"
+	"common/token"
 	"common/utils"
 	"file/models"
 	"file/repositories"
@@ -184,7 +184,7 @@ func (s *FileService) Upload(c *gin.Context) {
 
 	// repository.
 	// 2. Lưu file vào DB (GORM tự động gán ID sau khi save)
-	if err := c_action.SaveModel(c, &fileEntity); err != nil {
+	if err := _db.SaveModel(c, &fileEntity); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		// fmt.Errorf("failed to save file entity: %v", err)
 		return
@@ -213,12 +213,12 @@ func (s *FileService) Upload(c *gin.Context) {
 		fileEntity.Path = "s" + encryptedPath
 
 		// Lưu file vào DB
-		if err := c_action.SaveModel(c, &fileEntity); err != nil {
+		if err := _db.SaveModel(c, &fileEntity); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			// fmt.Errorf("failed to update file entity: %v", err)
 			return
 		}
-		profileId := cjwt.GetProfileId(c)
+		profileId := token.GetProfileId(c)
 		// Tạo FileAccessEntity (quyền truy cập file)
 		fileAccess := models.AccessEntity{
 			FileID:   fileEntity.ID,
@@ -237,7 +237,7 @@ func (s *FileService) Upload(c *gin.Context) {
 	}
 
 	fileEntity.Path = "p" + encryptedPath
-	if err := c_action.SaveModel(c, &fileEntity); err != nil {
+	if err := _db.SaveModel(c, &fileEntity); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		// fmt.Errorf("failed to update file entity: %v", err)
 		return
@@ -266,7 +266,7 @@ type SignatureResponse struct {
 // @Produce json
 // @Router /signature [put]
 func (s *FileService) GenerateSignature(c *gin.Context) {
-	profileId := int64(cjwt.GetProfileId(c))
+	profileId := int64(token.GetProfileId(c))
 	expiredTime := time.Now().Add(time.Duration(s.SignatureExpire) * time.Minute).Unix()
 	signature := utils.GenerateSignedUrl("info", profileId, s.SignatureKey, expiredTime)
 	signCipher := signEncode(s.XorCryptKey, profileId, expiredTime, signature)

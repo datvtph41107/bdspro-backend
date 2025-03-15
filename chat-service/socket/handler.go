@@ -1,17 +1,18 @@
 package socket
 
 import (
+	"chat/data"
 	"chat/models"
-	chatpb "chat/proto"
+	_db "common/db"
 	"common/token"
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
 )
 
 var upgrader = websocket.Upgrader{
@@ -35,12 +36,12 @@ var groups = make(map[uint64][]uint64)
 func HandleWebSocket(c *gin.Context) {
 	authStr := c.Query("token")
 	claims, err := token.ParseJWT(authStr)
-	userId := claims.ProfileId
-	// userId, err := strconv.ParseUint(claims.ProfileId, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
 		return
 	}
+	userId := claims.ProfileId
+	// userId, err := strconv.ParseUint(claims.ProfileId, 10, 64)
 	if userId == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user parameter"})
 		return
@@ -75,53 +76,119 @@ func HandleWebSocket(c *gin.Context) {
 			delete(clients, userId)
 			break
 		}
-		handleIncomingMessage(msg)
+		handleIncomingMessage(msg, userId)
 	}
 }
 
 func listenToRedis(conn *websocket.Conn, user uint64) {
-	log.Printf("Chạy ngay lập tức")
+	log.Printf("Nhận sự kiện từ REDIS")
 	pubsub := redisClient.Subscribe(context.Background(), "chat:"+strconv.FormatUint(user, 10))
 	ch := pubsub.Channel()
 	for msg := range ch {
-		log.Printf("TIN nhắn đi")
-		var chatMsg chatpb.ChatMessage
-		if err := proto.Unmarshal([]byte(msg.Payload), &chatMsg); err != nil {
-			log.Println("Protobuf Decode Error:", err)
-			continue
-		}
+		log.Printf("Gửi tin nhắn")
 
-		encodedMsg, _ := proto.Marshal(&chatMsg)
-		if err := conn.WriteMessage(websocket.BinaryMessage, encodedMsg); err != nil {
+		// chatMsg.From = user
+		// encodedMsg, _ := json.Marshal(chatMsg)
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
 			log.Println("WriteMessage Error:", err)
 			return
 		}
 	}
 }
 
-func handleIncomingMessage(msg []byte) {
-	var chatMsg chatpb.ChatMessage
-	if err := proto.Unmarshal(msg, &chatMsg); err != nil {
+func handleIncomingMessage(msg []byte, userId uint64) {
+	var actionMsg data.ChatAction
+	if err := json.Unmarshal(msg, &actionMsg); err != nil {
 		log.Println("Protobuf Decode Error:", err)
 		return
 	}
 
-	encodedMsg, _ := proto.Marshal(&chatMsg)
+	dataBytes, err := json.Marshal(actionMsg.Data) // Chuyển interface{} về JSON []byte
+	if err != nil {
+		log.Println("Protobuf Decode Error:", err)
+		return
+	}
 
-	if len(chatMsg.To) > 5 && chatMsg.To[:5] == "group" {
-		groupIdStr := chatMsg.To[6:]
-		groupId, _ := strconv.ParseUint(groupIdStr, 10, 64)
-		memberIds := groups[groupId]
+	// var chatReturn chatpb.ChatReturn
+	switch actionMsg.Type {
+	case "create_room":
+		var createRoom data.CreateRoom
+
+		if err := json.Unmarshal([]byte(dataBytes), &createRoom); err != nil {
+			log.Println("Failed to unmarshal CreateRoom:", err)
+			return
+		}
+
+		// Tạo một cuộc trò chuyện mới
+		conversation := models.ConversationModel{
+			CreatedBy: userId, // Hoặc lấy từ user gửi request
+			Title:     createRoom.RoomName,
+			Avatar:    "", // Có thể cập nhật sau
+		}
+
+		// Lưu vào database
+		if err := _db.DB.Create(&conversation).Error; err != nil {
+			log.Println("Failed to create conversation:", err)
+			return
+		}
+
+		actionMsg.Data = conversation
+		encodedMsg, _ := json.Marshal(&actionMsg)
+
+		var members []models.ParticipantModel
+		for _, memId := range createRoom.Members {
+			members = append(members, models.ParticipantModel{
+				MemberId:  memId,
+				GroupId:   conversation.ID,
+				CreatedBy: userId,
+			})
+			redisClient.Publish(context.Background(), "chat:"+strconv.FormatUint(memId, 32), encodedMsg)
+		}
+		_db.DB.CreateInBatches(members, 10)
+		groups[conversation.ID] = createRoom.Members
+
+		return
+	case "message":
+		var chatMsg data.ChatMessage
+		if err := json.Unmarshal(dataBytes, &chatMsg); err != nil {
+			returnError(userId, err.Error())
+			return
+		}
+
+		// groupId, _ := strconv.ParseUint(, 10, 32)
+		memberIds := groups[chatMsg.To]
+		if memberIds == nil {
+			returnError(userId, "Phòng không tồn tại")
+			return
+		}
+
+		chatMsg.From = userId
+		actionMsg.Data = chatMsg
+		encodedMsg, _ := json.Marshal(&actionMsg)
+
 		for _, memId := range memberIds {
 			// clients[memId].WriteMessage()
 			target := "chat:" + strconv.FormatUint(memId, 32)
 			redisClient.Publish(context.Background(), target, encodedMsg)
 		}
-		PushMessageToQueue("chat:messages", encodedMsg)
+
+		// Gửi tin nhắn qua Redis
+		redisClient.Publish(context.Background(), "chat:"+strconv.FormatUint(chatMsg.To, 10), encodedMsg)
+		encodedChatMsg, _ := json.Marshal(&chatMsg)
+		PushMessageToQueue("chat:messages", encodedChatMsg)
 		return
 	}
-	// Gửi tin nhắn qua Redis
 
-	redisClient.Publish(context.Background(), "chat:"+chatMsg.To, encodedMsg)
-	PushMessageToQueue("chat:messages", encodedMsg)
+}
+
+func returnError(userId uint64, message string) {
+	encodeErr, _ := json.Marshal(data.ChatAction{
+		Type:    "error",
+		Data:    nil,
+		Message: message,
+	})
+	redisClient.Publish(context.Background(),
+		"chat:"+strconv.FormatUint(userId, 10),
+		encodeErr,
+	)
 }

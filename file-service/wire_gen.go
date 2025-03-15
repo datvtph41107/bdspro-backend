@@ -7,7 +7,7 @@
 package main
 
 import (
-	"common/config"
+	"common/db"
 	"file/repositories"
 	"file/services"
 	"github.com/google/wire"
@@ -21,8 +21,7 @@ import (
 
 // InitializeApp khởi tạo toàn bộ hệ thống với Wire
 func InitializeApp() (*ConfigApp, error) {
-	databaseConfig := c_config.NewDatabaseConfig()
-	db, err := c_config.NewDB(databaseConfig)
+	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
 	}
@@ -37,4 +36,4 @@ func InitializeApp() (*ConfigApp, error) {
 // wire.go:
 
 // WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(c_config.NewDatabaseConfig, c_config.NewDB, repositories.NewFileRepository, repositories.NewFileAccessRepository, services.NewStorageService, services.NewFileService, NewConfigApp)
+var wireSet = wire.NewSet(_db.NewDB, repositories.NewFileRepository, repositories.NewFileAccessRepository, services.NewStorageService, services.NewFileService, NewConfigApp)

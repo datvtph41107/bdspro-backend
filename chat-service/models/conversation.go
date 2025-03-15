@@ -7,31 +7,31 @@ import (
 
 // Order đại diện cho thông tin đơn hàng
 // @swagger:model
-type GroupModel struct {
+type ConversationModel struct {
 	ID          uint64    `gorm:"primaryKey" json:"id"`
 	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
-	CreatedBy   string
+	CreatedBy   uint64
 	Title       string
 	Avatar      string
 	LastMessage string
 	LastUser    string
 }
 
-func (GroupModel) TableName() string {
-	return "group"
+func (ConversationModel) TableName() string {
+	return "conversation"
 }
 
-func GetGroupsByMemberID(memberId uint64, page, pageSize int) ([]GroupModel, error) {
-	var groups []GroupModel
+func GetGroupsByMemberID(memberId uint64, page, pageSize int) ([]ConversationModel, error) {
+	var groups []ConversationModel
 
 	offset := (page - 1) * pageSize
 
-	err := _db.DB.Table("group_tb").
-		Select("group_tb").
-		Joins("JOIN group_member ON group_tb.id = group_member.group_id").
-		Where("group_member.member_id = ?", memberId).
-		Order("group_tb.updated_at DESC").
+	err := _db.DB.Table("conversation").
+		Select("conversation").
+		Joins("JOIN participant ON conversation.id = participant.group_id").
+		Where("participant.member_id = ?", memberId).
+		Order("conversation.updated_at DESC").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&groups).Error

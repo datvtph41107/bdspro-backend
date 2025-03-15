@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	c_config "common/config"
+	_db "common/db"
 	cmodels "common/models"
 	"file/models"
 
@@ -22,7 +22,7 @@ func NewFileAccessRepository(db *gorm.DB) *AccessRepository {
 
 // Save lưu file vào DB
 func (r *AccessRepository) Create(file *models.AccessEntity) error {
-	return c_config.ConfigDB.Create(file).Error
+	return _db.DB.Create(file).Error
 }
 
 // existAccess kiểm tra sự tồn tại của quyền truy cập

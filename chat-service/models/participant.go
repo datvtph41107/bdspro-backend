@@ -6,7 +6,7 @@ import (
 
 // Order đại diện cho thông tin đơn hàng
 // @swagger:model
-type GroupMemberModel struct {
+type ParticipantModel struct {
 	ID        uint64 `gorm:"primaryKey" json:"id"`
 	GroupId   uint64
 	CreatedAt time.Time `gorm:"column:create_at;autoCreateTime" json:"created_at"`
@@ -15,8 +15,8 @@ type GroupMemberModel struct {
 	MemberId  uint64
 }
 
-func (GroupMemberModel) TableName() string {
-	return "group_member"
+func (ParticipantModel) TableName() string {
+	return "participant"
 }
 
 // func New(msg *chatpb.ChatMessage) MessageModel {

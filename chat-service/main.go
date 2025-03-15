@@ -2,13 +2,14 @@ package main
 
 import (
 	"chat/config"
+	"chat/data"
 	_ "chat/docs"
 	"chat/models"
-	chatpb "chat/proto"
 	"chat/routes"
 	"chat/socket"
 	_db "common/db"
 	"common/token"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"github.com/spf13/viper"
 	swaggerFile "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"google.golang.org/protobuf/proto"
 )
 
 var publicRoutes = []string{
@@ -47,13 +47,20 @@ func main() {
 				continue
 			}
 
-			var chatMessages []*chatpb.ChatMessage
+			var chatMessages []*data.ChatMessage
 			for _, rawMsg := range messages {
-				var chatMsg chatpb.ChatMessage
-				if err := proto.Unmarshal([]byte(rawMsg), &chatMsg); err != nil {
+				var chatMsg data.ChatMessage
+				if err := json.Unmarshal([]byte(rawMsg), &chatMsg); err != nil {
 					log.Println("Protobuf Decode Error:", err)
 					continue
 				}
+
+				// var chatMsg data.ChatMessage
+				// if err := json.Unmarshal(chatAction.Data, &chatMsg); err != nil {
+				// 	log.Println("Failed to unmarshal ChatMessage:", err)
+				// 	return
+				// }
+
 				chatMessages = append(chatMessages, &chatMsg)
 			}
 

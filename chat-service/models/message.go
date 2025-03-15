@@ -1,7 +1,7 @@
 package models
 
 import (
-	chatpb "chat/proto"
+	"chat/data"
 	_db "common/db"
 	"time"
 )
@@ -13,14 +13,15 @@ type MessageModel struct {
 	CreatedAt time.Time `gorm:"column:create_at;autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:update_at;autoUpdateTime" json:"updated_at"`
 	Message   string
-	To        string
-	From      string
+	To        uint64
+	From      uint64
+	Type      string // enum: message, image, forward
 }
 
 func (MessageModel) TableName() string {
 	return "message"
 }
-func New(msg *chatpb.ChatMessage) MessageModel {
+func New(msg *data.ChatMessage) MessageModel {
 	return MessageModel{
 		Message: msg.Message,
 		From:    msg.From,
@@ -30,7 +31,7 @@ func New(msg *chatpb.ChatMessage) MessageModel {
 
 func CheckUserInGroup(userId, groupId uint64) (bool, error) {
 	var count int64
-	err := _db.DB.Model(&GroupMemberModel{}).
+	err := _db.DB.Model(&ParticipantModel{}).
 		Where("group_id = ? AND member_id = ?", userId, groupId).
 		Count(&count).Error
 

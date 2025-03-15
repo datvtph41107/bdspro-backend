@@ -6,14 +6,24 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/proto"
 )
 
 func main() {
-	msg := &chatpb.ChatMessage{
-		From:    "Alo",
-		To:      "group:1",
-		Message: "Hello test redis",
+	msgData, err := ptypes.MarshalAny(&chatpb.ChatMessage{
+		From:    1,
+		To:      1,
+		Message: "xin chào cả nhà hiện tại là gửi cho group 1 có mem là 3 và 4",
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to marshal ChatMessage: %v", err)
+	}
+
+	msg := &chatpb.ChatAction{
+		Type: "message",
+		Data: msgData, // ✅ Đúng kiểu google.protobuf.Any
 	}
 
 	// Chuyển đổi tin nhắn thành byte array
@@ -29,5 +39,6 @@ func main() {
 	// 	log.Fatal("Error saving file:", err)
 	// }
 
-	fmt.Println("Message saved to message: " + base64Data)
+	fmt.Println("Message plain is: " + msg.String())
+	fmt.Println("Message base64: " + base64Data)
 }
