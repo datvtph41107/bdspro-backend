@@ -71,7 +71,7 @@ type OtpVerifyRequest struct {
 // GetByProfileId truy vấn UserProfileEntity theo profileId
 func ProfileGetByProfileId(profileId uint64) (*UserProfileEntity, error) {
 	var userProfile UserProfileEntity
-	if err := _db.DB.Where("profile_id = ?", profileId).First(&userProfile).Error; err != nil {
+	if err := _db.DB.Where("profile_id = ? and deleted_at is null", profileId).First(&userProfile).Error; err != nil {
 		return nil, err
 	}
 	return &userProfile, nil

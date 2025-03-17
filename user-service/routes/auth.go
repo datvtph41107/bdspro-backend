@@ -35,7 +35,9 @@ func AuthRoutes(r *gin.Engine, router *AuthRouter) {
 
 	api.DELETE("/logout", router.Logout)
 
-	api.PUT("/restore", router.Restore)
+	api.DELETE("/delete", _jwt.JWTAuthMiddleware(publicRoutes), router.Delete)
+
+	api.PUT("/restore", _jwt.JWTAuthMiddleware(publicRoutes), router.Restore)
 
 	api.POST("/qr/init", router.QRInit)
 
@@ -57,8 +59,9 @@ func (router *AuthRouter) RequestOTP(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	response, _ := router.Service.RequestOtp(c, dto)
-	c.JSON(http.StatusOK, response)
+	result, err := router.Service.RequestOtp(c, dto)
+	// c.JSON(http.StatusOK, response)
+	_routes.RouteResult(c, result, err)
 }
 
 // @Tags Auth
@@ -115,14 +118,16 @@ func (router *AuthRouter) RefreshToken(c *gin.Context) {
 // @Router /auth/logout [delete]
 func (router *AuthRouter) Logout(c *gin.Context) {
 	// cookieService.DeleteRefreshToken(c.Writer)
-	response := router.Service.Logout(c)
-	c.JSON(http.StatusOK, response)
+	// c.JSON(http.StatusOK, response)
+	result, err := router.Service.Logout(c)
+	_routes.RouteResult(c, result, err)
 }
 
 // @Summary Khôi phục tài khoản
 // @Description Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param body body data.RestorePhoneRequest true "Restore Phone Request"
 // @Tags Auth
 // @Router /auth/restore [put]
@@ -199,5 +204,20 @@ func (router *AuthRouter) QRStatus(c *gin.Context) {
 	sessionId, _ := strconv.ParseUint(sessionStr, 10, 32)
 
 	result, err := router.Service.VerifyQRSession(c, &dto, sessionId)
+	_routes.RouteResult(c, result, err)
+}
+
+// Xóa tài khoản
+// @Summary Xóa tài khoản
+// @Description API này cho phép xóa người dùng
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
+// @Router /auth/delete [delete]
+func (p *AuthRouter) Delete(c *gin.Context) {
+	result, err := p.Service.Delete(c)
+
 	_routes.RouteResult(c, result, err)
 }

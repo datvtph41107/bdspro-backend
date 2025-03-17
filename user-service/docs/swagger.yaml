@@ -31,6 +31,17 @@ definitions:
     - otp
     - phone
     type: object
+  data.PublicUserInfo:
+    properties:
+      avatar:
+        type: string
+      birth:
+        type: string
+      fullname:
+        type: string
+      profileId:
+        type: integer
+    type: object
   data.RestorePhoneRequest:
     properties:
       phone:
@@ -107,6 +118,12 @@ definitions:
         type: integer
       email:
         type: string
+      followerNumber:
+        type: integer
+      followingNumber:
+        type: integer
+      friendNumber:
+        type: integer
       fullname:
         type: string
       phone:
@@ -132,6 +149,23 @@ info:
   title: User API
   version: "1.0"
 paths:
+  /auth/delete:
+    delete:
+      consumes:
+      - application/json
+      description: API này cho phép xóa người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.PublicUserInfo'
+      security:
+      - BearerAuth: []
+      summary: Xóa tài khoản
+      tags:
+      - Auth
   /auth/logout:
     delete:
       description: Đăng xuất, xóa refresh token
@@ -269,6 +303,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Khôi phục tài khoản
       tags:
       - Auth
@@ -345,6 +381,27 @@ paths:
       summary: OAuth Login
       tags:
       - OAuth
+  /profile/info/{profileId}:
+    get:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: profileId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.PublicUserInfo'
+      summary: Thông tin người dùng
+      tags:
+      - Profile
   /profile/me:
     get:
       consumes:
@@ -397,7 +454,7 @@ paths:
       - BearerAuth: []
       summary: Cập nhật thông tin người dùng
       tags:
-      - User
+      - Profile
 securityDefinitions:
   BearerAuth:
     in: header

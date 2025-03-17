@@ -16,6 +16,7 @@ type UserAuthEntity struct {
 	Name        string    `gorm:"size:255"`
 	Email       string    `gorm:"size:255"`
 	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime"`
+	DeletedAt   time.Time `gorm:"column:deleted_at;autoCreateTime"`
 	UserID      uint64    `gorm:"column:user_id"` // Không cập nhật & xóa, chỉ tạo mới
 }
 
@@ -27,7 +28,7 @@ func (UserAuthEntity) TableName() string {
 // Tìm kiếm bằng số điện thoại
 func AuthFindByPhone(phone string) (*UserAuthEntity, error) {
 	var user UserAuthEntity
-	err := _db.DB.Where("provider = ? AND oauth_id = ?", "PHONE", phone).First(&user).Error
+	err := _db.DB.Where("provider = ? AND oauth_id = ? AND deleted_at is null", "PHONE", phone).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,7 @@ func AuthFindByPhone(phone string) (*UserAuthEntity, error) {
 // Tìm kiếm bằng provider và username
 func AuthFindByOAuthId(oauthId, provider string) (*UserAuthEntity, error) {
 	var user UserAuthEntity
-	err := _db.DB.Where("provider = ? AND oauth_id = ?", provider, oauthId).First(&user).Error
+	err := _db.DB.Where("provider = ? AND oauth_id = ? AND deleted_at is null", provider, oauthId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +58,13 @@ func AuthGetWithId(id uint64) (*UserAuthEntity, error) {
 // Kiểm tra sự tồn tại của tài khoản theo OAuth ID
 func AuthExistsByOAuth(phone string) (bool, error) {
 	var count int64
-	err := _db.DB.Model(&UserAuthEntity{}).Where("provider = ? AND oauth_id = ?", "PHONE", phone).Count(&count).Error
+	err := _db.DB.Model(&UserAuthEntity{}).Where("provider = ? AND oauth_id = ? AND deleted_at is null", "PHONE", phone).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func DeleteProfile(profileId uint64) {
+	_db.DB.Model(&UserAuthEntity{}).Where("user_id = ?", profileId).Update("deleted_at", time.Now())
 }

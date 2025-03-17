@@ -82,20 +82,30 @@ func NewRequestLoginResponse(e models.UserAuthEntity) RequestLoginResponse {
 //		Birth        *time.Time `json:"birth,omitempty" validate:"omitempty"`
 //	}
 type UserInfoResponse struct {
-	ProfileID    uint64     `json:"profileId"`
-	Phone        string     `json:"phone,omitempty"`
-	Email        string     `json:"email,omitempty"`
-	TaxCode      string     `json:"taxCode,omitempty"`
-	FullName     string     `json:"fullname,omitempty"`
-	Address      string     `json:"address,omitempty"`
-	Avatar       string     `json:"avatar,omitempty"`
-	ReferralCode string     `json:"referralCode,omitempty"`
-	ReferralBy   string     `json:"referralBy,omitempty"`
-	RoleType     string     `json:"roleType,omitempty"`
-	Position     string     `json:"position,omitempty"`
-	DepartmentID uint64     `json:"departmentId,omitempty"`
-	Birth        *time.Time `json:"birth,omitempty"`
-	StartDate    *time.Time `json:"startDate,omitempty"`
+	ProfileID       uint64     `json:"profileId"`
+	Phone           string     `json:"phone,omitempty"`
+	Email           string     `json:"email,omitempty"`
+	TaxCode         string     `json:"taxCode,omitempty"`
+	FullName        string     `json:"fullname,omitempty"`
+	Address         string     `json:"address,omitempty"`
+	Avatar          string     `json:"avatar,omitempty"`
+	ReferralCode    string     `json:"referralCode,omitempty"`
+	ReferralBy      string     `json:"referralBy,omitempty"`
+	RoleType        string     `json:"roleType,omitempty"`
+	Position        string     `json:"position,omitempty"`
+	DepartmentID    uint64     `json:"departmentId,omitempty"`
+	Birth           *time.Time `json:"birth,omitempty"`
+	StartDate       *time.Time `json:"startDate,omitempty"`
+	FollowingNumber int        `json:"followingNumber,omitempty"`
+	FollowerNumber  int        `json:"followerNumber,omitempty"`
+	FriendNumber    int        `json:"friendNumber,omitempty"`
+}
+
+type PublicUserInfo struct {
+	ProfileID uint64     `json:"profileId"`
+	FullName  string     `json:"fullname,omitempty"`
+	Avatar    string     `json:"avatar,omitempty"`
+	Birth     *time.Time `json:"birth,omitempty"`
 }
 
 type JwtTokenProperties struct {

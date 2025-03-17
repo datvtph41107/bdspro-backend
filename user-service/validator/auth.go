@@ -102,7 +102,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 			}
 		}
 	case enums.LIMIT_REQUEST_TIME:
-		if otpEntity.OTPDate.IsZero() {
+		if otpEntity.OTPDate != nil {
 			nextTime := otpEntity.OTPDate.Add(time.Duration(config.AppProperties.Otp.LockRequestAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				return &_routes.Except{

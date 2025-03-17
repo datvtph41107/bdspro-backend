@@ -6,5 +6,6 @@ func AutoMigrate() {
 	_db.DB.AutoMigrate(
 		&UserProfileEntity{},
 		&UserSessionEntity{},
+		&UserAuthEntity{},
 	)
 }

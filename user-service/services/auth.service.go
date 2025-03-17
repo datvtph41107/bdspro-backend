@@ -201,17 +201,17 @@ func (s *AuthService) RefreshToken(refreshToken string) (*data.RefreshResponse, 
 	}
 }
 
-func (s *AuthService) Logout(c *gin.Context) error {
+func (s *AuthService) Logout(c *gin.Context) (any, error) {
 	sessionID := _jwt.GetSessionId(c)
 	currentSession, err := models.SessionGetBySessionId(sessionID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	now := time.Now()
 	currentSession.FinishedDate = &now
 	_db.SaveWithAudit(c, currentSession)
 	s.RedisService.DeleteToken(currentSession.AuthID)
-	return nil
+	return 0, nil
 }
 
 // Restore khôi phục tài khoản
@@ -227,15 +227,15 @@ func (s *AuthService) Restore(c *gin.Context, dto data.RestorePhoneRequest) (*da
 		}
 	}
 
-	userID := _jwt.GetProfileId(c)
+	profileId := _jwt.GetProfileId(c)
 
 	e := models.UserAuthEntity{
 		Provider: "PHONE",
 		OAuthID:  dto.Phone,
-		UserID:   userID,
+		UserID:   profileId,
 	}
 
-	if err := _db.SaveWithAudit(c, e); err != nil {
+	if err := _db.SaveWithAudit(c, &e); err != nil {
 		return nil, err
 	}
 
@@ -249,7 +249,39 @@ func (s *AuthService) Restore(c *gin.Context, dto data.RestorePhoneRequest) (*da
 		Provider: e.Provider,
 		OAuthID:  e.OAuthID,
 	}, nil
+}
 
+// Xóa tài khoản
+func (s *AuthService) Delete(c *gin.Context) (uint64, error) {
+	// profileId := _jwt.GetProfileId(c)
+	principal := _jwt.GetPrincipal(c)
+	profile, err := models.ProfileGetByProfileId(principal.ProfileId)
+	if err != nil {
+		return 0, err
+	}
+	if profile == nil {
+		return 0, &_routes.Except{
+			Code:    400,
+			Message: "Tài khoản không tồn tại",
+		}
+	}
+
+	t := time.Now()
+	profile.DeletedAt = &t
+
+	if err := _db.SaveWithAudit(c, profile); err != nil {
+		return 0, err
+	}
+
+	models.DeleteProfile(principal.ProfileId)
+
+	cookies := c.Request.Cookies()
+	for _, cookie := range cookies {
+		c.SetCookie(cookie.Name, "", -1, "/", "", false, true)
+	}
+	s.RedisService.DeleteToken(principal.UserID)
+
+	return profile.ProfileID, nil
 }
 
 func (s *AuthService) RequestIsRegister(c *gin.Context, dto data.OtpRequest) (*models.UserAuthEntity, error) {

@@ -15,6 +15,34 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép xóa người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Xóa tài khoản",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.PublicUserInfo"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/logout": {
             "delete": {
                 "description": "Đăng xuất, xóa refresh token",
@@ -201,6 +229,11 @@ const docTemplate = `{
         },
         "/auth/restore": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới",
                 "consumes": [
                     "application/json"
@@ -331,6 +364,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/profile/info/{profileId}": {
+            "get": {
+                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Thông tin người dùng",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID của Profile",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.PublicUserInfo"
+                        }
+                    }
+                }
+            }
+        },
         "/profile/me": {
             "get": {
                 "security": [
@@ -392,7 +457,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "Profile"
                 ],
                 "summary": "Cập nhật thông tin người dùng",
                 "parameters": [
@@ -461,6 +526,23 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "string"
+                }
+            }
+        },
+        "data.PublicUserInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "fullname": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
                 }
             }
         },
@@ -577,6 +659,15 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "followerNumber": {
+                    "type": "integer"
+                },
+                "followingNumber": {
+                    "type": "integer"
+                },
+                "friendNumber": {
+                    "type": "integer"
                 },
                 "fullname": {
                     "type": "string"

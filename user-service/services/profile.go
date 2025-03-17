@@ -6,6 +6,7 @@ import (
 	_db "common/db"
 	_jwt "common/jwt"
 	"errors"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
@@ -44,22 +45,32 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info data.UserInfoReques
 	}
 
 	// Cập nhật thông tin
-	// infoEntity.Phone = info.Phone
-	// infoEntity.Email = info.Email
-	// infoEntity.TaxCode = info.TaxCode
-	// infoEntity.FullName = info.FullName
-	// infoEntity.Address = info.Address
-	// infoEntity.Avatar = info.Avatar
-	// infoEntity.Position = info.Position
-	// infoEntity.DepartmentID = info.DepartmentID
-	// infoEntity.Birth = info.Birth
 	copier.Copy(&infoEntity, &info)
 
 	// Lưu vào database
-
 	if err := _db.SaveWithAudit(c, infoEntity); err != nil {
 		return nil, err
 	}
 
 	return data.NewUserInfoResponse(infoEntity), nil
+}
+
+func (s *ProfileService) PublicUserInfo(c *gin.Context) (*data.PublicUserInfo, error) {
+	// var infoEntity models.UserProfileEntity
+	profileIdStr := c.Param("profileId")
+	profileId, _ := strconv.ParseUint(profileIdStr, 10, 32)
+
+	// Lấy thông tin user từ DB
+	infoEntity, err := models.ProfileGetByProfileId(profileId)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		infoEntity = &models.UserProfileEntity{
+			ProfileID: profileId,
+		}
+	}
+
+	var info data.PublicUserInfo
+	copier.Copy(&info, &infoEntity)
+
+	return &info, nil
 }
