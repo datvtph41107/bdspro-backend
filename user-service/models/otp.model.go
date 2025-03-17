@@ -1,0 +1,75 @@
+package models
+
+import (
+	_db "common/db"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+// UserOTPEntity đại diện cho bảng user_otp trong database
+type UserOTPEntity struct {
+	UserIdEntity
+	// ID           uint           `gorm:"primaryKey" json:"id"`
+	// AuthID uint `gorm:"column:auth_id" json:"authId"`
+	OTP          string     `gorm:"size:10" json:"otp"`
+	OTPSendTime  int        `gorm:"default:0" json:"otpSendTime"`
+	OTPCheckTime int        `gorm:"default:0" json:"otpCheckTime"`
+	OTPDate      *time.Time `gorm:"autoUpdateTime;type:timestampz" json:"otpDate"`
+	ExpiredTime  *time.Time `json:"expiredTime;type:timestampz"`
+	Activate     bool       `gorm:"default:false" json:"activate"`
+	// CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	// UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	// DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// TableName đặt tên bảng tương đương với Java
+func (UserOTPEntity) TableName() string {
+	return "user_otp"
+}
+
+// BeforeCreate GORM hook để đặt expiredTime trước khi tạo bản ghi mới
+func (u *UserOTPEntity) BeforeCreate(tx *gorm.DB) (err error) {
+	// Thiết lập thời gian hết hạn mặc định nếu chưa có
+	// t := time.Now().Add(time.Second * time.Duration(120)) // Thay đổi 120 giây thành giá trị phù hợp
+	// u.ExpiredTime = &t
+	return
+}
+
+// BeforeCreate GORM hook để đặt expiredTime trước khi tạo bản ghi mới
+func (u *UserOTPEntity) BeforeUpdate(tx *gorm.DB) (err error) {
+	// Thiết lập thời gian hết hạn mặc định nếu chưa có
+	t := time.Now().Add(time.Second * time.Duration(120)) // Thay đổi 120 giây thành giá trị phù hợp
+	u.ExpiredTime = &t
+	return
+}
+
+// UserOTPRepository cung cấp các phương thức thao tác với user_otp
+type UserOTPRepository struct {
+	db *gorm.DB
+}
+
+// NewUserOTPRepository tạo một instance mới
+func NewUserOTPRepository(db *gorm.DB) *UserOTPRepository {
+	return &UserOTPRepository{db: db}
+}
+
+// FindByOAuthId tìm kiếm UserOTPEntity bằng OAuth ID
+func OTPFindByOAuthId(oauthId string) (*UserOTPEntity, error) {
+	var otp UserOTPEntity
+	result := _db.DB.Where("auth_id = ?", oauthId).First(&otp)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &otp, nil
+}
+
+// GetById lấy UserOTPEntity theo ID
+func OTPGetById(authId uint64) (*UserOTPEntity, error) {
+	var otp UserOTPEntity
+	result := _db.DB.First(&otp, authId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &otp, nil
+}

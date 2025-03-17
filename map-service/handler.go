@@ -1,7 +1,7 @@
 package main
 
 import (
-	"common/utils"
+	_utils "common/utils"
 	"strconv"
 	"strings"
 )
@@ -28,7 +28,7 @@ func SplitPathEncode(input string) PathPrefix {
 }
 
 func SignDecode(key, signEncode string) *SignatureDecode {
-	xorDecoded, err := utils.XorDecode(signEncode, key)
+	xorDecoded, err := _utils.XorDecode(signEncode, key)
 	if err != nil {
 
 	}
@@ -53,7 +53,7 @@ func SignDecode(key, signEncode string) *SignatureDecode {
 
 func SignEncode(key string, profileID, expiredTime int64, signature string) string {
 	data := signature + ":" + strconv.FormatInt(profileID, 10) + ":" + strconv.FormatInt(expiredTime, 10)
-	return utils.XorEncode(data, key)
+	return _utils.XorEncode(data, key)
 }
 
 // XorEncode và XorDecode sẽ được định nghĩa sau

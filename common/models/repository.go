@@ -1,4 +1,4 @@
-package cmodels
+package _models
 
 import (
 	"github.com/gin-gonic/gin"

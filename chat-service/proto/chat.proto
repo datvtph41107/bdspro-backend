@@ -8,7 +8,7 @@ import "google/protobuf/any.proto";
 
 message ChatMessage {
     uint64 from = 1;
-    string to = 2;
+    uint64 to = 2;
     string message = 3;
 }
 

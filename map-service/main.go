@@ -1,8 +1,7 @@
 package main
 
 import (
-	c_config "common/config"
-	cjwt "common/jwt"
+	_jwt "common/jwt"
 	"log"
 	"map/config"
 	_ "map/docs"
@@ -64,9 +63,9 @@ func main() {
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	RootApp, _ = InitializeApp()
-	c_config.ConfigDB = RootApp.DB
+	// c_config.ConfigDB = RootApp.DB
 
-	r.Use(cjwt.JWTAuthMiddleware(publicRoutes))
+	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 
 	log.Printf("MAIN")
 	r.GET("/map/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

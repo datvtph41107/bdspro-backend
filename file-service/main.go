@@ -2,7 +2,7 @@ package main
 
 import (
 	_db "common/db"
-	"common/token"
+	_jwt "common/jwt"
 	"file/config"
 	_ "file/docs"
 	"file/services"
@@ -66,7 +66,7 @@ func main() {
 	RootApp, _ = InitializeApp()
 	_db.DB = RootApp.DB
 
-	r.Use(token.JWTAuthMiddleware(publicRoutes))
+	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 
 	log.Printf("MAIN")
 	r.GET("/file/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

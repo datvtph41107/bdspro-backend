@@ -1,4 +1,4 @@
-package token
+package _jwt
 
 import (
 	"net/http"

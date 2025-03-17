@@ -4,7 +4,7 @@
 package main
 
 import (
-	c_config "common/config"
+	_db "common/db"
 	"map/repo"
 	"map/services"
 
@@ -13,8 +13,7 @@ import (
 
 // WireSet tập hợp các dependencies để inject
 var wireSet = wire.NewSet(
-	c_config.NewDatabaseConfig,
-	c_config.NewDB,
+	_db.NewDB,
 	repo.NewMapRepo,
 	services.NewMapService,
 	NewConfigApp,

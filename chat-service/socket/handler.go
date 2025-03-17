@@ -4,7 +4,7 @@ import (
 	"chat/data"
 	"chat/models"
 	_db "common/db"
-	"common/token"
+	_jwt "common/jwt"
 	"context"
 	"encoding/json"
 	"log"
@@ -35,7 +35,7 @@ var groups = make(map[uint64][]uint64)
 
 func HandleWebSocket(c *gin.Context) {
 	authStr := c.Query("token")
-	claims, err := token.ParseJWT(authStr)
+	claims, err := _jwt.ParseJWT(authStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
 		return

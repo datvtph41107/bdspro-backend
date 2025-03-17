@@ -2,7 +2,7 @@ package routes
 
 import (
 	"chat/models"
-	"common/token"
+	_jwt "common/jwt"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,7 +34,7 @@ func GetChatHistory(c *gin.Context) {
 	size, _ := strconv.ParseInt(sizeStr, 10, 32)
 	groupIdStr, _ := c.GetQuery("group")
 	groupId, _ := strconv.ParseUint(groupIdStr, 10, 32)
-	userId := token.GetProfileId(c)
+	userId := _jwt.GetProfileId(c)
 	ok, err := models.CheckUserInGroup(uint64(userId), groupId)
 
 	if err != nil {
@@ -74,7 +74,7 @@ func GetGroupList(c *gin.Context) {
 	page, _ := strconv.ParseInt(pageStr, 10, 32)
 	// groupIdStr, _ := c.GetQuery("group")
 	// groupId, _ := strconv.ParseUint(groupIdStr, 10, 32)
-	userId := token.GetProfileId(c)
+	userId := _jwt.GetProfileId(c)
 	groups, err := models.GetGroupsByMemberID(uint64(userId), int(page), int(size))
 
 	if err != nil {

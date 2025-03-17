@@ -1,0 +1,411 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/user/auth/logout": {
+            "delete": {
+                "description": "Đăng xuất, xóa refresh token",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "responses": {}
+            }
+        },
+        "/user/auth/otp/request": {
+            "post": {
+                "description": "Gửi lại OTP hoặc submit lúc nhập SĐT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Gửi OTP",
+                "parameters": [
+                    {
+                        "description": "OTP Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.OtpRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/auth/otp/resend": {
+            "post": {
+                "description": "Gửi lại OTP mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Resend OTP",
+                "parameters": [
+                    {
+                        "description": "OTP Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.OtpRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/auth/otp/verify": {
+            "post": {
+                "description": "Xác minh OTP đã nhận",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Xác minh OTP",
+                "parameters": [
+                    {
+                        "description": "OTP Verify Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.OtpVerifyRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/auth/restore": {
+            "put": {
+                "description": "Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Khôi phục tài khoản",
+                "parameters": [
+                    {
+                        "description": "Restore Phone Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.RestorePhoneRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/auth/set-info": {
+            "post": {
+                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật thông tin người dùng",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.UserInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.UserInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/auth/token/refresh": {
+            "post": {
+                "description": "Làm mới access token bằng refresh token trong cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh token",
+                "responses": {}
+            }
+        },
+        "/user/oauth/{provider}/callback": {
+            "get": {
+                "description": "Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "OAuth Callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tên của provider (google, facebook, zalo, ...)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Mã xác thực từ provider",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Chuỗi state để bảo vệ chống tấn công CSRF",
+                        "name": "state",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin người dùng từ provider",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi khi xử lý callback",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/user/oauth/{provider}/login": {
+            "get": {
+                "description": "Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "OAuth Login",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tên của provider (google, facebook, zalo, ...)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Chuyển hướng đến trang đăng nhập của provider"
+                    },
+                    "400": {
+                        "description": "Lỗi khi provider không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "data.OtpRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "fullname": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0901230456"
+                }
+            }
+        },
+        "data.OtpVerifyRequest": {
+            "type": "object",
+            "required": [
+                "otp",
+                "phone"
+            ],
+            "properties": {
+                "authId": {
+                    "type": "integer"
+                },
+                "fullname": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "otp": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0901230456"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "data.RestorePhoneRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "data.UserInfoRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "avatar": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "department_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "fullname": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
+                },
+                "position": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "taxCode": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                }
+            }
+        },
+        "data.UserInfoResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "avatar": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "department_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullname": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "taxCode": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                }
+            }
+        }
+    }
+}

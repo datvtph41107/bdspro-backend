@@ -8,7 +8,7 @@ import (
 	"chat/routes"
 	"chat/socket"
 	_db "common/db"
-	"common/token"
+	_jwt "common/jwt"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -75,7 +75,7 @@ func main() {
 	r.GET("/chat/connect/ws", socket.HandleWebSocket)
 
 	http_r := r.Group("/chat")
-	http_r.Use(token.JWTAuthMiddleware(publicRoutes))
+	http_r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 	http_r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
 	http_r.GET("/info", func(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})

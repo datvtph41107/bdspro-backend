@@ -2,8 +2,8 @@ package services
 
 import (
 	_db "common/db"
-	"common/token"
-	"common/utils"
+	_jwt "common/jwt"
+	_utils "common/utils"
 	"file/models"
 	"file/repositories"
 	"fmt"
@@ -96,14 +96,14 @@ func (fs *FileService) GetFile(c *gin.Context) {
 	firstChar := string(p[0]) // Ký tự đầu tiên
 	remainingStr := p[1:]
 
-	decodedPath, err := utils.XorDecode(remainingStr, fs.XorCryptKey)
+	decodedPath, err := _utils.XorDecode(remainingStr, fs.XorCryptKey)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		// http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
 
-	ext := utils.GetFileExtension(decodedPath)
+	ext := _utils.GetFileExtension(decodedPath)
 	mineType := "application/octet-stream"
 	if ext == "png" {
 		// Đặt header Content-Type là image/png
@@ -184,7 +184,7 @@ func (s *FileService) Upload(c *gin.Context) {
 
 	// repository.
 	// 2. Lưu file vào DB (GORM tự động gán ID sau khi save)
-	if err := _db.SaveModel(c, &fileEntity); err != nil {
+	if err := _db.SaveWithAudit(c, &fileEntity); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		// fmt.Errorf("failed to save file entity: %v", err)
 		return
@@ -199,7 +199,7 @@ func (s *FileService) Upload(c *gin.Context) {
 	}
 
 	// 4. Mã hóa đường dẫn file (giống encrypt trong Spring Boot)
-	encryptedPath := utils.XorEncode(fileInfo.RelativePath, s.XorCryptKey)
+	encryptedPath := _utils.XorEncode(fileInfo.RelativePath, s.XorCryptKey)
 
 	// 5. Cập nhật thông tin file
 	fileEntity.SetFields(fileInfo)
@@ -213,12 +213,12 @@ func (s *FileService) Upload(c *gin.Context) {
 		fileEntity.Path = "s" + encryptedPath
 
 		// Lưu file vào DB
-		if err := _db.SaveModel(c, &fileEntity); err != nil {
+		if err := _db.SaveWithAudit(c, &fileEntity); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			// fmt.Errorf("failed to update file entity: %v", err)
 			return
 		}
-		profileId := token.GetProfileId(c)
+		profileId := _jwt.GetProfileId(c)
 		// Tạo FileAccessEntity (quyền truy cập file)
 		fileAccess := models.AccessEntity{
 			FileID:   fileEntity.ID,
@@ -237,7 +237,7 @@ func (s *FileService) Upload(c *gin.Context) {
 	}
 
 	fileEntity.Path = "p" + encryptedPath
-	if err := _db.SaveModel(c, &fileEntity); err != nil {
+	if err := _db.SaveWithAudit(c, &fileEntity); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		// fmt.Errorf("failed to update file entity: %v", err)
 		return
@@ -266,9 +266,9 @@ type SignatureResponse struct {
 // @Produce json
 // @Router /signature [put]
 func (s *FileService) GenerateSignature(c *gin.Context) {
-	profileId := int64(token.GetProfileId(c))
+	profileId := int64(_jwt.GetProfileId(c))
 	expiredTime := time.Now().Add(time.Duration(s.SignatureExpire) * time.Minute).Unix()
-	signature := utils.GenerateSignedUrl("info", profileId, s.SignatureKey, expiredTime)
+	signature := _utils.GenerateSignedUrl("info", profileId, s.SignatureKey, expiredTime)
 	signCipher := signEncode(s.XorCryptKey, profileId, expiredTime, signature)
 
 	sig := &SignatureResponse{
@@ -286,7 +286,7 @@ func (s *FileService) GenerateSignature(c *gin.Context) {
 
 func signEncode(key string, profileId, expiredTime int64, signature string) string {
 	split := fmt.Sprintf("%s:%d:%d", signature, profileId, expiredTime)
-	return utils.XorEncode(split, key)
+	return _utils.XorEncode(split, key)
 }
 
 func (fs *FileService) validSignature(sig *SignatureDecode) bool {
@@ -297,7 +297,7 @@ func (fs *FileService) validSignature(sig *SignatureDecode) bool {
 }
 
 func signDecode(key string, signEncode string) (*SignatureDecode, error) {
-	xorDecoded, _ := utils.XorDecode(signEncode, key)
+	xorDecoded, _ := _utils.XorDecode(signEncode, key)
 	split := strings.Split(xorDecoded, ":")
 	if len(split) > 2 {
 		profile, err1 := strconv.ParseInt(split[1], 10, 64)
@@ -330,7 +330,7 @@ func stringToInt64(s string) int64 {
 // getFileIdFromPath lấy ID file từ đường dẫn, trả về giá trị Long (int64 trong Go)
 func getFileIdFromPath(path string) int64 {
 	// Lấy phần mở rộng của file
-	ext := utils.GetFileExtension(path)
+	ext := _utils.GetFileExtension(path)
 
 	// Tạo pattern regex với phần mở rộng
 	pattern := fmt.Sprintf("(\\d+)\\.%s$", ext)

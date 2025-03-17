@@ -1,7 +1,7 @@
 package main
 
 import (
-	"common/token"
+	_jwt "common/jwt"
 	"log"
 	"os"
 	"payment/config"
@@ -71,7 +71,7 @@ func main() {
 	RootApp, _ = InitializeApp()
 	// config.ConfigDB = RootApp.DB
 
-	r.Use(token.JWTAuthMiddleware(publicRoutes))
+	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 
 	log.Printf("MAIN")
 	r.GET("/payment/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

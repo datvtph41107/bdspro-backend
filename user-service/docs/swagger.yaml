@@ -1,0 +1,282 @@
+definitions:
+  data.OtpRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        example: "0901230456"
+        type: string
+    required:
+    - phone
+    type: object
+  data.OtpVerifyRequest:
+    properties:
+      authId:
+        type: integer
+      fullname:
+        type: string
+      os:
+        type: string
+      otp:
+        type: string
+      phone:
+        example: "0901230456"
+        type: string
+      platform:
+        type: string
+      version:
+        type: string
+    required:
+    - otp
+    - phone
+    type: object
+  data.RestorePhoneRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
+    type: object
+  data.UserInfoRequest:
+    properties:
+      address:
+        maxLength: 100
+        minLength: 2
+        type: string
+      avatar:
+        maxLength: 255
+        type: string
+      birth:
+        type: string
+      department_id:
+        minimum: 1
+        type: integer
+      email:
+        maxLength: 100
+        type: string
+      fullname:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+      position:
+        maxLength: 50
+        minLength: 2
+        type: string
+      taxCode:
+        maxLength: 50
+        minLength: 2
+        type: string
+    type: object
+  data.UserInfoResponse:
+    properties:
+      address:
+        maxLength: 100
+        minLength: 2
+        type: string
+      avatar:
+        maxLength: 255
+        type: string
+      birth:
+        type: string
+      department_id:
+        minimum: 1
+        type: integer
+      email:
+        type: string
+      fullname:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+      position:
+        maxLength: 50
+        minLength: 2
+        type: string
+      taxCode:
+        maxLength: 50
+        minLength: 2
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /user/auth/logout:
+    delete:
+      description: Đăng xuất, xóa refresh token
+      responses: {}
+      summary: Logout
+      tags:
+      - Auth
+  /user/auth/otp/request:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP hoặc submit lúc nhập SĐT
+      parameters:
+      - description: OTP Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Gửi OTP
+      tags:
+      - Auth
+  /user/auth/otp/resend:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP mới
+      parameters:
+      - description: OTP Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Resend OTP
+      tags:
+      - Auth
+  /user/auth/otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Xác minh OTP đã nhận
+      parameters:
+      - description: OTP Verify Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpVerifyRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Xác minh OTP
+      tags:
+      - Auth
+  /user/auth/restore:
+    put:
+      consumes:
+      - application/json
+      description: Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới
+      parameters:
+      - description: Restore Phone Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.RestorePhoneRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Khôi phục tài khoản
+      tags:
+      - Auth
+  /user/auth/set-info:
+    post:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.UserInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+      summary: Cập nhật thông tin người dùng
+      tags:
+      - User
+  /user/auth/token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Làm mới access token bằng refresh token trong cookie
+      produces:
+      - application/json
+      responses: {}
+      summary: Refresh token
+      tags:
+      - Auth
+  /user/oauth/{provider}/callback:
+    get:
+      consumes:
+      - application/json
+      description: Nhận callback từ provider sau khi người dùng đăng nhập và xử lý
+        xác thực.
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Mã xác thực từ provider
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Chuỗi state để bảo vệ chống tấn công CSRF
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin người dùng từ provider
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi khi xử lý callback
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Callback
+      tags:
+      - OAuth
+  /user/oauth/{provider}/login:
+    get:
+      consumes:
+      - application/json
+      description: Chuyển hướng người dùng đến trang đăng nhập của provider (Google,
+        Facebook, Zalo, v.v.).
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Chuyển hướng đến trang đăng nhập của provider
+        "400":
+          description: Lỗi khi provider không hợp lệ
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Login
+      tags:
+      - OAuth
+swagger: "2.0"

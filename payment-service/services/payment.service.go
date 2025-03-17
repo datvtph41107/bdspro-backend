@@ -2,7 +2,7 @@ package services
 
 import (
 	_db "common/db"
-	"common/token"
+	_jwt "common/jwt"
 	"net/http"
 	"payment/models"
 	"payment/repo"
@@ -89,7 +89,7 @@ func (s *PaymentService) CreatePaymentLink(c *gin.Context) {
 	}
 
 	mapCheckoutToEntity(response, order)
-	if err := _db.SaveModel(c, &order); err != nil {
+	if err := _db.SaveWithAudit(c, &order); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -123,7 +123,7 @@ func (s *PaymentService) GetPaymentLinkInformation(c *gin.Context) {
 func (s *PaymentService) CancelPaymentLink(c *gin.Context) {
 	reason, _ := c.GetQuery("reason")
 	orderId := c.Param("orderId")
-	userId := token.GetProfileId(c)
+	userId := _jwt.GetProfileId(c)
 
 	// var webhookData payos.WebhookType
 	response, err := payos.CancelPaymentLink(orderId, &reason)
@@ -142,7 +142,7 @@ func (s *PaymentService) CancelPaymentLink(c *gin.Context) {
 	if order.Status == "PENDING" {
 		order.Status = "CANCELLED"
 		order.Reason = reason
-		_db.SaveModel(c, &order)
+		_db.SaveWithAudit(c, &order)
 	} else {
 		// return nil, errors.New("order has already been processed")
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Đơn đã được xử lý"})
