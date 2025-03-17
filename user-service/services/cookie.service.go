@@ -2,6 +2,8 @@ package services
 
 import (
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CookieService struct {
@@ -32,6 +34,21 @@ func (s *CookieService) SetRefreshToken(w http.ResponseWriter, refreshToken stri
 	}
 
 	http.SetCookie(w, cookie)
+}
+
+// Set cookie
+func (s *CookieService) Set(c *gin.Context, key string, value string) {
+	cookie := &http.Cookie{
+		Name:     key,
+		Value:    value,
+		HttpOnly: true,         // Ngăn JavaScript đọc cookie
+		Secure:   true,         // Chỉ gửi cookie qua HTTPS
+		MaxAge:   24 * 60 * 60, // Cookie tồn tại trong 1 ngày
+		Path:     "/",          // Chỉ áp dụng cho đường dẫn refresh token
+		// Domain: "yourdomain.com", // Uncomment nếu backend & frontend chạy trên domain khác nhau
+	}
+
+	http.SetCookie(c.Writer, cookie)
 }
 
 // Xóa refresh token khỏi cookie

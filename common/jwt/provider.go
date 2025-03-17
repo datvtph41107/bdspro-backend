@@ -13,8 +13,8 @@ import (
 // Secret key dùng để ký token
 // var jwtSecret = []byte("key-generate-jwt-token-authentication")
 
-// Claims chứa payload của token
-type Claims struct {
+// Principal chứa payload của token
+type Principal struct {
 	UserID    uint64 `json:"sub"`
 	ProfileId uint64 `json:"profile"`
 	Type      string `json:"type"`
@@ -65,7 +65,7 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 
 // GenerateJWT tạo JWT token với userID và thời gian hết hạn (expirationMinutes)
 func GenerateJWT(userID uint64, expirationMinutes int) (string, error) {
-	claims := Claims{
+	claims := Principal{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expirationMinutes) * time.Minute)),
@@ -79,8 +79,8 @@ func GenerateJWT(userID uint64, expirationMinutes int) (string, error) {
 }
 
 // ValidateJWT kiểm tra tính hợp lệ của token
-func ValidateJWT(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+func ValidateJWT(tokenString string) (*Principal, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Principal{}, func(token *jwt.Token) (interface{}, error) {
 		return viper.GetString("jwt.key-generate"), nil
 	})
 
@@ -89,21 +89,22 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	}
 
 	// Kiểm tra xem token có hợp lệ không
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
 		return claims, nil
 	}
 
 	return nil, errors.New("invalid token")
 }
 
-func ParseJWT(tokenStr string) (*Claims, error) {
+func ParseJWT(tokenStr string) (*Principal, error) {
 	// Parse token và xác thực nó
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &Principal{}, func(token *jwt.Token) (interface{}, error) {
 		// Kiểm tra tính hợp lệ của signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return viper.GetString("jwt.key-generate"), nil
+		key := viper.GetString("jwt.key-generate")
+		return []byte(key), nil
 	})
 
 	if err != nil {
@@ -111,7 +112,7 @@ func ParseJWT(tokenStr string) (*Claims, error) {
 	}
 
 	// Nếu token hợp lệ, trả về claims
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, fmt.Errorf("invalid token")
@@ -119,7 +120,7 @@ func ParseJWT(tokenStr string) (*Claims, error) {
 
 func GetProfileId(c *gin.Context) uint64 {
 	clms, _ := c.Get("claims")
-	if claims, ok := clms.(*Claims); ok {
+	if claims, ok := clms.(*Principal); ok {
 		return claims.ProfileId
 	}
 
@@ -128,11 +129,20 @@ func GetProfileId(c *gin.Context) uint64 {
 
 func GetSessionId(c *gin.Context) uint64 {
 	clms, _ := c.Get("claims")
-	if claims, ok := clms.(*Claims); ok {
+	if claims, ok := clms.(*Principal); ok {
 		return claims.ProfileId
 	}
 
 	return 0
+}
+
+func GetPrincipal(c *gin.Context) *Principal {
+	clms, _ := c.Get("claims")
+	if claims, ok := clms.(*Principal); ok {
+		return claims
+	}
+
+	return nil
 }
 
 func GetProperties(tokenString string) (*JwtTokenProperties, error) {

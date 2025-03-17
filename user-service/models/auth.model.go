@@ -45,7 +45,7 @@ func AuthFindByOAuthId(oauthId, provider string) (*UserAuthEntity, error) {
 }
 
 // Lấy user theo ID
-func AuthGetWithId(id uint) (*UserAuthEntity, error) {
+func AuthGetWithId(id uint64) (*UserAuthEntity, error) {
 	var user UserAuthEntity
 	err := _db.DB.First(&user, id).Error
 	if err != nil {

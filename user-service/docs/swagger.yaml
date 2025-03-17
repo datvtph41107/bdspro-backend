@@ -1,3 +1,4 @@
+basePath: /user
 definitions:
   data.OtpRequest:
     properties:
@@ -37,82 +38,108 @@ definitions:
     required:
     - phone
     type: object
+  data.SessionQRConfirm:
+    properties:
+      sessionId:
+        description: ID của trình duyệt hoặc phiên web
+        type: integer
+    type: object
+  data.SessionQRRequest:
+    properties:
+      clientId:
+        description: ID của trình duyệt hoặc phiên web
+        type: string
+      csrfToken:
+        description: Token chống CSRF (nếu cần)
+        type: string
+      expiration:
+        description: Thời gian hết hạn QR code (tính bằng giây)
+        type: integer
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+      userAgent:
+        description: Chuỗi nhận diện trình duyệt
+        type: string
+    type: object
+  data.SessionQRResponse:
+    properties:
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
   data.UserInfoRequest:
     properties:
       address:
-        maxLength: 100
-        minLength: 2
         type: string
       avatar:
-        maxLength: 255
         type: string
       birth:
         type: string
-      department_id:
-        minimum: 1
+      departmentId:
         type: integer
       email:
-        maxLength: 100
         type: string
       fullname:
-        maxLength: 50
-        minLength: 2
         type: string
       phone:
-        maxLength: 15
-        minLength: 10
         type: string
       position:
-        maxLength: 50
-        minLength: 2
+        type: string
+      referralBy:
+        type: string
+      startDate:
         type: string
       taxCode:
-        maxLength: 50
-        minLength: 2
         type: string
     type: object
   data.UserInfoResponse:
     properties:
       address:
-        maxLength: 100
-        minLength: 2
         type: string
       avatar:
-        maxLength: 255
         type: string
       birth:
         type: string
-      department_id:
-        minimum: 1
+      departmentId:
         type: integer
       email:
         type: string
       fullname:
-        maxLength: 50
-        minLength: 2
         type: string
       phone:
         type: string
       position:
-        maxLength: 50
-        minLength: 2
+        type: string
+      profileId:
+        type: integer
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      roleType:
+        type: string
+      startDate:
         type: string
       taxCode:
-        maxLength: 50
-        minLength: 2
         type: string
     type: object
 info:
   contact: {}
+  description: API quản lý người dùng
+  title: User API
+  version: "1.0"
 paths:
-  /user/auth/logout:
+  /auth/logout:
     delete:
       description: Đăng xuất, xóa refresh token
       responses: {}
       summary: Logout
       tags:
       - Auth
-  /user/auth/otp/request:
+  /auth/otp/request:
     post:
       consumes:
       - application/json
@@ -130,7 +157,7 @@ paths:
       summary: Gửi OTP
       tags:
       - Auth
-  /user/auth/otp/resend:
+  /auth/otp/resend:
     post:
       consumes:
       - application/json
@@ -148,7 +175,7 @@ paths:
       summary: Resend OTP
       tags:
       - Auth
-  /user/auth/otp/verify:
+  /auth/otp/verify:
     post:
       consumes:
       - application/json
@@ -166,7 +193,68 @@ paths:
       summary: Xác minh OTP
       tags:
       - Auth
-  /user/auth/restore:
+  /auth/qr/confirm:
+    post:
+      consumes:
+      - application/json
+      description: API này xác nhận rằng app đã quét QR và người dùng đã đồng ý đăng
+        nhập
+      parameters:
+      - description: Thông tin xác nhận QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRConfirm'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xác nhận QR Login
+      tags:
+      - Auth
+  /auth/qr/init:
+    post:
+      consumes:
+      - application/json
+      description: API này tạo một phiên QR để người dùng có thể đăng nhập qua app
+      parameters:
+      - description: Thông tin tạo QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.SessionQRResponse'
+      summary: Tạo QR Login
+      tags:
+      - Auth
+  /auth/qr/status:
+    post:
+      consumes:
+      - application/json
+      description: API này kiểm tra xem QR đã được xác nhận hay chưa
+      parameters:
+      - description: Thông tin kiểm tra QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Kiểm tra trạng thái QR
+      tags:
+      - Auth
+  /auth/restore:
     put:
       consumes:
       - application/json
@@ -184,29 +272,7 @@ paths:
       summary: Khôi phục tài khoản
       tags:
       - Auth
-  /user/auth/set-info:
-    post:
-      consumes:
-      - application/json
-      description: API này cho phép người dùng cập nhật thông tin cá nhân
-      parameters:
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/data.UserInfoRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Cập nhật thành công
-          schema:
-            $ref: '#/definitions/data.UserInfoResponse'
-      summary: Cập nhật thông tin người dùng
-      tags:
-      - User
-  /user/auth/token/refresh:
+  /auth/token/refresh:
     post:
       consumes:
       - application/json
@@ -217,7 +283,7 @@ paths:
       summary: Refresh token
       tags:
       - Auth
-  /user/oauth/{provider}/callback:
+  /oauth/{provider}/callback:
     get:
       consumes:
       - application/json
@@ -254,7 +320,7 @@ paths:
       summary: OAuth Callback
       tags:
       - OAuth
-  /user/oauth/{provider}/login:
+  /oauth/{provider}/login:
     get:
       consumes:
       - application/json
@@ -279,4 +345,62 @@ paths:
       summary: OAuth Login
       tags:
       - OAuth
+  /profile/me:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/set-info:
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.UserInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin người dùng
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

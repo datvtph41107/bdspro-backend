@@ -24,16 +24,19 @@ func InitializeApp() (*ConfigApp, error) {
 	redisService := _redis.NewRedisService()
 	cookieService := services.NewCookieService()
 	authService := services.NewAuthService(redisService, cookieService)
+	authRouter := routes.NewAuthRoutes(authService)
 	client := services.NewHttpClient()
 	googleAuthService := services.NewGoogleAuthService(client, authService)
 	zaloAuthService := services.NewZaloAuthService(client, authService)
 	facebookAuthService := services.NewFacebookAuthService(authService, client)
 	oAuthRouter := routes.NewOAuthRouter(googleAuthService, zaloAuthService, facebookAuthService)
-	configApp := NewConfigApp(authService, oAuthRouter)
+	profileService := services.NewProfileService()
+	profileRouter := routes.NewProfileRouter(profileService)
+	configApp := NewConfigApp(authRouter, oAuthRouter, profileRouter)
 	return configApp, nil
 }
 
 // wire.go:
 
 // WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(_redis.NewRedisService, services.NewCookieService, services.NewAuthService, services.NewHttpClient, services.NewFacebookAuthService, services.NewGoogleAuthService, services.NewZaloAuthService, routes.NewOAuthRouter, NewConfigApp)
+var wireSet = wire.NewSet(_redis.NewRedisService, services.NewCookieService, services.NewAuthService, services.NewHttpClient, services.NewFacebookAuthService, services.NewGoogleAuthService, services.NewZaloAuthService, services.NewProfileService, routes.NewAuthRoutes, routes.NewProfileRouter, routes.NewOAuthRouter, NewConfigApp)

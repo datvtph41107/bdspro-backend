@@ -4,6 +4,8 @@ import (
 	"auth/models"
 	"encoding/json"
 	"time"
+
+	"github.com/jinzhu/copier"
 )
 
 // AuthLoginResponse đại diện cho phản hồi đăng nhập
@@ -67,16 +69,33 @@ func NewRequestLoginResponse(e models.UserAuthEntity) RequestLoginResponse {
 }
 
 // UserInfoResponse đại diện cho phản hồi thông tin người dùng
+//
+//	type UserInfoResponse struct {
+//		Phone        string     `json:"phone,omitempty"`
+//		Email        string     `json:"email,omitempty"`
+//		TaxCode      string     `json:"taxCode,omitempty" validate:"omitempty,min=2,max=50"`
+//		Fullname     string     `json:"fullname,omitempty" validate:"omitempty,min=2,max=50"`
+//		Address      string     `json:"address,omitempty" validate:"omitempty,min=2,max=100"`
+//		Avatar       string     `json:"avatar,omitempty" validate:"omitempty,url,max=255"`
+//		Position     string     `json:"position,omitempty" validate:"omitempty,min=2,max=50"`
+//		DepartmentID uint64     `json:"department_id,omitempty" validate:"omitempty,gte=1"`
+//		Birth        *time.Time `json:"birth,omitempty" validate:"omitempty"`
+//	}
 type UserInfoResponse struct {
+	ProfileID    uint64     `json:"profileId"`
 	Phone        string     `json:"phone,omitempty"`
 	Email        string     `json:"email,omitempty"`
-	TaxCode      string     `json:"taxCode,omitempty" validate:"omitempty,min=2,max=50"`
-	Fullname     string     `json:"fullname,omitempty" validate:"omitempty,min=2,max=50"`
-	Address      string     `json:"address,omitempty" validate:"omitempty,min=2,max=100"`
-	Avatar       string     `json:"avatar,omitempty" validate:"omitempty,url,max=255"`
-	Position     string     `json:"position,omitempty" validate:"omitempty,min=2,max=50"`
-	DepartmentID uint64     `json:"department_id,omitempty" validate:"omitempty,gte=1"`
-	Birth        *time.Time `json:"birth,omitempty" validate:"omitempty"`
+	TaxCode      string     `json:"taxCode,omitempty"`
+	FullName     string     `json:"fullname,omitempty"`
+	Address      string     `json:"address,omitempty"`
+	Avatar       string     `json:"avatar,omitempty"`
+	ReferralCode string     `json:"referralCode,omitempty"`
+	ReferralBy   string     `json:"referralBy,omitempty"`
+	RoleType     string     `json:"roleType,omitempty"`
+	Position     string     `json:"position,omitempty"`
+	DepartmentID uint64     `json:"departmentId,omitempty"`
+	Birth        *time.Time `json:"birth,omitempty"`
+	StartDate    *time.Time `json:"startDate,omitempty"`
 }
 
 type JwtTokenProperties struct {
@@ -87,11 +106,21 @@ type JwtTokenProperties struct {
 	Type      string
 }
 
+// type ProfileResponse struct {
+
+// }
+
 // NewUserInfoResponse tạo mới từ UserProfileEntity
-func NewUserInfoResponse(e models.UserProfileEntity) UserInfoResponse {
-	return UserInfoResponse{
-		Phone:    e.Phone,
-		Email:    e.Email,
-		Fullname: e.FullName,
+func NewUserInfoResponse(e *models.UserProfileEntity) *UserInfoResponse {
+	if e == nil {
+		return nil
 	}
+	var response UserInfoResponse
+	copier.Copy(&response, e)
+	return &response
+	// return UserInfoResponse{
+	// 	Phone:    e.Phone,
+	// 	Email:    e.Email,
+	// 	Fullname: e.FullName,
+	// }
 }

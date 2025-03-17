@@ -20,6 +20,9 @@ var wireSet = wire.NewSet(
 	services.NewFacebookAuthService,
 	services.NewGoogleAuthService,
 	services.NewZaloAuthService,
+	services.NewProfileService,
+	routes.NewAuthRoutes,
+	routes.NewProfileRouter,
 	routes.NewOAuthRouter,
 	NewConfigApp,
 )

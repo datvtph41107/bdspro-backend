@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -18,7 +17,6 @@ import (
 	_utils "common/utils"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type AuthService struct {
@@ -158,46 +156,6 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 	return s.ResponseLogin(e, newSession.SessionID), nil
 }
 
-func (s *AuthService) UpdateUserInfo(c *gin.Context, info data.UserInfoRequest) (*data.UserInfoResponse, error) {
-	// var infoEntity models.UserProfileEntity
-	userID := _jwt.GetProfileId(c)
-
-	// Bắt đầu transaction
-	// tx := s.DB.Begin()
-
-	// Lấy thông tin user từ DB
-	infoEntity, err := models.ProfileGetByProfileId(userID)
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		infoEntity = &models.UserProfileEntity{
-			ProfileID: userID,
-		}
-	}
-
-	// Cập nhật thông tin
-	infoEntity.Phone = info.Phone
-	infoEntity.Email = info.Email
-	infoEntity.TaxCode = info.TaxCode
-	infoEntity.FullName = info.Fullname
-	infoEntity.Address = info.Address
-	infoEntity.Avatar = info.Avatar
-	infoEntity.Position = info.Position
-	infoEntity.DepartmentID = info.DepartmentID
-	infoEntity.Birth = info.Birth
-
-	// Lưu vào database
-
-	if err := _db.SaveWithAudit(c, infoEntity); err != nil {
-		return nil, err
-	}
-
-	return &data.UserInfoResponse{
-		Fullname: infoEntity.FullName,
-		Email:    infoEntity.Email,
-		Phone:    infoEntity.Phone,
-	}, nil
-}
-
 func (s *AuthService) createSession(c *gin.Context, e *models.UserAuthEntity, otp data.OtpVerifyRequest) *models.UserSessionEntity {
 	return &models.UserSessionEntity{
 		AuthID:    e.ID,
@@ -249,7 +207,8 @@ func (s *AuthService) Logout(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	currentSession.FinishedDate = time.Now()
+	now := time.Now()
+	currentSession.FinishedDate = &now
 	_db.SaveWithAudit(c, currentSession)
 	s.RedisService.DeleteToken(currentSession.AuthID)
 	return nil
@@ -477,11 +436,143 @@ func (s *AuthService) GetRefreshToken(authEntity *models.UserAuthEntity, session
 }
 
 func (s *AuthService) CreateSession(c *gin.Context, e *models.UserAuthEntity, otp *data.OtpVerifyRequest) *models.UserSessionEntity {
+	var authId uint64
+	if e != nil {
+		authId = e.ID
+	}
+	if otp == nil {
+		otp = &data.OtpVerifyRequest{}
+	}
 	return &models.UserSessionEntity{
-		AuthID:    e.ID,
+		AuthID:    authId,
 		Version:   otp.Version,
 		Platform:  otp.Platform,
 		OS:        otp.OS,
 		IPRequest: _utils.AuditIP(c),
+		Activate:  false,
 	}
+}
+
+func (s *AuthService) CreateQRSession(c *gin.Context, e *data.SessionQRRequest, sessionId uint64) (*data.SessionQRResponse, error) {
+	session, _ := models.SessionGetBySessionId(sessionId)
+	if session == nil {
+		session = s.CreateSession(c, nil, nil)
+	} else {
+
+		// copier.Copy(&session, &e)
+		// session.Activate
+		// e.SessionId = sessionId
+		return &data.SessionQRResponse{
+			SessionKey: session.SessionKey,
+			SessionId:  session.SessionID,
+		}, nil
+	}
+
+	key := _utils.RandomString(24)
+	session.SessionKey = key
+
+	err := _db.SaveWithAudit(c, &session)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+
+	s.CookieService.Set(c, config.C_SESSION_ID, strconv.FormatUint(session.SessionID, 10))
+
+	return &data.SessionQRResponse{
+		SessionKey: key,
+		SessionId:  session.SessionID,
+	}, nil
+}
+
+const maxConcurrentRequests = 1000 // Giới hạn số request đồng thời
+
+var semaphore = make(chan struct{}, maxConcurrentRequests)
+
+func (s *AuthService) ConfirmQRSession(c *gin.Context, e *data.SessionQRConfirm) (*models.UserSessionEntity, error) {
+	// Nếu semaphore đã đầy, từ chối request
+	select {
+	case semaphore <- struct{}{}:
+		defer func() { <-semaphore }() // Giải phóng khi xử lý xong
+	default:
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Truy cập đạt giới hạn vui lòng thử lại sau",
+		}
+	}
+
+	props := _jwt.GetPrincipal(c)
+	if props == nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Không thể xác thực phiên đăng nhập",
+		}
+	}
+
+	sessionEntity, err := models.SessionGetBySessionId(e.SessionId)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	if sessionEntity.FinishedDate != nil || sessionEntity.AuthID != 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Phiên đăng nhập không chính xác",
+		}
+	}
+
+	sessionEntity.AuthID = props.UserID
+	_db.SaveWithAudit(c, sessionEntity)
+
+	return sessionEntity, nil
+}
+
+func (s *AuthService) VerifyQRSession(c *gin.Context, e *data.SessionQRRequest, sessionId uint64) (*data.AuthLoginResponse, error) {
+	// Nếu semaphore đã đầy, từ chối request
+	select {
+	case semaphore <- struct{}{}:
+		defer func() { <-semaphore }() // Giải phóng khi xử lý xong
+	default:
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Truy cập đạt giới hạn vui lòng thử lại sau",
+		}
+	}
+
+	sessionEntity, err := models.SessionGetBySessionId(sessionId)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	if sessionEntity.FinishedDate != nil ||
+		sessionEntity.Activate ||
+		sessionEntity.SessionKey != e.SessionKey {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Phiên đăng nhập không chính xác",
+		}
+	}
+
+	sessionEntity.Activate = true
+	_db.SaveWithAudit(c, sessionEntity)
+
+	authEntity, err := models.AuthGetWithId(sessionEntity.AuthID)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	refreshToken := s.GetRefreshToken(authEntity, sessionId)
+	s.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	return s.ResponseLogin(authEntity, sessionEntity.SessionID), nil
 }

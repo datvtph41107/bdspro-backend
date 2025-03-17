@@ -34,7 +34,7 @@ service:
   feature: "Enabled only for Service User"
 
 redis:
-  host: localhost:6379
+  host: 14.225.210.29:6379
 spring:
   jpa:
     hibernate:

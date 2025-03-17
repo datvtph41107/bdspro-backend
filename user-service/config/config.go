@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const C_SESSION_ID = "C_SESSION_ID"
+
 //go:embed app.yml
 var ConfigFile []byte
 

@@ -1,10 +1,14 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "API quản lý người dùng",
+        "title": "User API",
+        "contact": {},
+        "version": "1.0"
     },
+    "basePath": "/user",
     "paths": {
-        "/user/auth/logout": {
+        "/auth/logout": {
             "delete": {
                 "description": "Đăng xuất, xóa refresh token",
                 "tags": [
@@ -14,7 +18,7 @@
                 "responses": {}
             }
         },
-        "/user/auth/otp/request": {
+        "/auth/otp/request": {
             "post": {
                 "description": "Gửi lại OTP hoặc submit lúc nhập SĐT",
                 "consumes": [
@@ -41,7 +45,7 @@
                 "responses": {}
             }
         },
-        "/user/auth/otp/resend": {
+        "/auth/otp/resend": {
             "post": {
                 "description": "Gửi lại OTP mới",
                 "consumes": [
@@ -68,7 +72,7 @@
                 "responses": {}
             }
         },
-        "/user/auth/otp/verify": {
+        "/auth/otp/verify": {
             "post": {
                 "description": "Xác minh OTP đã nhận",
                 "consumes": [
@@ -95,7 +99,100 @@
                 "responses": {}
             }
         },
-        "/user/auth/restore": {
+        "/auth/qr/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này xác nhận rằng app đã quét QR và người dùng đã đồng ý đăng nhập",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Xác nhận QR Login",
+                "parameters": [
+                    {
+                        "description": "Thông tin xác nhận QR",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.SessionQRConfirm"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/auth/qr/init": {
+            "post": {
+                "description": "API này tạo một phiên QR để người dùng có thể đăng nhập qua app",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Tạo QR Login",
+                "parameters": [
+                    {
+                        "description": "Thông tin tạo QR",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.SessionQRRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/data.SessionQRResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/qr/status": {
+            "post": {
+                "description": "API này kiểm tra xem QR đã được xác nhận hay chưa",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Kiểm tra trạng thái QR",
+                "parameters": [
+                    {
+                        "description": "Thông tin kiểm tra QR",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.SessionQRRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/auth/restore": {
             "put": {
                 "description": "Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới",
                 "consumes": [
@@ -122,41 +219,7 @@
                 "responses": {}
             }
         },
-        "/user/auth/set-info": {
-            "post": {
-                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Cập nhật thông tin người dùng",
-                "parameters": [
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/data.UserInfoRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cập nhật thành công",
-                        "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/auth/token/refresh": {
+        "/auth/token/refresh": {
             "post": {
                 "description": "Làm mới access token bằng refresh token trong cookie",
                 "consumes": [
@@ -172,7 +235,7 @@
                 "responses": {}
             }
         },
-        "/user/oauth/{provider}/callback": {
+        "/oauth/{provider}/callback": {
             "get": {
                 "description": "Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.",
                 "consumes": [
@@ -225,7 +288,7 @@
                 }
             }
         },
-        "/user/oauth/{provider}/login": {
+        "/oauth/{provider}/login": {
             "get": {
                 "description": "Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).",
                 "consumes": [
@@ -256,6 +319,91 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này trả về thông tin của user hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy thông tin cá nhân của user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/data.UserInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/set-info": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật thông tin người dùng",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.UserInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.UserInfoResponse"
                         }
                     }
                 }
@@ -320,48 +468,88 @@
                 }
             }
         },
+        "data.SessionQRConfirm": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "description": "ID của trình duyệt hoặc phiên web",
+                    "type": "integer"
+                }
+            }
+        },
+        "data.SessionQRRequest": {
+            "type": "object",
+            "properties": {
+                "clientId": {
+                    "description": "ID của trình duyệt hoặc phiên web",
+                    "type": "string"
+                },
+                "csrfToken": {
+                    "description": "Token chống CSRF (nếu cần)",
+                    "type": "string"
+                },
+                "expiration": {
+                    "description": "Thời gian hết hạn QR code (tính bằng giây)",
+                    "type": "integer"
+                },
+                "sessionId": {
+                    "type": "integer"
+                },
+                "sessionKey": {
+                    "type": "string"
+                },
+                "userAgent": {
+                    "description": "Chuỗi nhận diện trình duyệt",
+                    "type": "string"
+                }
+            }
+        },
+        "data.SessionQRResponse": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "integer"
+                },
+                "sessionKey": {
+                    "type": "string"
+                }
+            }
+        },
         "data.UserInfoRequest": {
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
+                    "type": "string"
                 },
                 "avatar": {
-                    "type": "string",
-                    "maxLength": 255
+                    "type": "string"
                 },
                 "birth": {
                     "type": "string"
                 },
-                "department_id": {
-                    "type": "integer",
-                    "minimum": 1
+                "departmentId": {
+                    "type": "integer"
                 },
                 "email": {
-                    "type": "string",
-                    "maxLength": 100
+                    "type": "string"
                 },
                 "fullname": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
                 },
                 "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10
+                    "type": "string"
                 },
                 "position": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
+                },
+                "referralBy": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
                 },
                 "taxCode": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
                 }
             }
         },
@@ -369,43 +557,55 @@
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
+                    "type": "string"
                 },
                 "avatar": {
-                    "type": "string",
-                    "maxLength": 255
+                    "type": "string"
                 },
                 "birth": {
                     "type": "string"
                 },
-                "department_id": {
-                    "type": "integer",
-                    "minimum": 1
+                "departmentId": {
+                    "type": "integer"
                 },
                 "email": {
                     "type": "string"
                 },
                 "fullname": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
                 },
                 "phone": {
                     "type": "string"
                 },
                 "position": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "referralBy": {
+                    "type": "string"
+                },
+                "referralCode": {
+                    "type": "string"
+                },
+                "roleType": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
                 },
                 "taxCode": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2
+                    "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

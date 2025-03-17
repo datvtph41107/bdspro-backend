@@ -15,9 +15,6 @@ import (
 )
 
 type FacebookAuthService struct {
-	// apiClient   *ApiClient
-	// properties  *AuthProperties
-	// userRepo    *UserAuthRepository
 	AuthService *AuthService
 	HttpClient  *http.Client
 }

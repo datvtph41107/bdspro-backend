@@ -7,15 +7,19 @@ import (
 
 // UserSessionEntity đại diện cho phiên đăng nhập của người dùng
 type UserSessionEntity struct {
-	SessionID    uint64    `gorm:"primaryKey;column:session_id;autoIncrement"`
-	AuthID       uint64    `gorm:"column:auth_id"`
-	Platform     string    `gorm:"column:platform;size:10"`
-	Version      string    `gorm:"column:version;size:20"`
-	OS           string    `gorm:"column:os;size:20"`
-	CreatedDate  time.Time `gorm:"column:created_date;autoCreateTime"`
-	FinishedDate time.Time `gorm:"column:finished_date"`
-	IPRequest    string    `gorm:"column:ip_request;size:20"`
-	TotalRequest uint64    `gorm:"column:total_request"`
+	SessionID    uint64     `gorm:"primaryKey;column:session_id;autoIncrement"`
+	AuthID       uint64     `gorm:"column:auth_id"`
+	Platform     string     `gorm:"column:platform;size:10"`
+	Version      string     `gorm:"column:version;size:20"`
+	OS           string     `gorm:"column:os;size:20"`
+	CreatedDate  *time.Time `gorm:"column:created_date;autoCreateTime"`
+	FinishedDate *time.Time `gorm:"column:finished_date"`
+	IPRequest    string     `gorm:"column:ip_request;size:20"`
+	TotalRequest uint64     `gorm:"column:total_request"`
+	UserAgent    string     `gorm:"column:user_agent" json:"userAgent"`
+	Activate     bool       `gorm:"column:activate" json:"activate"`
+	SessionKey   string     `gorm:"column:session_key" json:"sessionKey"`
+	ClientID     string     `gorm:"column:client_id" json:"clientId"`
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 

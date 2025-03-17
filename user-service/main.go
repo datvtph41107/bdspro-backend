@@ -3,8 +3,8 @@ package main
 import (
 	"auth/config"
 	_ "auth/docs"
+	"auth/models"
 	"auth/routes"
-	"auth/services"
 	"common"
 	"log"
 
@@ -17,17 +17,28 @@ var publicRoutes = []string{
 }
 
 type ConfigApp struct {
-	AuthService *services.AuthService
-	OAuthRouter *routes.OAuthRouter
+	Auth          *routes.AuthRouter
+	OAuthRouter   *routes.OAuthRouter
+	ProfileRouter *routes.ProfileRouter
 }
 
-func NewConfigApp(authService *services.AuthService, oAuthRouter *routes.OAuthRouter) *ConfigApp {
+func NewConfigApp(authService *routes.AuthRouter,
+	oAuthRouter *routes.OAuthRouter,
+	profile *routes.ProfileRouter) *ConfigApp {
 	return &ConfigApp{
-		AuthService: authService,
-		OAuthRouter: oAuthRouter,
+		Auth:          authService,
+		OAuthRouter:   oAuthRouter,
+		ProfileRouter: profile,
 	}
 }
 
+// @title User API
+// @version 1.0
+// @description API quản lý người dùng
+// @BasePath /user
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	r := gin.Default()
 	// os.Setenv("TZ", "Europe/London")
@@ -44,8 +55,11 @@ func main() {
 		log.Printf("Data: ", config.AppProperties)
 
 		app, _ := InitializeApp()
-		routes.AuthRoutes(r, app.AuthService)
+		models.AutoMigrate()
+
+		routes.AuthRoutes(r, app.Auth)
 		routes.OAuthRoutes(r, app.OAuthRouter)
+		routes.ProfileRoutes(r, app.ProfileRouter)
 		// fmt.Sprintf("Data: ", config.AppProperties.ZaloAppID)
 
 		// group.GET("/info", func(c *gin.Context) {

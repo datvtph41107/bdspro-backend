@@ -38,18 +38,37 @@ type RestorePhoneRequest struct {
 	Phone string `json:"phone" binding:"required" validate:"required,e164"`
 }
 
+type SessionQRRequest struct {
+	ClientID   string `json:"clientId"`   // ID của trình duyệt hoặc phiên web
+	UserAgent  string `json:"userAgent"`  // Chuỗi nhận diện trình duyệt
+	CsrfToken  string `json:"csrfToken"`  // Token chống CSRF (nếu cần)
+	Expiration int    `json:"expiration"` // Thời gian hết hạn QR code (tính bằng giây)
+	SessionKey string `json:"sessionKey"`
+	SessionId  uint64 `json:"sessionId"`
+}
+
+type SessionQRResponse struct {
+	SessionKey string `json:"sessionKey"`
+	SessionId  uint64 `json:"sessionId"`
+}
+type SessionQRConfirm struct {
+	SessionId uint64 `json:"sessionId"` // ID của trình duyệt hoặc phiên web
+}
+
 // UserInfoRequest đại diện cho yêu cầu cập nhật thông tin người dùng
 // @swagger:model
 type UserInfoRequest struct {
-	Phone        string     `json:"phone,omitempty" validate:"omitempty,min=10,max=15"`
-	Email        string     `json:"email,omitempty" validate:"omitempty,email,max=100"`
-	TaxCode      string     `json:"taxCode,omitempty" validate:"omitempty,min=2,max=50"`
-	Fullname     string     `json:"fullname,omitempty" validate:"omitempty,min=2,max=50"`
-	Address      string     `json:"address,omitempty" validate:"omitempty,min=2,max=100"`
-	Avatar       string     `json:"avatar,omitempty" validate:"omitempty,url,max=255"`
-	Position     string     `json:"position,omitempty" validate:"omitempty,min=2,max=50"`
-	DepartmentID uint64     `json:"department_id,omitempty" validate:"omitempty,gte=1"`
-	Birth        *time.Time `json:"birth,omitempty" validate:"omitempty"`
+	Phone        string     `json:"phone,omitempty"`
+	Email        string     `json:"email,omitempty"`
+	TaxCode      string     `json:"taxCode,omitempty"`
+	FullName     string     `json:"fullname,omitempty"`
+	Address      string     `json:"address,omitempty"`
+	Avatar       string     `json:"avatar,omitempty"`
+	ReferralBy   string     `json:"referralBy,omitempty"`
+	Position     string     `json:"position,omitempty"`
+	DepartmentID uint64     `json:"departmentId,omitempty"`
+	Birth        *time.Time `json:"birth,omitempty" time_format:"2006-01-02T15:04:05"`
+	StartDate    *time.Time `json:"startDate,omitempty" time_format:"2006-01-02T15:04:05"`
 }
 
 // Hàm validate để kiểm tra dữ liệu đầu vào

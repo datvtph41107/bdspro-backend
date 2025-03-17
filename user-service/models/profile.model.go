@@ -16,20 +16,21 @@ const (
 
 // UserProfileEntity chứa thông tin hồ sơ người dùng
 type UserProfileEntity struct {
-	ProfileID    uint64     `gorm:"primaryKey;column:profile_id"`
+	ProfileID    uint64     `gorm:"primaryKey;column:profile_id" copier:"-"`
 	Phone        string     `gorm:"size:20"`
 	Email        string     `gorm:"size:50"`
 	TaxCode      string     `gorm:"size:13"`
 	FullName     string     `gorm:"size:255"`
 	Address      string     `gorm:"size:255"`
 	Avatar       string     `gorm:"size:255"`
-	ReferralCode string     `gorm:"size:255"`
-	ReferralBy   string     `gorm:"size:255"`
-	RoleType     RoleEnum   `gorm:"type:varchar(10)"`
+	ReferralCode string     `gorm:"size:255" copier:"-"`
+	ReferralBy   string     `gorm:"size:255" copier:"-"`
+	RoleType     RoleEnum   `gorm:"type:varchar(10)" copier:"-"`
 	Position     string     `gorm:"size:255"`
 	DepartmentID uint64     `gorm:"column:department_id"`
 	Birth        *time.Time `gorm:"column:birth"`
 	StartDate    *time.Time `gorm:"column:start_date"`
+	DeletedAt    *time.Time `gorm:"column:deleted_at"`
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
