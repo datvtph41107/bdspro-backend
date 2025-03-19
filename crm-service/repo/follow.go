@@ -35,12 +35,12 @@ func NewFollowRepo(DB *gorm.DB) *FollowRepo {
 //		err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&friends).Error
 //		return friends, err
 //	}
-func (repo *FollowRepo) FollowerUser(currentId uint64, page int, pageSize int) ([]models.ContactEntity, error) {
-	var friends []models.ContactEntity
+func (repo *FollowRepo) FollowerUser(currentId uint64, page int, pageSize int) ([]models.Profile, error) {
+	var friends []models.Profile
 
-	query := repo.DB.Model(&models.ContactEntity{}).
-		Joins("LEFT JOIN follow ON (follow.created_by = db_contact.profile_id) "+
-			"						AND db_contact.profile_id <> ? ", currentId).
+	query := repo.DB.Model(&models.Profile{}).
+		Joins("LEFT JOIN follow ON (follow.created_by = profile_transfer.profile_id) "+
+			"						AND profile_transfer.profile_id <> ? ", currentId).
 		Where("follow.deleted_at is null and follow.following_id = ?", currentId)
 
 	// if dto.Text != nil && *dto.Text != "" {
@@ -50,12 +50,12 @@ func (repo *FollowRepo) FollowerUser(currentId uint64, page int, pageSize int) (
 	err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&friends).Error
 	return friends, err
 }
-func (repo *FollowRepo) FollowingUser(currentId uint64, page int, pageSize int) ([]models.ContactEntity, error) {
-	var friends []models.ContactEntity
+func (repo *FollowRepo) FollowingUser(currentId uint64, page int, pageSize int) ([]models.Profile, error) {
+	var friends []models.Profile
 
-	query := repo.DB.Model(&models.ContactEntity{}).
-		Joins("LEFT JOIN follow ON (follow.following_id = db_contact.profile_id) "+
-			"						AND db_contact.profile_id <> ? ", currentId).
+	query := repo.DB.Model(&models.Profile{}).
+		Joins("LEFT JOIN follow ON (follow.following_id = profile_transfer.profile_id) "+
+			"						AND profile_transfer.profile_id <> ? ", currentId).
 		Where("follow.deleted_at is null and follow.created_by = ?", currentId)
 
 	// if dto.Text != nil && *dto.Text != "" {

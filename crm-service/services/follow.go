@@ -30,12 +30,12 @@ func NewFollowService(repo *repo.FollowRepo,
 	}
 }
 
-func (s *FollowService) FollowerUser(c *gin.Context) ([]models.ContactEntity, error) {
+func (s *FollowService) FollowerUser(c *gin.Context) ([]models.Profile, error) {
 	profileId := _jwt.GetProfileId(c)
 	return s.followRepo.FollowerUser(profileId, 0, 10)
 }
 
-func (s *FollowService) FollowingUser(c *gin.Context) ([]models.ContactEntity, error) {
+func (s *FollowService) FollowingUser(c *gin.Context) ([]models.Profile, error) {
 	profileId := _jwt.GetProfileId(c)
 	return s.followRepo.FollowingUser(profileId, 0, 10)
 }

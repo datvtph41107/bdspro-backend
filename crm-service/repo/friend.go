@@ -79,8 +79,8 @@ func (repo *FriendRepo) SearchFriend(currentId uint64, dto data.FriendDTO, page 
 		Model(&models.FriendEntity{}).
 		Preload("GroupUser").
 		Preload("GroupReceiver").
-		Joins("LEFT JOIN db_contact ON (friend.created_by = db_contact.profile_id OR friend.receiver_id = db_contact.profile_id) "+
-			"						AND db_contact.profile_id <> ? ", currentId).
+		Joins("LEFT JOIN profile_transfer ON (friend.created_by = profile_transfer.profile_id OR friend.receiver_id = profile_transfer.profile_id) "+
+			"						AND profile_transfer.profile_id <> ? ", currentId).
 		Where("friend.status = 2 and friend.deleted_at is null")
 
 	if dto.Text != nil && *dto.Text != "" {

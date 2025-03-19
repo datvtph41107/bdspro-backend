@@ -20,7 +20,7 @@ func NewContactRepo(DB *gorm.DB) *ContactRepo {
 // ExistsBy kiểm tra xem một ContactEntity có tồn tại không dựa trên điều kiện
 func (r *ContactRepo) ExistByProfile(profileId uint64) (bool, error) {
 	var count int64
-	result := r.DB.Model(&models.ContactEntity{}).Where("profile_id = ?", profileId).Count(&count)
+	result := r.DB.Model(&models.Profile{}).Where("profile_id = ?", profileId).Count(&count)
 	if result.Error != nil {
 		return false, result.Error
 	}
@@ -29,7 +29,7 @@ func (r *ContactRepo) ExistByProfile(profileId uint64) (bool, error) {
 
 func (r *ContactRepo) Existed(followId uint64) error {
 	var count int64
-	result := r.DB.Model(&models.ContactEntity{}).Where("profile_id = ?", followId).Count(&count)
+	result := r.DB.Model(&models.Profile{}).Where("profile_id = ?", followId).Count(&count)
 	if result.Error != nil {
 		return result.Error
 	}

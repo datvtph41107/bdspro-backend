@@ -45,8 +45,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQL9Dialect
   datasource:
     url: jdbc:postgresql://14.225.205.222:5432/db_user
-    username: hieubap
-    password: Aikhocnoidaunay.1
+    username: user
+    password: znodVcrXdFtaOLdPaTQr3lmV
     driver-class-name: org.postgresql.Driver
 
 unauthorization:
