@@ -26,6 +26,14 @@ func (repo *FriendRepo) UpdateStatusById(status enums.FriendStatus, id uint64, r
 	}).Error
 }
 
+func (repo *FriendRepo) UpdateGroupById(isGroup bool, groupId uint64, id uint64) error {
+	tx := repo.DB.Model(&models.FriendEntity{}).Where("id = ?", id)
+	if isGroup {
+		return tx.Updates(map[string]interface{}{"group_id": groupId}).Error
+	}
+	return tx.Updates(map[string]interface{}{"group_receiver_id": groupId}).Error
+}
+
 func (repo *FriendRepo) UpdateGroupId(id *uint64, groupId uint64) error {
 	return repo.DB.Model(&models.FriendEntity{}).Where("id = ?", id).Update("group_id", groupId).Error
 }

@@ -26,6 +26,7 @@ func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 	api.GET("/list", router.FriendList)
 	api.POST("/request/:receiverId", router.FriendRequest)
 	api.PUT("/request/:requestId/accept", router.FriendAccept)
+	api.PUT("/group/:requestId/:groupId", router.FriendUpdateGroup)
 	api.DELETE("/request/:requestId/reject", router.FriendReject)
 	api.GET("/request/sent", router.FriendSent)
 	api.GET("/request/received", router.FriendReceived)
@@ -83,7 +84,23 @@ func (r *FriendRouter) FriendRequest(c *gin.Context) {
 // @Router /friend/request/{requestId}/accept [put]
 func (r *FriendRouter) FriendAccept(c *gin.Context) {
 	result, err := r.service.ChangeStatus(c, enums.Accepted)
+	_routes.RouteResult(c, result, err)
+}
 
+// @Summary Gán nhóm bạn bè
+// @Description Gán nhóm cho bạn bè
+// @Tags Bạn bè
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param requestId path int true "ID của lời mời kết bạn"
+// @Param groupId path int true "ID của nhóm"
+// @Success 200 {string} string "Lời mời đã được chấp nhận"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Failure 404 {string} string "Không tìm thấy lời mời"
+// @Router /friend/group/{requestId}/{groupId} [put]
+func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
+	result, err := r.service.ChangeGroup(c)
 	_routes.RouteResult(c, result, err)
 }
 

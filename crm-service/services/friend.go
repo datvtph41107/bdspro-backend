@@ -160,6 +160,40 @@ func (s *FriendService) ChangeStatus(c *gin.Context, status enums.FriendStatus) 
 	return 0, s.repo.UpdateStatusById(status, id, nil)
 }
 
+func (s *FriendService) ChangeGroup(c *gin.Context) (int, error) {
+	id, _ := strconv.ParseUint(c.Param("requestId"), 10, 32)
+	groupId, _ := strconv.ParseUint(c.Param("groupId"), 10, 32)
+
+	err := s.blockService.BeforeRequest(c, id)
+	if err != nil {
+		return 0, err
+	}
+
+	requestEntity, err := s.repo.FindByID(id)
+	if err != nil {
+		// return 0, errors.New("Id không chính xác")
+		return 0, &_routes.Except{
+			Code:    400,
+			Message: "Thông tin không đúng vui lòng kiểm tra lại",
+		}
+	}
+
+	profileId := _jwt.GetProfileId(c)
+
+	if (requestEntity.ReceiverID != profileId && requestEntity.CreatedBy != &profileId) || requestEntity.Status != enums.Pending {
+		return 0, &_routes.Except{
+			Code:    400,
+			Message: "Không thể thực hiện yêu cầu",
+		}
+	}
+
+	isGroup := true
+	if requestEntity.ReceiverID == profileId {
+		isGroup = false
+	}
+	return 0, s.repo.UpdateGroupById(isGroup, groupId, id)
+}
+
 // func (s *FriendService) Update(id uint64, request *data.FriendDTO) error {
 // 	existingRequest, err := s.repo.FindByID(id)
 // 	if err != nil {
