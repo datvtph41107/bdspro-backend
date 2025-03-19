@@ -8,6 +8,6 @@ type Page struct {
 }
 
 // NewPage creates a new Page instance
-func NewPage(skip, limit int) *Page {
-	return &Page{Limit: limit, Skip: skip}
+func NewPage(skip, limit int, sort string) *Page {
+	return &Page{Limit: limit, Skip: skip, Sort: sort}
 }

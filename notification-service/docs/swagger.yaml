@@ -25,6 +25,9 @@ definitions:
     - FriendRequest
     - FriendResponse
     - Follow
+  gin.H:
+    additionalProperties: {}
+    type: object
   models.NotificationEntity:
     properties:
       createdBy:
@@ -238,6 +241,33 @@ paths:
       security:
       - BearerAuth: []
       summary: Đánh dấu thông báo đã đọc
+      tags:
+      - Notifications
+  /notification/remove/{id}:
+    delete:
+      description: Xóa thông báo theo ID
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Xóa thông báo
       tags:
       - Notifications
 securityDefinitions:

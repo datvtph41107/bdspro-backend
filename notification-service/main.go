@@ -51,12 +51,5 @@ func main() {
 		models.AutoMigrate()
 
 		app.Noti.RegisterRoutes(r)
-		// routes.OAuthRoutes(r, app.OAuthRouter)
-		// routes.ProfileRoutes(r, app.ProfileRouter)
-		// fmt.Sprintf("Data: ", config.AppProperties.ZaloAppID)
-
-		// group.GET("/info", func(c *gin.Context) {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})
-		// })
 	})
 }

@@ -1,9 +1,10 @@
 package repo
 
 import (
-	_db "common/db"
+	_utils "common/utils"
 	"noti/data"
 	"noti/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -16,9 +17,9 @@ func NewNotificationRepository(db *gorm.DB) *NotificationRepository {
 	return &NotificationRepository{DB: db}
 }
 
-func (r *NotificationRepository) Search(dto data.SearchNotiRequest, pageable _db.Page) ([]models.NotificationEntity, error) {
+func (r *NotificationRepository) Search(dto data.SearchNotiRequest, pageable _utils.Page) ([]models.NotificationEntity, error) {
 	var notifications []models.NotificationEntity
-	query := r.DB.Where("user_id = ?", dto.UserID)
+	query := r.DB.Where("user_id = ? and deleted_at is null", dto.UserID)
 
 	// Phân trang
 	if pageable.Limit > 0 {
@@ -62,4 +63,11 @@ func (r *NotificationRepository) ExistsByIdAndUserId(id uint64, userID uint64) (
 		Where("id = ? AND user_id = ?", id, userID).
 		Count(&count).Error
 	return count > 0, err
+}
+
+func (repo *NotificationRepository) DeleteByID(profileId, id uint64) error {
+	return repo.DB.Model(&models.NotificationEntity{}).
+		Where("created_by = ? AND id = ?", profileId, id).
+		Update("deleted_at", time.Now()).
+		Error
 }

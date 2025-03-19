@@ -310,6 +310,49 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/notification/remove/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa thông báo theo ID",
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Xóa thông báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -348,6 +391,10 @@ const docTemplate = `{
                 "FriendResponse",
                 "Follow"
             ]
+        },
+        "gin.H": {
+            "type": "object",
+            "additionalProperties": {}
         },
         "models.NotificationEntity": {
             "type": "object",

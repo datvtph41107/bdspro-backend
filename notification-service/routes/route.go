@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	_db "common/db"
 	_jwt "common/jwt"
 	_routes "common/routes"
+	_util "common/utils"
 	"noti/data"
 	_ "noti/docs"
 	"noti/services"
@@ -34,6 +34,7 @@ func (r *NotificationRouter) RegisterRoutes(router *gin.Engine) {
 		notificationGroup.GET("/count", r.CountUnread)
 		notificationGroup.POST("/new", r.SendNotification)
 		notificationGroup.PUT("/read/:id", r.MarkAsRead)
+		notificationGroup.DELETE("/remove/:id", r.DeleteNotification)
 		notificationGroup.GET("", r.Search)
 		notificationGroup.POST("/app/push/token", r.SendToToken)
 		notificationGroup.POST("/app/push/topic", r.SendToTopic)
@@ -107,7 +108,7 @@ func (r *NotificationRouter) MarkAsRead(c *gin.Context) {
 // @Router /notification [get]
 func (r *NotificationRouter) Search(c *gin.Context) {
 	userID, _ := strconv.ParseUint(c.Query("user_id"), 10, 32)
-	notifications, err := r.Service.Search(c, data.SearchNotiRequest{UserID: &userID}, *_db.NewPage(0, 10))
+	notifications, err := r.Service.Search(c, data.SearchNotiRequest{UserID: &userID}, _util.GetPage(c))
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -154,5 +155,19 @@ func (r *NotificationRouter) SendToTopic(c *gin.Context) {
 		return
 	}
 	result, err := r.Firebase.SendToTopic(c, &request)
+	_routes.RouteResult(c, result, err)
+}
+
+// @Summary Xóa thông báo
+// @Description Xóa thông báo theo ID
+// @Tags Notifications
+// @Param id path int true "Notification ID"
+// @Security BearerAuth
+// @Success 200 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Router /notification/remove/{id} [delete]
+func (r *NotificationRouter) DeleteNotification(c *gin.Context) {
+	result, err := r.Service.Delete(c)
 	_routes.RouteResult(c, result, err)
 }

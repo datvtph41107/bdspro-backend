@@ -4,9 +4,11 @@ import (
 	_db "common/db"
 	_jwt "common/jwt"
 	_routes "common/routes"
+	_utils "common/utils"
 	"noti/data"
 	"noti/models"
 	"noti/repo"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +48,7 @@ func (s *NotificationService) CreateNotification(c *gin.Context, request data.Ne
 }
 
 // Search: Tìm kiếm danh sách thông báo
-func (s *NotificationService) Search(c *gin.Context, dto data.SearchNotiRequest, pageable _db.Page) ([]data.NotificationResponse, error) {
+func (s *NotificationService) Search(c *gin.Context, dto data.SearchNotiRequest, pageable _utils.Page) ([]data.NotificationResponse, error) {
 	profileId := _jwt.GetProfileId(c)
 	dto.UserID = &profileId
 	notifications, err := s.Repo.Search(dto, pageable)
@@ -76,12 +78,24 @@ func (s *NotificationService) Count(c *gin.Context) (int64, error) {
 // mapToDTO: Chuyển đổi NotificationEntity thành NotificationResponse
 func (s *NotificationService) mapToDTO(entity models.NotificationEntity) data.NotificationResponse {
 	return data.NotificationResponse{
-		ID:      entity.ID,
-		UserID:  entity.UserID,
-		Title:   entity.Title,
-		Message: entity.Message,
-		Link:    entity.Link,
-		Type:    entity.Type,
-		IsRead:  entity.IsRead,
+		ID:        entity.ID,
+		UserID:    entity.UserID,
+		Title:     entity.Title,
+		Message:   entity.Message,
+		Link:      entity.Link,
+		Type:      entity.Type,
+		IsRead:    entity.IsRead,
+		Timestamp: entity.CreatedAt,
 	}
+}
+
+func (s *NotificationService) Delete(c *gin.Context) (int, error) {
+	profileId := _jwt.GetProfileId(c)
+	idParam := c.Param("id")
+	notiId, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		return 0, err
+
+	}
+	return 1, s.Repo.DeleteByID(profileId, notiId)
 }
