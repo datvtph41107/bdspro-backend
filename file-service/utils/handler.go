@@ -1,7 +1,8 @@
-package main
+package utils
 
 import (
 	_utils "common/utils"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -51,9 +52,9 @@ func SignDecode(key, signEncode string) *SignatureDecode {
 	}
 }
 
-func SignEncode(key string, profileID, expiredTime int64, signature string) string {
-	data := signature + ":" + strconv.FormatInt(profileID, 10) + ":" + strconv.FormatInt(expiredTime, 10)
-	return _utils.XorEncode(data, key)
+func SignEncode(key string, profileId, expiredTime int64, signature string) string {
+	split := fmt.Sprintf("%s:%d:%d", signature, profileId, expiredTime)
+	return _utils.XorEncode(split, key)
 }
 
 // XorEncode và XorDecode sẽ được định nghĩa sau

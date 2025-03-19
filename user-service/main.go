@@ -6,7 +6,6 @@ import (
 	"auth/models"
 	"auth/routes"
 	"common"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +23,8 @@ type ConfigApp struct {
 
 func NewConfigApp(authService *routes.AuthRouter,
 	oAuthRouter *routes.OAuthRouter,
-	profile *routes.ProfileRouter) *ConfigApp {
+	profile *routes.ProfileRouter,
+) *ConfigApp {
 	return &ConfigApp{
 		Auth:          authService,
 		OAuthRouter:   oAuthRouter,
@@ -52,7 +52,6 @@ func main() {
 
 	common.SetupRestfulAPI(parameters, func() {
 		config.LoadProperties()
-		log.Printf("Data: ", config.AppProperties)
 
 		app, _ := InitializeApp()
 		models.AutoMigrate()

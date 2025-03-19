@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"file/models"
 	"file/repositories"
+	"file/utils"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -269,7 +270,7 @@ func (s *FileService) GenerateSignature(c *gin.Context) {
 	profileId := int64(_jwt.GetProfileId(c))
 	expiredTime := time.Now().Add(time.Duration(s.SignatureExpire) * time.Minute).Unix()
 	signature := _utils.GenerateSignedUrl("info", profileId, s.SignatureKey, expiredTime)
-	signCipher := signEncode(s.XorCryptKey, profileId, expiredTime, signature)
+	signCipher := utils.SignEncode(s.XorCryptKey, profileId, expiredTime, signature)
 
 	sig := &SignatureResponse{
 		S: signCipher,
@@ -282,11 +283,6 @@ func (s *FileService) GenerateSignature(c *gin.Context) {
 	// redisService.set(ids.m)
 
 	c.JSON(http.StatusOK, sig)
-}
-
-func signEncode(key string, profileId, expiredTime int64, signature string) string {
-	split := fmt.Sprintf("%s:%d:%d", signature, profileId, expiredTime)
-	return _utils.XorEncode(split, key)
 }
 
 func (fs *FileService) validSignature(sig *SignatureDecode) bool {
