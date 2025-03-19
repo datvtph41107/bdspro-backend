@@ -5,9 +5,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// @swagger:model
 type AuditBase struct {
-	CreatedBy *uint `gorm:"column:created_by" json:"created_by,omitempty"`
-	UpdatedBy *uint `gorm:"column:updated_by" json:"updated_by,omitempty"`
+	// gorm.Model
+	CreatedBy *uint64 `gorm:"column:created_by" json:"createdBy,omitempty"`
+	UpdatedBy *uint64 `gorm:"column:updated_by" json:"updatedBy,omitempty"`
 }
 
 // GORM Callback: Gán `CreatedBy` và `UpdatedBy` khi tạo mới
@@ -27,7 +29,7 @@ func (base *AuditBase) BeforeUpdate(tx *gorm.DB) error {
 	return nil
 }
 
-func GetCurrentUserID(tx *gorm.DB) uint {
+func GetCurrentUserID(tx *gorm.DB) uint64 {
 	ginCtx, ok := tx.Statement.Context.(*gin.Context)
 	if !ok {
 		return 0
@@ -42,7 +44,7 @@ func GetCurrentUserID(tx *gorm.DB) uint {
 	// val, ok := tx.Statement.Context.Value("claims").(*cjwt.Claims)
 	println(profileId)
 	if ok {
-		return profileId.(uint)
+		return profileId.(uint64)
 	}
 	return 0 // Nếu không có user_id, trả về 0 (hoặc panic nếu cần)
 }

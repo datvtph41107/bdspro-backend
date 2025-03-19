@@ -1,0 +1,28 @@
+server:
+  port: 8004
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_notification port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: 14.225.210.29:6379
+
+firebase:
+  file: bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+  fileUrl: config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json

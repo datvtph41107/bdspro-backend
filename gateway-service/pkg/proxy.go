@@ -27,6 +27,8 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 		serviceIp = 8004
 	} else if serviceName == "payment" {
 		serviceIp = 8005
+	} else if serviceName == "crm" {
+		serviceIp = 8006
 	} else if serviceName == "map" {
 		serviceIp = 8101
 	} else if serviceName == "bdspro" {
@@ -48,7 +50,7 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	// targetURL := fmt.Sprintf("http://%s/%s%s", serviceName, service.Port, serviceName, path)
 	targetURL := fmt.Sprintf(
 		"http://%s:%d/%s%s?%s",
-		"localhost",
+		serviceName,
 		serviceIp,
 		serviceName,
 		path,

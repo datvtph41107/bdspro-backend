@@ -35,6 +35,14 @@ case "$1" in
     service_path=payment-service
     path_jar=main
     ;;
+  "notification")
+    service_path=notification-service
+    path_jar=main
+    ;;
+  "crm")
+    service_path=crm-service
+    path_jar=main
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -60,7 +68,7 @@ echo $(pwd)
 if [ "$1" = "compose" ]; then
   echo "đẩy docker-compose.yml lên server..."
   scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
-  exit 0
+  exit 0  
 fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
@@ -71,10 +79,17 @@ scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}
+
+if [ "$1" = "notification" ]; then
+  scp config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+fi
+
 if [ $? -ne 0 ]; then
   echo "Có lỗi khi đẩy file lên server"
   exit 1
 fi
+
+
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}

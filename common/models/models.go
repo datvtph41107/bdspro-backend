@@ -2,6 +2,8 @@ package _models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // BaseEntity chứa các trường dùng chung cho mọi entity
@@ -9,10 +11,10 @@ import (
 type BaseEntity struct {
 	AuditBase
 	ID        uint64    `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time `gorm:"column:create_at;autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:update_at;autoUpdateTime" json:"updated_at"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"-"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"-"`
 	// CreatedBy *uint     `gorm:"column:created_by" json:"created_by,omitempty"`
 	// UpdatedBy *uint     `gorm:"column:updated_by" json:"updated_by,omitempty"`
-	Deleted bool `gorm:"column:deleted" json:"deleted"`
-	// DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"` // Hỗ trợ soft delete
+	// Deleted bool `gorm:"column:deleted" json:"deleted"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
 }

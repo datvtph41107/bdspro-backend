@@ -53,7 +53,7 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Lấy token từ header Authorization
 		tokenString := c.GetHeader("Authorization")
-		if isPublicRoute(pubRoutes, c.Request.URL.Path) && tokenString == "" {
+		if pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path) && tokenString == "" {
 			c.Next()
 			return
 		}
