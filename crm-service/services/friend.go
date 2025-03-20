@@ -18,15 +18,22 @@ type FriendService struct {
 	repo         *repo.FriendRepo
 	contact      *repo.ContactRepo
 	blockRepo    *repo.BlockRepo
+	followRepo   *repo.FollowRepo
 	blockService *BlockService
 }
 
-func NewFriendService(repo *repo.FriendRepo, contact *repo.ContactRepo, blockRepo *repo.BlockRepo, blockService *BlockService) *FriendService {
+func NewFriendService(repo *repo.FriendRepo,
+	contact *repo.ContactRepo,
+	followRepo *repo.FollowRepo,
+	blockRepo *repo.BlockRepo,
+	blockService *BlockService,
+) *FriendService {
 	return &FriendService{
 		repo:         repo,
 		contact:      contact,
 		blockRepo:    blockRepo,
 		blockService: blockService,
+		followRepo:   followRepo,
 	}
 }
 
@@ -232,4 +239,19 @@ func (s *FriendService) Delete(id uint64, userID uint64) error {
 		return errors.New("Bạn không thể xóa yêu cầu này")
 	}
 	return s.repo.DeleteByID(id)
+}
+
+func (s *FriendService) FriendInfo(c *gin.Context) (*data.FollowInfoRes, error) {
+	profileId := _jwt.GetProfileId(c)
+
+	numFollower, numFollowing, friendNumber, err := s.followRepo.GetFollowInfoCount(profileId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &data.FollowInfoRes{
+		NumFollower:  numFollower,
+		NumFollowing: numFollowing,
+		NumFriend:    friendNumber,
+	}, nil
 }

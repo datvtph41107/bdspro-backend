@@ -1,5 +1,14 @@
 basePath: /crm
 definitions:
+  data.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
   data.FriendDTO:
     properties:
       groupId:
@@ -271,6 +280,31 @@ paths:
       security:
       - BearerAuth: []
       summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/data.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
       tags:
       - Bạn bè
   /friend/list:

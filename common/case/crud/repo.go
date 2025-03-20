@@ -1,0 +1,43 @@
+package crud
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type BaseRepo[T any] struct {
+	DB *gorm.DB
+}
+
+// Tạo mới bản ghi
+func (r *BaseRepo[T]) Create(entity *T) error {
+	return r.DB.Create(entity).Error
+}
+
+// Cập nhật bản ghi
+func (r *BaseRepo[T]) Update(id uint64, entity *T) error {
+	return r.DB.Model(entity).Where("id = ?", id).Updates(entity).Error
+}
+
+// Xóa mềm bản ghi (cập nhật deleted_at thay vì xóa trực tiếp)
+func (r *BaseRepo[T]) Delete(id uint64) error {
+	return r.DB.Model(new(T)).Where("id = ?", id).Update("deleted_at", time.Now()).Error
+}
+
+// Lấy tất cả bản ghi (bỏ qua những bản ghi đã bị xóa mềm)
+func (r *BaseRepo[T]) GetAll() ([]T, error) {
+	var entities []T
+	err := r.DB.Where("deleted_at IS NULL").Find(&entities).Error
+	return entities, err
+}
+
+// Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
+func (r *BaseRepo[T]) GetByID(id uint64) (*T, error) {
+	var entity T
+	err := r.DB.Where("id = ? AND deleted_at IS NULL", id).First(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}

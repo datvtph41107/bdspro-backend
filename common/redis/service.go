@@ -20,7 +20,8 @@ const userPrefix = "USER_"
 // NewRedisService khởi tạo RedisService
 func NewRedisService() *RedisService {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
+		Addr:     viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
+		Password: viper.GetString("redis.pass"),
 	})
 	return &RedisService{
 		client: rdb,

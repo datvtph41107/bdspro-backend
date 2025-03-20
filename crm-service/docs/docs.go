@@ -353,6 +353,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/friend/info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "responses": {
+                    "200": {
+                        "description": "Số lượng theo dõi và bạn bè",
+                        "schema": {
+                            "$ref": "#/definitions/data.FollowInfoRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/friend/list": {
             "get": {
                 "security": [
@@ -814,6 +854,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "data.FollowInfoRes": {
+            "type": "object",
+            "properties": {
+                "numFollower": {
+                    "type": "integer"
+                },
+                "numFollowing": {
+                    "type": "integer"
+                },
+                "numFriend": {
+                    "type": "integer"
+                }
+            }
+        },
         "data.FriendDTO": {
             "type": "object",
             "properties": {

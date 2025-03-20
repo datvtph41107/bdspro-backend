@@ -22,3 +22,4 @@ jwt:
 
 redis:
   host: 14.225.210.29:6379
+  pass: protected_redis_secure_password

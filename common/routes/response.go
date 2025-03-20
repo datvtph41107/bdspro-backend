@@ -44,7 +44,7 @@ func RouteResult(c *gin.Context, result interface{}, err error) {
 	}
 
 	c.JSON(http.StatusOK, ResponseDTO{
-		Code:    http.StatusOK,
+		Code:    0,
 		Message: "Success",
 		Data:    result,
 	})

@@ -1,0 +1,538 @@
+basePath: /bdspro
+definitions:
+  models.District:
+    properties:
+      code:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      province:
+        $ref: '#/definitions/models.Province'
+      province_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.Province:
+    properties:
+      code:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Ward:
+    properties:
+      code:
+        type: integer
+      district:
+        $ref: '#/definitions/models.District'
+      district_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: CRM API
+  version: "1.0"
+paths:
+  /ward:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các tỉnh
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Ward'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách các tỉnh
+      tags:
+      - Wards
+    post:
+      consumes:
+      - application/json
+      description: Tạo một bản ghi tỉnh mới
+      parameters:
+      - description: Thông tin tỉnh
+        in: body
+        name: Ward
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ward'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tạo tỉnh mới
+      tags:
+      - Wards
+  /ward/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tỉnh theo ID (soft delete)
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xóa tỉnh
+      tags:
+      - Wards
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một tỉnh
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy thông tin tỉnh theo ID
+      tags:
+      - Wards
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin tỉnh theo ID
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin tỉnh mới
+        in: body
+        name: Ward
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ward'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cập nhật thông tin tỉnh
+      tags:
+      - Wards
+  /districts:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các quận/huyện
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.District'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách quận/huyện
+      tags:
+      - districts
+    post:
+      consumes:
+      - application/json
+      description: Thêm một quận/huyện mới vào hệ thống
+      parameters:
+      - description: Thông tin quận/huyện
+        in: body
+        name: district
+        required: true
+        schema:
+          $ref: '#/definitions/models.District'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tạo quận/huyện mới
+      tags:
+      - districts
+  /districts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quận/huyện theo ID (soft delete)
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xóa quận/huyện
+      tags:
+      - districts
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một quận/huyện
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy thông tin quận/huyện theo ID
+      tags:
+      - districts
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin quận/huyện theo ID
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin quận/huyện mới
+        in: body
+        name: district
+        required: true
+        schema:
+          $ref: '#/definitions/models.District'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cập nhật thông tin quận/huyện
+      tags:
+      - districts
+  /provinces:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các tỉnh
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Province'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách các tỉnh
+      tags:
+      - provinces
+    post:
+      consumes:
+      - application/json
+      description: Tạo một bản ghi tỉnh mới
+      parameters:
+      - description: Thông tin tỉnh
+        in: body
+        name: province
+        required: true
+        schema:
+          $ref: '#/definitions/models.Province'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tạo tỉnh mới
+      tags:
+      - provinces
+  /provinces/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tỉnh theo ID (soft delete)
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xóa tỉnh
+      tags:
+      - provinces
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một tỉnh
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy thông tin tỉnh theo ID
+      tags:
+      - provinces
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin tỉnh theo ID
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin tỉnh mới
+        in: body
+        name: province
+        required: true
+        schema:
+          $ref: '#/definitions/models.Province'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cập nhật thông tin tỉnh
+      tags:
+      - provinces
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

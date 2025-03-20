@@ -119,3 +119,31 @@ func (repo *FollowRepo) BlockFollow(profileId, targetId uint64) error {
 
 	return nil
 }
+
+func (repo *FollowRepo) GetFollowInfoCount(userID uint64) (followerCount int64, followingCount int64, friendCount int64, err error) {
+	err = repo.DB.Model(&models.FollowEntity{}).
+		Where("following_id = ?", userID).
+		Count(&followerCount).
+		Error
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	err = repo.DB.Model(&models.FollowEntity{}).
+		Where("created_by = ?", userID).
+		Count(&followingCount).
+		Error
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	err = repo.DB.Model(&models.FriendEntity{}).
+		Where("(created_by = ? or receiver_id = ?) and status = 2", userID, userID).
+		Count(&friendCount).
+		Error
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return followerCount, followingCount, friendCount, nil
+}

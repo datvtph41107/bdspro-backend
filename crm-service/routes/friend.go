@@ -30,6 +30,8 @@ func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 	api.DELETE("/request/:requestId/reject", router.FriendReject)
 	api.GET("/request/sent", router.FriendSent)
 	api.GET("/request/received", router.FriendReceived)
+	api.GET("/info", router.FriendInfo)
+
 }
 
 // @Summary Lấy danh sách bạn bè
@@ -149,6 +151,22 @@ func (r *FriendRouter) FriendSent(c *gin.Context) {
 // @Router /friend/request/received [get]
 func (r *FriendRouter) FriendReceived(c *gin.Context) {
 	result, err := r.service.RequestReceived(c)
+
+	_routes.RouteResult(c, result, err)
+}
+
+// @Summary Thông tin số người theo dõi, đang theo dõi và số bạn bè
+// @Description Thông tin số người theo dõi, đang theo dõi và số bạn bè
+// @Tags Bạn bè
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} data.FollowInfoRes "Số lượng theo dõi và bạn bè"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Failure 404 {string} string "Không tìm thấy"
+// @Router /friend/info [get]
+func (r *FriendRouter) FriendInfo(c *gin.Context) {
+	result, err := r.service.FriendInfo(c)
 
 	_routes.RouteResult(c, result, err)
 }

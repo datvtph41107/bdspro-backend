@@ -30,10 +30,10 @@ func InitializeApp() (*ConfigApp, error) {
 	}
 	friendRepo := repo.NewFriendRepo(db)
 	contactRepo := repo.NewContactRepo(db)
-	blockRepo := repo.NewBlockRepo(db)
 	followRepo := repo.NewFollowRepo(db)
+	blockRepo := repo.NewBlockRepo(db)
 	blockService := services.NewBlockService(blockRepo, contactRepo, friendRepo, followRepo)
-	friendService := services.NewFriendService(friendRepo, contactRepo, blockRepo, blockService)
+	friendService := services.NewFriendService(friendRepo, contactRepo, followRepo, blockRepo, blockService)
 	friendRouter := routes.NewFriendRouter(friendService)
 	groupRepo := repo.NewGroupRepo(db)
 	groupService := services.NewGroupService(groupRepo)
