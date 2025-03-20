@@ -1,13 +1,13 @@
 package models
 
 import (
-	cmodels "common/models"
+	_models "common/models"
 	"file/dto"
 )
 
 // FileEntity đại diện cho thông tin file, kế thừa từ BaseEntity
 type FileEntity struct {
-	cmodels.BaseEntity        // Kế thừa các trường từ BaseEntity
+	_models.BaseEntity        // Kế thừa các trường từ BaseEntity
 	Name               string `gorm:"column:name;type:varchar(255)" json:"name"`
 	Path               string `gorm:"column:path;type:varchar(255)" json:"path"`
 	ThumbnailPath      string `gorm:"column:thumbnail_path;type:varchar(255)" json:"thumbnail_path"`

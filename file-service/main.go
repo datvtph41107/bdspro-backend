@@ -1,14 +1,12 @@
 package main
 
 import (
-	_db "common/db"
 	_jwt "common/jwt"
 	"file/config"
 	_ "file/docs"
+	"file/models"
 	"file/services"
 	"log"
-	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -60,13 +58,14 @@ func main() {
 	config.LoadConfig()
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
-	os.Setenv("TZ", "Europe/London")
-	time.Local = time.FixedZone("Europe/London", 7*60*60)
+	// os.Setenv("TZ", "Europe/London")
+	// time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	RootApp, _ = InitializeApp()
-	_db.DB = RootApp.DB
+	// RootApp.
 
 	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+	models.AutoMigrate()
 
 	log.Printf("MAIN")
 	r.GET("/file/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

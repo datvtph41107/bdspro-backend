@@ -4,12 +4,13 @@ import (
 	_db "common/db"
 	_jwt "common/jwt"
 	_utils "common/utils"
+	"errors"
 	"file/models"
 	"file/repositories"
 	"file/utils"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -64,18 +65,149 @@ func (fs *FileService) processQueue() {
 	}
 }
 
-// loadFileAsResource đọc file từ đường dẫn
-func loadFileAsResource(path string) ([]byte, error) {
-	// Đọc file dưới dạng byte
-	data, err := ioutil.ReadFile(path)
+// đọc file từ đường dẫn
+// func loadFileAsResource(path string) ([]byte, error) {
+// 	// Đọc file dưới dạng byte
+
+// }
+
+// loadFileVideo đọc file video từ vị trí `from` đến `to` (theo byte).
+func loadFileVideo(path string, from, to uint64) ([]byte, error) {
+	// Mở file
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	defer file.Close()
+
+	// Kiểm tra kích thước file
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	fileSize := fileInfo.Size()
+
+	// Đảm bảo `to` không vượt quá kích thước file
+	if to > uint64(fileSize) {
+		to = uint64(fileSize)
+	}
+
+	// Kiểm tra nếu `from` lớn hơn `to`
+	if from >= to {
+		return nil, errors.New("invalid range")
+	}
+
+	// Dịch con trỏ file đến vị trí `from`
+	_, err = file.Seek(int64(from), 0)
+	if err != nil {
+		return nil, err
+	}
+
+	// Đọc dữ liệu từ `from` đến `to`
+	length := to - from
+	buffer := make([]byte, length)
+	n, err := file.Read(buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer[:n], nil
 }
+
+func LoadFileAndResponse(c *gin.Context, path string, ext string) {
+	mimeType := "application/octet-stream"
+	contentType := map[string]string{
+		"mp4":  "video/mp4",
+		"mov":  "video/quicktime",
+		"webm": "video/webm",
+		"ogg":  "video/ogg",
+		"png":  "image/png",
+	}
+	mime, exists := contentType[ext]
+	if exists {
+		mimeType = mime
+	} else {
+		mimeType = "application/octet-stream"
+	}
+
+	isStream := isVideoFormat(ext)
+	// chunk với luồng video
+	if isStream {
+		file, err := os.Open(path)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open file"})
+			return
+		}
+		defer file.Close()
+
+		fileInfo, _ := file.Stat()
+		fileSize := fileInfo.Size()
+
+		rangeHeader := c.GetHeader("Range")
+		var start, end int64
+		if rangeHeader != "" {
+			parts := strings.Split(strings.TrimPrefix(rangeHeader, "bytes="), "-")
+			start, _ = strconv.ParseInt(parts[0], 10, 64)
+			if parts[1] != "" {
+				end, _ = strconv.ParseInt(parts[1], 10, 64)
+			} else {
+				end = fileSize - 1
+			}
+		} else {
+			start = 0
+			end = fileSize - 1
+		}
+
+		if end >= fileSize {
+			end = fileSize - 1
+		}
+
+		length := end - start + 1
+		limit := int64(5 * 1024 * 1024) // limit 5MB cho mỗi lần load video
+		if length > limit {
+			end = start + limit - 1
+			length = limit
+		}
+
+		file.Seek(start, 0)
+		buffer := make([]byte, length)
+		file.Read(buffer)
+
+		c.Header("Accept-Ranges", "bytes")
+		c.Header("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, fileSize))
+		c.Header("Content-Length", strconv.FormatInt(length, 10))
+		c.Header("Content-Type", "video/mp4")
+		c.Status(http.StatusPartialContent) // 206 Partial Content
+		c.Writer.Write(buffer)
+		return
+	}
+
+	// return data, nil
+	fileData, err := os.ReadFile(path)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File không tồn tại"})
+		return
+	}
+	c.Data(http.StatusOK, mimeType, fileData)
+}
+
+// func ReadVideoStream(c *gin.Context, path string, ext string) {
+
+// }
 
 // Giới hạn số lượng request đồng thời (10)
 var semaphore = make(chan struct{}, 10)
+
+// Hàm kiểm tra xem chuỗi `x` có thuộc danh sách định dạng video hay không
+func isVideoFormat(x string) bool {
+	videoFormats := map[string]bool{
+		"mp4":  true,
+		"mov":  true,
+		"webm": true,
+		"ogg":  true,
+	}
+	return videoFormats[x]
+}
 
 // @Summary Tải file
 // @Description Tải file
@@ -105,23 +237,9 @@ func (fs *FileService) GetFile(c *gin.Context) {
 	}
 
 	ext := _utils.GetFileExtension(decodedPath)
-	mineType := "application/octet-stream"
-	if ext == "png" {
-		// Đặt header Content-Type là image/png
-		mineType = "image/png"
-	}
-	if firstChar == "p" {
 
-		// Kiểm tra phần mở rộng của file
-		// fmt.Printf("decodedPath=" + decodedPath)
-		// Load file dưới dạng byte
-		fileData, err := loadFileAsResource(decodedPath)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not read file"})
-			return
-		}
-		// Trả về Response chứa file
-		c.Data(http.StatusOK, mineType, fileData)
+	if firstChar == "p" {
+		LoadFileAndResponse(c, decodedPath, ext)
 		return
 	}
 
@@ -145,13 +263,15 @@ func (fs *FileService) GetFile(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Bạn không có quyền truy cập file"})
 		return
 	}
+
+	LoadFileAndResponse(c, decodedPath, ext)
 	// Load file dưới dạng byte
-	fileData, err := loadFileAsResource(decodedPath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "File không tồn tại"})
-		return
-	}
-	c.Data(http.StatusOK, mineType, fileData)
+
+	// if isStream {
+	// 	ReadVideoStream(c, decodedPath, ext)
+	// 	return
+	// }
+	// c.Data(http.StatusOK, mimeType, fileData)
 }
 
 // @Summary Upload file
