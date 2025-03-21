@@ -1,0 +1,446 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API quản lý người dùng",
+        "title": "CRM API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/membership",
+    "paths": {
+        "/membership/order": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new membership order",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Create a membership order",
+                "parameters": [
+                    {
+                        "description": "Order details",
+                        "name": "order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Membership"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Membership"
+                        }
+                    }
+                }
+            }
+        },
+        "/membership/plan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all membership plans",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Get membership plans",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Membership"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/plan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách tất cả các Gói dịch vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Lấy danh sách Gói dịch vụ",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Plan"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể lấy danh sách",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một Gói dịch vụ mới vào hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Tạo Gói dịch vụ mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin Gói dịch vụ",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Plan"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể tạo dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/plan/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về thông tin chi tiết của một Gói dịch vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Lấy thông tin Gói dịch vụ theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Gói dịch vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin Gói dịch vụ theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Cập nhật thông tin Gói dịch vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Gói dịch vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin Gói dịch vụ mới",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Plan"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể cập nhật dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa Gói dịch vụ theo ID (soft delete)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Xóa Gói dịch vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Gói dịch vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái xóa",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể xóa dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Membership": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "finishedDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "membershipId": {
+                    "type": "integer"
+                },
+                "orderId": {
+                    "type": "integer"
+                },
+                "paidAt": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Plan": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "createOrganization": {
+                    "type": "integer"
+                },
+                "createProduct": {
+                    "type": "integer"
+                },
+                "createProductAI": {
+                    "type": "integer"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "customerLimit": {
+                    "type": "integer"
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "friendLimit": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joinOrg": {
+                    "type": "integer"
+                },
+                "orgMemberLimit": {
+                    "type": "integer"
+                },
+                "orgProductLimit": {
+                    "type": "integer"
+                },
+                "packageName": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "publicProductLimit": {
+                    "type": "integer"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

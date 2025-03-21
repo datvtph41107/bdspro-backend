@@ -21,10 +21,10 @@ func (s *BaseService[T]) Create(c *gin.Context) (*T, error) {
 		}
 	}
 
-	if err := s.Repo.Create(&entity); err != nil {
+	if err := s.Repo.Create(c, &entity); err != nil {
 		return nil, &_routes.Except{
 			Code:    500,
-			Message: "Không thể tạo dữ liệu",
+			Message: err.Error(),
 		}
 	}
 
@@ -48,7 +48,7 @@ func (s *BaseService[T]) Update(c *gin.Context) (*T, error) {
 		}
 	}
 
-	if err := s.Repo.Update(id, &entity); err != nil {
+	if err := s.Repo.Update(c, id, &entity); err != nil {
 		return nil, &_routes.Except{
 			Code:    500,
 			Message: "Không thể cập nhật dữ liệu",

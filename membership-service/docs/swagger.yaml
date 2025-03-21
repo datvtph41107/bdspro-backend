@@ -1,0 +1,286 @@
+basePath: /membership
+definitions:
+  models.Membership:
+    properties:
+      createdBy:
+        description: gorm.Model
+        type: integer
+      finishedDate:
+        type: string
+      id:
+        type: integer
+      membershipId:
+        type: integer
+      orderId:
+        type: integer
+      paidAt:
+        type: string
+      profileId:
+        type: integer
+      updatedBy:
+        type: integer
+    type: object
+  models.Plan:
+    properties:
+      color:
+        type: string
+      createOrganization:
+        type: integer
+      createProduct:
+        type: integer
+      createProductAI:
+        type: integer
+      createdBy:
+        description: gorm.Model
+        type: integer
+      customerLimit:
+        type: integer
+      features:
+        items:
+          type: string
+        type: array
+      friendLimit:
+        type: integer
+      id:
+        type: integer
+      joinOrg:
+        type: integer
+      orgMemberLimit:
+        type: integer
+      orgProductLimit:
+        type: integer
+      packageName:
+        type: string
+      price:
+        type: integer
+      publicProductLimit:
+        type: integer
+      updatedBy:
+        type: integer
+      visibility:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: CRM API
+  version: "1.0"
+paths:
+  /membership/order:
+    post:
+      consumes:
+      - application/json
+      description: Create a new membership order
+      parameters:
+      - description: Order details
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/models.Membership'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Membership'
+      security:
+      - BearerAuth: []
+      summary: Create a membership order
+      tags:
+      - Thành viên
+  /membership/plan:
+    get:
+      description: Retrieve all membership plans
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Membership'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get membership plans
+      tags:
+      - Thành viên
+  /plan:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Gói dịch vụ
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Plan'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Gói dịch vụ
+      tags:
+      - Gói dịch vụ
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Gói dịch vụ mới vào hệ thống
+      parameters:
+      - description: Thông tin Gói dịch vụ
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/models.Plan'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Plan'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Gói dịch vụ mới
+      tags:
+      - Gói dịch vụ
+  /plan/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Gói dịch vụ theo ID (soft delete)
+      parameters:
+      - description: ID của Gói dịch vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Gói dịch vụ
+      tags:
+      - Gói dịch vụ
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Gói dịch vụ
+      parameters:
+      - description: ID của Gói dịch vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Plan'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Gói dịch vụ theo ID
+      tags:
+      - Gói dịch vụ
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Gói dịch vụ theo ID
+      parameters:
+      - description: ID của Gói dịch vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Gói dịch vụ mới
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/models.Plan'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Plan'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Gói dịch vụ
+      tags:
+      - Gói dịch vụ
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

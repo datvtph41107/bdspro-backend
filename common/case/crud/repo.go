@@ -3,6 +3,7 @@ package crud
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -11,13 +12,13 @@ type BaseRepo[T any] struct {
 }
 
 // Tạo mới bản ghi
-func (r *BaseRepo[T]) Create(entity *T) error {
-	return r.DB.Create(entity).Error
+func (r *BaseRepo[T]) Create(c *gin.Context, entity *T) error {
+	return r.DB.WithContext(c).Create(entity).Error
 }
 
 // Cập nhật bản ghi
-func (r *BaseRepo[T]) Update(id uint64, entity *T) error {
-	return r.DB.Model(entity).Where("id = ?", id).Updates(entity).Error
+func (r *BaseRepo[T]) Update(c *gin.Context, id uint64, entity *T) error {
+	return r.DB.WithContext(c).Model(entity).Where("id = ?", id).Updates(entity).Error
 }
 
 // Xóa mềm bản ghi (cập nhật deleted_at thay vì xóa trực tiếp)
