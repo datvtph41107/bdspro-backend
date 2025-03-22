@@ -7,6 +7,7 @@ go 1.24.1
 require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/wire v0.6.0
 	github.com/payOSHQ/payos-lib-golang v1.0.7
 	github.com/spf13/viper v1.20.0

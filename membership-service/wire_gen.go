@@ -32,7 +32,8 @@ func InitializeApp() (*ConfigApp, error) {
 	planService := services.NewPlanService(planRepo)
 	planRouter := routes.NewPlanRouter(planService)
 	membershipRepo := repo.NewMembershipRepo(db)
-	membershipService := services.NewMembershipService(membershipRepo, planRepo)
+	paymentClient := services.NewPaymentClient()
+	membershipService := services.NewMembershipService(membershipRepo, planRepo, paymentClient)
 	membershipRouter := routes.NewMembershipRouter(membershipService)
 	configApp := NewConfigApp(planRouter, membershipRouter)
 	return configApp, nil
@@ -41,4 +42,4 @@ func InitializeApp() (*ConfigApp, error) {
 // wire.go:
 
 // WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(_redis.NewRedisService, _db.NewDB, repo.NewPlanRepo, repo.NewMembershipRepo, services.NewPlanService, services.NewMembershipService, routes.NewPlanRouter, routes.NewMembershipRouter, NewConfigApp)
+var wireSet = wire.NewSet(_redis.NewRedisService, _db.NewDB, repo.NewPlanRepo, repo.NewMembershipRepo, services.NewPaymentClient, services.NewPlanService, services.NewMembershipService, routes.NewPlanRouter, routes.NewMembershipRouter, NewConfigApp)

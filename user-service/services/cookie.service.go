@@ -1,6 +1,7 @@
 package services
 
 import (
+	"auth/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,10 +27,10 @@ func (s *CookieService) SetRefreshToken(w http.ResponseWriter, refreshToken stri
 	cookie := &http.Cookie{
 		Name:     "rt",
 		Value:    refreshToken,
-		HttpOnly: true,          // Ngăn JavaScript đọc cookie
-		Secure:   true,          // Chỉ gửi cookie qua HTTPS
-		MaxAge:   24 * 60 * 60,  // Cookie tồn tại trong 1 ngày
-		Path:     s.PathRefresh, // Chỉ áp dụng cho đường dẫn refresh token
+		HttpOnly: true,                                                 // Ngăn JavaScript đọc cookie
+		Secure:   true,                                                 // Chỉ gửi cookie qua HTTPS
+		MaxAge:   int(config.AppProperties.Jwt.RefreshExpMinutes * 60), // Cookie tồn tại trong 1 ngày
+		Path:     s.PathRefresh,                                        // Chỉ áp dụng cho đường dẫn refresh token
 		// Domain: "yourdomain.com", // Uncomment nếu backend & frontend chạy trên domain khác nhau
 	}
 

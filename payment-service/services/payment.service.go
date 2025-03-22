@@ -4,6 +4,7 @@ import (
 	_db "common/db"
 	_jwt "common/jwt"
 	"net/http"
+	"payment/data"
 	"payment/models"
 	"payment/repo"
 
@@ -20,6 +21,7 @@ type PaymentService struct {
 	RedirectFail    string
 	SuccessCode     string
 	PaymentRepo     *repo.PaymentRepo
+	apiClient       *ApiClient
 }
 
 // type PayOSClient interface {
@@ -39,13 +41,14 @@ type PaymentService struct {
 // 	UpdatedAt   time.Time
 // }
 
-func NewPaymentService(repo *repo.PaymentRepo, db *gorm.DB) *PaymentService {
+func NewPaymentService(apiClient *ApiClient, repo *repo.PaymentRepo, db *gorm.DB) *PaymentService {
 	return &PaymentService{
 		PaymentRepo:     repo,
 		DB:              db,
 		RedirectSuccess: viper.GetString("payment.url.success-redirect"),
 		RedirectFail:    viper.GetString("payment.url.fail-redirect"),
 		SuccessCode:     "00",
+		apiClient:       apiClient,
 		// PayOS:       *payos,
 	}
 }
@@ -162,32 +165,43 @@ func (s *PaymentService) ConfirmWebhook(webhookURL string) (string, error) {
 // @Tags PayOS
 // @Accept json
 // @Produce json
+// @Param order body payos.WebhookType true "Order thông tin"
 // @Security BearerAuth
 // @Router /payos/webhook/verify [post]
 func (s *PaymentService) VerifyPaymentWebhookData(c *gin.Context) {
 	var webhookData payos.WebhookType
 
 	if err := c.ShouldBindJSON(&webhookData); err != nil {
-		c.JSON(http.StatusAccepted, gin.H{"error": "Invalid request body"})
+		c.JSON(http.StatusOK, gin.H{"error": "Invalid request body"})
 		// return nil, err
+		return
+	}
+	webhookDataType, err := payos.VerifyPaymentWebhookData(webhookData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 400, "data": err.Error()})
 		return
 	}
 
 	var order models.Order
-	if err := s.PaymentRepo.DB.Where("id = ?", webhookData.Data.OrderCode).First(&order).Error; err != nil {
-		c.JSON(http.StatusAccepted, gin.H{"error": err.Error})
+	if err := s.PaymentRepo.DB.Where("id = ?", webhookDataType.OrderCode).First(&order).Error; err != nil {
+		c.JSON(http.StatusOK, gin.H{"error": err.Error})
 		return
 		// return nil, errors.New("order not found")
 	}
 
 	status := "FAILED"
-	if webhookData.Code == s.SuccessCode {
+	if webhookDataType.Code == s.SuccessCode {
 		status = "COMPLETED"
 	}
-	order.Status = status
 
-	order.MapWebhookToOrder(webhookData)
+	order.Status = status
+	order.MapWebhookToOrder(*webhookDataType)
 	s.PaymentRepo.Save(c, &order)
+
+	if webhookDataType.Code == s.SuccessCode && order.Type == models.OrderMembership {
+		payload := GetPayload(order)
+		s.apiClient.CompletedPlan(payload)
+	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": order})
 	// return webhookData.Data, nil
 }
@@ -205,4 +219,16 @@ func mapCheckoutToEntity(response *payos.CheckoutResponseDataType, order *models
 	order.PaymentLinkID = response.PaymentLinkId
 	order.CheckoutURL = response.CheckoutUrl
 	order.QRCode = response.QRCode
+	// order.TransactionDateTime = response.
+}
+
+func GetPayload(order models.Order) data.NotiComplete {
+	return data.NotiComplete{
+		ID:        order.ID,
+		OrderId:   uint64(order.OrderCode),
+		ProfileId: 0,
+		Type:      order.Type,
+		TargetId:  *order.TargetId,
+		PaidAt:    order.TransactionDateTime,
+	}
 }

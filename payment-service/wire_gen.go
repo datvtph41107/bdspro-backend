@@ -25,8 +25,9 @@ func InitializeApp() (*ConfigApp, error) {
 	if err != nil {
 		return nil, err
 	}
+	apiClient := services.NewApiClient()
 	paymentRepo := repo.NewPaymentRepo(db)
-	paymentService := services.NewPaymentService(paymentRepo, db)
+	paymentService := services.NewPaymentService(apiClient, paymentRepo, db)
 	configApp := NewConfigApp(db, paymentService)
 	return configApp, nil
 }
@@ -34,4 +35,4 @@ func InitializeApp() (*ConfigApp, error) {
 // wire.go:
 
 // WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(_db.NewDB, repo.NewPaymentRepo, NewConfigApp, services.NewPaymentService)
+var wireSet = wire.NewSet(_db.NewDB, repo.NewPaymentRepo, services.NewApiClient, NewConfigApp, services.NewPaymentService)

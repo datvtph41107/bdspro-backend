@@ -8,7 +8,17 @@ eureka:
 database:
   dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_payment port=5432 sslmode=disable
 
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+  
 payment:
+  secretKey: key-to-generate-signature-for-call-hook
   url:
     success-redirect: http://bdspro.com/payment/success
     fail-redirect: http://bdspro.com/payment/success
@@ -16,3 +26,7 @@ payment:
     client-id: f439181c-481f-4095-bb78-c8a86910e5ff
     api-key: 4edfa60c-a41e-4dc5-a7c5-98e0b1ac3433
     check-sum: 93a375a40ed0b45b48cb2279f6fce2e64f838c9c5407b51a0026f3e162134a9a
+
+membership:
+  url: localhost:8007
+  path: /membership/user/verify

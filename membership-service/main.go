@@ -11,10 +11,8 @@ import (
 
 	_ "membership/docs"
 	_ "membership/models"
-	pay_pb "payment/generated/schema"
 
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
 )
 
 type ConfigApp struct {
@@ -57,12 +55,10 @@ func main() {
 		models.AutoMigrate()
 
 		app.plan.RegisterRoutes(r)
-
+		app.membership.RegisterRoutes(r)
 		// mux := runtime.NewServeMux()
 		// ctx := context.Background()
 
-		grpcServer := grpc.NewServer()
-		pay_pb.RegisterPaymentServiceServer(grpcServer, app.membership)
 		// app.membership.RegisterRoutes(r)
 		// app.ward.RegisterRoutes(r)
 		// routes.GroupRoutes(r, app.group)

@@ -15,6 +15,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	repo.NewPaymentRepo,
+	services.NewApiClient,
 	NewConfigApp,
 	services.NewPaymentService,
 )

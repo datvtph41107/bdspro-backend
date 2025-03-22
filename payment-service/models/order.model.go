@@ -1,7 +1,8 @@
 package models
 
 import (
-	cmodels "common/models"
+	_models "common/models"
+	"time"
 
 	"github.com/payOSHQ/payos-lib-golang"
 )
@@ -9,9 +10,10 @@ import (
 // Order đại diện cho thông tin đơn hàng
 // @swagger:model
 type Order struct {
-	cmodels.BaseEntity
-	ID                     uint64
+	_models.BaseEntity
 	Amount                 int
+	TargetId               *uint64
+	Type                   OrderType
 	Description            string
 	Status                 string
 	Reason                 string
@@ -26,7 +28,7 @@ type Order struct {
 	AmountPaid             int
 	AccountNumberPaid      string `gorm:"size:30"`
 	Reference              string
-	TransactionDateTime    string
+	TransactionDateTime    *time.Time
 	Code                   string
 	Message                string
 	CounterAccountBankID   string `gorm:"size:20"`
@@ -40,20 +42,23 @@ type Order struct {
 type OrderRequest struct {
 	Amount      int
 	Description string
+	TargetId    *uint64
+	Type        OrderType
 }
 
 func (Order) TableName() string {
 	return "orders"
 }
 
-func (o *Order) MapWebhookToOrder(webhookData payos.WebhookType) {
-	data := webhookData.Data
+func (o *Order) MapWebhookToOrder(data payos.WebhookDataType) {
+	// data := webhookData.Data
 
 	o.AmountPaid = data.Amount
 	o.Description = data.Description
 	o.AccountNumberPaid = data.AccountNumber
 	o.Reference = data.Reference
-	o.TransactionDateTime = data.TransactionDateTime
+	t, _ := time.Parse("2006-01-02 15:04:05", data.TransactionDateTime)
+	o.TransactionDateTime = &t
 	o.Currency = data.Currency
 	o.PaymentLinkID = data.PaymentLinkId
 	o.Code = data.Code

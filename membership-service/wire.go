@@ -19,6 +19,7 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	repo.NewPlanRepo,
 	repo.NewMembershipRepo,
+	services.NewPaymentClient,
 	services.NewPlanService,
 	services.NewMembershipService,
 	routes.NewPlanRouter,

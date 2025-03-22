@@ -7,6 +7,54 @@ definitions:
       description:
         type: string
     type: object
+  payos.WebhookDataType:
+    properties:
+      accountNumber:
+        type: string
+      amount:
+        type: integer
+      code:
+        type: string
+      counterAccountBankId:
+        type: string
+      counterAccountBankName:
+        type: string
+      counterAccountName:
+        type: string
+      counterAccountNumber:
+        type: string
+      currency:
+        type: string
+      desc:
+        type: string
+      description:
+        type: string
+      orderCode:
+        type: integer
+      paymentLinkId:
+        type: string
+      reference:
+        type: string
+      transactionDateTime:
+        type: string
+      virtualAccountName:
+        type: string
+      virtualAccountNumber:
+        type: string
+    type: object
+  payos.WebhookType:
+    properties:
+      code:
+        type: string
+      data:
+        $ref: '#/definitions/payos.WebhookDataType'
+      desc:
+        type: string
+      signature:
+        type: string
+      success:
+        type: boolean
+    type: object
 info:
   contact: {}
   description: This is a sample API
@@ -72,6 +120,13 @@ paths:
       consumes:
       - application/json
       description: Xác minh Webhook sau khi thanh toán thành công
+      parameters:
+      - description: Order thông tin
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/payos.WebhookType'
       produces:
       - application/json
       responses: {}

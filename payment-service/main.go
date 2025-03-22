@@ -1,11 +1,13 @@
 package main
 
 import (
+	_db "common/db"
 	_jwt "common/jwt"
 	"log"
 	"os"
 	"payment/config"
 	_ "payment/docs"
+	"payment/models"
 	"payment/services"
 	"time"
 
@@ -62,6 +64,7 @@ func main() {
 	clientId := viper.GetString("payment.payos.client-id")
 	apiKey := viper.GetString("payment.payos.api-key")
 	checksumKey := viper.GetString("payment.payos.check-sum")
+
 	payos.Key(clientId, apiKey, checksumKey)
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
@@ -69,6 +72,7 @@ func main() {
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	RootApp, _ = InitializeApp()
+	_db.DB.AutoMigrate(&models.Order{})
 	// config.ConfigDB = RootApp.DB
 
 	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))

@@ -119,6 +119,17 @@ const docTemplate = `{
                     "PayOS"
                 ],
                 "summary": "Xác minh Webhook",
+                "parameters": [
+                    {
+                        "description": "Order thông tin",
+                        "name": "order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payos.WebhookType"
+                        }
+                    }
+                ],
                 "responses": {}
             }
         }
@@ -132,6 +143,79 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                }
+            }
+        },
+        "payos.WebhookDataType": {
+            "type": "object",
+            "properties": {
+                "accountNumber": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "counterAccountBankId": {
+                    "type": "string"
+                },
+                "counterAccountBankName": {
+                    "type": "string"
+                },
+                "counterAccountName": {
+                    "type": "string"
+                },
+                "counterAccountNumber": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "orderCode": {
+                    "type": "integer"
+                },
+                "paymentLinkId": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                },
+                "transactionDateTime": {
+                    "type": "string"
+                },
+                "virtualAccountName": {
+                    "type": "string"
+                },
+                "virtualAccountNumber": {
+                    "type": "string"
+                }
+            }
+        },
+        "payos.WebhookType": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "data": {
+                    "$ref": "#/definitions/payos.WebhookDataType"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         }

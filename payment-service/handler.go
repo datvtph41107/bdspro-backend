@@ -2,6 +2,11 @@ package main
 
 import (
 	_utils "common/utils"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -57,3 +62,61 @@ func SignEncode(key string, profileID, expiredTime int64, signature string) stri
 }
 
 // XorEncode và XorDecode sẽ được định nghĩa sau
+
+func sortObjDataByKey(data map[string]interface{}) map[string]interface{} {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	sortedData := make(map[string]interface{})
+	for _, k := range keys {
+		sortedData[k] = data[k]
+	}
+
+	return sortedData
+}
+
+func convertObjToQueryStr(data map[string]interface{}) string {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var queryStr string
+	for i, k := range keys {
+		v := data[k]
+		var valueStr string
+		switch v := v.(type) {
+		case string:
+			valueStr = v
+		case float64:
+			valueStr = strconv.FormatFloat(v, 'f', -1, 64)
+		case int:
+			valueStr = strconv.Itoa(v)
+		case nil:
+			valueStr = ""
+		default:
+			jsonVal, _ := json.Marshal(v)
+			valueStr = string(jsonVal)
+		}
+		if i > 0 {
+			queryStr += "&"
+		}
+		queryStr += k + "=" + valueStr
+	}
+	return queryStr
+}
+
+func IsValidData(data map[string]interface{}, currentSignature, key string) bool {
+	sortedData := sortObjDataByKey(data)
+	dataQueryStr := convertObjToQueryStr(sortedData)
+
+	h := hmac.New(sha256.New, []byte(key))
+	h.Write([]byte(dataQueryStr))
+	signature := hex.EncodeToString(h.Sum(nil))
+
+	return signature == currentSignature
+}

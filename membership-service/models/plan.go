@@ -6,6 +6,7 @@ type Plan struct {
 	_models.BaseEntity
 	ID                 uint     `gorm:"primaryKey;autoIncrement" json:"id"`
 	PackageName        string   `gorm:"column:package_name" json:"packageName"`
+	Duration           int64    `gorm:"column:duration" json:"duration"` // day
 	Price              int64    `gorm:"column:price" json:"price"`
 	CreateProduct      int      `gorm:"column:create_product" json:"createProduct"`
 	PublicProductLimit int      `gorm:"column:public_product_limit" json:"publicProductLimit"`

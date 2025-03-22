@@ -7,8 +7,8 @@ import (
 
 type Membership struct {
 	_models.BaseEntity
-	ProfileId    uint64     `json:"profileId"`
-	MembershipId uint64     `json:"membershipId"`
+	ProfileId    uint64     `gorm:"unique" json:"profileId"`
+	PlanId       uint64     `json:"planId"`
 	FinishedDate *time.Time `json:"finishedDate,omitempty"`
 	OrderId      uint64     `json:"orderId"`
 	PaidAt       *time.Time `json:"paidAt,omitempty"`
