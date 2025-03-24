@@ -11,8 +11,8 @@ import (
 type BaseEntity struct {
 	AuditBase
 	ID        uint64    `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"-"`
-	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"-"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 	// CreatedBy *uint     `gorm:"column:created_by" json:"created_by,omitempty"`
 	// UpdatedBy *uint     `gorm:"column:updated_by" json:"updated_by,omitempty"`
 	// Deleted bool `gorm:"column:deleted" json:"deleted"`

@@ -9,5 +9,9 @@ func AutoMigrate() {
 		&Province{},
 		&District{},
 		&Ward{},
+		&Product{},
+		&ProductAccess{},
+		&DocType{},
+		&PropertyType{},
 	)
 }

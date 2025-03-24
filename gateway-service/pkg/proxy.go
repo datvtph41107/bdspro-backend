@@ -29,6 +29,8 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 		serviceIp = 8005
 	} else if serviceName == "crm" {
 		serviceIp = 8006
+	} else if serviceName == "membership" {
+		serviceIp = 8007
 	} else if serviceName == "map" {
 		serviceIp = 8101
 	} else if serviceName == "bdspro" {

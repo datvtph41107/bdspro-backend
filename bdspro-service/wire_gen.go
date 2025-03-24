@@ -7,11 +7,19 @@
 package main
 
 import (
-	"bdspro/mod/district"
-	"bdspro/mod/province"
-	"bdspro/mod/ward"
+	"bdspro/mod/admin"
+	"bdspro/mod/admin/district"
+	"bdspro/mod/admin/doc_type"
+	"bdspro/mod/admin/property_type"
+	"bdspro/mod/admin/province"
+	"bdspro/mod/admin/ward"
+	"bdspro/mod/global/product_access"
+	"bdspro/mod/user"
+	"bdspro/mod/user/asset"
+	"bdspro/mod/user/post"
+	"bdspro/mod/user/product"
+	"bdspro/mod/user/transaction"
 	"common/db"
-	"common/redis"
 	"github.com/google/wire"
 )
 
@@ -22,12 +30,18 @@ import (
 
 // Injectors from wire.go:
 
-// InitializeApp khởi tạo toàn bộ hệ thống với Wire
 func InitializeApp() (*ConfigApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
 	}
+	userProductRepo := u_product.NewUserProductRepo(db)
+	postRepo := u_post.NewPostRepo(db)
+	assetRepo := u_asset.NewAssetRepo(db)
+	productAccessRepo := product_accecss.NewProductAccessRepo(db)
+	productService := u_product.NewProductService(userProductRepo, postRepo, assetRepo, productAccessRepo)
+	userProductRoute := u_product.NewUserProductRoute(productService)
+	userRoute := user.NewUserRoute(userProductRoute)
 	provinceRepo := province.NewProvinceRepo(db)
 	provinceService := province.NewProvinceService(provinceRepo)
 	provinceRouter := province.NewProvinceRouter(provinceService)
@@ -37,11 +51,18 @@ func InitializeApp() (*ConfigApp, error) {
 	wardRepo := ward.NewWardRepo(db)
 	wardService := ward.NewWardService(wardRepo)
 	wardRouter := ward.NewWardRouter(wardService)
-	configApp := NewConfigApp(provinceRouter, districtRouter, wardRouter)
+	propertyTypeRepo := a_property_type.NewPropertyTypeRepo(db)
+	propertyTypeService := a_property_type.NewPropertyTypeService(propertyTypeRepo)
+	propertyTypeRouter := a_property_type.NewPropertyTypeRouter(propertyTypeService)
+	docTypeRepo := a_doc_type.NewDocTypeRepo(db)
+	docTypeService := a_doc_type.NewDocTypeService(docTypeRepo)
+	docTypeRouter := a_doc_type.NewDocTypeRouter(docTypeService)
+	adminRoute := admin.NewAdminRoute(provinceRouter, districtRouter, wardRouter, userProductRoute, propertyTypeRouter, docTypeRouter)
+	configApp := NewConfigApp(userRoute, adminRoute)
 	return configApp, nil
 }
 
 // wire.go:
 
-// WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(_redis.NewRedisService, _db.NewDB, province.NewProvinceRepo, province.NewProvinceService, province.NewProvinceRouter, district.NewDistrictRepo, district.NewDistrictService, district.NewDistrictRouter, ward.NewWardRepo, ward.NewWardService, ward.NewWardRouter, NewConfigApp)
+// Inject dependencies
+var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, admin.NewAdminRoute, u_asset.NewAssetRepo, u_asset.NewAssetService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, u_post.NewPostRepo, u_post.NewPostService, product_accecss.NewProductAccessRepo, u_product.NewProductService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)

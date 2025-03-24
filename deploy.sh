@@ -6,6 +6,12 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+if [ "$1" = "compose" ]; then
+  echo "đẩy docker-compose.yml lên server..."
+  scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
+  exit 0
+fi
+
 # Chọn thư mục dựa vào tham số đầu tiên
 service_path=/common
 path_jar=''
@@ -41,6 +47,14 @@ case "$1" in
     ;;
   "crm")
     service_path=crm-service
+    path_jar=main
+    ;;
+  "membership")
+    service_path=membership-service
+    path_jar=main
+    ;;
+  "bdspro")
+    service_path=bdspro-service
     path_jar=main
     ;;
   *)

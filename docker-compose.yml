@@ -1,0 +1,141 @@
+version: '3.3'
+
+services:
+  user:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    networks:
+      - internal
+
+  bdspro:
+    build:
+      context: ./bdspro-service
+      dockerfile: Dockerfile
+    container_name: bdspro
+    networks:
+      - internal
+
+  file:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: file
+    networks:
+      - internal
+    volumes:
+      - ./file-service/files:/app/files
+
+  chat:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    container_name: chat
+    networks:
+      - internal
+    ports:
+      - "8104:8104"
+  # openai:
+  #   build:
+  #     context: ./openai-service
+  #     dockerfile: Dockerfile
+  #   container_name: openai
+  #   networks:
+  #     - internal
+  #   depends_on:
+  #     - redis
+  #     - eureka
+
+  gateway:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway
+    networks:
+      - internal
+    ports:
+      - "8000:8000"
+
+  map:
+    build:
+      context: ./map-service
+      dockerfile: Dockerfile
+    container_name: map
+    networks:
+      - internal
+
+  notification:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification
+    networks:
+      - internal
+
+  payment:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment
+    networks:
+      - internal
+  
+  crm:
+    build:
+      context: ./crm-service
+      dockerfile: Dockerfile
+    container_name: crm
+    networks:
+      - internal
+  
+  membership:
+    build:
+      context: ./membership-service
+      dockerfile: Dockerfile
+    container_name: membership
+    networks:
+      - internal
+
+  config:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config
+    networks:
+      - internal
+
+  eureka:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka
+    networks:
+      - internal
+    ports:
+      - "8761:8761"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

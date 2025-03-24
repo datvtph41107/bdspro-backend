@@ -2,9 +2,8 @@ package main
 
 import (
 	"bdspro/config"
-	"bdspro/mod/district"
-	"bdspro/mod/province"
-	"bdspro/mod/ward"
+	"bdspro/mod/admin"
+	"bdspro/mod/user"
 	"bdspro/models"
 	"common"
 
@@ -16,39 +15,36 @@ import (
 )
 
 type ConfigApp struct {
-	province *province.ProvinceRouter
-	district *district.DistrictRouter
-	ward     *ward.WardRouter
+	userRoute   *user.UserRoute
+	adminRouter *admin.AdminRoute
 }
 
 func NewConfigApp(
-	province *province.ProvinceRouter,
-	district *district.DistrictRouter,
-	ward *ward.WardRouter,
+	userRoute *user.UserRoute,
+	adminRoute *admin.AdminRoute,
 ) *ConfigApp {
 	return &ConfigApp{
-		province: province,
-		district: district,
-		ward:     ward,
+		userRoute:   userRoute,
+		adminRouter: adminRoute,
 	}
 }
 
 var publicRoutes = []string{"/public"}
 
-// @title CRM API
+// @title BDSPRO API
 // @version 1.0
-// @description API quản lý người dùng
+// @description API phần logic chính của BĐSPro
 // @BasePath /bdspro
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 func main() {
-	r := gin.Default()
+	engine := gin.Default()
 	// os.Setenv("TZ", "Europe/London")
 
 	parameters := common.SetupParameters{
 		ConfigFile:   config.ConfigFile,
-		Engine:       r,
+		Engine:       engine,
 		PublicRoutes: publicRoutes,
 		Prefix:       "/bdspro",
 	}
@@ -60,18 +56,7 @@ func main() {
 		app, _ := InitializeApp()
 		models.AutoMigrate()
 
-		app.province.RegisterRoutes(r)
-		app.district.RegisterRoutes(r)
-		app.ward.RegisterRoutes(r)
-		// routes.GroupRoutes(r, app.group)
-		// routes.FollowRoutes(r, app.follow)
-		// routes.BlockRoutes(r, app.block)
-		// routes.OAuthRoutes(r, app.OAuthRouter)
-		// routes.ProfileRoutes(r, app.ProfileRouter)
-		// // fmt.Sprintf("Data: ", config.AppProperties.ZaloAppID)
-
-		// group.GET("/info", func(c *gin.Context) {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})
-		// })
+		app.adminRouter.RegisterAdminRouter(engine)
+		app.userRoute.RegisterUserRouter(engine)
 	})
 }
