@@ -25,6 +25,7 @@ func (s *CookieService) SetSessionBrowser(w http.ResponseWriter, refreshToken st
 // Đặt refresh token trong cookie
 func (s *CookieService) SetRefreshToken(w http.ResponseWriter, refreshToken string) {
 	cookie := &http.Cookie{
+		SameSite: http.SameSiteNoneMode,
 		Name:     "rt",
 		Value:    refreshToken,
 		HttpOnly: true,                                                 // Ngăn JavaScript đọc cookie

@@ -79,6 +79,7 @@ func (route *OAuthRouter) OauthCallback(c *gin.Context) {
 	provider := c.Param("provider")
 	code := c.Query("code")
 	state := c.Query("state")
+	platform := c.Query("platform")
 	var result *data.AuthLoginResponse
 	var err error
 
@@ -88,7 +89,7 @@ func (route *OAuthRouter) OauthCallback(c *gin.Context) {
 	case "google":
 		result, err = route.GoogleAuthService.HandleCallback(c, code, state)
 	case "facebook":
-		result, err = route.FacebookAuthService.HandleCallback(c, code, state)
+		result, err = route.FacebookAuthService.HandleCallback(c, code, platform, state)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider không hợp lệ"})
 		return

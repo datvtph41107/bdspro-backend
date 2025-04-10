@@ -44,10 +44,14 @@ func (UserProfileEntity) TableName() string {
 }
 
 // NewUserProfileEntity tạo user với authId
-func NewUserProfileEntity(authId uint64) *UserProfileEntity {
+func NewUserProfileEntity(authId uint64, fullname, email, phone, avatar string) *UserProfileEntity {
 	return &UserProfileEntity{
 		ReferralCode: generateReferral(authId),
 		RoleType:     RoleUser,
+		FullName:     fullname,
+		Email:        email,
+		Phone:        phone,
+		Avatar:       avatar,
 	}
 }
 
@@ -74,6 +78,16 @@ type OtpVerifyRequest struct {
 func ProfileGetByProfileId(profileId uint64) (*UserProfileEntity, error) {
 	var userProfile UserProfileEntity
 	if err := _db.DB.Where("profile_id = ? and deleted_at is null", profileId).First(&userProfile).Error; err != nil {
+		return nil, err
+	}
+	return &userProfile, nil
+}
+
+// GetByProfileId truy vấn UserProfileEntity theo profileId
+func ProfileGetByPhone(phone string) (*UserProfileEntity, error) {
+	var userProfile UserProfileEntity
+	if err := _db.DB.Where("phone = ? and deleted_at is null", phone).
+		First(&userProfile).Error; err != nil {
 		return nil, err
 	}
 	return &userProfile, nil

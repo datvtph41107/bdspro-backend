@@ -15,6 +15,7 @@ type UserAuthEntity struct {
 	IsSensitive bool       `gorm:"column:is_sensitive"`
 	Name        string     `gorm:"size:255"`
 	Email       string     `gorm:"size:255"`
+	Phone       string     `gorm:"size:255"`
 	CreatedAt   time.Time  `gorm:"column:created_at;autoCreateTime"`
 	DeletedAt   *time.Time `gorm:"column:deleted_at"`
 	UserID      uint64     `gorm:"column:user_id"` // Không cập nhật & xóa, chỉ tạo mới

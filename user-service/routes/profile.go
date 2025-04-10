@@ -21,16 +21,41 @@ func NewProfileRouter(profileService *services.ProfileService) *ProfileRouter {
 	}
 }
 
-var publicRoutes = []string{"/user/profile/info/"}
+var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
 
 func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 	profileGroup := r.Group("/user/profile")
 	{
 		profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+		profileGroup.GET("/find-by-phone", router.FindByPhone)
+		profileGroup.GET("/find", router.FindByPhone)
 		profileGroup.GET("/me", router.ProfileMe)
 		profileGroup.PUT("/set-info", router.SetInfo)
 		profileGroup.GET("/info/:profileId", router.PublicInfo)
 	}
+}
+
+// ProfileMe godoc
+// @Summary Lấy thông tin cá nhân của user
+// @Description API này trả về thông tin của user hiện tại
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} data.UserInfoResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /profile/find-by-phone [get]
+func (p *ProfileRouter) FindByPhone(c *gin.Context) {
+	result, err := p.Profile.ProfileGetByPhone(c)
+
+	_routes.RouteResult(c, result, err)
+}
+
+func (p *ProfileRouter) Find(c *gin.Context) {
+	result, err := p.Profile.ProfileGetByPhone(c)
+
+	_routes.RouteResult(c, result, err)
 }
 
 // ProfileMe godoc

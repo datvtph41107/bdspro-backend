@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -43,6 +44,13 @@ func NewAuthService(redisService *_redis.RedisService, cookie *CookieService) *A
 }
 
 func (s *AuthService) RequestOtp(c *gin.Context, otp data.OtpRequest) (*data.RequestLoginResponse, error) {
+	valid := _utils.ValidatePhoneNumber(otp.Phone)
+	if !valid {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Số điện thoại không đúng",
+		}
+	}
 	oauth, err := models.AuthFindByPhone(otp.Phone)
 	if err == nil && oauth != nil {
 		param, _ := GetParamValidate(oauth, "")
@@ -125,7 +133,7 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 
 	infoEntity, err := models.ProfileGetByProfileId(e.UserID)
 	if err != nil {
-		infoEntity = models.NewUserProfileEntity(e.ID)
+		infoEntity = models.NewUserProfileEntity(e.ID, e.Name, e.Email, e.Phone, e.Avatar)
 		_db.SaveWithAudit(c, infoEntity)
 
 		e.UserID = infoEntity.ProfileID
@@ -145,6 +153,10 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 
 				oauthAcc.UserID = infoEntity.ProfileID
 				_db.SaveWithAudit(c, oauthAcc)
+
+				infoEntity.Avatar = oauthAcc.Avatar
+				infoEntity.Email = oauthAcc.Email
+				_db.SaveWithAudit(c, infoEntity)
 			}
 		}
 	}
@@ -167,11 +179,12 @@ func (s *AuthService) createSession(c *gin.Context, e *models.UserAuthEntity, ot
 }
 
 func (s *AuthService) RefreshToken(refreshToken string) (*data.RefreshResponse, error) {
+	log.Println("refreshToken: %s", refreshToken, ":???")
 	props, err := _jwt.GetProperties(refreshToken)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    401,
-			Message: "Token không đúng",
+			Message: err.Error(),
 		}
 	}
 

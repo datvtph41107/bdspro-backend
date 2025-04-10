@@ -74,3 +74,20 @@ func (s *ProfileService) PublicUserInfo(c *gin.Context) (*data.PublicUserInfo, e
 
 	return &info, nil
 }
+
+func (s *ProfileService) ProfileGetByPhone(c *gin.Context) (*data.PublicUserInfo, error) {
+	// var infoEntity models.UserProfileEntity
+	phone := c.DefaultQuery("phone", "")
+
+	// Lấy thông tin user từ DB
+	infoEntity, err := models.ProfileGetByPhone(phone)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	var info data.PublicUserInfo
+	copier.Copy(&info, &infoEntity)
+
+	return &info, nil
+}

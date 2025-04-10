@@ -34,11 +34,11 @@ func (g *GoogleAuthService) GetUrlLogin() string {
 		"&response_type=code&scope=openid%20email%20profile&state=xyz"
 }
 
-func (g *GoogleAuthService) HandleCallback(c *gin.Context, code string, state string) (*data.AuthLoginResponse, error) {
-	accessToken, err := g.getAccessToken(code)
-	if err != nil {
-		return nil, err
-	}
+func (g *GoogleAuthService) HandleCallback(c *gin.Context, accessToken string, state string) (*data.AuthLoginResponse, error) {
+	// accessToken, err := g.getAccessToken(code)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	userInfo, err := g.getUserInfo(accessToken)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"auth/config"
 	"auth/data"
 	"auth/models"
-	"bytes"
 	_db "common/db"
 	_routes "common/routes"
 	"encoding/json"
@@ -79,46 +78,46 @@ func (s *ZaloAuthService) GetUrlLogin() string {
 // }
 
 func (s *ZaloAuthService) HandleCallback(c *gin.Context, code string, state string) (*data.AuthLoginResponse, error) {
-	params := url.Values{}
-	params.Set("app_id", config.AppProperties.Zalo.App.ID)
-	params.Set("code", code)
-	params.Set("grant_type", "authorization_code")
+	// params := url.Values{}
+	// params.Set("app_id", config.AppProperties.Zalo.App.ID)
+	// params.Set("code", code)
+	// params.Set("grant_type", "authorization_code")
 
-	req, err := http.NewRequest("POST", "https://oauth.zaloapp.com/v4/access_token", bytes.NewBufferString(params.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("secret_key", config.AppProperties.Zalo.SecretKey)
+	// req, err := http.NewRequest("POST", "https://oauth.zaloapp.com/v4/access_token", bytes.NewBufferString(params.Encode()))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// req.Header.Set("secret_key", config.AppProperties.Zalo.SecretKey)
 
-	resp, err := s.HttpClient.Do(req)
-	if err != nil {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Không lấy được access_token từ Zalo",
-		}
-	}
-	defer resp.Body.Close()
+	// resp, err := s.HttpClient.Do(req)
+	// if err != nil {
+	// 	return nil, &_routes.Except{
+	// 		Code:    401,
+	// 		Message: "Không lấy được access_token từ Zalo",
+	// 	}
+	// }
+	// defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, err
-	}
+	// var result map[string]interface{}
+	// if err := json.Unmarshal(body, &result); err != nil {
+	// 	return nil, err
+	// }
 
-	accessToken, ok := result["access_token"].(string)
-	if !ok {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Token hết hạn",
-		}
-	}
+	// accessToken, ok := result["access_token"].(string)
+	// if !ok {
+	// 	return nil, &_routes.Except{
+	// 		Code:    401,
+	// 		Message: "Token hết hạn",
+	// 	}
+	// }
 
-	userInfo, err := s.fetchUserInfo(accessToken)
+	userInfo, err := s.fetchUserInfo(code)
 	if err != nil {
 		return nil, err
 	}

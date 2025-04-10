@@ -102,10 +102,10 @@ type UserInfoResponse struct {
 }
 
 type PublicUserInfo struct {
-	ProfileID uint64     `json:"profileId"`
-	FullName  string     `json:"fullname,omitempty"`
-	Avatar    string     `json:"avatar,omitempty"`
-	Birth     *time.Time `json:"birth,omitempty"`
+	ProfileID uint64 `json:"profileId"`
+	FullName  string `json:"fullname,omitempty"`
+	Avatar    string `json:"avatar,omitempty"`
+	// Birth     *time.Time `json:"birth,omitempty"`
 }
 
 type JwtTokenProperties struct {

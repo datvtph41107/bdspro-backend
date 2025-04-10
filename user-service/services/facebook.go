@@ -38,7 +38,28 @@ func (s *FacebookAuthService) GetUrlLogin() string {
 	return fbAuthUrl
 }
 
-func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, state string) (*data.AuthLoginResponse, error) {
+func (s *FacebookAuthService) HandleCallback(c *gin.Context, accessToken string, platform string, state string) (*data.AuthLoginResponse, error) {
+	// var accessToken string
+	// if platform != "android" {
+	// 	_accessToken, err := s.getAccessToken(code)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	accessToken = _accessToken
+	// } else {
+	// 	accessToken = code
+	// }
+	// accessToken = code
+
+	userInfo, err := s.fetchUserInfo(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.RegisterOrLogin(c, userInfo)
+}
+
+func (s *FacebookAuthService) getAccessToken(code string) (string, error) {
 	params := url.Values{}
 	params.Set("client_id", config.AppProperties.Facebook.Client.ID)
 	params.Set("redirect_uri", config.AppProperties.Facebook.RedirectURI)
@@ -48,7 +69,7 @@ func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, state 
 	tokenURL := "https://graph.facebook.com/v22.0/oauth/access_token?" + params.Encode()
 	resp, err := s.HttpClient.Get(tokenURL)
 	if err != nil {
-		return nil, &_routes.Except{
+		return "", &_routes.Except{
 			Code:    401,
 			Message: "Không lấy được access_token từ Facebook",
 		}
@@ -57,7 +78,7 @@ func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, state 
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, &_routes.Except{
+		return "", &_routes.Except{
 			Code:    401,
 			Message: "Lỗi đọc phản hồi từ Facebook",
 		}
@@ -65,7 +86,7 @@ func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, state 
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, &_routes.Except{
+		return "", &_routes.Except{
 			Code:    401,
 			Message: "Lỗi parse JSON từ Facebook",
 		}
@@ -73,18 +94,12 @@ func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, state 
 
 	accessToken, ok := result["access_token"].(string)
 	if !ok {
-		return nil, &_routes.Except{
+		return "", &_routes.Except{
 			Code:    401,
 			Message: "Không lấy được access_token từ Facebook",
 		}
 	}
-
-	userInfo, err := s.fetchUserInfo(accessToken)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.RegisterOrLogin(c, userInfo)
+	return accessToken, nil
 }
 
 func (s *FacebookAuthService) fetchUserInfo(accessToken string) (map[string]interface{}, error) {
