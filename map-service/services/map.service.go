@@ -1,6 +1,7 @@
 package services
 
 import (
+	_routes "common/routes"
 	"errors"
 	"fmt"
 	"map/models"
@@ -126,5 +127,5 @@ func (service *MapService) HandleFindByPolygon(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, locations)
+	_routes.RouteResult(c, locations, nil)
 }

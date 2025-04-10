@@ -6,8 +6,6 @@ import (
 	"map/config"
 	_ "map/docs"
 	"map/services"
-	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -59,8 +57,8 @@ func main() {
 	config.LoadConfig()
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
-	os.Setenv("TZ", "Europe/London")
-	time.Local = time.FixedZone("Europe/London", 7*60*60)
+	// os.Setenv("TZ", "Europe/London")
+	// time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	RootApp, _ = InitializeApp()
 	// c_config.ConfigDB = RootApp.DB

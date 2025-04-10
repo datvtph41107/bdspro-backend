@@ -21,11 +21,15 @@ func NewMapRepo(db *gorm.DB) *MapRepo {
 func (r *MapRepo) FindLocationNearby(lat, lng, radius float64) ([]models.MapPoint, error) {
 	var points []models.MapPoint
 	query := `
-        SELECT id, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng, name,
-        ST_DistanceSphere(ST_MakePoint(lng, lat), ST_MakePoint(?, ?)) AS distance
-        FROM map_points 
-        WHERE ST_DistanceSphere(ST_MakePoint(lng, lat), ST_MakePoint(?, ?)) <= ?
-        ORDER BY distance;
+SELECT 
+  id, 
+  ST_Y(geom::geometry) AS lat, 
+  ST_X(geom::geometry) AS lng, 
+  name,
+  ST_Distance(geom, ST_MakePoint(?, ?)::geography) AS distance
+FROM map_points
+WHERE ST_Distance(geom, ST_MakePoint(?, ?)::geography) <= ?
+ORDER BY distance;
     `
 	result := r.DB.Raw(query, lng, lat, lng, lat, radius).Scan(&points)
 	return points, result.Error
