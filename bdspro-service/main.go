@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bdspro/config"
-	"bdspro/mod/admin"
-	"bdspro/mod/user"
-	"bdspro/models"
+	"bdspro/v1/config"
+	"bdspro/v1/mod/admin"
+	"bdspro/v1/mod/user"
+	"bdspro/v1/models"
 	"common"
 
-	_ "bdspro/docs"
+	_ "bdspro/v1/docs"
 	_ "common/models"
 	"log"
 

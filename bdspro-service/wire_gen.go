@@ -7,24 +7,40 @@
 package main
 
 import (
-	"bdspro/mod/admin"
-	"bdspro/mod/admin/district"
-	"bdspro/mod/admin/doc_type"
-	"bdspro/mod/admin/property_type"
-	"bdspro/mod/admin/province"
-	"bdspro/mod/admin/ward"
-	"bdspro/mod/global/product_access"
-	"bdspro/mod/user"
-	"bdspro/mod/user/asset"
-	"bdspro/mod/user/post"
-	"bdspro/mod/user/product"
-	"bdspro/mod/user/transaction"
+	"bdspro/v1/mod/admin"
+	"bdspro/v1/mod/admin/amenity"
+	"bdspro/v1/mod/admin/apartment"
+	"bdspro/v1/mod/admin/build_room"
+	"bdspro/v1/mod/admin/developer"
+	"bdspro/v1/mod/admin/district"
+	"bdspro/v1/mod/admin/doc_type"
+	"bdspro/v1/mod/admin/product"
+	"bdspro/v1/mod/admin/product_access"
+	"bdspro/v1/mod/admin/project"
+	"bdspro/v1/mod/admin/project_build"
+	"bdspro/v1/mod/admin/property_type"
+	"bdspro/v1/mod/admin/province"
+	"bdspro/v1/mod/admin/ward"
+	"bdspro/v1/mod/global/amenity"
+	"bdspro/v1/mod/global/apartment_attribute"
+	"bdspro/v1/mod/global/house_info"
+	"bdspro/v1/mod/global/product_access"
+	"bdspro/v1/mod/global/product_media"
+	"bdspro/v1/mod/global/product_price"
+	"bdspro/v1/mod/global/product_private"
+	"bdspro/v1/mod/global/region"
+	"bdspro/v1/mod/user"
+	"bdspro/v1/mod/user/asset"
+	"bdspro/v1/mod/user/list"
+	"bdspro/v1/mod/user/post"
+	"bdspro/v1/mod/user/product"
+	"bdspro/v1/mod/user/transaction"
 	"common/db"
 	"github.com/google/wire"
 )
 
 import (
-	_ "bdspro/docs"
+	_ "bdspro/v1/docs"
 	_ "common/models"
 )
 
@@ -35,13 +51,24 @@ func InitializeApp() (*ConfigApp, error) {
 	if err != nil {
 		return nil, err
 	}
-	userProductRepo := u_product.NewUserProductRepo(db)
+	productPriceRepo := product_price.NewProductPriceRepo(db)
+	productAccessRepo := product_accecss.NewProductAccessRepo(db)
+	productPrivateRepo := product_private.NewProductPrivateRepo(db, productAccessRepo)
+	userProductRepo := u_product.NewUserProductRepo(db, productPriceRepo, productAccessRepo, productPrivateRepo)
 	postRepo := u_post.NewPostRepo(db)
 	assetRepo := u_asset.NewAssetRepo(db)
-	productAccessRepo := product_accecss.NewProductAccessRepo(db)
-	productService := u_product.NewProductService(userProductRepo, postRepo, assetRepo, productAccessRepo)
+	productMediaRepo := product_media.NewProductMediaRepo(db)
+	houseInfoRepo := house_info.NewHouseInfoRepo(db)
+	regionRepo := g_region.NewRegionRepo(db)
+	docTypeRepo := a_doc_type.NewDocTypeRepo(db)
+	propertyTypeRepo := a_property_type.NewPropertyTypeRepo(db)
+	amenityRepo := amenity.NewAmenityRepo(db)
+	productService := u_product.NewProductService(userProductRepo, postRepo, assetRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo)
 	userProductRoute := u_product.NewUserProductRoute(productService)
-	userRoute := user.NewUserRoute(userProductRoute)
+	projectRepo := a_project.NewProjectRepo(db)
+	listService := u_list.NewUserListService(propertyTypeRepo, regionRepo, docTypeRepo, projectRepo, amenityRepo)
+	listRoute := u_list.NewListRoute(listService)
+	userRoute := user.NewUserRoute(userProductRoute, listRoute)
 	provinceRepo := province.NewProvinceRepo(db)
 	provinceService := province.NewProvinceService(provinceRepo)
 	provinceRouter := province.NewProvinceRouter(provinceService)
@@ -51,13 +78,33 @@ func InitializeApp() (*ConfigApp, error) {
 	wardRepo := ward.NewWardRepo(db)
 	wardService := ward.NewWardService(wardRepo)
 	wardRouter := ward.NewWardRouter(wardService)
-	propertyTypeRepo := a_property_type.NewPropertyTypeRepo(db)
+	adminProductRepo := a_product.NewAdminProductRepo(db, productPriceRepo, productAccessRepo, productPrivateRepo)
+	adminProductService := a_product.NewAdminProductService(adminProductRepo)
+	adminProductRouter := a_product.NewAdminProductRouter(adminProductService)
 	propertyTypeService := a_property_type.NewPropertyTypeService(propertyTypeRepo)
 	propertyTypeRouter := a_property_type.NewPropertyTypeRouter(propertyTypeService)
-	docTypeRepo := a_doc_type.NewDocTypeRepo(db)
 	docTypeService := a_doc_type.NewDocTypeService(docTypeRepo)
 	docTypeRouter := a_doc_type.NewDocTypeRouter(docTypeService)
-	adminRoute := admin.NewAdminRoute(provinceRouter, districtRouter, wardRouter, userProductRoute, propertyTypeRouter, docTypeRouter)
+	amenityService := a_amenity.NewAmenityService(amenityRepo)
+	amenityRouter := a_amenity.NewAmenityRouter(amenityService)
+	projectService := a_project.NewProjectService(projectRepo)
+	projectRouter := a_project.NewProjectRouter(projectService)
+	projectBuildRepo := a_project_build.NewProjectBuildRepo(db)
+	projectBuildService := a_project_build.NewProjectBuildService(projectBuildRepo)
+	projectBuildRouter := a_project_build.NewProjectBuildRouter(projectBuildService)
+	buildRoomRepo := a_build_room.NewBuildRoomRepo(db)
+	buildRoomService := a_build_room.NewBuildRoomService(buildRoomRepo)
+	buildRoomRouter := a_build_room.NewBuildRoomRouter(buildRoomService)
+	apartmentRepo := a_apartment.NewApartmentRepo(db)
+	apartmentAttrRepo := attribute_attribute.NewApartmentAttrRepo(db)
+	apartmentService := a_apartment.NewApartmentService(apartmentRepo, apartmentAttrRepo)
+	apartmentRouter := a_apartment.NewApartmentRouter(apartmentService)
+	developerRepo := a_developer.NewDeveloperRepo(db)
+	developerService := a_developer.NewDeveloperService(developerRepo)
+	developerRouter := a_developer.NewDeveloperRouter(developerService)
+	productAccessService := a_product_access.NewProductAccessService(productAccessRepo)
+	productAccessRouter := a_product_access.NewProductAccessRouter(productAccessService)
+	adminRoute := admin.NewAdminRoute(provinceRouter, districtRouter, wardRouter, adminProductRouter, propertyTypeRouter, docTypeRouter, amenityRouter, projectRouter, projectBuildRouter, buildRoomRouter, apartmentRouter, developerRouter, productAccessRouter)
 	configApp := NewConfigApp(userRoute, adminRoute)
 	return configApp, nil
 }
@@ -65,4 +112,4 @@ func InitializeApp() (*ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, admin.NewAdminRoute, u_asset.NewAssetRepo, u_asset.NewAssetService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, u_post.NewPostRepo, u_post.NewPostService, product_accecss.NewProductAccessRepo, u_product.NewProductService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)
+var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, a_product.NewAdminProductRepo, a_product.NewAdminProductRouter, a_product.NewAdminProductService, admin.NewAdminRoute, amenity.NewAmenityRepo, a_amenity.NewAmenityRouter, a_amenity.NewAmenityService, attribute_attribute.NewApartmentAttrRepo, a_apartment.NewApartmentRepo, a_apartment.NewApartmentRouter, a_apartment.NewApartmentService, u_asset.NewAssetRepo, u_asset.NewAssetService, a_build_room.NewBuildRoomRepo, a_build_room.NewBuildRoomRouter, a_build_room.NewBuildRoomService, a_developer.NewDeveloperRepo, a_developer.NewDeveloperRouter, a_developer.NewDeveloperService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, house_info.NewHouseInfoRepo, u_list.NewListRoute, u_post.NewPostRepo, u_post.NewPostService, product_accecss.NewProductAccessRepo, a_product_access.NewProductAccessRouter, a_product_access.NewProductAccessService, product_media.NewProductMediaRepo, product_price.NewProductPriceRepo, product_private.NewProductPrivateRepo, u_product.NewProductService, a_project_build.NewProjectBuildRepo, a_project_build.NewProjectBuildRouter, a_project_build.NewProjectBuildService, a_project.NewProjectRepo, a_project.NewProjectRouter, a_project.NewProjectService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, g_region.NewRegionRepo, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_list.NewUserListService, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)
