@@ -10,6 +10,8 @@ import (
 type Product struct {
 	_models.BaseEntity
 	ID              uint64                  `gorm:"primaryKey;autoIncrement" json:"id"`
+	ParentId        *uint64                 `gorm:"type:int8" json:"parentId"`
+	DepositeID      *uint64                 `gorm:"type:int8" json:"depositeId"`
 	AssetId         *uint64                 `gorm:"type:int8" json:"assetId"`
 	PropertyTypeId  *uint64                 `json:"propertyTypeId"`
 	PropertyType    *PropertyTypeItem       `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
@@ -40,8 +42,8 @@ type Product struct {
 	TransactionType int                     `gorm:"type:smallint;default:1" json:"transactionType"`
 	SaleStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:1" json:"saleStatus"`     // 1=Chưa bán, 2=Đang bán, 3=Đã bán
 	SaleVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:3" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	RentStatus      uint                    `gorm:"type:smallint;not null;default:3" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
-	RentVisibility  uint                    `gorm:"type:smallint;not null;default:1" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	RentStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:3" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
+	RentVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:1" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	OwnerUserID     *uint64                 `gorm:"type:int8" json:"ownerUserId,omitempty"`                 // Ai sở hữu (nếu đã bán)
 	OwnerOrgID      *uint64                 `gorm:"type:int8" json:"ownerOrgId,omitempty"`                  // Tổ chức sở hữu (nếu cty mua)
 	ProvinceID      *uint64                 `json:"provinceId"`
@@ -57,6 +59,7 @@ type Product struct {
 	HouseInfo       *HouseInfo              `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
 	CreatedUser     *ProfileInfo            `gorm:"foreignKey:CreatedBy;references:ProfileId" json:"createdUser,omitempty"`
 	UpdatedUser     *ProfileInfo            `gorm:"foreignKey:UpdatedBy;references:ProfileId" json:"updatedUser,omitempty"`
+	Archived        bool                    `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
 	// SalePriceTotal       *float64                `gorm:"type:DECIMAL(15,0)" json:"sale_price_total,omitempty"`                                                      // Giá bán niêm yết (công khai)
 	// SalePricePerM2       *float64                `gorm:"type:DECIMAL(15,2)" json:"sale_price_per_m2,omitempty"`                                                     // Giá bán/m² (công khai)
 	// SaleCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"sale_commission,omitempty"`                                                       // Hoa hồng bán (nội bộ)
@@ -65,7 +68,6 @@ type Product struct {
 	// RentCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"rent_commission,omitempty"`                                                       // Hoa hồng thuê (nội bộ)
 	// RentCommissionType   *string                 `gorm:"type:VARCHAR(10);check:rent_commission_type IN ('percent', 'fixed')" json:"rent_commission_type,omitempty"` // "percent" hoặc "fixed"
 	// GhiChuNoiBo    *string            `gorm:"type:TEXT" json:"ghi_chu_noi_bo,omitempty"`              // Ghi chú nội bộ (môi giới)
-	// Archived       bool               `gorm:"type:bool;not null;default:false" json:"archived"`       // 0=chưa, 1=archive
 	// ImportPrice   int64               `json:"importPrice"`
 	// CommissionPercentage float64             `json:"commissionPercentage"`
 	// CommissionAmount     float64             `json:"commissionAmount"`

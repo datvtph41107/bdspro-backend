@@ -6,6 +6,11 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# Cấu hình thông tin server
+REMOTE_USER="root"
+REMOTE_HOST="14.225.210.29"
+REMOTE_PATH=/root/spring-boot-microservice
+
 if [ "$1" = "compose" ]; then
   echo "đẩy docker-compose.yml lên server..."
   scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
@@ -16,6 +21,7 @@ fi
 service_path=/common
 path_jar=''
 service_name=$1
+payload_build=$1
 case "$1" in
   "gateway")
     service_path=gateway-service
@@ -57,6 +63,21 @@ case "$1" in
     service_path=bdspro-service
     path_jar=main
     ;;
+  "chathttp")
+    service_path=go-chat-service
+    path_jar=main
+    payload_build=http-server
+    ;;
+  "chatws")
+    service_path=go-chat-service
+    path_jar=main
+    payload_build=ws-server
+    ;;
+  "swagger-chat")
+    service_path=go-chat-service
+    path_jar=main
+    payload_build=swagger-chat
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -64,16 +85,12 @@ case "$1" in
 esac
 
 cd $service_path
+REMOTE_DIR=${REMOTE_PATH}/${service_path}
 
 echo "--- GO BUILDING ---"
 GOOS=linux GOARCH=amd64 go build -o main .
 echo "--- FINISH BUILDING ---"
 
-# Cấu hình thông tin server
-REMOTE_USER="root"
-REMOTE_HOST="14.225.210.29"
-REMOTE_PATH=/root/spring-boot-microservice
-REMOTE_DIR=${REMOTE_PATH}/${service_path}
 
 # Đẩy các file trong thư mục hiện tại lên server
 echo "Đang đẩy file lên server..."
@@ -91,11 +108,20 @@ mkdir -p ${REMOTE_DIR}
 
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+
 scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}
 
 if [ "$1" = "notification" ]; then
   scp config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+fi
+if [ "$1" = "chathttp" ]; then
+  scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
+
+if [ "$1" = "swagger-chat" ]; then
+  scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 
 if [ $? -ne 0 ]; then
@@ -107,7 +133,7 @@ fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
-docker-compose up -d --build ${service_name}
+docker-compose up -d --build ${payload_build}
 "
 
 # # SSH vào server và chạy lệnh build (giả sử bạn có file build.sh trong thư mục remote)

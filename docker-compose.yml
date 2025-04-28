@@ -34,7 +34,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./file-service/files:/app/files
+      - ./file-service/files:/files
 
   chat:
     build:
@@ -111,6 +111,45 @@ services:
       context: ./config-server
       dockerfile: Dockerfile
     container_name: config
+    networks:
+      - internal
+
+  http-server:
+    build: ./go-chat-service
+    container_name: http-server
+    ports:
+      - "8106:8081"
+    command: ["sh", "-c", "sleep 5 && /app/main http-serve --httpPort=8081 || sleep infinity"]
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+    networks:
+      - internal
+
+  ws-server:
+    build: ./go-chat-service
+    container_name: ws-server
+    ports:
+      - "8105:3001"
+    command: ["sh", "-c", "sleep 5 && /app/main ws-serve --wsPort=3001 || sleep infinity"]
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+    networks:
+      - internal
+  
+  swagger-chat:
+    build: ./go-chat-service
+    container_name: swagger-chat
+    ports:
+      - "8107:3001"
+    command: ["sh", "-c", "sleep 5 && /app/main swagger-serve || sleep infinity"]
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
     networks:
       - internal
 

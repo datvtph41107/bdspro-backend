@@ -34,6 +34,8 @@ import (
 	"bdspro/v1/mod/user/list"
 	"bdspro/v1/mod/user/post"
 	"bdspro/v1/mod/user/product"
+	"bdspro/v1/mod/user/product_access"
+	"bdspro/v1/mod/user/product_child"
 	"bdspro/v1/mod/user/transaction"
 	"common/db"
 	"github.com/google/wire"
@@ -68,7 +70,12 @@ func InitializeApp() (*ConfigApp, error) {
 	projectRepo := a_project.NewProjectRepo(db)
 	listService := u_list.NewUserListService(propertyTypeRepo, regionRepo, docTypeRepo, projectRepo, amenityRepo)
 	listRoute := u_list.NewListRoute(listService)
-	userRoute := user.NewUserRoute(userProductRoute, listRoute)
+	userProductChildRepo := u_product_child.NewUserProductChildRepo(db, productPriceRepo, productAccessRepo, productPrivateRepo)
+	productChildService := u_product_child.NewProductChildService(userProductChildRepo, userProductRepo, postRepo, assetRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo, productService)
+	userProductChildRoute := u_product_child.NewUserProductChildRoute(productChildService)
+	productAccessService := u_product_access.NewUserProductAccessService(productAccessRepo, productService)
+	userProductAccessRoute := u_product_access.NewUserProductAccessRoute(productAccessService)
+	userRoute := user.NewUserRoute(userProductRoute, listRoute, userProductChildRoute, userProductAccessRoute)
 	provinceRepo := province.NewProvinceRepo(db)
 	provinceService := province.NewProvinceService(provinceRepo)
 	provinceRouter := province.NewProvinceRouter(provinceService)
@@ -102,8 +109,8 @@ func InitializeApp() (*ConfigApp, error) {
 	developerRepo := a_developer.NewDeveloperRepo(db)
 	developerService := a_developer.NewDeveloperService(developerRepo)
 	developerRouter := a_developer.NewDeveloperRouter(developerService)
-	productAccessService := a_product_access.NewProductAccessService(productAccessRepo)
-	productAccessRouter := a_product_access.NewProductAccessRouter(productAccessService)
+	a_product_accessProductAccessService := a_product_access.NewProductAccessService(productAccessRepo)
+	productAccessRouter := a_product_access.NewProductAccessRouter(a_product_accessProductAccessService)
 	adminRoute := admin.NewAdminRoute(provinceRouter, districtRouter, wardRouter, adminProductRouter, propertyTypeRouter, docTypeRouter, amenityRouter, projectRouter, projectBuildRouter, buildRoomRouter, apartmentRouter, developerRouter, productAccessRouter)
 	configApp := NewConfigApp(userRoute, adminRoute)
 	return configApp, nil
@@ -112,4 +119,4 @@ func InitializeApp() (*ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, a_product.NewAdminProductRepo, a_product.NewAdminProductRouter, a_product.NewAdminProductService, admin.NewAdminRoute, amenity.NewAmenityRepo, a_amenity.NewAmenityRouter, a_amenity.NewAmenityService, attribute_attribute.NewApartmentAttrRepo, a_apartment.NewApartmentRepo, a_apartment.NewApartmentRouter, a_apartment.NewApartmentService, u_asset.NewAssetRepo, u_asset.NewAssetService, a_build_room.NewBuildRoomRepo, a_build_room.NewBuildRoomRouter, a_build_room.NewBuildRoomService, a_developer.NewDeveloperRepo, a_developer.NewDeveloperRouter, a_developer.NewDeveloperService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, house_info.NewHouseInfoRepo, u_list.NewListRoute, u_post.NewPostRepo, u_post.NewPostService, product_accecss.NewProductAccessRepo, a_product_access.NewProductAccessRouter, a_product_access.NewProductAccessService, product_media.NewProductMediaRepo, product_price.NewProductPriceRepo, product_private.NewProductPrivateRepo, u_product.NewProductService, a_project_build.NewProjectBuildRepo, a_project_build.NewProjectBuildRouter, a_project_build.NewProjectBuildService, a_project.NewProjectRepo, a_project.NewProjectRouter, a_project.NewProjectService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, g_region.NewRegionRepo, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_list.NewUserListService, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)
+var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, a_product.NewAdminProductRepo, a_product.NewAdminProductRouter, a_product.NewAdminProductService, admin.NewAdminRoute, amenity.NewAmenityRepo, a_amenity.NewAmenityRouter, a_amenity.NewAmenityService, attribute_attribute.NewApartmentAttrRepo, a_apartment.NewApartmentRepo, a_apartment.NewApartmentRouter, a_apartment.NewApartmentService, u_asset.NewAssetRepo, u_asset.NewAssetService, a_build_room.NewBuildRoomRepo, a_build_room.NewBuildRoomRouter, a_build_room.NewBuildRoomService, a_developer.NewDeveloperRepo, a_developer.NewDeveloperRouter, a_developer.NewDeveloperService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, house_info.NewHouseInfoRepo, u_list.NewListRoute, u_post.NewPostRepo, u_post.NewPostService, product_accecss.NewProductAccessRepo, a_product_access.NewProductAccessRouter, a_product_access.NewProductAccessService, u_product_child.NewProductChildService, product_media.NewProductMediaRepo, product_price.NewProductPriceRepo, product_private.NewProductPrivateRepo, u_product.NewProductService, a_project_build.NewProjectBuildRepo, a_project_build.NewProjectBuildRouter, a_project_build.NewProjectBuildService, a_project.NewProjectRepo, a_project.NewProjectRouter, a_project.NewProjectService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, g_region.NewRegionRepo, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_list.NewUserListService, u_product_access.NewUserProductAccessRoute, u_product_access.NewUserProductAccessService, u_product_child.NewUserProductChildRepo, u_product_child.NewUserProductChildRoute, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)

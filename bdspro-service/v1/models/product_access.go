@@ -11,8 +11,9 @@ type ProductAccess struct {
 	Product    *ProductItem `json:"product"`
 	ProductID  uint64       `json:"productId"`
 	Fields     string       `json:"fields"`
-	TargetType uint         `json:"targetType"`
+	TargetType uint         `json:"targetType"` // 1: cá nhân, 2: nhóm, 3: tổ chức
 	TargetId   uint64       `json:"targetId"`
+	Commission float32      `json:"commission"`
 }
 
 // GORM table name override

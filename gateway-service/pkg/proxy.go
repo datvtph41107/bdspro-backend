@@ -10,6 +10,7 @@ import (
 )
 
 func (g *Gateway) ProxyRequest(c *gin.Context) {
+	fmt.Println("ProxyRequest")
 	serviceName := c.Param("service")
 	path := c.Param("path")
 
@@ -52,19 +53,24 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	// targetURL := fmt.Sprintf("http://%s/%s%s", serviceName, service.Port, serviceName, path)
 	targetURL := fmt.Sprintf(
 		"http://%s:%d/%s%s?%s",
-		serviceName,
+		"localhost",
 		serviceIp,
 		serviceName,
 		path,
 		c.Request.URL.RawQuery,
 	)
 
-	fmt.Printf(targetURL)
+	fmt.Println(targetURL)
+	fmt.Println(c.Request.Header)
+	fmt.Println("c.Request.Method", c.Request.Method)
 
 	resp, err := g.Client.R().
 		SetHeaderMultiValues(c.Request.Header).
 		SetBody(c.Request.Body).
 		Execute(c.Request.Method, targetURL)
+
+	// fmt.Println("BODY: ", resp.RawResponse.Body)
+	// fmt.Println("resp.Header(): ", resp.Header())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -81,14 +87,21 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	for key, values := range resp.Header() {
 		for _, value := range values {
 			c.Writer.Header().Add(key, value)
+			// fmt.Println(key, value, " _HEADER_RESPONSE")
 		}
 	}
+
+	// c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Không được dùng "*"
+	fmt.Println(resp.Body(), " _BODY_RESPONSE")
 	// ✅ Gửi dữ liệu về FE
+	// "Access-Control-Allow-Origin"
+	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8102")
+	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	fmt.Println(c.Writer.Header(), "HEADER_REPONSE.......")
 	c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
 
 	// ✅ Đảm bảo CORS cho phép gửi Cookie
-	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000") // Không được dùng "*"
-	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	// target, _ := url.Parse("http://userservice:8080") // Đổi thành URL của User Service
 	// proxy := httputil.NewSingleHostReverseProxy(target)

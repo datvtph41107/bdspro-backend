@@ -33,6 +33,8 @@ import (
 	bdspro_v1_mod_user_list "bdspro/v1/mod/user/list"
 	bdspro_v1_mod_user_post "bdspro/v1/mod/user/post"
 	bdspro_v1_mod_user_product "bdspro/v1/mod/user/product"
+	bdspro_v1_mod_user_product_access "bdspro/v1/mod/user/product_access"
+	bdspro_v1_mod_user_product_child "bdspro/v1/mod/user/product_child"
 	bdspro_v1_mod_user_transaction "bdspro/v1/mod/user/transaction"
 )
 
@@ -72,6 +74,7 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_global_product_access.NewProductAccessRepo,
 	bdspro_v1_mod_admin_product_access.NewProductAccessRouter,
 	bdspro_v1_mod_admin_product_access.NewProductAccessService,
+	bdspro_v1_mod_user_product_child.NewProductChildService,
 	bdspro_v1_mod_global_product_media.NewProductMediaRepo,
 	bdspro_v1_mod_global_product_price.NewProductPriceRepo,
 	bdspro_v1_mod_global_product_private.NewProductPrivateRepo,
@@ -92,6 +95,10 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_user_transaction.NewTransactionRepo,
 	bdspro_v1_mod_user_transaction.NewTransactionService,
 	bdspro_v1_mod_user_list.NewUserListService,
+	bdspro_v1_mod_user_product_access.NewUserProductAccessRoute,
+	bdspro_v1_mod_user_product_access.NewUserProductAccessService,
+	bdspro_v1_mod_user_product_child.NewUserProductChildRepo,
+	bdspro_v1_mod_user_product_child.NewUserProductChildRoute,
 	bdspro_v1_mod_user_product.NewUserProductRepo,
 	bdspro_v1_mod_user_product.NewUserProductRoute,
 	bdspro_v1_mod_user.NewUserRoute,

@@ -122,6 +122,8 @@ func LoadFileAndResponse(c *gin.Context, path string, ext string) {
 		"webm": "video/webm",
 		"ogg":  "video/ogg",
 		"png":  "image/png",
+		"jpg":  "image/jpg",
+		"jpeg": "image/jpeg",
 	}
 	mime, exists := contentType[ext]
 	if exists {
@@ -163,11 +165,11 @@ func LoadFileAndResponse(c *gin.Context, path string, ext string) {
 		}
 
 		length := end - start + 1
-		limit := int64(5 * 1024 * 1024) // limit 5MB cho mỗi lần load video
-		if length > limit {
-			end = start + limit - 1
-			length = limit
-		}
+		// limit := int64(5 * 1024 * 1024) // limit 5MB cho mỗi lần load video
+		// if length > limit {
+		// 	end = start + limit - 1
+		// 	length = limit
+		// }
 
 		file.Seek(start, 0)
 		buffer := make([]byte, length)

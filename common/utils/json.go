@@ -2,11 +2,115 @@ package _utils
 
 import (
 	_routes "common/routes"
+	"fmt"
+	"net/url"
+	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 func ParseBody[T any](c *gin.Context) (*T, error) {
+	var entity T
+
+	// Đọc toàn bộ body từ request
+	if err := c.ShouldBindJSON(&entity); err != nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	return &entity, nil
+}
+
+func ParseBodyWithValidator[T any](c *gin.Context, target *T) error {
+	if err := c.ShouldBindJSON(target); err != nil {
+		if ve, ok := err.(validator.ValidationErrors); ok {
+			errorsMap := map[string]string{}
+			for _, fe := range ve {
+				field := strings.ToLower(fe.Field())
+
+				if f, ok := reflect.TypeOf(*target).FieldByName(fe.StructField()); ok {
+					if tag := f.Tag.Get("json"); tag != "" {
+						field = tag
+					}
+				}
+
+				switch fe.Tag() {
+				case "required":
+					errorsMap[field] = "Trường " + field + " là bắt buộc"
+				case "email":
+					errorsMap[field] = "Trường " + field + " phải là email hợp lệ"
+				case "min":
+					errorsMap[field] = "Trường " + field + " phải có ít nhất " + fe.Param() + " ký tự"
+				case "max":
+					errorsMap[field] = "Trường " + field + " không được vượt quá " + fe.Param() + " ký tự"
+				case "gte":
+					errorsMap[field] = "Trường " + field + " phải lớn hơn hoặc bằng " + fe.Param()
+				case "gt":
+					errorsMap[field] = "Trường " + field + " phải lớn hơn " + fe.Param()
+				case "lte":
+					errorsMap[field] = "Trường " + field + " phải nhỏ hơn hoặc bằng " + fe.Param()
+				case "lt":
+					errorsMap[field] = "Trường " + field + " phải nhỏ hơn " + fe.Param()
+				case "len":
+					errorsMap[field] = "Trường " + field + " phải có độ dài chính xác là " + fe.Param()
+				case "oneof":
+					errorsMap[field] = "Trường " + field + " phải là một trong các giá trị: " + fe.Param()
+				case "url":
+					errorsMap[field] = "Trường " + field + " phải là URL hợp lệ"
+				case "uuid":
+					errorsMap[field] = "Trường " + field + " phải là UUID hợp lệ"
+				case "numeric":
+					errorsMap[field] = "Trường " + field + " phải là số"
+				case "alpha":
+					errorsMap[field] = "Trường " + field + " chỉ được chứa chữ cái"
+				case "alphanum":
+					errorsMap[field] = "Trường " + field + " chỉ được chứa chữ cái và số"
+				case "startswith":
+					errorsMap[field] = "Trường " + field + " phải bắt đầu với: " + fe.Param()
+				case "endswith":
+					errorsMap[field] = "Trường " + field + " phải kết thúc với: " + fe.Param()
+				default:
+					errorsMap[field] = "Trường " + field + " không hợp lệ"
+				}
+			}
+
+			return &_routes.Except{
+				Code:    400,
+				Message: "Validation failed",
+				Errors:  errorsMap,
+			}
+		}
+
+		// Nếu không phải lỗi validator (ví dụ: JSON không hợp lệ)
+		return &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	return nil
+}
+
+func ParseQuery2[T any](c *gin.Context, target *T) error {
+	// Đọc toàn bộ body từ request
+	if err := c.ShouldBindQuery(&target); err != nil {
+		return &_routes.Except{
+			Code:    400,
+			Message: err.Error(),
+		}
+	}
+
+	return nil
+}
+
+func ParseQuery[T any](c *gin.Context) (*T, error) {
 	var entity T
 
 	// Đọc toàn bộ body từ request
@@ -18,4 +122,191 @@ func ParseBody[T any](c *gin.Context) (*T, error) {
 	}
 
 	return &entity, nil
+}
+
+func CompareEqual[T1, T2 any](t1 *T1, t2 *T2) bool {
+	// Kiểm tra nếu cả hai đều là nil
+	if t1 == nil && t2 == nil {
+		return true
+	}
+
+	// Nếu cả hai đều nil, trả về false
+	if reflect.TypeOf(t1) == reflect.TypeOf(t2) {
+		return reflect.DeepEqual(t1, t2) // So sánh khác nhau
+	}
+
+	return false
+}
+
+func ParseQueryToStruct[T any](query url.Values) (*T, error) {
+	var t T
+	v := reflect.ValueOf(&t).Elem()
+	tType := v.Type()
+
+	for i := 0; i < tType.NumField(); i++ {
+		field := tType.Field(i)
+		valueField := v.Field(i)
+
+		if !valueField.CanSet() {
+			continue
+		}
+
+		// Lấy tên query từ tag
+		queryKey := field.Tag.Get("form")
+		if queryKey == "" {
+			queryKey = field.Tag.Get("parser")
+		}
+		if queryKey == "" {
+			continue
+		}
+
+		raw := query.Get(queryKey)
+		if raw == "" {
+			continue
+		}
+		// Handle *time.Time
+		if valueField.Kind() == reflect.Ptr && valueField.Type().Elem() == reflect.TypeOf(time.Time{}) {
+			parsedTime, err := time.Parse(time.RFC3339, raw)
+			if err != nil {
+				return nil, fmt.Errorf("invalid time for %s: %v", queryKey, err)
+			}
+			valueField.Set(reflect.ValueOf(&parsedTime))
+			continue
+		}
+
+		rawValues := strings.Split(raw, ",")
+
+		switch valueField.Kind() {
+		case reflect.String:
+			valueField.SetString(raw)
+
+		case reflect.Float64:
+			parsed, err := strconv.ParseFloat(raw, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid float for %s: %v", queryKey, err)
+			}
+			valueField.SetFloat(parsed)
+
+		case reflect.Uint, reflect.Uint64:
+			parsed, err := strconv.ParseUint(raw, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid int for %s: %v", queryKey, err)
+			}
+			valueField.SetUint(parsed)
+
+		case reflect.Slice:
+			elemKind := valueField.Type().Elem().Kind()
+			slice := reflect.MakeSlice(valueField.Type(), 0, len(rawValues))
+			for _, s := range rawValues {
+				s = strings.TrimSpace(s)
+				switch elemKind {
+				case reflect.String:
+					slice = reflect.Append(slice, reflect.ValueOf(s))
+
+				case reflect.Uint64:
+					num, err := strconv.ParseUint(s, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid int64 in %s: %v", queryKey, err)
+					}
+					slice = reflect.Append(slice, reflect.ValueOf(num))
+
+				case reflect.Uint:
+					num, err := strconv.ParseUint(s, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid uint in %s: %v", queryKey, err)
+					}
+					slice = reflect.Append(slice, reflect.ValueOf(uint(num)))
+
+				default:
+					return nil, fmt.Errorf("unsupported slice type in %s", queryKey)
+				}
+			}
+			valueField.Set(slice)
+
+			// default:
+			// 	return nil, fmt.Errorf("unsupported field kind %s in %s", valueField.Kind(), field.Name)
+		}
+	}
+
+	return &t, nil
+}
+
+var vietnameseNumbers = map[string]int{
+	"một":  1,
+	"hai":  2,
+	"ba":   3,
+	"bốn":  4,
+	"năm":  5,
+	"sáu":  6,
+	"bảy":  7,
+	"tám":  8,
+	"chín": 9,
+	"mười": 10,
+}
+
+func ParseNumber(str string) *int {
+	str = strings.TrimSpace(strings.ToLower(str))
+	if num, err := strconv.Atoi(str); err == nil {
+		return &num
+	}
+	if val, exists := vietnameseNumbers[str]; exists {
+		return &val
+	}
+	return nil
+}
+
+func normalizeNumberWords(input string) string {
+	input = strings.ToLower(input)
+	for word, digit := range vietnameseNumbers {
+		input = strings.ReplaceAll(input, word, strconv.FormatInt(int64(digit), 10))
+	}
+	input = strings.ReplaceAll(input, "phẩy", ".")
+	input = strings.ReplaceAll(input, "chấm", ".")
+	input = strings.ReplaceAll(input, ",", ".")
+	input = strings.ReplaceAll(input, "tỷ", "")
+	return strings.TrimSpace(input)
+}
+
+func ExtractPriceInSentence(sentence string) (int64, error) {
+	// Tìm cụm có dạng "... tỷ ..."
+	re := regexp.MustCompile(`([\p{L}\d\s\.,]+?)\s*tỷ`)
+	matches := re.FindAllStringSubmatch(sentence, -1)
+
+	if len(matches) == 0 {
+		return 0, fmt.Errorf("Không tìm thấy giá trị tỷ")
+	}
+
+	// Xử lý cụm đầu tiên (nếu có nhiều thì có thể duyệt thêm)
+	for _, match := range matches {
+		raw := normalizeNumberWords(match[1])
+		raw = strings.ReplaceAll(raw, " ", "")
+		if raw == "" {
+			continue
+		}
+		if val, err := strconv.ParseFloat(raw, 64); err == nil {
+			return int64(val * 1_000_000_000), nil
+		}
+	}
+
+	return 0, fmt.Errorf("Không parse được số")
+}
+
+type Rule struct {
+	Field    string
+	Pattern  *regexp.Regexp
+	GetValue func([]string) interface{}
+}
+
+func ParseWithRules(sentence string, rules []Rule) map[string]interface{} {
+	result := make(map[string]interface{})
+	for _, rule := range rules {
+		match := rule.Pattern.FindStringSubmatch(sentence)
+		if len(match) > 0 {
+			value := rule.GetValue(match)
+			if value != nil {
+				result[rule.Field] = value
+			}
+		}
+	}
+	return result
 }

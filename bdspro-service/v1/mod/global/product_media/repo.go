@@ -1,7 +1,7 @@
 package product_media
 
 import (
-	"bdspro/v1/data"
+	u_product_dto "bdspro/v1/mod/user/product/dto"
 	"bdspro/v1/models"
 
 	"gorm.io/gorm"
@@ -35,7 +35,7 @@ func (repo *ProductMediaRepo) Create(access *models.ProductMedia) error {
 	return repo.DB.Create(&access).Error
 }
 
-func (r *ProductMediaRepo) UpdateProductMediaItems(productID uint64, mediaItems []data.MediaItem) error {
+func (r *ProductMediaRepo) UpdateProductMediaItems(productID uint64, mediaItems []u_product_dto.MediaItem) error {
 	// Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
 	tx := r.DB.Begin()
 

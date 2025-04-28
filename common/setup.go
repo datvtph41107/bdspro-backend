@@ -24,6 +24,15 @@ func SetupRestfulAPI(parameters SetupParameters, setup func()) {
 	_db.NewDB()
 	parameters.Engine.GET(parameters.Prefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
 	// models.AutoMigrate()
+	// parameters.Engine.Use(cors.New(cors.Config{
+	// 	AllowOrigins: []string{"http://localhost:3000", "http://14.225.210.29:8000"}, // Cho phép gọi từ frontend
+	// 	AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+	// 	// ExposeHeaders:    []string{"Content-Length"},
+	// 	ExposeHeaders:    []string{"Content-Length", "Set-Cookie"}, // Cho phép frontend thấy Set-Cookie
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 
 	setup()
 

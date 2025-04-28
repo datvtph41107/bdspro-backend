@@ -14,6 +14,7 @@ import (
 	g_region "bdspro/v1/mod/global/region"
 	u_asset "bdspro/v1/mod/user/asset"
 	u_post "bdspro/v1/mod/user/post"
+	u_product_dto "bdspro/v1/mod/user/product/dto"
 	"bdspro/v1/models"
 	"bdspro/v1/utils"
 	_db "common/db"
@@ -213,10 +214,10 @@ func (s *ProductService) UpdateProductStatus(ctx *gin.Context,
 		}
 	}
 
-	return s.productRepo.UpdateStatus(ctx, productID, newStatus)
+	return s.productRepo.UpdateSaleStatus(ctx, productID, newStatus)
 }
 
-func (s *ProductService) CreateProduct(c *gin.Context, product *data.ProductSaveRequest) (*models.Product, error) {
+func (s *ProductService) CreateProduct(c *gin.Context, product *u_product_dto.ProductSaveRequest) (*models.Product, error) {
 	profileId := _jwt.GetProfileId(c)
 
 	entity := &models.Product{}
@@ -307,7 +308,7 @@ func (s *ProductService) SearchProductMarket(c *gin.Context, dto *data.ProductSe
 	}, err
 }
 
-func (s *ProductService) UpdateReference(c *gin.Context, entity *models.Product, dto *data.ProductSaveRequest) error {
+func (s *ProductService) UpdateReference(c *gin.Context, entity *models.Product, dto *u_product_dto.ProductSaveRequest) error {
 	if dto.AmenityIds != nil {
 		s.productRepo.UpdateProductAmenityIds(entity.ID, dto.AmenityIds)
 	}
@@ -336,7 +337,7 @@ func (s *ProductService) UpdateReference(c *gin.Context, entity *models.Product,
 	return err
 }
 
-func (s *ProductService) Update(c *gin.Context, id uint64, product *data.ProductSaveRequest) (*models.Product, error) {
+func (s *ProductService) Update(c *gin.Context, id uint64, product *u_product_dto.ProductSaveRequest) (*models.Product, error) {
 	profileId := _jwt.GetProfileId(c)
 	entity, err := s.CheckAccessProduct(c, profileId, id)
 	if err != nil {
@@ -446,7 +447,7 @@ func (s *ProductService) UpdateAmenity(productID uint64, ids []uint64) error {
 	return nil
 }
 
-func (s *ProductService) UpdateMediaItems(productID uint64, items []data.MediaItem) error {
+func (s *ProductService) UpdateMediaItems(productID uint64, items []u_product_dto.MediaItem) error {
 	return s.mediaRepo.UpdateProductMediaItems(productID, items)
 }
 
@@ -460,6 +461,7 @@ func (s *ProductService) UpdateHouseInfo(c *gin.Context, productId uint64, house
 }
 
 func (s *ProductService) UpdatePrivateData(c *gin.Context, productID uint64, privateInfo *models.ProductPrivate) error {
+
 	return s.productPrivate.UpdateInfo(c, productID, privateInfo)
 }
 
@@ -477,7 +479,7 @@ func (s *ProductService) InferenceString(text string) string {
 	return ""
 }
 
-func (s *ProductService) CreateProductWithDetect(c *gin.Context, body *data.ProductSaveDetect) (any, error) {
+func (s *ProductService) CreateProductWithDetect(c *gin.Context, body *u_product_dto.ProductSaveDetect) (any, error) {
 	// searchs, err := utils.InferSearchText(body.Content)
 	// if err != nil {
 	// 	return nil, err
@@ -546,4 +548,130 @@ func (s *ProductService) CreateProductWithDetect(c *gin.Context, body *data.Prod
 	}
 
 	return searchs, nil
+}
+
+func (s *ProductService) RequiredOwner(c *gin.Context, id uint64) (*models.Product, error) {
+	product, err := s.productRepo.GetByID(c, id)
+	if err != nil {
+		return nil, err
+	}
+
+	profileId := _jwt.GetProfileId(c)
+
+	if *product.OwnerUserID != profileId {
+		return nil, &_routes.Except{
+			Code:    401,
+			Message: "Bạn không có quyền truy cập",
+		}
+	}
+	return product, nil
+}
+
+func (s *ProductService) Archived(c *gin.Context, dto u_product_dto.ArchivedRequest) error {
+	if _, err := s.RequiredOwner(c, *dto.ProductId); err != nil {
+		return err
+	}
+
+	return s.productRepo.UpdateArchived(c, dto)
+}
+
+func (s *ProductService) Delete(c *gin.Context, id uint64) error {
+	// sản phẩm đang cọc
+	product, err := s.RequiredOwner(c, id)
+	if err != nil {
+		return err
+	}
+
+	// todo: thêm hoặc có tin active
+	if product.SaleStatus != enums.ProductNotSold || product.RentStatus != enums.ProductNotRent {
+		return &_routes.Except{
+			Code:    401,
+			Message: "Không thể xóa sản phẩm này",
+		}
+	}
+	return s.productRepo.Delete(id)
+}
+
+func (s *ProductService) RentStatusUpdate(c *gin.Context, dto u_product_dto.StatusUpdate) error {
+	// sản phẩm đang cọc
+	_, err := s.RequiredOwner(c, *dto.ProductID)
+	if err != nil {
+		return err
+	}
+	return s.productRepo.UpdateRentStatus(c, *dto.ProductID, dto.Status)
+}
+
+func (s *ProductService) SaleStatusUpdate(c *gin.Context, dto u_product_dto.StatusUpdate) error {
+	// sản phẩm đang cọc
+	_, err := s.RequiredOwner(c, *dto.ProductID)
+	if err != nil {
+		return err
+	}
+	return s.productRepo.UpdateSaleStatus(c, *dto.ProductID, dto.Status)
+}
+
+func (s *ProductService) RentVisibilityUpdate(c *gin.Context, dto u_product_dto.VisibilityUpdate) error {
+	// sản phẩm đang cọc
+	_, err := s.RequiredOwner(c, *dto.ProductID)
+	if err != nil {
+		return err
+	}
+	return s.productRepo.UpdateRentVisibility(c, *dto.ProductID, dto.Visibility)
+}
+
+func (s *ProductService) SaleVisibilityUpdate(c *gin.Context, dto u_product_dto.VisibilityUpdate) error {
+	// sản phẩm đang cọc
+	_, err := s.RequiredOwner(c, *dto.ProductID)
+	if err != nil {
+		return err
+	}
+	return s.productRepo.UpdateSaleVisibility(c, *dto.ProductID, dto.Visibility)
+}
+
+func (s *ProductService) ProductDeposite(c *gin.Context, dto u_product_dto.DepositeRequest) error {
+	// sản phẩm đang cọc
+	product, err := s.RequiredOwner(c, dto.ProductID)
+	if err != nil {
+		return err
+	}
+
+	if product.DepositeID != nil {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Sản phẩm đã đặt cọc",
+		}
+	}
+
+	record := models.Deposite{
+		ProductID:     dto.ProductID,
+		CustomerName:  dto.CustomerName,
+		CustomerPhone: dto.CustomerPhone,
+		Amount:        dto.Amount,
+		Note:          dto.Note,
+	}
+	if err := s.productRepo.NewDeposite(c, &record); err != nil {
+		return err
+	}
+	product.DepositeID = &record.ID
+
+	return s.productRepo.Update(c, product.ID, product)
+}
+
+func (s *ProductService) CancelDeposite(c *gin.Context, id uint64) error {
+	// sản phẩm đang cọc
+	product, err := s.RequiredOwner(c, id)
+	if err != nil {
+		return err
+	}
+
+	if product.DepositeID == nil {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Sản phẩm chưa đặt cọc",
+		}
+	}
+
+	product.DepositeID = nil
+
+	return s.productRepo.Update(c, product.ID, product)
 }

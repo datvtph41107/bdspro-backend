@@ -5,6 +5,7 @@ import (
 	"auth/models"
 	_db "common/db"
 	_jwt "common/jwt"
+	_utils "common/utils"
 	"errors"
 	"strconv"
 
@@ -86,7 +87,43 @@ func (s *ProfileService) ProfileGetByPhone(c *gin.Context) (*data.PublicUserInfo
 		return nil, nil
 	}
 
-	var info data.PublicUserInfo
+	var info *data.PublicUserInfo
+	copier.Copy(&info, &infoEntity)
+
+	return info, nil
+}
+
+func (s *ProfileService) ProfileChatFind(c *gin.Context) (*[]data.PublicUserInfo, error) {
+	// var infoEntity models.UserProfileEntity
+	phone := c.DefaultQuery("text", "")
+
+	// Lấy thông tin user từ DB
+	infoEntity, err := models.ProfileSearchForChat(phone)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	var info []data.PublicUserInfo
+
+	copier.Copy(&info, &infoEntity)
+
+	return &info, nil
+}
+
+func (s *ProfileService) ProfileFindByIds(c *gin.Context) (*[]data.PublicUserInfo, error) {
+	// var infoEntity models.UserProfileEntity
+	dto, _ := _utils.ParseQueryToStruct[data.ProfileIDsRequest](c.Request.URL.Query())
+	ids := dto.IDs
+	// Lấy thông tin user từ DB
+	infoEntity, err := models.ProfileByIDs(ids)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	var info []data.PublicUserInfo
+
 	copier.Copy(&info, &infoEntity)
 
 	return &info, nil

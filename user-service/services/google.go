@@ -120,6 +120,9 @@ func (g *GoogleAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]
 	}
 
 	session := g.AuthService.CreateSession(c, existingUser, &data.OtpVerifyRequest{})
+	// refreshToken := g.AuthService.GetRefreshToken(existingUser, session.SessionID)
+	// g.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	return g.AuthService.ResponseLogin(existingUser, session.SessionID), nil
 }

@@ -1,0 +1,7 @@
+{
+  "ProductChildValidator": [
+    { "field": "area", "type": "required" },
+    { "field": "parentId", "type": "required" },
+    { "field": "name", "type": "required" }
+  ]
+}

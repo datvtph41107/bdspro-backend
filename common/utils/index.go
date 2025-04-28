@@ -16,3 +16,13 @@ func AuditIP(c *gin.Context) string {
 	clientIP := strings.Split(xfHeader, ",")[0]
 	return strings.TrimSpace(clientIP)
 }
+
+// TrimFirstWords cắt n từ đầu tiên của chuỗi
+func TrimFirstWords(text string, n int) string {
+	words := strings.Fields(text) // Tách thành mảng các từ, tự động bỏ khoảng trắng thừa
+
+	if len(words) <= n {
+		return strings.Join(words, " ")
+	}
+	return strings.Join(words[:n], " ")
+}

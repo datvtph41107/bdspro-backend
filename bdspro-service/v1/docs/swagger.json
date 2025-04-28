@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/bdspro",
+    "basePath": "/bdspro/v1",
     "paths": {
         "/admin/amenity": {
             "get": {
@@ -698,6 +698,274 @@
                 }
             }
         },
+        "/admin/developer": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách tất cả các Dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy danh sách Dự án",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Developer"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể lấy danh sách",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một Dự án mới vào hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Tạo Dự án mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin Dự án",
+                        "name": "Developer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Developer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Developer"
+                        }
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể tạo dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/developer/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về thông tin chi tiết của một Dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy thông tin Dự án theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Developer"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin Dự án theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cập nhật thông tin Dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin Dự án mới",
+                        "name": "Developer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Developer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Developer"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể cập nhật dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa Dự án theo ID (soft delete)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Xóa Dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái xóa",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể xóa dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/districts": {
             "get": {
                 "security": [
@@ -1234,7 +1502,7 @@
                 }
             }
         },
-        "/admin/project": {
+        "/admin/product-access": {
             "get": {
                 "security": [
                     {
@@ -1258,7 +1526,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Project"
+                                "$ref": "#/definitions/models.ProductAccess"
                             }
                         }
                     },
@@ -1293,11 +1561,11 @@
                 "parameters": [
                     {
                         "description": "Thông tin Dự án",
-                        "name": "Project",
+                        "name": "ProductAccess",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/models.ProductAccess"
                         }
                     }
                 ],
@@ -1305,7 +1573,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/models.ProductAccess"
                         }
                     },
                     "400": {
@@ -1319,6 +1587,219 @@
                     },
                     "500": {
                         "description": "Không thể tạo dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/product-access/private-fields": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách tất cả các Dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy danh sách Dự án",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ProductAccess"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể lấy danh sách",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/product-access/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về thông tin chi tiết của một Dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy thông tin Dự án theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin Dự án theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cập nhật thông tin Dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin Dự án mới",
+                        "name": "ProductAccess",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductAccess"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể cập nhật dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa Dự án theo ID (soft delete)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Xóa Dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái xóa",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể xóa dữ liệu",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1561,179 +2042,6 @@
                     {
                         "type": "integer",
                         "description": "ID của Tòa nhà trong dự án",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Trạng thái xóa",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "boolean"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "ID không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Không thể xóa dữ liệu",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/project/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Trả về thông tin chi tiết của một Dự án",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Lấy thông tin Dự án theo ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của Dự án",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.Project"
-                        }
-                    },
-                    "400": {
-                        "description": "ID không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Không tìm thấy dữ liệu",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật thông tin Dự án theo ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Cập nhật thông tin Dự án",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của Dự án",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin Dự án mới",
-                        "name": "Project",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Project"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.Project"
-                        }
-                    },
-                    "400": {
-                        "description": "ID không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Không thể cập nhật dữ liệu",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa Dự án theo ID (soft delete)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Xóa Dự án",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của Dự án",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2574,7 +2882,311 @@
                 }
             }
         },
-        "/user/product/me": {
+        "/user/product-access/private-fields": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách tất cả các Dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-share"
+                ],
+                "summary": "Lấy danh sách Dự án",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ProductAccess"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể lấy danh sách",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/product-access/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa Dự án theo ID (soft delete)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-share"
+                ],
+                "summary": "Xóa Dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Dự án",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái xóa",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ID không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể xóa dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/product-access/{productId}/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một Dự án mới vào hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-share"
+                ],
+                "summary": "Tạo Dự án mới",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Thông tin Dự án",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin Dự án",
+                        "name": "ProductAccess",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/u_product_access.AccessRequest"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể tạo dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/product/access-share": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Chia sẻ co-broker",
+                "responses": {}
+            }
+        },
+        "/user/product/deposite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cọc",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_dto.DepositeRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/deposite/{productId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Hủy cọc",
+                "responses": {}
+            }
+        },
+        "/user/product/devide": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-child"
+                ],
+                "summary": "Gộp toàn bộ sản phẩm con",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm con",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_child.DevideChildRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-child"
+                ],
+                "summary": "Gộp toàn bộ sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/market": {
             "get": {
                 "security": [
                     {
@@ -2589,9 +3201,9 @@
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "User/Product-search"
                 ],
-                "summary": "Lấy danh sách sản phẩm của user hiện tại",
+                "summary": "Lấy danh sách sản phẩm trang chủ",
                 "parameters": [
                     {
                         "type": "string",
@@ -2649,6 +3261,160 @@
                         "description": "Sort order",
                         "name": "sort",
                         "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-search"
+                ],
+                "summary": "Lấy danh sách sản phẩm của user hiện tại",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product code",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Product area",
+                        "name": "area",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product price",
+                        "name": "price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "null=\u003eall; 0=\u003eparent; \u003e0=\u003echildrent",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product description",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Additional notes",
+                        "name": "note",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Skip results",
+                        "name": "skip",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/merge": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-child"
+                ],
+                "summary": "Gộp sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path"
+                    },
+                    {
+                        "description": "Thông tin sản phẩm con",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_child.MergeProductChildRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/merge-all/{productId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-child"
+                ],
+                "summary": "Gộp toàn bộ sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -2732,6 +3498,70 @@
                 }
             }
         },
+        "/user/product/rent-status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_dto.StatusUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/rent-visibility": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Trạng thái sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_dto.VisibilityUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/user/product/revert/:id": {
             "put": {
                 "security": [
@@ -2771,6 +3601,278 @@
                 }
             }
         },
+        "/user/product/sale-status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_dto.StatusUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/sale-visibility": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Trạng thái sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_dto.VisibilityUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/split": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-child"
+                ],
+                "summary": "Tạo sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path"
+                    },
+                    {
+                        "description": "Thông tin sản phẩm con",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_product_child.SaveProductChildRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/suggest": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gợi ý các trường thông tin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product code",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Product area",
+                        "name": "area",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product price",
+                        "name": "price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product description",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Additional notes",
+                        "name": "note",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Skip results",
+                        "name": "skip",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/total": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-search"
+                ],
+                "summary": "Tìm kiếm tổng hợp",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Text",
+                        "name": "text",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Sizet results",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/product/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để tạo một sản phẩm mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Tạo sản phẩm mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Sản phẩm được tạo thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                }
+            }
+        },
         "/user/product/{productId}": {
             "put": {
                 "security": [
@@ -2803,8 +3905,36 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.ProductSaveRequest"
+                            "$ref": "#/definitions/u_product_dto.ArchivedRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -2829,56 +3959,6 @@
                 }
             }
         },
-        "data.HouseInfoUpdate": {
-            "type": "object",
-            "properties": {
-                "furniture": {
-                    "description": "Nội thất: \"full\", \"partial\", \"none\"",
-                    "type": "string"
-                },
-                "numBathroom": {
-                    "description": "Số WC (optional)",
-                    "type": "integer"
-                },
-                "numBedroom": {
-                    "description": "house info",
-                    "type": "integer"
-                },
-                "numCarPark": {
-                    "description": "Số chỗ để ôtô",
-                    "type": "integer"
-                },
-                "numFloor": {
-                    "description": "Số tầng (optional)",
-                    "type": "integer"
-                },
-                "numFront": {
-                    "description": "Số mặt tiền",
-                    "type": "integer"
-                },
-                "orientation": {
-                    "description": "Hướng nhà (Đông, Tây, Nam,...)",
-                    "type": "string"
-                }
-            }
-        },
-        "data.MediaItem": {
-            "type": "object",
-            "properties": {
-                "isMain": {
-                    "type": "boolean"
-                },
-                "mediaType": {
-                    "type": "string"
-                },
-                "mediaUrl": {
-                    "type": "string"
-                },
-                "order": {
-                    "type": "integer"
-                }
-            }
-        },
         "data.NewProductRequest": {
             "type": "object",
             "properties": {
@@ -2898,54 +3978,7 @@
                     "type": "string"
                 },
                 "price": {
-                    "type": "integer"
-                }
-            }
-        },
-        "data.ProductSaveRequest": {
-            "type": "object",
-            "properties": {
-                "amenityIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "area": {
-                    "type": "number"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "docTypeId": {
-                    "type": "integer"
-                },
-                "houseInfo": {
-                    "$ref": "#/definitions/data.HouseInfoUpdate"
-                },
-                "mediaItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/data.MediaItem"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "projectId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
+                    "$ref": "#/definitions/models.ProductPrice"
                 }
             }
         },
@@ -2954,6 +3987,51 @@
         },
         "data.StatusResponse": {
             "type": "object"
+        },
+        "enums.ProductStatus": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ],
+            "x-enum-comments": {
+                "ProductNotRent": "Chưa cho thuê",
+                "ProductNotSold": "Chưa bán",
+                "ProductRented": "Đã cho thuê",
+                "ProductRenting": "Đang cho thuê(cọc)",
+                "ProductSelling": "Đang bán(cọc)",
+                "ProductSold": "Đã bán"
+            },
+            "x-enum-varnames": [
+                "ProductNotSold",
+                "ProductSelling",
+                "ProductSold",
+                "ProductNotRent",
+                "ProductRenting",
+                "ProductRented"
+            ]
+        },
+        "enums.VisibilityStatus": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-comments": {
+                "VisiShow": "\"Đang hiển thị\"",
+                "VisibleInternal": "nội bộ",
+                "VisiblePublic": "công khai"
+            },
+            "x-enum-varnames": [
+                "VisiShow",
+                "VisiblePublic",
+                "VisibleInternal"
+            ]
         },
         "models.Amenity": {
             "type": "object",
@@ -3193,6 +4271,60 @@
                 }
             }
         },
+        "models.Developer": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "backgroundUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
         "models.District": {
             "type": "object",
             "properties": {
@@ -3244,14 +4376,11 @@
                 }
             }
         },
-        "models.Project": {
+        "models.ProductAccess": {
             "type": "object",
             "properties": {
-                "builds": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ProjectBuildItem"
-                    }
+                "commission": {
+                    "type": "number"
                 },
                 "createdAt": {
                     "type": "string"
@@ -3260,10 +4389,37 @@
                     "description": "gorm.Model",
                     "type": "integer"
                 },
-                "description": {
+                "fields": {
                     "type": "string"
                 },
-                "developerName": {
+                "id": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/models.ProductItem"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "description": "1: cá nhân, 2: nhóm, 3: tổ chức",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProductItem": {
+            "type": "object",
+            "properties": {
+                "code": {
                     "type": "string"
                 },
                 "id": {
@@ -3271,6 +4427,87 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "models.ProductPrice": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "deposite": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "priceOwner": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "rentCommission": {
+                    "type": "number"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "type": "integer"
+                },
+                "salePrice": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProductPrivate": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "importPrice": {
+                    "type": "integer"
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "operatingCost": {
+                    "type": "number"
+                },
+                "privateDocs": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -3327,23 +4564,6 @@
                     "type": "string"
                 },
                 "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.ProjectBuildItem": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "numApartment": {
-                    "type": "integer"
-                },
-                "numFloor": {
                     "type": "integer"
                 }
             }
@@ -3424,6 +4644,334 @@
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "u_product_access.AccessRequest": {
+            "type": "object",
+            "required": [
+                "targetId"
+            ],
+            "properties": {
+                "commission": {
+                    "type": "number"
+                },
+                "fields": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "description": "ProductID  *uint64 `json:\"parentId\" binding:\"required\"`",
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_child.DevideChildRequest": {
+            "type": "object",
+            "required": [
+                "childs",
+                "parentId"
+            ],
+            "properties": {
+                "childs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/u_product_dto.ProductSaveRequest"
+                    }
+                },
+                "parentId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_child.MergeProductChildRequest": {
+            "type": "object",
+            "required": [
+                "childIds",
+                "parentId"
+            ],
+            "properties": {
+                "childIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "parentId": {
+                    "description": "u_product_dto.ProductSaveRequest",
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_child.SaveProductChildRequest": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "parentId",
+                "price"
+            ],
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/u_product_dto.HouseInfoUpdate"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/u_product_dto.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "$ref": "#/definitions/models.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/models.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_dto.ArchivedRequest": {
+            "type": "object",
+            "required": [
+                "archived",
+                "productId"
+            ],
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_dto.DepositeRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "customerName",
+                "customerPhone",
+                "productId"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "customerName": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "customerPhone": {
+                    "type": "string",
+                    "minLength": 9
+                },
+                "note": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_dto.HouseInfoUpdate": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "description": "Nội thất: \"full\", \"partial\", \"none\"",
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "house info",
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "description": "Số chỗ để ôtô",
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "description": "Số tầng (optional)",
+                    "type": "integer"
+                },
+                "numFront": {
+                    "description": "Số mặt tiền",
+                    "type": "integer"
+                },
+                "orientation": {
+                    "description": "Hướng nhà (Đông, Tây, Nam,...)",
+                    "type": "string"
+                }
+            }
+        },
+        "u_product_dto.MediaItem": {
+            "type": "object",
+            "properties": {
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_dto.ProductSaveRequest": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "price"
+            ],
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/u_product_dto.HouseInfoUpdate"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/u_product_dto.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "$ref": "#/definitions/models.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/models.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "u_product_dto.StatusUpdate": {
+            "type": "object",
+            "required": [
+                "productId",
+                "status"
+            ],
+            "properties": {
+                "productId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                }
+            }
+        },
+        "u_product_dto.VisibilityUpdate": {
+            "type": "object",
+            "required": [
+                "productId",
+                "visibility"
+            ],
+            "properties": {
+                "productId": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/enums.VisibilityStatus"
                 }
             }
         }

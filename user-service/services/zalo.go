@@ -176,6 +176,9 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 	if err != nil {
 		return nil, err
 	}
+	// refreshToken := s.AuthService.GetRefreshToken(e, session.SessionID)
+	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	s.AuthService.GenRefreshToken(c, e, session.SessionID)
 
 	return s.AuthService.ResponseLogin(e, session.SessionID), nil
 }

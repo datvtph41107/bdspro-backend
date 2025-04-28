@@ -28,6 +28,9 @@ func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 	{
 		profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		profileGroup.GET("/find-by-phone", router.FindByPhone)
+		profileGroup.GET("/chat/find", router.FindOnChat)
+		profileGroup.GET("/find/ids", router.FindByIds)
+
 		profileGroup.GET("/find", router.FindByPhone)
 		profileGroup.GET("/me", router.ProfileMe)
 		profileGroup.PUT("/set-info", router.SetInfo)
@@ -48,6 +51,42 @@ func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 // @Router /profile/find-by-phone [get]
 func (p *ProfileRouter) FindByPhone(c *gin.Context) {
 	result, err := p.Profile.ProfileGetByPhone(c)
+
+	_routes.RouteResult(c, result, err)
+}
+
+// ProfileMe godoc
+// @Summary Lấy thông tin cá nhân của user
+// @Description API này trả về thông tin của user hiện tại
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query string true "ID của Profile"
+// @Success 200 {object} data.UserInfoResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /profile/chat/find [get]
+func (p *ProfileRouter) FindOnChat(c *gin.Context) {
+	result, err := p.Profile.ProfileChatFind(c)
+
+	_routes.RouteResult(c, result, err)
+}
+
+// ProfileMe godoc
+// @Summary Lấy thông tin cá nhân của user
+// @Description API này trả về thông tin của user hiện tại
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param ids query string true "ID của Profile"
+// @Success 200 {object} data.UserInfoResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /profile/find/ids [get]
+func (p *ProfileRouter) FindByIds(c *gin.Context) {
+	result, err := p.Profile.ProfileFindByIds(c)
 
 	_routes.RouteResult(c, result, err)
 }

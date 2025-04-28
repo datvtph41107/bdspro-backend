@@ -2,7 +2,7 @@ server:
   port: 8102
 
 database:
-  dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_bdspro port=5432 sslmode=disable
+  dsn: host=14.225.205.222 user=bdspro password=PdrX5OrvK5kVpfSlJzBTnJle dbname=db_bdspro port=5432 sslmode=disable
 
 key:
   jwt: key-generate-jwt-token-authentication

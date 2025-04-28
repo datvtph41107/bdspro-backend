@@ -6,6 +6,7 @@ import (
 	product_accecss "bdspro/v1/mod/global/product_access"
 	"bdspro/v1/mod/global/product_price"
 	"bdspro/v1/mod/global/product_private"
+	u_product_dto "bdspro/v1/mod/user/product/dto"
 	"bdspro/v1/models"
 	"common/case/crud2"
 	_db "common/db"
@@ -38,11 +39,36 @@ func NewUserProductRepo(db *gorm.DB,
 	}
 }
 
-func (r *UserProductRepo) UpdateStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+func (r *UserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_status", status).Error
+}
+func (r *UserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("rent_status", status).Error
+}
+func (r *UserProductRepo) UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("sale_visibility", vis).Error
+}
+func (r *UserProductRepo) UpdateRentVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("rent_visibility", vis).Error
+}
+
+func (r *UserProductRepo) UpdateArea(ctx context.Context, id uint64, area float64) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("area", area).Error
 }
 
 func (r *UserProductRepo) UpdateProduct(c *gin.Context, id uint64, entity *models.Product) error {
@@ -224,12 +250,24 @@ func (r *UserProductRepo) SearchProductWithOwner(profileId uint64, dto data.Prod
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId).
+		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+		// Order("created_at desc").
+		// Limit(pageable.Limit).
+		// Offset(pageable.Skip)
+
+	if dto.ParentID != nil && *dto.ParentID == 0 {
+		query = query.Where("products.parent_id is null")
+	} else if dto.ParentID != nil && *dto.ParentID > 0 {
+		query = query.Where("products.parent_id = ?", dto.ParentID)
+	}
+
+	err := query.
 		Order("created_at desc").
 		Limit(pageable.Limit).
-		Offset(pageable.Skip)
+		Offset(pageable.Skip).
+		Find(&results).Error
 
-	err := query.Find(&results).Error
+	// err := query.Find(&results).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -238,17 +276,6 @@ func (r *UserProductRepo) SearchProductWithOwner(profileId uint64, dto data.Prod
 	query.Count(&total)
 
 	return results, total, nil
-}
-
-func nullOrEmpty(s string) interface{} {
-	if strings.TrimSpace(s) == "" {
-		return nil
-	}
-	return s
-}
-
-func likePattern(s string) string {
-	return "%" + strings.ToLower(s) + "%"
 }
 
 func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.ProductSearchRequest, pageable _utils.Page) ([]models.Product, int64, error) {
@@ -353,7 +380,6 @@ func (r *UserProductRepo) SmartSearchProduct(
 ) ([]models.Product, int64, error) {
 	var results []models.Product
 	query := r.DB.
-		Debug().
 		Model(models.Product{}).
 		// Table("products p").
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
@@ -370,8 +396,7 @@ func (r *UserProductRepo) SmartSearchProduct(
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.deleted_at IS NULL").
-		Where("products.sale_visibility = ?", 3)
+		Where("products.sale_visibility = ? AND products.deleted_at IS NULL AND products.archived = false", 3)
 
 	if dto.Bedroom != nil {
 		query = query.Where("house_info.num_bedroom = ?", dto.Bedroom)
@@ -545,4 +570,14 @@ func (r *UserProductRepo) DetectProductData(profileId uint64, input string) ([]m
 	// }
 	// return results, total, nil
 	return nil, 0, nil
+}
+
+func (r *UserProductRepo) UpdateArchived(ctx *gin.Context, dto u_product_dto.ArchivedRequest) error {
+	return r.DB.WithContext(ctx).Model(&models.Product{}).
+		Where("id = ? and deleted_at is null", dto.ProductId).
+		Update("archived", dto.Archived).Error
+}
+
+func (r *UserProductRepo) NewDeposite(ctx *gin.Context, dto *models.Deposite) error {
+	return r.DB.WithContext(ctx).Create(&dto).Error
 }

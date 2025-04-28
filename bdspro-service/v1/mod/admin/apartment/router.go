@@ -76,3 +76,8 @@ func (r *ApartmentRouter) ImportExcel(c *gin.Context) {
 	result, err := r.Service.ImportApartments(c)
 	_routes.RouteResult(c, result, err)
 }
+
+func (r *ApartmentRouter) ExportExcel(c *gin.Context) {
+	result, err := r.Service.ImportApartments(c)
+	_routes.RouteResult(c, result, err)
+}

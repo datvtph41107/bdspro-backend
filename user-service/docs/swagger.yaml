@@ -35,8 +35,6 @@ definitions:
     properties:
       avatar:
         type: string
-      birth:
-        type: string
       fullname:
         type: string
       profileId:
@@ -381,6 +379,105 @@ paths:
       summary: OAuth Login
       tags:
       - OAuth
+  /profile/chat/find:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: text
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/find-by-phone:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/find/ids:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
   /profile/info/{profileId}:
     get:
       consumes:

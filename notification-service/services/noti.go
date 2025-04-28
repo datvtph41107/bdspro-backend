@@ -85,7 +85,7 @@ func (s *NotificationService) mapToDTO(entity models.NotificationEntity) data.No
 		Link:      entity.Link,
 		Type:      entity.Type,
 		IsRead:    entity.IsRead,
-		Timestamp: entity.CreatedAt,
+		Timestamp: *entity.CreatedAt,
 	}
 }
 

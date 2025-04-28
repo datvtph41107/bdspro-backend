@@ -76,3 +76,7 @@ func ValidateStruct(s interface{}) error {
 	validate := validator.New()
 	return validate.Struct(s)
 }
+
+type ProfileIDsRequest struct {
+	IDs []uint64 `form:"ids"`
+}

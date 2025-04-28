@@ -85,10 +85,38 @@ func ProfileGetByProfileId(profileId uint64) (*UserProfileEntity, error) {
 
 // GetByProfileId truy vấn UserProfileEntity theo profileId
 func ProfileGetByPhone(phone string) (*UserProfileEntity, error) {
-	var userProfile UserProfileEntity
-	if err := _db.DB.Where("phone = ? and deleted_at is null", phone).
-		First(&userProfile).Error; err != nil {
+	var userProfile *UserProfileEntity
+	if err := _db.DB.Model(&UserProfileEntity{}).
+		Where("(phone like '%' || ? || '%') and deleted_at is null", phone).
+		Scan(&userProfile).Error; err != nil {
 		return nil, err
 	}
-	return &userProfile, nil
+	return userProfile, nil
+}
+
+// GetByProfileId truy vấn UserProfileEntity theo profileId
+func ProfileSearchForChat(phone string) (*[]UserProfileEntity, error) {
+	var userProfile *[]UserProfileEntity
+
+	query := "%" + phone + "%"
+	if err := _db.DB.Debug().
+		Where("(phone ILIKE ? OR full_name ILIKE ?) AND deleted_at IS NULL", query, query).
+		// Where("(phone like '%' || ? || '%' or name like '%' || ? || '%') and deleted_at is null", phone, phone).
+		Find(&userProfile).Error; err != nil {
+		return nil, err
+	}
+	return userProfile, nil
+}
+
+// GetByProfileId truy vấn UserProfileEntity theo profileId
+func ProfileByIDs(ids []uint64) (*[]UserProfileEntity, error) {
+	var userProfile *[]UserProfileEntity
+
+	// query := "%" + phone + "%"
+	if err := _db.DB.Debug().
+		Where("profile_id in (?) AND deleted_at IS NULL", ids).
+		Find(&userProfile).Error; err != nil {
+		return nil, err
+	}
+	return userProfile, nil
 }

@@ -161,9 +161,10 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 		}
 	}
 
-	s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
-	refreshToken := s.GetRefreshToken(e, newSession.SessionID)
-	s.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
+	// refreshToken := s.GetRefreshToken(e, newSession.SessionID)
+	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	s.GenRefreshToken(c, e, newSession.SessionID)
 
 	return s.ResponseLogin(e, newSession.SessionID), nil
 }
@@ -617,7 +618,16 @@ func (s *AuthService) VerifyQRSession(c *gin.Context, e *data.SessionQRRequest, 
 		}
 	}
 
+	// s.RedisService.SaveToken(authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
+	// refreshToken := s.GetRefreshToken(authEntity, sessionId)
+	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	s.GenRefreshToken(c, authEntity, sessionId)
+	return s.ResponseLogin(authEntity, sessionEntity.SessionID), nil
+}
+
+func (s *AuthService) GenRefreshToken(c *gin.Context, authEntity *models.UserAuthEntity, sessionId uint64) string {
+	s.RedisService.SaveToken(authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
 	refreshToken := s.GetRefreshToken(authEntity, sessionId)
 	s.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	return s.ResponseLogin(authEntity, sessionEntity.SessionID), nil
+	return refreshToken
 }

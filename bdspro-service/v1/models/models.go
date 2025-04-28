@@ -6,11 +6,13 @@ import (
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
+		// &Deposite{},
+		// &ProductChildHistory{},
 		// &Product{},
 		// &Province{},
 		// &District{},
 		// &Ward{},
-		// &ProductAccess{},
+		&ProductAccess{},
 		// &DocType{},
 		// &PropertyType{},
 		// &Amenity{},
@@ -28,6 +30,6 @@ func AutoMigrate() {
 		// &ProductPrivate{},
 		// &Region{},
 		// &Product{},
-		&ProductPrice{},
+		// &ProductPrice{},
 	)
 }
