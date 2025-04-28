@@ -1,0 +1,60 @@
+package usecases
+
+import (
+	"context"
+
+	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
+	"github.com/tuandq3/go-chat-service/models"
+	"github.com/tuandq3/go-chat-service/utils"
+)
+
+type messageReactionUsecases struct {
+	repo repository
+}
+
+func NewMessageReactionUsecases(repo repository) *messageReactionUsecases {
+	return &messageReactionUsecases{
+		repo: repo,
+	}
+}
+
+func (m *messageReactionUsecases) CreateMessageReaction(ctx context.Context, messageId uint64, reaction string) (*models.MessageReactionModel, error) {
+	err := m.validateMessageAndCurrentUser(ctx, messageId)
+	if err != nil {
+		return nil, err
+	}
+	userId := utils.GetCurrentUserID(ctx)
+	messageReaction := &models.MessageReactionModel{
+		UserID:    userId,
+		MessageID: messageId,
+		Reaction:  reaction,
+	}
+	return m.repo.CreateMessageReaction(ctx, messageReaction)
+}
+
+func (m *messageReactionUsecases) validateMessageAndCurrentUser(ctx context.Context, messageId uint64) error {
+	userId := utils.GetCurrentUserID(ctx)
+	message, err := m.repo.FindMessageByID(ctx, messageId)
+	if err != nil {
+		return err
+	}
+	if message == nil {
+		return errors.MessageNotFound()
+	}
+
+	conversation, err := m.repo.GetConversationByID(ctx, message.ConversationID)
+	if err != nil {
+		return err
+	}
+	if conversation == nil {
+		return errors.ConversationNotFound()
+	}
+	isParticipant, err := m.repo.ExistParticipant(ctx, message.ConversationID, userId)
+	if err != nil {
+		return err
+	}
+	if !isParticipant {
+		return errors.NotParticipant()
+	}
+	return nil
+}

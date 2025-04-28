@@ -1,0 +1,23 @@
+database:
+  type: "POSTGRES"
+  dns: "host=localhost port=5432 user=admin dbname=postgres sslmode=disable password=admin"
+
+timeout:
+  transaction: 30s
+  idle: 120s
+  read: 30s
+  write: 60s
+
+redis:
+  host: "localhost:6379"
+  password: "password"
+
+swagger:
+  path: "./proto/docs/chat/chat.swagger.json"
+
+worker:
+  number: 10
+
+max_participant: 10
+environment:
+  - FABRIC_LOGGING_SPEC=debug

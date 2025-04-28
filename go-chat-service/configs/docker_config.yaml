@@ -1,0 +1,24 @@
+database:
+  type: "POSTGRES"
+  dns: "host=postgres port=5432 user=admin dbname=mydatabase sslmode=disable password=admin"
+
+timeout:
+  transaction: 30s
+  idle: 120s
+  read: 30s
+  write: 60s
+
+redis:
+  host: "redis:6379"
+  password: "password"
+
+app:
+  port: 8081
+  ws_port: 3003
+
+worker:
+  number: 10
+
+max_participant: 10
+environment:
+  - FABRIC_LOGGING_SPEC=debug

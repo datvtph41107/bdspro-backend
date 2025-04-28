@@ -1,0 +1,74 @@
+type: google.api.http
+config_version: 3
+
+http:
+  rules:
+    - selector: chat.ChatService.CreateConversation
+      post: /chat/conversations
+      body: "*"  
+    - selector: chat.ChatService.GetConversations
+      get: /chat/conversations
+    - selector: chat.ChatService.SendMessage
+      post: /chat/messages
+      body: "*"
+    - selector: chat.ChatService.GetMessages
+      get: /chat/messages
+    - selector: chat.ChatService.ForwardMessage
+      post: /chat/forward
+      body: "*"
+    - selector: chat.ChatService.MarkAsRead
+      post: /chat/read
+      body: "*"
+    - selector: chat.ChatService.PinMessage
+      post: /chat/pin
+      body: "*"
+    - selector: chat.ChatService.RecallMessage
+      post: /chat/recall
+      body: "*"
+    - selector: chat.ChatService.RemoveUser
+      post: /chat/removeUser
+      body: "*"
+    - selector: chat.ChatService.EditChannel
+      post: /chat/editChannel
+      body: "*"
+    - selector: chat.ChatService.CreateOrgChannel
+      post: /chat/createOrgChannel
+      body: "*"
+    - selector: chat.ChatService.MuteConversation
+      post: /chat/mute
+      body: "*"
+    - selector: chat.ChatService.Search
+      get: /chat/search
+    - selector: chat.ChatService.GetListParticipant
+      get: /conversation/{conversationId}/members
+    - selector: chat.ChatService.GetReadReceipt
+      get: /messages/{messageId}/readReceipt
+    - selector: chat.ChatService.GetPinnedMessages
+      get: /messages/{conversationId}/pinned
+    - selector: chat.ChatService.AddUser
+      post: /conversation/add-user
+      body: "*"
+    - selector: chat.ChatService.LeaveRoom
+      post: /conversation/leave
+      body: "*"
+    - selector: chat.ChatService.EditMessage
+      post: /messages/edit/{messageId}
+      body: "*"
+    - selector: chat.ChatService.DeleteViolation
+      delete: /messages/delete-violation/{messageId}
+    - selector: chat.ChatService.DeleteRoom
+      delete: /conversation/delete-conversation/{conversationId}
+    - selector: chat.ChatService.GetConversationById
+      get: /conversation/{conversationId}
+    - selector: chat.ChatService.GetSetting
+      get: /conversation/{id}/setting
+    - selector: chat.ChatService.GetFiles
+      get: /conversation/{conversationId}/files
+    - selector: chat.ChatService.GetImages
+      get: /conversation/{conversationId}/images
+    - selector: chat.ChatService.GetLinks
+      get: /conversation/{conversationId}/links
+    - selector: chat.ChatService.ReactionMessage
+      post: /message/reaction
+      body: "*"
+    

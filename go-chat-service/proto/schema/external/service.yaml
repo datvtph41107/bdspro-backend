@@ -1,0 +1,16 @@
+  type: google.api.http
+  config_version: 3
+
+  http:
+    rules:
+      - selector: external.BackgroundImageService.CreateBackgroundImage
+        post: /background
+        body: "*"  
+      - selector: external.BackgroundImageService.GetBackgroundImages
+        get: /background
+      - selector: external.BackgroundImageService.UpdateBackgroundImage
+        put: /background/{id}
+        body: "*"
+      - selector: external.BackgroundImageService.DeleteBackgroundImage
+        delete: /background/delete/{id}
+    

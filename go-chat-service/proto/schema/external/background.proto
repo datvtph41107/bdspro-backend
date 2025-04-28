@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package external;
+
+option go_package = "github.com/tuandq3/go-chat-service/proto/types/external;external";
+
+
+enum ImageType {
+    IMAGE_TYPE_UNSPECIFIED = 0;
+    JPEG = 1;
+    PNG = 2;
+    GIF = 3;
+}
+service BackgroundImageService {
+    rpc CreateBackgroundImage(CreateBackgroundImageRequest) returns (CreateBackgroundImageResponse);
+    rpc GetBackgroundImages(GetBackgroundImageRequest) returns (GetBackgroundImagesResponse);
+    rpc UpdateBackgroundImage(UpdateBackgroundImageRequest) returns (UpdateBackgroundImageResponse);
+    rpc DeleteBackgroundImage(DeleteBackgroundImageRequest) returns (DeleteBackgroundImageResponse);
+}
+
+
+message CreateBackgroundImageRequest {
+    string image_url = 1;  
+    string title = 2;      
+    ImageType image_type = 3;  
+    string description = 4;  
+}
+
+
+message CreateBackgroundImageResponse {
+    BackgroundImage background_image = 1;  
+}
+
+
+message GetBackgroundImageRequest {
+   optional int64 page = 1;
+   optional int64 size = 2;  
+}
+
+
+message GetBackgroundImagesResponse {
+    repeated BackgroundImage data = 1;  
+    uint64 total = 2;
+}
+
+
+message UpdateBackgroundImageRequest {
+    uint64 id = 1;  
+    string image_url = 2;  
+    string title = 3;      
+    ImageType image_type = 4;  
+    string description = 5;  
+}
+
+
+message UpdateBackgroundImageResponse {
+    BackgroundImage background_image = 1;  
+}
+
+
+message DeleteBackgroundImageRequest {
+    uint64 id = 1;  
+}
+
+
+message DeleteBackgroundImageResponse {
+    bool success = 1;  
+}
+
+
+message BackgroundImage {
+    uint64 id = 1;  
+    string image_url = 2;  
+    string title = 3;  
+    ImageType image_type = 4;  
+    string description = 5;  
+    string created_at = 6;  
+    string updated_at = 7;  
+}
+
+

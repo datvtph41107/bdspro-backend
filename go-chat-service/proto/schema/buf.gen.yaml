@@ -1,0 +1,16 @@
+version: v1
+plugins:
+    - name: go
+      out: ../types
+      opt:
+          - paths=source_relative
+    - name: go-grpc
+      out: ../types
+      opt:
+          - paths=source_relative
+    - name: grpc-gateway
+      out: ../types
+      opt:
+          - paths=source_relative
+          - generate_unbound_methods=true
+          - grpc_api_configuration=user/service.yaml
