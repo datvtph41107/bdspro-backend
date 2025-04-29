@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+
+service BdsproService {
+  rpc Ping (Empty) returns (PingResponse);
+  rpc ListProductInternal (ProductInternalRequest) returns (ProductInternalResponse);
+}
+
+message Empty {}
+message PingResponse {}
+message ProductInternalRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sort = 3;
+  string text = 4;
+}
+message ProductInternalResponse {
+  repeated ProductResponse data = 1;
+}
+
+message ProductResponse {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+}

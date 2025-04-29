@@ -1,0 +1,24 @@
+type: google.api.http
+config_version: 3
+
+http:
+  rules:
+    - selector: pb_noti.NotificationService.Count
+      get: /v2/notification/count
+    - selector: pb_noti.NotificationService.Send
+      post: /v2/notification/new
+      body: "*"
+    - selector: pb_noti.NotificationService.Read
+      put: /v2/notification/read/{id}
+      body: "*"
+    - selector: pb_noti.NotificationService.Remove
+      delete: /v2/notification/remove/{id}
+    - selector: pb_noti.NotificationService.List
+      get: /v2/notification
+      query: "*"
+    - selector: pb_noti.NotificationService.PushByToken
+      post: /v2/app/push/token
+      body: "*"
+    - selector: pb_noti.NotificationService.PushByTopic
+      post: /v2/app/push/topic
+      body: "*"

@@ -1,12 +1,12 @@
 //go:build wireinject
-// +build wireinject
-
-package main
-
-import (
-	"github.com/google/wire"
-	_db "common/db"
-	bdspro_v1_mod_admin "bdspro/v1/mod/admin"
+	// +build wireinject
+	
+	package cmd_http
+	
+	import (
+		"github.com/google/wire"
+		_db "common/db"
+		bdspro_v1_mod_admin "bdspro/v1/mod/admin"
 	bdspro_v1_mod_admin_amenity "bdspro/v1/mod/admin/amenity"
 	bdspro_v1_mod_admin_apartment "bdspro/v1/mod/admin/apartment"
 	bdspro_v1_mod_admin_build_room "bdspro/v1/mod/admin/build_room"
@@ -23,6 +23,8 @@ import (
 	bdspro_v1_mod_global_amenity "bdspro/v1/mod/global/amenity"
 	bdspro_v1_mod_global_apartment_attribute "bdspro/v1/mod/global/apartment_attribute"
 	bdspro_v1_mod_global_house_info "bdspro/v1/mod/global/house_info"
+	bdspro_v1_mod_global_member_plan "bdspro/v1/mod/global/member_plan"
+	bdspro_v1_mod_global_notification "bdspro/v1/mod/global/notification"
 	bdspro_v1_mod_global_product_access "bdspro/v1/mod/global/product_access"
 	bdspro_v1_mod_global_product_media "bdspro/v1/mod/global/product_media"
 	bdspro_v1_mod_global_product_price "bdspro/v1/mod/global/product_price"
@@ -69,6 +71,8 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_admin_doc_type.NewDocTypeService,
 	bdspro_v1_mod_global_house_info.NewHouseInfoRepo,
 	bdspro_v1_mod_user_list.NewListRoute,
+	bdspro_v1_mod_global_member_plan.NewMemberPlanService,
+	bdspro_v1_mod_global_notification.NewNotiService,
 	bdspro_v1_mod_user_post.NewPostRepo,
 	bdspro_v1_mod_user_post.NewPostService,
 	bdspro_v1_mod_global_product_access.NewProductAccessRepo,

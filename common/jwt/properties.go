@@ -12,6 +12,11 @@ const (
 	RefreshToken TokenType = "REFRESH"
 )
 
+type UserMetadata struct {
+	ProfileID *uint64
+	Role      []string
+}
+
 // JwtTokenProperties chứa thông tin JWT
 type JwtTokenProperties struct {
 	AuthID         uint64                 `json:"authId"`

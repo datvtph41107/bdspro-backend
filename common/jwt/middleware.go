@@ -1,10 +1,14 @@
 package _jwt
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 )
 
 // JWTMiddleware kiểm tra JWT từ request header
@@ -84,4 +88,93 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func JwtMiddleware(next http.Handler, publicPaths []string) gin.HandlerFunc {
+	return gin.HandlerFunc(func(c *gin.Context) {
+		path := c.Request.URL.Path
+
+		// Nếu path thuộc public, cho qua
+		for _, p := range publicPaths {
+			if strings.HasPrefix(path, p) {
+				c.Next()
+				return
+			}
+		}
+
+		// Các path còn lại yêu cầu JWT
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+			return
+		}
+
+		// Authorization: Bearer <token> → lấy ra phần token
+		parts := strings.Split(authHeader, "Bearer ")
+
+		var tokenString string
+		if len(parts) != 2 {
+			tokenString = parts[0]
+			// c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
+			// return
+		} else {
+			tokenString = strings.TrimSpace(parts[1])
+		}
+
+		// Parse và validate token
+		// claims := jwt.MapClaims{}
+		// token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// 	// TODO: thay secretKey bằng secret thực tế
+		// 	return []byte("secretKey"), nil
+		// })
+		claims, err := ParseJWT(tokenString)
+		log.Printf("err", err)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+
+		// Nếu cần: inject thông tin user vào context Gin
+		c.Set("userInfo", claims)
+		c.Set("profileId", claims.ProfileId)
+
+		c.Next() // Cho request đi tiếp
+
+	})
+}
+
+func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.MD {
+	md := metadata.MD{}
+
+	tokenString := r.Header.Get("Authorization")
+	if tokenString != "" {
+		// md.Append("authorization", tokenString)
+
+		splitToken := strings.Split(tokenString, "Bearer ")
+		var tokenStr string
+		if len(splitToken) == 2 {
+			tokenStr = strings.TrimSpace(splitToken[1])
+		} else {
+			tokenStr = strings.TrimSpace(splitToken[0])
+		}
+		claims, _ := ParseJWT(tokenStr)
+		if claims != nil {
+			md.Append("profileId", fmt.Sprintf("%d", claims.ProfileId))
+			log.Println("LOGING", fmt.Sprintf("%d", claims.ProfileId))
+		}
+
+		// claims := jwt.MapClaims{}
+		// token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		// 	return []byte("secretKey"), nil
+		// })
+		// if err == nil && token.Valid {
+		// 	if pid, ok := claims["profileId"].(float64); ok {
+		// 		profileIdStr := fmt.Sprintf("%.0f", pid)
+		// 		md.Append("profileid", profileIdStr)
+		// 	}
+		// }
+	}
+
+	log.Println("Metadata: ", md)
+	return md
 }

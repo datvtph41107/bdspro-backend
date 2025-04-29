@@ -1,6 +1,8 @@
 package models
 
 import (
+	"log"
+
 	"gorm.io/gorm"
 )
 
@@ -8,6 +10,7 @@ import (
 func AutoAudit(db *gorm.DB) {
 	db.Callback().Create().Before("gorm:create").Register("set_created_by", func(tx *gorm.DB) {
 		profileId := tx.Statement.Context.Value("profileId").(uint)
+		log.Println("profileId", profileId)
 		if tx.Statement.Schema != nil {
 			tx.Statement.SetColumn("created_by", profileId) // Thay bằng ID người dùng thực
 		}

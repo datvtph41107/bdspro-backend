@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,8 +13,9 @@ import (
 	"strings"
 )
 
-const wireFile = "../wire.go"
+const wireFile = "../cmd/http/wire.go"
 const rootPackage = "bdspro"
+const packageName = "cmd_http"
 
 type NewFunc struct {
 	FullPackage string
@@ -22,7 +24,9 @@ type NewFunc struct {
 }
 
 func main() {
-	newFuncs := findNewFunctions("../")
+	mod := os.Args[0]
+	log.Printf("MOD=", mod)
+	newFuncs := findNewFunctions("../v1")
 	existingFuncs := readExistingWire()
 
 	updatedFuncs := mergeFunctions(existingFuncs, newFuncs)
@@ -36,7 +40,7 @@ func main() {
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/C", "cd .. && wire")
 	} else {
-		cmd = exec.Command("/bin/sh", "-c", "cd .. && wire")
+		cmd = exec.Command("/bin/sh", "-c", "cd ../cmd/http && wire")
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -160,7 +164,15 @@ func mergeFunctions(existing, newFuncs []NewFunc) []NewFunc {
 }
 
 // Ghi danh sách các hàm vào wire.go
-func writeWireFile(funcs []NewFunc) {
+func writeWireFile(inputs []NewFunc) {
+	funcs := []NewFunc{}
+	for _, f := range inputs {
+		log.Println(f.FullPackage)
+		if !strings.HasPrefix(f.FullPackage, "bdspro/cmd") {
+			funcs = append(funcs, f)
+		}
+	}
+
 	file, err := os.Create(wireFile)
 	if err != nil {
 		fmt.Println("⚠️ Error creating wire.go:", err)
@@ -171,15 +183,15 @@ func writeWireFile(funcs []NewFunc) {
 	writer := bufio.NewWriter(file)
 
 	// Viết phần header
-	writer.WriteString(`//go:build wireinject
-// +build wireinject
-
-package main
-
-import (
-	"github.com/google/wire"
-	_db "common/db"
-`)
+	writer.WriteString(fmt.Sprintf(`//go:build wireinject
+	// +build wireinject
+	
+	package %s
+	
+	import (
+		"github.com/google/wire"
+		_db "common/db"
+	`, packageName))
 
 	// Viết danh sách import package với alias mới
 	packageSet := make(map[string]string)
@@ -190,6 +202,7 @@ import (
 	var imports []string
 	for pkg, alias := range packageSet {
 		imports = append(imports, fmt.Sprintf("\t%s \"%s\"", alias, pkg))
+
 	}
 	sort.Strings(imports)
 

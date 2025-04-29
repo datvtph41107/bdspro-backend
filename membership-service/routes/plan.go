@@ -5,6 +5,7 @@ import (
 	_jwt "common/jwt"
 	"membership/models"
 	"membership/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,13 +24,14 @@ func NewPlanRouter(service *services.PlanService) *PlanRouter {
 
 func (r *PlanRouter) RegisterRoutes(router *gin.Engine) {
 	PlanGroup := router.Group("/membership/plan")
-	PlanGroup.Use(_jwt.JWTAuthMiddleware(nil))
+	PlanGroup.Use(_jwt.JWTAuthMiddleware([]string{"/membership/plan/list"}))
 	{
 		PlanGroup.POST("", r.BaseRouter.Create)
 		PlanGroup.PUT(":id", r.BaseRouter.Update)
 		PlanGroup.DELETE(":id", r.BaseRouter.Delete)
 		PlanGroup.GET(":id", r.BaseRouter.GetByID)
 		PlanGroup.GET("", r.BaseRouter.GetAll)
+		PlanGroup.GET("/list", r.List)
 	}
 }
 
@@ -97,4 +99,18 @@ func (r *PlanRouter) Get(c *gin.Context) {}
 // @Success 200 {array} models.Plan
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
 // @Router /plan [get]
-func (r *PlanRouter) List(c *gin.Context) {}
+func (r *PlanRouter) Search(c *gin.Context) {}
+
+// @Summary Lấy danh sách Gói dịch vụ
+// @Description Trả về danh sách tất cả các Gói dịch vụ
+// @Tags Gói dịch vụ
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} models.Plan
+// @Failure 500 {object} map[string]string "Không thể lấy danh sách"
+// @Router /plan/list [get]
+func (r *PlanRouter) List(c *gin.Context) {
+	result, _ := r.Service.GetAll(c)
+	c.JSON(http.StatusOK, result)
+}

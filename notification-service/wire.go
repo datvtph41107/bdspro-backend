@@ -4,29 +4,30 @@
 package main
 
 import (
-	_db "common/db"
-	_redis "common/redis"
-	"noti/config"
-	"noti/repo"
-	"noti/routes"
-	"noti/services"
-
 	"github.com/google/wire"
+	_db "common/db"
+	noti_config "noti/config"
+	noti_data "noti/data"
+	noti_repo "noti/repo"
+	noti_routes "noti/routes"
+	noti_server "noti/server"
+	noti_services "noti/services"
 )
 
-// WireSet tập hợp các dependencies để inject
+// Inject dependencies
 var wireSet = wire.NewSet(
-	_redis.NewRedisService,
 	_db.NewDB,
-	config.NewFirebaseConfig,
-	repo.NewNotificationRepository,
-	services.NewNotificationService,
-	services.NewFirebaseService,
-	routes.NewNotificationRouter,
 	NewConfigApp,
+	noti_config.NewFirebaseConfig,
+	noti_services.NewFirebaseService,
+	noti_repo.NewHistoryRepository,
+	noti_repo.NewNotificationRepository,
+	noti_routes.NewNotificationRouter,
+	noti_services.NewNotificationService,
+	noti_services.NewNotificationService2,
+	noti_data.NewSendNotiResponse,
+	noti_server.NewServerHttp,
 )
-
-// InitializeApp khởi tạo toàn bộ hệ thống với Wire
 func InitializeApp() (*ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

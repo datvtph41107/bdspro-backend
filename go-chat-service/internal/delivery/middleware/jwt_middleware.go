@@ -34,13 +34,14 @@ func JWTMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			tokenParts := strings.Split(authHeader, " ")
-			if len(tokenParts) == 2 && strings.ToLower(tokenParts[0]) == "bearer" {
-				tokenString = tokenParts[1]
-			} else {
-				writeErrorResponse(w, http.StatusUnauthorized, "Invalid Authorization header format")
-				return
-			}
+			tokenString = authHeader
+			// tokenParts := strings.Split(authHeader, " ")
+			// if len(tokenParts) == 2 && strings.ToLower(tokenParts[0]) == "bearer" {
+			// 	tokenString = tokenParts[1]
+			// } else {
+			// 	writeErrorResponse(w, http.StatusUnauthorized, "Invalid Authorization header format")
+			// 	return
+			// }
 		}
 
 		if tokenString == "" {

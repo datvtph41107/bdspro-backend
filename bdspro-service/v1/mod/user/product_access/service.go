@@ -2,11 +2,13 @@ package u_product_access
 
 import (
 	"bdspro/v1/enums"
+	bdspro_noti "bdspro/v1/mod/global/notification"
 	product_accecss "bdspro/v1/mod/global/product_access"
 	u_product "bdspro/v1/mod/user/product"
 	"bdspro/v1/models"
 	"common/case/crud2"
 	_db "common/db"
+	pb_noti "pb/types/notification"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
@@ -16,12 +18,18 @@ import (
 type ProductAccessService struct {
 	crud2.BaseService[models.ProductAccess, *product_accecss.ProductAccessRepo]
 	productService *u_product.ProductService
+	NotiService    *bdspro_noti.NotiService
 }
 
-func NewUserProductAccessService(repo *product_accecss.ProductAccessRepo, productService *u_product.ProductService) *ProductAccessService {
+func NewUserProductAccessService(
+	repo *product_accecss.ProductAccessRepo,
+	productService *u_product.ProductService,
+	NotiService *bdspro_noti.NotiService,
+) *ProductAccessService {
 	return &ProductAccessService{
 		BaseService:    crud2.BaseService[models.ProductAccess, *product_accecss.ProductAccessRepo]{Repo: repo},
 		productService: productService,
+		NotiService:    NotiService,
 	}
 }
 
@@ -37,6 +45,7 @@ func (s *ProductAccessService) CreateBatch(c *gin.Context, id uint64, dtos []Acc
 		entities[i].ProductID = id
 	}
 
+	// đổi trạng thái sang nội bộ nếu riêng tư
 	if product.SaleVisibility == enums.ProductVisiblePrivate {
 		product.SaleVisibility = enums.ProductVisibleInternal
 		_db.SaveWithAudit(c, product)
@@ -48,6 +57,21 @@ func (s *ProductAccessService) CreateBatch(c *gin.Context, id uint64, dtos []Acc
 			DoUpdates: clause.AssignmentColumns([]string{"fields", "commission", "target_type"}),
 		}).
 		Save(&entities).Error
+
+	data := []*pb_noti.NotiNewRequest{}
+	for i := 0; i < len(entities); i++ {
+		data = append(data, &pb_noti.NotiNewRequest{
+			Title:   "Chia sẻ sản phẩm",
+			Message: "Bạn nhận được chia sẻ sản phẩm ",
+			Type:    1,
+			UserID:  entities[i].TargetId,
+		})
+		// entities[i].ProductID = id
+	}
+
+	s.NotiService.NotiClient.SendBatch(c, &pb_noti.NotiBatchRequest{
+		Datas: data,
+	})
 
 	return &entities, err
 }

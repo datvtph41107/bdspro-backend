@@ -1,0 +1,8 @@
+type: google.api.http
+config_version: 3
+
+http:
+  rules:
+    - selector: pb_bdspro.BdsproService.ListProductInternal
+      get: /v2/bdspro/user/product/internal
+      query: "*"

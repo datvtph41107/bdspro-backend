@@ -2,6 +2,8 @@ basePath: /membership
 definitions:
   models.Membership:
     properties:
+      createdAt:
+        type: string
       createdBy:
         description: gorm.Model
         type: integer
@@ -17,6 +19,8 @@ definitions:
         type: integer
       profileId:
         type: integer
+      updatedAt:
+        type: string
       updatedBy:
         type: integer
     type: object
@@ -30,6 +34,8 @@ definitions:
         type: integer
       createProductAI:
         type: integer
+      createdAt:
+        type: string
       createdBy:
         description: gorm.Model
         type: integer
@@ -58,6 +64,8 @@ definitions:
         type: integer
       publicProductLimit:
         type: integer
+      updatedAt:
+        type: string
       updatedBy:
         type: integer
       visibility:
@@ -238,6 +246,31 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật thông tin Gói dịch vụ
+      tags:
+      - Gói dịch vụ
+  /plan/list:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Gói dịch vụ
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Plan'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Gói dịch vụ
       tags:
       - Gói dịch vụ
   /user/init:

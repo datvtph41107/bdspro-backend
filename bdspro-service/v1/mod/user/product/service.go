@@ -7,6 +7,7 @@ import (
 	a_property_type "bdspro/v1/mod/admin/property_type"
 	"bdspro/v1/mod/global/amenity"
 	"bdspro/v1/mod/global/house_info"
+	"bdspro/v1/mod/global/member_plan"
 	product_accecss "bdspro/v1/mod/global/product_access"
 	"bdspro/v1/mod/global/product_media"
 	"bdspro/v1/mod/global/product_price"
@@ -41,6 +42,7 @@ type ProductService struct {
 	docTypeRepo       *a_doc_type.DocTypeRepo
 	propertyType      *a_property_type.PropertyTypeRepo
 	amenity           *amenity.AmenityRepo
+	memberPlan        *member_plan.MemberPlanService
 }
 
 func NewProductService(productRepo *UserProductRepo,
@@ -55,6 +57,7 @@ func NewProductService(productRepo *UserProductRepo,
 	docTypeRepo *a_doc_type.DocTypeRepo,
 	propertyType *a_property_type.PropertyTypeRepo,
 	amenity *amenity.AmenityRepo,
+	memberPlan *member_plan.MemberPlanService,
 ) *ProductService {
 	return &ProductService{
 		productRepo:       productRepo,
@@ -69,6 +72,7 @@ func NewProductService(productRepo *UserProductRepo,
 		docTypeRepo:       docTypeRepo,
 		propertyType:      propertyType,
 		amenity:           amenity,
+		memberPlan:        memberPlan,
 	}
 }
 

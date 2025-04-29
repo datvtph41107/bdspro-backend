@@ -8,17 +8,21 @@ package main
 
 import (
 	"common/db"
-	"common/redis"
 	"github.com/google/wire"
 	"noti/config"
+	"noti/data"
 	"noti/repo"
 	"noti/routes"
+	"noti/server"
 	"noti/services"
+)
+
+import (
+	_ "noti/docs"
 )
 
 // Injectors from wire.go:
 
-// InitializeApp khởi tạo toàn bộ hệ thống với Wire
 func InitializeApp() (*ConfigApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {
@@ -32,11 +36,13 @@ func InitializeApp() (*ConfigApp, error) {
 	}
 	firebaseService := services.NewFirebaseService(firebaseConfig)
 	notificationRouter := routes.NewNotificationRouter(notificationService, firebaseService)
-	configApp := NewConfigApp(notificationRouter)
+	notificationService2 := services.NewNotificationService2(notificationRepository, firebaseConfig)
+	serverHttp := server.NewServerHttp(notificationService2, firebaseService)
+	configApp := NewConfigApp(notificationRouter, serverHttp)
 	return configApp, nil
 }
 
 // wire.go:
 
-// WireSet tập hợp các dependencies để inject
-var wireSet = wire.NewSet(_redis.NewRedisService, _db.NewDB, config.NewFirebaseConfig, repo.NewNotificationRepository, services.NewNotificationService, services.NewFirebaseService, routes.NewNotificationRouter, NewConfigApp)
+// Inject dependencies
+var wireSet = wire.NewSet(_db.NewDB, NewConfigApp, config.NewFirebaseConfig, services.NewFirebaseService, repo.NewHistoryRepository, repo.NewNotificationRepository, routes.NewNotificationRouter, services.NewNotificationService, services.NewNotificationService2, data.NewSendNotiResponse, server.NewServerHttp)

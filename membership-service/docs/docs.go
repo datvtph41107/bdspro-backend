@@ -110,6 +110,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/plan/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách tất cả các Gói dịch vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gói dịch vụ"
+                ],
+                "summary": "Lấy danh sách Gói dịch vụ",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Plan"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể lấy danh sách",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/plan/{id}": {
             "get": {
                 "security": [
@@ -419,6 +459,9 @@ const docTemplate = `{
         "models.Membership": {
             "type": "object",
             "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
                 "createdBy": {
                     "description": "gorm.Model",
                     "type": "integer"
@@ -441,6 +484,9 @@ const docTemplate = `{
                 "profileId": {
                     "type": "integer"
                 },
+                "updatedAt": {
+                    "type": "string"
+                },
                 "updatedBy": {
                     "type": "integer"
                 }
@@ -460,6 +506,9 @@ const docTemplate = `{
                 },
                 "createProductAI": {
                     "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
                 },
                 "createdBy": {
                     "description": "gorm.Model",
@@ -501,6 +550,9 @@ const docTemplate = `{
                 },
                 "publicProductLimit": {
                     "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
                 },
                 "updatedBy": {
                     "type": "integer"

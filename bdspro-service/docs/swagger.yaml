@@ -1,4 +1,4 @@
-basePath: /bdspro/v1
+basePath: /v1/bdspro/v1
 definitions:
   data.ApartmentRequest:
     properties:
@@ -2542,6 +2542,31 @@ paths:
       summary: Cập nhật thông tin tỉnh
       tags:
       - Admin
+  /user/product-access:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProductAccess'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - User/Product-share
   /user/product-access/{id}:
     delete:
       consumes:
@@ -2801,6 +2826,30 @@ paths:
       summary: Gộp toàn bộ sản phẩm con
       tags:
       - User/Product-child
+  /user/product/internal:
+    get:
+      consumes:
+      - application/json
+      description: API để đăng tin sản phẩm lên hệ thống
+      parameters:
+      - description: Thông tin đăng tin
+        in: body
+        name: publish
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tin được đăng thành công
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Đăng tin sản phẩm
+      tags:
+      - User/Product-search
   /user/product/market:
     get:
       consumes:

@@ -13,8 +13,8 @@ type SendNotiRequest struct {
 	Image  string `json:"image"`
 }
 
-// NewSendNotiRequest khởi tạo một đối tượng SendNotiRequest
-func NewSendNotiRequest(target, title, body, image string) *SendNotiRequest {
+// SendNewNotiRequest khởi tạo một đối tượng SendNotiRequest
+func SendNewNotiRequest(target string, title string, body string, image string) *SendNotiRequest {
 	return &SendNotiRequest{
 		Target: target,
 		Title:  title,

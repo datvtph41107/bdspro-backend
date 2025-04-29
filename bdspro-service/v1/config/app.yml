@@ -1,5 +1,6 @@
 server:
   port: 8102
+  tcp_port: 8202
 
 database:
   dsn: host=14.225.205.222 user=bdspro password=PdrX5OrvK5kVpfSlJzBTnJle dbname=db_bdspro port=5432 sslmode=disable

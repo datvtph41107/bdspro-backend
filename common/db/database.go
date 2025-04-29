@@ -2,7 +2,6 @@ package _db
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -20,9 +19,9 @@ var DB *gorm.DB
 func NewDB() (*gorm.DB, error) {
 	dsn := viper.GetString("database.dsn")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	fmt.Println("Kết nối tới: %s", dsn)
 	if err != nil {
 		fmt.Println("❌ Không thể kết nối với cơ sở dữ liệu:", err)
-		log.Fatal("❌ Không thể kết nối với cơ sở dữ liệu:", err)
 		return nil, err
 	}
 	DB = db
