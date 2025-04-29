@@ -1431,13 +1431,14 @@ func (x *RemoveUserResponse) GetSuccess() bool {
 }
 
 type EditChannelRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId int32                  `protobuf:"varint,1,opt,name=conversationId,proto3" json:"conversationId,omitempty"`
-	IsBroadcast    *bool                  `protobuf:"varint,2,opt,name=is_broadcast,json=isBroadcast,proto3,oneof" json:"is_broadcast,omitempty"`
-	ForbidForward  *bool                  `protobuf:"varint,3,opt,name=forbid_forward,json=forbidForward,proto3,oneof" json:"forbid_forward,omitempty"`
-	Name           *string                `protobuf:"bytes,4,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId  int32                  `protobuf:"varint,1,opt,name=conversationId,proto3" json:"conversationId,omitempty"`
+	IsBroadcast     *bool                  `protobuf:"varint,2,opt,name=is_broadcast,json=isBroadcast,proto3,oneof" json:"is_broadcast,omitempty"`
+	ForbidForward   *bool                  `protobuf:"varint,3,opt,name=forbid_forward,json=forbidForward,proto3,oneof" json:"forbid_forward,omitempty"`
+	Name            *string                `protobuf:"bytes,4,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	BackgroundImage *string                `protobuf:"bytes,5,opt,name=background_image,json=backgroundImage,proto3,oneof" json:"background_image,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *EditChannelRequest) Reset() {
@@ -1494,6 +1495,13 @@ func (x *EditChannelRequest) GetForbidForward() bool {
 func (x *EditChannelRequest) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
+	}
+	return ""
+}
+
+func (x *EditChannelRequest) GetBackgroundImage() string {
+	if x != nil && x.BackgroundImage != nil {
+		return *x.BackgroundImage
 	}
 	return ""
 }
@@ -2915,16 +2923,17 @@ func (x *GetSettingRequest) GetId() uint64 {
 }
 
 type GetSettingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type          ConversationTypeEnum   `protobuf:"varint,2,opt,name=type,proto3,enum=chat.ConversationTypeEnum" json:"type,omitempty"`
-	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	IsBroadcast   bool                   `protobuf:"varint,4,opt,name=is_broadcast,json=isBroadcast,proto3" json:"is_broadcast,omitempty"`
-	ForbidForward bool                   `protobuf:"varint,5,opt,name=forbid_forward,json=forbidForward,proto3" json:"forbid_forward,omitempty"`
-	IsDeleted     bool                   `protobuf:"varint,6,opt,name=is_deleted,json=isDeleted,proto3" json:"is_deleted,omitempty"`
-	MuteNotif     bool                   `protobuf:"varint,7,opt,name=mute_notif,json=muteNotif,proto3" json:"mute_notif,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type            ConversationTypeEnum   `protobuf:"varint,2,opt,name=type,proto3,enum=chat.ConversationTypeEnum" json:"type,omitempty"`
+	Name            *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	IsBroadcast     bool                   `protobuf:"varint,4,opt,name=is_broadcast,json=isBroadcast,proto3" json:"is_broadcast,omitempty"`
+	ForbidForward   bool                   `protobuf:"varint,5,opt,name=forbid_forward,json=forbidForward,proto3" json:"forbid_forward,omitempty"`
+	IsDeleted       bool                   `protobuf:"varint,6,opt,name=is_deleted,json=isDeleted,proto3" json:"is_deleted,omitempty"`
+	MuteNotif       bool                   `protobuf:"varint,7,opt,name=mute_notif,json=muteNotif,proto3" json:"mute_notif,omitempty"`
+	BackgroundImage string                 `protobuf:"bytes,8,opt,name=background_image,json=backgroundImage,proto3" json:"background_image,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetSettingResponse) Reset() {
@@ -3004,6 +3013,13 @@ func (x *GetSettingResponse) GetMuteNotif() bool {
 		return x.MuteNotif
 	}
 	return false
+}
+
+func (x *GetSettingResponse) GetBackgroundImage() string {
+	if x != nil {
+		return x.BackgroundImage
+	}
+	return ""
 }
 
 type GetFilesRequest struct {
@@ -3624,15 +3640,17 @@ const file_chat_chat_proto_rawDesc = "" +
 	"\vadminUserId\x18\x02 \x01(\x05R\vadminUserId\x12\"\n" +
 	"\ftargetUserId\x18\x03 \x01(\x05R\ftargetUserId\".\n" +
 	"\x12RemoveUserResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xd6\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x9b\x02\n" +
 	"\x12EditChannelRequest\x12&\n" +
 	"\x0econversationId\x18\x01 \x01(\x05R\x0econversationId\x12&\n" +
 	"\fis_broadcast\x18\x02 \x01(\bH\x00R\visBroadcast\x88\x01\x01\x12*\n" +
 	"\x0eforbid_forward\x18\x03 \x01(\bH\x01R\rforbidForward\x88\x01\x01\x12\x17\n" +
-	"\x04name\x18\x04 \x01(\tH\x02R\x04name\x88\x01\x01B\x0f\n" +
+	"\x04name\x18\x04 \x01(\tH\x02R\x04name\x88\x01\x01\x12.\n" +
+	"\x10background_image\x18\x05 \x01(\tH\x03R\x0fbackgroundImage\x88\x01\x01B\x0f\n" +
 	"\r_is_broadcastB\x11\n" +
 	"\x0f_forbid_forwardB\a\n" +
-	"\x05_name\"/\n" +
+	"\x05_nameB\x13\n" +
+	"\x11_background_image\"/\n" +
 	"\x13EditChannelResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xcb\x01\n" +
 	"\x17CreateOrgChannelRequest\x12\x14\n" +
@@ -3725,7 +3743,7 @@ const file_chat_chat_proto_rawDesc = "" +
 	"\x12DeleteRoomResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"#\n" +
 	"\x11GetSettingRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\"\xfe\x01\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\"\xa9\x02\n" +
 	"\x12GetSettingResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1a.chat.ConversationTypeEnumR\x04type\x12\x17\n" +
@@ -3735,7 +3753,8 @@ const file_chat_chat_proto_rawDesc = "" +
 	"\n" +
 	"is_deleted\x18\x06 \x01(\bR\tisDeleted\x12\x1d\n" +
 	"\n" +
-	"mute_notif\x18\a \x01(\bR\tmuteNotifB\a\n" +
+	"mute_notif\x18\a \x01(\bR\tmuteNotif\x12)\n" +
+	"\x10background_image\x18\b \x01(\tR\x0fbackgroundImageB\a\n" +
 	"\x05_name\"a\n" +
 	"\x0fGetFilesRequest\x12&\n" +
 	"\x0econversationId\x18\x01 \x01(\x05R\x0econversationId\x12\x12\n" +

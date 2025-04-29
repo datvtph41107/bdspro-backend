@@ -11,7 +11,7 @@ type repository interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, userId uint64, keyword string) ([]*models.ConversationModel, error)
 	GetConversationByID(ctx context.Context, conversationID uint64) (*models.ConversationModel, error)
-	UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string) error
+	UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImage string) error
 	GetMessageOrConversation(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error)
 	GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error)
 	DeleteConversation(ctx context.Context, conversationID uint64) error

@@ -14,7 +14,7 @@ type conversationUsecases interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, keyword string) ([]*models.ConversationModel, error)
 
-	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string) error
+	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImage *string) error
 	CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)
 	Search(ctx context.Context, keyword string, searchType int, limit, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error)
 

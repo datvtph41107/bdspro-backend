@@ -88,11 +88,12 @@ func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID
 	return &conversation, err
 }
 
-func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string) error {
+func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImage string) error {
 	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", id).Updates(map[string]any{
-		"is_broadcast":   isBoardCast,
-		"forbid_forward": forbidForward,
-		"name":           name,
+		"is_broadcast":     isBoardCast,
+		"forbid_forward":   forbidForward,
+		"name":             name,
+		"background_image": backgroundImage,
 	}).Error
 }
 

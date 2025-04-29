@@ -59,13 +59,13 @@ func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offs
 	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
-func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast *bool, forbidForward *bool, name *string) error {
+func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast *bool, forbidForward *bool, name *string, backgroundImage *string) error {
 	err := c.isConversationAdmin(ctx, conversationId)
 	if err != nil {
 		return err
 	}
 
-	return c.repo.UpdateConversation(ctx, conversationId, *isBroadcast, *forbidForward, *name)
+	return c.repo.UpdateConversation(ctx, conversationId, *isBroadcast, *forbidForward, *name, *backgroundImage)
 }
 
 func (c *conversationUsecases) CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {

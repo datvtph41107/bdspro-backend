@@ -1246,6 +1246,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
         }
       }
     },
@@ -1467,6 +1470,9 @@
         },
         "muteNotif": {
           "type": "boolean"
+        },
+        "backgroundImage": {
+          "type": "string"
         }
       }
     },

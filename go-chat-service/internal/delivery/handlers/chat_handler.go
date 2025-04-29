@@ -366,7 +366,7 @@ func (s *chatHandler) RemoveUser(ctx context.Context, req *pb.RemoveUserRequest)
 }
 
 func (s *chatHandler) EditChannel(ctx context.Context, req *pb.EditChannelRequest) (*pb.EditChannelResponse, error) {
-	err := s.conversationUsecases.EditChannel(ctx, uint64(req.ConversationId), req.IsBroadcast, req.ForbidForward, req.Name)
+	err := s.conversationUsecases.EditChannel(ctx, uint64(req.ConversationId), req.IsBroadcast, req.ForbidForward, req.Name, req.BackgroundImage)
 	if err != nil {
 		return nil, err
 	}
@@ -631,13 +631,14 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *pb.GetSettingRequest)
 		return nil, err
 	}
 	return &pb.GetSettingResponse{
-		Id:            conversation.ID,
-		Type:          pb.ConversationTypeEnum(conversation.Type),
-		Name:          conversation.Name,
-		IsBroadcast:   conversation.IsBroadcast,
-		ForbidForward: conversation.ForbidForward,
-		IsDeleted:     conversation.IsDeleted,
-		MuteNotif:     participant.MuteNotif,
+		Id:              conversation.ID,
+		Type:            pb.ConversationTypeEnum(conversation.Type),
+		Name:            conversation.Name,
+		IsBroadcast:     conversation.IsBroadcast,
+		ForbidForward:   conversation.ForbidForward,
+		IsDeleted:       conversation.IsDeleted,
+		MuteNotif:       participant.MuteNotif,
+		BackgroundImage: conversation.BackgroundImage,
 	}, nil
 }
 

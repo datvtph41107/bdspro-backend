@@ -177,6 +177,7 @@ message EditChannelRequest {
   optional bool is_broadcast = 2;
   optional bool forbid_forward = 3;
   optional string name = 4;
+  optional string background_image = 5;
 }
 
 message EditChannelResponse {
@@ -336,6 +337,7 @@ message GetSettingResponse {
   bool forbid_forward = 5;
   bool is_deleted = 6;
   bool mute_notif = 7;
+  string background_image = 8;
 }
 
 message GetFilesRequest {

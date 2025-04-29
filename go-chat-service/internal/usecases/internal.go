@@ -11,7 +11,7 @@ type repository interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, userId uint64, keyword string) ([]*models.ConversationModel, error)
 	GetConversationByID(ctx context.Context, conversationID uint64) (*models.ConversationModel, error)
-	UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string) error
+	UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImage string) error
 	GetMessageOrConversation(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error)
 	GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error)
 	DeleteConversation(ctx context.Context, conversationID uint64) error
@@ -38,7 +38,7 @@ type repository interface {
 	GetReadReceipts(ctx context.Context, limit, offset int64, messageID uint64) ([]*models.ReadReceptModel, int64, error)
 	GetReadReceiptsByUserId(ctx context.Context, userId uint64) ([]*models.ReadReceptModel, error)
 
-	CreateMessageReaction(ctx context.Context, messageReaction *models.MessageReactionModel) (*models.MessageReactionModel, error) 
+	CreateMessageReaction(ctx context.Context, messageReaction *models.MessageReactionModel) (*models.MessageReactionModel, error)
 
 	GetBackgroundImages(ctx context.Context, page, size *int64) ([]*models.BackgroundImageModel, int64, error)
 	CreateBackgroundImage(ctx context.Context, model *models.BackgroundImageModel) (*models.BackgroundImageModel, error)
