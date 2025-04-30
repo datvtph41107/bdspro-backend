@@ -1,6 +1,6 @@
 database:
   type: "POSTGRES"
-  dns: "host=14.225.210.29 port=5432 user=chat dbname=db_chat sslmode=disable password=chat123"
+  dns: "host=14.225.205.222 port=5432 user=chat dbname=db_chat sslmode=disable password=chat123"
 
 timeout:
   transaction: 30s

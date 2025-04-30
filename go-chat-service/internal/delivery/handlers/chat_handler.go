@@ -170,7 +170,7 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageReques
 		},
 	}
 	if message.ReplyMessage != nil {
-		event.Data.ReplyMessage =  &pb.Message{
+		event.Data.ReplyMessage = &pb.Message{
 			MessageId:   int32(message.ReplyMessage.ID),
 			SenderId:    int32(message.ReplyMessage.SenderID),
 			Content:     message.ReplyMessage.Content,
@@ -656,7 +656,7 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *pb.GetSettingRequest)
 }
 
 func (s *chatHandler) GetFiles(ctx context.Context, req *pb.GetFilesRequest) (*pb.GetFilesResponse, error) {
-	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"video", "audio", "pdf"})
+	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"FILE", "video", "audio", "pdf"})
 	if err != nil {
 		return nil, err
 	}
@@ -682,7 +682,7 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *pb.GetFilesRequest) (*p
 }
 
 func (s *chatHandler) GetImages(ctx context.Context, req *pb.GetImagesRequest) (*pb.GetImagesResponse, error) {
-	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"image"})
+	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"IMAGE"})
 	if err != nil {
 		return nil, err
 	}
@@ -708,7 +708,7 @@ func (s *chatHandler) GetImages(ctx context.Context, req *pb.GetImagesRequest) (
 }
 
 func (s *chatHandler) GetLinks(ctx context.Context, req *pb.GetLinksRequest) (*pb.GetLinksResponse, error) {
-	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"link"})
+	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"LINK"})
 	if err != nil {
 		return nil, err
 	}

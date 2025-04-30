@@ -1,6 +1,6 @@
 database:
   type: "POSTGRES"
-  dns: "host=postgres port=5432 user=admin dbname=mydatabase sslmode=disable password=admin"
+  dns: "host=14.225.205.222 port=5432 user=chat dbname=db_chat sslmode=disable password=chat123"
 
 timeout:
   transaction: 30s
@@ -9,8 +9,8 @@ timeout:
   write: 60s
 
 redis:
-  host: "redis:6379"
-  password: "password"
+  host: "14.225.210.29:6379"
+  password: protected_redis_secure_password
 
 app:
   port: 8081
