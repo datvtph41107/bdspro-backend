@@ -60,7 +60,7 @@ func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offs
 }
 
 func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast *bool, forbidForward *bool, name *string, backgroundImage *string) error {
-	err := c.isConversationAdmin(ctx, conversationId)
+	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
 	}
