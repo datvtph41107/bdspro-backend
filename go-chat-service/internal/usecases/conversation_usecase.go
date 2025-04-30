@@ -59,14 +59,52 @@ func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offs
 	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
-func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast *bool, forbidForward *bool, name *string, backgroundImage *string) error {
+func (c *conversationUsecases) EditChannel(
+	ctx context.Context,
+	conversationId uint64,
+	isBroadcast *bool,
+	forbidForward *bool,
+	name *string,
+	backgroundImage *string,
+) error {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
 	}
 
-	return c.repo.UpdateConversation(ctx, conversationId, *isBroadcast, *forbidForward, *name, *backgroundImage)
+	// Kiểm tra nil trước khi dereference
+	var broadcastVal bool
+	if isBroadcast != nil {
+		broadcastVal = *isBroadcast
+	} else {
+		// Giá trị mặc định hoặc xử lý theo yêu cầu của bạn
+		broadcastVal = false
+	}
+
+	var forbidForwardVal bool
+	if forbidForward != nil {
+		forbidForwardVal = *forbidForward
+	} else {
+		forbidForwardVal = false
+	}
+
+	var nameVal string
+	if name != nil {
+		nameVal = *name
+	} else {
+		nameVal = ""
+	}
+
+	var bgImageVal string
+	if backgroundImage != nil {
+		bgImageVal = *backgroundImage
+	} else {
+		bgImageVal = ""
+	}
+
+	return c.repo.UpdateConversation(ctx, conversationId, broadcastVal, forbidForwardVal, nameVal, bgImageVal)
 }
+
 
 func (c *conversationUsecases) CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
 	panic("unimplemented")

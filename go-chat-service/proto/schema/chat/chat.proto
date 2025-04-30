@@ -381,6 +381,7 @@ message MessageReaction {
   int32 userId = 3;
   string createdAt = 4;
   uint64 id = 5;
+  string room_id = 6;
 }
 
 message ReactionMessageRequest {

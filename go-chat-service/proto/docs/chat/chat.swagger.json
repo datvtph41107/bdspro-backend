@@ -1582,6 +1582,9 @@
         "id": {
           "type": "string",
           "format": "uint64"
+        },
+        "roomId": {
+          "type": "string"
         }
       }
     },

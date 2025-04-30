@@ -158,3 +158,8 @@ message UpdateRoomMessage {
 message ExistedConversationResponse {
   int32 conversation_id = 1;
 }
+
+message ReactionMessage {
+  string type = 1;
+  chat.MessageReaction data = 2;
+}

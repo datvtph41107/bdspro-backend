@@ -24,10 +24,15 @@ func (m *messageReactionUsecases) CreateMessageReaction(ctx context.Context, mes
 		return nil, err
 	}
 	userId := utils.GetCurrentUserID(ctx)
+	message, err := m.repo.FindMessageByID(ctx, messageId)
+	if err != nil {
+		return nil, err
+	}
 	messageReaction := &models.MessageReactionModel{
-		UserID:    userId,
-		MessageID: messageId,
-		Reaction:  reaction,
+		UserID:         userId,
+		MessageID:      messageId,
+		Reaction:       reaction,
+		ConversationId: message.ConversationID,
 	}
 	return m.repo.CreateMessageReaction(ctx, messageReaction)
 }

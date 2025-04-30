@@ -3365,6 +3365,7 @@ type MessageReaction struct {
 	UserId        int32                  `protobuf:"varint,3,opt,name=userId,proto3" json:"userId,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,4,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	Id            uint64                 `protobuf:"varint,5,opt,name=id,proto3" json:"id,omitempty"`
+	RoomId        string                 `protobuf:"bytes,6,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3432,6 +3433,13 @@ func (x *MessageReaction) GetId() uint64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *MessageReaction) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
 }
 
 type ReactionMessageRequest struct {
@@ -3776,13 +3784,14 @@ const file_chat_chat_proto_rawDesc = "" +
 	"\x04size\x18\x03 \x01(\x05R\x04size\"S\n" +
 	"\x10GetLinksResponse\x12)\n" +
 	"\bmessages\x18\x01 \x03(\v2\r.chat.MessageR\bmessages\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\x91\x01\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xaa\x01\n" +
 	"\x0fMessageReaction\x12\x1c\n" +
 	"\tmessageId\x18\x01 \x01(\x05R\tmessageId\x12\x1a\n" +
 	"\breaction\x18\x02 \x01(\tR\breaction\x12\x16\n" +
 	"\x06userId\x18\x03 \x01(\x05R\x06userId\x12\x1c\n" +
 	"\tcreatedAt\x18\x04 \x01(\tR\tcreatedAt\x12\x0e\n" +
-	"\x02id\x18\x05 \x01(\x04R\x02id\"R\n" +
+	"\x02id\x18\x05 \x01(\x04R\x02id\x12\x17\n" +
+	"\aroom_id\x18\x06 \x01(\tR\x06roomId\"R\n" +
 	"\x16ReactionMessageRequest\x12\x1c\n" +
 	"\tmessageId\x18\x01 \x01(\x05R\tmessageId\x12\x1a\n" +
 	"\breaction\x18\x02 \x01(\tR\breaction\"3\n" +

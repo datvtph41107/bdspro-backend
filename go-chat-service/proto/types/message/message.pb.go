@@ -1583,6 +1583,58 @@ func (x *ExistedConversationResponse) GetConversationId() int32 {
 	return 0
 }
 
+type ReactionMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Data          *chat.MessageReaction  `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReactionMessage) Reset() {
+	*x = ReactionMessage{}
+	mi := &file_message_message_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReactionMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReactionMessage) ProtoMessage() {}
+
+func (x *ReactionMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_message_message_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReactionMessage.ProtoReflect.Descriptor instead.
+func (*ReactionMessage) Descriptor() ([]byte, []int) {
+	return file_message_message_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ReactionMessage) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ReactionMessage) GetData() *chat.MessageReaction {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
 var File_message_message_proto protoreflect.FileDescriptor
 
 const file_message_message_proto_rawDesc = "" +
@@ -1691,7 +1743,10 @@ const file_message_message_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x122\n" +
 	"\x04data\x18\x02 \x01(\v2\x1e.message.UpdateRoomMessageDataR\x04data\"F\n" +
 	"\x1bExistedConversationResponse\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\x05R\x0econversationIdB@Z>github.com/tuandq3/go-chat-service/proto/types/message;messageb\x06proto3"
+	"\x0fconversation_id\x18\x01 \x01(\x05R\x0econversationId\"P\n" +
+	"\x0fReactionMessage\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12)\n" +
+	"\x04data\x18\x02 \x01(\v2\x15.chat.MessageReactionR\x04dataB@Z>github.com/tuandq3/go-chat-service/proto/types/message;messageb\x06proto3"
 
 var (
 	file_message_message_proto_rawDescOnce sync.Once
@@ -1705,7 +1760,7 @@ func file_message_message_proto_rawDescGZIP() []byte {
 	return file_message_message_proto_rawDescData
 }
 
-var file_message_message_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_message_message_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_message_message_proto_goTypes = []any{
 	(*SendMessage)(nil),                 // 0: message.SendMessage
 	(*CreateRoomData)(nil),              // 1: message.CreateRoomData
@@ -1737,11 +1792,13 @@ var file_message_message_proto_goTypes = []any{
 	(*UpdateRoomMessageData)(nil),       // 27: message.UpdateRoomMessageData
 	(*UpdateRoomMessage)(nil),           // 28: message.UpdateRoomMessage
 	(*ExistedConversationResponse)(nil), // 29: message.ExistedConversationResponse
-	nil,                                 // 30: message.UpdateSettingsData.SettingsEntry
-	(*chat.Message)(nil),                // 31: chat.Message
+	(*ReactionMessage)(nil),             // 30: message.ReactionMessage
+	nil,                                 // 31: message.UpdateSettingsData.SettingsEntry
+	(*chat.Message)(nil),                // 32: chat.Message
+	(*chat.MessageReaction)(nil),        // 33: chat.MessageReaction
 }
 var file_message_message_proto_depIdxs = []int32{
-	31, // 0: message.SendMessage.data:type_name -> chat.Message
+	32, // 0: message.SendMessage.data:type_name -> chat.Message
 	1,  // 1: message.CreateRoom.data:type_name -> message.CreateRoomData
 	3,  // 2: message.JoinRoom.data:type_name -> message.JoinRoomData
 	5,  // 3: message.LeaveRoom.data:type_name -> message.LeaveRoomData
@@ -1751,17 +1808,18 @@ var file_message_message_proto_depIdxs = []int32{
 	13, // 7: message.PinMessage.data:type_name -> message.PinMessageData
 	15, // 8: message.ReactMessage.data:type_name -> message.ReactMessageData
 	17, // 9: message.SeenMessage.data:type_name -> message.SeenMessageData
-	30, // 10: message.UpdateSettingsData.settings:type_name -> message.UpdateSettingsData.SettingsEntry
+	31, // 10: message.UpdateSettingsData.settings:type_name -> message.UpdateSettingsData.SettingsEntry
 	19, // 11: message.UpdateSettings.data:type_name -> message.UpdateSettingsData
 	21, // 12: message.DeleteRoom.data:type_name -> message.DeleteRoomData
 	23, // 13: message.RemoveMember.data:type_name -> message.RemoveMemberData
 	25, // 14: message.DeleteViolationMessage.data:type_name -> message.DeleteViolationMessageData
 	27, // 15: message.UpdateRoomMessage.data:type_name -> message.UpdateRoomMessageData
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	33, // 16: message.ReactionMessage.data:type_name -> chat.MessageReaction
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_message_message_proto_init() }
@@ -1775,7 +1833,7 @@ func file_message_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_message_message_proto_rawDesc), len(file_message_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

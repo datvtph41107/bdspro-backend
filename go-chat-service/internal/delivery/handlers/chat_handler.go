@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/tuandq3/go-chat-service/internal/constants"
 	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
 	"github.com/tuandq3/go-chat-service/models"
+	"github.com/tuandq3/go-chat-service/proto/types/chat"
 	pb "github.com/tuandq3/go-chat-service/proto/types/chat"
 	messagepb "github.com/tuandq3/go-chat-service/proto/types/message"
 	"github.com/tuandq3/go-chat-service/utils"
@@ -734,15 +734,22 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *pb.GetLinksRequest) (*p
 }
 
 func (s *chatHandler) ReactionMessage(ctx context.Context, req *pb.ReactionMessageRequest) (*pb.ReactionMessageResponse, error) {
-	fmt.Println("ReactionMessage", req.MessageId, req.Reaction)
-	fmt.Println("gothere")
-	_, err := s.messageReactionUsecases.CreateMessageReaction(ctx, uint64(req.MessageId), req.Reaction)
-	fmt.Println("gothere2")
-
+	model, err := s.messageReactionUsecases.CreateMessageReaction(ctx, uint64(req.MessageId), req.Reaction)
 	if err != nil {
 		return nil, err
 	}
-
+	event := &messagepb.ReactionMessage{
+		Type: constants.REACT_MESSAGE_TYPE,
+		Data: &chat.MessageReaction{
+			MessageId: int32(model.MessageID),
+			UserId:    int32(model.UserID),
+			Reaction:  model.Reaction,
+			CreatedAt: model.CreatedAt.Local().Format(time.RFC3339),
+			Id:        uint64(model.ID),
+			RoomId:    strconv.FormatUint(model.ConversationId, 10),
+		},
+	}
+	s.eventChannel <- event
 	return &pb.ReactionMessageResponse{
 		Success: true,
 	}, nil

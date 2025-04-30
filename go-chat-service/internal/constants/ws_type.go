@@ -16,4 +16,5 @@ const (
 	REMOVE_MEMBER_TYPE            = "remove_member"
 	DELETE_VIOLATION_MESSAGE_TYPE = "delete_violation_message"
 	UPDATE_ROOM_TYPE              = "update_room"
+	REACT_MESSAGE                 = "react_message" // unimplemented
 )
