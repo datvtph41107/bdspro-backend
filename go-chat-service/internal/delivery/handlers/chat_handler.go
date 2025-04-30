@@ -166,7 +166,20 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageReques
 			FileUrl:     message.FileURL,
 			RoomId:      strconv.FormatUint(message.ConversationID, 10),
 			CreatedAt:   message.CreatedAt.Local().Format(time.RFC3339),
+			IsRecall:    message.Recall,
 		},
+	}
+	if message.ReplyMessage != nil {
+		event.Data.ReplyMessage =  &pb.Message{
+			MessageId:   int32(message.ReplyMessage.ID),
+			SenderId:    int32(message.ReplyMessage.SenderID),
+			Content:     message.ReplyMessage.Content,
+			ContentType: string(message.ReplyMessage.ContentType),
+			FileUrl:     message.ReplyMessage.FileURL,
+			RoomId:      strconv.FormatUint(message.ReplyMessage.ConversationID, 10),
+			CreatedAt:   message.ReplyMessage.CreatedAt.Local().Format(time.RFC3339),
+			IsRecall:    message.ReplyMessage.Recall,
+		}
 	}
 	s.eventChannel <- event
 

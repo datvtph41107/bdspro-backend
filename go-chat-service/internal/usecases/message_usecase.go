@@ -26,7 +26,18 @@ func (c *messageUsecases) SendMessage(ctx context.Context, message *models.Messa
 	}
 	message.SenderID = utils.GetCurrentUserID(ctx)
 
-	return c.repo.CreateMessage(ctx, message)
+	data, err := c.repo.CreateMessage(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	if message.ReplyId != nil {
+		replyMessage, err := c.repo.FindMessageByID(ctx, *message.ReplyId)
+		if err != nil {
+			return nil, err
+		}
+		data.ReplyMessage = replyMessage
+	}
+	return data, nil
 }
 
 func (c *messageUsecases) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
