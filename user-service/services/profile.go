@@ -15,11 +15,15 @@ import (
 )
 
 type ProfileService struct {
+	PreePlanID *uint64
 	// GetById(c *gin.Context, profileId uint64)
 }
 
 func NewProfileService() *ProfileService {
-	return &ProfileService{}
+	planId := uint64(1)
+	return &ProfileService{
+		PreePlanID: &planId,
+	}
 }
 
 func (s *ProfileService) GetInfoMe(c *gin.Context) (*data.UserInfoResponse, error) {

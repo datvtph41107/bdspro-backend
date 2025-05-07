@@ -1,8 +1,8 @@
 package u_product
 
 import (
+	"bdspro/enums"
 	"bdspro/v1/data"
-	"bdspro/v1/enums"
 	product_accecss "bdspro/v1/mod/global/product_access"
 	"bdspro/v1/mod/global/product_price"
 	"bdspro/v1/mod/global/product_private"
@@ -100,6 +100,30 @@ func (r *UserProductRepo) UpdateProduct(c *gin.Context, id uint64, entity *model
 
 func (r *UserProductRepo) UpdateAsset(asset *models.Asset) error {
 	return r.DB.Save(asset).Error
+}
+
+func (r *UserProductRepo) GetByID2(ctx context.Context, productID uint64) (*models.Product, error) {
+	var product models.Product
+
+	// Truy vấn thông tin sản phẩm từ cơ sở dữ liệu
+	err := r.DB.WithContext(ctx).
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("Amenities", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Preload("CreatedUser").
+		Preload("UpdatedUser").
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Where("id = ? AND deleted_at IS NULL", productID).
+		First(&product).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &product, nil
 }
 
 func (r *UserProductRepo) GetByID(ctx *gin.Context, id uint64) (*models.Product, error) {

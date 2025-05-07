@@ -6,7 +6,6 @@ import (
 
 	cmd_grpc "bdspro/cmd/grpc"
 	cmd_http "bdspro/cmd/http"
-	_ "bdspro/docs"
 	_ "common/models"
 
 	"github.com/spf13/cobra"
@@ -24,7 +23,6 @@ import (
 // @title BDSPRO API
 // @version 1.0
 // @description API phần logic chính của BĐSPro
-// @BasePath /v1/bdspro/v1
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

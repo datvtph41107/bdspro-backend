@@ -4,6 +4,7 @@ import (
 	"common"
 	"noti/config"
 	_ "noti/docs"
+	"noti/models"
 	"noti/routes"
 	"noti/server"
 	pb_noti "pb/types/notification"
@@ -29,9 +30,10 @@ func NewConfigApp(router *routes.NotificationRouter, ServerHttp *server.ServerHt
 	}
 }
 
-// @title User API
+// @title Notification API
 // @version 1.0
-// @description API quản lý người dùng
+// @description API phần logic thông báo
+// @BasePath /v2
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
@@ -80,12 +82,11 @@ func main() {
 	// 	config.LoadProperties()
 	// 	log.Printf("Data: ", config.AppProperties)
 
-	// 	models.AutoMigrate()
-
 	// 	app.Noti.RegisterRoutes(r)
 	// })
 	common.SetupGRPCServer(parameters, func(s *grpc.Server) {
 		app, _ := InitializeApp()
+		models.AutoMigrate()
 		pb_noti.RegisterNotificationServiceServer(s, app.ServerHttp)
 	})
 

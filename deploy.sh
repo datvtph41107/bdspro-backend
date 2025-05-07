@@ -123,7 +123,9 @@ fi
 if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
-
+if [ "$1" = "gateway" ]; then
+  scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
 if [ $? -ne 0 ]; then
   echo "Có lỗi khi đẩy file lên server"
   exit 1

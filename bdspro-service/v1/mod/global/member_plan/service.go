@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type MemberPlanService struct {
-	Plans map[uint64]MemberPlan
+	Plans map[uint64]*MemberPlan
 }
 
 func NewMemberPlanService() *MemberPlanService {
@@ -16,9 +18,17 @@ func NewMemberPlanService() *MemberPlanService {
 	return planService
 }
 
+func (s *MemberPlanService) CurrentPlan(c *gin.Context) *MemberPlan {
+	var id *uint64
+	if val, ok := c.Get("planId"); ok && val != nil {
+		id, _ = val.(*uint64)
+	}
+	return s.Plans[*id]
+}
+
 func (s *MemberPlanService) loadPlans() {
 	// var entities []MemberPlan
-	url := "http://14.225.210.29:8000/membership/plan/list"
+	url := "http://14.225.210.29:8000/v1/membership/plan/list"
 
 	// Gọi GET request
 	resp, err := http.Get(url)
@@ -35,9 +45,9 @@ func (s *MemberPlanService) loadPlans() {
 	}
 
 	// DB.Find(&entities)
-	cache := make(map[uint64]MemberPlan)
+	cache := make(map[uint64]*MemberPlan)
 	for _, e := range result {
-		cache[e.ID] = e
+		cache[e.ID] = &e
 	}
 	s.Plans = cache
 }

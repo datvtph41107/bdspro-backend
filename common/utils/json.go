@@ -12,6 +12,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/protoadapt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func ParseBody[T any](c *gin.Context) (*T, error) {
@@ -309,4 +313,98 @@ func ParseWithRules(sentence string, rules []Rule) map[string]interface{} {
 		}
 	}
 	return result
+}
+
+func isZeroValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return v.String() == ""
+	case reflect.Int, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint64:
+		return v.Uint() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	default:
+		return v.IsZero()
+	}
+}
+
+func MapWithValidation[S any, D any](src *S, dest *D) *_routes.Except {
+	srcVal := reflect.ValueOf(*src)
+	srcType := reflect.TypeOf(*src)
+
+	// srcVal := reflect.ValueOf(*src)
+	// srcType := reflect.TypeOf(*src)
+
+	destVal := reflect.ValueOf(dest).Elem()
+	destType := destVal.Type()
+	var timestampType = reflect.TypeOf(&timestamppb.Timestamp{})
+
+	for i := 0; i < srcType.NumField(); i++ {
+		srcField := srcType.Field(i)
+		srcValue := srcVal.Field(i)
+
+		// Map theo tên trường nếu tồn tại trong dest
+		if destField, ok := destType.FieldByName(srcField.Name); ok {
+			destFieldValue := destVal.FieldByName(destField.Name)
+
+			// Kiểm tra khả năng set
+			if destFieldValue.CanSet() {
+				srcKind := srcValue.Kind()
+				destKind := destFieldValue.Kind()
+
+				// Cho phép auto-convert int64 → uint64 nếu có thể
+				switch {
+				case srcValue.Type() == timestampType && destFieldValue.Type() == reflect.TypeOf((*time.Time)(nil)):
+					// *timestamppb.Timestamp → *time.Time
+					if !srcValue.IsNil() {
+						t := srcValue.Interface().(*timestamppb.Timestamp).AsTime()
+						destFieldValue.Set(reflect.ValueOf(&t))
+					}
+				case srcKind == reflect.Int64 && destKind == reflect.Uint64:
+					destFieldValue.SetUint(uint64(srcValue.Int()))
+				case srcKind == destKind:
+					destFieldValue.Set(srcValue)
+					// Bạn có thể thêm các case khác nếu muốn hỗ trợ thêm kiểu
+				}
+			}
+		}
+	}
+
+	errorsMap := map[string]string{}
+
+	for i := 0; i < destType.NumField(); i++ {
+		field := destType.Field(i)
+		value := destVal.Field(i)
+
+		// Lấy tên json để báo lỗi
+		jsonName := field.Name
+		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
+			jsonName = strings.Split(jsonTag, ",")[0]
+		}
+
+		// Kiểm tra binding:"required"
+		if bindingTag := field.Tag.Get("binding"); strings.Contains(bindingTag, "required") {
+			if isZeroValue(value) {
+				errorsMap[jsonName] = "Trường " + jsonName + " là bắt buộc"
+			}
+		}
+	}
+
+	if len(errorsMap) > 0 {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Validation failed",
+			Errors:  errorsMap,
+		}
+	}
+
+	return nil
+}
+
+func ErrorField(err *_routes.Except, detail protoadapt.MessageV1) error {
+	st := status.New(codes.Code(err.Code), err.Message)
+	stWithDetails, _ := st.WithDetails(detail)
+	return stWithDetails.Err()
 }

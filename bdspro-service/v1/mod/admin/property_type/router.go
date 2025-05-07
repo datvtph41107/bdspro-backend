@@ -40,7 +40,7 @@ func (r *PropertyTypeRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.PropertyType
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/property-type [post]
+// @Router /v1/bdspro/admin/property-type [post]
 func (r *PropertyTypeRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Loại bất động sản
@@ -54,7 +54,7 @@ func (r *PropertyTypeRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.PropertyType
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/property-type/{id} [put]
+// @Router /v1/bdspro/admin/property-type/{id} [put]
 func (r *PropertyTypeRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Loại bất động sản
@@ -67,7 +67,7 @@ func (r *PropertyTypeRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/property-type/{id} [delete]
+// @Router /v1/bdspro/admin/property-type/{id} [delete]
 func (r *PropertyTypeRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Loại bất động sản theo ID
@@ -80,7 +80,7 @@ func (r *PropertyTypeRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.PropertyType
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/property-type/{id} [get]
+// @Router /v1/bdspro/admin/property-type/{id} [get]
 func (r *PropertyTypeRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Loại bất động sản
@@ -91,5 +91,5 @@ func (r *PropertyTypeRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.PropertyType
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/property-type [get]
+// @Router /v1/bdspro/admin/property-type [get]
 func (r *PropertyTypeRouter) GetAll(c *gin.Context) {}

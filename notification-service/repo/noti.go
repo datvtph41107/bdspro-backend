@@ -19,7 +19,7 @@ func NewNotificationRepository(db *gorm.DB) *NotificationRepository {
 
 func (r *NotificationRepository) Search(dto data.SearchNotiRequest, pageable _utils.Page) ([]models.NotificationEntity, error) {
 	var notifications []models.NotificationEntity
-	query := r.DB.Where("user_id = ? and deleted_at is null", dto.UserID)
+	query := r.DB.Where("user_id = ? and deleted_at is null and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", dto.UserID)
 
 	// Phân trang
 	if pageable.Limit > 0 {
@@ -43,7 +43,7 @@ func (r *NotificationRepository) Create(notification *models.NotificationEntity)
 func (r *NotificationRepository) Count(userID uint64) (int64, error) {
 	var count int64
 	err := r.DB.Model(&models.NotificationEntity{}).
-		Where("user_id = ? AND (is_read IS NULL OR is_read = FALSE)", userID).
+		Where("user_id = ? AND (is_read IS NULL OR is_read = FALSE) and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", userID).
 		Count(&count).Error
 	return count, err
 }
@@ -51,7 +51,7 @@ func (r *NotificationRepository) Count(userID uint64) (int64, error) {
 // MarkNotificationAsRead: Đánh dấu một thông báo là đã đọc
 func (r *NotificationRepository) MarkNotificationAsRead(id uint64, userID uint64) (int64, error) {
 	result := r.DB.Model(&models.NotificationEntity{}).
-		Where("id = ? AND user_id = ?", id, userID).
+		Where("id = ? AND user_id = ? and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", id, userID).
 		Update("is_read", true)
 	return result.RowsAffected, result.Error
 }
@@ -60,14 +60,14 @@ func (r *NotificationRepository) MarkNotificationAsRead(id uint64, userID uint64
 func (r *NotificationRepository) ExistsByIdAndUserId(id uint64, userID uint64) (bool, error) {
 	var count int64
 	err := r.DB.Model(&models.NotificationEntity{}).
-		Where("id = ? AND user_id = ?", id, userID).
+		Where("id = ? AND user_id = ? and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", id, userID).
 		Count(&count).Error
 	return count > 0, err
 }
 
 func (repo *NotificationRepository) DeleteByID(profileId, id uint64) error {
 	return repo.DB.Model(&models.NotificationEntity{}).
-		Where("created_by = ? AND id = ?", profileId, id).
+		Where("created_by = ? AND id = ? and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", profileId, id).
 		Update("deleted_at", time.Now()).
 		Error
 }

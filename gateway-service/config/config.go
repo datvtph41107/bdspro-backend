@@ -8,24 +8,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config struct chứa toàn bộ thông tin từ file config.yml
-type Config struct {
-	Server struct {
-		Port string
-	}
-	Eureka struct {
-		Url  string
-		Port string
-	}
-	Database struct {
-		Host     string
-		User     string
-		Password string
-	}
-}
-
 //go:embed config.yml
-var configFile []byte
+var ConfigFile []byte
 
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
@@ -37,7 +21,7 @@ func LoadConfig() {
 	viper.AutomaticEnv()
 
 	// Đọc file config
-	err := viper.ReadConfig(bytes.NewReader(configFile))
+	err := viper.ReadConfig(bytes.NewReader(ConfigFile))
 	if err != nil {
 		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}

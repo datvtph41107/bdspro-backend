@@ -12,7 +12,7 @@ func AutoMigrate() {
 		// &Province{},
 		// &District{},
 		// &Ward{},
-		&ProductAccess{},
+		// &ProductAccess{},
 		// &DocType{},
 		// &PropertyType{},
 		// &Amenity{},
@@ -31,5 +31,7 @@ func AutoMigrate() {
 		// &Region{},
 		// &Product{},
 		// &ProductPrice{},
+		&Post{},
+		&Action{},
 	)
 }

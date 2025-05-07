@@ -1,0 +1,13 @@
+type: google.api.http
+config_version: 3
+
+http:
+  rules:
+    - selector: pb_payment.PaymentService.Register
+      post: /v2/payment/wallet/new
+      body: "*"
+    - selector: pb_payment.PaymentService.Balance
+      get: /v2/payment/wallet/balance
+    - selector: pb_payment.PaymentService.MakeTransaction
+      post: /v2/payment/wallet/transaction
+      body: "*"

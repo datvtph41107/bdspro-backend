@@ -67,7 +67,7 @@ func NewAdminRoute(province *province.ProvinceRouter,
 }
 
 func (r *AdminRoute) RegisterAdminRouter(e *gin.Engine) {
-	adminRouter := e.Group("/bdspro/v1/admin")
+	adminRouter := e.Group("/bdspro/admin")
 	adminRouter.Use(_jwt.JWTAuthMiddleware(nil))
 	r.product.RegisterRoutes(adminRouter)
 	r.province.RegisterRoutes(adminRouter)

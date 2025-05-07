@@ -1,7 +1,7 @@
 package u_product_child
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	a_doc_type "bdspro/v1/mod/admin/doc_type"
 	a_property_type "bdspro/v1/mod/admin/property_type"
 	"bdspro/v1/mod/global/amenity"

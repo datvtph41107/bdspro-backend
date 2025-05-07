@@ -13,6 +13,7 @@ import (
 	"noti/models"
 	"noti/repo"
 	pb_noti "pb/types/notification"
+	"time"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -45,12 +46,18 @@ func (s *NotificationService2) CreateNotification(c context.Context, request *pb
 		}
 	}
 
+	var visibleAt *time.Time
+	if request.VisibleAt != nil {
+		t := request.VisibleAt.AsTime()
+		visibleAt = &t
+	}
 	notification := models.NotificationEntity{
-		UserID:  request.UserID,
-		Title:   request.Title,
-		Message: request.Message,
-		Link:    request.Link,
-		Type:    enums.TypeEnum(request.Type),
+		UserID:    request.UserID,
+		Title:     request.Title,
+		Message:   request.Message,
+		Link:      request.Link,
+		Type:      enums.TypeEnum(request.Type),
+		VisibleAt: visibleAt,
 	}
 
 	if err := _db.SaveWithContext(c, &notification); err != nil {
@@ -75,12 +82,18 @@ func (s *NotificationService2) CreateBatch(c context.Context, dto *pb_noti.NotiB
 	notifications := []models.NotificationEntity{}
 	for i := 0; i < len(dto.Datas); i++ {
 		request := dto.Datas[i]
+		var visibleAt *time.Time
+		if request.VisibleAt != nil {
+			t := request.VisibleAt.AsTime()
+			visibleAt = &t
+		}
 		notifications = append(notifications, models.NotificationEntity{
-			UserID:  request.UserID,
-			Title:   request.Title,
-			Message: request.Message,
-			Link:    request.Link,
-			Type:    enums.TypeEnum(request.Type),
+			UserID:    request.UserID,
+			Title:     request.Title,
+			Message:   request.Message,
+			Link:      request.Link,
+			Type:      enums.TypeEnum(request.Type),
+			VisibleAt: visibleAt,
 		})
 	}
 
@@ -142,6 +155,16 @@ func (s *NotificationService2) Count(c context.Context) (int64, error) {
 
 // mapToDTO: Chuyển đổi NotificationEntity thành NotificationResponse
 func (s *NotificationService2) mapToDTO(entity models.NotificationEntity) *pb_noti.Notification {
+	var visibleAtPB *timestamppb.Timestamp
+	if entity.VisibleAt != nil {
+		visibleAtPB = timestamppb.New(*entity.VisibleAt)
+	}
+
+	var createdAtPB *timestamppb.Timestamp
+	if entity.CreatedAt != nil {
+		createdAtPB = timestamppb.New(*entity.CreatedAt)
+	}
+
 	return &pb_noti.Notification{
 		Id:        entity.ID,
 		UserID:    entity.UserID,
@@ -150,7 +173,8 @@ func (s *NotificationService2) mapToDTO(entity models.NotificationEntity) *pb_no
 		Link:      entity.Link,
 		Type:      int32(entity.Type),
 		IsRead:    entity.IsRead,
-		Timestamp: timestamppb.New(*entity.CreatedAt),
+		VisibleAt: visibleAtPB,
+		Timestamp: createdAtPB,
 	}
 }
 

@@ -1,0 +1,405 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample API",
+        "title": "Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/v2/payment",
+    "paths": {
+        "/payos/cancel/{orderId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy link thanh toán và cập nhật DB",
+                "tags": [
+                    "PayOS"
+                ],
+                "summary": "Hủy link thanh toán",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của đơn hàng",
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lý do hủy",
+                        "name": "reason",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/payos/create": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo link thanh toán và lưu vào DB",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PayOS"
+                ],
+                "summary": "Tạo link thanh toán",
+                "parameters": [
+                    {
+                        "description": "Order thông tin",
+                        "name": "order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.OrderRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/payos/info/{orderId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin link thanh toán từ PayOS",
+                "tags": [
+                    "PayOS"
+                ],
+                "summary": "Lấy thông tin link thanh toán",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của đơn hàng",
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/payos/webhook/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xác minh Webhook sau khi thanh toán thành công",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PayOS"
+                ],
+                "summary": "Xác minh Webhook",
+                "parameters": [
+                    {
+                        "description": "Order thông tin",
+                        "name": "order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payos.WebhookType"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/wallet/:id": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Cập nhật tài khoản",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài khoản",
+                        "name": "publish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Account"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/wallet/balance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Cập nhật tài khoản",
+                "responses": {}
+            }
+        },
+        "/wallet/new": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "Tạo tài khoản",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài khoản",
+                        "name": "publish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Account"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/wallet/transaction": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "summary": "[LOCAL]Tạo giao dịch mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài khoản",
+                        "name": "publish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Transaction"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "domain.Account": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "accountNumber": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Transaction": {
+            "type": "object",
+            "required": [
+                "accountId",
+                "amount",
+                "targetId",
+                "transactionType"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "integer"
+                },
+                "amount": {
+                    "type": "number"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "transactionId": {
+                    "description": "Deposite bool    `json:\"deposite\"`",
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.OrderRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.OrderType"
+                }
+            }
+        },
+        "models.OrderType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "OrderBill",
+                "OrderMembership"
+            ]
+        },
+        "payos.WebhookDataType": {
+            "type": "object",
+            "properties": {
+                "accountNumber": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "counterAccountBankId": {
+                    "type": "string"
+                },
+                "counterAccountBankName": {
+                    "type": "string"
+                },
+                "counterAccountName": {
+                    "type": "string"
+                },
+                "counterAccountNumber": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "orderCode": {
+                    "type": "integer"
+                },
+                "paymentLinkId": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                },
+                "transactionDateTime": {
+                    "type": "string"
+                },
+                "virtualAccountName": {
+                    "type": "string"
+                },
+                "virtualAccountNumber": {
+                    "type": "string"
+                }
+            }
+        },
+        "payos.WebhookType": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "data": {
+                    "$ref": "#/definitions/payos.WebhookDataType"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

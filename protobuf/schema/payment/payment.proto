@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package pb_payment;
+option go_package = "types/payment";
+
+service PaymentService {
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc MakeTransaction (TransactionRequest) returns (TransactionResponse);
+  rpc Balance (Empty) returns (BalanceRes);
+}
+
+message RegisterRequest {
+    int64 userId = 1;
+    string fullname = 2;
+    string phone = 3;
+}
+
+message RegisterResponse {
+    bool success = 1;
+}
+
+message TransactionRequest {
+	uint64 accountId = 1;
+    double amount = 2;
+    uint32 transactionType = 3;
+    uint64 targetId = 4;
+}
+
+message TransactionResponse {
+    int32 data = 1;
+}
+
+message Empty {}
+message BalanceRes {
+    double balance = 1;
+}

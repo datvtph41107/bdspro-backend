@@ -865,7 +865,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/user",
+	BasePath:         "/v1/user",
 	Schemes:          []string{},
 	Title:            "User API",
 	Description:      "API quản lý người dùng",

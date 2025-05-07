@@ -42,7 +42,7 @@ func (r *ProvinceRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.Province
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/provinces [post]
+// @Router /v1/bdspro/admin/provinces [post]
 func (r *ProvinceRouter) Create(c *gin.Context) {
 
 }
@@ -58,7 +58,7 @@ func (r *ProvinceRouter) Create(c *gin.Context) {
 // @Success 200 {object} models.Province
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/provinces/{id} [put]
+// @Router /v1/bdspro/admin/provinces/{id} [put]
 func (r *ProvinceRouter) Update(c *gin.Context) {
 
 }
@@ -73,7 +73,7 @@ func (r *ProvinceRouter) Update(c *gin.Context) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/provinces/{id} [delete]
+// @Router /v1/bdspro/admin/provinces/{id} [delete]
 func (r *ProvinceRouter) Delete(c *gin.Context) {
 
 }
@@ -88,7 +88,7 @@ func (r *ProvinceRouter) Delete(c *gin.Context) {
 // @Success 200 {object} models.Province
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/provinces/{id} [get]
+// @Router /v1/bdspro/admin/provinces/{id} [get]
 func (r *ProvinceRouter) GetByID(c *gin.Context) {
 
 }
@@ -101,7 +101,7 @@ func (r *ProvinceRouter) GetByID(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.Province
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/provinces [get]
+// @Router /v1/bdspro/admin/provinces [get]
 func (r *ProvinceRouter) GetAll(c *gin.Context) {
 
 }

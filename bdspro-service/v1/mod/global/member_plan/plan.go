@@ -6,6 +6,7 @@ type MemberPlan struct {
 	Duration           int64    `json:"duration"` // day
 	Price              int64    `json:"price"`
 	CreateProduct      int      `json:"createProduct"`
+	LimitPost          int64    `json:"limitPost"`
 	PublicProductLimit int      `json:"publicProductLimit"`
 	CreateProductAI    int      `json:"createProductAI"`
 	FriendLimit        int      `json:"friendLimit"`

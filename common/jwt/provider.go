@@ -15,11 +15,12 @@ import (
 
 // Principal chứa payload của token
 type Principal struct {
-	UserID    uint64 `json:"sub"`
-	ProfileId uint64 `json:"profile"`
-	Type      string `json:"type"`
-	Role      string `json:"role"`
-	Session   uint   `json:"session"`
+	UserID    uint64  `json:"sub"`
+	ProfileId uint64  `json:"profile"`
+	PlanId    *uint64 `json:"plan"`
+	Type      string  `json:"type"`
+	Role      string  `json:"role"`
+	Session   uint    `json:"session"`
 	jwt.RegisteredClaims
 }
 
@@ -31,6 +32,7 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 		"session":     jwtTokenProperties.SessionID,
 		"authorities": jwtTokenProperties.Privileges,
 		"sub":         jwtTokenProperties.AuthID,
+		"plan":        jwtTokenProperties.PlanID,
 		"iat":         time.Now().Unix(),
 	}
 
@@ -168,16 +170,19 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	authID, _ := claims["sub"].(float64)
 	sessionID, _ := claims["session"].(float64)
 	profileID, _ := claims["profile"].(float64)
+	planID, _ := claims["plan"].(float64)
 	role, _ := claims["role"].(string)
 	tokenType, _ := claims["type"].(string)
 	privileges, _ := claims["authorities"].([]string)
 	issuedAt, _ := claims["iat"].(float64) // Unix timestamp
 
+	plan := uint64(planID)
 	// Tạo đối tượng JwtTokenProperties
 	return &JwtTokenProperties{
 		SessionID:  uint64(sessionID),
 		AuthID:     uint64(authID),
 		ProfileID:  uint64(profileID),
+		PlanID:     &plan,
 		Role:       role,
 		Type:       TokenType(tokenType),
 		Privileges: privileges,

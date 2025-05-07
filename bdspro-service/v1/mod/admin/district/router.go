@@ -42,7 +42,7 @@ func (r *DistrictRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.District
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/districts [post]
+// @Router /v1/bdspro/admin/districts [post]
 func (r *DistrictRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin quận/huyện
@@ -56,7 +56,7 @@ func (r *DistrictRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.District
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/districts/{id} [put]
+// @Router /v1/bdspro/admin/districts/{id} [put]
 func (r *DistrictRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa quận/huyện
@@ -69,7 +69,7 @@ func (r *DistrictRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/districts/{id} [delete]
+// @Router /v1/bdspro/admin/districts/{id} [delete]
 func (r *DistrictRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin quận/huyện theo ID
@@ -82,7 +82,7 @@ func (r *DistrictRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.District
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/districts/{id} [get]
+// @Router /v1/bdspro/admin/districts/{id} [get]
 func (r *DistrictRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách quận/huyện
@@ -93,5 +93,5 @@ func (r *DistrictRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.District
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/districts [get]
+// @Router /v1/bdspro/admin/districts [get]
 func (r *DistrictRouter) GetAll(c *gin.Context) {}

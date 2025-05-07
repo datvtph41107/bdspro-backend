@@ -19,8 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BdsproService_Ping_FullMethodName                = "/pb_bdspro.BdsproService/Ping"
-	BdsproService_ListProductInternal_FullMethodName = "/pb_bdspro.BdsproService/ListProductInternal"
+	BdsproService_Ping_FullMethodName                   = "/pb_bdspro.BdsproService/Ping"
+	BdsproService_ListProductInternal_FullMethodName    = "/pb_bdspro.BdsproService/ListProductInternal"
+	BdsproService_GetAssets_FullMethodName              = "/pb_bdspro.BdsproService/GetAssets"
+	BdsproService_FilterAssets_FullMethodName           = "/pb_bdspro.BdsproService/FilterAssets"
+	BdsproService_BulkAction_FullMethodName             = "/pb_bdspro.BdsproService/BulkAction"
+	BdsproService_CreateAsset_FullMethodName            = "/pb_bdspro.BdsproService/CreateAsset"
+	BdsproService_CreateAssetFromProduct_FullMethodName = "/pb_bdspro.BdsproService/CreateAssetFromProduct"
+	BdsproService_ConvertProductToAsset_FullMethodName  = "/pb_bdspro.BdsproService/ConvertProductToAsset"
+	BdsproService_UpdateAsset_FullMethodName            = "/pb_bdspro.BdsproService/UpdateAsset"
+	BdsproService_DeleteAsset_FullMethodName            = "/pb_bdspro.BdsproService/DeleteAsset"
+	BdsproService_Archived_FullMethodName               = "/pb_bdspro.BdsproService/Archived"
+	BdsproService_GetAssetDetails_FullMethodName        = "/pb_bdspro.BdsproService/GetAssetDetails"
+	BdsproService_ShareAsset_FullMethodName             = "/pb_bdspro.BdsproService/ShareAsset"
+	BdsproService_SplitAsset_FullMethodName             = "/pb_bdspro.BdsproService/SplitAsset"
+	BdsproService_MergeAsset_FullMethodName             = "/pb_bdspro.BdsproService/MergeAsset"
+	BdsproService_GetAssetHistory_FullMethodName        = "/pb_bdspro.BdsproService/GetAssetHistory"
 )
 
 // BdsproServiceClient is the client API for BdsproService service.
@@ -29,6 +43,21 @@ const (
 type BdsproServiceClient interface {
 	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error)
 	ListProductInternal(ctx context.Context, in *ProductInternalRequest, opts ...grpc.CallOption) (*ProductInternalResponse, error)
+	// assets
+	GetAssets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AssetList, error)
+	FilterAssets(ctx context.Context, in *FilterAssetsRequest, opts ...grpc.CallOption) (*AssetList, error)
+	BulkAction(ctx context.Context, in *BulkActionRequest, opts ...grpc.CallOption) (*Empty, error)
+	CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*Asset, error)
+	CreateAssetFromProduct(ctx context.Context, in *CreateAssetRequestFromProduct, opts ...grpc.CallOption) (*Asset, error)
+	ConvertProductToAsset(ctx context.Context, in *CreateAssetRequestConvertProduct, opts ...grpc.CallOption) (*Asset, error)
+	UpdateAsset(ctx context.Context, in *UpdateAssetRequest, opts ...grpc.CallOption) (*Asset, error)
+	DeleteAsset(ctx context.Context, in *DeleteAssetRequest, opts ...grpc.CallOption) (*Empty, error)
+	Archived(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Empty, error)
+	GetAssetDetails(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetDetails, error)
+	ShareAsset(ctx context.Context, in *ShareAssetRequest, opts ...grpc.CallOption) (*Empty, error)
+	SplitAsset(ctx context.Context, in *SplitAssetRequest, opts ...grpc.CallOption) (*Empty, error)
+	MergeAsset(ctx context.Context, in *MergeAssetRequest, opts ...grpc.CallOption) (*Asset, error)
+	GetAssetHistory(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetHistory, error)
 }
 
 type bdsproServiceClient struct {
@@ -59,12 +88,167 @@ func (c *bdsproServiceClient) ListProductInternal(ctx context.Context, in *Produ
 	return out, nil
 }
 
+func (c *bdsproServiceClient) GetAssets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AssetList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssetList)
+	err := c.cc.Invoke(ctx, BdsproService_GetAssets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) FilterAssets(ctx context.Context, in *FilterAssetsRequest, opts ...grpc.CallOption) (*AssetList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssetList)
+	err := c.cc.Invoke(ctx, BdsproService_FilterAssets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) BulkAction(ctx context.Context, in *BulkActionRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, BdsproService_BulkAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Asset)
+	err := c.cc.Invoke(ctx, BdsproService_CreateAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) CreateAssetFromProduct(ctx context.Context, in *CreateAssetRequestFromProduct, opts ...grpc.CallOption) (*Asset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Asset)
+	err := c.cc.Invoke(ctx, BdsproService_CreateAssetFromProduct_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) ConvertProductToAsset(ctx context.Context, in *CreateAssetRequestConvertProduct, opts ...grpc.CallOption) (*Asset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Asset)
+	err := c.cc.Invoke(ctx, BdsproService_ConvertProductToAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) UpdateAsset(ctx context.Context, in *UpdateAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Asset)
+	err := c.cc.Invoke(ctx, BdsproService_UpdateAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) DeleteAsset(ctx context.Context, in *DeleteAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, BdsproService_DeleteAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) Archived(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, BdsproService_Archived_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) GetAssetDetails(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetDetails, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssetDetails)
+	err := c.cc.Invoke(ctx, BdsproService_GetAssetDetails_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) ShareAsset(ctx context.Context, in *ShareAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, BdsproService_ShareAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) SplitAsset(ctx context.Context, in *SplitAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, BdsproService_SplitAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) MergeAsset(ctx context.Context, in *MergeAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Asset)
+	err := c.cc.Invoke(ctx, BdsproService_MergeAsset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bdsproServiceClient) GetAssetHistory(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetHistory, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssetHistory)
+	err := c.cc.Invoke(ctx, BdsproService_GetAssetHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BdsproServiceServer is the server API for BdsproService service.
 // All implementations must embed UnimplementedBdsproServiceServer
 // for forward compatibility.
 type BdsproServiceServer interface {
 	Ping(context.Context, *Empty) (*PingResponse, error)
 	ListProductInternal(context.Context, *ProductInternalRequest) (*ProductInternalResponse, error)
+	// assets
+	GetAssets(context.Context, *Empty) (*AssetList, error)
+	FilterAssets(context.Context, *FilterAssetsRequest) (*AssetList, error)
+	BulkAction(context.Context, *BulkActionRequest) (*Empty, error)
+	CreateAsset(context.Context, *CreateAssetRequest) (*Asset, error)
+	CreateAssetFromProduct(context.Context, *CreateAssetRequestFromProduct) (*Asset, error)
+	ConvertProductToAsset(context.Context, *CreateAssetRequestConvertProduct) (*Asset, error)
+	UpdateAsset(context.Context, *UpdateAssetRequest) (*Asset, error)
+	DeleteAsset(context.Context, *DeleteAssetRequest) (*Empty, error)
+	Archived(context.Context, *ArchivedRequest) (*Empty, error)
+	GetAssetDetails(context.Context, *GetAssetRequest) (*AssetDetails, error)
+	ShareAsset(context.Context, *ShareAssetRequest) (*Empty, error)
+	SplitAsset(context.Context, *SplitAssetRequest) (*Empty, error)
+	MergeAsset(context.Context, *MergeAssetRequest) (*Asset, error)
+	GetAssetHistory(context.Context, *GetAssetRequest) (*AssetHistory, error)
 	mustEmbedUnimplementedBdsproServiceServer()
 }
 
@@ -80,6 +264,48 @@ func (UnimplementedBdsproServiceServer) Ping(context.Context, *Empty) (*PingResp
 }
 func (UnimplementedBdsproServiceServer) ListProductInternal(context.Context, *ProductInternalRequest) (*ProductInternalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProductInternal not implemented")
+}
+func (UnimplementedBdsproServiceServer) GetAssets(context.Context, *Empty) (*AssetList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAssets not implemented")
+}
+func (UnimplementedBdsproServiceServer) FilterAssets(context.Context, *FilterAssetsRequest) (*AssetList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FilterAssets not implemented")
+}
+func (UnimplementedBdsproServiceServer) BulkAction(context.Context, *BulkActionRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BulkAction not implemented")
+}
+func (UnimplementedBdsproServiceServer) CreateAsset(context.Context, *CreateAssetRequest) (*Asset, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) CreateAssetFromProduct(context.Context, *CreateAssetRequestFromProduct) (*Asset, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAssetFromProduct not implemented")
+}
+func (UnimplementedBdsproServiceServer) ConvertProductToAsset(context.Context, *CreateAssetRequestConvertProduct) (*Asset, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConvertProductToAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) UpdateAsset(context.Context, *UpdateAssetRequest) (*Asset, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) DeleteAsset(context.Context, *DeleteAssetRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) Archived(context.Context, *ArchivedRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Archived not implemented")
+}
+func (UnimplementedBdsproServiceServer) GetAssetDetails(context.Context, *GetAssetRequest) (*AssetDetails, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAssetDetails not implemented")
+}
+func (UnimplementedBdsproServiceServer) ShareAsset(context.Context, *ShareAssetRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShareAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) SplitAsset(context.Context, *SplitAssetRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SplitAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) MergeAsset(context.Context, *MergeAssetRequest) (*Asset, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MergeAsset not implemented")
+}
+func (UnimplementedBdsproServiceServer) GetAssetHistory(context.Context, *GetAssetRequest) (*AssetHistory, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAssetHistory not implemented")
 }
 func (UnimplementedBdsproServiceServer) mustEmbedUnimplementedBdsproServiceServer() {}
 func (UnimplementedBdsproServiceServer) testEmbeddedByValue()                       {}
@@ -138,6 +364,258 @@ func _BdsproService_ListProductInternal_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BdsproService_GetAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).GetAssets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_GetAssets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).GetAssets(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_FilterAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterAssetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).FilterAssets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_FilterAssets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).FilterAssets(ctx, req.(*FilterAssetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_BulkAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BulkActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).BulkAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_BulkAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).BulkAction(ctx, req.(*BulkActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_CreateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).CreateAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_CreateAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).CreateAsset(ctx, req.(*CreateAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_CreateAssetFromProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAssetRequestFromProduct)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).CreateAssetFromProduct(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_CreateAssetFromProduct_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).CreateAssetFromProduct(ctx, req.(*CreateAssetRequestFromProduct))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_ConvertProductToAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAssetRequestConvertProduct)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).ConvertProductToAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_ConvertProductToAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).ConvertProductToAsset(ctx, req.(*CreateAssetRequestConvertProduct))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_UpdateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).UpdateAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_UpdateAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).UpdateAsset(ctx, req.(*UpdateAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_DeleteAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).DeleteAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_DeleteAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).DeleteAsset(ctx, req.(*DeleteAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_Archived_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchivedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).Archived(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_Archived_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).Archived(ctx, req.(*ArchivedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_GetAssetDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).GetAssetDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_GetAssetDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).GetAssetDetails(ctx, req.(*GetAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_ShareAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShareAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).ShareAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_ShareAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).ShareAsset(ctx, req.(*ShareAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_SplitAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SplitAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).SplitAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_SplitAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).SplitAsset(ctx, req.(*SplitAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_MergeAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MergeAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).MergeAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_MergeAsset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).MergeAsset(ctx, req.(*MergeAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BdsproService_GetAssetHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BdsproServiceServer).GetAssetHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BdsproService_GetAssetHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BdsproServiceServer).GetAssetHistory(ctx, req.(*GetAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BdsproService_ServiceDesc is the grpc.ServiceDesc for BdsproService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +630,62 @@ var BdsproService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProductInternal",
 			Handler:    _BdsproService_ListProductInternal_Handler,
+		},
+		{
+			MethodName: "GetAssets",
+			Handler:    _BdsproService_GetAssets_Handler,
+		},
+		{
+			MethodName: "FilterAssets",
+			Handler:    _BdsproService_FilterAssets_Handler,
+		},
+		{
+			MethodName: "BulkAction",
+			Handler:    _BdsproService_BulkAction_Handler,
+		},
+		{
+			MethodName: "CreateAsset",
+			Handler:    _BdsproService_CreateAsset_Handler,
+		},
+		{
+			MethodName: "CreateAssetFromProduct",
+			Handler:    _BdsproService_CreateAssetFromProduct_Handler,
+		},
+		{
+			MethodName: "ConvertProductToAsset",
+			Handler:    _BdsproService_ConvertProductToAsset_Handler,
+		},
+		{
+			MethodName: "UpdateAsset",
+			Handler:    _BdsproService_UpdateAsset_Handler,
+		},
+		{
+			MethodName: "DeleteAsset",
+			Handler:    _BdsproService_DeleteAsset_Handler,
+		},
+		{
+			MethodName: "Archived",
+			Handler:    _BdsproService_Archived_Handler,
+		},
+		{
+			MethodName: "GetAssetDetails",
+			Handler:    _BdsproService_GetAssetDetails_Handler,
+		},
+		{
+			MethodName: "ShareAsset",
+			Handler:    _BdsproService_ShareAsset_Handler,
+		},
+		{
+			MethodName: "SplitAsset",
+			Handler:    _BdsproService_SplitAsset_Handler,
+		},
+		{
+			MethodName: "MergeAsset",
+			Handler:    _BdsproService_MergeAsset_Handler,
+		},
+		{
+			MethodName: "GetAssetHistory",
+			Handler:    _BdsproService_GetAssetHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

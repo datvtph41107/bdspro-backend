@@ -150,11 +150,10 @@ func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[strin
 	}
 
 	session := s.AuthService.CreateSession(c, e, &data.OtpVerifyRequest{})
-	// refreshToken := s.AuthService.GetRefreshToken(e, session.SessionID)
 	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.AuthService.GenRefreshToken(c, e, session.SessionID)
-
-	return s.AuthService.ResponseLogin(e, session.SessionID), nil
+	planID := s.AuthService.GetPlanID(e.UserID)
+	return s.AuthService.ResponseLogin(e, planID, session.SessionID), nil
 }
 
 func extractEmail(userInfo map[string]interface{}) string {

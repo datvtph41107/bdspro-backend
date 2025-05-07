@@ -1,4 +1,4 @@
-basePath: /user
+basePath: /v1/user
 definitions:
   data.OtpRequest:
     properties:

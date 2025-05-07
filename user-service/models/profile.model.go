@@ -33,6 +33,7 @@ type UserProfileEntity struct {
 	DeletedAt     *time.Time `gorm:"column:deleted_at"`
 	FrontIdentify string     `gorm:"column:front_identify"`
 	BackIdentify  string     `gorm:"column:back_identify"`
+	PlanID        *uint64    `gorm:"column:plan_id"`
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -44,7 +45,7 @@ func (UserProfileEntity) TableName() string {
 }
 
 // NewUserProfileEntity tạo user với authId
-func NewUserProfileEntity(authId uint64, fullname, email, phone, avatar string) *UserProfileEntity {
+func NewUserProfileEntity(authId uint64, planID *uint64, fullname, email, phone, avatar string) *UserProfileEntity {
 	return &UserProfileEntity{
 		ReferralCode: generateReferral(authId),
 		RoleType:     RoleUser,
@@ -52,6 +53,7 @@ func NewUserProfileEntity(authId uint64, fullname, email, phone, avatar string) 
 		Email:        email,
 		Phone:        phone,
 		Avatar:       avatar,
+		PlanID:       planID,
 	}
 }
 

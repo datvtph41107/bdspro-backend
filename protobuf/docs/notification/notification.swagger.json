@@ -296,6 +296,10 @@
         "userID": {
           "type": "string",
           "format": "uint64"
+        },
+        "visibleAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -335,6 +339,10 @@
           "type": "boolean"
         },
         "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "visibleAt": {
           "type": "string",
           "format": "date-time"
         }

@@ -1,8 +1,8 @@
 package u_product
 
 import (
+	"bdspro/enums"
 	"bdspro/v1/data"
-	"bdspro/v1/enums"
 	a_doc_type "bdspro/v1/mod/admin/doc_type"
 	a_property_type "bdspro/v1/mod/admin/property_type"
 	"bdspro/v1/mod/global/amenity"
@@ -14,7 +14,6 @@ import (
 	"bdspro/v1/mod/global/product_private"
 	g_region "bdspro/v1/mod/global/region"
 	u_asset "bdspro/v1/mod/user/asset"
-	u_post "bdspro/v1/mod/user/post"
 	u_product_dto "bdspro/v1/mod/user/product/dto"
 	"bdspro/v1/models"
 	"bdspro/v1/utils"
@@ -30,8 +29,8 @@ import (
 )
 
 type ProductService struct {
-	productRepo       *UserProductRepo
-	postRepo          *u_post.PostRepo
+	ProductRepo *UserProductRepo
+	// postRepo          *u_post.PostRepo
 	assetRepo         *u_asset.AssetRepo
 	mediaRepo         *product_media.ProductMediaRepo
 	productAccessRepo *product_accecss.ProductAccessRepo
@@ -46,7 +45,7 @@ type ProductService struct {
 }
 
 func NewProductService(productRepo *UserProductRepo,
-	postRepo *u_post.PostRepo,
+	// postRepo *u_post.PostRepo,
 	assetRepo *u_asset.AssetRepo,
 	mediaRepo *product_media.ProductMediaRepo,
 	productAccessRepo *product_accecss.ProductAccessRepo,
@@ -60,8 +59,8 @@ func NewProductService(productRepo *UserProductRepo,
 	memberPlan *member_plan.MemberPlanService,
 ) *ProductService {
 	return &ProductService{
-		productRepo:       productRepo,
-		postRepo:          postRepo,
+		ProductRepo: productRepo,
+		// postRepo:          postRepo,
 		assetRepo:         assetRepo,
 		productAccessRepo: productAccessRepo,
 		mediaRepo:         mediaRepo,
@@ -132,94 +131,94 @@ func NewProductService(productRepo *UserProductRepo,
 // 	return nil
 // }
 
-func (s *ProductService) UpdateProductStatus(ctx *gin.Context,
-	productID uint64,
-	newStatus enums.ProductStatus,
-	buyerID *uint64,
-	buyerOrgID *uint64,
-) error {
-	product, err := s.productRepo.GetByID(ctx, productID)
-	if err != nil {
-		return err
-	}
+// func (s *ProductService) UpdateProductStatus(ctx *gin.Context,
+// 	productID uint64,
+// 	newStatus enums.ProductStatus,
+// 	buyerID *uint64,
+// 	buyerOrgID *uint64,
+// ) error {
+// 	product, err := s.productRepo.GetByID(ctx, productID)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	switch newStatus {
-	case enums.ProductSelling:
-		if product.SaleStatus == enums.ProductNotSold {
-			// nếu thuộc sở hữu của công ty hoặc cá nhân thì đổi trạng thái tài sản sang đang bán
-			if product.OwnerUserID != nil || product.OwnerOrgID != nil {
-				if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusSelling); err != nil {
-					return err
-				}
-			}
+// 	switch newStatus {
+// 	case enums.ProductSelling:
+// 		if product.SaleStatus == enums.ProductNotSold {
+// 			// nếu thuộc sở hữu của công ty hoặc cá nhân thì đổi trạng thái tài sản sang đang bán
+// 			if product.OwnerUserID != nil || product.OwnerOrgID != nil {
+// 				if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusSelling); err != nil {
+// 					return err
+// 				}
+// 			}
 
-			if product.SaleVisibility == enums.ProductVisiblePublic {
-				if err := s.postRepo.CreateOrUpdatePostVisibility(ctx, productID, enums.PostVisiblePublic); err != nil {
-					return err
-				}
-			} else if product.SaleVisibility == enums.ProductVisibleInternal {
-				if err := s.postRepo.CreateOrUpdatePostVisibility(ctx, productID, enums.PostVisibleInternal); err != nil {
-					return err
-				}
-			}
-			// nếu sản phẩm là riêng tư thì không tạo tin
-		}
+// 			if product.SaleVisibility == enums.ProductVisiblePublic {
+// 				if err := s.postRepo.CreateOrUpdatePostVisibility(ctx, productID, enums.PostVisiblePublic); err != nil {
+// 					return err
+// 				}
+// 			} else if product.SaleVisibility == enums.ProductVisibleInternal {
+// 				if err := s.postRepo.CreateOrUpdatePostVisibility(ctx, productID, enums.PostVisibleInternal); err != nil {
+// 					return err
+// 				}
+// 			}
+// 			// nếu sản phẩm là riêng tư thì không tạo tin
+// 		}
 
-	case enums.ProductNotSold:
-		if product.SaleStatus == enums.ProductSelling {
-			// sản phẩm thuộc công ty -> đổi sang chưa bán
-			if product.OwnerOrgID != nil {
-				if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusNotSold); err != nil {
-					return err
-				}
-			}
-			// công ty không sở hữu tài sản không thay đổi
+// 	case enums.ProductNotSold:
+// 		if product.SaleStatus == enums.ProductSelling {
+// 			// sản phẩm thuộc công ty -> đổi sang chưa bán
+// 			if product.OwnerOrgID != nil {
+// 				if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusNotSold); err != nil {
+// 					return err
+// 				}
+// 			}
+// 			// công ty không sở hữu tài sản không thay đổi
 
-			post, err := s.postRepo.GetPostByProductID(product.ID)
-			if err != nil {
-				return err
-			}
+// 			post, err := s.postRepo.GetPostByProductID(product.ID)
+// 			if err != nil {
+// 				return err
+// 			}
 
-			// tin đang công khai => tạm ẩn
-			if post.Visibility == enums.PostVisiblePublic {
-				if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostHide); err != nil {
-					return err
-				}
-			}
+// 			// tin đang công khai => tạm ẩn
+// 			if post.Visibility == enums.PostVisiblePublic {
+// 				if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostHide); err != nil {
+// 					return err
+// 				}
+// 			}
 
-			// tin nội bộ => dừng
-			if post.Visibility == enums.PostVisiblePublic {
-				if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostStop); err != nil {
-					return err
-				}
-			}
-		}
+// 			// tin nội bộ => dừng
+// 			if post.Visibility == enums.PostVisiblePublic {
+// 				if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostStop); err != nil {
+// 					return err
+// 				}
+// 			}
+// 		}
 
-	case enums.ProductSold:
-		if buyerID != nil || buyerOrgID != nil {
-			// Bán cho công ty hoặc người dùng
-			product.OwnerUserID = buyerID
-			product.OwnerOrgID = buyerOrgID
-			if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusOwning); err != nil {
-				return err
-			}
-		} else {
-			// todo
-			// Bán ra ngoài
-			product.OwnerUserID = nil
-			product.OwnerOrgID = nil
-		}
+// 	case enums.ProductSold:
+// 		if buyerID != nil || buyerOrgID != nil {
+// 			// Bán cho công ty hoặc người dùng
+// 			product.OwnerUserID = buyerID
+// 			product.OwnerOrgID = buyerOrgID
+// 			if err := s.assetRepo.UpdateStatus(ctx, product.AssetId, enums.AssetStatusOwning); err != nil {
+// 				return err
+// 			}
+// 		} else {
+// 			// todo
+// 			// Bán ra ngoài
+// 			product.OwnerUserID = nil
+// 			product.OwnerOrgID = nil
+// 		}
 
-		if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostStatusCompleted); err != nil {
-			return err
-		}
-		if err := s.postRepo.HideOrDeletePost(ctx, productID); err != nil {
-			return err
-		}
-	}
+// 		if err := s.postRepo.UpdatePostStatus(ctx, productID, enums.PostStatusCompleted); err != nil {
+// 			return err
+// 		}
+// 		if err := s.postRepo.HideOrDeletePost(ctx, productID); err != nil {
+// 			return err
+// 		}
+// 	}
 
-	return s.productRepo.UpdateSaleStatus(ctx, productID, newStatus)
-}
+// 	return s.productRepo.UpdateSaleStatus(ctx, productID, newStatus)
+// }
 
 func (s *ProductService) CreateProduct(c *gin.Context, product *u_product_dto.ProductSaveRequest) (*models.Product, error) {
 	profileId := _jwt.GetProfileId(c)
@@ -277,7 +276,7 @@ func (s *ProductService) CheckAccessProduct(c *gin.Context, profileId, productId
 		return nil, err
 	}
 
-	product, err := s.productRepo.GetByID(c, productId)
+	product, err := s.ProductRepo.GetByID(c, productId)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +293,7 @@ func (s *ProductService) CheckAccessProduct(c *gin.Context, profileId, productId
 
 func (s *ProductService) SearchProductWithOwner(c *gin.Context, dto *data.ProductSearchRequest) (_routes.ResponseDTO, error) {
 	profileId := _jwt.GetProfileId(c)
-	results, total, err := s.productRepo.SearchProductWithOwner(profileId, *dto, _utils.GetPage(c))
+	results, total, err := s.ProductRepo.SearchProductWithOwner(profileId, *dto, _utils.GetPage(c))
 	return _routes.ResponseDTO{
 		Code:          0,
 		Data:          results,
@@ -304,7 +303,7 @@ func (s *ProductService) SearchProductWithOwner(c *gin.Context, dto *data.Produc
 
 func (s *ProductService) SearchProductMarket(c *gin.Context, dto *data.ProductSearchRequest) (_routes.ResponseDTO, error) {
 	profileId := _jwt.GetProfileId(c)
-	results, total, err := s.productRepo.SearchProductMarket(profileId, *dto, _utils.GetPage(c))
+	results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto, _utils.GetPage(c))
 	return _routes.ResponseDTO{
 		Code:          0,
 		Data:          results,
@@ -314,7 +313,7 @@ func (s *ProductService) SearchProductMarket(c *gin.Context, dto *data.ProductSe
 
 func (s *ProductService) UpdateReference(c *gin.Context, entity *models.Product, dto *u_product_dto.ProductSaveRequest) error {
 	if dto.AmenityIds != nil {
-		s.productRepo.UpdateProductAmenityIds(entity.ID, dto.AmenityIds)
+		s.ProductRepo.UpdateProductAmenityIds(entity.ID, dto.AmenityIds)
 	}
 
 	// price := entity.Price
@@ -386,7 +385,7 @@ func (s *ProductService) Detail(c *gin.Context) (*models.Product, error) {
 		}
 	}
 
-	entity, err := s.productRepo.GetByID(c, id)
+	entity, err := s.ProductRepo.GetByID(c, id)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    404,
@@ -406,7 +405,7 @@ func (s *ProductService) Rent(c *gin.Context, id uint64, body any) (*models.Prod
 		}
 	}
 
-	entity, err := s.productRepo.GetByID(c, id)
+	entity, err := s.ProductRepo.GetByID(c, id)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    404,
@@ -430,7 +429,7 @@ func (s *ProductService) SmartSearch(c *gin.Context, text string) (_routes.Respo
 	searchs.DocTypeIds = docTypeIds
 	searchs.PropertyTypeIds = propertyTypeIds
 
-	results, total, err := s.productRepo.SmartSearchProduct(0, searchs, p)
+	results, total, err := s.ProductRepo.SmartSearchProduct(0, searchs, p)
 	log.Println("Search= ")
 
 	return _routes.ResponseDTO{
@@ -446,7 +445,7 @@ func (s *ProductService) UpdatePrice(c *gin.Context, priceID uint64, entity *mod
 
 func (s *ProductService) UpdateAmenity(productID uint64, ids []uint64) error {
 	if len(ids) > 0 {
-		return s.productRepo.UpdateProductAmenityIds(productID, ids)
+		return s.ProductRepo.UpdateProductAmenityIds(productID, ids)
 	}
 	return nil
 }
@@ -555,7 +554,7 @@ func (s *ProductService) CreateProductWithDetect(c *gin.Context, body *u_product
 }
 
 func (s *ProductService) RequiredOwner(c *gin.Context, id uint64) (*models.Product, error) {
-	product, err := s.productRepo.GetByID(c, id)
+	product, err := s.ProductRepo.GetByID(c, id)
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +575,7 @@ func (s *ProductService) Archived(c *gin.Context, dto u_product_dto.ArchivedRequ
 		return err
 	}
 
-	return s.productRepo.UpdateArchived(c, dto)
+	return s.ProductRepo.UpdateArchived(c, dto)
 }
 
 func (s *ProductService) Delete(c *gin.Context, id uint64) error {
@@ -593,7 +592,7 @@ func (s *ProductService) Delete(c *gin.Context, id uint64) error {
 			Message: "Không thể xóa sản phẩm này",
 		}
 	}
-	return s.productRepo.Delete(id)
+	return s.ProductRepo.Delete(id)
 }
 
 func (s *ProductService) RentStatusUpdate(c *gin.Context, dto u_product_dto.StatusUpdate) error {
@@ -602,7 +601,7 @@ func (s *ProductService) RentStatusUpdate(c *gin.Context, dto u_product_dto.Stat
 	if err != nil {
 		return err
 	}
-	return s.productRepo.UpdateRentStatus(c, *dto.ProductID, dto.Status)
+	return s.ProductRepo.UpdateRentStatus(c, *dto.ProductID, dto.Status)
 }
 
 func (s *ProductService) SaleStatusUpdate(c *gin.Context, dto u_product_dto.StatusUpdate) error {
@@ -611,7 +610,7 @@ func (s *ProductService) SaleStatusUpdate(c *gin.Context, dto u_product_dto.Stat
 	if err != nil {
 		return err
 	}
-	return s.productRepo.UpdateSaleStatus(c, *dto.ProductID, dto.Status)
+	return s.ProductRepo.UpdateSaleStatus(c, *dto.ProductID, dto.Status)
 }
 
 func (s *ProductService) RentVisibilityUpdate(c *gin.Context, dto u_product_dto.VisibilityUpdate) error {
@@ -620,7 +619,7 @@ func (s *ProductService) RentVisibilityUpdate(c *gin.Context, dto u_product_dto.
 	if err != nil {
 		return err
 	}
-	return s.productRepo.UpdateRentVisibility(c, *dto.ProductID, dto.Visibility)
+	return s.ProductRepo.UpdateRentVisibility(c, *dto.ProductID, dto.Visibility)
 }
 
 func (s *ProductService) SaleVisibilityUpdate(c *gin.Context, dto u_product_dto.VisibilityUpdate) error {
@@ -629,7 +628,7 @@ func (s *ProductService) SaleVisibilityUpdate(c *gin.Context, dto u_product_dto.
 	if err != nil {
 		return err
 	}
-	return s.productRepo.UpdateSaleVisibility(c, *dto.ProductID, dto.Visibility)
+	return s.ProductRepo.UpdateSaleVisibility(c, *dto.ProductID, dto.Visibility)
 }
 
 func (s *ProductService) ProductDeposite(c *gin.Context, dto u_product_dto.DepositeRequest) error {
@@ -653,12 +652,12 @@ func (s *ProductService) ProductDeposite(c *gin.Context, dto u_product_dto.Depos
 		Amount:        dto.Amount,
 		Note:          dto.Note,
 	}
-	if err := s.productRepo.NewDeposite(c, &record); err != nil {
+	if err := s.ProductRepo.NewDeposite(c, &record); err != nil {
 		return err
 	}
 	product.DepositeID = &record.ID
 
-	return s.productRepo.Update(c, product.ID, product)
+	return s.ProductRepo.Update(c, product.ID, product)
 }
 
 func (s *ProductService) CancelDeposite(c *gin.Context, id uint64) error {
@@ -677,5 +676,5 @@ func (s *ProductService) CancelDeposite(c *gin.Context, id uint64) error {
 
 	product.DepositeID = nil
 
-	return s.productRepo.Update(c, product.ID, product)
+	return s.ProductRepo.Update(c, product.ID, product)
 }

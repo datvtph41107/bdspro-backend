@@ -18,10 +18,11 @@ import (
 )
 
 type SetupParameters struct {
-	ConfigFile   []byte
-	Engine       *gin.Engine
-	PublicRoutes []string
-	Prefix       string
+	ConfigFile    []byte
+	Engine        *gin.Engine
+	PublicRoutes  []string
+	Prefix        string
+	IgnoreSwagger bool
 }
 
 func ProfileIDInterceptor(
@@ -54,7 +55,10 @@ func ProfileIDInterceptor(
 func SetupGRPCServer(parameters SetupParameters, setup func(*grpc.Server)) {
 	LoadConfig(parameters.ConfigFile)
 	// _db.NewDB()
-	parameters.Engine.GET(parameters.Prefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
+	if !parameters.IgnoreSwagger {
+		parameters.Engine.GET(parameters.Prefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
+	}
+
 	// models.AutoMigrate()
 	// parameters.Engine.Use(cors.New(cors.Config{
 	// 	AllowOrigins: []string{"http://localhost:3000", "http://14.225.210.29:8000"}, // Cho phép gọi từ frontend

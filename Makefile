@@ -1,0 +1,13 @@
+gen:
+	cd protobuf/schema && buf generate --template ./notification/buf.gen.yaml --path notification
+	cd protobuf/schema && buf generate --template ./bdspro/buf.gen.yaml --path bdspro
+	cd protobuf/schema && buf generate --template ./task/buf.gen.yaml --path task
+	cd protobuf/schema && buf generate --template ./payment/buf.gen.yaml --path payment
+	cd protobuf/schema && buf generate --template ./spec/buf.gen.yaml --path spec
+
+payment:
+	cd payment-service && go run main.go http
+gateway:
+	cd gateway-service && go run main.go http
+bdspro:
+	cd gateway-service && go run main.go grpc

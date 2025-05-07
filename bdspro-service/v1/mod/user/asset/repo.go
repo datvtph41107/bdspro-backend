@@ -1,7 +1,7 @@
 package u_asset
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	"bdspro/v1/models"
 	"common/case/crud"
 	"context"

@@ -35,7 +35,7 @@ func NewConfigApp(authService *routes.AuthRouter,
 // @title User API
 // @version 1.0
 // @description API quản lý người dùng
-// @BasePath /user
+// @BasePath /v1/user
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

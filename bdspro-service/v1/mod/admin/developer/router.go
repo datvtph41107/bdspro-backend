@@ -40,7 +40,7 @@ func (r *DeveloperRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.Developer
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/developer [post]
+// @Router /v1/bdspro/admin/developer [post]
 func (r *DeveloperRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Dự án
@@ -54,7 +54,7 @@ func (r *DeveloperRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.Developer
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/developer/{id} [put]
+// @Router /v1/bdspro/admin/developer/{id} [put]
 func (r *DeveloperRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Dự án
@@ -67,7 +67,7 @@ func (r *DeveloperRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/developer/{id} [delete]
+// @Router /v1/bdspro/admin/developer/{id} [delete]
 func (r *DeveloperRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Dự án theo ID
@@ -80,7 +80,7 @@ func (r *DeveloperRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.Developer
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/developer/{id} [get]
+// @Router /v1/bdspro/admin/developer/{id} [get]
 func (r *DeveloperRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Dự án
@@ -91,5 +91,5 @@ func (r *DeveloperRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.Developer
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/developer [get]
+// @Router /v1/bdspro/admin/developer [get]
 func (r *DeveloperRouter) GetAll(c *gin.Context) {}

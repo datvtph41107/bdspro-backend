@@ -2,13 +2,18 @@ package _jwt
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
+	pb_spec "pb/types/spec"
+
 	"github.com/gin-gonic/gin"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // JWTMiddleware kiểm tra JWT từ request header
@@ -85,6 +90,7 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 		// Gắn claims vào context để các handler sau có thể sử dụng
 		c.Set("claims", claims)
 		c.Set("profileId", claims.ProfileId)
+		c.Set("planId", claims.PlanId)
 
 		c.Next()
 	}
@@ -160,7 +166,7 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 		claims, _ := ParseJWT(tokenStr)
 		if claims != nil {
 			md.Append("profileId", fmt.Sprintf("%d", claims.ProfileId))
-			log.Println("LOGING", fmt.Sprintf("%d", claims.ProfileId))
+			md.Append("planId", fmt.Sprintf("%d", *claims.PlanId))
 		}
 
 		// claims := jwt.MapClaims{}
@@ -177,4 +183,45 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 
 	log.Println("Metadata: ", md)
 	return md
+}
+
+func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err error) {
+	st, ok := status.FromError(err)
+	if !ok {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+	errorMap := make(map[string]string)
+
+	for _, detail := range st.Details() {
+		switch t := detail.(type) {
+		case *pb_spec.FieldErrors:
+			for k, v := range t.Errors {
+				errorMap[k] = v
+			}
+		}
+	}
+
+	resp := map[string]interface{}{
+		"code":    int(st.Code()),
+		"message": st.Message(),
+		"errors":  errorMap,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(runtime.HTTPStatusFromCode(st.Code()))
+	_ = json.NewEncoder(w).Encode(resp)
+
+	// var specErr *_routes.Except
+	// if errors.As(err, &specErr) {
+	// 	w.Header().Set("Content-Type", "application/json")
+	// 	w.WriteHeader(http.StatusOK) // hoặc `w.WriteHeader(specErr.Code)` nếu bạn muốn
+	// 	json.NewEncoder(w).Encode(specErr)
+	// } else {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	// 		"code":    500,
+	// 		"message": err.Error(),
+	// 	})
+	// }
 }

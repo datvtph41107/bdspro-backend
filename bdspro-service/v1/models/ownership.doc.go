@@ -1,6 +1,6 @@
 package models
 
-import "bdspro/v1/enums"
+import "bdspro/enums"
 
 type OwnershipDoc struct {
 	ID        uint64 `gorm:"primaryKey;autoIncrement" json:"id"`

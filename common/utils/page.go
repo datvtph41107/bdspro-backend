@@ -9,9 +9,9 @@ import (
 
 // Page represents pagination information
 type Page struct {
-	Limit int
-	Skip  int
-	Sort  string
+	Limit int    `json:"limit" form:"limit,default=20"`
+	Skip  int    `json:"skip" form:"skip,default=0"`
+	Sort  string `json:"sort"`
 }
 
 // NewPage creates a new Page instance

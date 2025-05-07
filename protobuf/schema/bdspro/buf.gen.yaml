@@ -11,11 +11,3 @@ plugins:
     opt: 
       - paths=source_relative
       - grpc_api_configuration=./bdspro/service.yaml
-  - plugin: openapiv2
-    out: ../docs/bdspro
-    opt:
-      - logtostderr=true
-      - allow_merge=true
-      - merge_file_name=bdspro
-      - grpc_api_configuration=./bdspro/service.yaml
-      - version=true

@@ -1,7 +1,7 @@
 package u_product_child
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	product_accecss "bdspro/v1/mod/global/product_access"
 	"bdspro/v1/mod/global/product_price"
 	"bdspro/v1/mod/global/product_private"

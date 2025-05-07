@@ -1,7 +1,7 @@
 package u_product_access
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	"bdspro/v1/models"
 	"common/case/crud2"
 	_routes "common/routes"
@@ -46,7 +46,7 @@ func (r *UserProductAccessRoute) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.ProductAccess
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /user/product-access/{productId}/batch [post]
+// @Router /v1/bdspro/user/product-access/{productId}/batch [post]
 func (r *UserProductAccessRoute) CreateBatch(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -75,7 +75,7 @@ func (r *UserProductAccessRoute) CreateBatch(c *gin.Context) {
 // // @Success 200 {object} models.ProductAccess
 // // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// // @Router /user/product-access/{id} [put]
+// // @Router /v1/bdspro/user/product-access/{id} [put]
 // func (r *UserProductAccessRoute) Update(c *gin.Context) {}
 
 // @Summary Xóa Dự án
@@ -88,7 +88,7 @@ func (r *UserProductAccessRoute) CreateBatch(c *gin.Context) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /user/product-access/{id} [delete]
+// @Router /v1/bdspro/user/product-access/{id} [delete]
 func (r *UserProductAccessRoute) Delete(c *gin.Context) {}
 
 // // @Summary Lấy thông tin Dự án theo ID
@@ -101,7 +101,7 @@ func (r *UserProductAccessRoute) Delete(c *gin.Context) {}
 // // @Success 200 {object} models.ProductAccess
 // // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// // @Router /user/product-access/{id} [get]
+// // @Router /v1/bdspro/user/product-access/{id} [get]
 // func (r *UserProductAccessRoute) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Dự án
@@ -112,7 +112,7 @@ func (r *UserProductAccessRoute) Delete(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.ProductAccess
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /user/product-access [get]
+// @Router /v1/bdspro/user/product-access [get]
 func (r *UserProductAccessRoute) Search(c *gin.Context) {
 
 }
@@ -125,7 +125,7 @@ func (r *UserProductAccessRoute) Search(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.ProductAccess
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /user/product-access/private-fields [get]
+// @Router /v1/bdspro/user/product-access/private-fields [get]
 func (r *UserProductAccessRoute) GetFields(c *gin.Context) {
 	// fields := []struct {
 	// 	Value string `json:"value"`

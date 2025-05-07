@@ -1,7 +1,7 @@
 package models
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	_models "common/models"
 )
 

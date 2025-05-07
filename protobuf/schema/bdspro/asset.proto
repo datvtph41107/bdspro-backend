@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+import "google/protobuf/timestamp.proto";
+
+message ArchivedRequest {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message Asset {
+  uint64 id = 1;
+  string name = 2;
+  uint64 wardId = 3;
+  uint64 districtId = 4;
+  uint64 provinceId = 5;
+  double price = 6;
+  google.protobuf.Timestamp buyedDate = 7;
+  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+  optional uint64 productId = 9;
+  optional uint64 ownerUserId = 10;
+  optional uint64 ownerOrgId = 11;
+  optional uint64 parentAssetId = 12;
+  string splitMergeStatus = 13;
+  double purchasePrice = 14;
+  google.protobuf.Timestamp purchaseDate = 15;
+  string legalStatus = 16;
+  bool archived = 17;
+  uint32 rentStatus = 18;
+  double area = 19;
+  string address = 20;
+  string description = 21;
+}
+
+message AssetList {
+  repeated Asset data = 1;
+}
+
+message GetAssetRequest {
+  uint64 id = 1;
+}
+
+message DeleteAssetRequest {
+  uint64 id = 1;
+}
+
+message CreateAssetRequest {
+  uint64 id = 1;
+  string name = 2;
+  uint64 wardId = 3;
+  uint64 districtId = 4;
+  uint64 provinceId = 5;
+  double price = 6;
+  google.protobuf.Timestamp buyedDate = 7;
+  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+  optional uint64 productId = 9;
+  optional uint64 ownerUserId = 10;
+  optional uint64 ownerOrgId = 11;
+  optional uint64 parentAssetId = 12;
+  string splitMergeStatus = 13;
+  double purchasePrice = 14;
+  google.protobuf.Timestamp purchaseDate = 15;
+  string legalStatus = 16;
+  bool archived = 17;
+  uint32 rentStatus = 18;
+  double area = 19;
+  string address = 20;
+  string description = 21;
+}
+
+message UpdateAssetRequest {
+  uint64 id = 1;
+  string name = 2;
+  uint64 wardId = 3;
+  uint64 districtId = 4;
+  uint64 provinceId = 5;
+  double price = 6;
+  google.protobuf.Timestamp buyedDate = 7;
+  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+  optional uint64 productId = 9;
+  optional uint64 ownerUserId = 10;
+  optional uint64 ownerOrgId = 11;
+  optional uint64 parentAssetId = 12;
+  string splitMergeStatus = 13;
+  double purchasePrice = 14;
+  google.protobuf.Timestamp purchaseDate = 15;
+  string legalStatus = 16;
+  bool archived = 17;
+  uint32 rentStatus = 18;
+  double area = 19;
+  string address = 20;
+  string description = 21;
+}
+
+
+message BulkActionRequest {
+  repeated uint64 ids = 1;
+  uint32 action = 2;
+}
+
+message FilterAssetsRequest {
+  string keyword = 1;
+  uint32 type = 2;
+  bool archived = 3;
+}
+
+message AssetDetails {
+  Asset data = 1;
+}
+
+message ShareAssetRequest {
+  uint64 id = 1;
+  repeated string user_ids = 2;
+}
+
+message SplitAssetRequest {
+  uint64 id = 1;
+  repeated Asset parts = 2;
+}
+
+message MergeAssetRequest {
+  repeated uint64 ids = 1;
+  string new_name = 2;
+  uint64 id = 3;
+}
+
+message AssetHistory {
+  uint64 asset_id = 1;
+  repeated string changes = 2;
+}
+
+
+// Use Case 1: Tạo mới hoàn toàn (không có sản phẩm)
+message CreateAssetRequestNew {
+  string name = 1;
+  double area = 2;
+  string address = 3;
+  string description = 4;
+  google.protobuf.Timestamp purchase_date = 5;
+  double purchase_price = 6;
+}
+
+// Use Case 2: Tạo từ sản phẩm có sẵn
+message CreateAssetRequestFromProduct {
+  uint64 product_id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Timestamp purchase_date = 4;
+  double purchase_price = 5;
+}
+
+// Use Case 3: Chuyển sản phẩm thành tài sản
+message CreateAssetRequestConvertProduct {
+  uint64 product_id = 1;
+  string name = 2;
+  string address = 3;
+  double area = 4;
+  string description = 5;
+  google.protobuf.Timestamp purchase_date = 6;
+  double purchase_price = 7;
+}

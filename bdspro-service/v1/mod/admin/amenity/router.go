@@ -40,7 +40,7 @@ func (r *AmenityRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.Amenity
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/amenity [post]
+// @Router /v1/bdspro/admin/amenity [post]
 func (r *AmenityRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Tiện ích
@@ -54,7 +54,7 @@ func (r *AmenityRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.Amenity
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/amenity/{id} [put]
+// @Router /v1/bdspro/admin/amenity/{id} [put]
 func (r *AmenityRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Tiện ích
@@ -67,7 +67,7 @@ func (r *AmenityRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/amenity/{id} [delete]
+// @Router /v1/bdspro/admin/amenity/{id} [delete]
 func (r *AmenityRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Tiện ích theo ID
@@ -80,7 +80,7 @@ func (r *AmenityRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.Amenity
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/amenity/{id} [get]
+// @Router /v1/bdspro/admin/amenity/{id} [get]
 func (r *AmenityRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Tiện ích
@@ -91,5 +91,5 @@ func (r *AmenityRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.Amenity
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/amenity [get]
+// @Router /v1/bdspro/admin/amenity [get]
 func (r *AmenityRouter) GetAll(c *gin.Context) {}

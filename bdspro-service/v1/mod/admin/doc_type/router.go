@@ -40,7 +40,7 @@ func (r *DocTypeRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.DocType
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/doc-type [post]
+// @Router /v1/bdspro/admin/doc-type [post]
 func (r *DocTypeRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Loại giấy tờ pháp lý
@@ -54,7 +54,7 @@ func (r *DocTypeRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.DocType
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/doc-type/{id} [put]
+// @Router /v1/bdspro/admin/doc-type/{id} [put]
 func (r *DocTypeRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Loại giấy tờ pháp lý
@@ -67,7 +67,7 @@ func (r *DocTypeRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/doc-type/{id} [delete]
+// @Router /v1/bdspro/admin/doc-type/{id} [delete]
 func (r *DocTypeRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Loại giấy tờ pháp lý theo ID
@@ -80,7 +80,7 @@ func (r *DocTypeRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.DocType
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/doc-type/{id} [get]
+// @Router /v1/bdspro/admin/doc-type/{id} [get]
 func (r *DocTypeRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Loại giấy tờ pháp lý
@@ -91,5 +91,5 @@ func (r *DocTypeRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.DocType
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/doc-type [get]
+// @Router /v1/bdspro/admin/doc-type [get]
 func (r *DocTypeRouter) GetAll(c *gin.Context) {}

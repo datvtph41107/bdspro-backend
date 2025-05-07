@@ -1,7 +1,7 @@
 package u_product_dto
 
 import (
-	"bdspro/v1/enums"
+	"bdspro/enums"
 	"bdspro/v1/models"
 )
 

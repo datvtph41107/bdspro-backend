@@ -1,9 +1,13 @@
 server:
   port: 8000
+  tcp_port: 8800
 
-eureka:
-  url: localhost
-  port: 8761
+service:
+  domain: localhost
+  port:
+    notification: 8004
+    payment: 8805
+    bdspro: 8202
 
 jwt:
   key-generate: key-generate-jwt-token-authentication

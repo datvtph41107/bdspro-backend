@@ -1,11 +1,28 @@
 syntax = "proto3";
 
 package pb_bdspro;
+import "bdspro/asset.proto";
 option go_package = "types/bdspro";
 
 service BdsproService {
   rpc Ping (Empty) returns (PingResponse);
   rpc ListProductInternal (ProductInternalRequest) returns (ProductInternalResponse);
+
+  // assets
+  rpc GetAssets (pb_bdspro.Empty) returns (AssetList);
+  rpc FilterAssets (FilterAssetsRequest) returns (AssetList);
+  rpc BulkAction (BulkActionRequest) returns (pb_bdspro.Empty);
+  rpc CreateAsset (CreateAssetRequest) returns (Asset);
+  rpc CreateAssetFromProduct (CreateAssetRequestFromProduct) returns (Asset);
+  rpc ConvertProductToAsset (CreateAssetRequestConvertProduct) returns (Asset);
+  rpc UpdateAsset (UpdateAssetRequest) returns (Asset);
+  rpc DeleteAsset (DeleteAssetRequest) returns (pb_bdspro.Empty);
+  rpc Archived (ArchivedRequest) returns (pb_bdspro.Empty);
+  rpc GetAssetDetails (GetAssetRequest) returns (AssetDetails);
+  rpc ShareAsset (ShareAssetRequest) returns (pb_bdspro.Empty);
+  rpc SplitAsset (SplitAssetRequest) returns (pb_bdspro.Empty);
+  rpc MergeAsset (MergeAssetRequest) returns (Asset);
+  rpc GetAssetHistory (GetAssetRequest) returns (AssetHistory);
 }
 
 message Empty {}

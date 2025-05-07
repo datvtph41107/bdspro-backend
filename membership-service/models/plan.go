@@ -9,6 +9,7 @@ type Plan struct {
 	Duration           int64    `gorm:"column:duration" json:"duration"` // day
 	Price              int64    `gorm:"column:price" json:"price"`
 	CreateProduct      int      `gorm:"column:create_product" json:"createProduct"`
+	LimitPost          int64    `gorm:"column:post_limit" json:"limitPost"`
 	PublicProductLimit int      `gorm:"column:public_product_limit" json:"publicProductLimit"`
 	CreateProductAI    int      `gorm:"column:create_product_ai" json:"createProductAI"`
 	FriendLimit        int      `gorm:"column:friend_limit" json:"friendLimit"`

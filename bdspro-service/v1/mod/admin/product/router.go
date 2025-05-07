@@ -40,7 +40,7 @@ func (r *AdminProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.AdminProduct
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/AdminProduct [post]
+// @Router /v1/bdspro/admin/AdminProduct [post]
 // func (r *AdminProductRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Dự án
@@ -54,7 +54,7 @@ func (r *AdminProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} models.AdminProduct
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/AdminProduct/{id} [put]
+// @Router /v1/bdspro/admin/AdminProduct/{id} [put]
 // func (r *AdminProductRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Dự án
@@ -67,7 +67,7 @@ func (r *AdminProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/AdminProduct/{id} [delete]
+// @Router /v1/bdspro/admin/AdminProduct/{id} [delete]
 // func (r *AdminProductRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Dự án theo ID
@@ -80,7 +80,7 @@ func (r *AdminProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} models.AdminProduct
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/AdminProduct/{id} [get]
+// @Router /v1/bdspro/admin/AdminProduct/{id} [get]
 // func (r *AdminProductRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Dự án
@@ -91,5 +91,5 @@ func (r *AdminProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Security BearerAuth
 // @Success 200 {array} models.AdminProduct
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/AdminProduct [get]
+// @Router /v1/bdspro/admin/AdminProduct [get]
 // func (r *AdminProductRouter) GetAll(c *gin.Context) {}

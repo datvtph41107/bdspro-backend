@@ -40,7 +40,7 @@ func (r *BuildRoomRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.BuildRoom
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/build-room [post]
+// @Router /v1/bdspro/admin/build-room [post]
 func (r *BuildRoomRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Phòng chung cho các tầng
@@ -54,7 +54,7 @@ func (r *BuildRoomRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.BuildRoom
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/build-room/{id} [put]
+// @Router /v1/bdspro/admin/build-room/{id} [put]
 func (r *BuildRoomRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Phòng chung cho các tầng
@@ -67,7 +67,7 @@ func (r *BuildRoomRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/build-room/{id} [delete]
+// @Router /v1/bdspro/admin/build-room/{id} [delete]
 func (r *BuildRoomRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Phòng chung cho các tầng theo ID
@@ -80,7 +80,7 @@ func (r *BuildRoomRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.BuildRoom
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/build-room/{id} [get]
+// @Router /v1/bdspro/admin/build-room/{id} [get]
 func (r *BuildRoomRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Phòng chung cho các tầng
@@ -91,5 +91,5 @@ func (r *BuildRoomRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.BuildRoom
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/build-room [get]
+// @Router /v1/bdspro/admin/build-room [get]
 func (r *BuildRoomRouter) GetAll(c *gin.Context) {}

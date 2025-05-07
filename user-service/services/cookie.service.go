@@ -13,7 +13,7 @@ type CookieService struct {
 
 func NewCookieService() *CookieService {
 	return &CookieService{
-		PathRefresh: "/user/auth/token/refresh",
+		PathRefresh: "/v1/user/auth/token/refresh",
 	}
 }
 

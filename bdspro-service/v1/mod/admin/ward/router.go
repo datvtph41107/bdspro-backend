@@ -42,7 +42,7 @@ func (r *WardRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.Ward
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/ward [post]
+// @Router /v1/bdspro/admin/ward [post]
 func (r *WardRouter) Create(c *gin.Context) {
 
 }
@@ -58,7 +58,7 @@ func (r *WardRouter) Create(c *gin.Context) {
 // @Success 200 {object} models.Ward
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/ward/{id} [put]
+// @Router /v1/bdspro/admin/ward/{id} [put]
 func (r *WardRouter) Update(c *gin.Context) {
 
 }
@@ -73,7 +73,7 @@ func (r *WardRouter) Update(c *gin.Context) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/ward/{id} [delete]
+// @Router /v1/bdspro/admin/ward/{id} [delete]
 func (r *WardRouter) Delete(c *gin.Context) {
 
 }
@@ -88,7 +88,7 @@ func (r *WardRouter) Delete(c *gin.Context) {
 // @Success 200 {object} models.Ward
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/ward/{id} [get]
+// @Router /v1/bdspro/admin/ward/{id} [get]
 func (r *WardRouter) GetByID(c *gin.Context) {
 
 }
@@ -101,7 +101,7 @@ func (r *WardRouter) GetByID(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.Ward
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/ward [get]
+// @Router /v1/bdspro/admin/ward [get]
 func (r *WardRouter) GetAll(c *gin.Context) {
 
 }

@@ -1,7 +1,7 @@
 package data
 
 import (
-	"payment/models"
+	"payment/external/mod/gate/models"
 	"time"
 )
 

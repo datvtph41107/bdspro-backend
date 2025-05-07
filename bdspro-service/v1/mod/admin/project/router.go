@@ -40,7 +40,7 @@ func (r *ProjectRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.Project
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/project [post]
+// @Router /v1/bdspro/admin/project [post]
 // func (r *ProjectRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Dự án
@@ -54,7 +54,7 @@ func (r *ProjectRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} models.Project
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/project/{id} [put]
+// @Router /v1/bdspro/admin/project/{id} [put]
 // func (r *ProjectRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Dự án
@@ -67,7 +67,7 @@ func (r *ProjectRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/project/{id} [delete]
+// @Router /v1/bdspro/admin/project/{id} [delete]
 // func (r *ProjectRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Dự án theo ID
@@ -80,7 +80,7 @@ func (r *ProjectRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {object} models.Project
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/project/{id} [get]
+// @Router /v1/bdspro/admin/project/{id} [get]
 // func (r *ProjectRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Dự án
@@ -91,5 +91,5 @@ func (r *ProjectRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Security BearerAuth
 // @Success 200 {array} models.Project
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/project [get]
+// @Router /v1/bdspro/admin/project [get]
 // func (r *ProjectRouter) GetAll(c *gin.Context) {}

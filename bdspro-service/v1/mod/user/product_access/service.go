@@ -1,9 +1,9 @@
 package u_product_access
 
 import (
-	"bdspro/v1/enums"
-	bdspro_noti "bdspro/v1/mod/global/notification"
+	"bdspro/enums"
 	product_accecss "bdspro/v1/mod/global/product_access"
+	bdspro_noti "bdspro/v1/mod/global/transmit"
 	u_product "bdspro/v1/mod/user/product"
 	"bdspro/v1/models"
 	"common/case/crud2"
@@ -18,13 +18,13 @@ import (
 type ProductAccessService struct {
 	crud2.BaseService[models.ProductAccess, *product_accecss.ProductAccessRepo]
 	productService *u_product.ProductService
-	NotiService    *bdspro_noti.NotiService
+	NotiService    *bdspro_noti.TransmitService
 }
 
 func NewUserProductAccessService(
 	repo *product_accecss.ProductAccessRepo,
 	productService *u_product.ProductService,
-	NotiService *bdspro_noti.NotiService,
+	NotiService *bdspro_noti.TransmitService,
 ) *ProductAccessService {
 	return &ProductAccessService{
 		BaseService:    crud2.BaseService[models.ProductAccess, *product_accecss.ProductAccessRepo]{Repo: repo},

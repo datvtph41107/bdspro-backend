@@ -1,0 +1,4051 @@
+definitions:
+  bdspro.ArchivedRequest:
+    properties:
+      archived:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  bdspro.Asset:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      buyedDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      description:
+        type: string
+      districtId:
+        type: integer
+      docStatus:
+        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
+        type: integer
+      id:
+        type: integer
+      legalStatus:
+        type: string
+      name:
+        type: string
+      ownerOrgId:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentAssetId:
+        type: integer
+      price:
+        type: number
+      productId:
+        type: integer
+      provinceId:
+        type: integer
+      purchaseDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      purchasePrice:
+        type: number
+      rentStatus:
+        type: string
+      splitMergeStatus:
+        type: string
+      wardId:
+        type: integer
+    type: object
+  bdspro.CreateAssetRequest:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      buyedDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      description:
+        type: string
+      districtId:
+        type: integer
+      docStatus:
+        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
+        type: integer
+      id:
+        type: integer
+      legalStatus:
+        type: string
+      name:
+        type: string
+      ownerOrgId:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentAssetId:
+        type: integer
+      price:
+        type: number
+      productId:
+        type: integer
+      provinceId:
+        type: integer
+      purchaseDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      purchasePrice:
+        type: number
+      rentStatus:
+        type: string
+      splitMergeStatus:
+        type: string
+      wardId:
+        type: integer
+    type: object
+  bdspro.MergeAssetRequest:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      new_name:
+        type: string
+    type: object
+  bdspro.ShareAssetRequest:
+    properties:
+      id:
+        type: integer
+      user_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  bdspro.SplitAssetRequest:
+    properties:
+      id:
+        type: integer
+      parts:
+        items:
+          $ref: '#/definitions/bdspro.Asset'
+        type: array
+    type: object
+  bdspro.UpdateAssetRequest:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      buyedDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      description:
+        type: string
+      districtId:
+        type: integer
+      docStatus:
+        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
+        type: integer
+      id:
+        type: integer
+      legalStatus:
+        type: string
+      name:
+        type: string
+      ownerOrgId:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentAssetId:
+        type: integer
+      price:
+        type: number
+      productId:
+        type: integer
+      provinceId:
+        type: integer
+      purchaseDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      purchasePrice:
+        type: number
+      rentStatus:
+        type: string
+      splitMergeStatus:
+        type: string
+      wardId:
+        type: integer
+    type: object
+  data.ApartmentRequest:
+    properties:
+      attribute:
+        $ref: '#/definitions/models.ApartmentAttribute'
+      buildId:
+        type: integer
+      elements:
+        items:
+          $ref: '#/definitions/models.Apartment'
+        type: array
+    type: object
+  data.NewProductRequest:
+    properties:
+      area:
+        type: number
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      note:
+        type: string
+      price:
+        $ref: '#/definitions/models.ProductPrice'
+    type: object
+  data.StatusRequest:
+    type: object
+  data.StatusResponse:
+    type: object
+  domain.AssetSplitMergeHistory:
+    properties:
+      actionType:
+        type: string
+      assetId:
+        type: integer
+      childAssetIds:
+        description: JSON string or comma-separated IDs
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      parentAssetId:
+        type: integer
+      performedBy:
+        type: integer
+      splitMergeDate:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  dto.AssetDetailResponse:
+    type: object
+  enums.ProductStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    type: integer
+    x-enum-comments:
+      ProductNotRent: Chưa cho thuê
+      ProductNotSold: Chưa bán
+      ProductRented: Đã cho thuê
+      ProductRenting: Đang cho thuê(cọc)
+      ProductSelling: Đang bán(cọc)
+      ProductSold: Đã bán
+    x-enum-varnames:
+    - ProductNotSold
+    - ProductSelling
+    - ProductSold
+    - ProductNotRent
+    - ProductRenting
+    - ProductRented
+  enums.VisibilityStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-comments:
+      VisiShow: '"Đang hiển thị"'
+      VisibleInternal: nội bộ
+      VisiblePublic: công khai
+    x-enum-varnames:
+    - VisiShow
+    - VisiblePublic
+    - VisibleInternal
+  models.Amenity:
+    properties:
+      active:
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.Apartment:
+    properties:
+      archived:
+        type: integer
+      attributeId:
+        type: integer
+      buildId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      floor:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ApartmentAttrItem:
+    properties:
+      area:
+        description: Diện tích
+        type: integer
+      blueprintUrl:
+        description: Link bản vẽ
+        type: string
+      buildId:
+        description: Diện tích
+        type: integer
+      furniture:
+        description: Nội thất
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      updatedAt:
+        description: Link bản vẽ
+        type: string
+    type: object
+  models.ApartmentAttribute:
+    properties:
+      area:
+        description: Diện tích
+        type: integer
+      blueprintUrl:
+        description: Link bản vẽ
+        type: string
+      buildId:
+        description: Diện tích
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      furniture:
+        description: Nội thất
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ApartmentItem:
+    properties:
+      archived:
+        type: integer
+      attributeId:
+        type: integer
+      floor:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
+    type: object
+  models.BuildRoom:
+    properties:
+      area:
+        description: Diện tích
+        type: integer
+      blockId:
+        type: integer
+      blueprintUrl:
+        description: Link bản vẽ
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      floor:
+        type: integer
+      furniture:
+        description: Nội thất
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      order:
+        type: integer
+      unitCode:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.Developer:
+    properties:
+      address:
+        type: string
+      backgroundUrl:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      website:
+        type: string
+    type: object
+  models.District:
+    properties:
+      code:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      province:
+        $ref: '#/definitions/models.Province'
+      province_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.DocType:
+    properties:
+      active:
+        description: true = đang sử dụng, false = ẩn
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProductAccess:
+    properties:
+      commission:
+        type: number
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      fields:
+        type: string
+      id:
+        type: integer
+      product:
+        $ref: '#/definitions/models.ProductItem'
+      productId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        description: '1: cá nhân, 2: nhóm, 3: tổ chức'
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProductItem:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.ProductMediaItem:
+    properties:
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  models.ProductPrice:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      currency:
+        type: string
+      deposite:
+        type: number
+      id:
+        type: integer
+      priceOwner:
+        type: integer
+      productId:
+        type: integer
+      rentCommission:
+        type: number
+      rentPaymentCycle:
+        type: integer
+      rentPrice:
+        type: number
+      saleCommission:
+        type: integer
+      salePrice:
+        type: number
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProductPrivate:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      importPrice:
+        type: integer
+      internalNote:
+        type: string
+      operatingCost:
+        type: number
+      privateDocs:
+        type: string
+      productId:
+        type: integer
+      targetProfit:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProjectBuild:
+    properties:
+      apartments:
+        items:
+          $ref: '#/definitions/models.ApartmentItem'
+        type: array
+      attributes:
+        items:
+          $ref: '#/definitions/models.ApartmentAttrItem'
+        type: array
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+      project:
+        $ref: '#/definitions/models.ProjectItem'
+      projectId:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProjectItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.PropertyType:
+    properties:
+      active:
+        description: true = đang sử dụng, false = ẩn
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.Province:
+    properties:
+      code:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Ward:
+    properties:
+      code:
+        type: integer
+      district:
+        $ref: '#/definitions/models.District'
+      district_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  timestamppb.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
+  u_action.ActionRequest:
+    properties:
+      action:
+        type: integer
+      targetId:
+        type: integer
+    required:
+    - action
+    - targetId
+    type: object
+  u_post.PostExpiredRequest:
+    properties:
+      numDay:
+        type: integer
+      postId:
+        type: integer
+    required:
+    - numDay
+    - postId
+    type: object
+  u_post.PostSaveRequest:
+    properties:
+      content:
+        type: string
+      expiredAt:
+        type: string
+      metadatas:
+        $ref: '#/definitions/models.ProductMediaItem'
+      productId:
+        type: integer
+      title:
+        type: string
+      transactionType:
+        type: integer
+    required:
+    - content
+    - productId
+    - transactionType
+    type: object
+  u_post.PostUpdateRequest:
+    properties:
+      content:
+        type: string
+      metadatas:
+        $ref: '#/definitions/models.ProductMediaItem'
+      title:
+        type: string
+      transactionType:
+        type: integer
+    type: object
+  u_product_access.AccessRequest:
+    properties:
+      commission:
+        type: number
+      fields:
+        type: string
+      targetId:
+        description: ProductID  *uint64 `json:"parentId" binding:"required"`
+        type: integer
+      targetType:
+        type: integer
+    required:
+    - targetId
+    type: object
+  u_product_child.DevideChildRequest:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/u_product_dto.ProductSaveRequest'
+        type: array
+      parentId:
+        type: integer
+    required:
+    - childs
+    - parentId
+    type: object
+  u_product_child.MergeProductChildRequest:
+    properties:
+      childIds:
+        items:
+          type: integer
+        type: array
+      parentId:
+        description: u_product_dto.ProductSaveRequest
+        type: integer
+    required:
+    - childIds
+    - parentId
+    type: object
+  u_product_child.SaveProductChildRequest:
+    properties:
+      amenityIds:
+        items:
+          type: integer
+        type: array
+      area:
+        type: number
+      code:
+        type: string
+      description:
+        type: string
+      districtId:
+        type: integer
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/u_product_dto.HouseInfoUpdate'
+      mediaItems:
+        items:
+          $ref: '#/definitions/u_product_dto.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      parentId:
+        type: integer
+      price:
+        $ref: '#/definitions/models.ProductPrice'
+      productPrivate:
+        $ref: '#/definitions/models.ProductPrivate'
+      projectId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      transactionType:
+        type: integer
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - parentId
+    - price
+    type: object
+  u_product_dto.ArchivedRequest:
+    properties:
+      archived:
+        type: boolean
+      productId:
+        type: integer
+    required:
+    - archived
+    - productId
+    type: object
+  u_product_dto.DepositeRequest:
+    properties:
+      amount:
+        type: integer
+      customerName:
+        minLength: 2
+        type: string
+      customerPhone:
+        minLength: 9
+        type: string
+      note:
+        type: string
+      productId:
+        type: integer
+    required:
+    - amount
+    - customerName
+    - customerPhone
+    - productId
+    type: object
+  u_product_dto.HouseInfoUpdate:
+    properties:
+      furniture:
+        description: 'Nội thất: "full", "partial", "none"'
+        type: string
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: house info
+        type: integer
+      numCarPark:
+        description: Số chỗ để ôtô
+        type: integer
+      numFloor:
+        description: Số tầng (optional)
+        type: integer
+      numFront:
+        description: Số mặt tiền
+        type: integer
+      orientation:
+        description: Hướng nhà (Đông, Tây, Nam,...)
+        type: string
+    type: object
+  u_product_dto.MediaItem:
+    properties:
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      order:
+        type: integer
+    type: object
+  u_product_dto.ProductSaveRequest:
+    properties:
+      amenityIds:
+        items:
+          type: integer
+        type: array
+      area:
+        type: number
+      code:
+        type: string
+      description:
+        type: string
+      districtId:
+        type: integer
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/u_product_dto.HouseInfoUpdate'
+      mediaItems:
+        items:
+          $ref: '#/definitions/u_product_dto.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      parentId:
+        type: integer
+      price:
+        $ref: '#/definitions/models.ProductPrice'
+      productPrivate:
+        $ref: '#/definitions/models.ProductPrivate'
+      projectId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      transactionType:
+        type: integer
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - price
+    type: object
+  u_product_dto.StatusUpdate:
+    properties:
+      productId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.ProductStatus'
+    required:
+    - productId
+    - status
+    type: object
+  u_product_dto.VisibilityUpdate:
+    properties:
+      productId:
+        type: integer
+      visibility:
+        $ref: '#/definitions/enums.VisibilityStatus'
+    required:
+    - productId
+    - visibility
+    type: object
+info:
+  contact: {}
+  description: API phần logic chính của BĐSPro
+  title: BDSPRO API
+  version: "1.0"
+paths:
+  /v1/bdspro/admin/amenity:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Tiện ích
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Amenity'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Tiện ích
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Tiện ích mới vào hệ thống
+      parameters:
+      - description: Thông tin Tiện ích
+        in: body
+        name: Amenity
+        required: true
+        schema:
+          $ref: '#/definitions/models.Amenity'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Amenity'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Tiện ích mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/amenity/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Tiện ích theo ID (soft delete)
+      parameters:
+      - description: ID của Tiện ích
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Tiện ích
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Tiện ích
+      parameters:
+      - description: ID của Tiện ích
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Amenity'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Tiện ích theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Tiện ích theo ID
+      parameters:
+      - description: ID của Tiện ích
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Tiện ích mới
+        in: body
+        name: Amenity
+        required: true
+        schema:
+          $ref: '#/definitions/models.Amenity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Amenity'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Tiện ích
+      tags:
+      - Admin
+  /v1/bdspro/admin/apartment:
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Tòa nhà trong dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Tòa nhà trong dự án
+        in: body
+        name: Apartments
+        required: true
+        schema:
+          $ref: '#/definitions/data.ApartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/data.ApartmentRequest'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Tòa nhà trong dự án mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/apartment/import:
+    post:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Tòa nhà trong dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Apartment'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Tòa nhà trong dự án
+      tags:
+      - Admin
+  /v1/bdspro/admin/apartment/status:
+    put:
+      consumes:
+      - application/json
+      description: Thêm một Tòa nhà trong dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Tòa nhà trong dự án
+        in: body
+        name: Apartments
+        required: true
+        schema:
+          $ref: '#/definitions/data.ApartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/data.ApartmentRequest'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Tòa nhà trong dự án mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/build-room:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Phòng chung cho các tầng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BuildRoom'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Phòng chung cho các tầng
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Phòng chung cho các tầng mới vào hệ thống
+      parameters:
+      - description: Thông tin Phòng chung cho các tầng
+        in: body
+        name: BuildRoom
+        required: true
+        schema:
+          $ref: '#/definitions/models.BuildRoom'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.BuildRoom'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Phòng chung cho các tầng mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/build-room/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Phòng chung cho các tầng theo ID (soft delete)
+      parameters:
+      - description: ID của Phòng chung cho các tầng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Phòng chung cho các tầng
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Phòng chung cho các tầng
+      parameters:
+      - description: ID của Phòng chung cho các tầng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BuildRoom'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Phòng chung cho các tầng theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Phòng chung cho các tầng theo ID
+      parameters:
+      - description: ID của Phòng chung cho các tầng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Phòng chung cho các tầng mới
+        in: body
+        name: Project
+        required: true
+        schema:
+          $ref: '#/definitions/models.BuildRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BuildRoom'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Phòng chung cho các tầng
+      tags:
+      - Admin
+  /v1/bdspro/admin/developer:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Developer'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Dự án
+        in: body
+        name: Developer
+        required: true
+        schema:
+          $ref: '#/definitions/models.Developer'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Developer'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Dự án mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/developer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Dự án theo ID (soft delete)
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Dự án
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Dự án
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Developer'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Dự án theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Dự án theo ID
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Dự án mới
+        in: body
+        name: Developer
+        required: true
+        schema:
+          $ref: '#/definitions/models.Developer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Developer'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Dự án
+      tags:
+      - Admin
+  /v1/bdspro/admin/districts:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các quận/huyện
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.District'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách quận/huyện
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một quận/huyện mới vào hệ thống
+      parameters:
+      - description: Thông tin quận/huyện
+        in: body
+        name: district
+        required: true
+        schema:
+          $ref: '#/definitions/models.District'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo quận/huyện mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/districts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quận/huyện theo ID (soft delete)
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa quận/huyện
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một quận/huyện
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin quận/huyện theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin quận/huyện theo ID
+      parameters:
+      - description: ID của quận/huyện
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin quận/huyện mới
+        in: body
+        name: district
+        required: true
+        schema:
+          $ref: '#/definitions/models.District'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.District'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin quận/huyện
+      tags:
+      - Admin
+  /v1/bdspro/admin/doc-type:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Loại giấy tờ pháp lý
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DocType'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Loại giấy tờ pháp lý
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Loại giấy tờ pháp lý mới vào hệ thống
+      parameters:
+      - description: Thông tin Loại giấy tờ pháp lý
+        in: body
+        name: DocType
+        required: true
+        schema:
+          $ref: '#/definitions/models.DocType'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.DocType'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Loại giấy tờ pháp lý mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/doc-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Loại giấy tờ pháp lý theo ID (soft delete)
+      parameters:
+      - description: ID của Loại giấy tờ pháp lý
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Loại giấy tờ pháp lý
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Loại giấy tờ pháp lý
+      parameters:
+      - description: ID của Loại giấy tờ pháp lý
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocType'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Loại giấy tờ pháp lý theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Loại giấy tờ pháp lý theo ID
+      parameters:
+      - description: ID của Loại giấy tờ pháp lý
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Loại giấy tờ pháp lý mới
+        in: body
+        name: DocType
+        required: true
+        schema:
+          $ref: '#/definitions/models.DocType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocType'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Loại giấy tờ pháp lý
+      tags:
+      - Admin
+  /v1/bdspro/admin/product-access:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProductAccess'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Dự án
+        in: body
+        name: ProductAccess
+        required: true
+        schema:
+          $ref: '#/definitions/models.ProductAccess'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ProductAccess'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Dự án mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/product-access/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Dự án theo ID (soft delete)
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Dự án
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Dự án
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProductAccess'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Dự án theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Dự án theo ID
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Dự án mới
+        in: body
+        name: ProductAccess
+        required: true
+        schema:
+          $ref: '#/definitions/models.ProductAccess'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProductAccess'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Dự án
+      tags:
+      - Admin
+  /v1/bdspro/admin/product-access/private-fields:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProductAccess'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - Admin
+  /v1/bdspro/admin/project-build:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Tòa nhà trong dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProjectBuild'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Tòa nhà trong dự án
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Tòa nhà trong dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Tòa nhà trong dự án
+        in: body
+        name: ProjectBuild
+        required: true
+        schema:
+          $ref: '#/definitions/models.ProjectBuild'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ProjectBuild'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Tòa nhà trong dự án mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/project-build/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Tòa nhà trong dự án theo ID (soft delete)
+      parameters:
+      - description: ID của Tòa nhà trong dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Tòa nhà trong dự án
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Tòa nhà trong dự án
+      parameters:
+      - description: ID của Tòa nhà trong dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProjectBuild'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Tòa nhà trong dự án theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Tòa nhà trong dự án theo ID
+      parameters:
+      - description: ID của Tòa nhà trong dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Tòa nhà trong dự án mới
+        in: body
+        name: Project
+        required: true
+        schema:
+          $ref: '#/definitions/models.ProjectBuild'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProjectBuild'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Tòa nhà trong dự án
+      tags:
+      - Admin
+  /v1/bdspro/admin/property-type:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Loại bất động sản
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PropertyType'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Loại bất động sản
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Loại bất động sản mới vào hệ thống
+      parameters:
+      - description: Thông tin Loại bất động sản
+        in: body
+        name: PropertyType
+        required: true
+        schema:
+          $ref: '#/definitions/models.PropertyType'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.PropertyType'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Loại bất động sản mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/property-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Loại bất động sản theo ID (soft delete)
+      parameters:
+      - description: ID của Loại bất động sản
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Loại bất động sản
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của một Loại bất động sản
+      parameters:
+      - description: ID của Loại bất động sản
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PropertyType'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin Loại bất động sản theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin Loại bất động sản theo ID
+      parameters:
+      - description: ID của Loại bất động sản
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin Loại bất động sản mới
+        in: body
+        name: PropertyType
+        required: true
+        schema:
+          $ref: '#/definitions/models.PropertyType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PropertyType'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin Loại bất động sản
+      tags:
+      - Admin
+  /v1/bdspro/admin/provinces:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các tỉnh
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Province'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các tỉnh
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Tạo một bản ghi tỉnh mới
+      parameters:
+      - description: Thông tin tỉnh
+        in: body
+        name: province
+        required: true
+        schema:
+          $ref: '#/definitions/models.Province'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo tỉnh mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/provinces/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tỉnh theo ID (soft delete)
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa tỉnh
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một tỉnh
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin tỉnh theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin tỉnh theo ID
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin tỉnh mới
+        in: body
+        name: province
+        required: true
+        schema:
+          $ref: '#/definitions/models.Province'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Province'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin tỉnh
+      tags:
+      - Admin
+  /v1/bdspro/admin/ward:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các tỉnh
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Ward'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các tỉnh
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Tạo một bản ghi tỉnh mới
+      parameters:
+      - description: Thông tin tỉnh
+        in: body
+        name: Ward
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ward'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo tỉnh mới
+      tags:
+      - Admin
+  /v1/bdspro/admin/ward/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tỉnh theo ID (soft delete)
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa tỉnh
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một tỉnh
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin tỉnh theo ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin tỉnh theo ID
+      parameters:
+      - description: ID của tỉnh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin tỉnh mới
+        in: body
+        name: Ward
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ward'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Ward'
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể cập nhật dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin tỉnh
+      tags:
+      - Admin
+  /v1/bdspro/user/action:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tham số
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/u_action.ActionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Thêm sự kiện
+      tags:
+      - User/Action
+  /v1/bdspro/user/action/dashboard/post/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đếm sự kiện của bài viết
+      tags:
+      - User/Action
+  /v1/bdspro/user/action/dashboard/post/bar:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: fromDate
+        type: string
+      - description: day, month
+        in: query
+        name: group
+        type: string
+      - in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đếm sự kiện của bài viết
+      tags:
+      - User/Action
+  /v1/bdspro/user/post:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin đăng tin
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/u_post.PostSaveRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đăng tin sản phẩm
+      tags:
+      - User/Post
+  /v1/bdspro/user/post/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID bài đăng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - User/Post
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID bài đăng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - User/Post
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID bài đăng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin đăng tin
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/u_post.PostUpdateRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tin
+      tags:
+      - User/Post
+  /v1/bdspro/user/post/global:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: expiredFrom
+        type: string
+      - in: query
+        name: expiredTo
+        type: string
+      - in: query
+        name: hidden
+        type: boolean
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: skip
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: title
+        type: string
+      - in: query
+        name: transactionType
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Danh sách tin của tôi
+      tags:
+      - User/Post
+  /v1/bdspro/user/post/new-expired:
+    post:
+      consumes:
+      - application/json
+      description: API để gia hạn
+      parameters:
+      - description: Thông tin gia hạn
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/u_post.PostExpiredRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gia hạn tin
+      tags:
+      - User/Post
+  /v1/bdspro/user/post/personal:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: expiredFrom
+        type: string
+      - in: query
+        name: expiredTo
+        type: string
+      - in: query
+        name: hidden
+        type: boolean
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: skip
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: title
+        type: string
+      - in: query
+        name: transactionType
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Danh sách tin của tôi
+      tags:
+      - User/Post
+  /v1/bdspro/user/product-access:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProductAccess'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - User/Product-share
+  /v1/bdspro/user/product-access/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Dự án theo ID (soft delete)
+      parameters:
+      - description: ID của Dự án
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái xóa
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: ID không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể xóa dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa Dự án
+      tags:
+      - User/Product-share
+  /v1/bdspro/user/product-access/{productId}/batch:
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Dự án
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin Dự án
+        in: body
+        name: ProductAccess
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/u_product_access.AccessRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ProductAccess'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Dự án mới
+      tags:
+      - User/Product-share
+  /v1/bdspro/user/product-access/private-fields:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách tất cả các Dự án
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProductAccess'
+            type: array
+        "500":
+          description: Không thể lấy danh sách
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách Dự án
+      tags:
+      - User/Product-share
+  /v1/bdspro/user/product/{id}:
+    post:
+      consumes:
+      - application/json
+      description: API để tạo một sản phẩm mới
+      parameters:
+      - description: Thông tin sản phẩm
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/data.NewProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sản phẩm được tạo thành công
+          schema:
+            $ref: '#/definitions/data.NewProductRequest'
+      security:
+      - BearerAuth: []
+      summary: Tạo sản phẩm mới
+      tags:
+      - User
+  /v1/bdspro/user/product/{productId}:
+    delete:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được
+        gửi lên.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.ProductSaveRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/access-share:
+    post:
+      consumes:
+      - application/json
+      description: API
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chia sẻ co-broker
+      tags:
+      - User
+  /v1/bdspro/user/product/archived/{productId}:
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được
+        gửi lên.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.ArchivedRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/deposite:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.DepositeRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cọc
+      tags:
+      - User
+  /v1/bdspro/user/product/deposite/{productId}:
+    delete:
+      consumes:
+      - application/json
+      description: API
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Hủy cọc
+      tags:
+      - User
+  /v1/bdspro/user/product/devide:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm con
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_child.DevideChildRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp toàn bộ sản phẩm con
+      tags:
+      - User/Product-child
+  /v1/bdspro/user/product/history:
+    get:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp toàn bộ sản phẩm con
+      tags:
+      - User/Product-child
+  /v1/bdspro/user/product/internal:
+    get:
+      consumes:
+      - application/json
+      description: API để đăng tin sản phẩm lên hệ thống
+      parameters:
+      - description: Thông tin đăng tin
+        in: body
+        name: publish
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tin được đăng thành công
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Đăng tin sản phẩm
+      tags:
+      - User/Product-search
+  /v1/bdspro/user/product/market:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product code
+        in: query
+        name: code
+        type: string
+      - description: Product area
+        in: query
+        name: area
+        type: number
+      - description: Product price
+        in: query
+        name: price
+        type: integer
+      - description: Product description
+        in: query
+        name: description
+        type: string
+      - description: Additional notes
+        in: query
+        name: note
+        type: string
+      - default: 10
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Skip results
+        in: query
+        name: skip
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách sản phẩm trang chủ
+      tags:
+      - User/Product-search
+  /v1/bdspro/user/product/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product code
+        in: query
+        name: code
+        type: string
+      - description: Product area
+        in: query
+        name: area
+        type: number
+      - description: Product price
+        in: query
+        name: price
+        type: integer
+      - description: null=>all; 0=>parent; >0=>childrent
+        in: query
+        name: parentId
+        type: integer
+      - description: Product description
+        in: query
+        name: description
+        type: string
+      - description: Additional notes
+        in: query
+        name: note
+        type: string
+      - default: 10
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Skip results
+        in: query
+        name: skip
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách sản phẩm của user hiện tại
+      tags:
+      - User/Product-search
+  /v1/bdspro/user/product/merge:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        type: integer
+      - description: Thông tin sản phẩm con
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_child.MergeProductChildRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp sản phẩm con
+      tags:
+      - User/Product-child
+  /v1/bdspro/user/product/merge-all/{productId}:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp toàn bộ sản phẩm con
+      tags:
+      - User/Product-child
+  /v1/bdspro/user/product/new:
+    post:
+      consumes:
+      - application/json
+      description: API để tạo một sản phẩm mới
+      parameters:
+      - description: Thông tin sản phẩm
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/data.NewProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sản phẩm được tạo thành công
+          schema:
+            $ref: '#/definitions/data.NewProductRequest'
+      security:
+      - BearerAuth: []
+      summary: Tạo sản phẩm mới
+      tags:
+      - User
+  /v1/bdspro/user/product/publish:
+    put:
+      consumes:
+      - application/json
+      description: API để đăng tin sản phẩm lên hệ thống
+      parameters:
+      - description: Thông tin đăng tin
+        in: body
+        name: publish
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tin được đăng thành công
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Đăng tin sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/rent-status:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.StatusUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/rent-visibility:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.VisibilityUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Trạng thái sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/revert/:id:
+    put:
+      consumes:
+      - application/json
+      description: API để hoàn tác trạng thái sản phẩm về trạng thái trước đó
+      parameters:
+      - description: Thông tin hoàn tác
+        in: body
+        name: revert
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái sản phẩm đã được hoàn tác
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Hoàn tác trạng thái sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/sale-status:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.StatusUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/sale-visibility:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_dto.VisibilityUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Trạng thái sản phẩm
+      tags:
+      - User
+  /v1/bdspro/user/product/split:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        type: integer
+      - description: Thông tin sản phẩm con
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_product_child.SaveProductChildRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo sản phẩm con
+      tags:
+      - User/Product-child
+  /v1/bdspro/user/product/suggest:
+    post:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product code
+        in: query
+        name: code
+        type: string
+      - description: Product area
+        in: query
+        name: area
+        type: number
+      - description: Product price
+        in: query
+        name: price
+        type: integer
+      - description: Product description
+        in: query
+        name: description
+        type: string
+      - description: Additional notes
+        in: query
+        name: note
+        type: string
+      - default: 10
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Skip results
+        in: query
+        name: skip
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gợi ý các trường thông tin
+      tags:
+      - User
+  /v1/bdspro/user/product/total:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Text
+        in: query
+        name: text
+        required: true
+        type: string
+      - default: 10
+        description: Sizet results
+        in: query
+        name: size
+        type: integer
+      - default: 0
+        description: Page
+        in: query
+        name: page
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm tổng hợp
+      tags:
+      - User/Product-search
+  /v2/bdspro/v2/assets:
+    get:
+      description: Trả về danh sách tất cả tài sản hiện có trong hệ thống
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}:
+    delete:
+      description: Xóa một tài sản khỏi hệ thống
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa tài sản
+      tags:
+      - Assets
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin một tài sản theo ID
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Thông tin cập nhật
+        in: body
+        name: asset
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.UpdateAssetRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}/details:
+    get:
+      description: Lấy thông tin chi tiết của một tài sản theo ID
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AssetDetailResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}/history:
+    get:
+      description: Lấy lịch sử thay đổi của một tài sản
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AssetSplitMergeHistory'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Lịch sử tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}/merge:
+    post:
+      consumes:
+      - application/json
+      description: Gộp nhiều tài sản thành một tài sản chung
+      parameters:
+      - description: ID tài sản chính
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Thông tin gộp tài sản
+        in: body
+        name: merge
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.MergeAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Gộp tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}/share:
+    post:
+      consumes:
+      - application/json
+      description: Chia sẻ quyền quản lý tài sản cho người khác
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Thông tin chia sẻ
+        in: body
+        name: share
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.ShareAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Chia sẻ tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/{id}/split:
+    post:
+      consumes:
+      - application/json
+      description: Tách tài sản hiện tại thành nhiều tài sản nhỏ hơn
+      parameters:
+      - description: ID tài sản
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Thông tin tách tài sản
+        in: body
+        name: split
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.SplitAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Tách tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/archived/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/bdspro.ArchivedRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lưu trữ tài sản
+      tags:
+      - Assets
+  /v2/bdspro/v2/assets/create:
+    post:
+      consumes:
+      - application/json
+      description: API dùng để tạo mới một tài sản trong hệ thống
+      parameters:
+      - description: Thông tin tài sản
+        in: body
+        name: asset
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.CreateAssetRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo tài sản mới
+      tags:
+      - Assets
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

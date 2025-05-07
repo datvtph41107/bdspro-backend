@@ -20,9 +20,9 @@ type ResponseDTO struct {
 
 // ResponseDTO là cấu trúc JSON chuẩn
 type Except struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Errors  interface{} `json:"errors,omitempty"`
+	Code    int               `json:"code"`
+	Message string            `json:"message"`
+	Errors  map[string]string `json:"errors,omitempty"`
 }
 
 func (e *Except) Error() string {

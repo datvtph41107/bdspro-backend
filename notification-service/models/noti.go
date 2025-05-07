@@ -3,17 +3,19 @@ package models
 import (
 	_models "common/models"
 	"noti/enums"
+	"time"
 )
 
 type NotificationEntity struct {
 	_models.BaseEntity
-	ID      uint64 `gorm:"primaryKey"`
-	UserID  uint64 `gorm:"index"`
-	Title   string
-	Message string
-	Link    string
-	Type    enums.TypeEnum
-	IsRead  bool `gorm:"default:false"`
+	ID        uint64 `gorm:"primaryKey"`
+	UserID    uint64 `gorm:"index"`
+	Title     string
+	Message   string
+	Link      string
+	Type      enums.TypeEnum
+	VisibleAt *time.Time
+	IsRead    bool `gorm:"default:false"`
 }
 
 func (n *NotificationEntity) TableName() string {

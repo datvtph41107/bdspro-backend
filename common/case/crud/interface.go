@@ -1,5 +1,9 @@
 package crud
 
+import (
+	"context"
+)
+
 // import "github.com/gin-gonic/gin"
 
 // BaseRouterInterface định nghĩa các phương thức chung cho router
@@ -26,3 +30,11 @@ package crud
 // 	GetAll() ([]T, error)
 // 	GetByID(id uint64) (*T, error)
 // }
+
+type CrudRepo[T any] interface {
+	Create(c *context.Context, entity *T) error
+	Update(c *context.Context, id uint64, entity *T) error
+	Delete(id uint64) error
+	GetAll() ([]T, error)
+	GetByID(id uint64) (*T, error)
+}

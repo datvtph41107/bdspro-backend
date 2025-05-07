@@ -1,8 +1,44 @@
-type: google.api.http
+type: google.api.Service
 config_version: 3
 
 http:
   rules:
-    - selector: pb_bdspro.BdsproService.ListProductInternal
-      get: /v2/bdspro/user/product/internal
-      query: "*"
+    - selector: pb_bdspro.BdsproService.GetAssets
+      get: /v2/bdspro/v2/assets
+
+    - selector: pb_bdspro.BdsproService.Archived
+      put: /v2/bdspro/v2/assets/archived/{id}
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.BulkAction
+      post: /v2/bdspro/v2/assets/bulk-action
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.CreateAsset
+      post: /v2/bdspro/v2/assets/create
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.UpdateAsset
+      put: /v2/bdspro/v2/assets/{id}
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.DeleteAsset
+      delete: /v2/bdspro/v2/assets/{id}
+
+    - selector: pb_bdspro.BdsproService.GetAssetDetails
+      get: /v2/bdspro/v2/assets/{id}/details
+
+    - selector: pb_bdspro.BdsproService.ShareAsset
+      post: /v2/bdspro/v2/assets/{id}/share
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.SplitAsset
+      post: /v2/bdspro/v2/assets/{id}/split
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.MergeAsset
+      post: /v2/bdspro/v2/assets/{id}/merge
+      body: "*"
+
+    - selector: pb_bdspro.BdsproService.GetAssetHistory
+      get: /v2/bdspro/v2/assets/{id}/history

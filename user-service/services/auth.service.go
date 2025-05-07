@@ -31,15 +31,18 @@ type AuthService struct {
 	// AuditService     utils.AuditService
 	RedisService  *_redis.RedisService
 	CookieService *CookieService
+	PreePlanID    *uint64
 
 	// ConfigProperties utils.PropertiesConfiguration
 	// Properties config.AppProperties
 }
 
 func NewAuthService(redisService *_redis.RedisService, cookie *CookieService) *AuthService {
+	planId := uint64(1)
 	return &AuthService{
 		RedisService:  redisService,
 		CookieService: cookie,
+		PreePlanID:    &planId,
 	}
 }
 
@@ -133,7 +136,7 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 
 	infoEntity, err := models.ProfileGetByProfileId(e.UserID)
 	if err != nil {
-		infoEntity = models.NewUserProfileEntity(e.ID, e.Name, e.Email, e.Phone, e.Avatar)
+		infoEntity = models.NewUserProfileEntity(e.ID, s.PreePlanID, e.Name, e.Email, e.Phone, e.Avatar)
 		_db.SaveWithAudit(c, infoEntity)
 
 		e.UserID = infoEntity.ProfileID
@@ -162,11 +165,10 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 	}
 
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
-	// refreshToken := s.GetRefreshToken(e, newSession.SessionID)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, e, newSession.SessionID)
 
-	return s.ResponseLogin(e, newSession.SessionID), nil
+	return s.ResponseLogin(e, infoEntity.PlanID, newSession.SessionID), nil
 }
 
 func (s *AuthService) createSession(c *gin.Context, e *models.UserAuthEntity, otp data.OtpVerifyRequest) *models.UserSessionEntity {
@@ -199,11 +201,13 @@ func (s *AuthService) RefreshToken(refreshToken string) (*data.RefreshResponse, 
 	}
 
 	if props.Type == "REFRESH" {
+		planID := s.GetPlanID(props.ProfileID)
 		newToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 			AuthID:    props.AuthID,
 			ProfileID: props.ProfileID,
 			Role:      props.Role,
 			SessionID: props.SessionID,
+			PlanID:    planID,
 			Type:      "ACCESS",
 		})
 		return &data.RefreshResponse{AccessToken: newToken}, nil
@@ -453,7 +457,7 @@ func GetParamValidate(oauth *models.UserAuthEntity, otp string) (*data.AuthParam
 	}, nil
 }
 
-func (s *AuthService) ResponseLogin(authEntity *models.UserAuthEntity, sessionID uint64) *data.AuthLoginResponse {
+func (s *AuthService) ResponseLogin(authEntity *models.UserAuthEntity, planID *uint64, sessionID uint64) *data.AuthLoginResponse {
 	if authEntity.UserID == 0 {
 		return &data.AuthLoginResponse{
 			AuthID: authEntity.ID,
@@ -465,6 +469,7 @@ func (s *AuthService) ResponseLogin(authEntity *models.UserAuthEntity, sessionID
 		SessionID: sessionID,
 		Role:      "ROLE_USER",
 		Type:      "ACCESS",
+		PlanID:    planID,
 	})
 
 	return data.NewAuthLoginResponse(accessToken, authEntity, "ROLE_USER")
@@ -474,6 +479,7 @@ func (s *AuthService) GetRefreshToken(authEntity *models.UserAuthEntity, session
 	refreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authEntity.ID,
 		ProfileID: authEntity.UserID,
+		// PlanID: ,
 		SessionID: sessionID,
 		Role:      "ROLE_USER",
 		Type:      "REFRESH",
@@ -619,15 +625,24 @@ func (s *AuthService) VerifyQRSession(c *gin.Context, e *data.SessionQRRequest, 
 	}
 
 	// s.RedisService.SaveToken(authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
-	// refreshToken := s.GetRefreshToken(authEntity, sessionId)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, authEntity, sessionId)
-	return s.ResponseLogin(authEntity, sessionEntity.SessionID), nil
+	planID := s.GetPlanID(authEntity.UserID)
+	return s.ResponseLogin(authEntity, planID, sessionEntity.SessionID), nil
+}
+
+func (s *AuthService) GetPlanID(profileID uint64) *uint64 {
+	infoEntity, err := models.ProfileGetByProfileId(profileID)
+	if err != nil {
+		return nil
+	}
+	return infoEntity.PlanID
 }
 
 func (s *AuthService) GenRefreshToken(c *gin.Context, authEntity *models.UserAuthEntity, sessionId uint64) string {
 	s.RedisService.SaveToken(authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), config.AppProperties.Jwt.RefreshExpMinutes*60)
 	refreshToken := s.GetRefreshToken(authEntity, sessionId)
 	s.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	log.Println("refreshToken=", refreshToken)
 	return refreshToken
 }

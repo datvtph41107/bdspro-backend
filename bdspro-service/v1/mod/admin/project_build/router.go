@@ -40,7 +40,7 @@ func (r *ProjectBuildRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.ProjectBuild
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/project-build [post]
+// @Router /v1/bdspro/admin/project-build [post]
 func (r *ProjectBuildRouter) Create(c *gin.Context) {}
 
 // @Summary Cập nhật thông tin Tòa nhà trong dự án
@@ -54,7 +54,7 @@ func (r *ProjectBuildRouter) Create(c *gin.Context) {}
 // @Success 200 {object} models.ProjectBuild
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// @Router /admin/project-build/{id} [put]
+// @Router /v1/bdspro/admin/project-build/{id} [put]
 func (r *ProjectBuildRouter) Update(c *gin.Context) {}
 
 // @Summary Xóa Tòa nhà trong dự án
@@ -67,7 +67,7 @@ func (r *ProjectBuildRouter) Update(c *gin.Context) {}
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /admin/project-build/{id} [delete]
+// @Router /v1/bdspro/admin/project-build/{id} [delete]
 func (r *ProjectBuildRouter) Delete(c *gin.Context) {}
 
 // @Summary Lấy thông tin Tòa nhà trong dự án theo ID
@@ -80,7 +80,7 @@ func (r *ProjectBuildRouter) Delete(c *gin.Context) {}
 // @Success 200 {object} models.ProjectBuild
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// @Router /admin/project-build/{id} [get]
+// @Router /v1/bdspro/admin/project-build/{id} [get]
 func (r *ProjectBuildRouter) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Tòa nhà trong dự án
@@ -91,5 +91,5 @@ func (r *ProjectBuildRouter) GetByID(c *gin.Context) {}
 // @Security BearerAuth
 // @Success 200 {array} models.ProjectBuild
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/project-build [get]
+// @Router /v1/bdspro/admin/project-build [get]
 func (r *ProjectBuildRouter) GetAll(c *gin.Context) {}

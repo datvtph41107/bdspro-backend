@@ -1,5 +1,15 @@
 package u_post
 
+import (
+	"bdspro/v1/models"
+	"common/case/crud2"
+	_routes "common/routes"
+	_utils "common/utils"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+)
+
 // import (
 // 	"bdspro/v1/models"
 // 	"common/case/crud"
@@ -7,96 +17,145 @@ package u_post
 // 	"github.com/gin-gonic/gin"
 // )
 
-// type WardRouter struct {
-// 	crud.BaseRouter[models.Ward]
-// }
+type PostRouter struct {
+	postService *PostService
+	crud2.BaseRouter[models.Post, *PostService]
+}
 
-// func NewWardRouter(service *WardService) *WardRouter {
-// 	return &WardRouter{
-// 		BaseRouter: crud.BaseRouter[models.Ward]{
-// 			Service: service.BaseService,
-// 		},
+func NewPostRouter(service *PostService) *PostRouter {
+	return &PostRouter{
+		postService: service,
+		BaseRouter: crud2.BaseRouter[models.Post, *PostService]{
+			Service: service,
+		},
+	}
+}
+
+func (r *PostRouter) RegisterRoutes(router *gin.RouterGroup) {
+	group := router.Group("/post")
+	{
+		// todo:
+		group.POST("", r.CreatePost)
+		group.POST("/new-expired", r.NewExpiredPost)
+		group.GET("/:id", r.GetDetail)
+		group.PUT("/:id", r.UpdatePost)
+		group.DELETE("/:id", r.Delete)
+		group.PUT("/hidden", r.UpdateHidden)
+		group.GET("/personal", r.GetPersonalPost)
+		group.GET("/global", r.GetGlobalPost)
+		// group.PUT("/action", r.Action)
+		// group.GET("/share", r.Share)
+		//
+		// group.GET("/dashboard", r.GetGlobalPost) // thống kê lượt xem, click liên hệ
+		group.GET("/up-vip", r.GetGlobalPost)
+		group.GET("/marketing", r.GetGlobalPost) // quảng cáo
+		group.GET("/export", r.GetGlobalPost)    // xuất excel
+	}
+}
+
+func (r *PostRouter) CreatePost(c *gin.Context) {
+	body := PostSaveRequest{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.postService.CreatePost(c, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *PostRouter) UpdatePost(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	body := PostUpdateRequest{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.postService.UpdatePost(c, id, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *PostRouter) UpdateHidden(c *gin.Context) {
+	body := UpdateHiddenRequest{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.postService.UpdateHidden(c, body)
+	_routes.RouteResult(c, result, err)
+}
+
+// func (r *PostRouter) Action(c *gin.Context) {
+// 	body := ActionRequest{}
+// 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
 // 	}
+
+// 	result, err := r.postService.Action(c, body)
+// 	_routes.RouteResult(c, result, err)
 // }
 
-// func (r *WardRouter) RegisterRoutes(router *gin.Engine) {
-// 	WardGroup := router.Group("/bdspro/v1/Wards")
-// 	{
-// 		WardGroup.POST("", r.BaseRouter.Create)
-// 		WardGroup.PUT(":id", r.BaseRouter.Update)
-// 		WardGroup.DELETE(":id", r.BaseRouter.Delete)
-// 		WardGroup.GET(":id", r.BaseRouter.GetByID)
-// 		WardGroup.GET("", r.BaseRouter.GetAll)
-// 	}
-// }
+func (r *PostRouter) GetDetail(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// // @BasePath /api
+	result, err := r.postService.Detail(c, id)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Tạo tỉnh mới
-// // @Description Tạo một bản ghi tỉnh mới
-// // @Tags Wards
-// // @Accept json
-// // @Produce json
-// // @Param Ward body models.Ward true "Thông tin tỉnh"
-// // @Success 201 {object} models.Ward
-// // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// // @Router /Wards [post]
-// func (r *WardRouter) create(c *gin.Context) {
+func (r *PostRouter) GetPersonalPost(c *gin.Context) {
+	query := SearchRequest{}
+	if err := _utils.ParseQuery2(c, &query); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.postService.PersonalPost(c, query)
+	_routes.RouteResult(c, *result, err)
+}
 
-// // @Summary Cập nhật thông tin tỉnh
-// // @Description Cập nhật thông tin tỉnh theo ID
-// // @Tags Wards
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Param Ward body models.Ward true "Thông tin tỉnh mới"
-// // @Success 200 {object} models.Ward
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// // @Router /Wards/{id} [put]
-// func (r *WardRouter) update(c *gin.Context) {
+func (r *PostRouter) GetGlobalPost(c *gin.Context) {
+	query := SearchRequest{}
+	if err := _utils.ParseQuery2(c, &query); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.postService.GlobalPost(c, query)
+	_routes.RouteResult(c, *result, err)
+}
 
-// // @Summary Xóa tỉnh
-// // @Description Xóa tỉnh theo ID (soft delete)
-// // @Tags Wards
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Success 200 {object} map[string]bool "Trạng thái xóa"
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// // @Router /Wards/{id} [delete]
-// func (r *WardRouter) delete(c *gin.Context) {
+// todo: logic thanh toán chưa rõ ràng
+func (r *PostRouter) NewExpiredPost(c *gin.Context) {
+	body := PostExpiredRequest{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.postService.MakeNewExpired(c, body)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Lấy thông tin tỉnh theo ID
-// // @Description Lấy thông tin chi tiết của một tỉnh
-// // @Tags Wards
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Success 200 {object} models.Ward
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// // @Router /Wards/{id} [get]
-// func (r *WardRouter) getByID(c *gin.Context) {
+// todo: logic thanh toán chưa rõ ràng
+func (r *PostRouter) Share(c *gin.Context) {
+	body := PostExpiredRequest{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
-
-// // @Summary Lấy danh sách các tỉnh
-// // @Description Trả về danh sách tất cả các tỉnh
-// // @Tags Wards
-// // @Accept json
-// // @Produce json
-// // @Success 200 {array} models.Ward
-// // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// // @Router /Wards [get]
-// func (r *WardRouter) getAll(c *gin.Context) {
-
-// }
+	result, err := r.postService.MakeNewExpired(c, body)
+	_routes.RouteResult(c, result, err)
+}

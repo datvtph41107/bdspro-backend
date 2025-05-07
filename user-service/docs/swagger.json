@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/user",
+    "basePath": "/v1/user",
     "paths": {
         "/auth/delete": {
             "delete": {

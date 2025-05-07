@@ -1,0 +1,560 @@
+basePath: /v1/user
+definitions:
+  data.OtpRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        example: "0901230456"
+        type: string
+    required:
+    - phone
+    type: object
+  data.OtpVerifyRequest:
+    properties:
+      authId:
+        type: integer
+      fullname:
+        type: string
+      os:
+        type: string
+      otp:
+        type: string
+      phone:
+        example: "0901230456"
+        type: string
+      platform:
+        type: string
+      version:
+        type: string
+    required:
+    - otp
+    - phone
+    type: object
+  data.PublicUserInfo:
+    properties:
+      avatar:
+        type: string
+      fullname:
+        type: string
+      profileId:
+        type: integer
+    type: object
+  data.RestorePhoneRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
+    type: object
+  data.SessionQRConfirm:
+    properties:
+      sessionId:
+        description: ID của trình duyệt hoặc phiên web
+        type: integer
+    type: object
+  data.SessionQRRequest:
+    properties:
+      clientId:
+        description: ID của trình duyệt hoặc phiên web
+        type: string
+      csrfToken:
+        description: Token chống CSRF (nếu cần)
+        type: string
+      expiration:
+        description: Thời gian hết hạn QR code (tính bằng giây)
+        type: integer
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+      userAgent:
+        description: Chuỗi nhận diện trình duyệt
+        type: string
+    type: object
+  data.SessionQRResponse:
+    properties:
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
+  data.UserInfoRequest:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      birth:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      fullname:
+        type: string
+      phone:
+        type: string
+      position:
+        type: string
+      referralBy:
+        type: string
+      startDate:
+        type: string
+      taxCode:
+        type: string
+    type: object
+  data.UserInfoResponse:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      birth:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      followerNumber:
+        type: integer
+      followingNumber:
+        type: integer
+      friendNumber:
+        type: integer
+      fullname:
+        type: string
+      phone:
+        type: string
+      position:
+        type: string
+      profileId:
+        type: integer
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      roleType:
+        type: string
+      startDate:
+        type: string
+      taxCode:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: User API
+  version: "1.0"
+paths:
+  /auth/delete:
+    delete:
+      consumes:
+      - application/json
+      description: API này cho phép xóa người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.PublicUserInfo'
+      security:
+      - BearerAuth: []
+      summary: Xóa tài khoản
+      tags:
+      - Auth
+  /auth/logout:
+    delete:
+      description: Đăng xuất, xóa refresh token
+      responses: {}
+      summary: Logout
+      tags:
+      - Auth
+  /auth/otp/request:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP hoặc submit lúc nhập SĐT
+      parameters:
+      - description: OTP Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Gửi OTP
+      tags:
+      - Auth
+  /auth/otp/resend:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP mới
+      parameters:
+      - description: OTP Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Resend OTP
+      tags:
+      - Auth
+  /auth/otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Xác minh OTP đã nhận
+      parameters:
+      - description: OTP Verify Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.OtpVerifyRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Xác minh OTP
+      tags:
+      - Auth
+  /auth/qr/confirm:
+    post:
+      consumes:
+      - application/json
+      description: API này xác nhận rằng app đã quét QR và người dùng đã đồng ý đăng
+        nhập
+      parameters:
+      - description: Thông tin xác nhận QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRConfirm'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xác nhận QR Login
+      tags:
+      - Auth
+  /auth/qr/init:
+    post:
+      consumes:
+      - application/json
+      description: API này tạo một phiên QR để người dùng có thể đăng nhập qua app
+      parameters:
+      - description: Thông tin tạo QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.SessionQRResponse'
+      summary: Tạo QR Login
+      tags:
+      - Auth
+  /auth/qr/status:
+    post:
+      consumes:
+      - application/json
+      description: API này kiểm tra xem QR đã được xác nhận hay chưa
+      parameters:
+      - description: Thông tin kiểm tra QR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SessionQRRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Kiểm tra trạng thái QR
+      tags:
+      - Auth
+  /auth/restore:
+    put:
+      consumes:
+      - application/json
+      description: Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới
+      parameters:
+      - description: Restore Phone Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/data.RestorePhoneRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Khôi phục tài khoản
+      tags:
+      - Auth
+  /auth/token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Làm mới access token bằng refresh token trong cookie
+      produces:
+      - application/json
+      responses: {}
+      summary: Refresh token
+      tags:
+      - Auth
+  /oauth/{provider}/callback:
+    get:
+      consumes:
+      - application/json
+      description: Nhận callback từ provider sau khi người dùng đăng nhập và xử lý
+        xác thực.
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Mã xác thực từ provider
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Chuỗi state để bảo vệ chống tấn công CSRF
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin người dùng từ provider
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi khi xử lý callback
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Callback
+      tags:
+      - OAuth
+  /oauth/{provider}/login:
+    get:
+      consumes:
+      - application/json
+      description: Chuyển hướng người dùng đến trang đăng nhập của provider (Google,
+        Facebook, Zalo, v.v.).
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Chuyển hướng đến trang đăng nhập của provider
+        "400":
+          description: Lỗi khi provider không hợp lệ
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Login
+      tags:
+      - OAuth
+  /profile/chat/find:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: text
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/find-by-phone:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/find/ids:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/info/{profileId}:
+    get:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: profileId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.PublicUserInfo'
+      summary: Thông tin người dùng
+      tags:
+      - Profile
+  /profile/me:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /profile/set-info:
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.UserInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/data.UserInfoResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin người dùng
+      tags:
+      - Profile
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

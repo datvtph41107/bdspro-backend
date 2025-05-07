@@ -13,25 +13,28 @@ import (
 	"strings"
 )
 
-const wireFile = "../cmd/http/wire.go"
-const rootPackage = "bdspro"
-const packageName = "cmd_http"
-
 type NewFunc struct {
 	FullPackage string
 	Alias       string
 	Func        string
 }
 
+const wireFile = "../cmd/http/wire.go"
+const folderFind = "../"
+const packageName = "cmd_http"
+
 func main() {
+	const rootPackage = "bdspro"
+	const prefix = rootPackage + "/cmd"
 	mod := os.Args[0]
 	log.Printf("MOD=", mod)
-	newFuncs := findNewFunctions("../v1")
+
+	newFuncs := findNewFunctions(rootPackage, folderFind)
 	existingFuncs := readExistingWire()
 
 	updatedFuncs := mergeFunctions(existingFuncs, newFuncs)
 
-	writeWireFile(updatedFuncs)
+	writeWireFile(updatedFuncs, prefix)
 	fmt.Println("✅ wire.go updated successfully!")
 
 	// cmd := exec.Command("cd .. && wire")
@@ -53,7 +56,7 @@ func main() {
 }
 
 // Tìm tất cả các hàm `NewXXX` trong các file Go và lấy package + đường dẫn đầy đủ
-func findNewFunctions(root string) []NewFunc {
+func findNewFunctions(rootPackage, root string) []NewFunc {
 	var newFuncs []NewFunc
 	re := regexp.MustCompile(`func\s+(New\w+)\(`)
 
@@ -62,7 +65,7 @@ func findNewFunctions(root string) []NewFunc {
 			return nil
 		}
 
-		fullPackage := getFullPackagePath(path)
+		fullPackage := getFullPackagePath(rootPackage, path)
 		alias := generateAlias(fullPackage)
 		if fullPackage == "" {
 			return nil
@@ -99,7 +102,7 @@ func findNewFunctions(root string) []NewFunc {
 }
 
 // Lấy đường dẫn import đầy đủ từ đường dẫn file, bỏ `../`
-func getFullPackagePath(path string) string {
+func getFullPackagePath(rootPackage, path string) string {
 	relPath, err := filepath.Rel(".", filepath.Dir(path))
 	if err != nil {
 		return ""
@@ -164,11 +167,11 @@ func mergeFunctions(existing, newFuncs []NewFunc) []NewFunc {
 }
 
 // Ghi danh sách các hàm vào wire.go
-func writeWireFile(inputs []NewFunc) {
+func writeWireFile(inputs []NewFunc, prefix string) {
 	funcs := []NewFunc{}
 	for _, f := range inputs {
 		log.Println(f.FullPackage)
-		if !strings.HasPrefix(f.FullPackage, "bdspro/cmd") {
+		if !strings.HasPrefix(f.FullPackage, prefix) {
 			funcs = append(funcs, f)
 		}
 	}

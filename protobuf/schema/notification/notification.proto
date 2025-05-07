@@ -51,6 +51,7 @@ message Notification {
     uint64 userID = 6;
     bool isRead = 7;
     google.protobuf.Timestamp timestamp = 8;
+    google.protobuf.Timestamp visibleAt = 9;
 }
 
 message IdRequest {
@@ -70,6 +71,7 @@ message NotiNewRequest {
     string title = 3;
     int32 type = 4;
     uint64 userID = 5;
+    google.protobuf.Timestamp visibleAt = 6;
 }
 
 message NotiNewResponse {

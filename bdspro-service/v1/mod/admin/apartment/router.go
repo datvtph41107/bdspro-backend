@@ -41,7 +41,7 @@ func (r *ApartmentRouter) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} data.ApartmentRequest
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/apartment [post]
+// @Router /v1/bdspro/admin/apartment [post]
 func (r *ApartmentRouter) UpdateApartments(c *gin.Context) {
 	result, err := r.Service.UpdateApartments(c)
 	_routes.RouteResult(c, result, err)
@@ -57,7 +57,7 @@ func (r *ApartmentRouter) UpdateApartments(c *gin.Context) {
 // @Success 201 {object} data.ApartmentRequest
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /admin/apartment/status [put]
+// @Router /v1/bdspro/admin/apartment/status [put]
 func (r *ApartmentRouter) UpdateStatusApartments(c *gin.Context) {
 	result, err := r.Service.UpdateStatusApartments(c)
 	_routes.RouteResult(c, result, err)
@@ -71,7 +71,7 @@ func (r *ApartmentRouter) UpdateStatusApartments(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.Apartment
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /admin/apartment/import [post]
+// @Router /v1/bdspro/admin/apartment/import [post]
 func (r *ApartmentRouter) ImportExcel(c *gin.Context) {
 	result, err := r.Service.ImportApartments(c)
 	_routes.RouteResult(c, result, err)
