@@ -2,7 +2,7 @@ package cmd_grpc
 
 import (
 	"bdspro/config"
-	"bdspro/v2/db"
+	"bdspro/db"
 	w "bdspro/wire"
 	"common"
 	_db "common/db"
@@ -56,7 +56,19 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(
 			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 		)
-		pb_bdspro.RegisterBdsproServiceServer(s, app.GrpcServer)
+		// pb_bdspro.RegisterBdsproServiceServer(s, app.GrpcServer)
+		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
+
+		// @bind: register_server
+		pb_bdspro.RegisterCostDocumentServiceServer(s, app.CostDocumentServer)
+		pb_bdspro.RegisterIncomeDocumentServiceServer(s, app.IncomeDocumentServer)
+		pb_bdspro.RegisterAssetIncomeTypeServiceServer(s, app.AssetIncomeTypeServer)
+		pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationServer)
+		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeServer)
+		pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostServer)
+		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
+		pb_bdspro.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
+
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

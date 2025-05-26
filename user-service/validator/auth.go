@@ -1,25 +1,25 @@
 package validator
 
 import (
-	"auth/config"
-	"auth/data"
-	"auth/enums"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
 	"fmt"
 	"time"
+	"user/config/property"
+	"user/data"
+	"user/enums"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthValidator struct {
-	Properties *config.UserProperties
+	Properties *property.UserProperties
 	// OtpRepository   repository.UserOTPRepository
 	// StatusRepository repository.UserStatusRepository
 }
 
-func NewAuthValidator(props *config.UserProperties) *AuthValidator {
+func NewAuthValidator(props *property.UserProperties) *AuthValidator {
 	return &AuthValidator{
 		Properties: props,
 		// OtpRepository:   otpRepo,
@@ -58,7 +58,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 			}
 		}
 	case enums.LIMIT_OTP_SEND:
-		if otpEntity.OTPSendTime >= config.AppProperties.Otp.MaxTimesResend {
+		if otpEntity.OTPSendTime >= property.AppProperties.Otp.MaxTimesResend {
 			LockAccount(c, param)
 			return &_routes.Except{
 				Code:    code,
@@ -66,7 +66,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 			}
 		}
 	case enums.LIMIT_OTP_ENTER:
-		if otpEntity.OTPCheckTime >= config.AppProperties.Otp.MaxTimesOtpEnter {
+		if otpEntity.OTPCheckTime >= property.AppProperties.Otp.MaxTimesOtpEnter {
 			LockAccount(c, param)
 			return &_routes.Except{
 				Code:    code,
@@ -80,7 +80,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 			return &_routes.Except{
 				Code: code,
 				Message: "Mã không chính xác. Bạn còn " + fmt.Sprintf("%d",
-					config.AppProperties.Otp.MaxTimesOtpEnter+1-otpEntity.OTPCheckTime) +
+					property.AppProperties.Otp.MaxTimesOtpEnter+1-otpEntity.OTPCheckTime) +
 					" lần. Mã OTP của bạn là " + otpEntity.OTP,
 			}
 		}
@@ -93,7 +93,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 		}
 	case enums.LIMIT_NEXT_TIME:
 		if otpEntity.OTPDate != nil {
-			nextTime := otpEntity.OTPDate.Add(time.Duration(config.AppProperties.Otp.LockSendAfter) * time.Second)
+			nextTime := otpEntity.OTPDate.Add(time.Duration(property.AppProperties.Otp.LockSendAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				return &_routes.Except{
 					Code:    code,
@@ -103,7 +103,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 		}
 	case enums.LIMIT_REQUEST_TIME:
 		if otpEntity.OTPDate != nil {
-			nextTime := otpEntity.OTPDate.Add(time.Duration(config.AppProperties.Otp.LockRequestAfter) * time.Second)
+			nextTime := otpEntity.OTPDate.Add(time.Duration(property.AppProperties.Otp.LockRequestAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				return &_routes.Except{
 					Code:    code,
@@ -138,7 +138,7 @@ func LockAccount(c *gin.Context, param *data.AuthParam) {
 		otpEntity.OTP = otp
 		otpEntity.OTPCheckTime = 0
 		otpEntity.OTPSendTime = 0
-		statusEntity.LockedUntil = time.Now().Add(time.Duration(config.AppProperties.Otp.LockVerifyAfter) * time.Second)
+		statusEntity.LockedUntil = time.Now().Add(time.Duration(property.AppProperties.Otp.LockVerifyAfter) * time.Second)
 		_db.SaveWithAudit(c, otpEntity)
 		_db.SaveWithAudit(c, statusEntity)
 	}

@@ -8,6 +8,12 @@ package wire
 
 import (
 	"bdspro/config"
+	"bdspro/external/handler"
+	"bdspro/external/repo"
+	"bdspro/external/routes"
+	"bdspro/external/service"
+	"bdspro/internal/repo"
+	"bdspro/internal/usecases"
 	"bdspro/v1/mod/admin"
 	"bdspro/v1/mod/admin/amenity"
 	"bdspro/v1/mod/admin/apartment"
@@ -24,28 +30,36 @@ import (
 	"bdspro/v1/mod/admin/ward"
 	"bdspro/v1/mod/global/amenity"
 	"bdspro/v1/mod/global/apartment_attribute"
+	"bdspro/v1/mod/global/history/asset"
 	"bdspro/v1/mod/global/house_info"
-	"bdspro/v1/mod/global/member_plan"
 	"bdspro/v1/mod/global/product_access"
+	product_accecss2 "bdspro/v1/mod/global/product_history"
 	"bdspro/v1/mod/global/product_media"
 	"bdspro/v1/mod/global/product_price"
 	"bdspro/v1/mod/global/product_private"
 	"bdspro/v1/mod/global/region"
-	"bdspro/v1/mod/global/transmit"
 	"bdspro/v1/mod/user"
 	"bdspro/v1/mod/user/action"
+	"bdspro/v1/mod/user/apartment"
 	"bdspro/v1/mod/user/asset"
+	"bdspro/v1/mod/user/asset2"
+	"bdspro/v1/mod/user/asset_cost"
+	"bdspro/v1/mod/user/asset_cost_type"
+	"bdspro/v1/mod/user/asset_exploitation"
+	"bdspro/v1/mod/user/asset_income_type"
+	"bdspro/v1/mod/user/asset_legal"
+	"bdspro/v1/mod/user/asset_share"
+	"bdspro/v1/mod/user/build_room"
+	"bdspro/v1/mod/user/like"
 	"bdspro/v1/mod/user/list"
 	"bdspro/v1/mod/user/post"
 	"bdspro/v1/mod/user/product"
+	"bdspro/v1/mod/user/product/interface"
 	"bdspro/v1/mod/user/product_access"
 	"bdspro/v1/mod/user/product_child"
+	"bdspro/v1/mod/user/project_build"
 	"bdspro/v1/mod/user/transaction"
-	"bdspro/v2/external/handler"
-	"bdspro/v2/external/repo"
-	"bdspro/v2/external/service"
-	"bdspro/v2/repo"
-	"bdspro/v2/usecases"
+	"bdspro/v1/providers"
 	"common/db"
 	"github.com/google/wire"
 )
@@ -62,46 +76,70 @@ func InitializeApp() (*config.ConfigApp, error) {
 	gormProductAccessRepo := postgre_repo.NewGromProductAccessRepo(db)
 	gormProductPrivateRepo := postgre_repo.NewGormProductPrivateRepo(db, gormProductAccessRepo)
 	gormUserProductRepo := postgre_repo.NewGormUserProductRepo(db, gormProductPriceRepo, gormProductAccessRepo, gormProductPrivateRepo)
-	gormProductMediaRepo := postgre_repo.NewGormProductMediaRepo(db)
-	gormHouseInfoRepo := postgre_repo.NewGormHouseInfoRepo(db)
-	gormRegionRepo := postgre_repo.NewGormRegionRepo(db)
-	gormDocTypeRepo := postgre_repo.NewGormDocTypeRepo(db)
-	gormPropertyTypeRepo := postgre_repo.NewGormPropertyTypeRepo(db)
-	gormAmenityRepo := postgre_repo.NewGormAmenityRepo(db)
-	memberPlanUsecase := service.NewMemberPlanUsecase()
-	productUserUsecase := usecases.NewProductUserUsecase(gormUserProductRepo, gormAssetRepo, gormProductMediaRepo, gormProductAccessRepo, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, gormRegionRepo, gormDocTypeRepo, gormPropertyTypeRepo, gormAmenityRepo, memberPlanUsecase)
-	assetUsecase := usecases.NewAssetUsecase(gormAssetRepo, gormUserProductRepo, productUserUsecase)
-	bdsproGrpcServer := server.NewGrpcService(assetUsecase)
+	gormAssetHistoryRepo := postgre_repo.NewGormAssetSplitHistoryRepo(db)
+	uAssetUsecase := usecases.NewUAssetUsecase(gormAssetRepo, gormUserProductRepo, gormAssetHistoryRepo)
+	genericGrpcServer := handler.NewGenericService(uAssetUsecase)
 	productPriceRepo := product_price.NewProductPriceRepo(db)
 	productAccessRepo := product_accecss.NewProductAccessRepo(db)
 	productPrivateRepo := product_private.NewProductPrivateRepo(db, productAccessRepo)
 	userProductRepo := u_product.NewUserProductRepo(db, productPriceRepo, productAccessRepo, productPrivateRepo)
-	assetRepo := u_asset.NewAssetRepo(db)
 	productMediaRepo := product_media.NewProductMediaRepo(db)
 	houseInfoRepo := house_info.NewHouseInfoRepo(db)
 	regionRepo := g_region.NewRegionRepo(db)
 	docTypeRepo := a_doc_type.NewDocTypeRepo(db)
 	propertyTypeRepo := a_property_type.NewPropertyTypeRepo(db)
 	amenityRepo := amenity.NewAmenityRepo(db)
-	memberPlanService := member_plan.NewMemberPlanService()
-	productService := u_product.NewProductService(userProductRepo, assetRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo, memberPlanService)
-	userProductRoute := u_product.NewUserProductRoute(productService)
+	memberPlanProvider := providers.NewMemberPlanService()
+	userProductService := u_product.NewUserProductService(userProductRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo, memberPlanProvider)
+	userProductRoute := u_product.NewUserProductRoute(userProductService)
 	projectRepo := a_project.NewProjectRepo(db)
 	listService := u_list.NewUserListService(propertyTypeRepo, regionRepo, docTypeRepo, projectRepo, amenityRepo)
 	listRoute := u_list.NewListRoute(listService)
 	userProductChildRepo := u_product_child.NewUserProductChildRepo(db, productPriceRepo, productAccessRepo, productPrivateRepo)
 	postRepo := u_post.NewPostRepo(db)
-	productChildService := u_product_child.NewProductChildService(userProductChildRepo, userProductRepo, postRepo, assetRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo, productService)
+	assetRepo := u_asset.NewAssetRepo(db)
+	productChildService := u_product_child.NewProductChildService(userProductChildRepo, userProductRepo, postRepo, assetRepo, productMediaRepo, productAccessRepo, houseInfoRepo, productPriceRepo, productPrivateRepo, regionRepo, docTypeRepo, propertyTypeRepo, amenityRepo, userProductService)
 	userProductChildRoute := u_product_child.NewUserProductChildRoute(productChildService)
-	transmitService := transmit.NewNotiService()
-	productAccessService := u_product_access.NewUserProductAccessService(productAccessRepo, productService, transmitService)
+	transmitProvider := providers.NewNotiService()
+	productAccessService := u_product_access.NewUserProductAccessService(productAccessRepo, userProductService, transmitProvider)
 	userProductAccessRoute := u_product_access.NewUserProductAccessRoute(productAccessService)
-	postService := u_post.NewPostService(postRepo, memberPlanService, productService, transmitService)
-	postRouter := u_post.NewPostRouter(postService)
+	userPostService := u_post.NewUserPostService(postRepo, memberPlanProvider, userProductService, transmitProvider, userProductRepo)
+	postRouter := u_post.NewPostRouter(userPostService)
 	actionRepo := u_action.NewActionRepo(db)
 	actionService := u_action.NewActionService(actionRepo)
 	actionRouter := u_action.NewActionRouter(actionService)
-	userRoute := user.NewUserRoute(userProductRoute, listRoute, userProductChildRoute, userProductAccessRoute, postRouter, actionRouter)
+	assetHistoryRepo := history.NewAssetHistoryRepo(db)
+	userAssetService := u_asset.NewUserAssetService(assetRepo, userProductRepo, userProductService, assetHistoryRepo)
+	assetRouter := u_asset.NewAssetRouter(userAssetService)
+	assetCostRepo := u_asset_cost.NewAssetCostRepo(db)
+	assetCostService := u_asset_cost.NewAssetCostService(assetCostRepo)
+	assetCostRouter := u_asset_cost.NewAssetCostRouter(assetCostService)
+	assetCostTypeRepo := u_asset_cost_type.NewAssetCostTypeRepo(db)
+	assetCostTypeService := u_asset_cost_type.NewAssetCostTypeService(assetCostTypeRepo)
+	assetCostTypeRouter := u_asset_cost_type.NewAssetCostTypeRouter(assetCostTypeService)
+	assetExploitationRepo := u_asset_exploitation.NewAssetExploitationRepo(db)
+	assetExploitationService := u_asset_exploitation.NewAssetExploitationService(assetExploitationRepo)
+	assetExploitationRouter := u_asset_exploitation.NewAssetExploitationRouter(assetExploitationService)
+	assetLegalRepo := u_asset_legal.NewAssetLegalRepo(db)
+	assetLegalService := u_asset_legal.NewAssetLegalService(assetLegalRepo)
+	assetLegalRouter := u_asset_legal.NewAssetLegalRouter(assetLegalService)
+	assetIncomeTypeRepo := u_asset_income_type.NewAssetIncomeTypeRepo(db)
+	assetIncomeTypeService := u_asset_income_type.NewAssetIncomeTypeService(assetIncomeTypeRepo)
+	assetIncomeTypeRouter := u_asset_income_type.NewAssetIncomeTypeRouter(assetIncomeTypeService)
+	assetShareRepo := u_asset_share.NewAssetShareRepo(db)
+	assetShareService := u_asset_share.NewAssetShareService(assetShareRepo)
+	assetShareRouter := u_asset_share.NewAssetShareRouter(assetShareService)
+	userBuildRoomRepo := u_build_room.NewUserBuildRoomRepo(db)
+	userBuildRoomService := u_build_room.NewUserBuildRoomService(userBuildRoomRepo)
+	userBuildRoomRouter := u_build_room.NewUserBuildRoomRouter(userBuildRoomService)
+	userApartmentRepo := u_apartment.NewUserApartmentRepo(db)
+	apartmentAttrRepo := attribute_attribute.NewApartmentAttrRepo(db)
+	userApartmentService := u_apartment.NewUserApartmentService(userApartmentRepo, apartmentAttrRepo)
+	userApartmentRouter := u_apartment.NewUserApartmentRouter(userApartmentService)
+	userProjectBuildRepo := u_project_build.NewUserProjectBuildRepo(db)
+	userProjectBuildService := u_project_build.NewUserProjectBuildService(userProjectBuildRepo)
+	userProjectBuildRouter := u_project_build.NewUserProjectBuildRouter(userProjectBuildService)
+	userRoute := user.NewUserRoute(userProductRoute, listRoute, userProductChildRoute, userProductAccessRoute, postRouter, actionRouter, assetRouter, assetCostRouter, assetCostTypeRouter, assetExploitationRouter, assetLegalRouter, assetIncomeTypeRouter, assetShareRouter, userBuildRoomRouter, userApartmentRouter, userProjectBuildRouter)
 	provinceRepo := province.NewProvinceRepo(db)
 	provinceService := province.NewProvinceService(provinceRepo)
 	provinceRouter := province.NewProvinceRouter(provinceService)
@@ -129,7 +167,6 @@ func InitializeApp() (*config.ConfigApp, error) {
 	buildRoomService := a_build_room.NewBuildRoomService(buildRoomRepo)
 	buildRoomRouter := a_build_room.NewBuildRoomRouter(buildRoomService)
 	apartmentRepo := a_apartment.NewApartmentRepo(db)
-	apartmentAttrRepo := attribute_attribute.NewApartmentAttrRepo(db)
 	apartmentService := a_apartment.NewApartmentService(apartmentRepo, apartmentAttrRepo)
 	apartmentRouter := a_apartment.NewApartmentRouter(apartmentService)
 	developerRepo := a_developer.NewDeveloperRepo(db)
@@ -138,11 +175,56 @@ func InitializeApp() (*config.ConfigApp, error) {
 	a_product_accessProductAccessService := a_product_access.NewProductAccessService(productAccessRepo)
 	productAccessRouter := a_product_access.NewProductAccessRouter(a_product_accessProductAccessService)
 	adminRoute := admin.NewAdminRoute(provinceRouter, districtRouter, wardRouter, adminProductRouter, propertyTypeRouter, docTypeRouter, amenityRouter, projectRouter, projectBuildRouter, buildRoomRouter, apartmentRouter, developerRouter, productAccessRouter)
-	configApp := config.NewConfigApp(bdsproGrpcServer, userRoute, adminRoute)
+	gormCostDocumentRepo := postgre_repo.NewGormCostDocumentRepo(db)
+	costDocumentUsecase := usecases.NewCostDocumentUc(gormCostDocumentRepo)
+	costDocumentServer := service.NewCostDocumentServer(costDocumentUsecase)
+	gormIncomeDocumentRepo := postgre_repo.NewGormIncomeDocumentRepo(db)
+	incomeDocumentUsecase := usecases.NewIncomeDocumentUc(gormIncomeDocumentRepo)
+	incomeDocumentServer := service.NewIncomeDocumentServer(incomeDocumentUsecase)
+	gormAssetIncomeTypeRepo := postgre_repo.NewGormAssetIncomeTypeRepo(db)
+	assetIncomeTypeUsecase := usecases.NewAssetIncomeTypeUc(gormAssetIncomeTypeRepo)
+	assetIncomeTypeServer := service.NewAssetIncomeTypeServer(assetIncomeTypeUsecase)
+	gormAssetExploitationRepo := postgre_repo.NewGormAssetExploitationRepo(db)
+	assetExploitationUsecase := usecases.NewAssetExploitationUc(gormAssetExploitationRepo)
+	assetExploitationServer := service.NewAssetExploitationServer(assetExploitationUsecase)
+	gormAssetCostTypeRepo := postgre_repo.NewGormAssetCostTypeRepo(db)
+	assetCostTypeUsecase := usecases.NewAssetCostTypeUc(gormAssetCostTypeRepo)
+	assetCostTypeServer := service.NewAssetCostTypeServer(assetCostTypeUsecase)
+	gormAssetCostRepo := postgre_repo.NewGormAssetCostRepo(db)
+	assetCostUsecase := usecases.NewAssetCostUc(gormAssetCostRepo)
+	assetCostServer := service.NewAssetCostServer(assetCostUsecase)
+	gormAssetLegalRepo := postgre_repo.NewGormAssetLegalRepo(db)
+	assetLegalUsecase := usecases.NewAssetLegalUc(gormAssetLegalRepo)
+	assetLegalServer := service.NewAssetLegalServer(assetLegalUsecase)
+	assetHistoryUsecase := usecases.NewAssetSplitHistoryUc(gormAssetHistoryRepo)
+	assetSplitHistoryServer := service.NewAssetSplitHistoryServer(assetHistoryUsecase)
+	postgreHistoryRepo := postgre_repo.NewPostgreHistoryRepo(db)
+	gormProductMediaRepo := postgre_repo.NewGormProductMediaRepo(db)
+	gormHouseInfoRepo := postgre_repo.NewGormHouseInfoRepo(db)
+	gormRegionRepo := postgre_repo.NewGormRegionRepo(db)
+	gormDocTypeRepo := postgre_repo.NewGormDocTypeRepo(db)
+	gormPropertyTypeRepo := postgre_repo.NewGormPropertyTypeRepo(db)
+	gormAmenityRepo := postgre_repo.NewGormAmenityRepo(db)
+	memberPlanUsecase := service.NewMemberPlanUsecase()
+	gormPostRepo := postgre_repo.NewGormPostRepo(db)
+	uPostUsecase := usecases.NewUPostUsecase(gormPostRepo, memberPlanProvider, transmitProvider, gormUserProductRepo)
+	uProductUsecase := usecases.NewUProductUsecase(gormUserProductRepo, postgreHistoryRepo, gormAssetRepo, gormProductMediaRepo, gormProductAccessRepo, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, gormRegionRepo, gormDocTypeRepo, gormPropertyTypeRepo, gormAmenityRepo, memberPlanUsecase, uPostUsecase, uAssetUsecase)
+	uProductRouter := routes.NewUProductRoute(uProductUsecase)
+	gormUProductChildRepo := postgre_repo.NewGormUProductChildRepo(db, productPriceRepo)
+	uProductChildUsecase := usecases.NewUProductChildUsecase(gormUProductChildRepo, gormUserProductRepo, gormPostRepo, gormAssetRepo, gormProductMediaRepo, gormProductAccessRepo, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, gormRegionRepo, gormDocTypeRepo, gormPropertyTypeRepo, gormAmenityRepo, uProductUsecase)
+	uProductChildRoute := routes.NewUProductChildRoute(uProductChildUsecase)
+	productAccessUsecase := usecases.NewUProductAccessUsecase(gormProductAccessRepo, uProductUsecase, transmitProvider)
+	uProductAccessRoute := routes.NewUProductAccessRoute(productAccessUsecase)
+	routerManager := routes.NewRouterManager(uProductRouter, uProductChildRoute, uProductAccessRoute)
+	configApp := config.NewConfigApp(genericGrpcServer, userRoute, adminRoute, costDocumentServer, incomeDocumentServer, assetIncomeTypeServer, assetExploitationServer, assetCostTypeServer, assetCostServer, assetLegalServer, assetSplitHistoryServer, routerManager)
+	userProductService.UserAssetService = userAssetService
+	userProductService.UserPostService = userPostService
+	uPostUsecase.UProductUsecase = uProductUsecase
+	uAssetUsecase.ProductUc = uProductUsecase
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.AmenityRepo), new(*postgre_repo.GormAmenityRepo)), wire.Bind(new(repo.AssetRepo), new(*postgre_repo.GormAssetRepo)), wire.Bind(new(repo.AssetHistoryRepo), new(*postgre_repo.GormAssetHistoryRepo)), wire.Bind(new(repo.DocTypeRepo), new(*postgre_repo.GormDocTypeRepo)), wire.Bind(new(repo.HouseInfoRepo), new(*postgre_repo.GormHouseInfoRepo)), wire.Bind(new(repo.ProductAccessRepo), new(*postgre_repo.GormProductAccessRepo)), wire.Bind(new(repo.ProductMediaRepo), new(*postgre_repo.GormProductMediaRepo)), wire.Bind(new(repo.ProductPriceRepo), new(*postgre_repo.GormProductPriceRepo)), wire.Bind(new(repo.ProductPrivateRepo), new(*postgre_repo.GormProductPrivateRepo)), wire.Bind(new(repo.ProductUserRepo), new(*postgre_repo.GormUserProductRepo)), wire.Bind(new(repo.PropertyTypeRepo), new(*postgre_repo.GormPropertyTypeRepo)), wire.Bind(new(repo.RegionRepo), new(*postgre_repo.GormRegionRepo)), wire.Bind(new(usecases.PlanUsecase), new(*service.MemberPlanUsecase)), u_action.NewActionRepo, u_action.NewActionRouter, u_action.NewActionService, a_product.NewAdminProductRepo, a_product.NewAdminProductRouter, a_product.NewAdminProductService, admin.NewAdminRoute, amenity.NewAmenityRepo, a_amenity.NewAmenityRouter, a_amenity.NewAmenityService, attribute_attribute.NewApartmentAttrRepo, a_apartment.NewApartmentRepo, a_apartment.NewApartmentRouter, a_apartment.NewApartmentService, u_asset.NewAssetRepo, u_asset.NewAssetService, usecases.NewAssetUsecase, a_build_room.NewBuildRoomRepo, a_build_room.NewBuildRoomRouter, a_build_room.NewBuildRoomService, config.NewConfigApp, a_developer.NewDeveloperRepo, a_developer.NewDeveloperRouter, a_developer.NewDeveloperService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, postgre_repo.NewGormAmenityRepo, postgre_repo.NewGormAssetRepo, postgre_repo.NewGormDocTypeRepo, postgre_repo.NewGormHistoryRepo, postgre_repo.NewGormHouseInfoRepo, postgre_repo.NewGormProductMediaRepo, postgre_repo.NewGormProductPriceRepo, postgre_repo.NewGormProductPrivateRepo, postgre_repo.NewGormPropertyTypeRepo, postgre_repo.NewGormRegionRepo, postgre_repo.NewGormUserProductRepo, postgre_repo.NewGromProductAccessRepo, server.NewGrpcService, usecases.NewHistoryUsecase, house_info.NewHouseInfoRepo, u_list.NewListRoute, member_plan.NewMemberPlanService, service.NewMemberPlanUsecase, transmit.NewNotiService, u_post.NewPostRepo, u_post.NewPostRouter, u_post.NewPostService, product_accecss.NewProductAccessRepo, a_product_access.NewProductAccessRouter, a_product_access.NewProductAccessService, u_product_child.NewProductChildService, product_media.NewProductMediaRepo, product_price.NewProductPriceRepo, product_private.NewProductPrivateRepo, u_product.NewProductService, usecases.NewProductUserUsecase, a_project_build.NewProjectBuildRepo, a_project_build.NewProjectBuildRouter, a_project_build.NewProjectBuildService, a_project.NewProjectRepo, a_project.NewProjectRouter, a_project.NewProjectService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, g_region.NewRegionRepo, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, u_list.NewUserListService, u_product_access.NewUserProductAccessRoute, u_product_access.NewUserProductAccessService, u_product_child.NewUserProductChildRepo, u_product_child.NewUserProductChildRoute, u_product.NewUserProductRepo, u_product.NewUserProductRoute, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.AmenityRepo), new(*postgre_repo.GormAmenityRepo)), wire.Bind(new(repo.AssetCostRepo), new(*postgre_repo.GormAssetCostRepo)), wire.Bind(new(repo.AssetCostTypeRepo), new(*postgre_repo.GormAssetCostTypeRepo)), wire.Bind(new(repo.AssetExploitationRepo), new(*postgre_repo.GormAssetExploitationRepo)), wire.Bind(new(repo.AssetIncomeTypeRepo), new(*postgre_repo.GormAssetIncomeTypeRepo)), wire.Bind(new(repo.AssetLegalRepo), new(*postgre_repo.GormAssetLegalRepo)), wire.Bind(new(repo.CostDocumentRepo), new(*postgre_repo.GormCostDocumentRepo)), wire.Bind(new(repo.DocTypeRepo), new(*postgre_repo.GormDocTypeRepo)), wire.Bind(new(repo.HouseInfoRepo), new(*postgre_repo.GormHouseInfoRepo)), wire.Bind(new(repo.IncomeDocumentRepo), new(*postgre_repo.GormIncomeDocumentRepo)), wire.Bind(new(repo.ProductAccessRepo), new(*postgre_repo.GormProductAccessRepo)), wire.Bind(new(repo.ProductHistoryRepo), new(*postgre_repo.PostgreHistoryRepo)), wire.Bind(new(repo.ProductMediaRepo), new(*postgre_repo.GormProductMediaRepo)), wire.Bind(new(repo.ProductPriceRepo), new(*postgre_repo.GormProductPriceRepo)), wire.Bind(new(repo.ProductPrivateRepo), new(*postgre_repo.GormProductPrivateRepo)), wire.Bind(new(repo.UProductRepo), new(*postgre_repo.GormUserProductRepo)), wire.Bind(new(repo.PropertyTypeRepo), new(*postgre_repo.GormPropertyTypeRepo)), wire.Bind(new(repo.RegionRepo), new(*postgre_repo.GormRegionRepo)), wire.Bind(new(repo.AssetRepo), new(*postgre_repo.GormAssetRepo)), wire.Bind(new(repo.UAssetHistoryRepo), new(*postgre_repo.GormAssetHistoryRepo)), wire.Bind(new(repo.UPostRepo), new(*postgre_repo.GormPostRepo)), wire.Bind(new(repo.UProductChildRepo), new(*postgre_repo.GormUProductChildRepo)), wire.Bind(new(usecases.PlanUsecase), new(*service.MemberPlanUsecase)), wire.Bind(new(iu_product.IUserProductService), new(*u_product.UserProductService)), u_action.NewActionRepo, u_action.NewActionRouter, u_action.NewActionService, a_product.NewAdminProductRepo, a_product.NewAdminProductRouter, a_product.NewAdminProductService, admin.NewAdminRoute, amenity.NewAmenityRepo, a_amenity.NewAmenityRouter, a_amenity.NewAmenityService, attribute_attribute.NewApartmentAttrRepo, a_apartment.NewApartmentRepo, a_apartment.NewApartmentRouter, a_apartment.NewApartmentService, u_asset_cost.NewAssetCostRepo, u_asset_cost.NewAssetCostRouter, service.NewAssetCostServer, u_asset_cost.NewAssetCostService, u_asset_cost_type.NewAssetCostTypeRepo, u_asset_cost_type.NewAssetCostTypeRouter, service.NewAssetCostTypeServer, u_asset_cost_type.NewAssetCostTypeService, usecases.NewAssetCostTypeUc, usecases.NewAssetCostUc, u_asset_exploitation.NewAssetExploitationRepo, u_asset_exploitation.NewAssetExploitationRouter, service.NewAssetExploitationServer, u_asset_exploitation.NewAssetExploitationService, usecases.NewAssetExploitationUc, history.NewAssetHistoryRepo, u_asset_income_type.NewAssetIncomeTypeRepo, u_asset_income_type.NewAssetIncomeTypeRouter, service.NewAssetIncomeTypeServer, u_asset_income_type.NewAssetIncomeTypeService, usecases.NewAssetIncomeTypeUc, u_asset_legal.NewAssetLegalRepo, u_asset_legal.NewAssetLegalRouter, service.NewAssetLegalServer, u_asset_legal.NewAssetLegalService, usecases.NewAssetLegalUc, u_asset.NewAssetRepo, u_asset2.NewAssetRepo2, u_asset.NewAssetRouter, u_asset2.NewAssetRouter2, u_asset2.NewAssetService2, u_asset_share.NewAssetShareRepo, u_asset_share.NewAssetShareRouter, u_asset_share.NewAssetShareService, service.NewAssetSplitHistoryServer, usecases.NewAssetSplitHistoryUc, a_build_room.NewBuildRoomRepo, a_build_room.NewBuildRoomRouter, a_build_room.NewBuildRoomService, config.NewConfigApp, service.NewCostDocumentServer, usecases.NewCostDocumentUc, a_developer.NewDeveloperRepo, a_developer.NewDeveloperRouter, a_developer.NewDeveloperService, district.NewDistrictRepo, district.NewDistrictRouter, district.NewDistrictService, a_doc_type.NewDocTypeRepo, a_doc_type.NewDocTypeRouter, a_doc_type.NewDocTypeService, handler.NewGenericService, postgre_repo.NewGormAmenityRepo, postgre_repo.NewGormAssetCostRepo, postgre_repo.NewGormAssetCostTypeRepo, postgre_repo.NewGormAssetExploitationRepo, postgre_repo.NewGormAssetIncomeTypeRepo, postgre_repo.NewGormAssetLegalRepo, postgre_repo.NewGormAssetRepo, postgre_repo.NewGormAssetSplitHistoryRepo, postgre_repo.NewGormCostDocumentRepo, postgre_repo.NewGormDocTypeRepo, postgre_repo.NewGormHouseInfoRepo, postgre_repo.NewGormIncomeDocumentRepo, postgre_repo.NewGormPostRepo, postgre_repo.NewGormProductMediaRepo, postgre_repo.NewGormProductPriceRepo, postgre_repo.NewGormProductPrivateRepo, postgre_repo.NewGormPropertyTypeRepo, postgre_repo.NewGormRegionRepo, postgre_repo.NewGormUProductChildRepo, postgre_repo.NewGormUserProductRepo, postgre_repo.NewGromProductAccessRepo, handler.NewGrpcService, house_info.NewHouseInfoRepo, service.NewIncomeDocumentServer, usecases.NewIncomeDocumentUc, u_like.NewLikeRepo, u_like.NewLikeRouter, u_like.NewLikeService, u_list.NewListRoute, providers.NewMemberPlanService, service.NewMemberPlanUsecase, providers.NewNotiService, u_post.NewPostRepo, u_post.NewPostRouter, postgre_repo.NewPostgreHistoryRepo, product_accecss.NewProductAccessRepo, a_product_access.NewProductAccessRouter, a_product_access.NewProductAccessService, u_product_child.NewProductChildService, product_accecss2.NewProductHistoryRepo, product_media.NewProductMediaRepo, product_price.NewProductPriceRepo, product_private.NewProductPrivateRepo, a_project_build.NewProjectBuildRepo, a_project_build.NewProjectBuildRouter, a_project_build.NewProjectBuildService, a_project.NewProjectRepo, a_project.NewProjectRouter, a_project.NewProjectService, a_property_type.NewPropertyTypeRepo, a_property_type.NewPropertyTypeRouter, a_property_type.NewPropertyTypeService, province.NewProvinceRepo, province.NewProvinceRouter, province.NewProvinceService, providers.NewRedisProvider, g_region.NewRegionRepo, routes.NewRouterManager, u_transaction.NewTransactionRepo, u_transaction.NewTransactionService, usecases.NewUAssetUsecase, usecases.NewUPostUsecase, routes.NewUProductAccessRoute, usecases.NewUProductAccessUsecase, routes.NewUProductChildRoute, usecases.NewUProductChildUsecase, routes.NewUProductRoute, usecases.NewUProductUsecase, u_apartment.NewUserApartmentRepo, u_apartment.NewUserApartmentRouter, u_apartment.NewUserApartmentService, u_asset.NewUserAssetService, u_build_room.NewUserBuildRoomRepo, u_build_room.NewUserBuildRoomRouter, u_build_room.NewUserBuildRoomService, u_list.NewUserListService, u_post.NewUserPostService, u_product_access.NewUserProductAccessRoute, u_product_access.NewUserProductAccessService, u_product_child.NewUserProductChildRepo, u_product_child.NewUserProductChildRoute, u_product.NewUserProductRepo, u_product.NewUserProductRoute, u_product.NewUserProductService, u_project_build.NewUserProjectBuildRepo, u_project_build.NewUserProjectBuildRouter, u_project_build.NewUserProjectBuildService, user.NewUserRoute, ward.NewWardRepo, ward.NewWardRouter, ward.NewWardService)

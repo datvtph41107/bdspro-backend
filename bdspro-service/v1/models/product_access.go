@@ -33,3 +33,16 @@ func (p *ProductAccess) GetFields() []string {
 	}
 	return strings.Split(p.Fields, ",")
 }
+
+type ProductAccessQuery struct {
+	// UserId     uint64
+	// _models.BaseEntity
+	// Product    *ProductItem `json:"product"`
+	ProductID  uint64  `json:"productId"`
+	Fields     string  `json:"fields"`
+	TargetType uint    `json:"targetType"` // 1: cá nhân, 2: nhóm, 3: tổ chức
+	TargetId   uint64  `json:"targetId"`
+	Commission float32 `json:"commission"`
+	TargetName string  `gorm:"column:target_name" json:"targetName"`
+	Avatar     string  `gorm:"column:avatar" json:"avatar"`
+}

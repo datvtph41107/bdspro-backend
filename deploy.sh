@@ -8,11 +8,16 @@ fi
 
 # Cấu hình thông tin server
 REMOTE_USER="root"
-REMOTE_HOST="14.225.210.29"
-REMOTE_PATH=/root/spring-boot-microservice
+REMOTE_HOST="14.225.205.222"
+WORKSPACE_NAME=backend-microservice
+REMOTE_PATH=/root/$WORKSPACE_NAME
 
 if [ "$1" = "compose" ]; then
-  echo "đẩy docker-compose.yml lên server..."
+  echo "đẩy docker-compose.yml lên server..." $REMOTE_PATH
+  ssh ${REMOTE_USER}@${REMOTE_HOST} "
+mkdir -p ${REMOTE_PATH}
+"
+  # mkdir -p $WORKSPACE_NAME
   scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
   exit 0
 fi

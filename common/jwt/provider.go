@@ -15,12 +15,13 @@ import (
 
 // Principal chứa payload của token
 type Principal struct {
-	UserID    uint64  `json:"sub"`
-	ProfileId uint64  `json:"profile"`
-	PlanId    *uint64 `json:"plan"`
-	Type      string  `json:"type"`
-	Role      string  `json:"role"`
-	Session   uint    `json:"session"`
+	UserID    uint64           `json:"sub"`
+	ProfileId uint64           `json:"profile"`
+	PlanId    *uint64          `json:"plan"`
+	Type      string           `json:"type"`
+	Role      string           `json:"role"`
+	Session   uint             `json:"session"`
+	PlanFrom  *jwt.NumericDate `json:"start"`
 	jwt.RegisteredClaims
 }
 
@@ -33,6 +34,7 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 		"authorities": jwtTokenProperties.Privileges,
 		"sub":         jwtTokenProperties.AuthID,
 		"plan":        jwtTokenProperties.PlanID,
+		"planAt":      jwtTokenProperties.PlanAt,
 		"iat":         time.Now().Unix(),
 	}
 
@@ -65,38 +67,38 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 	return signedToken, nil
 }
 
-// GenerateJWT tạo JWT token với userID và thời gian hết hạn (expirationMinutes)
-func GenerateJWT(userID uint64, expirationMinutes int) (string, error) {
-	claims := Principal{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expirationMinutes) * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "your-app",
-		},
-	}
+// // GenerateJWT tạo JWT token với userID và thời gian hết hạn (expirationMinutes)
+// func GenerateJWT(userID uint64, expirationMinutes int) (string, error) {
+// 	claims := Principal{
+// 		UserID: userID,
+// 		RegisteredClaims: jwt.RegisteredClaims{
+// 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expirationMinutes) * time.Minute)),
+// 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+// 			Issuer:    "your-app",
+// 		},
+// 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(viper.GetString("jwt.key-generate"))
-}
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+// 	return token.SignedString(viper.GetString("jwt.key-generate"))
+// }
 
-// ValidateJWT kiểm tra tính hợp lệ của token
-func ValidateJWT(tokenString string) (*Principal, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Principal{}, func(token *jwt.Token) (interface{}, error) {
-		return viper.GetString("jwt.key-generate"), nil
-	})
+// // ValidateJWT kiểm tra tính hợp lệ của token
+// func ValidateJWT(tokenString string) (*Principal, error) {
+// 	token, err := jwt.ParseWithClaims(tokenString, &Principal{}, func(token *jwt.Token) (interface{}, error) {
+// 		return viper.GetString("jwt.key-generate"), nil
+// 	})
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Kiểm tra xem token có hợp lệ không
-	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
-		return claims, nil
-	}
+// 	// Kiểm tra xem token có hợp lệ không
+// 	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
+// 		return claims, nil
+// 	}
 
-	return nil, errors.New("invalid token")
-}
+// 	return nil, errors.New("invalid token")
+// }
 
 func ParseJWT(tokenStr string) (*Principal, error) {
 	// Parse token và xác thực nó
@@ -174,8 +176,10 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	role, _ := claims["role"].(string)
 	tokenType, _ := claims["type"].(string)
 	privileges, _ := claims["authorities"].([]string)
+	planFrom, _ := claims["start"].(int64)
 	issuedAt, _ := claims["iat"].(float64) // Unix timestamp
 
+	planAt := time.Unix(planFrom, 0)
 	plan := uint64(planID)
 	// Tạo đối tượng JwtTokenProperties
 	return &JwtTokenProperties{
@@ -187,5 +191,6 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 		Type:       TokenType(tokenType),
 		Privileges: privileges,
 		IssuedAt:   time.Unix(int64(issuedAt), 0),
+		PlanAt:     &planAt,
 	}, nil
 }

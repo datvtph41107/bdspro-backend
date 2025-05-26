@@ -29,7 +29,7 @@ import (
 // 	}
 // }
 
-var publicRoutes = []string{"/bdspro/user/post/global"}
+var publicRoutes = []string{"/bdspro/v1/user/post/global"}
 
 // httpCmd represents the http command
 var HttpCmd = &cobra.Command{
@@ -57,6 +57,7 @@ var HttpCmd = &cobra.Command{
 
 			app.AdminRouter.RegisterAdminRouter(engine)
 			app.UserRoute.RegisterUserRouter(engine)
+			app.RouterManager.RegisterRouter(engine)
 		})
 		// fmt.Println("Running HTTP server on :8080")
 

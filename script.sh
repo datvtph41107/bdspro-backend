@@ -10,7 +10,7 @@ fi
 
 if [ "$1" = "wire" ]; then
   echo "Usage: $1 swag [extra_flags]"
-  cd $2-service && go run ../script/gen_wire.go $2
+  cd $2-service && go run ../code/script/gen_wire.go $2
 
   exit 1
 fi

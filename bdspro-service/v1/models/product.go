@@ -1,7 +1,7 @@
 package models
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
 	_models "common/models"
 )
 
@@ -13,12 +13,13 @@ type Product struct {
 	ParentId        *uint64                 `gorm:"type:int8" json:"parentId"`
 	DepositeID      *uint64                 `gorm:"type:int8" json:"depositeId"`
 	AssetId         *uint64                 `gorm:"type:int8" json:"assetId"`
+	Asset           *Asset                  `json:"asset"`
 	PropertyTypeId  *uint64                 `json:"propertyTypeId"`
 	PropertyType    *PropertyTypeItem       `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	DocTypeId       *uint64                 `json:"docTypeId"`
 	DocType         *DocTypeItem            `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
 	Amenities       []AmenityItem           `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
-	Visibility      enums.Scope             `json:"visibility" gorm:"default:1"` //phạm vi
+	Visibility      enums.Scope             `json:"visibility" gorm:"default:10"` //phạm vi
 	Name            string                  `gorm:"size:255" json:"name"`
 	Code            string                  `gorm:"size:15" json:"code"`
 	CategoryID      *uint64                 `json:"categoryId"`
@@ -39,13 +40,13 @@ type Product struct {
 	CustomerID      *uint64                 `json:"customerId"`
 	PrivateData     *ProductPrivate         `json:"privateInfo"`
 	Note            string                  `json:"note"`
-	TransactionType int                     `gorm:"type:smallint;default:1" json:"transactionType"`
-	SaleStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:1" json:"saleStatus"`     // 1=Chưa bán, 2=Đang bán, 3=Đã bán
-	SaleVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:3" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	RentStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:3" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
-	RentVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:1" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	OwnerUserID     *uint64                 `gorm:"type:int8" json:"ownerUserId,omitempty"`                 // Ai sở hữu (nếu đã bán)
-	OwnerOrgID      *uint64                 `gorm:"type:int8" json:"ownerOrgId,omitempty"`                  // Tổ chức sở hữu (nếu cty mua)
+	TransactionType uint                    `gorm:"type:smallint;default:10" json:"transactionType"`         // 10: sale, 20: rent
+	SaleStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:10" json:"saleStatus"`     // 10=Chưa bán, 20=Đang bán, 30=Đã bán
+	SaleVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:10" json:"saleVisibility"` // 10=Riêng tư, 20=Nội bộ, 30=Công khai
+	RentStatus      enums.ProductStatus     `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 10=Chưa thuê, 20=Đang đăng tin, 30=Đang cho thuê
+	RentVisibility  enums.ProductVisibility `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 10=Riêng tư, 20=Nội bộ, 30=Công khai
+	OwnerUserID     *uint64                 `gorm:"type:int8" json:"ownerUserId,omitempty"`                  // Ai sở hữu (nếu đã bán)
+	OwnerOrgID      *uint64                 `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)
 	ProvinceID      *uint64                 `json:"provinceId"`
 	Province        *Region                 `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	DistrictID      *uint64                 `json:"districtId"`
@@ -89,6 +90,12 @@ type Product struct {
 	// Images               []ProductImage         `gorm:"foreignKey:ProductID" json:"images,omitempty"`
 	// ShareRequests        []ShareRequest         `gorm:"foreignKey:ProductID" json:"share_requests,omitempty"`
 	// AssignMembers        []*OrganizationRequest `gorm:"many2many:product_member" json:"assign_members,omitempty"`
+
+}
+
+type ProductEntity struct {
+	Product
+	AvaiableArea float64 `gorm:"column:avaiable_area" json:"avaiableArea"`
 }
 
 func (Product) TableName() string {

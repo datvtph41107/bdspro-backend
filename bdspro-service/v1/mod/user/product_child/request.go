@@ -79,6 +79,6 @@ type ProductChildSearch struct {
 }
 
 type ProductHistorySearch struct {
-	Page uint `json:"page"`
-	Size uint `json:"size"`
+	Page uint `form:"page"`
+	Size uint `form:"size"`
 }

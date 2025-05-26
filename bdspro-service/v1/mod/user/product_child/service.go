@@ -1,7 +1,7 @@
 package u_product_child
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
 	a_doc_type "bdspro/v1/mod/admin/doc_type"
 	a_property_type "bdspro/v1/mod/admin/property_type"
 	"bdspro/v1/mod/global/amenity"
@@ -14,6 +14,7 @@ import (
 	u_asset "bdspro/v1/mod/user/asset"
 	u_post "bdspro/v1/mod/user/post"
 	u_product "bdspro/v1/mod/user/product"
+	u_product_dto "bdspro/v1/mod/user/product/dto"
 	"bdspro/v1/models"
 	_jwt "common/jwt"
 	_routes "common/routes"
@@ -22,20 +23,20 @@ import (
 )
 
 type ProductChildService struct {
-	productChildRepo  *UserProductChildRepo
-	productRepo       *u_product.UserProductRepo
-	postRepo          *u_post.PostRepo
-	assetRepo         *u_asset.AssetRepo
-	mediaRepo         *product_media.ProductMediaRepo
-	productAccessRepo *product_accecss.ProductAccessRepo
-	houseInfoRepo     *house_info.HouseInfoRepo
-	priceRepo         *product_price.ProductPriceRepo
-	productPrivate    *product_private.ProductPrivateRepo
-	region            *g_region.RegionRepo
-	docTypeRepo       *a_doc_type.DocTypeRepo
-	propertyType      *a_property_type.PropertyTypeRepo
-	amenity           *amenity.AmenityRepo
-	productService    *u_product.ProductService
+	productChildRepo   *UserProductChildRepo
+	productRepo        *u_product.UserProductRepo
+	postRepo           *u_post.PostRepo
+	assetRepo          *u_asset.AssetRepo
+	mediaRepo          *product_media.ProductMediaRepo
+	productAccessRepo  *product_accecss.ProductAccessRepo
+	houseInfoRepo      *house_info.HouseInfoRepo
+	priceRepo          *product_price.ProductPriceRepo
+	productPrivate     *product_private.ProductPrivateRepo
+	region             *g_region.RegionRepo
+	docTypeRepo        *a_doc_type.DocTypeRepo
+	propertyType       *a_property_type.PropertyTypeRepo
+	amenity            *amenity.AmenityRepo
+	UserProductService *u_product.UserProductService
 }
 
 func NewProductChildService(productChildRepo *UserProductChildRepo,
@@ -51,23 +52,23 @@ func NewProductChildService(productChildRepo *UserProductChildRepo,
 	docTypeRepo *a_doc_type.DocTypeRepo,
 	propertyType *a_property_type.PropertyTypeRepo,
 	amenity *amenity.AmenityRepo,
-	productService *u_product.ProductService,
+	UserProductService *u_product.UserProductService,
 ) *ProductChildService {
 	return &ProductChildService{
-		productChildRepo:  productChildRepo,
-		productRepo:       productRepo,
-		postRepo:          postRepo,
-		assetRepo:         assetRepo,
-		productAccessRepo: productAccessRepo,
-		mediaRepo:         mediaRepo,
-		houseInfoRepo:     houseInfoRepo,
-		priceRepo:         priceRepo,
-		productPrivate:    productPrivate,
-		region:            region,
-		docTypeRepo:       docTypeRepo,
-		propertyType:      propertyType,
-		amenity:           amenity,
-		productService:    productService,
+		productChildRepo:   productChildRepo,
+		productRepo:        productRepo,
+		postRepo:           postRepo,
+		assetRepo:          assetRepo,
+		productAccessRepo:  productAccessRepo,
+		mediaRepo:          mediaRepo,
+		houseInfoRepo:      houseInfoRepo,
+		priceRepo:          priceRepo,
+		productPrivate:     productPrivate,
+		region:             region,
+		docTypeRepo:        docTypeRepo,
+		propertyType:       propertyType,
+		amenity:            amenity,
+		UserProductService: UserProductService,
 	}
 }
 
@@ -96,7 +97,18 @@ func (s *ProductChildService) RequiredBeforeSave(c *gin.Context, parentID uint64
 	return parent, nil
 }
 
-func (s *ProductChildService) Create(c *gin.Context, body *SaveProductChildRequest) (*models.Product, error) {
+func (s *ProductChildService) InfoArea(c *gin.Context, id *uint64) (*InfoAreaResponse, error) {
+	_, err := s.RequiredBeforeSave(c, *id)
+	if err != nil {
+		return nil, err
+	}
+
+	profileId := _jwt.GetProfileId(c)
+	result, err := s.productChildRepo.InfoArea(c, &profileId, id)
+	return result, err
+}
+
+func (s *ProductChildService) Create(c *gin.Context, body *SaveProductChildRequest) (*u_product_dto.CreateResponse, error) {
 	parent, err := s.RequiredBeforeSave(c, *body.ParentID)
 	if err != nil {
 		return nil, err
@@ -110,8 +122,13 @@ func (s *ProductChildService) Create(c *gin.Context, body *SaveProductChildReque
 	}
 
 	body.ProductSaveRequest.ParentID = body.ParentID
-	result, err := s.productService.CreateProduct(c, &body.ProductSaveRequest)
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_NewChild, body.ParentID, *body.ParentID, []uint64{result.ID})
+	result, err := s.UserProductService.CreateProduct(c, &body.ProductSaveRequest)
+	s.productChildRepo.CreateHistory(c, enums.ProductHistory_NewChild,
+		body.ParentID,
+		*body.ParentID,
+		[]uint64{result.Product.ID},
+		[]float64{result.Product.Area},
+	)
 	return result, err
 }
 
@@ -129,7 +146,13 @@ func (s *ProductChildService) MergeProductChild(c *gin.Context, body *MergeProdu
 		}
 	}
 
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_Merge, nil, *body.ParentID, *body.ChildIDs)
+	s.productChildRepo.CreateHistory(c,
+		enums.ProductHistory_Merge,
+		nil,
+		*body.ParentID,
+		*body.ChildIDs,
+		[]float64{},
+	)
 	// body.ProductSaveRequest.ParentID = body.ParentID
 	return nil, s.productChildRepo.MergeChilds(*body.ChildIDs)
 }
@@ -155,7 +178,12 @@ func (s *ProductChildService) MergeAllProductChild(c *gin.Context, parentID *uin
 	}
 	// body.ProductSaveRequest.ParentID = body.ParentID
 
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_MergeAll, nil, *parentID, ids)
+	s.productChildRepo.CreateHistory(c,
+		enums.ProductHistory_MergeAll,
+		nil,
+		*parentID, ids,
+		[]float64{},
+	)
 	return nil, nil
 }
 
@@ -198,25 +226,32 @@ func (s *ProductChildService) DevideProductChild(c *gin.Context, devideData *Dev
 	s.productRepo.UpdateArea(c, child.ID, child.Area-totalDevide)
 	var results []models.Product
 	for i := 0; i < len(devideData.Childs); i++ {
-		result, err := s.productService.CreateProduct(c, &devideData.Childs[i])
+		result, err := s.UserProductService.CreateProduct(c, &devideData.Childs[i])
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, *result)
+		results = append(results, *result.Product)
 	}
 
 	var ids []uint64
+	var areas []float64
 
 	for _, r := range results {
 		ids = append(ids, r.ID)
+		areas = append(areas, r.Area)
 	}
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_Devide, &child.ID, *child.ParentId, ids)
+	s.productChildRepo.CreateHistory(c, enums.ProductHistory_Devide,
+		&child.ID,
+		*child.ParentId,
+		ids,
+		areas,
+	)
 	return &results, nil
 }
 
-func (s *ProductChildService) History(c *gin.Context, dto *ProductHistorySearch) (_routes.ResponseDTO, error) {
+func (s *ProductChildService) History(c *gin.Context, id uint64, dto *ProductHistorySearch) (_routes.ResponseDTO, error) {
 	profileId := _jwt.GetProfileId(c)
-	result, total, err := s.productChildRepo.History(c, profileId, dto)
+	result, total, err := s.productChildRepo.History(c, profileId, id, dto)
 	if err != nil {
 		return _routes.ResponseDTO{}, err
 	}

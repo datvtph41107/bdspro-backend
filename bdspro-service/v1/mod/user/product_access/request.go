@@ -1,8 +1,10 @@
 package u_product_access
 
 import (
+	"bdspro/internal/enums"
 	"bdspro/v1/data"
 	u_product_dto "bdspro/v1/mod/user/product/dto"
+	_dto "common/dto"
 )
 
 type AccessRequest struct {
@@ -78,7 +80,14 @@ type ProductAccessSearch struct {
 }
 
 type AccessSearch struct {
-	Page      uint    `json:"page"`
-	Size      uint    `json:"size"`
-	ProductID *uint64 `json:"productId"`
+	_dto.Page
+	// Page       uint                 `form:"page"`
+	// Size       uint                 `form:"size"`
+	ProductID  uint64               `form:"productId" valid:"required"`
+	TargetType enums.TargetTypeEnum `form:"targetType" valid:"required"`
+}
+
+type BulkRequest struct {
+	Datas   []AccessRequest `json:"datas"`
+	Deletes []AccessRequest `json:"deletes"`
 }

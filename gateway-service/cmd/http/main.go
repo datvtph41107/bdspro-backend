@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // Middleware CORS
@@ -50,14 +51,23 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
+// Custom metadata injector
+func CustomMetadataMethod(ctx context.Context, req *http.Request) metadata.MD {
+	md := metadata.Pairs(
+		"x-http-method", req.Method,
+	)
+	log.Println("Method: ", req.Method)
+	return md
+}
+
 var publicRoutes = []string{
-	"/v1/bdspro/user/post",
-	"/v1/bdspro/user/post/global",
+	"/v1/bdspro/v1/user/post",
+	"/v1/bdspro/v1/user/post/global",
 	"/v1/public",
-	"/v1/bdspro/user/list/property-type",
-	"/v1/bdspro/user/list/property-type",
-	"/v1/bdspro/user/post/global",
-	"/v1/bdspro/user/product/market",
+	"/v1/bdspro/v1/user/list/property-type",
+	"/v1/bdspro/v1/user/list/property-type",
+	"/v1/bdspro/v1/user/post/global",
+	"/v1/bdspro/v1/user/product/market",
 	"/v1/file/swagger",
 	"/v1/file/upload",
 	"/v1/file/load",
@@ -72,8 +82,16 @@ var publicRoutes = []string{
 	"/v1/payment/wallet/account/new",
 	"/v1/user/swagger",
 	"/v1/user/auth/otp",
+	"/v1/user/oauth/zalo/callback",
+	"/v1/user/oauth/facebook/callback",
+	"/v1/user/oauth/google/callback",
+	"/v1/user/auth/token/refresh",
+	"/v1/user/profile/info/",
 	"/v1/user/profile/info/",
 	"/v1/user/profile/find-by-phone",
+	"/v1/membership/plan/list",
+	"/v1/search",
+	// "/v1/search/plan/list",
 }
 
 // func AuthMiddleware() gin.HandlerFunc {
@@ -116,6 +134,7 @@ var HttpCmd = &cobra.Command{
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
+			// runtime.WithMetadata(CustomMetadataMethod),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
@@ -125,6 +144,15 @@ var HttpCmd = &cobra.Command{
 		_ = pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notification_endpoint, opts)
 		_ = pb_payment.RegisterPaymentServiceHandlerFromEndpoint(ctx, mux, payment_endpoint, opts)
 		_ = pb_bdspro.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterIncomeDocumentServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetIncomeTypeServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetExploitationServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetCostTypeServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetCostServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
@@ -140,8 +168,13 @@ var HttpCmd = &cobra.Command{
 		})
 
 		r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
-		r.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8000", "http://14.225.210.29:8000"}, // Cho phép gọi từ frontend
+		r.Use(cors.New(cors.Config{ // Cho phép gọi từ frontend
+			AllowOrigins: []string{
+				"http://localhost:3000",
+				"http://localhost:8000",
+				"http://14.225.210.29:8000",
+				"http://14.225.205.222:8000",
+			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 			ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},

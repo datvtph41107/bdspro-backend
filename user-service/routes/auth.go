@@ -1,22 +1,22 @@
 package routes
 
 import (
-	"auth/config"
-	"auth/data"
-	"auth/services"
 	_jwt "common/jwt"
 	_routes "common/routes"
 	"net/http"
 	"strconv"
+	"user/config/property"
+	"user/data"
+	auth_service "user/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthRouter struct {
-	Service *services.AuthService
+	Service *auth_service.AuthService
 }
 
-func NewAuthRoutes(service *services.AuthService) *AuthRouter {
+func NewAuthRoutes(service *auth_service.AuthService) *AuthRouter {
 	return &AuthRouter{
 		Service: service,
 	}
@@ -157,7 +157,7 @@ func (router *AuthRouter) QRInit(c *gin.Context) {
 		return
 	}
 
-	sessionStr, _ := c.Cookie(config.C_SESSION_ID)
+	sessionStr, _ := c.Cookie(property.C_SESSION_ID)
 	sessionId, _ := strconv.ParseUint(sessionStr, 10, 32)
 
 	result, err := router.Service.CreateQRSession(c, &dto, sessionId)
@@ -200,7 +200,7 @@ func (router *AuthRouter) QRStatus(c *gin.Context) {
 		return
 	}
 
-	sessionStr, _ := c.Cookie(config.C_SESSION_ID)
+	sessionStr, _ := c.Cookie(property.C_SESSION_ID)
 	sessionId, _ := strconv.ParseUint(sessionStr, 10, 32)
 
 	result, err := router.Service.VerifyQRSession(c, &dto, sessionId)

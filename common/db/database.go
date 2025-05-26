@@ -2,6 +2,8 @@ package _db
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -24,6 +26,18 @@ func NewDB() (*gorm.DB, error) {
 		fmt.Println("❌ Không thể kết nối với cơ sở dữ liệu:", err)
 		return nil, err
 	}
+	// Lấy *sql.DB để set connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to get db from gorm: %v", err)
+	}
+
+	// Cấu hình pool
+	sqlDB.SetMaxOpenConns(300) // Tối đa 50 kết nối đồng thời mở được
+	sqlDB.SetMaxIdleConns(200) // Tối đa 25 kết nối nhàn rỗi giữ sẵn
+	sqlDB.SetConnMaxLifetime(time.Minute * 5)
+	// sqlDB.SetConnMaxLifetime(time.Minute * 5)
+
 	DB = db
 	fmt.Println("✅ Kết nối PostgreSQL thành công!")
 	return db, nil

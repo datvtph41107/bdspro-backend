@@ -2,6 +2,7 @@ package data
 
 import (
 	"bdspro/v1/models"
+	_dto "common/dto"
 	"time"
 )
 
@@ -17,7 +18,26 @@ type NewProductRequest struct {
 type TextSearchRequest struct {
 	Text string `form:"text"`
 }
+
+type ProductSearchCacheKey struct {
+	NumBedrooms      []uint   `form:"numBedrooms"`
+	NumBathrooms     []uint   `form:"numBathrooms"`
+	NumFloors        []uint   `form:"numFloors"`
+	DocTypeIds       []uint64 `form:"docTypeIds"`
+	PropertyTypeIds  []uint64 `form:"propertyTypeIds"`
+	AmenityIds       []uint64 `form:"amenityIds"`
+	SourceTypeIds    []uint   `form:"sourceTypeIds"`
+	TransactionTypes []uint   `form:"transactionTypes"`
+	SaleStatus       []uint   `form:"saleStatus"`
+	RentStatus       []uint   `form:"rentStatus"`
+	ProvinceIds      []uint64 `form:"provinceIds"`
+	DistrictIds      []uint64 `form:"districtIds"`
+	WardIds          []uint64 `form:"wardIds"`
+	Archived         *bool    `form:"archived"`
+}
 type ProductSearchRequest struct {
+	_dto.Page
+	// Page2            int        `form:"size"`
 	Name             string     `form:"name"`
 	Code             string     `form:"code"`
 	Area             float64    `form:"area"`
@@ -40,7 +60,7 @@ type ProductSearchRequest struct {
 	Note             string     `form:"note"`
 	Timestamp        *time.Time `form:"timestamp"`
 	ParentID         *uint64    `form:"parentId"`
-	// IsParent         *bool      `form:"isParent"`
+	Archived         *bool      `form:"archived"`
 }
 
 //	type ElementRequest struct {

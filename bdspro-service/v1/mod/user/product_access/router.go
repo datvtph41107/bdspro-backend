@@ -1,7 +1,8 @@
 package u_product_access
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
+	user_dto "bdspro/v1/mod/user/dto/request"
 	"bdspro/v1/models"
 	"common/case/crud2"
 	_routes "common/routes"
@@ -26,6 +27,7 @@ func NewUserProductAccessRoute(service *ProductAccessService) *UserProductAccess
 func (r *UserProductAccessRoute) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/product-access")
 	{
+		group.POST("/:productId/bulk", r.BulkSave)
 		group.POST("/:productId/batch", r.CreateBatch)
 		// group.PUT(":id", r.BaseRouter.Update)
 		group.DELETE(":id", r.BaseRouter.Delete)
@@ -33,6 +35,36 @@ func (r *UserProductAccessRoute) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("", r.Search)
 		group.GET("/private-fields", r.GetFields)
 	}
+}
+
+// @Summary Tạo Dự án mới
+// @Description Thêm một Dự án mới vào hệ thống
+// @Tags User/Product-share
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param productId path int true "Thông tin Dự án"
+// @Param ProductAccess body []AccessRequest true "Thông tin Dự án"
+// @Success 201 {object} models.ProductAccess
+// @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
+// @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
+// @Router /v1/bdspro/user/product-access/{productId}/bulk [post]
+func (r *UserProductAccessRoute) BulkSave(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	body := BulkRequest{}
+
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.BulkSave(c, id, body)
+	_routes.RouteResult(c, result, err)
 }
 
 // @Summary Tạo Dự án mới
@@ -114,7 +146,14 @@ func (r *UserProductAccessRoute) Delete(c *gin.Context) {}
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
 // @Router /v1/bdspro/user/product-access [get]
 func (r *UserProductAccessRoute) Search(c *gin.Context) {
+	var dto user_dto.ProductAccessSearch
+	if err := _utils.ParseQuery2(c, &dto); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
+	results, err := r.Service.Search(c, dto)
+	_routes.RouteResult(c, results, err)
 }
 
 // @Summary Lấy danh sách Dự án

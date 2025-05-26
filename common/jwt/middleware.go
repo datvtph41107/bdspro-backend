@@ -181,6 +181,7 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 		// }
 	}
 
+	md.Append("method", r.Method)
 	log.Println("Metadata: ", md)
 	return md
 }

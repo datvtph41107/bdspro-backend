@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+import "google/protobuf/timestamp.proto";
+
+message AssetCostTypeDTO {
+  uint64 id = 1;
+  string typeName = 2;
+  bool isCustom = 3;
+}
+
+message AssetCostTypeListDTO {
+  repeated AssetCostTypeDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service AssetCostTypeService {
+    rpc Get (AssetCostTypeDTO) returns (AssetCostTypeListDTO);
+    rpc Detail (AssetCostTypeDTO) returns (AssetCostTypeDTO);
+    rpc Create (AssetCostTypeDTO) returns (AssetCostTypeDTO);
+    rpc Update (AssetCostTypeDTO) returns (AssetCostTypeDTO);
+    rpc Delete (AssetCostTypeDTO) returns (AssetCostTypeDTO);
+}

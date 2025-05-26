@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+import "google/protobuf/timestamp.proto";
+
+message AssetSplitHistoryDTO {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message AssetSplitHistoryListDTO {
+  repeated AssetSplitHistoryDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service AssetSplitHistoryService {
+    rpc Get (AssetSplitHistoryDTO) returns (AssetSplitHistoryListDTO);
+    rpc Detail (AssetSplitHistoryDTO) returns (AssetSplitHistoryDTO);
+    rpc Create (AssetSplitHistoryDTO) returns (AssetSplitHistoryDTO);
+    rpc Update (AssetSplitHistoryDTO) returns (AssetSplitHistoryDTO);
+    rpc Delete (AssetSplitHistoryDTO) returns (AssetSplitHistoryDTO);
+}

@@ -1,7 +1,7 @@
 package a_product_access
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
 	"bdspro/v1/models"
 	"common/case/crud2"
 

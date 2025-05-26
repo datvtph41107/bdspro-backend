@@ -8,6 +8,12 @@ import (
 	_db "common/db"
 	"bdspro/config"
 	bdspro_config "bdspro/config"
+	bdspro_external_handler "bdspro/external/handler"
+	bdspro_external_repo "bdspro/external/repo"
+	bdspro_external_routes "bdspro/external/routes"
+	bdspro_external_service "bdspro/external/service"
+	bdspro_internal_repo "bdspro/internal/repo"
+	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_v1_mod_admin "bdspro/v1/mod/admin"
 	bdspro_v1_mod_admin_amenity "bdspro/v1/mod/admin/amenity"
 	bdspro_v1_mod_admin_apartment "bdspro/v1/mod/admin/apartment"
@@ -24,46 +30,65 @@ import (
 	bdspro_v1_mod_admin_ward "bdspro/v1/mod/admin/ward"
 	bdspro_v1_mod_global_amenity "bdspro/v1/mod/global/amenity"
 	bdspro_v1_mod_global_apartment_attribute "bdspro/v1/mod/global/apartment_attribute"
+	bdspro_v1_mod_global_history_asset "bdspro/v1/mod/global/history/asset"
 	bdspro_v1_mod_global_house_info "bdspro/v1/mod/global/house_info"
-	bdspro_v1_mod_global_member_plan "bdspro/v1/mod/global/member_plan"
 	bdspro_v1_mod_global_product_access "bdspro/v1/mod/global/product_access"
+	bdspro_v1_mod_global_product_history "bdspro/v1/mod/global/product_history"
 	bdspro_v1_mod_global_product_media "bdspro/v1/mod/global/product_media"
 	bdspro_v1_mod_global_product_price "bdspro/v1/mod/global/product_price"
 	bdspro_v1_mod_global_product_private "bdspro/v1/mod/global/product_private"
 	bdspro_v1_mod_global_region "bdspro/v1/mod/global/region"
-	bdspro_v1_mod_global_transmit "bdspro/v1/mod/global/transmit"
 	bdspro_v1_mod_user "bdspro/v1/mod/user"
 	bdspro_v1_mod_user_action "bdspro/v1/mod/user/action"
+	bdspro_v1_mod_user_apartment "bdspro/v1/mod/user/apartment"
 	bdspro_v1_mod_user_asset "bdspro/v1/mod/user/asset"
+	bdspro_v1_mod_user_asset2 "bdspro/v1/mod/user/asset2"
+	bdspro_v1_mod_user_asset_cost "bdspro/v1/mod/user/asset_cost"
+	bdspro_v1_mod_user_asset_cost_type "bdspro/v1/mod/user/asset_cost_type"
+	bdspro_v1_mod_user_asset_exploitation "bdspro/v1/mod/user/asset_exploitation"
+	bdspro_v1_mod_user_asset_income_type "bdspro/v1/mod/user/asset_income_type"
+	bdspro_v1_mod_user_asset_legal "bdspro/v1/mod/user/asset_legal"
+	bdspro_v1_mod_user_asset_share "bdspro/v1/mod/user/asset_share"
+	bdspro_v1_mod_user_build_room "bdspro/v1/mod/user/build_room"
+	bdspro_v1_mod_user_like "bdspro/v1/mod/user/like"
 	bdspro_v1_mod_user_list "bdspro/v1/mod/user/list"
 	bdspro_v1_mod_user_post "bdspro/v1/mod/user/post"
 	bdspro_v1_mod_user_product "bdspro/v1/mod/user/product"
 	bdspro_v1_mod_user_product_access "bdspro/v1/mod/user/product_access"
 	bdspro_v1_mod_user_product_child "bdspro/v1/mod/user/product_child"
+	bdspro_v1_mod_user_product_interface "bdspro/v1/mod/user/product/interface"
+	bdspro_v1_mod_user_project_build "bdspro/v1/mod/user/project_build"
 	bdspro_v1_mod_user_transaction "bdspro/v1/mod/user/transaction"
-	bdspro_v2_external_handler "bdspro/v2/external/handler"
-	bdspro_v2_external_repo "bdspro/v2/external/repo"
-	bdspro_v2_external_service "bdspro/v2/external/service"
-	bdspro_v2_repo "bdspro/v2/repo"
-	bdspro_v2_usecases "bdspro/v2/usecases"
+	bdspro_v1_providers "bdspro/v1/providers"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
-	wire.Bind(new(bdspro_v2_repo.AmenityRepo), new(*bdspro_v2_external_repo.GormAmenityRepo)),
-	wire.Bind(new(bdspro_v2_repo.AssetRepo), new(*bdspro_v2_external_repo.GormAssetRepo)),
-	wire.Bind(new(bdspro_v2_repo.AssetHistoryRepo), new(*bdspro_v2_external_repo.GormAssetHistoryRepo)),
-	wire.Bind(new(bdspro_v2_repo.DocTypeRepo), new(*bdspro_v2_external_repo.GormDocTypeRepo)),
-	wire.Bind(new(bdspro_v2_repo.HouseInfoRepo), new(*bdspro_v2_external_repo.GormHouseInfoRepo)),
-	wire.Bind(new(bdspro_v2_repo.ProductAccessRepo), new(*bdspro_v2_external_repo.GormProductAccessRepo)),
-	wire.Bind(new(bdspro_v2_repo.ProductMediaRepo), new(*bdspro_v2_external_repo.GormProductMediaRepo)),
-	wire.Bind(new(bdspro_v2_repo.ProductPriceRepo), new(*bdspro_v2_external_repo.GormProductPriceRepo)),
-	wire.Bind(new(bdspro_v2_repo.ProductPrivateRepo), new(*bdspro_v2_external_repo.GormProductPrivateRepo)),
-	wire.Bind(new(bdspro_v2_repo.ProductUserRepo), new(*bdspro_v2_external_repo.GormUserProductRepo)),
-	wire.Bind(new(bdspro_v2_repo.PropertyTypeRepo), new(*bdspro_v2_external_repo.GormPropertyTypeRepo)),
-	wire.Bind(new(bdspro_v2_repo.RegionRepo), new(*bdspro_v2_external_repo.GormRegionRepo)),
-	wire.Bind(new(bdspro_v2_usecases.PlanUsecase), new(*bdspro_v2_external_service.MemberPlanUsecase)),
+	wire.Bind(new(bdspro_internal_repo.AmenityRepo), new(*bdspro_external_repo.GormAmenityRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetCostRepo), new(*bdspro_external_repo.GormAssetCostRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetCostTypeRepo), new(*bdspro_external_repo.GormAssetCostTypeRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetExploitationRepo), new(*bdspro_external_repo.GormAssetExploitationRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetIncomeTypeRepo), new(*bdspro_external_repo.GormAssetIncomeTypeRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetLegalRepo), new(*bdspro_external_repo.GormAssetLegalRepo)),
+	wire.Bind(new(bdspro_internal_repo.CostDocumentRepo), new(*bdspro_external_repo.GormCostDocumentRepo)),
+	wire.Bind(new(bdspro_internal_repo.DocTypeRepo), new(*bdspro_external_repo.GormDocTypeRepo)),
+	wire.Bind(new(bdspro_internal_repo.HouseInfoRepo), new(*bdspro_external_repo.GormHouseInfoRepo)),
+	wire.Bind(new(bdspro_internal_repo.IncomeDocumentRepo), new(*bdspro_external_repo.GormIncomeDocumentRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductAccessRepo), new(*bdspro_external_repo.GormProductAccessRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductHistoryRepo), new(*bdspro_external_repo.PostgreHistoryRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductMediaRepo), new(*bdspro_external_repo.GormProductMediaRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductPriceRepo), new(*bdspro_external_repo.GormProductPriceRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductPrivateRepo), new(*bdspro_external_repo.GormProductPrivateRepo)),
+	wire.Bind(new(bdspro_internal_repo.UProductRepo), new(*bdspro_external_repo.GormUserProductRepo)),
+	wire.Bind(new(bdspro_internal_repo.PropertyTypeRepo), new(*bdspro_external_repo.GormPropertyTypeRepo)),
+	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_external_repo.GormRegionRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetRepo), new(*bdspro_external_repo.GormAssetRepo)),
+	wire.Bind(new(bdspro_internal_repo.UAssetHistoryRepo), new(*bdspro_external_repo.GormAssetHistoryRepo)),
+	wire.Bind(new(bdspro_internal_repo.UPostRepo), new(*bdspro_external_repo.GormPostRepo)),
+	wire.Bind(new(bdspro_internal_repo.UProductChildRepo), new(*bdspro_external_repo.GormUProductChildRepo)),
+	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_external_service.MemberPlanUsecase)),
+	wire.Bind(new(bdspro_v1_mod_user_product_interface.IUserProductService), new(*bdspro_v1_mod_user_product.UserProductService)),
 	bdspro_v1_mod_user_action.NewActionRepo,
 	bdspro_v1_mod_user_action.NewActionRouter,
 	bdspro_v1_mod_user_action.NewActionService,
@@ -78,13 +103,48 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_admin_apartment.NewApartmentRepo,
 	bdspro_v1_mod_admin_apartment.NewApartmentRouter,
 	bdspro_v1_mod_admin_apartment.NewApartmentService,
+	bdspro_v1_mod_user_asset_cost.NewAssetCostRepo,
+	bdspro_v1_mod_user_asset_cost.NewAssetCostRouter,
+	bdspro_external_service.NewAssetCostServer,
+	bdspro_v1_mod_user_asset_cost.NewAssetCostService,
+	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeRepo,
+	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeRouter,
+	bdspro_external_service.NewAssetCostTypeServer,
+	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeService,
+	bdspro_internal_usecases.NewAssetCostTypeUc,
+	bdspro_internal_usecases.NewAssetCostUc,
+	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationRepo,
+	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationRouter,
+	bdspro_external_service.NewAssetExploitationServer,
+	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationService,
+	bdspro_internal_usecases.NewAssetExploitationUc,
+	bdspro_v1_mod_global_history_asset.NewAssetHistoryRepo,
+	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeRepo,
+	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeRouter,
+	bdspro_external_service.NewAssetIncomeTypeServer,
+	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeService,
+	bdspro_internal_usecases.NewAssetIncomeTypeUc,
+	bdspro_v1_mod_user_asset_legal.NewAssetLegalRepo,
+	bdspro_v1_mod_user_asset_legal.NewAssetLegalRouter,
+	bdspro_external_service.NewAssetLegalServer,
+	bdspro_v1_mod_user_asset_legal.NewAssetLegalService,
+	bdspro_internal_usecases.NewAssetLegalUc,
 	bdspro_v1_mod_user_asset.NewAssetRepo,
-	bdspro_v1_mod_user_asset.NewAssetService,
-	bdspro_v2_usecases.NewAssetUsecase,
+	bdspro_v1_mod_user_asset2.NewAssetRepo2,
+	bdspro_v1_mod_user_asset.NewAssetRouter,
+	bdspro_v1_mod_user_asset2.NewAssetRouter2,
+	bdspro_v1_mod_user_asset2.NewAssetService2,
+	bdspro_v1_mod_user_asset_share.NewAssetShareRepo,
+	bdspro_v1_mod_user_asset_share.NewAssetShareRouter,
+	bdspro_v1_mod_user_asset_share.NewAssetShareService,
+	bdspro_external_service.NewAssetSplitHistoryServer,
+	bdspro_internal_usecases.NewAssetSplitHistoryUc,
 	bdspro_v1_mod_admin_build_room.NewBuildRoomRepo,
 	bdspro_v1_mod_admin_build_room.NewBuildRoomRouter,
 	bdspro_v1_mod_admin_build_room.NewBuildRoomService,
 	bdspro_config.NewConfigApp,
+	bdspro_external_service.NewCostDocumentServer,
+	bdspro_internal_usecases.NewCostDocumentUc,
 	bdspro_v1_mod_admin_developer.NewDeveloperRepo,
 	bdspro_v1_mod_admin_developer.NewDeveloperRouter,
 	bdspro_v1_mod_admin_developer.NewDeveloperService,
@@ -94,37 +154,50 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_admin_doc_type.NewDocTypeRepo,
 	bdspro_v1_mod_admin_doc_type.NewDocTypeRouter,
 	bdspro_v1_mod_admin_doc_type.NewDocTypeService,
-	bdspro_v2_external_repo.NewGormAmenityRepo,
-	bdspro_v2_external_repo.NewGormAssetRepo,
-	bdspro_v2_external_repo.NewGormDocTypeRepo,
-	bdspro_v2_external_repo.NewGormHistoryRepo,
-	bdspro_v2_external_repo.NewGormHouseInfoRepo,
-	bdspro_v2_external_repo.NewGormProductMediaRepo,
-	bdspro_v2_external_repo.NewGormProductPriceRepo,
-	bdspro_v2_external_repo.NewGormProductPrivateRepo,
-	bdspro_v2_external_repo.NewGormPropertyTypeRepo,
-	bdspro_v2_external_repo.NewGormRegionRepo,
-	bdspro_v2_external_repo.NewGormUserProductRepo,
-	bdspro_v2_external_repo.NewGromProductAccessRepo,
-	bdspro_v2_external_handler.NewGrpcService,
-	bdspro_v2_usecases.NewHistoryUsecase,
+	bdspro_external_handler.NewGenericService,
+	bdspro_external_repo.NewGormAmenityRepo,
+	bdspro_external_repo.NewGormAssetCostRepo,
+	bdspro_external_repo.NewGormAssetCostTypeRepo,
+	bdspro_external_repo.NewGormAssetExploitationRepo,
+	bdspro_external_repo.NewGormAssetIncomeTypeRepo,
+	bdspro_external_repo.NewGormAssetLegalRepo,
+	bdspro_external_repo.NewGormAssetRepo,
+	bdspro_external_repo.NewGormAssetSplitHistoryRepo,
+	bdspro_external_repo.NewGormCostDocumentRepo,
+	bdspro_external_repo.NewGormDocTypeRepo,
+	bdspro_external_repo.NewGormHouseInfoRepo,
+	bdspro_external_repo.NewGormIncomeDocumentRepo,
+	bdspro_external_repo.NewGormPostRepo,
+	bdspro_external_repo.NewGormProductMediaRepo,
+	bdspro_external_repo.NewGormProductPriceRepo,
+	bdspro_external_repo.NewGormProductPrivateRepo,
+	bdspro_external_repo.NewGormPropertyTypeRepo,
+	bdspro_external_repo.NewGormRegionRepo,
+	bdspro_external_repo.NewGormUProductChildRepo,
+	bdspro_external_repo.NewGormUserProductRepo,
+	bdspro_external_repo.NewGromProductAccessRepo,
+	bdspro_external_handler.NewGrpcService,
 	bdspro_v1_mod_global_house_info.NewHouseInfoRepo,
+	bdspro_external_service.NewIncomeDocumentServer,
+	bdspro_internal_usecases.NewIncomeDocumentUc,
+	bdspro_v1_mod_user_like.NewLikeRepo,
+	bdspro_v1_mod_user_like.NewLikeRouter,
+	bdspro_v1_mod_user_like.NewLikeService,
 	bdspro_v1_mod_user_list.NewListRoute,
-	bdspro_v1_mod_global_member_plan.NewMemberPlanService,
-	bdspro_v2_external_service.NewMemberPlanUsecase,
-	bdspro_v1_mod_global_transmit.NewNotiService,
+	bdspro_v1_providers.NewMemberPlanService,
+	bdspro_external_service.NewMemberPlanUsecase,
+	bdspro_v1_providers.NewNotiService,
 	bdspro_v1_mod_user_post.NewPostRepo,
 	bdspro_v1_mod_user_post.NewPostRouter,
-	bdspro_v1_mod_user_post.NewPostService,
+	bdspro_external_repo.NewPostgreHistoryRepo,
 	bdspro_v1_mod_global_product_access.NewProductAccessRepo,
 	bdspro_v1_mod_admin_product_access.NewProductAccessRouter,
 	bdspro_v1_mod_admin_product_access.NewProductAccessService,
 	bdspro_v1_mod_user_product_child.NewProductChildService,
+	bdspro_v1_mod_global_product_history.NewProductHistoryRepo,
 	bdspro_v1_mod_global_product_media.NewProductMediaRepo,
 	bdspro_v1_mod_global_product_price.NewProductPriceRepo,
 	bdspro_v1_mod_global_product_private.NewProductPrivateRepo,
-	bdspro_v1_mod_user_product.NewProductService,
-	bdspro_v2_usecases.NewProductUserUsecase,
 	bdspro_v1_mod_admin_project_build.NewProjectBuildRepo,
 	bdspro_v1_mod_admin_project_build.NewProjectBuildRouter,
 	bdspro_v1_mod_admin_project_build.NewProjectBuildService,
@@ -137,16 +210,38 @@ var wireSet = wire.NewSet(
 	bdspro_v1_mod_admin_province.NewProvinceRepo,
 	bdspro_v1_mod_admin_province.NewProvinceRouter,
 	bdspro_v1_mod_admin_province.NewProvinceService,
+	bdspro_v1_providers.NewRedisProvider,
 	bdspro_v1_mod_global_region.NewRegionRepo,
+	bdspro_external_routes.NewRouterManager,
 	bdspro_v1_mod_user_transaction.NewTransactionRepo,
 	bdspro_v1_mod_user_transaction.NewTransactionService,
+	bdspro_internal_usecases.NewUAssetUsecase,
+	bdspro_internal_usecases.NewUPostUsecase,
+	bdspro_external_routes.NewUProductAccessRoute,
+	bdspro_internal_usecases.NewUProductAccessUsecase,
+	bdspro_external_routes.NewUProductChildRoute,
+	bdspro_internal_usecases.NewUProductChildUsecase,
+	bdspro_external_routes.NewUProductRoute,
+	bdspro_internal_usecases.NewUProductUsecase,
+	bdspro_v1_mod_user_apartment.NewUserApartmentRepo,
+	bdspro_v1_mod_user_apartment.NewUserApartmentRouter,
+	bdspro_v1_mod_user_apartment.NewUserApartmentService,
+	bdspro_v1_mod_user_asset.NewUserAssetService,
+	bdspro_v1_mod_user_build_room.NewUserBuildRoomRepo,
+	bdspro_v1_mod_user_build_room.NewUserBuildRoomRouter,
+	bdspro_v1_mod_user_build_room.NewUserBuildRoomService,
 	bdspro_v1_mod_user_list.NewUserListService,
+	bdspro_v1_mod_user_post.NewUserPostService,
 	bdspro_v1_mod_user_product_access.NewUserProductAccessRoute,
 	bdspro_v1_mod_user_product_access.NewUserProductAccessService,
 	bdspro_v1_mod_user_product_child.NewUserProductChildRepo,
 	bdspro_v1_mod_user_product_child.NewUserProductChildRoute,
 	bdspro_v1_mod_user_product.NewUserProductRepo,
 	bdspro_v1_mod_user_product.NewUserProductRoute,
+	bdspro_v1_mod_user_product.NewUserProductService,
+	bdspro_v1_mod_user_project_build.NewUserProjectBuildRepo,
+	bdspro_v1_mod_user_project_build.NewUserProjectBuildRouter,
+	bdspro_v1_mod_user_project_build.NewUserProjectBuildService,
 	bdspro_v1_mod_user.NewUserRoute,
 	bdspro_v1_mod_admin_ward.NewWardRepo,
 	bdspro_v1_mod_admin_ward.NewWardRouter,

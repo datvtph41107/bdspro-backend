@@ -1,0 +1,175 @@
+package auth_service
+
+import (
+	_db "common/db"
+	_routes "common/routes"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"user/config/property"
+	"user/data"
+	auth_model "user/models/auth"
+
+	"github.com/gin-gonic/gin"
+)
+
+type FacebookAuthService struct {
+	AuthService *AuthService
+	HttpClient  *http.Client
+}
+
+func NewFacebookAuthService(authService *AuthService, httpClient *http.Client) *FacebookAuthService {
+	return &FacebookAuthService{
+		// apiClient:   apiClient,
+		// properties:  properties,
+		// userRepo:    userRepo,
+		AuthService: authService,
+		HttpClient:  httpClient,
+	}
+}
+
+func (s *FacebookAuthService) GetUrlLogin() string {
+	fbAuthUrl := "https://www.facebook.com/v22.0/dialog/oauth?" +
+		"client_id=" + property.AppProperties.Facebook.Client.ID +
+		"&redirect_uri=" + url.QueryEscape(property.AppProperties.Facebook.RedirectURI) +
+		"&state=xyz" +
+		"&scope=email"
+	return fbAuthUrl
+}
+
+func (s *FacebookAuthService) HandleCallback(c *gin.Context, accessToken string, platform string, state string) (*data.AuthLoginResponse, error) {
+	// var accessToken string
+	// if platform != "android" {
+	// 	_accessToken, err := s.getAccessToken(code)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	accessToken = _accessToken
+	// } else {
+	// 	accessToken = code
+	// }
+	// accessToken = code
+
+	userInfo, err := s.fetchUserInfo(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.RegisterOrLogin(c, userInfo)
+}
+
+func (s *FacebookAuthService) getAccessToken(code string) (string, error) {
+	params := url.Values{}
+	params.Set("client_id", property.AppProperties.Facebook.Client.ID)
+	params.Set("redirect_uri", property.AppProperties.Facebook.RedirectURI)
+	params.Set("client_secret", property.AppProperties.Facebook.Client.Secret)
+	params.Set("code", code)
+
+	tokenURL := "https://graph.facebook.com/v22.0/oauth/access_token?" + params.Encode()
+	resp, err := s.HttpClient.Get(tokenURL)
+	if err != nil {
+		return "", &_routes.Except{
+			Code:    401,
+			Message: "Không lấy được access_token từ Facebook",
+		}
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", &_routes.Except{
+			Code:    401,
+			Message: "Lỗi đọc phản hồi từ Facebook",
+		}
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", &_routes.Except{
+			Code:    401,
+			Message: "Lỗi parse JSON từ Facebook",
+		}
+	}
+
+	accessToken, ok := result["access_token"].(string)
+	if !ok {
+		return "", &_routes.Except{
+			Code:    401,
+			Message: "Không lấy được access_token từ Facebook",
+		}
+	}
+	return accessToken, nil
+}
+
+func (s *FacebookAuthService) fetchUserInfo(accessToken string) (map[string]interface{}, error) {
+	req, err := http.NewRequest("GET", "https://graph.facebook.com/me?fields=id,name,email&access_token="+accessToken, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var userInfo map[string]interface{}
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		return nil, err
+	}
+
+	return userInfo, nil
+}
+
+func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]interface{}) (*data.AuthLoginResponse, error) {
+	username, ok := userInfo["id"].(string)
+	if !ok {
+		return nil, &_routes.Except{
+			Code:    401,
+			Message: "Không lấy được id từ Facebook",
+		}
+	}
+	e, err := auth_model.AuthFindByOAuthId(username, "FACEBOOK")
+	if err != nil {
+		e = &auth_model.UserAuthEntity{
+			Provider: "FACEBOOK",
+			Username: username,
+			OAuthID:  username,
+			Name:     userInfo["name"].(string),
+			Email:    extractEmail(userInfo),
+			Avatar:   ExtractAvatar(userInfo),
+		}
+		_db.SaveWithAudit(c, e)
+		s.AuthService.NewUser(c, e.ID)
+	}
+
+	session := s.AuthService.CreateSession(c, e, &data.OtpVerifyRequest{})
+	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
+	s.AuthService.GenRefreshToken(c, e, session.SessionID)
+	profile := s.AuthService.GetProfileByID(e.UserID)
+	return s.AuthService.ResponseLogin(e, profile, session.SessionID), nil
+}
+
+func extractEmail(userInfo map[string]interface{}) string {
+	if email, ok := userInfo["email"].(string); ok {
+		return email
+	}
+	return ""
+}
+
+func ExtractAvatar(userInfo map[string]interface{}) string {
+	if picture, ok := userInfo["picture"].(map[string]interface{}); ok {
+		if data, ok := picture["data"].(map[string]interface{}); ok {
+			if url, ok := data["url"].(string); ok {
+				return url
+			}
+		}
+	}
+	return ""
+}

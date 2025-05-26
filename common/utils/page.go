@@ -9,7 +9,7 @@ import (
 
 // Page represents pagination information
 type Page struct {
-	Limit int    `json:"limit" form:"limit,default=20"`
+	Limit int    `json:"limit" form:"limit,default=50"`
 	Skip  int    `json:"skip" form:"skip,default=0"`
 	Sort  string `json:"sort"`
 }

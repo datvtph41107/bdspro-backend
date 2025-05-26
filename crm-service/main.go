@@ -56,7 +56,7 @@ func main() {
 
 	common.SetupRestfulAPI(parameters, func() {
 		config.LoadProperties()
-		log.Printf("Data: ", config.AppProperties)
+		log.Printf("Data: ", property.AppProperties)
 
 		app, _ := InitializeApp()
 		models.AutoMigrate()
@@ -67,7 +67,7 @@ func main() {
 		routes.BlockRoutes(r, app.block)
 		// routes.OAuthRoutes(r, app.OAuthRouter)
 		// routes.ProfileRoutes(r, app.ProfileRouter)
-		// // fmt.Sprintf("Data: ", config.AppProperties.ZaloAppID)
+		// // fmt.Sprintf("Data: ", property.AppProperties.ZaloAppID)
 
 		// group.GET("/info", func(c *gin.Context) {
 		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})

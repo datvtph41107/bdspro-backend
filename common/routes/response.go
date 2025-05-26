@@ -53,6 +53,8 @@ func RouteResult(c *gin.Context, result interface{}, err error) {
 		return
 	}
 
+	// json := jsoniter.Con
+	// rs, _ := json.MarshalIndent(result, "", "  ")
 	c.JSON(http.StatusOK, ResponseDTO{
 		Code:    0,
 		Message: "Success",

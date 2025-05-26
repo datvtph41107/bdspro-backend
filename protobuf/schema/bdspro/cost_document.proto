@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+import "google/protobuf/timestamp.proto";
+
+message CostDocumentDTO {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message CostDocumentListDTO {
+  repeated CostDocumentDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service CostDocumentService {
+    rpc Get (CostDocumentDTO) returns (CostDocumentListDTO);
+    rpc Detail (CostDocumentDTO) returns (CostDocumentDTO);
+    rpc Create (CostDocumentDTO) returns (CostDocumentDTO);
+    rpc Update (CostDocumentDTO) returns (CostDocumentDTO);
+    rpc Delete (CostDocumentDTO) returns (CostDocumentDTO);
+}

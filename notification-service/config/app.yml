@@ -6,7 +6,7 @@ eureka:
   port: 8761
 
 database:
-  dsn: host=14.225.205.222 user=hieubap password=Aikhocnoidaunay.1 dbname=db_notification port=5432 sslmode=disable
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_notification port=5432 sslmode=disable
 
 key:
   jwt: key-generate-jwt-token-authentication

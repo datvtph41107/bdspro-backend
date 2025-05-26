@@ -80,7 +80,7 @@ func main() {
 
 	// common.SetupRestfulAPI(parameters, func() {
 	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", config.AppProperties)
+	// 	log.Printf("Data: ", property.AppProperties)
 
 	// 	app.Noti.RegisterRoutes(r)
 	// })
@@ -92,7 +92,7 @@ func main() {
 
 	// common.SetupRestfulAPI(parameters, func() {
 	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", config.AppProperties)
+	// 	log.Printf("Data: ", property.AppProperties)
 
 	// 	app, _ := InitializeApp()
 	// 	models.AutoMigrate()

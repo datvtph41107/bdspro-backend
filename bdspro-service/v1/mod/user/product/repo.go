@@ -1,12 +1,17 @@
 package u_product
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
 	"bdspro/v1/data"
 	product_accecss "bdspro/v1/mod/global/product_access"
 	"bdspro/v1/mod/global/product_price"
 	"bdspro/v1/mod/global/product_private"
 	u_product_dto "bdspro/v1/mod/user/product/dto"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"bdspro/v1/models"
 	"common/case/crud2"
 	_db "common/db"
@@ -16,11 +21,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 )
 
+var totalCountCache = cache.New(10*time.Minute, 15*time.Minute)
+
 type UserProductRepo struct {
 	crud2.BaseRepo[models.Product]
+	// AssetRepo      *u_asset.AssetRepo
 	PriceRepo      *product_price.ProductPriceRepo
 	ProductAccess  *product_accecss.ProductAccessRepo
 	ProductPrivate *product_private.ProductPrivateRepo
@@ -30,12 +39,14 @@ func NewUserProductRepo(db *gorm.DB,
 	PriceRepo *product_price.ProductPriceRepo,
 	ProductAccess *product_accecss.ProductAccessRepo,
 	ProductPrivate *product_private.ProductPrivateRepo,
+	// AssetRepo *u_asset.AssetRepo,
 ) *UserProductRepo {
 	return &UserProductRepo{
 		BaseRepo:       crud2.BaseRepo[models.Product]{DB: db},
 		PriceRepo:      PriceRepo,
 		ProductAccess:  ProductAccess,
 		ProductPrivate: ProductPrivate,
+		// AssetRepo:      AssetRepo,
 	}
 }
 
@@ -102,20 +113,30 @@ func (r *UserProductRepo) UpdateAsset(asset *models.Asset) error {
 	return r.DB.Save(asset).Error
 }
 
+func (r *UserProductRepo) CountByAssetID(assetID uint64) (int64, error) {
+	var count int64
+	err := r.DB.Model(models.Product{}).
+		Select("id").
+		Where("deleted_at is null and asset_id = ?", assetID).
+		Count(&count).
+		Error
+	return count, err
+}
+
 func (r *UserProductRepo) GetByID2(ctx context.Context, productID uint64) (*models.Product, error) {
 	var product models.Product
 
 	// Truy vấn thông tin sản phẩm từ cơ sở dữ liệu
 	err := r.DB.WithContext(ctx).
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Preload("CreatedUser").
-		Preload("UpdatedUser").
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
+		// Preload("PropertyType", "deleted_at IS NULL").
+		// Preload("DocType", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
+		// Preload("MediaList", "deleted_at IS NULL").
+		// Preload("CreatedUser").
+		// Preload("UpdatedUser").
+		// Preload("Province", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
+		// Preload("Ward", "deleted_at IS NULL").
 		Where("id = ? AND deleted_at IS NULL", productID).
 		First(&product).Error
 
@@ -133,7 +154,7 @@ func (r *UserProductRepo) GetByID(ctx *gin.Context, id uint64) (*models.Product,
 	err := _db.DB.
 		Table("products p").
 		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
-        	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
+			AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
@@ -185,6 +206,8 @@ func (r *UserProductRepo) GetByID(ctx *gin.Context, id uint64) (*models.Product,
 		entity.Developer = developer
 	}
 
+	// assetInfo := r.Asset
+
 	profileId := _jwt.GetProfileId(ctx)
 
 	privateData, _ := r.ProductPrivate.GetPrivateFields(ctx, profileId, entity)
@@ -230,108 +253,7 @@ func (r *UserProductRepo) UpdateProductAmenityIds(productID uint64, amenityIDs [
 	return nil
 }
 
-func (r *UserProductRepo) SearchProductWithOwner(profileId uint64, dto data.ProductSearchRequest, pageable _utils.Page) ([]models.Product, int64, error) {
-	var results []models.Product
-
-	// query := `
-	// 	SELECT p.*, dt.*, pt.*
-	// 	FROM product_access pa
-	// 	JOIN products p ON pa.product_id = p.id
-	// 	LEFT JOIN doc_type dt ON p.doc_type_id = dt.id
-	// 	LEFT JOIN property_type pt ON p.property_type_id = pt.id
-	// 	LIMIT ? OFFSET ?
-	// `
-
-	// err := r.DB.Raw(query, pageable.Limit, pageable.Skip).
-	// 	Scan(&results).Error
-
-	query := r.DB.
-		Debug().
-		Model(models.Product{}).
-		Joins(`LEFT JOIN product_access pa
-					ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
-		// Where("pa.user_id = ?", profileId).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		// Preload("Price", func(db *gorm.DB) *gorm.DB {
-		// 	return db.
-		// 		Where("created_at = (SELECT MAX(created_at) FROM product_price WHERE product_id = product_prices.product_id)").
-		// 		Order("created_at desc").Limit(1) // Lấy giá gần đây nhất
-		// }).
-		// Preload("Price", "deleted_at IS NULL").
-		// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
-		// 	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
-		// Joins("LEFT JOIN product_price ON product_price.product_id = products.id").
-		// Where("product_price.created_at = (SELECT MAX(created_at) FROM product_price WHERE product_price.product_id = products.id)").
-
-		// Select("products.*, product_prices.*").
-
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
-		// Order("created_at desc").
-		// Limit(pageable.Limit).
-		// Offset(pageable.Skip)
-
-	if dto.ParentID != nil && *dto.ParentID == 0 {
-		query = query.Where("products.parent_id is null")
-	} else if dto.ParentID != nil && *dto.ParentID > 0 {
-		query = query.Where("products.parent_id = ?", dto.ParentID)
-	}
-
-	err := query.
-		Order("created_at desc").
-		Limit(pageable.Limit).
-		Offset(pageable.Skip).
-		Find(&results).Error
-
-	// err := query.Find(&results).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var total int64
-	query.Count(&total)
-
-	return results, total, nil
-}
-
-func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.ProductSearchRequest, pageable _utils.Page) ([]models.Product, int64, error) {
-	var results []models.Product
-
-	// Joins(`LEFT JOIN product_access pa
-	// 			ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
-
-	query := r.DB.
-		Debug().
-		Model(models.Product{}).
-		// Table("products p").
-		// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
-		// 	AND lp.created_at = (SELECT MAX(lp.created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		Joins(`LEFT JOIN product_price on product_price.id = products.last_price_id AND product_price.deleted_at IS NULL`).
-		Joins(`LEFT JOIN house_info 
-				ON house_info.product_id = products.id AND house_info.deleted_at IS NULL`).
-		Preload("HouseInfo", "deleted_at IS NULL").
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.deleted_at IS NULL").
-		Where(`((products.transaction_type = 2 and products.rent_visibility = 1) 
-			OR (products.transaction_type = 1 and products.sale_visibility = 1))`)
-
+func (r *UserProductRepo) QuerySearchProduct(query *gorm.DB, dto *data.ProductSearchRequest) *gorm.DB {
 	if dto.PriceFrom > 0 {
 		query = query.Where("? < product_price.sale_price", dto.PriceFrom)
 	}
@@ -382,14 +304,179 @@ func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.Product
 		query = query.Where("LOWER(products.name) LIKE ? OR LOWER(products.code) LIKE ?", pattern, pattern)
 	}
 
+	if dto.ParentID != nil && *dto.ParentID == 0 {
+		query = query.Where("products.parent_id is null")
+	} else if dto.ParentID != nil && *dto.ParentID > 0 {
+		query = query.Where("products.parent_id = ?", dto.ParentID)
+	}
+
+	if dto.Archived != nil {
+		query = query.Where("products.archived = ?", dto.Archived)
+	}
+	return query
+}
+
+func GenerateSearchTotalKey(req data.ProductSearchRequest) string {
+	// Tạo struct chứa các field cần cache
+	cacheKey := data.ProductSearchCacheKey{
+		NumBedrooms:      req.NumBedrooms,
+		NumBathrooms:     req.NumBathrooms,
+		NumFloors:        req.NumFloors,
+		DocTypeIds:       req.DocTypeIds,
+		PropertyTypeIds:  req.PropertyTypeIds,
+		AmenityIds:       req.AmenityIds,
+		SourceTypeIds:    req.SourceTypeIds,
+		TransactionTypes: req.TransactionTypes,
+		SaleStatus:       req.SaleStatus,
+		RentStatus:       req.RentStatus,
+		ProvinceIds:      req.ProvinceIds,
+		DistrictIds:      req.DistrictIds,
+		WardIds:          req.WardIds,
+		Archived:         req.Archived,
+	}
+
+	jsonBytes, _ := json.Marshal(cacheKey)
+	hash := sha256.Sum256(jsonBytes)
+	return fmt.Sprintf("total_%x", hash)
+}
+
+func (r *UserProductRepo) SearchProductWithOwner(profileId uint64, dto *data.ProductSearchRequest) ([]models.ProductEntity, int64, error) {
+	var results []models.ProductEntity
+
+	// query := `
+	// 	SELECT p.*, dt.*, pt.*
+	// 	FROM product_access pa
+	// 	JOIN products p ON pa.product_id = p.id
+	// 	LEFT JOIN doc_type dt ON p.doc_type_id = dt.id
+	// 	LEFT JOIN property_type pt ON p.property_type_id = pt.id
+	// 	LIMIT ? OFFSET ?
+	// `
+
+	// err := r.DB.Raw(query, pageable.Limit, pageable.Skip).
+	// 	Scan(&results).Error
+
+	query := r.DB.
+		Debug().
+		Model(models.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN product_access pa
+					ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, profileId).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+
+		// Where("pa.user_id = ?", profileId).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		// Preload("Price", func(db *gorm.DB) *gorm.DB {
+		// 	return db.
+		// 		Where("created_at = (SELECT MAX(created_at) FROM product_price WHERE product_id = product_prices.product_id)").
+		// 		Order("created_at desc").Limit(1) // Lấy giá gần đây nhất
+		// }).
+		// Preload("Price", "deleted_at IS NULL").
+		// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
+		// 	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
+		// Joins("LEFT JOIN product_price ON product_price.product_id = products.id").
+		// Where("product_price.created_at = (SELECT MAX(created_at) FROM product_price WHERE product_price.product_id = products.id)").
+
+		// Select("products.*, product_prices.*").
+
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("Amenities", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+	// Order("created_at desc").
+	// Limit(pageable.Limit).
+	// Offset(pageable.Skip)
+
+	query = r.QuerySearchProduct(query, dto)
+	// if dto.ParentID != nil && *dto.ParentID == 0 {
+	// 	query = query.Where("products.parent_id is null")
+	// } else if dto.ParentID != nil && *dto.ParentID > 0 {
+	// 	query = query.Where("products.parent_id = ?", dto.ParentID)
+	// }
+
+	// if dto.Archived != nil {
+	// 	query = query.Where("products.archived = ?", dto.Archived)
+	// }
+
+	skip := dto.GetOffset()
+	limit := dto.GetLimit()
 	err := query.
 		Order("created_at desc").
+		Limit(limit).
+		Offset(skip).
+		Find(&results).Error
+
+	// err := query.Find(&results).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}
+
+func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.ProductSearchRequest, pageable _utils.Page) ([]u_product_dto.ProductMarket, int64, error) {
+	var results []u_product_dto.ProductMarket
+
+	// Joins(`LEFT JOIN product_access pa
+	// 			ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
+
+	// Table("products p").
+	// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
+	// 	AND lp.created_at = (SELECT MAX(lp.created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
+
+	// Preload("Price", func(db *gorm.DB) *gorm.DB {
+	// 	return db.Order("product_price.created_at asc")
+	// }).
+	// Joins(`LEFT JOIN product_price on product_price.id = products.last_price_id AND product_price.deleted_at IS NULL`).
+	// Joins(`LEFT JOIN house_info
+	// 		ON house_info.product_id = products.id AND house_info.deleted_at IS NULL`).
+	// Preload("HouseInfo", "deleted_at IS NULL").
+	// Preload("Province", "deleted_at IS NULL").
+	// Preload("District", "deleted_at IS NULL").
+	// Preload("Ward", "deleted_at IS NULL").
+	// Preload("Amenities", "deleted_at IS NULL").
+	// Preload("DocType", "deleted_at IS NULL").
+	// Preload("PropertyType", "deleted_at IS NULL").
+	// Preload("MediaList", "deleted_at IS NULL").
+	// Where("products.deleted_at IS NULL").
+	// Where(`((products.transaction_type = 20 and products.rent_visibility = 10)
+	// 	OR (products.transaction_type = 10 and products.sale_visibility = 10))`)
+	query := r.DB.
+		Debug().
+		Table("product_market")
+		// Model(u_product_dto.ProductMarket{})
+
+	// query = r.QuerySearchProduct(query, dto)
+
+	err := query.
+		// Order("created_at desc").
 		Limit(pageable.Limit).
 		Offset(pageable.Skip).
 		Find(&results).Error
 
 	var total int64
 	query.Count(&total)
+
+	// key := GenerateSearchTotalKey(dto)
+
+	// if cachedTotal, found := totalCountCache.Get(key); found {
+	// 	total = cachedTotal.(int64)
+	// } else {
+	// 	if err := query.Count(&total).Error; err != nil {
+	// 		return nil, 0, err
+	// 	}
+	// 	totalCountCache.Set(key, total, cache.DefaultExpiration)
+	// }
 
 	if err != nil {
 		return nil, 0, err
@@ -400,7 +487,6 @@ func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.Product
 func (r *UserProductRepo) SmartSearchProduct(
 	profileId uint64,
 	dto data.TotalSearchParser,
-	pageable _utils.Page,
 ) ([]models.Product, int64, error) {
 	var results []models.Product
 	query := r.DB.
@@ -484,8 +570,8 @@ func (r *UserProductRepo) SmartSearchProduct(
 	// 	query = query.Where("LOWER(products.name) LIKE ? OR LOWER(products.code) LIKE ?", pattern, pattern)
 	// }
 	err := query.
-		Limit(pageable.Limit).
-		Offset(pageable.Skip).
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
 		Find(&results).Error
 
 	var total int64
@@ -604,4 +690,12 @@ func (r *UserProductRepo) UpdateArchived(ctx *gin.Context, dto u_product_dto.Arc
 
 func (r *UserProductRepo) NewDeposite(ctx *gin.Context, dto *models.Deposite) error {
 	return r.DB.WithContext(ctx).Create(&dto).Error
+}
+
+// Cập nhật bản ghi
+func (r *UserProductRepo) UpdateAssetID(c *gin.Context, id uint64, assetID uint64) error {
+	return r.DB.WithContext(c).Model(&models.Product{}).
+		Where("id = ? and deleted_at is null and asset_id is null", id).
+		Update("asset_id", assetID).
+		Error
 }

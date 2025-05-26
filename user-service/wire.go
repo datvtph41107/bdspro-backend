@@ -4,9 +4,9 @@
 package main
 
 import (
-	"auth/routes"
-	"auth/services"
 	_redis "common/redis"
+	"user/routes"
+	"user/services"
 
 	"github.com/google/wire"
 )

@@ -25,7 +25,9 @@ func (route *UserProductChildRoute) RegisterRoute(r *gin.RouterGroup) {
 	api.POST("/merge", route.MergeChild)
 	api.POST("/merge-all/:productId", route.MergeAll)
 	api.POST("/devide", route.DevideChild)
-	api.GET("/history", route.History)
+	api.GET("/history-child/:id", route.History)
+	api.GET("/area-info/:id", route.InfoArea)
+
 }
 
 // func (route *UserProductChildRoute) ListChild(c *gin.Context) {
@@ -56,6 +58,29 @@ func (route *UserProductChildRoute) CreateChild(c *gin.Context) {
 		return
 	}
 	result, err := route.productService.Create(c, &_body)
+	_routes.RouteResult(c, result, err)
+}
+
+// @Summary Tạo sản phẩm con
+// @Description API
+// @Tags User/Product-child
+// @Accept json
+// @Produce json
+// @Param productId path int false "Product ID"
+// @Security BearerAuth
+// @Param body body SaveProductChildRequest true "Thông tin sản phẩm con"
+// @Router /v1/bdspro/user/product/split [post]
+func (route *UserProductChildRoute) InfoArea(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, &_routes.Except{
+			Code:    400,
+			Message: "ID không hợp lệ",
+		})
+		return
+	}
+
+	result, err := route.productService.InfoArea(c, &id)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -122,13 +147,22 @@ func (route *UserProductChildRoute) DevideChild(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body query ProductHistorySearch true "Thông tin sản phẩm con"
-// @Router /v1/bdspro/user/product/history [get]
+// @Router /v1/bdspro/user/product/history-child/:id [get]
 func (route *UserProductChildRoute) History(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, &_routes.Except{
+			Code:    400,
+			Message: "ID không hợp lệ",
+		})
+		return
+	}
+
 	_body := ProductHistorySearch{}
 	if err := _utils.ParseQuery2(c, &_body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.productService.History(c, &_body)
+	result, err := route.productService.History(c, id, &_body)
 	_routes.RouteResult(c, result, err)
 }

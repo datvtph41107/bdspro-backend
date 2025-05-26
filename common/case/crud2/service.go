@@ -68,10 +68,10 @@ func (s *BaseService[T, R]) Delete(c *gin.Context) (bool, error) {
 		}
 	}
 
-	if err := s.Repo.Delete(id); err != nil {
+	if err := s.Repo.Delete(c, id); err != nil {
 		return false, &_routes.Except{
 			Code:    500,
-			Message: "Không thể xóa dữ liệu",
+			Message: err.Error(), // "Không thể xóa dữ liệu",
 		}
 	}
 

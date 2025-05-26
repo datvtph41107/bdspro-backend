@@ -2,6 +2,7 @@ package _utils
 
 import (
 	_routes "common/routes"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -39,7 +40,10 @@ func ParseBodyWithValidator[T any](c *gin.Context, target *T) error {
 			for _, fe := range ve {
 				field := strings.ToLower(fe.Field())
 
-				if f, ok := reflect.TypeOf(*target).FieldByName(fe.StructField()); ok {
+				typ := reflect.TypeOf(*target)
+				strF := fe.StructField()
+				f, ok := typ.FieldByName(strF)
+				if ok {
 					if tag := f.Tag.Get("json"); tag != "" {
 						field = tag
 					}
@@ -102,12 +106,160 @@ func ParseBodyWithValidator[T any](c *gin.Context, target *T) error {
 	return nil
 }
 
+type fieldInfo struct {
+	StructField reflect.StructField
+	IndexPath   []int // đường dẫn tới field, dùng để gọi tValue.FieldByIndex
+}
+
+func getAllFields(t reflect.Type, indexPath []int) []fieldInfo {
+	var fields []fieldInfo
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		path := append(indexPath, i)
+
+		if f.Anonymous && f.Type.Kind() == reflect.Struct {
+			fields = append(fields, getAllFields(f.Type, path)...)
+		} else {
+			fields = append(fields, fieldInfo{StructField: f, IndexPath: path})
+		}
+	}
+	return fields
+}
+
 func ParseQuery2[T any](c *gin.Context, target *T) error {
-	// Đọc toàn bộ body từ request
-	if err := c.ShouldBindQuery(&target); err != nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
+	tType := reflect.TypeOf(*target)
+	tValue := reflect.ValueOf(target).Elem()
+
+	query := c.Request.URL.Query()
+
+	fields := getAllFields(tType, nil)
+
+	for _, field := range fields {
+		valueField := tValue.FieldByIndex(field.IndexPath)
+
+		if !valueField.CanSet() {
+			continue
+		}
+
+		queryKey := field.StructField.Tag.Get("form")
+		if queryKey == "" {
+			continue
+		}
+
+		raw := query.Get(queryKey)
+		valid := field.StructField.Tag.Get("valid")
+		if raw == "" && valid == "required" {
+			return fmt.Errorf("%s là bắt buộc", queryKey)
+		}
+		if raw == "" {
+			continue
+		}
+
+		parser := field.StructField.Tag.Get("parser")
+		if parser == "uint64s" {
+			rawValues := strings.Split(raw, ",")
+			// slice := reflect.MakeSlice(uint64, 0, len(rawValues))
+			slice := make([]uint64, len(rawValues)) // [0 0 0]
+
+			for i, s := range rawValues {
+				s = strings.TrimSpace(s)
+				num, err := strconv.ParseUint(s, 10, 64)
+				if err != nil {
+					return fmt.Errorf("invalid uint64 in %s: %v", queryKey, err)
+				}
+				slice[i] = num
+				// slice = reflect.Append(slice, reflect.ValueOf(num))
+			}
+			// values := reflect.ValueOf(&slice)
+			valueField.Set(reflect.ValueOf(slice))
+			continue
+		}
+
+		// Handle *time.Time
+		if valueField.Kind() == reflect.Ptr && valueField.Type().Elem() == reflect.TypeOf(time.Time{}) {
+			parsedTime, err := time.Parse(time.RFC3339, raw)
+			if err != nil {
+				return fmt.Errorf("invalid time for %s: %v", queryKey, err)
+			}
+			valueField.Set(reflect.ValueOf(&parsedTime))
+			continue
+		}
+
+		if valueField.Kind() == reflect.Ptr && valueField.Type().Elem() == reflect.TypeOf(uint64(0)) {
+			parsed, err := strconv.ParseUint(raw, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid int for %s: %v", queryKey, err)
+			}
+			valueField.Set(reflect.ValueOf(&parsed))
+			continue
+		}
+
+		if valueField.Kind() == reflect.Ptr && valueField.Type().Elem() == reflect.TypeOf(true) {
+			parsed, err := strconv.ParseBool(raw)
+			if err != nil {
+				return fmt.Errorf("invalid int for %s: %v", queryKey, err)
+			}
+			valueField.Set(reflect.ValueOf(&parsed))
+			continue
+		}
+
+		rawValues := strings.Split(raw, ",")
+		kind := valueField.Kind()
+		switch kind {
+		case reflect.String:
+			valueField.SetString(raw)
+
+		case reflect.Float64:
+			parsed, err := strconv.ParseFloat(raw, 64)
+			if err != nil {
+				return fmt.Errorf("invalid float for %s: %v", queryKey, err)
+			}
+			valueField.SetFloat(parsed)
+
+		case reflect.Int, reflect.Int64:
+			parsed, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid int for %s: %v", queryKey, err)
+			}
+			valueField.SetInt(parsed)
+		case reflect.Uint, reflect.Uint64:
+			parsed, err := strconv.ParseUint(raw, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid int for %s: %v", queryKey, err)
+			}
+			valueField.SetUint(parsed)
+
+		case reflect.Slice:
+			elemKind := valueField.Type().Elem().Kind()
+			slice := reflect.MakeSlice(valueField.Type(), 0, len(rawValues))
+			for _, s := range rawValues {
+				s = strings.TrimSpace(s)
+				switch elemKind {
+				case reflect.String:
+					slice = reflect.Append(slice, reflect.ValueOf(s))
+
+				case reflect.Uint64:
+					num, err := strconv.ParseUint(s, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid uint64 in %s: %v", queryKey, err)
+					}
+					slice = reflect.Append(slice, reflect.ValueOf(num))
+
+				case reflect.Uint:
+					num, err := strconv.ParseUint(s, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid uint in %s: %v", queryKey, err)
+					}
+					slice = reflect.Append(slice, reflect.ValueOf(uint(num)))
+
+				default:
+					return fmt.Errorf("unsupported slice type in %s", queryKey)
+				}
+			}
+			valueField.Set(slice)
+
+		default:
+			// Có thể thêm xử lý cho các loại khác nếu cần
 		}
 	}
 
@@ -407,4 +559,15 @@ func ErrorField(err *_routes.Except, detail protoadapt.MessageV1) error {
 	st := status.New(codes.Code(err.Code), err.Message)
 	stWithDetails, _ := st.WithDetails(detail)
 	return stWithDetails.Err()
+}
+
+func StructToJSONString(p interface{}) *string {
+	jsonBytes, err := json.Marshal(p)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil
+	}
+
+	jsonString := string(jsonBytes)
+	return &jsonString
 }

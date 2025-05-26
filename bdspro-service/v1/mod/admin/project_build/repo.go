@@ -2,7 +2,7 @@ package a_project_build
 
 import (
 	"bdspro/v1/models"
-	"common/case/crud"
+	"common/case/crud2"
 	_db "common/db"
 
 	"github.com/gin-gonic/gin"
@@ -10,12 +10,12 @@ import (
 )
 
 type ProjectBuildRepo struct {
-	crud.BaseRepo[models.ProjectBuild]
+	crud2.BaseRepo[models.ProjectBuild]
 }
 
 func NewProjectBuildRepo(db *gorm.DB) *ProjectBuildRepo {
 	return &ProjectBuildRepo{
-		BaseRepo: crud.BaseRepo[models.ProjectBuild]{DB: db},
+		BaseRepo: crud2.BaseRepo[models.ProjectBuild]{DB: db},
 	}
 }
 

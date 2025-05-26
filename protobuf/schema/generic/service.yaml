@@ -1,0 +1,15 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    - selector: pb_generic.GenericService.HandleRequest
+      match: "/{path=**}"
+      body: "*"
+    # - selector: pb_generic.GenericService.HandleRequest
+    #   get: "/{path=**}"
+    # - selector: pb_generic.GenericService.HandleRequest
+    #   put: "/{path=**}"
+    #   body: "*"
+    # - selector: pb_generic.GenericService.HandleRequest
+    #   delete: "/{path=**}"

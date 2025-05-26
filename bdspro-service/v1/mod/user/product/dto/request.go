@@ -1,7 +1,11 @@
 package u_product_dto
 
 import (
-	"bdspro/enums"
+	"bdspro/internal/enums"
+	// u_post "bdspro/v1/mod/user/post"
+
+	u_asset_dto "bdspro/v1/mod/user/asset/dto"
+	u_post_dto "bdspro/v1/mod/user/post/dto"
 	"bdspro/v1/models"
 )
 
@@ -23,26 +27,33 @@ type HouseInfoUpdate struct {
 	Orientation *string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
 }
 
+type PostWithProduct struct {
+}
 type ProductSaveRequest struct {
-	ParentID        *uint64                `gorm:"size:255" json:"parentId"`
-	Name            string                 `gorm:"size:255" json:"name" binding:"required"`
-	Code            string                 `gorm:"size:15" json:"code"`
-	Area            float64                `json:"area" binding:"required"`
-	Description     string                 `json:"description"`
-	Note            string                 `json:"note"`
-	PropertyTypeId  *uint64                `json:"propertyTypeId"`
-	DocTypeId       *uint64                `json:"docTypeId"`
-	AmenityIds      []uint64               `json:"amenityIds"`
-	ProjectId       *uint64                `json:"projectId"`
-	ProvinceID      *uint64                `json:"provinceId"`
-	DistrictID      *uint64                `json:"districtId"`
-	WardID          *uint64                `json:"wardId"`
-	TransactionType int                    `json:"transactionType"`
-	PriceDTO        *models.ProductPrice   `json:"price" binding:"required"`
-	MediaItemDTOs   []MediaItem            `json:"mediaItems"`
-	HouseInfoDTO    *HouseInfoUpdate       `json:"houseInfo"`
-	PrivateDataDTO  *models.ProductPrivate `json:"productPrivate"`
-	GoogleMapLink   string                 `json:"googleMapLink"`
+	ParentID        *uint64                             `gorm:"size:255" json:"parentId"`
+	Name            string                              `gorm:"size:255" json:"name" binding:"required"`
+	Code            string                              `gorm:"size:15" json:"code"`
+	Area            float64                             `json:"area" binding:"required"`
+	Description     string                              `json:"description"`
+	Note            string                              `json:"note"`
+	PropertyTypeId  *uint64                             `json:"propertyTypeId"`
+	DocTypeId       *uint64                             `json:"docTypeId"`
+	AmenityIds      []uint64                            `json:"amenityIds"`
+	ProjectId       *uint64                             `json:"projectId"`
+	ProvinceID      *uint64                             `json:"provinceId"`
+	DistrictID      *uint64                             `json:"districtId"`
+	WardID          *uint64                             `json:"wardId"`
+	TransactionType int                                 `json:"transactionType"`
+	PriceDTO        *models.ProductPrice                `json:"price" binding:"required"`
+	MediaItemDTOs   []MediaItem                         `json:"mediaItems"`
+	HouseInfoDTO    *HouseInfoUpdate                    `json:"houseInfo"`
+	PrivateDataDTO  *models.ProductPrivate              `json:"productPrivate"`
+	GoogleMapLink   string                              `json:"googleMapLink"`
+	SourceType      uint                                `json:"sourceType"`
+	SaleStatus      *enums.ProductStatus                `json:"saleStatus"`
+	RentStatus      *enums.ProductStatus                `json:"rentStatus"`
+	PostCreate      *u_post_dto.PostSaveWithProduct     `json:"post"`
+	AssetCreate     *u_asset_dto.AssetCreateWithProduct `json:"asset"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê

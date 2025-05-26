@@ -32,6 +32,8 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 		serviceIp = 8006
 	} else if serviceName == "membership" {
 		serviceIp = 8007
+	} else if serviceName == "search" {
+		serviceIp = 8008
 	} else if serviceName == "map" {
 		serviceIp = 8101
 	} else if serviceName == "bdspro" {
@@ -54,6 +56,7 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	targetURL := fmt.Sprintf(
 		"http://%s:%d/%s%s?%s",
 		"localhost",
+		// serviceName,
 		serviceIp,
 		serviceName,
 		path,
@@ -92,13 +95,13 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	}
 
 	// c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Không được dùng "*"
-	fmt.Println(resp.Body(), " _BODY_RESPONSE")
+	// fmt.Println(resp.Body(), " _BODY_RESPONSE")
 	// ✅ Gửi dữ liệu về FE
 	// "Access-Control-Allow-Origin"
 	// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8102")
 	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	fmt.Println(c.Writer.Header(), "HEADER_REPONSE.......")
+	// fmt.Println(c.Writer.Header(), "HEADER_REPONSE.......")
 	c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
 
 	// ✅ Đảm bảo CORS cho phép gửi Cookie

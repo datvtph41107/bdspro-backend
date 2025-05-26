@@ -10,15 +10,15 @@ import (
 // @swagger:model
 type BaseEntity struct {
 	AuditBase
-	ID        uint64         `gorm:"primaryKey" json:"id"`
-	CreatedAt *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
-	UpdatedAt *time.Time     `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
+	ID        uint64          `gorm:"primaryKey" json:"id"`
+	CreatedAt *time.Time      `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt *time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
+	DeletedAt *gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
 }
 
 type BaseEntityNotId struct {
 	AuditBase
-	CreatedAt *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
-	UpdatedAt *time.Time     `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
+	CreatedAt *time.Time      `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt *time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
+	DeletedAt *gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
 }

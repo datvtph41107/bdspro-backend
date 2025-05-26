@@ -1,11 +1,13 @@
 package main
 
 import (
-	"auth/config"
-	_ "auth/docs"
-	"auth/models"
-	"auth/routes"
 	"common"
+	"user/config"
+	_ "user/docs"
+	"user/models"
+	"user/routes"
+
+	"user/wire"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,23 +15,6 @@ import (
 var publicRoutes = []string{
 	"/user/swagger",
 	"/user/auth/otp",
-}
-
-type ConfigApp struct {
-	Auth          *routes.AuthRouter
-	OAuthRouter   *routes.OAuthRouter
-	ProfileRouter *routes.ProfileRouter
-}
-
-func NewConfigApp(authService *routes.AuthRouter,
-	oAuthRouter *routes.OAuthRouter,
-	profile *routes.ProfileRouter,
-) *ConfigApp {
-	return &ConfigApp{
-		Auth:          authService,
-		OAuthRouter:   oAuthRouter,
-		ProfileRouter: profile,
-	}
 }
 
 // @title User API
@@ -53,13 +38,18 @@ func main() {
 	common.SetupRestfulAPI(parameters, func() {
 		config.LoadProperties()
 
-		app, _ := InitializeApp()
+		app, _ := wire.InitializeApp()
 		models.AutoMigrate()
 
 		routes.AuthRoutes(r, app.Auth)
 		routes.OAuthRoutes(r, app.OAuthRouter)
 		routes.ProfileRoutes(r, app.ProfileRouter)
-		// fmt.Sprintf("Data: ", config.AppProperties.ZaloAppID)
+		// routes.AuthRoutes(r, app.Auth)
+		routes.BlockRoutes(r, app.BlockRouter)
+		routes.FollowRoutes(r, app.FollowRouter)
+		routes.FriendRoutes(r, app.FriendRouter)
+		routes.GroupRoutes(r, app.GroupRouter)
+		// fmt.Sprintf("Data: ", property.AppProperties.ZaloAppID)
 
 		// group.GET("/info", func(c *gin.Context) {
 		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})

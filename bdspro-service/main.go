@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	cmd_grpc "bdspro/cmd/grpc"
@@ -42,6 +45,10 @@ func init() {
 }
 
 func main() {
+	go func() {
+		log.Println("run go-routine")
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -64,7 +71,7 @@ func main() {
 	// app, _ := InitializeApp()
 	// common.SetupRestfulAPI(parameters, func() {
 	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", config.AppProperties)
+	// 	log.Printf("Data: ", property.AppProperties)
 
 	// 	models.AutoMigrate()
 
@@ -74,7 +81,12 @@ func main() {
 
 	// common.SetupGRPCServer(parameters, func(s *grpc.Server) {
 	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", config.AppProperties)
+	// 	log.Printf("Data: ", property.AppProperties)
 	// 	pb_bdspro.RegisterBdsproServiceServer(s, app.ServerHttp)
 	// })
 }
+
+// userProductService.UserAssetService = userAssetService
+// 	userProductService.UserPostService = userPostService
+// 	uPostUsecase.UProductUsecase = uProductUsecase
+// 	uAssetUsecase.ProductUc = uProductUsecase

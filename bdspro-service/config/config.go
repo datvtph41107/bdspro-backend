@@ -1,9 +1,11 @@
 package config
 
 import (
+	server "bdspro/external/handler"
+	"bdspro/external/routes"
+	"bdspro/external/service"
 	"bdspro/v1/mod/admin"
 	"bdspro/v1/mod/user"
-	server "bdspro/v2/external/handler"
 	"bytes"
 	_ "embed"
 	"log"
@@ -45,18 +47,53 @@ var AppProperties UserProperties
 var ConfigFile []byte
 
 type ConfigApp struct {
-	GrpcServer  *server.BdsproGrpcServer
-	UserRoute   *user.UserRoute
-	AdminRouter *admin.AdminRoute
+	// GrpcServer        *server.BdsproGrpcServer
+	GrpcGenericServer *server.GenericGrpcServer
+	UserRoute         *user.UserRoute
+	AdminRouter       *admin.AdminRoute
+	RouterManager     *routes.RouterManager
+
+	// @bind: register_server_config
+	CostDocumentServer      *service.CostDocumentServer
+	IncomeDocumentServer    *service.IncomeDocumentServer
+	AssetIncomeTypeServer   *service.AssetIncomeTypeServer
+	AssetExploitationServer *service.AssetExploitationServer
+	AssetCostTypeServer     *service.AssetCostTypeServer
+	AssetCostServer         *service.AssetCostServer
+	AssetLegalServer        *service.AssetLegalServer
+	AssetSplitHistoryServer *service.AssetSplitHistoryServer
 }
 
-func NewConfigApp(GrpcServer *server.BdsproGrpcServer,
+func NewConfigApp(
+	GrpcGenericServer *server.GenericGrpcServer,
 	userRoute *user.UserRoute,
-	adminRoute *admin.AdminRoute) *ConfigApp {
+	adminRoute *admin.AdminRoute,
+	// @bind: register_server_param
+	CostDocumentServer *service.CostDocumentServer,
+	IncomeDocumentServer *service.IncomeDocumentServer,
+	AssetIncomeTypeServer *service.AssetIncomeTypeServer,
+	AssetExploitationServer *service.AssetExploitationServer,
+	AssetCostTypeServer *service.AssetCostTypeServer,
+	AssetCostServer *service.AssetCostServer,
+	AssetLegalServer *service.AssetLegalServer,
+	AssetSplitHistoryServer *service.AssetSplitHistoryServer,
+	RouterManager *routes.RouterManager,
+) *ConfigApp {
 	return &ConfigApp{
-		GrpcServer:  GrpcServer,
-		UserRoute:   userRoute,
-		AdminRouter: adminRoute,
+		// GrpcServer:        GrpcServer,
+		GrpcGenericServer: GrpcGenericServer,
+		UserRoute:         userRoute,
+		AdminRouter:       adminRoute,
+		// @bind: register_server_new
+		CostDocumentServer:      CostDocumentServer,
+		IncomeDocumentServer:    IncomeDocumentServer,
+		AssetIncomeTypeServer:   AssetIncomeTypeServer,
+		AssetExploitationServer: AssetExploitationServer,
+		AssetCostTypeServer:     AssetCostTypeServer,
+		AssetCostServer:         AssetCostServer,
+		AssetLegalServer:        AssetLegalServer,
+		AssetSplitHistoryServer: AssetSplitHistoryServer,
+		RouterManager:           RouterManager,
 	}
 }
 

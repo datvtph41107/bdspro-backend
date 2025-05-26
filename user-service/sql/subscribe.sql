@@ -5,7 +5,7 @@ create table profile_transfer (
 )
 
 CREATE SUBSCRIPTION profile_sub_transfer_crm
-CONNECTION 'host=14.225.205.222 port=5432 dbname=db_user user=user password=znodVcrXdFtaOLdPaTQr3lmV' 
+CONNECTION 'host=14.225.210.29 port=5432 dbname=db_user user=user password=znodVcrXdFtaOLdPaTQr3lmV' 
 publication profile_pub_transfer;
 
 -- SELECT * FROM pg_publication_tables;

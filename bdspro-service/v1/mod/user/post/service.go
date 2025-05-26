@@ -1,10 +1,13 @@
 package u_post
 
 import (
-	"bdspro/v1/mod/global/member_plan"
-	"bdspro/v1/mod/global/transmit"
+	"bdspro/internal/enums"
+	user_dto "bdspro/v1/mod/user/dto/request"
+	u_post_dto "bdspro/v1/mod/user/post/dto"
 	u_product "bdspro/v1/mod/user/product"
+	iu_product "bdspro/v1/mod/user/product/interface"
 	"bdspro/v1/models"
+	"bdspro/v1/providers"
 	"common/case/crud2"
 	_db "common/db"
 	_jwt "common/jwt"
@@ -17,29 +20,36 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type PostService struct {
+type UserPostService struct {
 	crud2.BaseService[models.Post, *PostRepo]
-	planService    *member_plan.MemberPlanService
-	productService *u_product.ProductService
-	transmit       *transmit.TransmitService
+	planService *providers.MemberPlanProvider
+	// UserProductService *u_product.UserProductService
+	transmit *providers.TransmitProvider
+	// productRepo        *u_product.UserProductRepo
+	UserProductService iu_product.IUserProductService
+	ProductRepo        *u_product.UserProductRepo
 }
 
-func NewPostService(repo *PostRepo,
-	planService *member_plan.MemberPlanService,
-	productService *u_product.ProductService,
-	transmit *transmit.TransmitService,
-) *PostService {
-	return &PostService{
+func NewUserPostService(repo *PostRepo,
+	planService *providers.MemberPlanProvider,
+	UserProductService iu_product.IUserProductService,
+	transmit *providers.TransmitProvider,
+	productRepo *u_product.UserProductRepo,
+	// serviceManager *manager.ServiceManager,
+) *UserPostService {
+	return &UserPostService{
 		BaseService: crud2.BaseService[models.Post, *PostRepo]{
 			Repo: repo,
 		},
-		planService:    planService,
-		productService: productService,
-		transmit:       transmit,
+		planService:        planService,
+		UserProductService: UserProductService,
+		transmit:           transmit,
+		ProductRepo:        productRepo,
+		// serviceManager:     serviceManager,
 	}
 }
 
-func (s *PostService) CreatePost(c *gin.Context, dto PostSaveRequest) (*models.Post, error) {
+func (s *UserPostService) CreatePost(c *gin.Context, dto *u_post_dto.PostSaveRequest) (*models.Post, error) {
 	plan := s.planService.CurrentPlan(c)
 	if plan == nil {
 		return nil, &_routes.Except{
@@ -48,34 +58,51 @@ func (s *PostService) CreatePost(c *gin.Context, dto PostSaveRequest) (*models.P
 		}
 	}
 
-	_, err := s.productService.RequiredOwner(c, dto.ProductID)
+	// _, err := s.UserProductService.RequiredOwner(c, dto.ProductID)
+	_, err := s.UserProductService.RequiredOwnerProduct(c, dto.ProductID)
 	if err != nil {
 		return nil, err
 	}
 
-	profileId := _jwt.GetProfileId(c)
-	if plan.LimitPost <= s.Repo.CountPost(c, profileId) {
+	principal := _jwt.GetPrincipal(c)
+	// profileId := _jwt.GetProfileId(c)
+	if plan.LimitPost <= s.Repo.CountPostFromDate(c, time.Now().Add(-30)) {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Số lượng tạo tin đã đạt giới hạn. Vui lòng nâng cấp gói",
+			// Bạn đã hết hạn mức tin
 		}
 	}
 	// plan := s.planService.Plans
-	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId); existed {
+	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, principal.ProfileId); existed {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Tin đăng vẫn còn hạn",
 		}
 	}
+
+	numDate := dto.NumDate
+	if numDate <= 0 {
+		numDate = 15
+	}
+	if numDate > 30 {
+		numDate = 30
+	}
 	entity := &models.Post{
 		ProductId:       dto.ProductID,
-		Content:         dto.Content,
-		TransactionType: dto.TransactionType,
 		Title:           dto.Title,
+		Content:         dto.Content,
+		Price:           dto.Price,
+		TransactionType: dto.TransactionType,
+		PackageVisible:  dto.PackageVisible,
+		Visibility:      dto.Visibility,
+		NumDate:         numDate,
 		ExpiredAt:       dto.ExpiredAt,
+		Status:          enums.PostPublic,
+		Hidden:          dto.Hidden,
 	}
 	if entity.ExpiredAt == nil {
-		expired := time.Now().Add(15 * 24 * time.Hour)
+		expired := time.Now().Add(time.Duration(numDate) * 24 * time.Hour)
 		entity.ExpiredAt = &expired
 	}
 
@@ -85,14 +112,14 @@ func (s *PostService) CreatePost(c *gin.Context, dto PostSaveRequest) (*models.P
 		Title:     "Hết hạn tin đăng",
 		Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
 		Type:      3,
-		UserID:    profileId,
+		UserID:    principal.ProfileId,
 		VisibleAt: timestamppb.New(visibleAt),
 	})
 
 	return entity, err
 }
 
-func (s *PostService) UpdateHidden(c *gin.Context, dto UpdateHiddenRequest) (*models.Post, error) {
+func (s *UserPostService) UpdateHidden(c *gin.Context, dto u_post_dto.UpdateHiddenRequest) (*models.Post, error) {
 	entity, err := s.RequiredOwner(c, dto.PostID)
 	if err != nil {
 		return nil, err
@@ -104,7 +131,7 @@ func (s *PostService) UpdateHidden(c *gin.Context, dto UpdateHiddenRequest) (*mo
 	return entity, err
 }
 
-func (s *PostService) Action(c *gin.Context, dto ActionRequest) (*models.Post, error) {
+func (s *UserPostService) Action(c *gin.Context, dto u_post_dto.ActionRequest) (*models.Post, error) {
 	entity, err := s.RequiredOwner(c, dto.PostID)
 	if err != nil {
 		return nil, err
@@ -118,7 +145,7 @@ func (s *PostService) Action(c *gin.Context, dto ActionRequest) (*models.Post, e
 	return nil, err
 }
 
-func (s *PostService) UpdatePost(c *gin.Context, id uint64, dto PostUpdateRequest) (*models.Post, error) {
+func (s *UserPostService) UpdatePost(c *gin.Context, id uint64, dto u_post_dto.PostUpdateRequest) (*models.Post, error) {
 	entity, err := s.RequiredOwner(c, id)
 	if err != nil {
 		return nil, err
@@ -130,7 +157,7 @@ func (s *PostService) UpdatePost(c *gin.Context, id uint64, dto PostUpdateReques
 	return entity, err
 }
 
-func (s *PostService) RequiredOwner(c *gin.Context, id uint64) (*models.Post, error) {
+func (s *UserPostService) RequiredOwner(c *gin.Context, id uint64) (*models.Post, error) {
 	post, err := s.Repo.GetByID(c, id)
 	if err != nil {
 		return nil, err
@@ -147,7 +174,7 @@ func (s *PostService) RequiredOwner(c *gin.Context, id uint64) (*models.Post, er
 	return post, nil
 }
 
-func (s *PostService) MakeNewExpired(c *gin.Context, dto PostExpiredRequest) (*models.Post, error) {
+func (s *UserPostService) MakeNewExpired(c *gin.Context, dto u_post_dto.PostExpiredRequest) (*models.Post, error) {
 	// plan := s.planService.CurrentPlan(c)
 	// if plan == nil {
 	// 	return nil, &_routes.Except{
@@ -192,40 +219,40 @@ func (s *PostService) MakeNewExpired(c *gin.Context, dto PostExpiredRequest) (*m
 	return entity, err
 }
 
-func (s *PostService) Detail(c *gin.Context, id uint64) (*PostDetail, error) {
+func (s *UserPostService) Detail(c *gin.Context, id uint64) (*u_post_dto.PostDetail, error) {
 	post, err := s.Repo.GetByID(c, id)
 	if err != nil {
 		return nil, err
 	}
-	product, _ := s.productService.ProductRepo.GetByID(c, post.ProductId)
+	product, _ := s.ProductRepo.GetByID(c, post.ProductId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PostDetail{
+	return &u_post_dto.PostDetail{
 		Post:        post,
 		ProductInfo: product,
 	}, nil
 }
 
-func (s *PostService) PersonalPost(c *gin.Context, dto SearchRequest) (*_routes.ResponseDTO, error) {
+func (s *UserPostService) PersonalPost(c *gin.Context, dto u_post_dto.SearchRequest) (_routes.ResponseDTO, error) {
 	profileId := _jwt.GetProfileId(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
 	if err != nil {
-		return nil, &_routes.Except{
+		return _routes.ResponseDTO{}, &_routes.Except{
 			Code:    500,
 			Message: err.Error(),
 		}
 	}
 
-	return &_routes.ResponseDTO{
+	return _routes.ResponseDTO{
 		Code:          0,
 		Data:          entities,
 		TotalElements: &total,
 	}, nil
 }
 
-func (s *PostService) GlobalPost(c *gin.Context, dto SearchRequest) (*_routes.ResponseDTO, error) {
+func (s *UserPostService) GlobalPost(c *gin.Context, dto u_post_dto.SearchRequest) (*_routes.ResponseDTO, error) {
 	entities, total, err := s.Repo.Global(c, dto)
 	if err != nil {
 		return nil, &_routes.Except{
@@ -239,4 +266,9 @@ func (s *PostService) GlobalPost(c *gin.Context, dto SearchRequest) (*_routes.Re
 		Data:          entities,
 		TotalElements: &total,
 	}, nil
+}
+
+func (s *UserPostService) ProductPostLink(c *gin.Context, id uint64, dto *user_dto.PostLinkSearch) (*[]models.PostItem, error) {
+	entities, err := s.Repo.SearchLinkToProduct(c, id, dto)
+	return &entities, err
 }

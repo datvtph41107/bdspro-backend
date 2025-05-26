@@ -1,176 +1,102 @@
 definitions:
-  bdspro.ArchivedRequest:
+  _owner.OwnerModel-models_AssetCostType:
     properties:
-      archived:
-        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      data:
+        $ref: '#/definitions/models.AssetCostType'
       id:
         type: integer
-    type: object
-  bdspro.Asset:
-    properties:
-      address:
+      ownerId:
+        type: integer
+      updatedAt:
         type: string
-      archived:
-        type: boolean
-      area:
+      updatedBy:
+        type: integer
+    type: object
+  bdspro.AssetCostDTO:
+    properties:
+      amount:
         type: number
-      buyedDate:
+      assetId:
+        type: integer
+      date:
         $ref: '#/definitions/timestamppb.Timestamp'
       description:
         type: string
-      districtId:
-        type: integer
-      docStatus:
-        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
-        type: integer
       id:
         type: integer
-      legalStatus:
-        type: string
-      name:
-        type: string
-      ownerOrgId:
-        type: integer
-      ownerUserId:
-        type: integer
-      parentAssetId:
-        type: integer
-      price:
-        type: number
-      productId:
-        type: integer
-      provinceId:
-        type: integer
-      purchaseDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      purchasePrice:
-        type: number
-      rentStatus:
-        type: string
-      splitMergeStatus:
-        type: string
-      wardId:
-        type: integer
     type: object
-  bdspro.CreateAssetRequest:
+  bdspro.AssetCostTypeDTO:
     properties:
-      address:
-        type: string
-      archived:
+      id:
+        type: integer
+      isCustom:
         type: boolean
-      area:
+      typeName:
+        type: string
+    type: object
+  bdspro.AssetExploitationDTO:
+    properties:
+      assetID:
+        type: integer
+      contractValue:
         type: number
-      buyedDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
+      customer:
+        type: string
       description:
         type: string
-      districtId:
-        type: integer
-      docStatus:
-        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
-        type: integer
-      id:
-        type: integer
-      legalStatus:
-        type: string
-      name:
-        type: string
-      ownerOrgId:
-        type: integer
-      ownerUserId:
-        type: integer
-      parentAssetId:
-        type: integer
-      price:
-        type: number
-      productId:
-        type: integer
-      provinceId:
-        type: integer
-      purchaseDate:
+      endDate:
         $ref: '#/definitions/timestamppb.Timestamp'
-      purchasePrice:
+      fileContract:
+        type: string
+      id:
+        type: integer
+      incomeAmount:
         type: number
-      rentStatus:
-        type: string
-      splitMergeStatus:
-        type: string
-      wardId:
+      startDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      type:
         type: integer
     type: object
-  bdspro.MergeAssetRequest:
+  bdspro.AssetIncomeTypeDTO:
     properties:
       id:
         type: integer
-      ids:
-        items:
-          type: integer
-        type: array
-      new_name:
+      isCustom:
+        type: boolean
+      typeName:
         type: string
     type: object
-  bdspro.ShareAssetRequest:
+  bdspro.AssetLegalDTO:
     properties:
-      id:
-        type: integer
-      user_ids:
-        items:
-          type: string
-        type: array
-    type: object
-  bdspro.SplitAssetRequest:
-    properties:
-      id:
-        type: integer
-      parts:
-        items:
-          $ref: '#/definitions/bdspro.Asset'
-        type: array
-    type: object
-  bdspro.UpdateAssetRequest:
-    properties:
-      address:
-        type: string
       archived:
         type: boolean
-      area:
-        type: number
-      buyedDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      description:
-        type: string
-      districtId:
-        type: integer
-      docStatus:
-        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
-        type: integer
       id:
         type: integer
-      legalStatus:
-        type: string
-      name:
-        type: string
-      ownerOrgId:
+    type: object
+  bdspro.AssetSplitHistoryDTO:
+    properties:
+      archived:
+        type: boolean
+      id:
         type: integer
-      ownerUserId:
+    type: object
+  bdspro.CostDocumentDTO:
+    properties:
+      archived:
+        type: boolean
+      id:
         type: integer
-      parentAssetId:
-        type: integer
-      price:
-        type: number
-      productId:
-        type: integer
-      provinceId:
-        type: integer
-      purchaseDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      purchasePrice:
-        type: number
-      rentStatus:
-        type: string
-      splitMergeStatus:
-        type: string
-      wardId:
+    type: object
+  bdspro.IncomeDocumentDTO:
+    properties:
+      archived:
+        type: boolean
+      id:
         type: integer
     type: object
   data.ApartmentRequest:
@@ -203,45 +129,387 @@ definitions:
     type: object
   data.StatusResponse:
     type: object
-  domain.AssetSplitMergeHistory:
+  domain.ProductMediaItem:
     properties:
-      actionType:
-        type: string
-      assetId:
+      id:
         type: integer
-      childAssetIds:
-        description: JSON string or comma-separated IDs
+      isMain:
+        type: boolean
+      mediaType:
         type: string
+      mediaUrl:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  domain.ProductPrice:
+    properties:
       createdAt:
         type: string
       createdBy:
         description: gorm.Model
         type: integer
-      description:
+      currency:
         type: string
+      deposite:
+        type: number
       id:
         type: integer
-      parentAssetId:
+      priceOwner:
         type: integer
-      performedBy:
+      productId:
         type: integer
-      splitMergeDate:
-        type: string
+      rentCommission:
+        type: number
+      rentPaymentCycle:
+        type: integer
+      rentPrice:
+        type: number
+      saleCommission:
+        type: integer
+      salePrice:
+        type: number
       updatedAt:
         type: string
       updatedBy:
         type: integer
     type: object
-  dto.AssetDetailResponse:
+  domain.ProductPrivate:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      importPrice:
+        type: integer
+      internalNote:
+        type: string
+      operatingCost:
+        type: number
+      privateDocs:
+        type: string
+      productId:
+        type: integer
+      targetProfit:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
     type: object
+  dto.ArchivedRequest:
+    properties:
+      archived:
+        type: boolean
+      productId:
+        type: integer
+    required:
+    - archived
+    - productId
+    type: object
+  dto.AssetCreateWithProduct:
+    properties:
+      description:
+        type: string
+      legalStatus:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        description: Name          string            `json:"name,omitempty" binding:"required"`
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.AssetStatus'
+    type: object
+  dto.DepositeRequest:
+    properties:
+      amount:
+        type: integer
+      customerName:
+        minLength: 2
+        type: string
+      customerPhone:
+        minLength: 9
+        type: string
+      note:
+        type: string
+      productId:
+        type: integer
+    required:
+    - amount
+    - customerName
+    - customerPhone
+    - productId
+    type: object
+  dto.DevideChildRequest:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/dto.ProductSaveRequest'
+        type: array
+      parentId:
+        type: integer
+    required:
+    - childs
+    - parentId
+    type: object
+  dto.HouseInfoUpdate:
+    properties:
+      furniture:
+        description: 'Nội thất: "full", "partial", "none"'
+        type: string
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: house info
+        type: integer
+      numCarPark:
+        description: Số chỗ để ôtô
+        type: integer
+      numFloor:
+        description: Số tầng (optional)
+        type: integer
+      numFront:
+        description: Số mặt tiền
+        type: integer
+      orientation:
+        description: Hướng nhà (Đông, Tây, Nam,...)
+        type: string
+    type: object
+  dto.MediaItem:
+    properties:
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      order:
+        type: integer
+    type: object
+  dto.MergeProductChildRequest:
+    properties:
+      childIds:
+        items:
+          type: integer
+        type: array
+      parentId:
+        description: u_product_dto.ProductSaveRequest
+        type: integer
+    required:
+    - childIds
+    - parentId
+    type: object
+  dto.PostSaveWithProduct:
+    properties:
+      content:
+        type: string
+      expiredAt:
+        type: string
+      hidden:
+        type: boolean
+      metadatas:
+        $ref: '#/definitions/domain.ProductMediaItem'
+      numDate:
+        type: integer
+      packageVisible:
+        type: integer
+      postPrice:
+        type: number
+      productId:
+        type: integer
+      title:
+        type: string
+      transactionType:
+        type: integer
+      visibility:
+        $ref: '#/definitions/enums.PostVisibility'
+    type: object
+  dto.ProductSaveRequest:
+    properties:
+      amenityIds:
+        items:
+          type: integer
+        type: array
+      area:
+        type: number
+      asset:
+        $ref: '#/definitions/dto.AssetCreateWithProduct'
+      code:
+        type: string
+      description:
+        type: string
+      districtId:
+        type: integer
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/dto.HouseInfoUpdate'
+      mediaItems:
+        items:
+          $ref: '#/definitions/dto.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      parentId:
+        type: integer
+      post:
+        $ref: '#/definitions/dto.PostSaveWithProduct'
+      price:
+        $ref: '#/definitions/domain.ProductPrice'
+      productPrivate:
+        $ref: '#/definitions/domain.ProductPrivate'
+      projectId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      rentStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      saleStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      sourceType:
+        type: integer
+      transactionType:
+        type: integer
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - price
+    type: object
+  dto.SaveProductChildRequest:
+    properties:
+      amenityIds:
+        items:
+          type: integer
+        type: array
+      area:
+        type: number
+      asset:
+        $ref: '#/definitions/dto.AssetCreateWithProduct'
+      code:
+        type: string
+      description:
+        type: string
+      districtId:
+        type: integer
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/dto.HouseInfoUpdate'
+      mediaItems:
+        items:
+          $ref: '#/definitions/dto.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      parentId:
+        type: integer
+      post:
+        $ref: '#/definitions/dto.PostSaveWithProduct'
+      price:
+        $ref: '#/definitions/domain.ProductPrice'
+      productPrivate:
+        $ref: '#/definitions/domain.ProductPrivate'
+      projectId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      rentStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      saleStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      sourceType:
+        type: integer
+      transactionType:
+        type: integer
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - parentId
+    - price
+    type: object
+  dto.StatusUpdate:
+    properties:
+      productId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.ProductStatus'
+    required:
+    - productId
+    - status
+    type: object
+  dto.VisibilityUpdate:
+    properties:
+      productId:
+        type: integer
+      visibility:
+        $ref: '#/definitions/enums.VisibilityStatus'
+    required:
+    - productId
+    - visibility
+    type: object
+  enums.AssetStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-comments:
+      AssetStatusNotSold: đang bán
+      AssetStatusOwning: đang sở hữu
+      AssetStatusRenting: đang cho thuê
+      AssetStatusSelling: đang bán
+      AssetStatusSold: đã bán
+    x-enum-varnames:
+    - AssetStatusOwning
+    - AssetStatusRenting
+    - AssetStatusSold
+    - AssetStatusSelling
+    - AssetStatusNotSold
+  enums.PostVisibility:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      PostVisibleInternal: Nội bộ
+      PostVisiblePublic: Công khai
+      PostVisibleShowing: Đang hiển thị
+    x-enum-varnames:
+    - PostVisibleShowing
+    - PostVisiblePublic
+    - PostVisibleInternal
   enums.ProductStatus:
     enum:
-    - 1
-    - 2
-    - 3
-    - 4
-    - 5
-    - 6
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
     type: integer
     x-enum-comments:
       ProductNotRent: Chưa cho thuê
@@ -257,11 +525,31 @@ definitions:
     - ProductNotRent
     - ProductRenting
     - ProductRented
+  enums.ProductVisibility:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ProductVisiblePrivate
+    - ProductVisibleInternal
+    - ProductVisiblePublic
+  enums.Scope:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - Public
+    - Share
+    - Private
   enums.VisibilityStatus:
     enum:
-    - 1
-    - 2
-    - 3
+    - 10
+    - 20
+    - 30
     type: integer
     x-enum-comments:
       VisiShow: '"Đang hiển thị"'
@@ -288,6 +576,13 @@ definitions:
         type: string
       updatedBy:
         type: integer
+    type: object
+  models.AmenityItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   models.Apartment:
     properties:
@@ -341,6 +636,8 @@ definitions:
       numBedroom:
         description: Số phòng ngủ (optional)
         type: integer
+      price:
+        type: number
       updatedAt:
         description: Link bản vẽ
         type: string
@@ -372,6 +669,8 @@ definitions:
       numBedroom:
         description: Số phòng ngủ (optional)
         type: integer
+      price:
+        type: number
       updatedAt:
         type: string
       updatedBy:
@@ -392,6 +691,298 @@ definitions:
       ordinal:
         type: integer
       status:
+        type: integer
+    type: object
+  models.Asset:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      district:
+        $ref: '#/definitions/models.Region'
+      districtId:
+        type: integer
+      id:
+        type: integer
+      legalStatus:
+        type: integer
+      name:
+        type: string
+      ownerOrgId:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentAssetId:
+        type: integer
+      product:
+        $ref: '#/definitions/models.Product'
+      productId:
+        type: integer
+      propertyType:
+        $ref: '#/definitions/models.PropertyTypeItem'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/models.Region'
+      provinceId:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.AssetStatus'
+      splitMergeStatus:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      ward:
+        $ref: '#/definitions/models.Region'
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - purchasePrice
+    - wardId
+    type: object
+  models.AssetCost:
+    properties:
+      amount:
+        type: number
+      assetId:
+        type: integer
+      costTypeId:
+        type: integer
+      date:
+        description: ngày chi
+        type: string
+      description:
+        type: string
+      type:
+        type: integer
+    required:
+    - amount
+    - assetId
+    - costTypeId
+    - type
+    type: object
+  models.AssetCostType:
+    properties:
+      id:
+        type: integer
+      type:
+        type: integer
+      typeName:
+        type: string
+    required:
+    - type
+    - typeName
+    type: object
+  models.AssetExploitation:
+    properties:
+      assetId:
+        description: _models.BaseEntity
+        type: integer
+      contractName:
+        type: string
+      contractValue:
+        type: number
+      customer:
+        description: tên kh
+        type: string
+      cyclePay:
+        type: integer
+      description:
+        type: string
+      endDate:
+        type: string
+      fileContract:
+        type: string
+      incomeAmount:
+        type: number
+      startDate:
+        type: string
+      status:
+        type: integer
+      type:
+        $ref: '#/definitions/_owner.OwnerModel-models_AssetCostType'
+      typeId:
+        type: integer
+    required:
+    - assetId
+    - contractName
+    - contractValue
+    - customer
+    - typeId
+    type: object
+  models.AssetIncomeType:
+    properties:
+      typeName:
+        type: string
+    required:
+    - typeName
+    type: object
+  models.AssetLegal:
+    properties:
+      assetId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      documentName:
+        type: string
+      documentUrl:
+        type: string
+      expiryDate:
+        type: string
+      id:
+        type: integer
+      issuedDate:
+        type: string
+      relatedSplitMergeId:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - assetId
+    - documentName
+    - documentUrl
+    type: object
+  models.AssetShare:
+    properties:
+      assetId:
+        type: integer
+      permissions:
+        type: string
+      targetId:
+        type: integer
+      typeShare:
+        type: integer
+    required:
+    - assetId
+    - targetId
+    - typeShare
+    type: object
+  models.AssetSplit:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      description:
+        type: string
+      districtId:
+        type: integer
+      legalStatus:
+        type: integer
+      name:
+        type: string
+      parentAssetId:
+        type: integer
+      productId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.AssetStatus'
+      splitMergeStatus:
+        type: string
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - purchasePrice
+    - wardId
+    type: object
+  models.Attribute:
+    properties:
+      attribute_values:
+        items:
+          $ref: '#/definitions/models.AttributeValue'
+        type: array
+      created_at:
+        type: string
+      hint_text:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: integer
+      unit:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.AttributeProduct:
+    properties:
+      attribute:
+        $ref: '#/definitions/models.Attribute'
+      attribute_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: integer
+      updated_at:
+        type: string
+      value:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/models.AttributeValue'
+        type: array
+    type: object
+  models.AttributeValue:
+    properties:
+      attribute:
+        $ref: '#/definitions/models.Attribute'
+      attribute_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      value:
         type: integer
     type: object
   models.BuildRoom:
@@ -471,6 +1062,15 @@ definitions:
       website:
         type: string
     type: object
+  models.DeveloperItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
   models.District:
     properties:
       code:
@@ -503,6 +1103,186 @@ definitions:
       updatedAt:
         type: string
       updatedBy:
+        type: integer
+    type: object
+  models.DocTypeItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.HouseInfo:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      furniture:
+        description: 'Nội thất: "full", "partial", "none"'
+        type: string
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      numCarPark:
+        description: Số chỗ để ôtô
+        type: integer
+      numFloor:
+        description: Số tầng (optional)
+        type: integer
+      numFront:
+        description: Số mặt tiền
+        type: integer
+      numToilet:
+        type: integer
+      orientation:
+        description: Hướng nhà (Đông, Tây, Nam,...)
+        type: string
+      product_id:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.Product:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          $ref: '#/definitions/models.AmenityItem'
+        type: array
+      apartment:
+        $ref: '#/definitions/models.Apartment'
+      apartmentAttribute:
+        $ref: '#/definitions/models.ApartmentAttribute'
+      apartmentId:
+        type: integer
+      archived:
+        description: 0=chưa, 1=archive
+        type: boolean
+      area:
+        type: number
+      asset:
+        $ref: '#/definitions/models.Asset'
+      assetId:
+        type: integer
+      attributes:
+        items:
+          $ref: '#/definitions/models.AttributeProduct'
+        type: array
+      build:
+        $ref: '#/definitions/models.ProjectBuild'
+      categoryId:
+        type: integer
+      code:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      createdUser:
+        $ref: '#/definitions/models.ProfileInfo'
+      customerId:
+        type: integer
+      depositeId:
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/models.Developer'
+      district:
+        $ref: '#/definitions/models.Region'
+      districtId:
+        type: integer
+      docType:
+        $ref: '#/definitions/models.DocTypeItem'
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/models.HouseInfo'
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/models.ProductMediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      orgStatus:
+        type: integer
+      organizationId:
+        type: integer
+      ownerOrgId:
+        description: Tổ chức sở hữu (nếu cty mua)
+        type: integer
+      ownerUserId:
+        description: Ai sở hữu (nếu đã bán)
+        type: integer
+      parentId:
+        type: integer
+      positionUrl:
+        type: string
+      price:
+        $ref: '#/definitions/models.ProductPrice'
+      privateInfo:
+        $ref: '#/definitions/models.ProductPrivate'
+      project:
+        $ref: '#/definitions/models.Project'
+      propertyType:
+        $ref: '#/definitions/models.PropertyTypeItem'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/models.Region'
+      provinceId:
+        type: integer
+      rentStatus:
+        allOf:
+        - $ref: '#/definitions/enums.ProductStatus'
+        description: 10=Chưa thuê, 20=Đang đăng tin, 30=Đang cho thuê
+      rentVisibility:
+        allOf:
+        - $ref: '#/definitions/enums.ProductVisibility'
+        description: 10=Riêng tư, 20=Nội bộ, 30=Công khai
+      saleStatus:
+        allOf:
+        - $ref: '#/definitions/enums.ProductStatus'
+        description: 10=Chưa bán, 20=Đang bán, 30=Đã bán
+      saleVisibility:
+        allOf:
+        - $ref: '#/definitions/enums.ProductVisibility'
+        description: 10=Riêng tư, 20=Nội bộ, 30=Công khai
+      sourceType:
+        type: integer
+      transactionType:
+        description: '10: sale, 20: rent'
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      updatedUser:
+        $ref: '#/definitions/models.ProfileInfo'
+      visibility:
+        allOf:
+        - $ref: '#/definitions/enums.Scope'
+        description: phạm vi
+      ward:
+        $ref: '#/definitions/models.Region'
+      wardId:
         type: integer
     type: object
   models.ProductAccess:
@@ -612,6 +1392,41 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  models.ProfileInfo:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      profileId:
+        type: integer
+    type: object
+  models.Project:
+    properties:
+      builds:
+        items:
+          $ref: '#/definitions/models.ProjectBuildItem'
+        type: array
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/models.DeveloperItem'
+      developerId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   models.ProjectBuild:
     properties:
       apartments:
@@ -646,6 +1461,17 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  models.ProjectBuildItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+    type: object
   models.ProjectItem:
     properties:
       id:
@@ -672,6 +1498,13 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  models.PropertyTypeItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   models.Province:
     properties:
       code:
@@ -682,6 +1515,32 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  models.Region:
+    properties:
+      code:
+        type: integer
+      codeName:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      parentId:
+        type: integer
+      unit:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
     type: object
   models.Ward:
     properties:
@@ -714,55 +1573,72 @@ definitions:
           9999-12-31T23:59:59Z inclusive.
         type: integer
     type: object
-  u_action.ActionRequest:
+  u_asset.ArchivedDTO:
     properties:
-      action:
+      archived:
+        type: boolean
+      id:
         type: integer
-      targetId:
+    type: object
+  u_asset.MergeDTO:
+    properties:
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - ids
+    type: object
+  u_asset.SplitDTOSwagger:
+    properties:
+      datas:
+        items:
+          $ref: '#/definitions/models.AssetSplit'
+        type: array
+      id:
         type: integer
     required:
-    - action
-    - targetId
+    - datas
+    - id
     type: object
-  u_post.PostExpiredRequest:
+  u_asset_dto.AssetCreateWithProduct:
     properties:
-      numDay:
+      description:
+        type: string
+      legalStatus:
         type: integer
-      postId:
-        type: integer
-    required:
-    - numDay
-    - postId
+      purchaseDate:
+        type: string
+      purchasePrice:
+        description: Name          string            `json:"name,omitempty" binding:"required"`
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.AssetStatus'
     type: object
-  u_post.PostSaveRequest:
+  u_post_dto.PostSaveWithProduct:
     properties:
       content:
         type: string
       expiredAt:
         type: string
+      hidden:
+        type: boolean
       metadatas:
         $ref: '#/definitions/models.ProductMediaItem'
+      numDate:
+        type: integer
+      packageVisible:
+        type: integer
+      postPrice:
+        type: number
       productId:
         type: integer
       title:
         type: string
       transactionType:
         type: integer
-    required:
-    - content
-    - productId
-    - transactionType
-    type: object
-  u_post.PostUpdateRequest:
-    properties:
-      content:
-        type: string
-      metadatas:
-        $ref: '#/definitions/models.ProductMediaItem'
-      title:
-        type: string
-      transactionType:
-        type: integer
+      visibility:
+        $ref: '#/definitions/enums.PostVisibility'
     type: object
   u_product_access.AccessRequest:
     properties:
@@ -811,6 +1687,8 @@ definitions:
         type: array
       area:
         type: number
+      asset:
+        $ref: '#/definitions/u_asset_dto.AssetCreateWithProduct'
       code:
         type: string
       description:
@@ -833,6 +1711,8 @@ definitions:
         type: string
       parentId:
         type: integer
+      post:
+        $ref: '#/definitions/u_post_dto.PostSaveWithProduct'
       price:
         $ref: '#/definitions/models.ProductPrice'
       productPrivate:
@@ -842,6 +1722,12 @@ definitions:
       propertyTypeId:
         type: integer
       provinceId:
+        type: integer
+      rentStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      saleStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      sourceType:
         type: integer
       transactionType:
         type: integer
@@ -926,6 +1812,8 @@ definitions:
         type: array
       area:
         type: number
+      asset:
+        $ref: '#/definitions/u_asset_dto.AssetCreateWithProduct'
       code:
         type: string
       description:
@@ -948,6 +1836,8 @@ definitions:
         type: string
       parentId:
         type: integer
+      post:
+        $ref: '#/definitions/u_post_dto.PostSaveWithProduct'
       price:
         $ref: '#/definitions/models.ProductPrice'
       productPrivate:
@@ -957,6 +1847,12 @@ definitions:
       propertyTypeId:
         type: integer
       provinceId:
+        type: integer
+      rentStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      saleStatus:
+        $ref: '#/definitions/enums.ProductStatus'
+      sourceType:
         type: integer
       transactionType:
         type: integer
@@ -1293,7 +2189,7 @@ paths:
       parameters:
       - description: Thông tin Phòng chung cho các tầng
         in: body
-        name: BuildRoom
+        name: UserBuildRoom
         required: true
         schema:
           $ref: '#/definitions/models.BuildRoom'
@@ -2173,7 +3069,7 @@ paths:
       parameters:
       - description: Thông tin Tòa nhà trong dự án
         in: body
-        name: ProjectBuild
+        name: UserProjectBuild
         required: true
         schema:
           $ref: '#/definitions/models.ProjectBuild'
@@ -2825,244 +3721,6 @@ paths:
       summary: Cập nhật thông tin tỉnh
       tags:
       - Admin
-  /v1/bdspro/user/action:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Tham số
-        in: body
-        name: dto
-        required: true
-        schema:
-          $ref: '#/definitions/u_action.ActionRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Thêm sự kiện
-      tags:
-      - User/Action
-  /v1/bdspro/user/action/dashboard/post/{id}:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Đếm sự kiện của bài viết
-      tags:
-      - User/Action
-  /v1/bdspro/user/action/dashboard/post/bar:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - in: query
-        name: content
-        type: string
-      - in: query
-        name: fromDate
-        type: string
-      - description: day, month
-        in: query
-        name: group
-        type: string
-      - in: query
-        name: toDate
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Đếm sự kiện của bài viết
-      tags:
-      - User/Action
-  /v1/bdspro/user/post:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Thông tin đăng tin
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/u_post.PostSaveRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Đăng tin sản phẩm
-      tags:
-      - User/Post
-  /v1/bdspro/user/post/{id}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID bài đăng
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xóa
-      tags:
-      - User/Post
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID bài đăng
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xem chi tiết
-      tags:
-      - User/Post
-    put:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID bài đăng
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Thông tin đăng tin
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/u_post.PostUpdateRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Cập nhật tin
-      tags:
-      - User/Post
-  /v1/bdspro/user/post/global:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - in: query
-        name: content
-        type: string
-      - in: query
-        name: expiredFrom
-        type: string
-      - in: query
-        name: expiredTo
-        type: string
-      - in: query
-        name: hidden
-        type: boolean
-      - in: query
-        name: limit
-        type: integer
-      - in: query
-        name: skip
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - in: query
-        name: title
-        type: string
-      - in: query
-        name: transactionType
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      summary: Danh sách tin của tôi
-      tags:
-      - User/Post
-  /v1/bdspro/user/post/new-expired:
-    post:
-      consumes:
-      - application/json
-      description: API để gia hạn
-      parameters:
-      - description: Thông tin gia hạn
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/u_post.PostExpiredRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Gia hạn tin
-      tags:
-      - User/Post
-  /v1/bdspro/user/post/personal:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - in: query
-        name: content
-        type: string
-      - in: query
-        name: expiredFrom
-        type: string
-      - in: query
-        name: expiredTo
-        type: string
-      - in: query
-        name: hidden
-        type: boolean
-      - in: query
-        name: limit
-        type: integer
-      - in: query
-        name: skip
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - in: query
-        name: title
-        type: string
-      - in: query
-        name: transactionType
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Danh sách tin của tôi
-      tags:
-      - User/Post
   /v1/bdspro/user/product-access:
     get:
       consumes:
@@ -3126,6 +3784,49 @@ paths:
       tags:
       - User/Product-share
   /v1/bdspro/user/product-access/{productId}/batch:
+    post:
+      consumes:
+      - application/json
+      description: Thêm một Dự án mới vào hệ thống
+      parameters:
+      - description: Thông tin Dự án
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin Dự án
+        in: body
+        name: ProductAccess
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/u_product_access.AccessRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ProductAccess'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Không thể tạo dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo Dự án mới
+      tags:
+      - User/Product-share
+  /v1/bdspro/user/product-access/{productId}/bulk:
     post:
       consumes:
       - application/json
@@ -3274,7 +3975,7 @@ paths:
       summary: Chia sẻ co-broker
       tags:
       - User
-  /v1/bdspro/user/product/archived/{productId}:
+  /v1/bdspro/user/product/archived:
     put:
       consumes:
       - application/json
@@ -3353,7 +4054,7 @@ paths:
       summary: Gộp toàn bộ sản phẩm con
       tags:
       - User/Product-child
-  /v1/bdspro/user/product/history:
+  /v1/bdspro/user/product/history-child/:id:
     get:
       consumes:
       - application/json
@@ -3373,30 +4074,6 @@ paths:
       summary: Gộp toàn bộ sản phẩm con
       tags:
       - User/Product-child
-  /v1/bdspro/user/product/internal:
-    get:
-      consumes:
-      - application/json
-      description: API để đăng tin sản phẩm lên hệ thống
-      parameters:
-      - description: Thông tin đăng tin
-        in: body
-        name: publish
-        required: true
-        schema:
-          $ref: '#/definitions/data.StatusRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Tin được đăng thành công
-          schema:
-            $ref: '#/definitions/data.StatusResponse'
-      security:
-      - BearerAuth: []
-      summary: Đăng tin sản phẩm
-      tags:
-      - User/Product-search
   /v1/bdspro/user/product/market:
     get:
       consumes:
@@ -3813,197 +4490,92 @@ paths:
       summary: Tìm kiếm tổng hợp
       tags:
       - User/Product-search
-  /v2/bdspro/v2/assets:
+  /v1/bdspro/v1/user/asset-cost:
     get:
-      description: Trả về danh sách tất cả tài sản hiện có trong hệ thống
+      parameters:
+      - description: |-
+          Page    int     `form:"page"`
+          Size    int     `form:"size"`
+        in: query
+        name: assetId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: typeIds
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: types
+        type: array
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách tài sản
+      summary: Lấy danh sách
       tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}:
+      - Chi phí tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetCost'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Chi phí tài sản
+  /v1/bdspro/v1/user/asset-cost/{id}:
     delete:
-      description: Xóa một tài sản khỏi hệ thống
       parameters:
-      - description: ID tài sản
+      - description: ID
         in: path
         name: id
         required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/data.StatusResponse'
-      security:
-      - BearerAuth: []
-      summary: Xóa tài sản
-      tags:
-      - Assets
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật thông tin một tài sản theo ID
-      parameters:
-      - description: ID tài sản
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Thông tin cập nhật
-        in: body
-        name: asset
-        required: true
-        schema:
-          $ref: '#/definitions/bdspro.UpdateAssetRequest'
+        type: integer
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Cập nhật tài sản
+      summary: Xóa
       tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}/details:
+      - Chi phí tài sản
     get:
-      description: Lấy thông tin chi tiết của một tài sản theo ID
       parameters:
-      - description: ID tài sản
+      - description: ID
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.AssetDetailResponse'
+      responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy chi tiết tài sản
+      summary: Xem chi tiết
       tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}/history:
-    get:
-      description: Lấy lịch sử thay đổi của một tài sản
-      parameters:
-      - description: ID tài sản
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/domain.AssetSplitMergeHistory'
-            type: array
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tài sản
-      tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}/merge:
-    post:
-      consumes:
-      - application/json
-      description: Gộp nhiều tài sản thành một tài sản chung
-      parameters:
-      - description: ID tài sản chính
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Thông tin gộp tài sản
-        in: body
-        name: merge
-        required: true
-        schema:
-          $ref: '#/definitions/bdspro.MergeAssetRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/data.StatusResponse'
-      security:
-      - BearerAuth: []
-      summary: Gộp tài sản
-      tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}/share:
-    post:
-      consumes:
-      - application/json
-      description: Chia sẻ quyền quản lý tài sản cho người khác
-      parameters:
-      - description: ID tài sản
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Thông tin chia sẻ
-        in: body
-        name: share
-        required: true
-        schema:
-          $ref: '#/definitions/bdspro.ShareAssetRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/data.StatusResponse'
-      security:
-      - BearerAuth: []
-      summary: Chia sẻ tài sản
-      tags:
-      - Assets
-  /v2/bdspro/v2/assets/{id}/split:
-    post:
-      consumes:
-      - application/json
-      description: Tách tài sản hiện tại thành nhiều tài sản nhỏ hơn
-      parameters:
-      - description: ID tài sản
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Thông tin tách tài sản
-        in: body
-        name: split
-        required: true
-        schema:
-          $ref: '#/definitions/bdspro.SplitAssetRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/data.StatusResponse'
-      security:
-      - BearerAuth: []
-      summary: Tách tài sản
-      tags:
-      - Assets
-  /v2/bdspro/v2/assets/archived/{id}:
+      - Chi phí tài sản
     put:
-      consumes:
-      - application/json
       parameters:
       - description: ID
         in: path
@@ -4013,36 +4585,1622 @@ paths:
       - description: Body
         in: body
         name: body
-        schema:
-          $ref: '#/definitions/bdspro.ArchivedRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lưu trữ tài sản
-      tags:
-      - Assets
-  /v2/bdspro/v2/assets/create:
-    post:
-      consumes:
-      - application/json
-      description: API dùng để tạo mới một tài sản trong hệ thống
-      parameters:
-      - description: Thông tin tài sản
-        in: body
-        name: asset
         required: true
         schema:
-          $ref: '#/definitions/bdspro.CreateAssetRequest'
+          $ref: '#/definitions/models.AssetCost'
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Tạo tài sản mới
+      summary: Lấy theo ID
       tags:
-      - Assets
+      - Chi phí tài sản
+  /v1/bdspro/v1/user/asset-exploitation:
+    get:
+      parameters:
+      - in: query
+        name: assetId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: status
+        type: array
+      - in: query
+        name: text
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: typeId
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Hợp đồng khai thác
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetExploitation'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Hợp đồng khai thác
+  /v1/bdspro/v1/user/asset-exploitation/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Hợp đồng khai thác
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Hợp đồng khai thác
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetExploitation'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Hợp đồng khai thác
+  /v1/bdspro/v1/user/asset-legal:
+    get:
+      parameters:
+      - description: |-
+          Page    int     `form:"page"`
+          Size    int     `form:"size"`
+        in: query
+        name: assetId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: typeIds
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: types
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - chi
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetLegal'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - chi
+  /v1/bdspro/v1/user/asset-legal/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - chi
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - chi
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetLegal'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - chi
+  /v1/bdspro/v1/user/asset/share:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtIds
+        type: integer
+      - in: query
+        name: docStatus
+        type: integer
+      - in: query
+        name: legalStatus
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentAssetId
+        type: integer
+      - in: query
+        name: priceFrom
+        type: integer
+      - in: query
+        name: priceTo
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceIds
+        type: integer
+      - in: query
+        name: purchasePriceFrom
+        type: number
+      - in: query
+        name: purchasePriceTo
+        type: number
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: splitMergeStatus
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardIds
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Chia sẻ tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetShare'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Chia sẻ tài sản
+  /v1/bdspro/v1/user/asset/share/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Chia sẻ tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Chia sẻ tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetShare'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Chia sẻ tài sản
+  /v1/bdspro/v1/user/assets:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Asset'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Asset'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/archived/{id}:
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.ArchivedDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/history-owner:
+    get:
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lịch sử tách gộp tài sản dành cho user
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/history/:id:
+    get:
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lịch sử tách gộp tài sản danh cho tài sản
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/internal:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtIds
+        type: integer
+      - in: query
+        name: docStatus
+        type: integer
+      - in: query
+        name: legalStatus
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentAssetId
+        type: integer
+      - in: query
+        name: priceFrom
+        type: integer
+      - in: query
+        name: priceTo
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceIds
+        type: integer
+      - in: query
+        name: purchasePriceFrom
+        type: number
+      - in: query
+        name: purchasePriceTo
+        type: number
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: splitMergeStatus
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardIds
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản được chia sẻ
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/merge:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.MergeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp tài sản
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/search:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtIds
+        type: integer
+      - in: query
+        name: docStatus
+        type: integer
+      - in: query
+        name: legalStatus
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentAssetId
+        type: integer
+      - in: query
+        name: priceFrom
+        type: integer
+      - in: query
+        name: priceTo
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceIds
+        type: integer
+      - in: query
+        name: purchasePriceFrom
+        type: number
+      - in: query
+        name: purchasePriceTo
+        type: number
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: splitMergeStatus
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardIds
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản của người dùng
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/assets/split:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.SplitDTOSwagger'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tách tài sản
+      tags:
+      - Tài sản
+  /v1/bdspro/v1/user/type/asset-cost:
+    get:
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      - description: 10, 20
+        in: query
+        name: types
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách loại chi phí
+      tags:
+      - Danh mục loại
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetCostType'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới loại chi phí
+      tags:
+      - Danh mục loại
+  /v1/bdspro/v1/user/type/asset-cost/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa loại chi phí
+      tags:
+      - Danh mục loại
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết loại chi phí
+      tags:
+      - Danh mục loại
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetCostType'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID loại chi phí
+      tags:
+      - Danh mục loại
+  /v1/bdspro/v1/user/type/asset-income:
+    get:
+      parameters:
+      - in: query
+        name: assetId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách loại thu nhập
+      tags:
+      - Danh mục loại
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetIncomeType'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới loại thu nhập
+      tags:
+      - Danh mục loại
+  /v1/bdspro/v1/user/type/asset-income/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa loại thu nhập
+      tags:
+      - Danh mục loại
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết loại thu nhập
+      tags:
+      - Danh mục loại
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetIncomeType'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID loại thu nhập
+      tags:
+      - Danh mục loại
+  /v2/bdspro/v2/asset-cost:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: amount
+        type: number
+      - in: query
+        name: assetId
+        type: integer
+      - in: query
+        name: description
+        type: string
+      - in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetCostDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-cost-type:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isCustom
+        type: boolean
+      - in: query
+        name: typeName
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetCostTypeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-cost-type/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetCostTypeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-cost/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetCostDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-exploitation:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: assetID
+        type: integer
+      - in: query
+        name: contractValue
+        type: number
+      - in: query
+        name: customer
+        type: string
+      - in: query
+        name: description
+        type: string
+      - in: query
+        name: fileContract
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: incomeAmount
+        type: number
+      - in: query
+        name: type
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetExploitationDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-exploitation/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetExploitationDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-income-type:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isCustom
+        type: boolean
+      - in: query
+        name: typeName
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetIncomeTypeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-income-type/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetIncomeTypeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/asset-legal:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - AssetLegal
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetLegalDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - AssetLegal
+  /v2/bdspro/v2/asset-legal/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - AssetLegal
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - AssetLegal
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetLegalDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - AssetLegal
+  /v2/bdspro/v2/asset-split-history:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - AssetSplitHistory
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetSplitHistoryDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - AssetSplitHistory
+  /v2/bdspro/v2/asset-split-history/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - AssetSplitHistory
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - AssetSplitHistory
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.AssetSplitHistoryDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - AssetSplitHistory
+  /v2/bdspro/v2/cost-document:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.CostDocumentDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/cost-document/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.CostDocumentDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/income-document:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách
+      tags:
+      - Thu - Chi tài sản
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.IncomeDocumentDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Thu - Chi tài sản
+  /v2/bdspro/v2/income-document/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Thu - Chi tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Thu - Chi tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspro.IncomeDocumentDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Thu - Chi tài sản
 securityDefinitions:
   BearerAuth:
     in: header

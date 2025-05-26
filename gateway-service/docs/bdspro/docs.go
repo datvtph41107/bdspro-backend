@@ -496,7 +496,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Thông tin Phòng chung cho các tầng",
-                        "name": "BuildRoom",
+                        "name": "UserBuildRoom",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1876,7 +1876,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Thông tin Tòa nhà trong dự án",
-                        "name": "ProjectBuild",
+                        "name": "UserProjectBuild",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -2889,393 +2889,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/bdspro/user/action": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Action"
-                ],
-                "summary": "Thêm sự kiện",
-                "parameters": [
-                    {
-                        "description": "Tham số",
-                        "name": "dto",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/u_action.ActionRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/action/dashboard/post/bar": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Action"
-                ],
-                "summary": "Đếm sự kiện của bài viết",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "content",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "fromDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "day, month",
-                        "name": "group",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "toDate",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/action/dashboard/post/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Action"
-                ],
-                "summary": "Đếm sự kiện của bài viết",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/post": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Đăng tin sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin đăng tin",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/u_post.PostSaveRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/post/global": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Danh sách tin của tôi",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "content",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "expiredFrom",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "expiredTo",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "hidden",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "skip",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "title",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "transactionType",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/post/new-expired": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API để gia hạn",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Gia hạn tin",
-                "parameters": [
-                    {
-                        "description": "Thông tin gia hạn",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/u_post.PostExpiredRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/post/personal": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Danh sách tin của tôi",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "content",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "expiredFrom",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "expiredTo",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "hidden",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "skip",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "title",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "transactionType",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/user/post/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Xem chi tiết",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID bài đăng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Cập nhật tin",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID bài đăng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin đăng tin",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/u_post.PostUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Post"
-                ],
-                "summary": "Xóa",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID bài đăng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/user/product-access": {
             "get": {
                 "security": [
@@ -3481,6 +3094,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/bdspro/user/product-access/{productId}/bulk": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một Dự án mới vào hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User/Product-share"
+                ],
+                "summary": "Tạo Dự án mới",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Thông tin Dự án",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin Dự án",
+                        "name": "ProductAccess",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/u_product_access.AccessRequest"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Không thể tạo dữ liệu",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/bdspro/user/product/access-share": {
             "post": {
                 "security": [
@@ -3502,7 +3182,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/user/product/archived/{productId}": {
+        "/v1/bdspro/user/product/archived": {
             "put": {
                 "security": [
                     {
@@ -3626,7 +3306,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/user/product/history": {
+        "/v1/bdspro/user/product/history-child/:id": {
             "get": {
                 "security": [
                     {
@@ -3657,45 +3337,6 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
-            }
-        },
-        "/v1/bdspro/user/product/internal": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API để đăng tin sản phẩm lên hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User/Product-search"
-                ],
-                "summary": "Đăng tin sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin đăng tin",
-                        "name": "publish",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/data.StatusRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tin được đăng thành công",
-                        "schema": {
-                            "$ref": "#/definitions/data.StatusResponse"
-                        }
-                    }
-                }
             }
         },
         "/v1/bdspro/user/product/market": {
@@ -4452,41 +4093,128 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v2/bdspro/v2/assets": {
+        "/v1/bdspro/v1/user/asset-cost": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Trả về danh sách tất cả tài sản hiện có trong hệ thống",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Chi phí tài sản"
                 ],
-                "summary": "Lấy danh sách tài sản",
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page    int     ` + "`" + `form:\"page\"` + "`" + `\nSize    int     ` + "`" + `form:\"size\"` + "`" + `",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "typeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "types",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi phí tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetCost"
+                        }
+                    }
+                ],
                 "responses": {}
             }
         },
-        "/v2/bdspro/v2/assets/archived/{id}": {
+        "/v1/bdspro/v1/user/asset-cost/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi phí tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Chi phí tài sản"
                 ],
-                "summary": "Lưu trữ tài sản",
+                "summary": "Lấy theo ID",
                 "parameters": [
                     {
                         "type": "integer",
@@ -4499,79 +4227,9 @@ const docTemplate = `{
                         "description": "Body",
                         "name": "body",
                         "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/bdspro.ArchivedRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/assets/create": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API dùng để tạo mới một tài sản trong hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Assets"
-                ],
-                "summary": "Tạo tài sản mới",
-                "parameters": [
-                    {
-                        "description": "Thông tin tài sản",
-                        "name": "asset",
-                        "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bdspro.CreateAssetRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/assets/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật thông tin một tài sản theo ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Assets"
-                ],
-                "summary": "Cập nhật tài sản",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID tài sản",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "asset",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/bdspro.UpdateAssetRequest"
+                            "$ref": "#/definitions/models.AssetCost"
                         }
                     }
                 ],
@@ -4583,503 +4241,2774 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Xóa một tài sản khỏi hệ thống",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Chi phí tài sản"
                 ],
-                "summary": "Xóa tài sản",
+                "summary": "Xóa",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID tài sản",
+                        "type": "integer",
+                        "description": "ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/data.StatusResponse"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
-        "/v2/bdspro/v2/assets/{id}/details": {
+        "/v1/bdspro/v1/user/asset-exploitation": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy thông tin chi tiết của một tài sản theo ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Hợp đồng khai thác"
                 ],
-                "summary": "Lấy chi tiết tài sản",
+                "summary": "Lấy danh sách",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID tài sản",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.AssetDetailResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/bdspro/v2/assets/{id}/history": {
-            "get": {
-                "security": [
+                        "type": "integer",
+                        "name": "assetId",
+                        "in": "query"
+                    },
                     {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy lịch sử thay đổi của một tài sản",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Assets"
-                ],
-                "summary": "Lịch sử tài sản",
-                "parameters": [
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
-                        "description": "ID tài sản",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "typeId",
+                        "in": "query"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.AssetSplitMergeHistory"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/bdspro/v2/assets/{id}/merge": {
+                "responses": {}
+            },
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Gộp nhiều tài sản thành một tài sản chung",
-                "consumes": [
+                "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng khai thác"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetExploitation"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/asset-exploitation/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Hợp đồng khai thác"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng khai thác"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetExploitation"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng khai thác"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/asset-legal": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - chi"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page    int     ` + "`" + `form:\"page\"` + "`" + `\nSize    int     ` + "`" + `form:\"size\"` + "`" + `",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "typeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "types",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - chi"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetLegal"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/asset-legal/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - chi"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - chi"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetLegal"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - chi"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/asset/share": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "districtIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "docStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "legalStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentAssetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "splitMergeStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardIds",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetShare"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/asset/share/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetShare"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Asset"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/archived/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_asset.ArchivedDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/history-owner": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Lịch sử tách gộp tài sản dành cho user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/history/:id": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Lịch sử tách gộp tài sản danh cho tài sản",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/internal": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản được chia sẻ",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "districtIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "docStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "legalStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentAssetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "splitMergeStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardIds",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/merge": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
                 ],
                 "summary": "Gộp tài sản",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID tài sản chính",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin gộp tài sản",
-                        "name": "merge",
+                        "description": "body",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bdspro.MergeAssetRequest"
+                            "$ref": "#/definitions/u_asset.MergeDTO"
                         }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/data.StatusResponse"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
-        "/v2/bdspro/v2/assets/{id}/share": {
-            "post": {
+        "/v1/bdspro/v1/user/assets/search": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Chia sẻ quyền quản lý tài sản cho người khác",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Tài sản"
                 ],
-                "summary": "Chia sẻ tài sản",
+                "summary": "Lấy danh sách tài sản của người dùng",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID tài sản",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
                     },
                     {
-                        "description": "Thông tin chia sẻ",
-                        "name": "share",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/bdspro.ShareAssetRequest"
-                        }
+                        "type": "integer",
+                        "name": "districtIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "docStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "legalStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentAssetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "priceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "purchasePriceTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "splitMergeStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardIds",
+                        "in": "query"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/data.StatusResponse"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
-        "/v2/bdspro/v2/assets/{id}/split": {
+        "/v1/bdspro/v1/user/assets/split": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Tách tài sản hiện tại thành nhiều tài sản nhỏ hơn",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Assets"
+                    "Tài sản"
                 ],
                 "summary": "Tách tài sản",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID tài sản",
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/u_asset.SplitDTOSwagger"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/assets/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Thông tin tách tài sản",
-                        "name": "split",
+                        "description": "Body",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bdspro.SplitAssetRequest"
+                            "$ref": "#/definitions/models.Asset"
                         }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/type/asset-cost": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Lấy danh sách loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "10, 20",
+                        "name": "types",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Tạo mới loại chi phí",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.StatusResponse"
+                            "$ref": "#/definitions/models.AssetCostType"
                         }
                     }
-                }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/type/asset-cost/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Xem chi tiết loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Lấy theo ID loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetCostType"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Xóa loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/type/asset-income": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Lấy danh sách loại thu nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Tạo mới loại thu nhập",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetIncomeType"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v1/user/type/asset-income/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Xem chi tiết loại thu nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Lấy theo ID loại thu nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetIncomeType"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Danh mục loại"
+                ],
+                "summary": "Xóa loại thu nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-cost": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetCostDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-cost-type": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isCustom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "typeName",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetCostTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-cost-type/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetCostTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-cost/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetCostDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-exploitation": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "assetID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "contractValue",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "customer",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fileContract",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "name": "incomeAmount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetExploitationDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-exploitation/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetExploitationDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-income-type": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isCustom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "typeName",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetIncomeTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-income-type/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetIncomeTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-legal": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetLegalDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-legal/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetLegalDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-split-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetSplitHistory"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetSplitHistory"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetSplitHistoryDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset-split-history/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetSplitHistory"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetSplitHistory"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.AssetSplitHistoryDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetSplitHistory"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/cost-document": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.CostDocumentDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/cost-document/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.CostDocumentDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/income-document": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy danh sách",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.IncomeDocumentDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/income-document/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspro.IncomeDocumentDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thu - Chi tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         }
     },
     "definitions": {
-        "bdspro.ArchivedRequest": {
+        "_owner.OwnerModel-models_AssetCostType": {
             "type": "object",
             "properties": {
-                "archived": {
-                    "type": "boolean"
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/models.AssetCostType"
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
                     "type": "integer"
                 }
             }
         },
-        "bdspro.Asset": {
+        "bdspro.AssetCostDTO": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "area": {
+                "amount": {
                     "type": "number"
                 },
-                "buyedDate": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "date": {
                     "$ref": "#/definitions/timestamppb.Timestamp"
                 },
                 "description": {
                     "type": "string"
                 },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docStatus": {
-                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
-                    "type": "integer"
-                },
                 "id": {
-                    "type": "integer"
-                },
-                "legalStatus": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerOrgId": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "type": "string"
-                },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "wardId": {
                     "type": "integer"
                 }
             }
         },
-        "bdspro.CreateAssetRequest": {
+        "bdspro.AssetCostTypeDTO": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
+                "id": {
+                    "type": "integer"
                 },
-                "archived": {
+                "isCustom": {
                     "type": "boolean"
                 },
-                "area": {
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspro.AssetExploitationDTO": {
+            "type": "object",
+            "properties": {
+                "assetID": {
+                    "type": "integer"
+                },
+                "contractValue": {
                     "type": "number"
                 },
-                "buyedDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                "customer": {
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docStatus": {
-                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "legalStatus": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerOrgId": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
+                "endDate": {
                     "$ref": "#/definitions/timestamppb.Timestamp"
                 },
-                "purchasePrice": {
+                "fileContract": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incomeAmount": {
                     "type": "number"
                 },
-                "rentStatus": {
-                    "type": "string"
+                "startDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
                 },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "wardId": {
+                "type": {
                     "type": "integer"
                 }
             }
         },
-        "bdspro.MergeAssetRequest": {
+        "bdspro.AssetIncomeTypeDTO": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "integer"
                 },
-                "ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "isCustom": {
+                    "type": "boolean"
                 },
-                "new_name": {
+                "typeName": {
                     "type": "string"
                 }
             }
         },
-        "bdspro.ShareAssetRequest": {
+        "bdspro.AssetLegalDTO": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "user_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "bdspro.SplitAssetRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "parts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/bdspro.Asset"
-                    }
-                }
-            }
-        },
-        "bdspro.UpdateAssetRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
                 "archived": {
                     "type": "boolean"
                 },
-                "area": {
-                    "type": "number"
-                },
-                "buyedDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
+                "id": {
                     "type": "integer"
-                },
-                "docStatus": {
-                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
-                    "type": "integer"
+                }
+            }
+        },
+        "bdspro.AssetSplitHistoryDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspro.CostDocumentDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
                 },
-                "legalStatus": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerOrgId": {
+                "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspro.IncomeDocumentDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
                 },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "type": "string"
-                },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "wardId": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -5130,19 +7059,29 @@ const docTemplate = `{
         "data.StatusResponse": {
             "type": "object"
         },
-        "domain.AssetSplitMergeHistory": {
+        "domain.ProductMediaItem": {
             "type": "object",
             "properties": {
-                "actionType": {
-                    "type": "string"
-                },
-                "assetId": {
+                "id": {
                     "type": "integer"
                 },
-                "childAssetIds": {
-                    "description": "JSON string or comma-separated IDs",
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
                     "type": "string"
                 },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ProductPrice": {
+            "type": "object",
+            "properties": {
                 "createdAt": {
                     "type": "string"
                 },
@@ -5150,20 +7089,35 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
-                "description": {
+                "currency": {
                     "type": "string"
+                },
+                "deposite": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "parentAssetId": {
+                "priceOwner": {
                     "type": "integer"
                 },
-                "performedBy": {
+                "productId": {
                     "type": "integer"
                 },
-                "splitMergeDate": {
-                    "type": "string"
+                "rentCommission": {
+                    "type": "number"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "type": "integer"
+                },
+                "salePrice": {
+                    "type": "number"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -5173,18 +7127,492 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.AssetDetailResponse": {
-            "type": "object"
+        "domain.ProductPrivate": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "importPrice": {
+                    "type": "integer"
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "operatingCost": {
+                    "type": "number"
+                },
+                "privateDocs": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ArchivedRequest": {
+            "type": "object",
+            "required": [
+                "archived",
+                "productId"
+            ],
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AssetCreateWithProduct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.AssetStatus"
+                }
+            }
+        },
+        "dto.DepositeRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "customerName",
+                "customerPhone",
+                "productId"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "customerName": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "customerPhone": {
+                    "type": "string",
+                    "minLength": 9
+                },
+                "note": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.DevideChildRequest": {
+            "type": "object",
+            "required": [
+                "childs",
+                "parentId"
+            ],
+            "properties": {
+                "childs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductSaveRequest"
+                    }
+                },
+                "parentId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.HouseInfoUpdate": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "description": "Nội thất: \"full\", \"partial\", \"none\"",
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "house info",
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "description": "Số chỗ để ôtô",
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "description": "Số tầng (optional)",
+                    "type": "integer"
+                },
+                "numFront": {
+                    "description": "Số mặt tiền",
+                    "type": "integer"
+                },
+                "orientation": {
+                    "description": "Hướng nhà (Đông, Tây, Nam,...)",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.MediaItem": {
+            "type": "object",
+            "properties": {
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.MergeProductChildRequest": {
+            "type": "object",
+            "required": [
+                "childIds",
+                "parentId"
+            ],
+            "properties": {
+                "childIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "parentId": {
+                    "description": "u_product_dto.ProductSaveRequest",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PostSaveWithProduct": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "metadatas": {
+                    "$ref": "#/definitions/domain.ProductMediaItem"
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/enums.PostVisibility"
+                }
+            }
+        },
+        "dto.ProductSaveRequest": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "price"
+            ],
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/dto.AssetCreateWithProduct"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/dto.HouseInfoUpdate"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/dto.PostSaveWithProduct"
+                },
+                "price": {
+                    "$ref": "#/definitions/domain.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/domain.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "saleStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.SaveProductChildRequest": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "parentId",
+                "price"
+            ],
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/dto.AssetCreateWithProduct"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/dto.HouseInfoUpdate"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/dto.PostSaveWithProduct"
+                },
+                "price": {
+                    "$ref": "#/definitions/domain.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/domain.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "saleStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.StatusUpdate": {
+            "type": "object",
+            "required": [
+                "productId",
+                "status"
+            ],
+            "properties": {
+                "productId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                }
+            }
+        },
+        "dto.VisibilityUpdate": {
+            "type": "object",
+            "required": [
+                "productId",
+                "visibility"
+            ],
+            "properties": {
+                "productId": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/enums.VisibilityStatus"
+                }
+            }
+        },
+        "enums.AssetStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ],
+            "x-enum-comments": {
+                "AssetStatusNotSold": "đang bán",
+                "AssetStatusOwning": "đang sở hữu",
+                "AssetStatusRenting": "đang cho thuê",
+                "AssetStatusSelling": "đang bán",
+                "AssetStatusSold": "đã bán"
+            },
+            "x-enum-varnames": [
+                "AssetStatusOwning",
+                "AssetStatusRenting",
+                "AssetStatusSold",
+                "AssetStatusSelling",
+                "AssetStatusNotSold"
+            ]
+        },
+        "enums.PostVisibility": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "PostVisibleInternal": "Nội bộ",
+                "PostVisiblePublic": "Công khai",
+                "PostVisibleShowing": "Đang hiển thị"
+            },
+            "x-enum-varnames": [
+                "PostVisibleShowing",
+                "PostVisiblePublic",
+                "PostVisibleInternal"
+            ]
         },
         "enums.ProductStatus": {
             "type": "integer",
             "enum": [
-                1,
-                2,
-                3,
-                4,
-                5,
-                6
+                10,
+                20,
+                30,
+                40,
+                50,
+                60
             ],
             "x-enum-comments": {
                 "ProductNotRent": "Chưa cho thuê",
@@ -5203,12 +7631,38 @@ const docTemplate = `{
                 "ProductRented"
             ]
         },
+        "enums.ProductVisibility": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "ProductVisiblePrivate",
+                "ProductVisibleInternal",
+                "ProductVisiblePublic"
+            ]
+        },
+        "enums.Scope": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "Public",
+                "Share",
+                "Private"
+            ]
+        },
         "enums.VisibilityStatus": {
             "type": "integer",
             "enum": [
-                1,
-                2,
-                3
+                10,
+                20,
+                30
             ],
             "x-enum-comments": {
                 "VisiShow": "\"Đang hiển thị\"",
@@ -5245,6 +7699,17 @@ const docTemplate = `{
                 },
                 "updatedBy": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.AmenityItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -5323,6 +7788,9 @@ const docTemplate = `{
                     "description": "Số phòng ngủ (optional)",
                     "type": "integer"
                 },
+                "price": {
+                    "type": "number"
+                },
                 "updatedAt": {
                     "description": "Link bản vẽ",
                     "type": "string"
@@ -5366,6 +7834,9 @@ const docTemplate = `{
                     "description": "Số phòng ngủ (optional)",
                     "type": "integer"
                 },
+                "price": {
+                    "type": "number"
+                },
                 "updatedAt": {
                     "type": "string"
                 },
@@ -5396,6 +7867,438 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Asset": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "purchasePrice",
+                "wardId"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "district": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerOrgId": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/models.Product"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/models.PropertyTypeItem"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.AssetStatus"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "ward": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetCost": {
+            "type": "object",
+            "required": [
+                "amount",
+                "assetId",
+                "costTypeId",
+                "type"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "costTypeId": {
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "ngày chi",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetCostType": {
+            "type": "object",
+            "required": [
+                "type",
+                "typeName"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AssetExploitation": {
+            "type": "object",
+            "required": [
+                "assetId",
+                "contractName",
+                "contractValue",
+                "customer",
+                "typeId"
+            ],
+            "properties": {
+                "assetId": {
+                    "description": "_models.BaseEntity",
+                    "type": "integer"
+                },
+                "contractName": {
+                    "type": "string"
+                },
+                "contractValue": {
+                    "type": "number"
+                },
+                "customer": {
+                    "description": "tên kh",
+                    "type": "string"
+                },
+                "cyclePay": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "fileContract": {
+                    "type": "string"
+                },
+                "incomeAmount": {
+                    "type": "number"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/_owner.OwnerModel-models_AssetCostType"
+                },
+                "typeId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetIncomeType": {
+            "type": "object",
+            "required": [
+                "typeName"
+            ],
+            "properties": {
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AssetLegal": {
+            "type": "object",
+            "required": [
+                "assetId",
+                "documentName",
+                "documentUrl"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                },
+                "relatedSplitMergeId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetShare": {
+            "type": "object",
+            "required": [
+                "assetId",
+                "targetId",
+                "typeShare"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "typeShare": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetSplit": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "purchasePrice",
+                "wardId"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.AssetStatus"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Attribute": {
+            "type": "object",
+            "properties": {
+                "attribute_values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AttributeValue"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "hint_text": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AttributeProduct": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/models.Attribute"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "product": {
+                    "$ref": "#/definitions/models.Product"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AttributeValue"
+                    }
+                }
+            }
+        },
+        "models.AttributeValue": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/models.Attribute"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {
                     "type": "integer"
                 }
             }
@@ -5513,6 +8416,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.DeveloperItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.District": {
             "type": "object",
             "properties": {
@@ -5560,6 +8477,281 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.DocTypeItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.HouseInfo": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "furniture": {
+                    "description": "Nội thất: \"full\", \"partial\", \"none\"",
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "Số phòng ngủ (optional)",
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "description": "Số chỗ để ôtô",
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "description": "Số tầng (optional)",
+                    "type": "integer"
+                },
+                "numFront": {
+                    "description": "Số mặt tiền",
+                    "type": "integer"
+                },
+                "numToilet": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "description": "Hướng nhà (Đông, Tây, Nam,...)",
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Product": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AmenityItem"
+                    }
+                },
+                "apartment": {
+                    "$ref": "#/definitions/models.Apartment"
+                },
+                "apartmentAttribute": {
+                    "$ref": "#/definitions/models.ApartmentAttribute"
+                },
+                "apartmentId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "description": "0=chưa, 1=archive",
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/models.Asset"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AttributeProduct"
+                    }
+                },
+                "build": {
+                    "$ref": "#/definitions/models.ProjectBuild"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/models.ProfileInfo"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "depositeId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/models.Developer"
+                },
+                "district": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docType": {
+                    "$ref": "#/definitions/models.DocTypeItem"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/models.HouseInfo"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProductMediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "orgStatus": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerOrgId": {
+                    "description": "Tổ chức sở hữu (nếu cty mua)",
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "description": "Ai sở hữu (nếu đã bán)",
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "positionUrl": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/models.ProductPrice"
+                },
+                "privateInfo": {
+                    "$ref": "#/definitions/models.ProductPrivate"
+                },
+                "project": {
+                    "$ref": "#/definitions/models.Project"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/models.PropertyTypeItem"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "description": "10=Chưa thuê, 20=Đang đăng tin, 30=Đang cho thuê",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ProductStatus"
+                        }
+                    ]
+                },
+                "rentVisibility": {
+                    "description": "10=Riêng tư, 20=Nội bộ, 30=Công khai",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ProductVisibility"
+                        }
+                    ]
+                },
+                "saleStatus": {
+                    "description": "10=Chưa bán, 20=Đang bán, 30=Đã bán",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ProductStatus"
+                        }
+                    ]
+                },
+                "saleVisibility": {
+                    "description": "10=Riêng tư, 20=Nội bộ, 30=Công khai",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ProductVisibility"
+                        }
+                    ]
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "description": "10: sale, 20: rent",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "updatedUser": {
+                    "$ref": "#/definitions/models.ProfileInfo"
+                },
+                "visibility": {
+                    "description": "phạm vi",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.Scope"
+                        }
+                    ]
+                },
+                "ward": {
+                    "$ref": "#/definitions/models.Region"
+                },
+                "wardId": {
                     "type": "integer"
                 }
             }
@@ -5725,6 +8917,59 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ProfileInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Project": {
+            "type": "object",
+            "properties": {
+                "builds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProjectBuildItem"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/models.DeveloperItem"
+                },
+                "developerId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.ProjectBuild": {
             "type": "object",
             "properties": {
@@ -5776,6 +9021,23 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ProjectBuildItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numApartment": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.ProjectItem": {
             "type": "object",
             "properties": {
@@ -5815,6 +9077,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PropertyTypeItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Province": {
             "type": "object",
             "properties": {
@@ -5829,6 +9102,45 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Region": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "codeName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
                 }
             }
         },
@@ -5868,43 +9180,72 @@ const docTemplate = `{
                 }
             }
         },
-        "u_action.ActionRequest": {
+        "u_asset.ArchivedDTO": {
             "type": "object",
-            "required": [
-                "action",
-                "targetId"
-            ],
             "properties": {
-                "action": {
-                    "type": "integer"
+                "archived": {
+                    "type": "boolean"
                 },
-                "targetId": {
+                "id": {
                     "type": "integer"
                 }
             }
         },
-        "u_post.PostExpiredRequest": {
+        "u_asset.MergeDTO": {
             "type": "object",
             "required": [
-                "numDay",
-                "postId"
+                "ids"
             ],
             "properties": {
-                "numDay": {
-                    "type": "integer"
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "u_asset.SplitDTOSwagger": {
+            "type": "object",
+            "required": [
+                "datas",
+                "id"
+            ],
+            "properties": {
+                "datas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AssetSplit"
+                    }
                 },
-                "postId": {
+                "id": {
                     "type": "integer"
                 }
             }
         },
-        "u_post.PostSaveRequest": {
+        "u_asset_dto.AssetCreateWithProduct": {
             "type": "object",
-            "required": [
-                "content",
-                "productId",
-                "transactionType"
-            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.AssetStatus"
+                }
+            }
+        },
+        "u_post_dto.PostSaveWithProduct": {
+            "type": "object",
             "properties": {
                 "content": {
                     "type": "string"
@@ -5912,8 +9253,20 @@ const docTemplate = `{
                 "expiredAt": {
                     "type": "string"
                 },
+                "hidden": {
+                    "type": "boolean"
+                },
                 "metadatas": {
                     "$ref": "#/definitions/models.ProductMediaItem"
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
                 },
                 "productId": {
                     "type": "integer"
@@ -5923,23 +9276,9 @@ const docTemplate = `{
                 },
                 "transactionType": {
                     "type": "integer"
-                }
-            }
-        },
-        "u_post.PostUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
                 },
-                "metadatas": {
-                    "$ref": "#/definitions/models.ProductMediaItem"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "transactionType": {
-                    "type": "integer"
+                "visibility": {
+                    "$ref": "#/definitions/enums.PostVisibility"
                 }
             }
         },
@@ -6019,6 +9358,9 @@ const docTemplate = `{
                 "area": {
                     "type": "number"
                 },
+                "asset": {
+                    "$ref": "#/definitions/u_asset_dto.AssetCreateWithProduct"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -6052,6 +9394,9 @@ const docTemplate = `{
                 "parentId": {
                     "type": "integer"
                 },
+                "post": {
+                    "$ref": "#/definitions/u_post_dto.PostSaveWithProduct"
+                },
                 "price": {
                     "$ref": "#/definitions/models.ProductPrice"
                 },
@@ -6065,6 +9410,15 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "saleStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "sourceType": {
                     "type": "integer"
                 },
                 "transactionType": {
@@ -6185,6 +9539,9 @@ const docTemplate = `{
                 "area": {
                     "type": "number"
                 },
+                "asset": {
+                    "$ref": "#/definitions/u_asset_dto.AssetCreateWithProduct"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -6218,6 +9575,9 @@ const docTemplate = `{
                 "parentId": {
                     "type": "integer"
                 },
+                "post": {
+                    "$ref": "#/definitions/u_post_dto.PostSaveWithProduct"
+                },
                 "price": {
                     "$ref": "#/definitions/models.ProductPrice"
                 },
@@ -6231,6 +9591,15 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "saleStatus": {
+                    "$ref": "#/definitions/enums.ProductStatus"
+                },
+                "sourceType": {
                     "type": "integer"
                 },
                 "transactionType": {

@@ -1,8 +1,12 @@
 package data
 
-import "bdspro/v1/models"
+import (
+	"bdspro/v1/models"
+	_dto "common/dto"
+)
 
 type TotalSearchParser struct {
+	_dto.Page
 	Bedroom         *uint     `json:"numBedroom"`
 	Bathroom        *uint     `json:"numBathroom"`
 	Toilet          *uint     `json:"toilet"`

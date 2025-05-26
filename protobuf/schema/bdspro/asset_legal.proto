@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "types/bdspro";
+import "google/protobuf/timestamp.proto";
+
+message AssetLegalDTO {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message AssetLegalListDTO {
+  repeated AssetLegalDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service AssetLegalService {
+    rpc Get (AssetLegalDTO) returns (AssetLegalListDTO);
+    rpc Detail (AssetLegalDTO) returns (AssetLegalDTO);
+    rpc Create (AssetLegalDTO) returns (AssetLegalDTO);
+    rpc Update (AssetLegalDTO) returns (AssetLegalDTO);
+    rpc Delete (AssetLegalDTO) returns (AssetLegalDTO);
+}

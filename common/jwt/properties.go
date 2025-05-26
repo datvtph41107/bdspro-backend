@@ -29,6 +29,7 @@ type JwtTokenProperties struct {
 	Type           TokenType              `json:"type"`
 	IssuedAt       time.Time              `json:"issuedAt"`
 	Privileges     []string               `json:"privileges"`
+	PlanAt         *time.Time             `json:"planAt"`
 	AdditionalInfo map[string]interface{} `json:"additionalInformation"`
 }
 

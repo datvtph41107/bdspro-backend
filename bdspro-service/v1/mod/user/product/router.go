@@ -2,6 +2,7 @@ package u_product
 
 import (
 	"bdspro/v1/data"
+	user_dto "bdspro/v1/mod/user/dto/request"
 	u_product_dto "bdspro/v1/mod/user/product/dto"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -11,12 +12,12 @@ import (
 )
 
 type UserProductRoute struct {
-	productService *ProductService
+	UserProductService *UserProductService
 }
 
-func NewUserProductRoute(product *ProductService) *UserProductRoute {
+func NewUserProductRoute(product *UserProductService) *UserProductRoute {
 	return &UserProductRoute{
-		productService: product,
+		UserProductService: product,
 	}
 }
 
@@ -31,11 +32,14 @@ func (route *UserProductRoute) RegisterRouteUserProduct(r *gin.RouterGroup) {
 	api.POST("/new", route.NewProduct)
 	api.POST("/suggest", route.NewProductWithDetect)
 	api.GET("/:id", route.Detail)
+	api.GET("/:id/posts", route.Posts)
+	api.GET("/:id/members", route.Members)
+	api.GET("/:id/history", route.History)
 	api.PUT("/edit/:id", route.Edit)
 	api.PUT("/publish", route.PublishProduct)
 	api.PUT("/revert", route.RevertProduct)
 
-	api.PUT("/archived/:id", route.Archived)
+	api.PUT("/archived", route.Archived)
 	api.DELETE("/:id", route.Delete)
 	api.PUT("/sale-status", route.SaleStatusUpdate)
 	api.PUT("/rent-status", route.RentStatusUpdate)
@@ -57,8 +61,12 @@ func (route *UserProductRoute) RegisterRouteUserProduct(r *gin.RouterGroup) {
 // @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
 // @Router /v1/bdspro/user/product/new [post]
 func (route *UserProductRoute) NewProduct(c *gin.Context) {
-	body, _ := _utils.ParseBody[u_product_dto.ProductSaveRequest](c)
-	result, err := route.productService.CreateProduct(c, body)
+	body, err := _utils.ParseBody[u_product_dto.ProductSaveRequest](c)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+	result, err := route.UserProductService.CreateProduct(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -72,7 +80,52 @@ func (route *UserProductRoute) NewProduct(c *gin.Context) {
 // @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
 // @Router /v1/bdspro/user/product/{id} [post]
 func (route *UserProductRoute) Detail(c *gin.Context) {
-	result, err := route.productService.Detail(c)
+	result, err := route.UserProductService.Detail(c)
+	_routes.RouteResult(c, result, err)
+}
+
+func (route *UserProductRoute) Posts(c *gin.Context) {
+	var dto user_dto.PostLinkSearch
+	if err := _utils.ParseQuery2(c, &dto); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, &_routes.Except{
+			Code:    400,
+			Message: "ID không hợp lệ",
+		})
+		return
+	}
+
+	result, err := route.UserProductService.Posts(c, id, dto)
+	_routes.RouteResult(c, result, err)
+}
+
+func (route *UserProductRoute) Members(c *gin.Context) {
+	var dto user_dto.ProductAccessSearch
+	if err := _utils.ParseQuery2(c, &dto); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, &_routes.Except{
+			Code:    400,
+			Message: "ID không hợp lệ",
+		})
+		return
+	}
+
+	result, err := route.UserProductService.Members(c, id, dto)
+	_routes.RouteResult(c, result, err)
+}
+
+func (route *UserProductRoute) History(c *gin.Context) {
+	result, err := route.UserProductService.Detail(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -121,8 +174,13 @@ func (route *UserProductRoute) RevertProduct(e *gin.Context) {
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v1/bdspro/user/product/me [get]
 func (route *UserProductRoute) SearchProductWithOwner(c *gin.Context) {
-	body, _ := _utils.ParseQuery[data.ProductSearchRequest](c)
-	result, err := route.productService.SearchProductWithOwner(c, body)
+	body := data.ProductSearchRequest{}
+	err := _utils.ParseQuery2(c, &body)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+	result, err := route.UserProductService.SearchProductWithOwner(c, &body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -143,8 +201,9 @@ func (route *UserProductRoute) SearchProductWithOwner(c *gin.Context) {
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v1/bdspro/user/product/market [get]
 func (route *UserProductRoute) SearchProductMarket(c *gin.Context) {
+	// _routes.RouteResult(c, nil, nil)
 	body, _ := _utils.ParseQueryToStruct[data.ProductSearchRequest](c.Request.URL.Query())
-	result, err := route.productService.SearchProductMarket(c, body)
+	result, err := route.UserProductService.SearchProductMarket(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -161,7 +220,7 @@ func (route *UserProductRoute) SearchProductMarket(c *gin.Context) {
 // @Router /v1/bdspro/user/product/total [get]
 func (route *UserProductRoute) SearchSmartProduct(c *gin.Context) {
 	body, _ := _utils.ParseQueryToStruct[data.TextSearchRequest](c.Request.URL.Query())
-	result, err := route.productService.SmartSearch(c, body.Text)
+	result, err := route.UserProductService.SmartSearch(c, body.Text)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -183,7 +242,7 @@ func (route *UserProductRoute) SearchSmartProduct(c *gin.Context) {
 // @Router /v1/bdspro/user/product/suggest [post]
 func (route *UserProductRoute) NewProductWithDetect(c *gin.Context) {
 	_body, _ := _utils.ParseBody[u_product_dto.ProductSaveDetect](c)
-	result, err := route.productService.CreateProductWithDetect(c, _body)
+	result, err := route.UserProductService.CreateProductWithDetect(c, _body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -203,7 +262,7 @@ func (route *UserProductRoute) Edit(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.productService.Update(c, id, body)
+	result, err := route.UserProductService.Update(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -214,7 +273,7 @@ func (route *UserProductRoute) Rent(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.productService.Rent(c, id, body)
+	result, err := route.UserProductService.Rent(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -226,7 +285,7 @@ func (route *UserProductRoute) Rent(c *gin.Context) {
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Param body body u_product_dto.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/archived/{productId} [put]
+// @Router /v1/bdspro/user/product/archived [put]
 func (route *UserProductRoute) Archived(c *gin.Context) {
 	body := u_product_dto.ArchivedRequest{}
 
@@ -234,7 +293,7 @@ func (route *UserProductRoute) Archived(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.Archived(c, body)
+	err := route.UserProductService.Archived(c, body)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -252,7 +311,7 @@ func (route *UserProductRoute) Delete(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err = route.productService.Delete(c, id)
+	err = route.UserProductService.Delete(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -271,7 +330,7 @@ func (route *UserProductRoute) RentStatusUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.RentStatusUpdate(c, status)
+	err := route.UserProductService.RentStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -290,7 +349,7 @@ func (route *UserProductRoute) SaleStatusUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.SaleStatusUpdate(c, status)
+	err := route.UserProductService.SaleStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -309,7 +368,7 @@ func (route *UserProductRoute) RentVisibilityUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.RentVisibilityUpdate(c, status)
+	err := route.UserProductService.RentVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -328,7 +387,7 @@ func (route *UserProductRoute) SaleVisibilityUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.SaleVisibilityUpdate(c, status)
+	err := route.UserProductService.SaleVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -347,7 +406,7 @@ func (route *UserProductRoute) Deposite(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.productService.ProductDeposite(c, dto)
+	err := route.UserProductService.ProductDeposite(c, dto)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -365,7 +424,7 @@ func (route *UserProductRoute) CancelDeposite(c *gin.Context) {
 		return
 	}
 
-	err = route.productService.CancelDeposite(c, id)
+	err = route.UserProductService.CancelDeposite(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -383,6 +442,6 @@ func (route *UserProductRoute) Share(c *gin.Context) {
 		return
 	}
 
-	err = route.productService.CancelDeposite(c, id)
+	err = route.UserProductService.CancelDeposite(c, id)
 	_routes.RouteResult(c, nil, err)
 }

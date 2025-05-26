@@ -1,102 +1,157 @@
 package u_asset
 
-// import (
-// 	"bdspro/v1/models"
-// 	"common/case/crud"
+import (
+	"bdspro/v1/models"
+	"common/case/crud2"
+	_routes "common/routes"
+	_utils "common/utils"
+	"strconv"
 
-// 	"github.com/gin-gonic/gin"
-// )
+	"github.com/gin-gonic/gin"
+)
 
-// type AssetRouter struct {
-// 	crud.BaseRouter[models.Asset]
-// }
+type AssetRouter struct {
+	crud2.BaseRouter[models.Asset, *UserAssetService]
+}
 
-// func NewAssetRouter(service *AssetService) *AssetRouter {
-// 	return &AssetRouter{
-// 		BaseRouter: crud.BaseRouter[models.Asset]{
-// 			Service: service.BaseService,
-// 		},
-// 	}
-// }
+func NewAssetRouter(service *UserAssetService) *AssetRouter {
+	return &AssetRouter{
+		BaseRouter: crud2.BaseRouter[models.Asset, *UserAssetService]{
+			Service: service,
+		},
+	}
+}
 
-// func (r *AssetRouter) RegisterRoutes(router *gin.Engine) {
-// 	assetGroup := router.Group("/bdspro/v1/assets")
-// 	{
-// 		assetGroup.POST("", r.BaseRouter.Create)
-// 		assetGroup.PUT(":id", r.BaseRouter.Update)
-// 		assetGroup.DELETE(":id", r.BaseRouter.Delete)
-// 		assetGroup.GET(":id", r.BaseRouter.GetByID)
-// 		assetGroup.GET("", r.BaseRouter.GetAll)
-// 	}
-// }
+func (r *AssetRouter) RegisterRoutes(router *gin.RouterGroup) {
+	assetGroup := router.Group("/assets")
+	{
+		assetGroup.GET("/internal", r.SearchMe)
+		assetGroup.GET("/share", r.SearchShare)
+		assetGroup.PUT("/archived", r.Archived)
+		assetGroup.POST("", r.CreateAsset)
+		assetGroup.POST("/from-product", r.CreateAssetFromProduct)
 
-// // @BasePath /api
+		assetGroup.PUT(":id", r.UpdateAsset)
+		assetGroup.DELETE(":id", r.BaseRouter.Delete)
+		assetGroup.GET(":id/detail", r.BaseRouter.GetByID)
+		assetGroup.POST("/merge", r.Merge)
+		assetGroup.POST("/split", r.Split)
+		assetGroup.GET("/history/:id", r.History)
+		assetGroup.GET("/history-owner", r.HistoryOwner)
+		// assetGroup.GET(":id/share", r.BaseRouter.GetByID)
+	}
+}
 
-// // @Summary Tạo tỉnh mới
-// // @Description Tạo một bản ghi tỉnh mới
-// // @Tags assets
-// // @Accept json
-// // @Produce json
-// // @Param Ward body models.Ward true "Thông tin tỉnh"
-// // @Success 201 {object} models.Ward
-// // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// // @Router /assets [post]
-// func (r *WardRouter) create(c *gin.Context) {
+func (r *AssetRouter) CreateAsset(c *gin.Context) {
+	body := models.Asset{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.Service.CreateAsset(c, &body)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Cập nhật thông tin tỉnh
-// // @Description Cập nhật thông tin tỉnh theo ID
-// // @Tags assets
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Param Ward body models.Ward true "Thông tin tỉnh mới"
-// // @Success 200 {object} models.Ward
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// // @Router /assets/{id} [put]
-// func (r *WardRouter) update(c *gin.Context) {
+func (r *AssetRouter) CreateAssetFromProduct(c *gin.Context) {
+	body := models.Asset{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.Service.CreateAssetFromProduct(c, &body)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Xóa tỉnh
-// // @Description Xóa tỉnh theo ID (soft delete)
-// // @Tags assets
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Success 200 {object} map[string]bool "Trạng thái xóa"
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// // @Router /assets/{id} [delete]
-// func (r *WardRouter) delete(c *gin.Context) {
+func (r *AssetRouter) SearchMe(c *gin.Context) {
+	body := SearchDTO{}
+	if err := _utils.ParseQuery2(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.Service.SearchAssetMe(c, body)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Lấy thông tin tỉnh theo ID
-// // @Description Lấy thông tin chi tiết của một tỉnh
-// // @Tags assets
-// // @Accept json
-// // @Produce json
-// // @Param id path int true "ID của tỉnh"
-// // @Success 200 {object} models.Ward
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// // @Router /assets/{id} [get]
-// func (r *WardRouter) getByID(c *gin.Context) {
+func (r *AssetRouter) SearchShare(c *gin.Context) {
+	body := SearchDTO{}
+	if err := _utils.ParseQuery2(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	result, err := r.Service.SearchAssetShare(c, body)
+	_routes.RouteResult(c, result, err)
+}
 
-// // @Summary Lấy danh sách các tỉnh
-// // @Description Trả về danh sách tất cả các tỉnh
-// // @Tags assets
-// // @Accept json
-// // @Produce json
-// // @Success 200 {array} models.Ward
-// // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// // @Router /assets [get]
-// func (r *WardRouter) getAll(c *gin.Context) {
+func (r *AssetRouter) Archived(c *gin.Context) {
+	body := ArchivedDTO{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
 
-// }
+	err := r.Service.ArchiveAsset(c, body.ID, body.Archived)
+	_routes.RouteResult(c, nil, err)
+}
+
+func (r *AssetRouter) Merge(c *gin.Context) {
+	body := MergeDTO{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.MergeAsset(c, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *AssetRouter) Split(c *gin.Context) {
+	body := SplitDTO{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.SplitAsset(c, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *AssetRouter) History(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	body := HistoryDTO{}
+	if err := _utils.ParseQuery2(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.History(c, id, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *AssetRouter) HistoryOwner(c *gin.Context) {
+	body := HistoryDTO{}
+	if err := _utils.ParseQuery2(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.HistoryOwner(c, body)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *AssetRouter) UpdateAsset(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	body := models.Asset{}
+	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := r.Service.UpdateAsset(c, id, &body)
+	_routes.RouteResult(c, result, err)
+}

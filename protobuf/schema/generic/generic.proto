@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package pb_generic;
+option go_package = "types/generic";
+import "google/protobuf/any.proto";
+
+service GenericService {
+    rpc HandleRequest (RequestBody) returns (ResponseBody);
+}
+
+message RequestBody {
+    string method = 1;
+    string path = 2;
+    google.protobuf.Any body = 3;
+}
+
+message ResponseBody {
+    uint64 code = 1;
+    string message = 2;
+    google.protobuf.Any body = 3;
+    google.protobuf.Any errors = 4;
+}

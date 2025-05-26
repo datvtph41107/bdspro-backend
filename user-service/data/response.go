@@ -1,9 +1,10 @@
 package data
 
 import (
-	"auth/models"
 	"encoding/json"
 	"time"
+	auth_model "user/models/auth"
+	user_model "user/models/user"
 
 	"github.com/jinzhu/copier"
 )
@@ -18,8 +19,14 @@ type AuthLoginResponse struct {
 	RefreshToken string `json:"refreshToken,omitempty"`
 }
 
+type FollowInfoRes struct {
+	NumFollower  int64 `json:"numFollower"`
+	NumFollowing int64 `json:"numFollowing"`
+	NumFriend    int64 `json:"numFriend"`
+}
+
 // Hàm khởi tạo AuthLoginResponse từ UserAuthEntity
-func NewAuthLoginResponse(accessToken string, authEntity *models.UserAuthEntity, role string) *AuthLoginResponse {
+func MakeAuthLoginResponse(accessToken string, authEntity *auth_model.UserAuthEntity, role string) *AuthLoginResponse {
 	return &AuthLoginResponse{
 		AccessToken: accessToken,
 		// RefreshToken: refreshToken,
@@ -60,7 +67,7 @@ type RequestLoginResponse struct {
 }
 
 // NewRequestLoginResponse tạo mới từ UserAuthEntity
-func NewRequestLoginResponse(e models.UserAuthEntity) RequestLoginResponse {
+func NewRequestLoginResponse(e auth_model.UserAuthEntity) RequestLoginResponse {
 	return RequestLoginResponse{
 		AuthID:   e.ID,
 		Provider: e.Provider,
@@ -121,7 +128,7 @@ type JwtTokenProperties struct {
 // }
 
 // NewUserInfoResponse tạo mới từ UserProfileEntity
-func NewUserInfoResponse(e *models.UserProfileEntity) *UserInfoResponse {
+func NewUserInfoResponse(e *user_model.UserProfileEntity) *UserInfoResponse {
 	if e == nil {
 		return nil
 	}

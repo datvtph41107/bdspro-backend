@@ -34,7 +34,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./file-service/files:/files
+      - ${PWD}/file-service/files:/files
 
   chat:
     build:
@@ -106,13 +106,13 @@ services:
     networks:
       - internal
 
-  config:
-    build:
-      context: ./config-server
-      dockerfile: Dockerfile
-    container_name: config
-    networks:
-      - internal
+  # config:
+  #   build:
+  #     context: ./config-server
+  #     dockerfile: Dockerfile
+  #   container_name: config
+  #   networks:
+  #     - internal
 
   http-server:
     build: ./go-chat-service
@@ -153,27 +153,27 @@ services:
     networks:
       - internal
 
-  eureka:
-    build:
-      context: ./eureka-server
-      dockerfile: Dockerfile
-    container_name: eureka
-    networks:
-      - internal
-    ports:
-      - "8761:8761"
+  # eureka:
+  #   build:
+  #     context: ./eureka-server
+  #     dockerfile: Dockerfile
+  #   container_name: eureka
+  #   networks:
+  #     - internal
+  #   ports:
+  #     - "8761:8761"
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
-    networks:
-      - internal
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis
+  #   restart: always
+  #   command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
+  #   networks:
+  #     - internal
 
 networks:
   internal:

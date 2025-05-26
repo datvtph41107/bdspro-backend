@@ -1,24 +1,24 @@
 package routes
 
 import (
-	"auth/data"
-	"auth/services"
 	_routes "common/routes"
 	"net/http"
+	"user/data"
+	auth_service "user/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 type OAuthRouter struct {
-	GoogleAuthService   *services.GoogleAuthService
-	ZaloAuthService     *services.ZaloAuthService
-	FacebookAuthService *services.FacebookAuthService
+	GoogleAuthService   *auth_service.GoogleAuthService
+	ZaloAuthService     *auth_service.ZaloAuthService
+	FacebookAuthService *auth_service.FacebookAuthService
 }
 
 func NewOAuthRouter(
-	google *services.GoogleAuthService,
-	zalo *services.ZaloAuthService,
-	facebook *services.FacebookAuthService,
+	google *auth_service.GoogleAuthService,
+	zalo *auth_service.ZaloAuthService,
+	facebook *auth_service.FacebookAuthService,
 ) *OAuthRouter {
 	return &OAuthRouter{
 		GoogleAuthService:   google,

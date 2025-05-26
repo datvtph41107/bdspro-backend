@@ -11,8 +11,9 @@ func (ProfileTransfer) TableName() string {
 }
 
 type ProfileInfo struct {
-	ProfileId uint64 `json:"profileId"`
-	FullName  string `json:"fullName"`
+	ProfileId uint64 `gorm:"column:profile_id" json:"profileId"`
+	FullName  string `gorm:"column:full_name" json:"fullName"`
+	Avatar    string `gorm:"column:avatar" json:"avatar"`
 }
 
 func (ProfileInfo) TableName() string {
