@@ -293,7 +293,7 @@ func (s *UProductUsecase) Update(c context.Context, id uint64, product *dto.Prod
 
 func (s *UProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, error) {
 
-	entity, err := s.ProductRepo.GetByID(id)
+	entity, err := s.ProductRepo.GetByID2(c, id)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    404,

@@ -103,6 +103,7 @@ func (r *GormUserProductRepo) GetByID2(ctx context.Context, productID uint64) (*
 	// Truy vấn thông tin sản phẩm từ cơ sở dữ liệu
 	err := r.DB.WithContext(ctx).
 		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("Deposite", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
@@ -130,6 +131,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
         	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
 		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("Deposite", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
 		Preload("Apartment", "deleted_at IS NULL").
@@ -591,11 +593,28 @@ func (r *GormUserProductRepo) DetectProductData(profileId uint64, input string) 
 }
 
 func (r *GormUserProductRepo) UpdateArchived(ctx context.Context, productId uint64, archived bool) error {
-	return r.DB.WithContext(ctx).Model(&domain.Product{}).
+	return r.DB.WithContext(ctx).Model(domain.Product{}).
 		Where("id = ? and deleted_at is null", productId).
 		Update("archived", archived).Error
 }
 
 func (r *GormUserProductRepo) NewDeposite(ctx context.Context, dto *domain.Deposite) error {
 	return r.DB.WithContext(ctx).Create(&dto).Error
+}
+
+func (r *GormUserProductRepo) CountByAssetID(assetID uint64) (int64, error) {
+	var count int64
+	err := r.DB.Model(domain.Product{}).
+		Select("id").
+		Where("deleted_at is null and asset_id = ?", assetID).
+		Count(&count).
+		Error
+	return count, err
+}
+
+func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetID uint64) error {
+	return r.DB.WithContext(c).Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null and asset_id is null", id).
+		Update("asset_id", assetID).
+		Error
 }

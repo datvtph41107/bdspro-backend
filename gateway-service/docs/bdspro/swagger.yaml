@@ -5427,6 +5427,328 @@ paths:
       summary: Lấy theo ID loại thu nhập
       tags:
       - Danh mục loại
+  /v1/bdspro/v2/user/assets:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Asset'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa
+      tags:
+      - Tài sản
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - Tài sản
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Asset'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/archived/{id}:
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.ArchivedDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy theo ID
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/history-owner:
+    get:
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lịch sử tách gộp tài sản dành cho user
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/history/:id:
+    get:
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lịch sử tách gộp tài sản danh cho tài sản
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/internal:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtId
+        type: integer
+      - in: query
+        name: onlyParent
+        type: boolean
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản được chia sẻ
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/merge:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.MergeDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gộp tài sản
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/search:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtId
+        type: integer
+      - in: query
+        name: onlyParent
+        type: boolean
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản của người dùng
+      tags:
+      - Tài sản
+  /v1/bdspro/v2/user/assets/split:
+    get:
+      parameters:
+      - in: query
+        name: archived
+        type: boolean
+      - in: query
+        name: districtId
+        type: integer
+      - in: query
+        name: onlyParent
+        type: boolean
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
+      - in: query
+        name: provinceId
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: rentStatus
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      - in: query
+        name: wardId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài sản có số lượng con
+      tags:
+      - Tài sản
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/u_asset.SplitDTOSwagger'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tách tài sản
+      tags:
+      - Tài sản
   /v2/bdspro/v2/asset-cost:
     get:
       parameters:

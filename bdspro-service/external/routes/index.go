@@ -12,16 +12,19 @@ type RouterManager struct {
 	uProductRouter      *UProductRouter
 	uProductChildRouter *UProductChildRoute
 	uProductAccessRoute *UProductAccessRoute
+	uAssetRoute         *UAssetRoute
 }
 
 func NewRouterManager(uProductRouter *UProductRouter,
 	uProductChildRouter *UProductChildRoute,
 	uProductAccessRoute *UProductAccessRoute,
+	uAssetRoute *UAssetRoute,
 ) *RouterManager {
 	return &RouterManager{
 		uProductRouter:      uProductRouter,
 		uProductChildRouter: uProductChildRouter,
 		uProductAccessRoute: uProductAccessRoute,
+		uAssetRoute:         uAssetRoute,
 	}
 }
 
@@ -39,4 +42,5 @@ func (rm *RouterManager) RegisterRouter(e *gin.Engine) {
 	rm.uProductRouter.RegisterRoutes(userRouter)
 	rm.uProductChildRouter.RegisterRoute(userRouter)
 	rm.uProductAccessRoute.RegisterRoutes(userRouter)
+	rm.uAssetRoute.RegisterRoutes(userRouter)
 }

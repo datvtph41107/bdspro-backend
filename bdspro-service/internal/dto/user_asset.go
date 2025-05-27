@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/enums"
 	_dto "common/dto"
 	"time"
@@ -28,4 +29,25 @@ type AssetSearchDTO struct {
 	PropertyTypeIds []uint64 `form:"propertyTypeIds"`
 	RentStatus      []uint64 `form:"rentStatus"`
 	Archived        *bool    `form:"archived"`
+	OnlyParent      *bool    `form:"onlyParent"`
+	ParentID        *uint64  `form:"parentId"`
+}
+
+type MergeAssetDTO struct {
+	IDs []uint64 `json:"ids" binding:"required,notemptyarray,dive"`
+}
+
+type SplitAssetDTO struct {
+	ID    uint64         `json:"id" binding:"required"`
+	Datas []domain.Asset `json:"datas" binding:"required,notemptyarray,dive"`
+}
+
+type AssetArchivedDTO struct {
+	ID       uint64
+	Archived bool
+}
+
+type AssetWithChildCountDTO struct {
+	domain.AssetList
+	NumChild int64 `json:"numChild"`
 }

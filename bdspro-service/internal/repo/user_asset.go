@@ -2,6 +2,7 @@ package repo
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/dto"
 	"common/case/crud3"
 	"context"
 )
@@ -22,4 +23,15 @@ type AssetRepo interface {
 	// Các phương thức mới
 	GetProductByID(ctx context.Context, productID *uint64) (*domain.Product, error)
 	CreateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error)
+	GetByIDsWithValidOwner(ctx context.Context, profileId uint64, ids []uint64) ([]domain.Asset, error)
+	DeleteBatch(c context.Context, ids []uint64) error
+	CreateBatch(c context.Context, entity []domain.Asset) error
+	History(
+		c context.Context,
+		profileId uint64,
+		assetId uint64,
+		dto *dto.AssetHistoryDTO) (*[]domain.AssetHistory, int64, error)
+	SearchShare(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
+	SearchOwner(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
+	GetAssetsWithChildCount(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error)
 }

@@ -89,6 +89,12 @@ func (r *GormAssetRepo) QuerySearch(query *gorm.DB, dto dto.AssetSearchDTO) *gor
 	if dto.Archived != nil {
 		query.Where("archived = ?", dto.Archived)
 	}
+	if dto.OnlyParent != nil {
+		query.Where("parent_asset_id is null")
+	}
+	if dto.ParentID != nil {
+		query.Where("parent_asset_id = ?", dto.ParentID)
+	}
 	return query
 }
 
@@ -414,4 +420,70 @@ LIMIT ? OFFSET ?;
 		totalElements = raws[0].TotalElement
 	}
 	return &result, totalElements, nil
+}
+
+func (s *GormAssetRepo) DeleteBatch(c context.Context, ids []uint64) error {
+	return s.DB.Model(&domain.Asset{}).
+		Where("id in (?)", ids).
+		Update("deleted_at", time.Now()).Error
+}
+
+func (r *GormAssetRepo) CreateBatch(c context.Context, entity []domain.Asset) error {
+	return r.DB.WithContext(c).Create(&entity).Error
+}
+
+func (r *GormAssetRepo) GetAssetsWithChildCount(ctx context.Context, ownerID uint64, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
+	var assets []dto.AssetWithChildCountDTO
+	var total int64
+
+	query := r.DB.WithContext(ctx).
+		Debug().
+		Select(`assets.*, 
+			province.name as province_name, 
+			district.name as district_name, 
+			ward.name as ward_name,
+			property_type.name as property_type_name,
+			(SELECT COUNT(*) FROM assets child WHERE child.parent_asset_id = assets.id AND child.deleted_at IS NULL) as num_child`).
+		Table("assets").
+		Joins("left join property_type property_type on property_type.id = assets.property_type_id").
+		Joins("left join region province on province.id = assets.province_id").
+		Joins("left join region district on district.id = assets.district_id").
+		Joins("left join region ward on ward.id = assets.ward_id").
+		Where("assets.deleted_at is null AND assets.owner_user_id = ?", ownerID)
+
+	// Apply search filters
+	if searchDto.Text != "" {
+		query = query.Where("LOWER(assets.name) LIKE ?", "%"+searchDto.Text+"%")
+	}
+	if searchDto.ProvinceID != nil {
+		query = query.Where("assets.province_id = ?", searchDto.ProvinceID)
+	}
+	if searchDto.DistrictID != nil {
+		query = query.Where("assets.district_id = ?", searchDto.DistrictID)
+	}
+	if searchDto.WardID != nil {
+		query = query.Where("assets.ward_id = ?", searchDto.WardID)
+	}
+	if len(searchDto.PropertyTypeIds) > 0 {
+		query = query.Where("assets.property_type_id IN ?", searchDto.PropertyTypeIds)
+	}
+	if searchDto.Archived != nil {
+		query = query.Where("assets.archived = ?", searchDto.Archived)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination using Page methods
+	if err := query.
+		Order("assets.created_at DESC").
+		Offset(searchDto.GetOffset()).
+		Limit(searchDto.GetLimit()).
+		Find(&assets).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return assets, total, nil
 }

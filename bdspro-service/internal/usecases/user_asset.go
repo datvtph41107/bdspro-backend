@@ -10,6 +10,9 @@ import (
 	"context"
 	"errors"
 	"log"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 )
 
 type UAssetUsecase struct {
@@ -25,8 +28,9 @@ func NewUAssetUsecase(assetRepo repo.AssetRepo,
 	AssetHistoryRepo repo.UAssetHistoryRepo,
 ) *UAssetUsecase {
 	return &UAssetUsecase{
-		AssetRepo:       assetRepo,
-		ProductUserRepo: ProductRepo,
+		AssetRepo:        assetRepo,
+		ProductUserRepo:  ProductRepo,
+		AssetHistoryRepo: AssetHistoryRepo,
 		// ProductUc:       ProductUc,
 	}
 }
@@ -159,7 +163,7 @@ func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *domain.Asse
 }
 
 // UC8: Tạo tài sản từ sản phẩm có sẵn
-func (uc *UAssetUsecase) CreateAssetFromProduct(ctx context.Context, productID uint64, assetData *domain.Asset) (*domain.Asset, error) {
+func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *domain.Asset) (*domain.Asset, error) {
 	// if req.ProductId == nil {
 	// 	return nil, fmt.Errorf("product_id is required")
 	// }
@@ -181,19 +185,27 @@ func (uc *UAssetUsecase) CreateAssetFromProduct(ctx context.Context, productID u
 	// return s.saveAsset(ctx, req)
 
 	// Lấy thông tin sản phẩm từ ProductService
-	product, err := uc.ProductUserRepo.GetByID(productID)
+	product, err := uc.ProductUserRepo.GetByID(*assetData.ProductID)
 	if err != nil {
 		return nil, errors.New("product not found")
 	}
 
 	// Liên kết thông tin sản phẩm vào tài sản
 	assetData.ProductID = &product.ID
-	assetData.Name = product.Name
-	assetData.Description = product.Description
+	id := _utils.GetProfileIdWithContext(ctx)
+	assetData.OwnerUserID = &id
 	assetData.Archived = false
 
 	// Tạo tài sản
 	err = uc.AssetRepo.Create(ctx, assetData)
+
+	if assetData.ProductID != nil {
+		uc.ProductUserRepo.UpdateAssetID(ctx, *assetData.ProductID, assetData.ID)
+	}
+
+	afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: assetData})
+	uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_New, &assetData.ID, nil, afterData)
+
 	return assetData, err
 }
 
@@ -294,4 +306,256 @@ func (uc *UAssetUsecase) ArchiveAsset(ctx context.Context, assetID uint64, archi
 	}
 
 	return nil
+}
+
+// UC13: Gộp tài sản
+func (uc *UAssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (*domain.Asset, error) {
+	// if len(dto.IDs) < 1 {
+	// 	return nil, &_routes.Except{
+	// 		Code:    401,
+	// 		Message: "Bạn phải chọn tối thiểu 2 tài sản",
+	// 	}
+	// }
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	entities, err := uc.AssetRepo.GetByIDsWithValidOwner(ctx, profileId, dto.IDs)
+	if len(entities) != len(dto.IDs) {
+		return nil, &_routes.Except{
+			Code:    401,
+			Message: "Bạn không sở hữu tài sản hoặc tài sản đang trong giao dịch chưa hoàn tất",
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	currentAsset := entities[0]
+	sumArea := 0.0
+	parentId := (*uint64)(nil)
+
+	for _, e := range entities {
+		sumArea += e.Area
+		if e.ParentAssetID != nil {
+			parentId = e.ParentAssetID
+		}
+		if e.ParentAssetID == nil {
+			return nil, &_routes.Except{
+				Code:    400,
+				Message: "Chỉ gộp tài sản con",
+			}
+		}
+		// if e.WardID != currentAsset.WardID ||
+		// 	e.DistrictID != currentAsset.DistrictID ||
+		// 	e.ProvinceID != currentAsset.ProvinceID {
+		// 	return nil, &_routes.Except{
+		// 		Code:    400,
+		// 		Message: "Danh sách tài sản không liền kề nhau",
+		// 	}
+		// }
+	}
+
+	if parentId != nil {
+		parentAsset, err := uc.AssetRepo.GetByID(*parentId)
+		if err != nil {
+			return nil, err
+		}
+		beforeData := _utils.StructToJSONString(parentAsset)
+		parentAsset.Area = parentAsset.Area + sumArea
+		if err := uc.AssetRepo.Update(ctx, parentAsset.ID, parentAsset); err != nil {
+			return nil, err
+		}
+
+		if err = uc.AssetRepo.DeleteBatch(ctx, dto.IDs); err != nil {
+			return nil, err
+		}
+		// uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_Merge, parentId, dto.IDs)
+
+		afterData := _utils.StructToJSONString(struct {
+			Parent *domain.Asset
+			Childs []domain.Asset
+		}{
+			Parent: parentAsset,
+			Childs: entities,
+		})
+		uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_Merge, parentId, beforeData, afterData)
+		return parentAsset, nil
+	}
+
+	// todo: đoạn này có thể không chạy đến do chỉ gộp con chứ không gộp cha
+
+	nAsset := &domain.Asset{}
+	copier.Copy(nAsset, &dto)
+
+	// profileId := _jwt.GetProfileId(ctx)
+	nAsset.OwnerUserID = &profileId
+	nAsset.WardID = currentAsset.WardID
+	nAsset.DistrictID = currentAsset.DistrictID
+	nAsset.ProvinceID = currentAsset.ProvinceID
+	nAsset.Archived = false
+	nAsset.Area = sumArea
+	nAsset.RentStatus = 1
+
+	// Cập nhật trạng thái tài sản thành "archived"
+	if err := uc.AssetRepo.Create(ctx, nAsset); err != nil {
+		return nil, err
+	}
+
+	if err = uc.AssetRepo.DeleteBatch(ctx, dto.IDs); err != nil {
+		return nil, err
+	}
+
+	// todo
+
+	return &currentAsset, err
+}
+
+// UC13: Tách tài sản
+func (uc *UAssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) ([]domain.Asset, error) {
+	currentAsset, err := uc.RequiredOwner(ctx, dto.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// todo: tài sản liên kết nhiều sp
+	numProductLink, err := uc.ProductUserRepo.CountByAssetID(currentAsset.ID)
+	if err != nil {
+		return nil, err
+	}
+	if numProductLink > 1 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Không thể tách do tài sản đang liên kết với nhiều sản phẩm",
+		}
+	}
+
+	// currentAsset := entities[0]
+	sumArea := 0.0
+	for _, e := range dto.Datas {
+		sumArea += e.Area
+		if e.Area < 1 {
+			return nil, &_routes.Except{
+				Code:    400,
+				Message: "Diện tích không hợp lệ",
+			}
+		}
+	}
+
+	if sumArea >= currentAsset.Area {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Diện tích không hợp lệ",
+		}
+	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	for i := range dto.Datas {
+		nAsset := &dto.Datas[i]
+		nAsset.OwnerUserID = &profileId
+		nAsset.WardID = currentAsset.WardID
+		nAsset.DistrictID = currentAsset.DistrictID
+		nAsset.ProvinceID = currentAsset.ProvinceID
+		nAsset.Archived = false
+		nAsset.RentStatus = 1
+		nAsset.ParentAssetID = &dto.ID
+		// nAsset.Area = sumArea
+	}
+
+	// Cập nhật trạng thái tài sản thành "archived"
+	if err := uc.AssetRepo.CreateBatch(ctx, dto.Datas); err != nil {
+		return nil, err
+	}
+
+	beforeData := _utils.StructToJSONString(currentAsset)
+
+	currentAsset.Area = currentAsset.Area - sumArea
+	if err := uc.AssetRepo.Update(ctx, currentAsset.ID, currentAsset); err != nil {
+		return nil, err
+	}
+
+	afterData := _utils.StructToJSONString(struct {
+		Parent *domain.Asset
+		Childs []domain.Asset
+	}{
+		Parent: currentAsset,
+		Childs: dto.Datas,
+	})
+
+	// var ids []uint64
+	// for _, r := range dto.Datas {
+	// 	ids = append(ids, r.ID)
+	// }
+	// uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_Slit, &dto.ID, ids)
+	uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_Slit, &dto.ID, beforeData, afterData)
+
+	// todo
+
+	return dto.Datas, nil
+}
+
+func (uc *UAssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	assets, total, err := uc.AssetRepo.SearchOwner(ctx, profileId, dto)
+	if err != nil {
+		return _routes.ResponseDTO{}, err
+	}
+	return _routes.ResponseDTO{
+		Code:          0,
+		Data:          assets,
+		TotalElements: &total,
+	}, nil
+}
+
+// UC6: Tìm kiếm tài sản theo từ khóa hoặc mã tài sản
+func (uc *UAssetUsecase) SearchAssetShare(ctx context.Context, dto dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	results, total, err := uc.AssetRepo.SearchShare(ctx, profileId, dto)
+	if err != nil {
+		return _routes.ResponseDTO{}, err
+	}
+	return _routes.ResponseDTO{
+		Data:          results,
+		TotalElements: &total,
+	}, nil
+}
+
+// UC13: Tách tài sản
+func (uc *UAssetUsecase) History(ctx context.Context, assetID uint64, dto dto.AssetHistoryDTO) (_routes.ResponseDTO, error) {
+	// profileId := _jwt.GetProfileId(ctx)
+	results, total, err := uc.AssetRepo.History(ctx, 0, assetID, &dto)
+	if err != nil {
+		return _routes.ResponseDTO{}, err
+	}
+	return _routes.ResponseDTO{
+		Code:          0,
+		Data:          results,
+		TotalElements: &total,
+	}, nil
+}
+
+// UC14: Lịch sử tài sản
+func (uc *UAssetUsecase) HistoryOwner(ctx context.Context, dto dto.AssetHistoryDTO) (_routes.ResponseDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	results, total, err := uc.AssetRepo.History(ctx, profileId, 0, &dto)
+	if err != nil {
+		return _routes.ResponseDTO{}, err
+	}
+	return _routes.ResponseDTO{
+		Code:          0,
+		Data:          results,
+		TotalElements: &total,
+	}, nil
+}
+
+func (uc *UAssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
+	// Validate input if needed
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	// Call repository to get data
+	assets, total, err := uc.AssetRepo.GetAssetsWithChildCount(ctx, profileId, searchDto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return assets, total, nil
 }

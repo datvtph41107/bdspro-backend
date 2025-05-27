@@ -12,6 +12,7 @@ type Product struct {
 	ID              uint64                  `gorm:"primaryKey;autoIncrement" json:"id"`
 	ParentId        *uint64                 `gorm:"type:int8" json:"parentId"`
 	DepositeID      *uint64                 `gorm:"type:int8" json:"depositeId"`
+	Deposite        *Deposite               `gorm:"foreignKey:DepositeID;references:ID" json:"deposite"`
 	AssetId         *uint64                 `gorm:"type:int8" json:"assetId"`
 	PropertyTypeId  *uint64                 `json:"propertyTypeId"`
 	PropertyType    *PropertyTypeItem       `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`

@@ -54,4 +54,6 @@ type UProductRepo interface {
 
 	// Tạo mới thông tin đặt cọc
 	NewDeposite(ctx context.Context, dto *domain.Deposite) error
+	CountByAssetID(assetID uint64) (int64, error)
+	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
 }
