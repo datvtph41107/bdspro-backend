@@ -1,0 +1,16 @@
+package dto
+
+import _dto "common/dto"
+
+type PostMediaItem struct {
+	ID        uint64 `json:"id"`
+	MediaURL  string `json:"mediaUrl"`
+	MediaType string `json:"mediaType"`
+	IsMain    bool   `json:"isMain"`
+	Order     int    `json:"order"`
+}
+
+type PostMediaGetDTO struct {
+	_dto.Page
+	PostID uint64 `form:"postId"`
+}

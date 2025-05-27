@@ -30,20 +30,21 @@ type PostSearchRequest struct {
 type PostDetail struct {
 	Post        *domain.Post    `json:"post"`
 	ProductInfo *domain.Product `json:"product"`
+	AssetInfo   *domain.Asset   `json:"asset"`
 }
 
 type PostSaveRequest struct {
-	ProductID       uint64                  `json:"productId" binding:"required"`
-	Title           string                  `json:"title"`
-	Content         string                  `json:"content" binding:"required"`
-	Price           float64                 `json:"postPrice"`
-	TransactionType uint                    `json:"transactionType" binding:"required"`
-	Visibility      enums.PostVisibility    `json:"visibility" binding:"required"`
-	PackageVisible  uint                    `json:"packageVisible"`
-	ExpiredAt       *time.Time              `json:"expiredAt"`
-	NumDate         int                     `json:"numDate"`
-	Hidden          bool                    `json:"hidden"`
-	Metadatas       domain.ProductMediaItem `json:"metadatas"`
+	ProductID       uint64               `json:"productId" binding:"required"`
+	Title           string               `json:"title"`
+	Content         string               `json:"content" binding:"required"`
+	Price           float64              `json:"postPrice"`
+	TransactionType uint                 `json:"transactionType" binding:"required"`
+	Visibility      enums.PostVisibility `json:"visibility" binding:"required"`
+	PackageVisible  uint                 `json:"packageVisible"`
+	ExpiredAt       *time.Time           `json:"expiredAt"`
+	NumDate         int                  `json:"numDate"`
+	Hidden          bool                 `json:"hidden"`
+	MediaList       []PostMediaItem      `json:"mediaList"`
 	// Status    uint   `json:"status"`
 }
 
@@ -73,14 +74,14 @@ type ActionRequest struct {
 }
 
 type PostUpdateRequest struct {
-	Title           string                  `json:"title"`
-	Content         string                  `json:"content"`
-	Price           float64                 `json:"postPrice"`
-	TransactionType uint                    `json:"transactionType"`
-	PackageVisible  uint                    `json:"packageVisible"`
-	Visibility      enums.PostVisibility    `json:"visibility"`
-	NumDate         int                     `json:"numDate"`
-	Metadatas       domain.ProductMediaItem `json:"metadatas"`
+	Title           string               `json:"title"`
+	Content         string               `json:"content"`
+	Price           float64              `json:"postPrice"`
+	TransactionType uint                 `json:"transactionType"`
+	PackageVisible  uint                 `json:"packageVisible"`
+	Visibility      enums.PostVisibility `json:"visibility"`
+	NumDate         int                  `json:"numDate"`
+	MediaList       []PostMediaItem      `json:"mediaList"`
 }
 
 type PostShareRequest struct {

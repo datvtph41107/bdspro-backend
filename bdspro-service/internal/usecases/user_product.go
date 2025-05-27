@@ -32,6 +32,7 @@ type UProductUsecase struct {
 	MemberPlan         PlanUsecase
 	UserPostUsecase    *UPostUsecase
 	UAssetUsecase      *UAssetUsecase
+	DepositeRepo       repo.DepositeRepo
 }
 
 func NewUProductUsecase(productRepo repo.UProductRepo,
@@ -49,6 +50,7 @@ func NewUProductUsecase(productRepo repo.UProductRepo,
 	memberPlan PlanUsecase,
 	UserPostUsecase *UPostUsecase,
 	UAssetUsecase *UAssetUsecase,
+	depositeRepo repo.DepositeRepo,
 ) *UProductUsecase {
 	return &UProductUsecase{
 		ProductRepo:        productRepo,
@@ -66,6 +68,7 @@ func NewUProductUsecase(productRepo repo.UProductRepo,
 		UserPostUsecase:    UserPostUsecase,
 		ProductHistoryRepo: ProductHistoryRepo,
 		UAssetUsecase:      UAssetUsecase,
+		DepositeRepo:       depositeRepo,
 	}
 }
 
@@ -103,26 +106,6 @@ func (s *UProductUsecase) CreateProduct(c context.Context, product *dto.ProductS
 		return nil, err
 	}
 
-	// access := &domain.ProductAccess{
-	// 	UserId:    profileId,
-	// 	ProductID: entity.ID,
-	// }
-	// err := s.productAccessRepo.Create(c, access)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// ProductID       uint64                  `json:"productId" binding:"required"`
-	// Title           string                  `json:"title"`
-	// Content         string                  `json:"content" binding:"required"`
-	// Price           float64                 `json:"postPrice"`
-	// TransactionType uint                    `json:"transactionType" binding:"required"`
-	// Visibility      enums.PostVisibility    `json:"visibility" binding:"required"`
-	// PackageVisible  uint                    `json:"packageVisible"`
-	// ExpiredAt       *time.Time              `json:"expiredAt"`
-	// NumDate         int                     `json:"numDate"`
-	// Hidden          bool                    `json:"hidden"`
-	// Metadatas       domain.ProductMediaItem `json:"metadatas"`
 	postInfo := product.PostCreate
 	var postEntity *domain.Post
 	var err error
@@ -165,7 +148,10 @@ func (s *UProductUsecase) CreateProduct(c context.Context, product *dto.ProductS
 			// Description:    assetInfo.Description,
 		}
 
-		assetEntity, err = s.UAssetUsecase.CreateAsset(c, assetEntity)
+		assetEntity, err = s.UAssetUsecase.CreateAsset(c, &dto.AssetSaveRequest{
+			Asset:      *assetEntity,
+			LegalItems: assetInfo.LegalItems,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -293,7 +279,7 @@ func (s *UProductUsecase) Update(c context.Context, id uint64, product *dto.Prod
 
 func (s *UProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, error) {
 
-	entity, err := s.ProductRepo.GetByID2(c, id)
+	entity, err := s.ProductRepo.GetByIDContext(c, id)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    404,
@@ -542,15 +528,15 @@ func (s *UProductUsecase) SaleVisibilityUpdate(c context.Context, dto dto.Visibi
 	return s.ProductRepo.UpdateSaleVisibility(c, *dto.ProductID, dto.Visibility)
 }
 
-func (s *UProductUsecase) ProductDeposite(c context.Context, dto dto.DepositeRequest) error {
+func (s *UProductUsecase) ProductDeposite(c context.Context, dto dto.DepositeRequest) (*domain.Deposite, error) {
 	// sản phẩm đang cọc
 	product, err := s.RequiredOwner(c, dto.ProductID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if product.DepositeID != nil {
-		return &_routes.Except{
+		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Sản phẩm đã đặt cọc",
 		}
@@ -564,16 +550,22 @@ func (s *UProductUsecase) ProductDeposite(c context.Context, dto dto.DepositeReq
 		Note:          dto.Note,
 	}
 	if err := s.ProductRepo.NewDeposite(c, &record); err != nil {
-		return err
+		return nil, err
 	}
 	product.DepositeID = &record.ID
-
-	return s.ProductRepo.Update(c, product.ID, product)
+	if err := s.ProductRepo.Update(c, product.ID, product); err != nil {
+		return nil, err
+	}
+	return &record, nil
 }
 
 func (s *UProductUsecase) CancelDeposite(c context.Context, id uint64) error {
 	// sản phẩm đang cọc
-	product, err := s.RequiredOwner(c, id)
+	deposite, err := s.DepositeRepo.GetDepositeByID(c, id)
+	if err != nil {
+		return err
+	}
+	product, err := s.RequiredOwner(c, deposite.ProductID)
 	if err != nil {
 		return err
 	}
@@ -587,7 +579,7 @@ func (s *UProductUsecase) CancelDeposite(c context.Context, id uint64) error {
 
 	product.DepositeID = nil
 
-	return s.ProductRepo.Update(c, product.ID, product)
+	return s.ProductRepo.CancelDeposite(c, product.ID)
 }
 
 func (uc *UProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSearch) (*[]domain.PostItem, error) {

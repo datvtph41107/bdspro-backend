@@ -2,8 +2,7 @@ package services
 
 import (
 	"fmt"
-
-	payment "payment/models"
+	"membership/data"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
@@ -24,7 +23,7 @@ func NewPaymentClient() *PaymentClient {
 	}
 }
 
-func (p *PaymentClient) RequestOrder(c *gin.Context, body payment.OrderRequest) (any, error) {
+func (p *PaymentClient) RequestOrder(c *gin.Context, body data.OrderRequest) (any, error) {
 	targetURL := fmt.Sprintf("http://%s/%s", p.Url, p.Path)
 	resp, err := p.Client.R().
 		SetHeaderMultiValues(c.Request.Header).

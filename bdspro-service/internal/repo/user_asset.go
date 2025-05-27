@@ -18,6 +18,7 @@ type AssetRepo interface {
 	// Delete(ctx context.Context, id uint64) error
 	// GetAssetDetails(ctx context.Context, id uint64) (*domain.Asset, error)
 	ShareAsset(ctx context.Context, id uint64, userID uint64) error
+	GetAssetByProductID(ctx context.Context, id *uint64) (*domain.Asset, error)
 	SplitAsset(ctx context.Context, id uint64, splitData map[string]interface{}) ([]domain.Asset, error)
 	MergeAssets(ctx context.Context, ids []uint64) (*domain.Asset, error)
 	// Các phương thức mới

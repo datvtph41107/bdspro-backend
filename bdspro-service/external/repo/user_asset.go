@@ -32,10 +32,11 @@ func (r *GormAssetRepo) GetAssetByID(id uint64) (*domain.Asset, error) {
 	return &asset, nil
 }
 
-func (r *GormAssetRepo) GetAssetByProductID(id *uint64) (*domain.Asset, error) {
+func (r *GormAssetRepo) GetAssetByProductID(ctx context.Context, id *uint64) (*domain.Asset, error) {
 	var asset domain.Asset
 	if err := r.DB.
 		Where("product_id = ? and deleted_at is null", id).
+		Preload("LegalItems", "deleted_at IS NULL").
 		Limit(1).
 		First(&asset).Error; err != nil {
 		return nil, err
@@ -98,31 +99,56 @@ func (r *GormAssetRepo) QuerySearch(query *gorm.DB, dto dto.AssetSearchDTO) *gor
 	return query
 }
 
+func (r *GormAssetRepo) SearchOwnerQuery(ownerID uint64, dto dto.AssetSearchDTO) *gorm.DB {
+	query := r.DB.
+		Table("assets"). // <- quan trọng để Preload hiểu model gốc
+		// Preload("LegalItems", "deleted_at IS NULL").
+		Select(`assets.*,
+		province.name as province_name, 
+		district.name as district_name, 
+		ward.name as ward_name,
+		property_type.name as property_type_name,
+		COALESCE(json_agg(json_build_object(
+			'id', legal.id,
+			'documentName', legal.document_name,
+			'documentUrl', legal.document_url,
+			'issuedDate', legal.issued_date,
+			'expiryDate', legal.expiry_date,
+			'description', legal.description
+		)) FILTER (WHERE legal.asset_id = assets.id), '[]') AS legal_list`).
+		Joins("left join property_type on property_type.id = assets.property_type_id").
+		Joins("left join region province on province.id = assets.province_id").
+		Joins("left join region district on district.id = assets.district_id").
+		Joins("left join region ward on ward.id = assets.ward_id").
+		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id").
+		Where("assets.deleted_at is null and assets.owner_user_id = ?", ownerID).
+		Group("assets.id, assets.created_by, province.id, district.id, ward.id, property_type.id")
+
+	return r.QuerySearch(query, dto)
+
+}
 func (r *GormAssetRepo) SearchOwner(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	var assets []domain.AssetList
 	var total int64
-	query := r.DB.WithContext(ctx).
-		Debug().
-		Select(`assets.*, 
-	province.name as province_name, 
-	district.name as district_name, 
-	ward.name as ward_name,
-	property_type.name as property_type_name`).
-		Joins("left join property_type property_type on property_type.id = assets.property_type_id").
-		Joins("left join region province on province.id = assets.province_id").
-		Joins("left join region district  on district.id = assets.district_id").
-		Joins("left join region ward on ward.id = assets.ward_id").
-		Where("assets.deleted_at is null and assets.owner_user_id = ?", ownerID)
 
-	query = r.QuerySearch(query, dto)
+	// type rawResult struct {
+	// 	domain.AssetList
+	// 	LegalList json.RawMessage `gorm:"column:legal_list" json:"legalList"`
+	// }
+
+	// var raws []rawResult
+
+	query := r.SearchOwnerQuery(ownerID, dto)
 
 	if err := query.
 		Order("created_at desc").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
-		Find(&assets).Error; err != nil {
+		Scan(&assets).Error; err != nil {
 		return nil, 0, err
 	}
+
+	query = r.SearchOwnerQuery(ownerID, dto)
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}

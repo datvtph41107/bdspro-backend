@@ -26,6 +26,8 @@ type UPostUsecase struct {
 	UProductUsecase *UProductUsecase
 	ProductRepo     repo.UProductRepo
 	Repo            repo.UPostRepo
+	PostMediaRepo   repo.PostMediaRepo
+	AssetRepo       repo.AssetRepo
 }
 
 func NewUPostUsecase(repo repo.UPostRepo,
@@ -33,6 +35,8 @@ func NewUPostUsecase(repo repo.UPostRepo,
 	// UserProductService *UProductUsecase,
 	transmit *providers.TransmitProvider,
 	productRepo repo.UProductRepo,
+	postMediaRepo repo.PostMediaRepo,
+	assetRepo repo.AssetRepo,
 	// serviceManager *manager.ServiceManager,
 ) *UPostUsecase {
 	return &UPostUsecase{
@@ -41,15 +45,17 @@ func NewUPostUsecase(repo repo.UPostRepo,
 		// },
 		planService: planService,
 		// UProductUsecase: UserProductService,
-		transmit:    transmit,
-		ProductRepo: productRepo,
-		Repo:        repo,
+		transmit:      transmit,
+		ProductRepo:   productRepo,
+		Repo:          repo,
+		PostMediaRepo: postMediaRepo,
+		AssetRepo:     assetRepo,
 		// serviceManager:     serviceManager,
 	}
 }
 
 func (s *UPostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*domain.Post, error) {
-	plan := s.planService.CurrentPlan2(c)
+	plan := s.planService.CurrentPlanFromContext(c)
 	if plan == nil {
 		return nil, &_routes.Except{
 			Code:    500,
@@ -106,6 +112,11 @@ func (s *UPostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (
 	}
 
 	err = _db.SaveWithContext(c, entity)
+
+	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
+		return nil, err
+	}
+
 	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
 	s.transmit.NotiClient.Send(c, &pb_noti.NotiNewRequest{
 		Title:     "Hết hạn tin đăng",
@@ -153,6 +164,10 @@ func (s *UPostUsecase) UpdatePost(c context.Context, id uint64, dto dto.PostUpda
 	copier.Copy(&entity, &dto)
 
 	err = _db.SaveWithContext(c, entity)
+
+	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
+		return nil, err
+	}
 	return entity, err
 }
 
@@ -223,14 +238,20 @@ func (s *UPostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, er
 	if err != nil {
 		return nil, err
 	}
-	product, _ := s.ProductRepo.GetByID(post.ProductId)
+	product, _ := s.ProductRepo.GetByIDContext(c, post.ProductId)
 	if err != nil {
 		return nil, err
+	}
+
+	var asset *domain.Asset
+	if post.ProductId != 0 {
+		asset, _ = s.AssetRepo.GetAssetByProductID(c, &post.ProductId)
 	}
 
 	return &dto.PostDetail{
 		Post:        post,
 		ProductInfo: product,
+		AssetInfo:   asset,
 	}, nil
 }
 
@@ -270,4 +291,22 @@ func (s *UPostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) 
 func (s *UPostUsecase) ProductPostLink(c context.Context, id uint64, dto *dto.PostLinkSearch) (*[]domain.PostItem, error) {
 	entities, err := s.Repo.SearchLinkToProduct(c, id, dto)
 	return &entities, err
+}
+
+func (s *UPostUsecase) Delete(c context.Context, id uint64) error {
+	requiredOwner, err := s.RequiredOwner(c, id)
+	if err != nil {
+		return err
+	}
+
+	if requiredOwner.Status == enums.PostPublic {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Tin đăng đã được đăng",
+		}
+	}
+
+	profileId := _utils.GetProfileIdWithContext(c)
+	err = s.Repo.Delete(c, profileId, id)
+	return err
 }

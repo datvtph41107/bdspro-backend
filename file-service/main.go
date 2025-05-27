@@ -1,6 +1,7 @@
 package main
 
 import (
+	_db "common/db"
 	_jwt "common/jwt"
 	"file/config"
 	_ "file/docs"
@@ -49,13 +50,14 @@ func NewConfigApp(db *gorm.DB, fileService *services.FileService) *ConfigApp {
 // @title Example API
 // @version 1.0
 // @description This is a sample API
-// @BasePath /file
+// @BasePath /v1/file
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 func main() {
 	r := gin.Default()
 	config.LoadConfig()
+	_db.NewDB()
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 	// os.Setenv("TZ", "Europe/London")

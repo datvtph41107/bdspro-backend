@@ -26,4 +26,5 @@ type UPostRepo interface {
 	Search(ctx context.Context, profileId uint64, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error)
 	Global(ctx context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error)
 	SearchLinkToProduct(ctx context.Context, profileId uint64, dto *dto.PostLinkSearch) ([]domain.PostItem, error)
+	Delete(ctx context.Context, profileId, id uint64) error
 }

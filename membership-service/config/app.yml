@@ -2,7 +2,7 @@ server:
   port: 8007
 
 database:
-  dsn: host=14.225.210.29 user=membership password=6GDnBBFBE5rMFjt4xPSDpsYm dbname=db_membership port=5432 sslmode=disable
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_membership port=5432 sslmode=disable
 
 key:
   jwt: key-generate-jwt-token-authentication

@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/file",
+    "basePath": "/v1/file",
     "paths": {
         "/load/{p}/{s}": {
             "get": {

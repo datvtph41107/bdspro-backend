@@ -126,7 +126,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/file",
+	BasePath:         "/v1/file",
 	Schemes:          []string{},
 	Title:            "Example API",
 	Description:      "This is a sample API",

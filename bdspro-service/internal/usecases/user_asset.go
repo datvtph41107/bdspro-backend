@@ -20,17 +20,20 @@ type UAssetUsecase struct {
 	ProductUserRepo  repo.UProductRepo
 	ProductUc        *UProductUsecase
 	AssetHistoryRepo repo.UAssetHistoryRepo
+	AssetLegalRepo   repo.AssetLegalRepo
 }
 
 func NewUAssetUsecase(assetRepo repo.AssetRepo,
 	ProductRepo repo.UProductRepo,
 	// ProductUc *UProductUsecase,
 	AssetHistoryRepo repo.UAssetHistoryRepo,
+	AssetLegalRepo repo.AssetLegalRepo,
 ) *UAssetUsecase {
 	return &UAssetUsecase{
 		AssetRepo:        assetRepo,
 		ProductUserRepo:  ProductRepo,
 		AssetHistoryRepo: AssetHistoryRepo,
+		AssetLegalRepo:   AssetLegalRepo,
 		// ProductUc:       ProductUc,
 	}
 }
@@ -74,7 +77,7 @@ func (s *UAssetUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Ass
 }
 
 // UC3: Chỉnh sửa thông tin tài sản trực tiếp từ danh sách
-func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *domain.Asset) (*domain.Asset, error) {
+func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
 	if id == 0 {
 		return nil, errors.New("asset ID is required")
 	}
@@ -110,6 +113,7 @@ func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *
 		return nil, err
 	}
 
+	uc.AssetLegalRepo.UpdateLegalItems(ctx, asset.ID, assetData.LegalItems)
 	afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: asset})
 	uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_Update, &assetData.ID, nil, afterData)
 
@@ -150,7 +154,7 @@ func (uc *UAssetUsecase) DeleteAsset(ctx context.Context, id uint64) error {
 // }
 
 // UC7: Tạo mới tài sản bằng nút truy cập nhanh
-func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *domain.Asset) (*domain.Asset, error) {
+func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
 	if assetData.Name == "" || assetData.Area <= 0 || assetData.Address == "" {
 		return nil, errors.New("missing required fields: name, area, or address")
 	}
@@ -158,12 +162,17 @@ func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *domain.Asse
 	assetData.OwnerUserID = &id
 	assetData.Archived = false
 
-	err := uc.AssetRepo.Create(ctx, assetData)
-	return assetData, err
+	asset := &domain.Asset{}
+	copier.Copy(asset, assetData)
+
+	err := uc.AssetRepo.Create(ctx, asset)
+
+	uc.AssetLegalRepo.UpdateLegalItems(ctx, asset.ID, assetData.LegalItems)
+	return asset, err
 }
 
 // UC8: Tạo tài sản từ sản phẩm có sẵn
-func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *domain.Asset) (*domain.Asset, error) {
+func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
 	// if req.ProductId == nil {
 	// 	return nil, fmt.Errorf("product_id is required")
 	// }
@@ -197,16 +206,17 @@ func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *dom
 	assetData.Archived = false
 
 	// Tạo tài sản
-	err = uc.AssetRepo.Create(ctx, assetData)
+	err = uc.AssetRepo.Create(ctx, &assetData.Asset)
 
 	if assetData.ProductID != nil {
 		uc.ProductUserRepo.UpdateAssetID(ctx, *assetData.ProductID, assetData.ID)
 	}
+	uc.AssetLegalRepo.UpdateLegalItems(ctx, assetData.ID, assetData.LegalItems)
 
-	afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: assetData})
+	afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: &assetData.Asset})
 	uc.AssetHistoryRepo.CreateHistory(ctx, enums.AssetHistory_New, &assetData.ID, nil, afterData)
 
-	return assetData, err
+	return &assetData.Asset, err
 }
 
 // UC9: Tạo tài sản và sản phẩm mới
@@ -558,4 +568,12 @@ func (uc *UAssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto 
 	}
 
 	return assets, total, nil
+}
+
+func (uc *UAssetUsecase) GetAssetDetail(ctx context.Context, assetID uint64) (*domain.Asset, error) {
+	asset, err := uc.AssetRepo.GetByID(assetID)
+	if err != nil {
+		return nil, err
+	}
+	return asset, nil
 }

@@ -44,7 +44,7 @@ func main() {
 	parameters := common.SetupParameters{
 		ConfigFile:   config.ConfigFile,
 		Engine:       r,
-		PublicRoutes: []string{"/membership/plan/list"},
+		PublicRoutes: []string{"/membership/user/plans"},
 		Prefix:       "/membership",
 	}
 

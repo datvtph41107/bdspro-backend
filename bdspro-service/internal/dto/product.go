@@ -43,6 +43,7 @@ type ProductSearchRequest struct {
 	Note             string     `form:"note"`
 	Timestamp        *time.Time `form:"timestamp"`
 	ParentID         *uint64    `form:"parentId"`
+	Text             string     `form:"text"`
 	// IsParent         *bool      `form:"isParent"`
 }
 

@@ -90,6 +90,7 @@ var publicRoutes = []string{
 	"/v1/user/profile/info/",
 	"/v1/user/profile/find-by-phone",
 	"/v1/membership/plan/list",
+	"/v1/membership/user/plans",
 	"/v1/search",
 	// "/v1/search/plan/list",
 }

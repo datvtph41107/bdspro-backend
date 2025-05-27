@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	_routes "common/routes"
@@ -35,8 +34,8 @@ func (r *UAssetRoute) RegisterRoutes(router *gin.RouterGroup) {
 		assetGroup.POST("/from-product", r.CreateAssetFromProduct)
 
 		assetGroup.PUT(":id", r.UpdateAsset)
-		// assetGroup.DELETE(":id", r.BaseRouter.Delete)
-		// assetGroup.GET(":id/detail", r.BaseRouter.GetByID)
+		assetGroup.DELETE(":id", r.DeleteAsset)
+		assetGroup.GET("/:id/detail", r.GetDetail)
 		assetGroup.POST("/merge", r.Merge)
 		assetGroup.POST("/split", r.Split)
 		assetGroup.GET("/history/:id", r.History)
@@ -46,7 +45,7 @@ func (r *UAssetRoute) RegisterRoutes(router *gin.RouterGroup) {
 }
 
 func (r *UAssetRoute) CreateAsset(c *gin.Context) {
-	body := domain.Asset{}
+	body := dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -57,7 +56,7 @@ func (r *UAssetRoute) CreateAsset(c *gin.Context) {
 }
 
 func (r *UAssetRoute) CreateAssetFromProduct(c *gin.Context) {
-	body := domain.Asset{}
+	body := dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -164,7 +163,7 @@ func (r *UAssetRoute) HistoryOwner(c *gin.Context) {
 func (r *UAssetRoute) UpdateAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	body := domain.Asset{}
+	body := dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -172,4 +171,18 @@ func (r *UAssetRoute) UpdateAsset(c *gin.Context) {
 
 	result, err := r.Service.UpdateAsset(c, id, &body)
 	_routes.RouteResult(c, result, err)
+}
+
+func (r *UAssetRoute) GetDetail(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	result, err := r.Service.GetAssetDetail(c, id)
+	_routes.RouteResult(c, result, err)
+}
+
+func (r *UAssetRoute) DeleteAsset(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	err := r.Service.DeleteAsset(c, id)
+	_routes.RouteResult(c, nil, err)
 }

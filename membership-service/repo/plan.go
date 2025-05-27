@@ -19,6 +19,7 @@ func NewPlanRepo(db *gorm.DB) *PlanRepo {
 
 func (p *PlanRepo) ListForUser() ([]models.Plan, error) {
 	var entities []models.Plan
-	err := p.DB.Where("deleted_at IS NULL and visibility = true").Find(&entities).Error
+
+	err := p.DB.Debug().Where("deleted_at IS NULL and visibility = true").Find(&entities).Error
 	return entities, err
 }

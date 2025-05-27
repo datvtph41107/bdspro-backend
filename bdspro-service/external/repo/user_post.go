@@ -328,3 +328,9 @@ func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64
 // func (r *PostRepo) GetByID(c context.Context, id uint64) (*domain.Post, error) {
 
 // }
+
+func (r *GormPostRepo) Delete(ctx context.Context, profileId, id uint64) error {
+	return r.DB.WithContext(ctx).
+		Model(&domain.Post{}).
+		Where("id = ? AND created_by = ?", id, profileId).Update("deleted_at", time.Now()).Error
+}

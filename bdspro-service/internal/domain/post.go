@@ -25,6 +25,8 @@ type Post struct {
 	Like            uint64               `json:"numLike"`
 	Comment         uint64               `json:"numComment"`
 	NumView         uint64               `json:"numView"`
+	Product         *Product             `json:"product"`
+	// Asset           *Asset               `json:"asset"`
 }
 
 type PostItem struct {

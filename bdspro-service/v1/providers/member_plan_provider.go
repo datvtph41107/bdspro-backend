@@ -47,14 +47,22 @@ func (s *MemberPlanProvider) CurrentPlan(c *gin.Context) *MemberPlan {
 	return s.Plans[*id]
 }
 
-func (s *MemberPlanProvider) CurrentPlan2(c context.Context) *MemberPlan {
-	id := c.Value("planId").(uint64)
-	return s.Plans[id]
+func (s *MemberPlanProvider) CurrentPlanFromContext(c context.Context) *MemberPlan {
+	planId := c.Value("planId")
+	id := planId.(*uint64)
+	if s.Plans == nil {
+		s.loadPlans()
+		return nil
+	}
+	if id == nil {
+		return nil
+	}
+	return s.Plans[*id]
 }
 
 func (s *MemberPlanProvider) loadPlans() {
 	// var entities []MemberPlan
-	url := "http://14.225.210.29:8000/v1/membership/plan/list"
+	url := "http://14.225.205.222:8000/v1/membership/user/plans"
 
 	// Gọi GET request
 	resp, err := http.Get(url)

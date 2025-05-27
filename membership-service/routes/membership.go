@@ -4,6 +4,7 @@ import (
 	_jwt "common/jwt"
 	_routes "common/routes"
 	"membership/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,7 @@ func NewMembershipRouter(service *services.MembershipService) *MembershipRouter 
 
 var publicRoutes = []string{
 	"/membership/user/verify",
+	"/membership/user/plans",
 }
 
 func (r *MembershipRouter) RegisterRoutes(router *gin.Engine) {
@@ -44,7 +46,11 @@ func (r *MembershipRouter) RegisterRoutes(router *gin.Engine) {
 // @Router /user/plan [get]
 func (r *MembershipRouter) ListPlan(c *gin.Context) {
 	result, err := r.Service.ListPlan(c)
-	_routes.RouteResult(c, result, err)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 // CreateOrder creates a new membership order

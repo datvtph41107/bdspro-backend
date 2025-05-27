@@ -45,7 +45,7 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 	api.PUT("/sale-visibility", route.SaleVisibilityUpdate)
 	api.PUT("/rent-visibility", route.RentVisibilityUpdate)
 	api.POST("/deposite", route.Deposite)
-	api.DELETE("/deposite/{productId}", route.CancelDeposite)
+	api.DELETE("/deposite/:depositeId", route.CancelDeposite)
 
 	// api.DELETE("/:id", route.Delete)
 }
@@ -436,8 +436,8 @@ func (route *UProductRouter) Deposite(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.ProductDeposite(c, dto)
-	_routes.RouteResult(c, nil, err)
+	deposite, err := route.UserProductService.ProductDeposite(c, dto)
+	_routes.RouteResult(c, deposite, err)
 }
 
 // @Summary Hủy cọc
@@ -446,9 +446,10 @@ func (route *UProductRouter) Deposite(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Router /v1/bdspro/user/product/deposite/{productId} [delete]
+// @Param depositeId path int true "Deposite ID"
+// @Router /v1/bdspro/user/product/deposite/{depositeId} [delete]
 func (route *UProductRouter) CancelDeposite(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+	id, err := strconv.ParseUint(c.Param("depositeId"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -458,20 +459,20 @@ func (route *UProductRouter) CancelDeposite(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Chia sẻ co-broker
-// @Description API
-// @Tags User
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Router /v1/bdspro/user/product/access-share [post]
-func (route *UProductRouter) Share(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // @Summary Chia sẻ co-broker
+// // @Description API
+// // @Tags User
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Router /v1/bdspro/user/product/access-share [post]
+// func (route *UProductRouter) Share(c *gin.Context) {
+// 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+// 	if err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	err = route.UserProductService.CancelDeposite(c, id)
-	_routes.RouteResult(c, nil, err)
-}
+// 	err = route.UserProductService.CancelDeposite(c, id)
+// 	_routes.RouteResult(c, nil, err)
+// }

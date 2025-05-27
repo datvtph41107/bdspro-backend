@@ -2,6 +2,7 @@ package cmd_http
 
 import (
 	"bdspro/config"
+	"bdspro/db"
 	"bdspro/v1/models"
 	app_validator "bdspro/v1/validator"
 	w "bdspro/wire"
@@ -54,6 +55,7 @@ var HttpCmd = &cobra.Command{
 			log.Printf("Data: ", config.AppProperties)
 
 			models.AutoMigrate()
+			db.MigrateDomain()
 
 			app.AdminRouter.RegisterAdminRouter(engine)
 			app.UserRoute.RegisterUserRouter(engine)

@@ -8,7 +8,6 @@ import (
 	"membership/data"
 	"membership/models"
 	"membership/repo"
-	payment "payment/models"
 	"strconv"
 	"time"
 
@@ -84,7 +83,7 @@ func (m *MembershipService) CreateOrder(c *gin.Context) (*models.Membership, err
 		}
 	}
 
-	payload := payment.OrderRequest{
+	payload := data.OrderRequest{
 		Amount:      int(plan.Price),
 		Description: "UP_PLAN",
 		TargetId:    &membership.ID,

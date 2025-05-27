@@ -3,6 +3,7 @@ package domain
 import (
 	"bdspro/internal/enums"
 	_models "common/models"
+	"encoding/json"
 	"time"
 
 	"gorm.io/gorm"
@@ -46,16 +47,23 @@ type Asset struct {
 	PropertyTypeId   *uint64           `json:"propertyTypeId"`
 	PropertyType     *PropertyTypeItem `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	Product          *Product          `gorm:"foreignKey:ProductID;references:ID" json:"product,omitempty"`
+	LegalItems       *[]LegalItem      `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
 }
 
 type AssetList struct {
 	Asset
-	PropertyTypeName string `gorm:"column:property_type_name" json:"propertyTypeName"`
-	ProvinceName     string `gorm:"column:province_name" json:"provinceName"`
-	DistrictName     string `gorm:"column:district_name" json:"districtName"`
-	WardName         string `gorm:"column:ward_name" json:"wardName"`
-	Permissions      string `gorm:"column:permissions" json:"permissions"`
+	PropertyTypeName string          `gorm:"column:property_type_name" json:"propertyTypeName"`
+	ProvinceName     string          `gorm:"column:province_name" json:"provinceName"`
+	DistrictName     string          `gorm:"column:district_name" json:"districtName"`
+	WardName         string          `gorm:"column:ward_name" json:"wardName"`
+	Permissions      string          `gorm:"column:permissions" json:"permissions"`
+	LegalList        json.RawMessage `gorm:"column:legal_list" json:"legalList"` // raw json from query
+	// LegalItems       []LegalItem     `gorm:"-" json:"legalItems"`
 }
+
+// func (a *AssetList) TableName() string {
+// 	return "assets"
+// }
 
 type AssetLog struct {
 	CreatedBy        *uint64           `json:"-"`

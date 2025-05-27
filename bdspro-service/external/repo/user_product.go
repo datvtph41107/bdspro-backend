@@ -227,60 +227,78 @@ func (r *GormUserProductRepo) UpdateProductAmenityIds(productID uint64, amenityI
 	return nil
 }
 
-func (r *GormUserProductRepo) SearchProductWithOwner(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	var results []domain.Product
-
-	// query := `
-	// 	SELECT p.*, dt.*, pt.*
-	// 	FROM product_access pa
-	// 	JOIN products p ON pa.product_id = p.id
-	// 	LEFT JOIN doc_type dt ON p.doc_type_id = dt.id
-	// 	LEFT JOIN property_type pt ON p.property_type_id = pt.id
-	// 	LIMIT ? OFFSET ?
-	// `
-
-	// err := r.DB.Raw(query, pageable.Limit, pageable.Skip).
-	// 	Scan(&results).Error
-
-	query := r.DB.
-		Debug().
-		Model(domain.Product{}).
-		Joins(`LEFT JOIN product_access pa
-					ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
-		// Where("pa.user_id = ?", profileId).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		// Preload("Price", func(db *gorm.DB) *gorm.DB {
-		// 	return db.
-		// 		Where("created_at = (SELECT MAX(created_at) FROM product_price WHERE product_id = product_prices.product_id)").
-		// 		Order("created_at desc").Limit(1) // Lấy giá gần đây nhất
-		// }).
-		// Preload("Price", "deleted_at IS NULL").
-		// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
-		// 	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
-		// Joins("LEFT JOIN product_price ON product_price.product_id = products.id").
-		// Where("product_price.created_at = (SELECT MAX(created_at) FROM product_price WHERE product_price.product_id = products.id)").
-
-		// Select("products.*, product_prices.*").
-
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
-		// Order("created_at desc").
-		// Limit(pageable.Limit).
-		// Offset(pageable.Skip)
-
+func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto dto.ProductSearchRequest) *gorm.DB {
 	if dto.ParentID != nil && *dto.ParentID == 0 {
 		query = query.Where("products.parent_id is null")
 	} else if dto.ParentID != nil && *dto.ParentID > 0 {
 		query = query.Where("products.parent_id = ?", dto.ParentID)
 	}
+
+	if dto.TransactionTypes != nil {
+		query = query.Where("products.transaction_type IN (?)", dto.TransactionTypes)
+	}
+
+	if dto.SaleStatus != nil {
+		query = query.Where("products.sale_status IN (?)", dto.SaleStatus)
+	}
+
+	if dto.RentStatus != nil {
+		query = query.Where("products.rent_status IN (?)", dto.RentStatus)
+	}
+
+	if dto.SourceTypeIds != nil {
+		query = query.Where("products.source_type IN (?)", dto.SourceTypeIds)
+	}
+
+	if dto.PriceFrom > 0 {
+		query = query.Where("? < product_price.sale_price", dto.PriceFrom)
+	}
+	if dto.PriceTo > 0 {
+		query = query.Where("product_price.sale_price < ?", dto.PriceTo)
+	}
+
+	if dto.NumBedrooms != nil {
+		query = query.Where("products.num_bedroom IN (?)", dto.NumBedrooms)
+	}
+
+	if dto.NumBathrooms != nil {
+		query = query.Where("products.num_bathroom IN (?)", dto.NumBathrooms)
+	}
+
+	if dto.Text != "" {
+		query = query.Where("LOWER(products.name) LIKE ?", "%"+strings.ToLower(dto.Text)+"%")
+	}
+
+	return query
+}
+
+func (r *GormUserProductRepo) SearchProductWithOwner(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	var results []domain.Product
+
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN product_access pa
+					ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, profileId).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+
+		// Where("pa.user_id = ?", profileId).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+
+	query = r.QueryDomain(query, dto)
 
 	err := query.
 		Order("created_at desc").
@@ -321,7 +339,7 @@ func (r *GormUserProductRepo) SearchProductMarket(profileId uint64, dto dto.Prod
 		Preload("Province", "deleted_at IS NULL").
 		Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
@@ -494,101 +512,6 @@ func (r *GormUserProductRepo) SmartSearchProduct(
 }
 
 func (r *GormUserProductRepo) DetectProductData(profileId uint64, input string) ([]domain.Product, int64, error) {
-	// var results []domain.Product
-	// query := r.DB.
-	// 	Debug().
-	// 	Model(domain.Product{}).
-	// 	// Table("products p").
-	// 	Preload("Price", func(db *gorm.DB) *gorm.DB {
-	// 		return db.Order("product_price.created_at asc")
-	// 	}).
-	// 	Joins(`LEFT JOIN product_price on product_price.id = products.last_price_id AND product_price.deleted_at IS NULL`).
-	// 	Joins(`LEFT JOIN house_info
-	// 		ON house_info.product_id = products.id AND house_info.deleted_at IS NULL`).
-	// 	Preload("HouseInfo", "deleted_at IS NULL").
-	// 	Preload("Province", "deleted_at IS NULL").
-	// 	Preload("District", "deleted_at IS NULL").
-	// 	Preload("Ward", "deleted_at IS NULL").
-	// 	Preload("Amenities", "deleted_at IS NULL").
-	// 	Preload("DocType", "deleted_at IS NULL").
-	// 	Preload("PropertyType", "deleted_at IS NULL").
-	// 	Preload("MediaList", "deleted_at IS NULL").
-	// 	Where("products.deleted_at IS NULL").
-	// 	Where("products.sale_visibility = ?", 3)
-
-	// if dto.Bedroom != nil {
-	// 	query = query.Where("house_info.num_bedroom = ?", dto.Bedroom)
-	// }
-	// if dto.Toilet != nil {
-	// 	query = query.Where("house_info.num_toilet = ?", dto.Toilet)
-	// }
-	// if dto.Kitchen != nil {
-	// 	query = query.Where("house_info.num_kitchen = ?", dto.Kitchen)
-	// }
-	// if dto.Park != nil {
-	// 	query = query.Where("house_info.num_car_park = ?", dto.Park)
-	// }
-	// if dto.Floor != nil {
-	// 	query = query.Where("house_info.num_floor IN (?)", dto.Floor)
-	// }
-	// if dto.Price != nil {
-	// 	query = query.Where("? < product_price.sale_price and product_price.sale_price < ?",
-	// 		*dto.Price-300_000_000,
-	// 		*dto.Price+300_000_000)
-	// }
-	// if dto.Area != nil {
-	// 	query = query.Where("? < products.area and products.area < ?",
-	// 		*dto.Area-3, *dto.Area+3)
-	// }
-	// if dto.Frontage != nil {
-	// 	query = query.Where("house_info.num_front = ?", dto.Frontage)
-	// }
-	// if dto.SourceTypeIds != nil {
-	// 	query = query.Where("products.source_type IN (?)", dto.SourceTypeIds)
-	// }
-	// if dto.Frontage != nil {
-	// 	query = query.Where("house_info.num_front = ?", dto.Frontage)
-	// }
-	// if len(dto.RegionIds) > 0 {
-	// 	query = query.Where(`(products.province_id IN (?)
-	// 			OR products.district_id IN (?)
-	// 			OR products.ward_id IN (?))`,
-	// 		dto.RegionIds, dto.RegionIds, dto.RegionIds)
-	// }
-	// // if len(dto.DistrictIds) > 0 {
-	// // 	query = query.Where("products.district_id IN (?)", dto.DistrictIds)
-	// // }
-	// // if len(dto.WardIds) > 0 {
-	// // 	query = query.Where("products.ward_id IN (?)", dto.WardIds)
-	// // }
-	// if len(dto.DocTypeIds) > 0 {
-	// 	query = query.Where("products.doc_type_id IN (?)", dto.DocTypeIds)
-	// }
-	// if len(dto.PropertyTypeIds) > 0 {
-	// 	query = query.Where("products.property_type_id IN (?)", dto.PropertyTypeIds)
-	// }
-	// if len(dto.RentStatus) > 0 {
-	// 	query = query.Where("products.rent_status IN (?)", dto.RentStatus)
-	// }
-	// if len(dto.SaleStatus) > 0 {
-	// 	query = query.Where("products.sale_status IN (?)", dto.SaleStatus)
-	// }
-	// if trimmed := strings.TrimSpace(dto.Name); trimmed != "" {
-	// 	pattern := "%" + strings.ToLower(trimmed) + "%"
-	// 	query = query.Where("LOWER(products.name) LIKE ? OR LOWER(products.code) LIKE ?", pattern, pattern)
-	// }
-	// err := query.
-	// 	Limit(pageable.Limit).
-	// 	Offset(pageable.Skip).
-	// 	Find(&results).Error
-
-	// var total int64
-	// query.Count(&total)
-
-	// if err != nil {
-	// 	return nil, 0, err
-	// }
-	// return results, total, nil
 	return nil, 0, nil
 }
 
@@ -617,4 +540,11 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 		Where("id = ? and deleted_at is null and asset_id is null", id).
 		Update("asset_id", assetID).
 		Error
+}
+
+func (r *GormUserProductRepo) CancelDeposite(ctx context.Context, id uint64) error {
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("deposite_id", nil).Error
 }

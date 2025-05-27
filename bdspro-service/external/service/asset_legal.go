@@ -2,6 +2,7 @@ package service
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	"context"
 	pb_bdspro "pb/types/bdspro"
@@ -11,17 +12,19 @@ import (
 
 type AssetLegalServer struct {
 	pb_bdspro.UnimplementedAssetLegalServiceServer
-	UC usecases.AssetLegalUsecase
+	UC *usecases.AssetLegalUsecase
 }
 
-func NewAssetLegalServer(AssetLegalUc usecases.AssetLegalUsecase) *AssetLegalServer {
+func NewAssetLegalServer(AssetLegalUc *usecases.AssetLegalUsecase) *AssetLegalServer {
 	return &AssetLegalServer{
 		UC: AssetLegalUc,
 	}
 }
 
-func (s AssetLegalServer) Get(c context.Context, dto *pb_bdspro.AssetLegalDTO) (*pb_bdspro.AssetLegalListDTO, error) {
-	result, err := s.UC.GetData(c, dto.Id)
+func (s AssetLegalServer) Get(c context.Context, data *pb_bdspro.AssetLegalDTO) (*pb_bdspro.AssetLegalListDTO, error) {
+	query := dto.AssetLegalGetDTO{}
+	copier.Copy(&query, &data)
+	result, _, err := s.UC.GetData(c, query)
 
 	pbdatas := []*pb_bdspro.AssetLegalDTO{}
 	for _, r := range result {

@@ -56,4 +56,6 @@ type UProductRepo interface {
 	NewDeposite(ctx context.Context, dto *domain.Deposite) error
 	CountByAssetID(assetID uint64) (int64, error)
 	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
+	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
+	CancelDeposite(ctx context.Context, id uint64) error
 }
