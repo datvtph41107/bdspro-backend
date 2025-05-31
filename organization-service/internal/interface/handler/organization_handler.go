@@ -1,0 +1,31 @@
+package handler
+
+import (
+	"context"
+
+	"github.com/tuandq2112/organization-service/internal/interface/transformer"
+	"github.com/tuandq2112/organization-service/internal/usecase"
+	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
+)
+
+type OrganizationHandler struct {
+	organizationpb.UnimplementedOrganizationServiceServer
+	OrganizationUsecase     usecase.OrganizationUsecase
+	OrganizationTransformer transformer.OrganizationTransformer
+}
+
+func NewOrganizationHandler(organizationUsecase usecase.OrganizationUsecase, organizationTransformer transformer.OrganizationTransformer) *OrganizationHandler {
+	return &OrganizationHandler{
+		OrganizationUsecase:     organizationUsecase,
+		OrganizationTransformer: organizationTransformer,
+	}
+}
+
+func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organizationpb.CreateOrganizationRequest) (*organizationpb.CreateOrganizationResponse, error) {
+	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
+	organization, err := h.OrganizationUsecase.CreateOrganization(ctx, organization)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationTransformer.EntityToCreateOrganizationResponse(organization), nil
+}

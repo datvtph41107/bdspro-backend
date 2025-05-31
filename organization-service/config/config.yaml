@@ -1,0 +1,11 @@
+HTTP:
+  PORT: 8080
+Database:
+  PRIMARY_DB_TYPE: postgres
+  DB_DNS: host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable
+WhitelistMethods:
+  GET_PATH:
+  POST_PATH:
+    - /organization/api/v1/organizations
+  PUT_PATH:
+  DELETE_PATH:

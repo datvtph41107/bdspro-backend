@@ -1,8 +1,7 @@
 package models
 
-import (
-	"time"
-)
+import "time"
+
 
 type ConversationTypeEnum int
 
@@ -13,20 +12,21 @@ const (
 )
 
 type ConversationModel struct {
-	ID              uint64               `gorm:"primaryKey;autoIncrement"`
-	Type            ConversationTypeEnum `gorm:"not null;index:idx_type_created"`
-	Name            *string              `gorm:"size:255"`
-	CreatedBy       uint64               `gorm:"not null;column:created_by"`
-	IsBroadcast     bool                 `gorm:"default:false;column:is_broadcast"`
-	ForbidForward   bool                 `gorm:"default:false;column:forbid_forward"`
-	CreatedAt       time.Time            `gorm:"autoCreateTime;column:created_at;index:idx_type_created"`
-	UpdatedAt       time.Time            `gorm:"autoUpdateTime;column:updated_at"`
-	Participants    []ParticipantModel   `gorm:"foreignKey:ConversationID;references:ID"`
-	IsDeleted       bool                 `json:"is_deleted" gorm:"default:false"`
-	Avatar          string               `gorm:"size:255"`
-	BackgroundImage string               `gorm:"size:255"`
-	UnreadCount     int                  `gorm:"-"`
-	LatestMessage   MessageModel         `gorm:"-"`
+	ID        uint64               `gorm:"primaryKey;autoIncrement"`
+	Type      ConversationTypeEnum `gorm:"not null;index:idx_type_created"`
+	Name      *string              `gorm:"size:255"`
+	CreatedBy uint64               `gorm:"not null;column:created_by"`
+
+	IsBroadcast     bool               `gorm:"default:false;column:is_broadcast"`
+	ForbidForward   bool               `gorm:"default:false;column:forbid_forward"`
+	CreatedAt       time.Time          `gorm:"autoCreateTime;column:created_at;index:idx_type_created"`
+	UpdatedAt       time.Time          `gorm:"autoUpdateTime;column:updated_at"`
+	Participants    []ParticipantModel `gorm:"foreignKey:ConversationID;references:ID"`
+	IsDeleted       bool               `json:"is_deleted" gorm:"default:false"`
+	Avatar          string             `gorm:"size:255"`
+	BackgroundImage string             `gorm:"size:255"`
+	UnreadCount     int                `gorm:"-"`
+	LatestMessage   MessageModel       `gorm:"-"`
 }
 
 func (ConversationModel) TableName() string {
