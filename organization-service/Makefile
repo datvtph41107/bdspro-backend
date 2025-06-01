@@ -11,3 +11,5 @@ swagger:
 run: swagger
 	go run main.go http-gateway
 
+run-grpc:
+	go run main.go grpc-server

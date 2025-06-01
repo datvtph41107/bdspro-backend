@@ -1,0 +1,115 @@
+package grpc
+
+import (
+	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/oklog/run"
+	"github.com/tuandq2112/organization-service/appconfig"
+	"github.com/tuandq2112/organization-service/internal/interface/handler"
+	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+)
+
+type GRPCServer struct {
+	organizationHandler *handler.OrganizationHandler
+	logger *flogging.FabricLogger
+}
+
+func NewGRPCServer(organizationHandler *handler.OrganizationHandler) *GRPCServer {
+	return &GRPCServer{
+		organizationHandler: organizationHandler,
+		logger:              flogging.MustGetLogger(appconfig.SERVICE_NAME),
+	}
+}
+
+func (s *GRPCServer) Start() {
+	g := &run.Group{}
+
+	start, stop := buildGRPCServer(s.logger, s.organizationHandler)
+
+	g.Add(start, stop)
+
+	signalStart, signalStop := buildSignalHandler(s.logger)
+	g.Add(signalStart, signalStop)
+
+	if err := g.Run(); err != nil {
+		s.logger.Error("Server exited", zap.Error(err))
+	}
+}
+
+func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler) (func() error, func(error)) {
+	unaryInts := []grpc.UnaryServerInterceptor{}
+	streamInts := []grpc.StreamServerInterceptor{}
+	_, start, stop, err := BuildGRPCServer(
+		fmt.Sprintf(":%s", appconfig.GRPC_PORT),
+		func(s *grpc.Server) {
+			logger.Info("Registering OrganizationServiceServer")
+			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)
+		},
+		unaryInts,
+		streamInts,
+	)
+	if err != nil {
+		return nil, nil
+	}
+
+	return start, stop
+}
+
+func buildSignalHandler(logger *flogging.FabricLogger) (func() error, func(error)) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	return func() error {
+			sig := <-sigs
+			return fmt.Errorf("signal received: %v", sig)
+		}, func(err error) {
+			close(sigs)
+		}
+}
+
+func BuildGRPCServer(
+	addr string,
+	registerFunc func(*grpc.Server),
+	unaryInterceptors []grpc.UnaryServerInterceptor,
+	streamInterceptors []grpc.StreamServerInterceptor,
+) (
+	server *grpc.Server,
+	start func() error,
+	stop func(err error),
+	err error,
+) {
+	var opts []grpc.ServerOption
+
+	if len(unaryInterceptors) > 0 {
+		opts = append(opts, grpc.ChainUnaryInterceptor(unaryInterceptors...))
+	}
+
+	if len(streamInterceptors) > 0 {
+		opts = append(opts, grpc.ChainStreamInterceptor(streamInterceptors...))
+	}
+
+	server = grpc.NewServer(opts...)
+	registerFunc(server)
+
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to listen: %w", err)
+	}
+
+	start = func() error {
+		return server.Serve(lis)
+	}
+
+	stop = func(err error) {
+		server.GracefulStop()
+	}
+
+	return server, start, stop, nil
+}

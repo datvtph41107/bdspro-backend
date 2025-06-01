@@ -11,6 +11,7 @@ import (
 
 const (
 	USER_CONTEXT = "user_context"
+	SERVICE_NAME = "organization-service"
 )
 
 type DBType string
@@ -21,6 +22,7 @@ const (
 	// Default values
 	DefaultDBDNS    = "host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable"
 	DefaultHTTPPort = "8080"
+	DefaultGRPCPort = "50052"
 )
 
 var (
@@ -33,6 +35,7 @@ var (
 	WHITELIST_METHODS_POST_PATH   []string
 	WHITELIST_METHODS_PUT_PATH    []string
 	WHITELIST_METHODS_DELETE_PATH []string
+	GRPC_PORT                     = DefaultGRPCPort
 )
 
 func InitConfig() {
