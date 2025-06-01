@@ -103,38 +103,6 @@
           "OrganizationService"
         ]
       }
-    },
-    "/v1/organizations": {
-      "post": {
-        "operationId": "OrganizationService_CreateOrganization",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationCreateOrganizationRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationCreateOrganizationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "OrganizationService"
-        ]
-      }
     }
   },
   "security": [
@@ -152,6 +120,18 @@
   },
   "swagger": "2.0",
   "tags": [
+    {
+      "name": "OrganizationService"
+    },
+    {
+      "name": "OrganizationService"
+    },
+    {
+      "name": "OrganizationService"
+    },
+    {
+      "name": "OrganizationService"
+    },
     {
       "name": "OrganizationService"
     },

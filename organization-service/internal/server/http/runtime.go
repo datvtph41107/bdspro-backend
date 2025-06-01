@@ -29,10 +29,12 @@ func NewHttpServer(organizationHandler *handler.OrganizationHandler) *HttpServer
 	}
 }
 
+
 func (h *HttpServer) Run() {
 	ctx := context.Background()
-
-	mux := runtime.NewServeMux()
+	var opts []runtime.ServeMuxOption
+	opts = append(opts, runtime.WithErrorHandler(CustomErrorHandler))
+	mux := runtime.NewServeMux(opts...)
 	err := organizationpb.RegisterOrganizationServiceHandlerServer(ctx, mux, h.organizationHandler)
 	if err != nil {
 		h.logger.Errorf("Failed to register organization service: %v", err)

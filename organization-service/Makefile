@@ -7,7 +7,7 @@ build:
 swagger:
 	go run main.go merge-swagger
 
-.PHONY: swagger
-run:
+.PHONY: run
+run: swagger
 	go run main.go http-gateway
 

@@ -8,6 +8,7 @@ import (
 	"github.com/tuandq2112/organization-service/internal/infrastructure/repository"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
+	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/server/http"
 	"github.com/tuandq2112/organization-service/internal/usecase"
 )
@@ -22,6 +23,7 @@ var usecaseSet = wire.NewSet(
 
 var handlerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
+	validator.NewOrganizationValidator,
 	handler.NewOrganizationHandler,
 )
 

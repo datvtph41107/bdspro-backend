@@ -11,6 +11,7 @@ import (
 	"github.com/tuandq2112/organization-service/internal/infrastructure/repository"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
+	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/server/http"
 	"github.com/tuandq2112/organization-service/internal/usecase"
 )
@@ -21,7 +22,8 @@ func InitializeHttpServer() *http.HttpServer {
 	organizationRepository := repository.NewRepository()
 	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository)
 	organizationTransformer := transformer.NewOrganizationTransformer()
-	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer)
+	organizationValidator := validator.NewOrganizationValidator()
+	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
 	httpServer := http.NewHttpServer(organizationHandler)
 	return httpServer
 }
@@ -32,4 +34,4 @@ var repositorySet = wire.NewSet(repository.NewRepository)
 
 var usecaseSet = wire.NewSet(usecase.NewOrganizationUsecase)
 
-var handlerSet = wire.NewSet(transformer.NewOrganizationTransformer, handler.NewOrganizationHandler)
+var handlerSet = wire.NewSet(transformer.NewOrganizationTransformer, validator.NewOrganizationValidator, handler.NewOrganizationHandler)
