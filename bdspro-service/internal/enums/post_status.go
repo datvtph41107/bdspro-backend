@@ -1,33 +1,21 @@
 package enums
 
-type PostStatus int
+type EPostStatus int
 
 const (
-	PostPublic          PostStatus = 10
-	PostFinished        PostStatus = 20
-	PostSold            PostStatus = 40
-	PostRent            PostStatus = 50
-	PostStop            PostStatus = 60 // tùy nghiệp vụ về sau
-	PostStatusCompleted PostStatus = 70
-	// PostHide            PostStatus = 3
+	EPostPublic          EPostStatus = 10
+	EPostFinished        EPostStatus = 20
+	EPostSold            EPostStatus = 40
+	EPostRent            EPostStatus = 50
+	EPostStop            EPostStatus = 60 // tùy nghiệp vụ về sau
+	EPostStatusCompleted EPostStatus = 70
 )
 
-func (s PostStatus) String() string {
-	switch s {
-	case PostPublic:
-		return "Công khai"
-	case PostFinished:
-		return "Hết hạn"
-	// case PostHide:
-	// 	return "Tạm ẩn"
-	case PostSold:
-		return "Đã bán"
-	case PostRent:
-		return "Đã cho thuê"
-	case PostStop:
-		return "Dừng"
-		// return "Đã xóa"
-	default:
-		return ""
-	}
+var EPostStatusNames = map[EPostStatus]string{
+	EPostPublic:          "Công khai",
+	EPostFinished:        "Hết hạn",
+	EPostSold:            "Đã bán",
+	EPostRent:            "Đã cho thuê",
+	EPostStop:            "Dừng",
+	EPostStatusCompleted: "Đã hoàn thành",
 }

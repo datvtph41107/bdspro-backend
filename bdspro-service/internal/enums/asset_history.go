@@ -13,3 +13,13 @@ const (
 	// AssetHistory_UpPost   AssetHistory = 7
 	// AssetHistory_MergeAll AssetHistory = 3
 )
+
+var AssetHistoryNames = map[AssetHistory]string{
+	AssetHistory_Merge:    "Gộp",
+	AssetHistory_Slit:     "Chia",
+	AssetHistory_New:      "Tạo",
+	AssetHistory_Update:   "Cập nhật",
+	AssetHistory_Archived: "Lưu trữ",
+	AssetHistory_Deleted:  "Xóa",
+	AssetHistory_UpPost:   "Đăng tin",
+}

@@ -1,4 +1,4 @@
-package routes
+package user_router
 
 import (
 	_jwt "common/jwt"
@@ -42,6 +42,7 @@ var publicRoutes = []string{
 	"/bdspro/v2/user/list/property-type",
 	"/bdspro/v2/user/post/global",
 	"/bdspro/v2/user/product/market",
+	"/bdspro/v2/user/posts/publish",
 }
 
 func (rm *RouterManager) RegisterRouter(e *gin.Engine) {

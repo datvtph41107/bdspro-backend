@@ -83,8 +83,8 @@ type AccessSearch struct {
 	_dto.Page
 	// Page       uint                 `form:"page"`
 	// Size       uint                 `form:"size"`
-	ProductID  uint64               `form:"productId" valid:"required"`
-	TargetType enums.TargetTypeEnum `form:"targetType" valid:"required"`
+	ProductID  uint64            `form:"productId" valid:"required"`
+	TargetType enums.ETargetType `form:"targetType" valid:"required"`
 }
 
 type BulkRequest struct {

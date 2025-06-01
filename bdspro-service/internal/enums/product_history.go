@@ -1,10 +1,17 @@
 package enums
 
-type ProductHistory uint
+type EProductHistory uint
 
 const (
-	ProductHistory_NewChild ProductHistory = 10
-	ProductHistory_Merge    ProductHistory = 20
-	ProductHistory_MergeAll ProductHistory = 30
-	ProductHistory_Devide   ProductHistory = 40
+	EProductHistory_NewChild EProductHistory = 10
+	EProductHistory_Merge    EProductHistory = 20
+	EProductHistory_MergeAll EProductHistory = 30
+	EProductHistory_Devide   EProductHistory = 40
 )
+
+var EProductHistoryNames = map[EProductHistory]string{
+	EProductHistory_NewChild: "Tạo con",
+	EProductHistory_Merge:    "Gộp",
+	EProductHistory_MergeAll: "Gộp tất cả",
+	EProductHistory_Devide:   "Chia",
+}

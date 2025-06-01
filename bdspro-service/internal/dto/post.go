@@ -34,17 +34,17 @@ type PostDetail struct {
 }
 
 type PostSaveRequest struct {
-	ProductID       uint64               `json:"productId" binding:"required"`
-	Title           string               `json:"title"`
-	Content         string               `json:"content" binding:"required"`
-	Price           float64              `json:"postPrice"`
-	TransactionType uint                 `json:"transactionType" binding:"required"`
-	Visibility      enums.PostVisibility `json:"visibility" binding:"required"`
-	PackageVisible  uint                 `json:"packageVisible"`
-	ExpiredAt       *time.Time           `json:"expiredAt"`
-	NumDate         int                  `json:"numDate"`
-	Hidden          bool                 `json:"hidden"`
-	MediaList       []PostMediaItem      `json:"mediaList"`
+	ProductID       uint64            `json:"productId" binding:"required"`
+	Title           string            `json:"title"`
+	Content         string            `json:"content" binding:"required"`
+	Price           float64           `json:"postPrice"`
+	TransactionType uint              `json:"transactionType" binding:"required"`
+	Visibility      enums.EVisibility `json:"visibility" binding:"required"`
+	PackageVisible  uint              `json:"packageVisible"`
+	ExpiredAt       *time.Time        `json:"expiredAt"`
+	NumDate         int               `json:"numDate"`
+	Hidden          bool              `json:"hidden"`
+	MediaList       []PostMediaItem   `json:"mediaList"`
 	// Status    uint   `json:"status"`
 }
 
@@ -54,7 +54,7 @@ type PostSaveWithProduct struct {
 	Content         string                  `json:"content"`
 	Price           float64                 `json:"postPrice"`
 	TransactionType uint                    `json:"transactionType"`
-	Visibility      enums.PostVisibility    `json:"visibility"`
+	Visibility      enums.EVisibility       `json:"visibility"`
 	PackageVisible  uint                    `json:"packageVisible"`
 	ExpiredAt       *time.Time              `json:"expiredAt"`
 	NumDate         int                     `json:"numDate"`
@@ -74,14 +74,14 @@ type ActionRequest struct {
 }
 
 type PostUpdateRequest struct {
-	Title           string               `json:"title"`
-	Content         string               `json:"content"`
-	Price           float64              `json:"postPrice"`
-	TransactionType uint                 `json:"transactionType"`
-	PackageVisible  uint                 `json:"packageVisible"`
-	Visibility      enums.PostVisibility `json:"visibility"`
-	NumDate         int                  `json:"numDate"`
-	MediaList       []PostMediaItem      `json:"mediaList"`
+	Title           string            `json:"title"`
+	Content         string            `json:"content"`
+	Price           float64           `json:"postPrice"`
+	TransactionType uint              `json:"transactionType"`
+	PackageVisible  uint              `json:"packageVisible"`
+	Visibility      enums.EVisibility `json:"visibility"`
+	NumDate         int               `json:"numDate"`
+	MediaList       []PostMediaItem   `json:"mediaList"`
 }
 
 type PostShareRequest struct {
@@ -108,4 +108,8 @@ type SearchRequest struct {
 	Status          []uint64   `form:"status"`
 	Types           []uint64   `form:"types"` // 1: hiển thị, 2: hết hạn; 3: tạm ẩn
 	PackageVisibles []uint64   `form:"packageVisibles"`
+}
+
+type PostPublishSearch struct {
+	_dto.Page
 }

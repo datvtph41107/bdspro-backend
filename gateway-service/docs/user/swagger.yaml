@@ -1,5 +1,53 @@
 basePath: /v1/user
 definitions:
+  data.CertificationBatchSave:
+    properties:
+      fileUrl:
+        type: string
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+      title:
+        type: string
+      type:
+        type: integer
+    type: object
+  data.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  data.FriendDTO:
+    properties:
+      groupId:
+        type: integer
+      groupReceiverId:
+        type: integer
+      id:
+        type: integer
+      isSender:
+        description: |-
+          Group           *FriendGroupDTO `json:"group,omitempty"`
+          UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
+        type: boolean
+      receiverId:
+        type: integer
+      respondedAt:
+        type: string
+      senderId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.EFriendStatus'
+      text:
+        type: string
+    type: object
   data.OtpRequest:
     properties:
       fullname:
@@ -31,14 +79,91 @@ definitions:
     - otp
     - phone
     type: object
+  data.ProfessionBatchSave:
+    properties:
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+    type: object
   data.PublicUserInfo:
     properties:
+      address:
+        type: string
       avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      certifications:
+        description: transient
+        items:
+          $ref: '#/definitions/user_model.CertificationItem'
+        type: array
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      frontIdentify:
         type: string
       fullname:
         type: string
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
+      position:
+        type: string
+      professions:
+        items:
+          $ref: '#/definitions/user_model.ProfessionItem'
+        type: array
       profileId:
         type: integer
+      rateStats:
+        $ref: '#/definitions/user_model.RateStats'
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      relationShip:
+        $ref: '#/definitions/data.RelationShip'
+      roleRealEstate:
+        $ref: '#/definitions/enums.ERoleRealEstate'
+      slogan:
+        type: string
+      startDate:
+        type: string
+      statusOnline:
+        $ref: '#/definitions/enums.EOnlineStatus'
+      taxCode:
+        type: string
+      twitter:
+        type: string
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  data.RelationShip:
+    properties:
+      friendStatus:
+        $ref: '#/definitions/user_model.FriendItem'
+      isFollowing:
+        type: boolean
     type: object
   data.RestorePhoneRequest:
     properties:
@@ -85,23 +210,71 @@ definitions:
         type: string
       avatar:
         type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
       birth:
         type: string
+      certificationRemoveIds:
+        items:
+          type: integer
+        type: array
+      certifications:
+        items:
+          $ref: '#/definitions/data.CertificationBatchSave'
+        type: array
       departmentId:
         type: integer
       email:
         type: string
+      facebook:
+        type: string
+      frontIdentify:
+        type: string
       fullname:
+        type: string
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
         type: string
       phone:
         type: string
+      phone2:
+        type: string
       position:
         type: string
-      referralBy:
+      professionRemoveIds:
+        items:
+          type: integer
+        type: array
+      professions:
+        items:
+          $ref: '#/definitions/data.ProfessionBatchSave'
+        type: array
+      profileVisibility:
+        type: integer
+      roleRealEstate:
+        $ref: '#/definitions/enums.ERoleRealEstate'
+      slogan:
         type: string
       startDate:
         type: string
+      statusOnline:
+        $ref: '#/definitions/enums.EOnlineStatus'
+      tabDefault:
+        $ref: '#/definitions/enums.ESettingTab'
       taxCode:
+        type: string
+      twitter:
+        type: string
+      visibility:
+        type: integer
+      website:
+        type: string
+      youtube:
         type: string
     type: object
   data.UserInfoResponse:
@@ -140,6 +313,197 @@ definitions:
         type: string
       taxCode:
         type: string
+    type: object
+  enums.EFriendStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      EFriendStatusAccepted: '"ACCEPT"'
+      EFriendStatusPending: '"PENDING"'
+      EFriendStatusReject: '"REJECT"'
+    x-enum-varnames:
+    - EFriendStatusPending
+    - EFriendStatusAccepted
+    - EFriendStatusReject
+  enums.EOnlineStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - Online
+    - Offline
+    - Busy
+  enums.ERoleRealEstate:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ERoleRealEstateBroker
+    - ERoleRealEstateAppraiser
+    - ERoleRealEstateLegal
+  enums.ESettingTab:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    - 70
+    - 80
+    - 90
+    - 100
+    - 110
+    - 120
+    - 130
+    type: integer
+    x-enum-varnames:
+    - ETabProfile
+    - ETabPost
+    - ETabActivity
+    - ETabSetting
+    - EIntrodution
+    - EEvaluation
+    - EReaction
+    - EShare
+    - ESharePost
+    - EShareActivity
+    - EShareSetting
+    - EShareIntrodution
+    - EShareEvaluation
+  enums.VerifyStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - VerifyPending
+    - VerifyVerified
+    - VerifyRejected
+  user_model.CertificationItem:
+    properties:
+      fileUrl:
+        description: Link tài liệu
+        type: string
+      id:
+        type: integer
+      title:
+        description: Tên văn bằng
+        type: string
+      verifiedStatus:
+        allOf:
+        - $ref: '#/definitions/enums.VerifyStatus'
+        description: Trạng thái xác minh
+    type: object
+  user_model.FriendItem:
+    properties:
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.EFriendStatus'
+        description: '1: Pending, 2: Accepted, 3: Declined'
+    type: object
+  user_model.GroupEntity:
+    properties:
+      backgroundColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      textColor:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  user_model.ProfessionItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      verifiedStatus:
+        $ref: '#/definitions/enums.VerifyStatus'
+    type: object
+  user_model.Rate:
+    properties:
+      anonymous:
+        type: boolean
+      comment:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      createdUser:
+        $ref: '#/definitions/user_model.UserItem'
+      id:
+        type: integer
+      parentId:
+        type: integer
+      score:
+        maximum: 5
+        minimum: 1
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        description: '10: user 20: group 30: organization'
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - comment
+    - score
+    - targetId
+    - targetType
+    type: object
+  user_model.RateStats:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
+  user_model.UserItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      profileId:
+        type: integer
     type: object
 info:
   contact: {}
@@ -317,6 +681,534 @@ paths:
       summary: Refresh token
       tags:
       - Auth
+  /block/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Bỏ chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần bỏ chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Bỏ chặn một người dùng
+      tags:
+      - Chặn
+    post:
+      consumes:
+      - application/json
+      description: Chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Chặn một người dùng
+      tags:
+      - Chặn
+  /block/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách ID của những người mà người dùng hiện tại đã chặn
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người dùng bị chặn
+      tags:
+      - Chặn
+  /follow/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một người khỏi danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã xóa người khỏi danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa người khỏi danh sách theo dõi
+      tags:
+      - Theo dõi
+    post:
+      consumes:
+      - application/json
+      description: Thêm một người vào danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã thêm người vào danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thêm người vào danh sách theo dõi
+      tags:
+      - Theo dõi
+  /follow/followers:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người theo dõi người dùng cụ thể
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người theo dõi của người dùng
+      tags:
+      - Theo dõi
+  /follow/following:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người mà người dùng đang theo dõi
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người mà người dùng đang theo dõi
+      tags:
+      - Theo dõi
+  /friend/group/{requestId}/{groupId}:
+    put:
+      consumes:
+      - application/json
+      description: Gán nhóm cho bạn bè
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/data.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      tags:
+      - Bạn bè
+  /friend/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè
+      tags:
+      - Bạn bè
+  /friend/request/{receiverId}:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời kết bạn đến người dùng khác
+      parameters:
+      - description: ID của người nhận lời mời
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được gửi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người nhận
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/accept:
+    put:
+      consumes:
+      - application/json
+      description: Đồng ý lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Đồng ý kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/reject:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/received:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã nhận
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã nhận
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã nhận
+      tags:
+      - Bạn bè
+  /friend/request/sent:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã gửi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã gửi
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
+  /groups:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm
+    post:
+      consumes:
+      - application/json
+      description: Tạo một nhóm mới với thông tin được cung cấp
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user_model.GroupEntity'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "409":
+          description: Nhóm đã tồn tại
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Tạo nhóm mới
+      tags:
+      - Nhóm
+  /groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một nhóm khỏi hệ thống
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã bị xóa
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa nhóm
+      tags:
+      - Nhóm
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin nhóm hiện tại
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user_model.GroupEntity'
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin nhóm
+      tags:
+      - Nhóm
   /oauth/{provider}/callback:
     get:
       consumes:
@@ -353,7 +1245,7 @@ paths:
             type: object
       summary: OAuth Callback
       tags:
-      - OAuth
+      - Auth
   /oauth/{provider}/login:
     get:
       consumes:
@@ -378,7 +1270,7 @@ paths:
             type: object
       summary: OAuth Login
       tags:
-      - OAuth
+      - Auth
   /profile/chat/find:
     get:
       consumes:
@@ -482,7 +1374,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      description: API này gọi không cần Token. dùng trong màn preview profile
       parameters:
       - description: ID của Profile
         in: path
@@ -496,7 +1388,9 @@ paths:
           description: Cập nhật thành công
           schema:
             $ref: '#/definitions/data.PublicUserInfo'
-      summary: Thông tin người dùng
+      security:
+      - BearerAuth: []
+      summary: Xem thông tin public của người dùng
       tags:
       - Profile
   /profile/me:
@@ -532,7 +1426,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: API này cho phép người dùng cập nhật thông tin cá nhân
+      description: API này cho phép người dùng cập nhật thông tin hồ sơ
       parameters:
       - description: Thông tin cập nhật
         in: body
@@ -549,9 +1443,111 @@ paths:
             $ref: '#/definitions/data.UserInfoResponse'
       security:
       - BearerAuth: []
-      summary: Cập nhật thông tin người dùng
+      summary: Cập nhật thông tin hồ sơ
       tags:
       - Profile
+  /rate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo đánh giá mới
+      parameters:
+      - description: Thông tin đánh giá
+        in: body
+        name: rate
+        required: true
+        schema:
+          $ref: '#/definitions/user_model.Rate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo đánh giá
+      tags:
+      - Rate
+  /rate/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa đánh giá theo id
+      parameters:
+      - description: ID của đánh giá
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa đánh giá
+      tags:
+      - Rate
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật đánh giá theo id
+      parameters:
+      - description: ID của đánh giá
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Thông tin đánh giá
+        in: body
+        name: rate
+        required: true
+        schema:
+          $ref: '#/definitions/user_model.Rate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật đánh giá
+      tags:
+      - Rate
+  /rate/list/{targetId}/{targetType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đánh giá theo targetId và targetType
+      parameters:
+      - description: ID của target
+        in: path
+        name: targetId
+        required: true
+        type: string
+      - description: 'Loại của target, 10: user, 20: group, 30: organization'
+        in: path
+        name: targetType
+        required: true
+        type: string
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      - description: 'Điểm đánh giá, 1: 1 sao, 2: 2 sao, 3: 3 sao, 4: 4 sao, 5: 5
+          sao'
+        in: query
+        name: score
+        type: integer
+      - description: ID của đánh giá cha
+        in: query
+        name: parentId
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Lấy danh sách đánh giá
+      tags:
+      - Rate
 securityDefinitions:
   BearerAuth:
     in: header

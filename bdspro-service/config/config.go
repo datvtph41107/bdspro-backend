@@ -2,8 +2,9 @@ package config
 
 import (
 	server "bdspro/external/handler"
-	"bdspro/external/routes"
-	"bdspro/external/service"
+	public_router "bdspro/external/router/public"
+	user_router "bdspro/external/router/user"
+	service "bdspro/external/services"
 	"bdspro/v1/mod/admin"
 	"bdspro/v1/mod/user"
 	"bytes"
@@ -51,7 +52,8 @@ type ConfigApp struct {
 	GrpcGenericServer *server.GenericGrpcServer
 	UserRoute         *user.UserRoute
 	AdminRouter       *admin.AdminRoute
-	RouterManager     *routes.RouterManager
+	RouterManager     *user_router.RouterManager
+	EnumRoute         *public_router.PublicRouter
 
 	// @bind: register_server_config
 	CostDocumentServer      *service.CostDocumentServer
@@ -77,7 +79,8 @@ func NewConfigApp(
 	AssetCostServer *service.AssetCostServer,
 	AssetLegalServer *service.AssetLegalServer,
 	AssetSplitHistoryServer *service.AssetSplitHistoryServer,
-	RouterManager *routes.RouterManager,
+	RouterManager *user_router.RouterManager,
+	EnumRoute *public_router.PublicRouter,
 ) *ConfigApp {
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
@@ -94,6 +97,7 @@ func NewConfigApp(
 		AssetLegalServer:        AssetLegalServer,
 		AssetSplitHistoryServer: AssetSplitHistoryServer,
 		RouterManager:           RouterManager,
+		EnumRoute:               EnumRoute,
 	}
 }
 

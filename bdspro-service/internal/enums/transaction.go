@@ -9,17 +9,9 @@ const (
 	TxFail       TransactionStatus = 40 // Giao dịch thất bại
 )
 
-func (s TransactionStatus) String() string {
-	switch s {
-	case TxNot:
-		return "Chưa giao dịch"
-	case TxProcessing:
-		return "Đang giao dịch"
-	case TxCompleted:
-		return "Hoàn tất giao dịch"
-	case TxFail:
-		return "Giao dịch thất bại"
-	default:
-		return ""
-	}
+var TransactionStatusNames = map[TransactionStatus]string{
+	TxNot:        "Chưa giao dịch",
+	TxProcessing: "Đang giao dịch",
+	TxCompleted:  "Hoàn tất giao dịch",
+	TxFail:       "Giao dịch thất bại",
 }

@@ -123,7 +123,7 @@ func (s *ProductChildService) Create(c *gin.Context, body *SaveProductChildReque
 
 	body.ProductSaveRequest.ParentID = body.ParentID
 	result, err := s.UserProductService.CreateProduct(c, &body.ProductSaveRequest)
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_NewChild,
+	s.productChildRepo.CreateHistory(c, enums.EProductHistory_NewChild,
 		body.ParentID,
 		*body.ParentID,
 		[]uint64{result.Product.ID},
@@ -147,7 +147,7 @@ func (s *ProductChildService) MergeProductChild(c *gin.Context, body *MergeProdu
 	}
 
 	s.productChildRepo.CreateHistory(c,
-		enums.ProductHistory_Merge,
+		enums.EProductHistory_Merge,
 		nil,
 		*body.ParentID,
 		*body.ChildIDs,
@@ -179,7 +179,7 @@ func (s *ProductChildService) MergeAllProductChild(c *gin.Context, parentID *uin
 	// body.ProductSaveRequest.ParentID = body.ParentID
 
 	s.productChildRepo.CreateHistory(c,
-		enums.ProductHistory_MergeAll,
+		enums.EProductHistory_MergeAll,
 		nil,
 		*parentID, ids,
 		[]float64{},
@@ -240,7 +240,7 @@ func (s *ProductChildService) DevideProductChild(c *gin.Context, devideData *Dev
 		ids = append(ids, r.ID)
 		areas = append(areas, r.Area)
 	}
-	s.productChildRepo.CreateHistory(c, enums.ProductHistory_Devide,
+	s.productChildRepo.CreateHistory(c, enums.EProductHistory_Devide,
 		&child.ID,
 		*child.ParentId,
 		ids,

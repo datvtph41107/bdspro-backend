@@ -70,6 +70,7 @@ func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, en
 			!_utils.CompareEqual(&oldPrice.SaleCommission, &entity.SaleCommission) ||
 			!_utils.CompareEqual(&oldPrice.RentPrice, &entity.RentPrice) ||
 			!_utils.CompareEqual(&oldPrice.RentCommission, &entity.RentCommission) ||
+			!_utils.CompareEqual(&oldPrice.Deposite, &entity.Deposite) ||
 			!_utils.CompareEqual(&oldPrice.RentPaymentCycle, &entity.RentPaymentCycle)
 			// oldPrice.SaleCommissionType != entity.Price.SaleCommissionType ||
 			// oldPrice.RentCommissionType != entity.Price.RentCommissionType ||

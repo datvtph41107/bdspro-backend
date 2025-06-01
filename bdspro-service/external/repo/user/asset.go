@@ -1,8 +1,9 @@
-package postgre_repo
+package postgre_user_repo
 
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"common/case/crud3"
 	"context"
@@ -44,7 +45,7 @@ func (r *GormAssetRepo) GetAssetByProductID(ctx context.Context, id *uint64) (*d
 	return &asset, nil
 }
 
-func (r *GormAssetRepo) UpdateStatus(ctx context.Context, assetID *uint64, status enums.AssetStatus) error {
+func (r *GormAssetRepo) UpdateStatus(ctx context.Context, assetID *uint64, status enums.EAssetStatus) error {
 	return r.DB.WithContext(ctx).Model(&domain.Asset{}).
 		Where("id = ? and deleted_at is null", assetID).
 		Update("status", status).Error
@@ -66,7 +67,7 @@ func (r *GormAssetRepo) GetAssets(ctx context.Context, profileId uint64, limit, 
 	return assets, nil
 }
 
-func (r *GormAssetRepo) QuerySearch(query *gorm.DB, dto dto.AssetSearchDTO) *gorm.DB {
+func (r *GormAssetRepo) QuerySearch(query *gorm.DB, dto user_dto.AssetSearchDTO) *gorm.DB {
 	if dto.Text != "" {
 		trimmed := strings.TrimSpace(dto.Text)
 		pattern := "%" + strings.ToLower(trimmed) + "%"
@@ -99,7 +100,7 @@ func (r *GormAssetRepo) QuerySearch(query *gorm.DB, dto dto.AssetSearchDTO) *gor
 	return query
 }
 
-func (r *GormAssetRepo) SearchOwnerQuery(ownerID uint64, dto dto.AssetSearchDTO) *gorm.DB {
+func (r *GormAssetRepo) SearchOwnerQuery(ownerID uint64, dto user_dto.AssetSearchDTO) *gorm.DB {
 	query := r.DB.
 		Table("assets"). // <- quan trọng để Preload hiểu model gốc
 		// Preload("LegalItems", "deleted_at IS NULL").
@@ -127,7 +128,7 @@ func (r *GormAssetRepo) SearchOwnerQuery(ownerID uint64, dto dto.AssetSearchDTO)
 	return r.QuerySearch(query, dto)
 
 }
-func (r *GormAssetRepo) SearchOwner(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (r *GormAssetRepo) SearchOwner(ctx context.Context, ownerID uint64, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	var assets []domain.AssetList
 	var total int64
 
@@ -155,7 +156,7 @@ func (r *GormAssetRepo) SearchOwner(ctx context.Context, ownerID uint64, dto dto
 	return assets, total, nil
 }
 
-func (r *GormAssetRepo) SearchShare(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (r *GormAssetRepo) SearchShare(ctx context.Context, ownerID uint64, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	var assets []domain.AssetList
 	var total int64
 	// query := r.DB.WithContext(ctx).
@@ -256,6 +257,7 @@ func (r *GormAssetRepo) GetByID(id uint64) (*domain.Asset, error) {
 		Preload("Product", "deleted_at IS NULL").
 		Preload("Product.MediaList", "deleted_at IS NULL").
 		Preload("Product.Price", "deleted_at IS NULL").
+		Preload("LegalItems", "deleted_at IS NULL").
 		First(&asset).
 		Error; err != nil {
 		return nil, err
@@ -458,8 +460,8 @@ func (r *GormAssetRepo) CreateBatch(c context.Context, entity []domain.Asset) er
 	return r.DB.WithContext(c).Create(&entity).Error
 }
 
-func (r *GormAssetRepo) GetAssetsWithChildCount(ctx context.Context, ownerID uint64, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
-	var assets []dto.AssetWithChildCountDTO
+func (r *GormAssetRepo) GetAssetsWithChildCount(ctx context.Context, ownerID uint64, searchDto user_dto.AssetSearchDTO) ([]user_dto.AssetWithChildCountDTO, int64, error) {
+	var assets []user_dto.AssetWithChildCountDTO
 	var total int64
 
 	query := r.DB.WithContext(ctx).
@@ -512,4 +514,12 @@ func (r *GormAssetRepo) GetAssetsWithChildCount(ctx context.Context, ownerID uin
 	}
 
 	return assets, total, nil
+}
+
+func (r *GormAssetRepo) GetAssetPublish(profileId uint64) ([]domain.Asset, int64, error) {
+	var assets []domain.Asset
+	if err := r.DB.Where("owner_user_id = ? and deleted_at is null", profileId).Find(&assets).Error; err != nil {
+		return nil, 0, err
+	}
+	return assets, int64(len(assets)), nil
 }

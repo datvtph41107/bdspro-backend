@@ -19,7 +19,7 @@ func NewFriendRepo(DB *gorm.DB) *FriendRepo {
 	}
 }
 
-func (repo *FriendRepo) UpdateStatusById(status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
+func (repo *FriendRepo) UpdateStatusById(status enums.EFriendStatus, id uint64, respondedAt *time.Time) error {
 	return repo.DB.Model(&user_model.FriendEntity{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":       status,
 		"responded_at": respondedAt,
@@ -94,7 +94,7 @@ func (repo *FriendRepo) SearchFriend(currentId uint64, dto data.FriendDTO, page 
 func (repo *FriendRepo) ExistsByCreatedByAndReceiverId(createdBy uint64, receiverId uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&user_model.FriendEntity{}).
-		Where("created_by = ? AND receiver_id = ? AND status <> ?", createdBy, receiverId, enums.Reject).
+		Where("created_by = ? AND receiver_id = ? AND status <> ?", createdBy, receiverId, enums.EFriendStatusReject).
 		Count(&count).Error
 	return count > 0, err
 }
@@ -143,4 +143,21 @@ func (repo *FriendRepo) ExistsFriendship(id uint64, receiverID uint64) (bool, er
 		Where("id = ? AND receiver_id = ?", id, receiverID).
 		Count(&count).Error
 	return count > 0, err
+}
+
+func (repo *FriendRepo) GetRelationShip(currentId uint64, targetId uint64) (*user_model.FriendItem, error) {
+	var status *user_model.FriendItem
+
+	err := repo.DB.
+		Model(&user_model.FriendItem{}).
+		Select("id, status, created_by, receiver_id").
+		Where("((created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)) AND deleted_at IS NULL",
+			currentId, targetId, targetId, currentId).
+		Find(&status).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }

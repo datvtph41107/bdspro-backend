@@ -22,7 +22,11 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 	// 	return claims.ProfileId
 	// }
 	// return 0
-	return ctx.Value("profileId").(uint64)
+	profileId := ctx.Value("profileId")
+	if profileId == nil {
+		return 0
+	}
+	return profileId.(uint64)
 }
 
 // func GetProfileIdFromContext(ctx context.Context) uint64 {

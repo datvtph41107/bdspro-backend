@@ -17,6 +17,29 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  _routes.Except:
+    properties:
+      code:
+        type: integer
+      errors:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  _routes.ResponseDTO:
+    properties:
+      code:
+        type: integer
+      data:
+        description: Data có thể là bất kỳ kiểu dữ liệu nào
+      errors: {}
+      message:
+        type: string
+      totalElements:
+        type: integer
+    type: object
   bdspro.AssetCostDTO:
     properties:
       amount:
@@ -129,6 +152,595 @@ definitions:
     type: object
   data.StatusResponse:
     type: object
+  domain.AmenityItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.Apartment:
+    properties:
+      archived:
+        type: integer
+      attributeId:
+        type: integer
+      buildId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      floor:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.ApartmentAttrItem:
+    properties:
+      area:
+        description: Diện tích
+        type: integer
+      blueprintUrl:
+        description: Link bản vẽ
+        type: string
+      buildId:
+        description: Diện tích
+        type: integer
+      furniture:
+        description: Nội thất
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      updatedAt:
+        description: Link bản vẽ
+        type: string
+    type: object
+  domain.ApartmentAttribute:
+    properties:
+      area:
+        description: Diện tích
+        type: integer
+      blueprintUrl:
+        description: Link bản vẽ
+        type: string
+      buildId:
+        description: Diện tích
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      furniture:
+        description: Nội thất
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.ApartmentItem:
+    properties:
+      archived:
+        type: integer
+      attributeId:
+        type: integer
+      floor:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
+    type: object
+  domain.Asset:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      district:
+        $ref: '#/definitions/domain.Region'
+      districtId:
+        type: integer
+      id:
+        type: integer
+      legalItems:
+        items:
+          $ref: '#/definitions/domain.LegalItem'
+        type: array
+      legalStatus:
+        type: integer
+      name:
+        type: string
+      ownerOrgId:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentAssetId:
+        type: integer
+      product:
+        $ref: '#/definitions/domain.Product'
+      productId:
+        type: integer
+      propertyType:
+        $ref: '#/definitions/domain.PropertyTypeItem'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/domain.Region'
+      provinceId:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.EAssetStatus'
+      splitMergeStatus:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      ward:
+        $ref: '#/definitions/domain.Region'
+      wardId:
+        type: integer
+    required:
+    - area
+    - name
+    - purchasePrice
+    - wardId
+    type: object
+  domain.Attribute:
+    properties:
+      attribute_values:
+        items:
+          $ref: '#/definitions/domain.AttributeValue'
+        type: array
+      created_at:
+        type: string
+      hint_text:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: integer
+      unit:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.AttributeProduct:
+    properties:
+      attribute:
+        $ref: '#/definitions/domain.Attribute'
+      attribute_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      product:
+        $ref: '#/definitions/domain.Product'
+      product_id:
+        type: integer
+      updated_at:
+        type: string
+      value:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/domain.AttributeValue'
+        type: array
+    type: object
+  domain.AttributeValue:
+    properties:
+      attribute:
+        $ref: '#/definitions/domain.Attribute'
+      attribute_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: integer
+    type: object
+  domain.Deposite:
+    properties:
+      amount:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      customerName:
+        type: string
+      customerPhone:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      productId:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.Developer:
+    properties:
+      address:
+        type: string
+      backgroundUrl:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      website:
+        type: string
+    type: object
+  domain.DeveloperItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  domain.DocTypeItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.HouseInfo:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      furniture:
+        description: 'Nội thất: "full", "partial", "none"'
+        type: string
+      numBathroom:
+        description: Số WC (optional)
+        type: integer
+      numBedroom:
+        description: Số phòng ngủ (optional)
+        type: integer
+      numCarPark:
+        description: Số chỗ để ôtô
+        type: integer
+      numFloor:
+        description: Số tầng (optional)
+        type: integer
+      numFront:
+        description: Số mặt tiền
+        type: integer
+      numToilet:
+        type: integer
+      orientation:
+        description: Hướng nhà (Đông, Tây, Nam,...)
+        type: string
+      product_id:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.LegalItem:
+    properties:
+      assetId:
+        type: integer
+      description:
+        type: string
+      documentName:
+        type: string
+      documentUrl:
+        type: string
+      expiryDate:
+        type: string
+      id:
+        type: integer
+      issuedDate:
+        type: string
+    type: object
+  domain.Post:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      expiredAt:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/domain.PostMediaEntity'
+        type: array
+      numComment:
+        type: integer
+      numDate:
+        type: integer
+      numLike:
+        type: integer
+      numView:
+        type: integer
+      packageVisible:
+        description: '1: thường, 2: VIP'
+        type: integer
+      postPrice:
+        type: number
+      priceType:
+        description: '1: chính thức, 2: thỏa thuận'
+        type: integer
+      product:
+        $ref: '#/definitions/domain.Product'
+      productId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.EPostStatus'
+      title:
+        type: string
+      transactionType:
+        type: integer
+      type:
+        description: '1: normal, 2: feed, 3: share'
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      visibility:
+        $ref: '#/definitions/enums.EVisibility'
+    type: object
+  domain.PostMediaEntity:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      postId:
+        description: ID        uint64 `gorm:"primaryKey;autoIncrement;not null" json:"id"`
+        type: integer
+      sort_order:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.Product:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          $ref: '#/definitions/domain.AmenityItem'
+        type: array
+      apartment:
+        $ref: '#/definitions/domain.Apartment'
+      apartmentAttribute:
+        $ref: '#/definitions/domain.ApartmentAttribute'
+      apartmentId:
+        type: integer
+      archived:
+        description: 0=chưa, 1=archive
+        type: boolean
+      area:
+        type: number
+      assetId:
+        type: integer
+      attributes:
+        items:
+          $ref: '#/definitions/domain.AttributeProduct'
+        type: array
+      build:
+        $ref: '#/definitions/domain.ProjectBuild'
+      categoryId:
+        type: integer
+      code:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      createdUser:
+        $ref: '#/definitions/domain.ProfileInfo'
+      customerId:
+        type: integer
+      deposite:
+        $ref: '#/definitions/domain.Deposite'
+      depositeId:
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/domain.Developer'
+      district:
+        $ref: '#/definitions/domain.Region'
+      districtId:
+        type: integer
+      docType:
+        $ref: '#/definitions/domain.DocTypeItem'
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/domain.HouseInfo'
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/domain.ProductMediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      orgStatus:
+        type: integer
+      organizationId:
+        type: integer
+      ownerOrgId:
+        description: Tổ chức sở hữu (nếu cty mua)
+        type: integer
+      ownerUserId:
+        description: Ai sở hữu (nếu đã bán)
+        type: integer
+      parentId:
+        type: integer
+      positionUrl:
+        type: string
+      price:
+        $ref: '#/definitions/domain.ProductPrice'
+      privateInfo:
+        $ref: '#/definitions/domain.ProductPrivate'
+      project:
+        $ref: '#/definitions/domain.Project'
+      propertyType:
+        $ref: '#/definitions/domain.PropertyTypeItem'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/domain.Region'
+      provinceId:
+        type: integer
+      rentStatus:
+        allOf:
+        - $ref: '#/definitions/enums.EProductStatus'
+        description: 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
+      rentVisibility:
+        allOf:
+        - $ref: '#/definitions/enums.EVisibility'
+        description: 1=Riêng tư, 2=Nội bộ, 3=Công khai
+      saleStatus:
+        allOf:
+        - $ref: '#/definitions/enums.EProductStatus'
+        description: 1=Chưa bán, 2=Đang bán, 3=Đã bán
+      saleVisibility:
+        allOf:
+        - $ref: '#/definitions/enums.EVisibility'
+        description: 1=Riêng tư, 2=Nội bộ, 3=Công khai
+      sourceType:
+        type: integer
+      transactionType:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      updatedUser:
+        $ref: '#/definitions/domain.ProfileInfo'
+      visibility:
+        allOf:
+        - $ref: '#/definitions/enums.EVisibility'
+        description: phạm vi
+      ward:
+        $ref: '#/definitions/domain.Region'
+      wardId:
+        type: integer
+    type: object
   domain.ProductMediaItem:
     properties:
       id:
@@ -200,6 +812,124 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  domain.ProfileInfo:
+    properties:
+      fullName:
+        type: string
+      profileId:
+        type: integer
+    type: object
+  domain.Project:
+    properties:
+      builds:
+        items:
+          $ref: '#/definitions/domain.ProjectBuildItem'
+        type: array
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/domain.DeveloperItem'
+      developerId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.ProjectBuild:
+    properties:
+      apartments:
+        items:
+          $ref: '#/definitions/domain.ApartmentItem'
+        type: array
+      attributes:
+        items:
+          $ref: '#/definitions/domain.ApartmentAttrItem'
+        type: array
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+      project:
+        $ref: '#/definitions/domain.ProjectItem'
+      projectId:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.ProjectBuildItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+    type: object
+  domain.ProjectItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.PropertyTypeItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.Region:
+    properties:
+      code:
+        type: integer
+      codeName:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      parentId:
+        type: integer
+      unit:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   dto.ArchivedRequest:
     properties:
       archived:
@@ -209,20 +939,6 @@ definitions:
     required:
     - archived
     - productId
-    type: object
-  dto.AssetCreateWithProduct:
-    properties:
-      description:
-        type: string
-      legalStatus:
-        type: integer
-      purchaseDate:
-        type: string
-      purchasePrice:
-        description: Name          string            `json:"name,omitempty" binding:"required"`
-        type: number
-      rentStatus:
-        $ref: '#/definitions/enums.AssetStatus'
     type: object
   dto.DepositeRequest:
     properties:
@@ -282,6 +998,8 @@ definitions:
     type: object
   dto.MediaItem:
     properties:
+      id:
+        type: integer
       isMain:
         type: boolean
       mediaType:
@@ -327,7 +1045,7 @@ definitions:
       transactionType:
         type: integer
       visibility:
-        $ref: '#/definitions/enums.PostVisibility'
+        $ref: '#/definitions/enums.EVisibility'
     type: object
   dto.ProductSaveRequest:
     properties:
@@ -338,7 +1056,7 @@ definitions:
       area:
         type: number
       asset:
-        $ref: '#/definitions/dto.AssetCreateWithProduct'
+        $ref: '#/definitions/user_dto.AssetCreateWithProduct'
       code:
         type: string
       description:
@@ -374,9 +1092,13 @@ definitions:
       provinceId:
         type: integer
       rentStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
+      rentVisibility:
+        $ref: '#/definitions/enums.EVisibility'
       saleStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
+      saleVisibility:
+        $ref: '#/definitions/enums.EVisibility'
       sourceType:
         type: integer
       transactionType:
@@ -397,7 +1119,7 @@ definitions:
       area:
         type: number
       asset:
-        $ref: '#/definitions/dto.AssetCreateWithProduct'
+        $ref: '#/definitions/user_dto.AssetCreateWithProduct'
       code:
         type: string
       description:
@@ -433,9 +1155,13 @@ definitions:
       provinceId:
         type: integer
       rentStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
+      rentVisibility:
+        $ref: '#/definitions/enums.EVisibility'
       saleStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
+      saleVisibility:
+        $ref: '#/definitions/enums.EVisibility'
       sourceType:
         type: integer
       transactionType:
@@ -453,7 +1179,7 @@ definitions:
       productId:
         type: integer
       status:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
     required:
     - productId
     - status
@@ -463,12 +1189,12 @@ definitions:
       productId:
         type: integer
       visibility:
-        $ref: '#/definitions/enums.VisibilityStatus'
+        $ref: '#/definitions/enums.EVisibility'
     required:
     - productId
     - visibility
     type: object
-  enums.AssetStatus:
+  enums.EAssetStatus:
     enum:
     - 10
     - 20
@@ -477,32 +1203,36 @@ definitions:
     - 50
     type: integer
     x-enum-comments:
-      AssetStatusNotSold: đang bán
-      AssetStatusOwning: đang sở hữu
-      AssetStatusRenting: đang cho thuê
-      AssetStatusSelling: đang bán
-      AssetStatusSold: đã bán
+      EAssetStatusNotSold: đang bán
+      EAssetStatusOwning: đang sở hữu
+      EAssetStatusRenting: đang cho thuê
+      EAssetStatusSelling: đang bán
+      EAssetStatusSold: đã bán
     x-enum-varnames:
-    - AssetStatusOwning
-    - AssetStatusRenting
-    - AssetStatusSold
-    - AssetStatusSelling
-    - AssetStatusNotSold
-  enums.PostVisibility:
+    - EAssetStatusOwning
+    - EAssetStatusRenting
+    - EAssetStatusSold
+    - EAssetStatusSelling
+    - EAssetStatusNotSold
+  enums.EPostStatus:
     enum:
     - 10
     - 20
-    - 30
+    - 40
+    - 50
+    - 60
+    - 70
     type: integer
     x-enum-comments:
-      PostVisibleInternal: Nội bộ
-      PostVisiblePublic: Công khai
-      PostVisibleShowing: Đang hiển thị
+      EPostStop: tùy nghiệp vụ về sau
     x-enum-varnames:
-    - PostVisibleShowing
-    - PostVisiblePublic
-    - PostVisibleInternal
-  enums.ProductStatus:
+    - EPostPublic
+    - EPostFinished
+    - EPostSold
+    - EPostRent
+    - EPostStop
+    - EPostStatusCompleted
+  enums.EProductStatus:
     enum:
     - 10
     - 20
@@ -511,54 +1241,23 @@ definitions:
     - 50
     - 60
     type: integer
-    x-enum-comments:
-      ProductNotRent: Chưa cho thuê
-      ProductNotSold: Chưa bán
-      ProductRented: Đã cho thuê
-      ProductRenting: Đang cho thuê(cọc)
-      ProductSelling: Đang bán(cọc)
-      ProductSold: Đã bán
     x-enum-varnames:
-    - ProductNotSold
-    - ProductSelling
-    - ProductSold
-    - ProductNotRent
-    - ProductRenting
-    - ProductRented
-  enums.ProductVisibility:
+    - EProductNotSold
+    - EProductSelling
+    - EProductSold
+    - EProductNotRent
+    - EProductRenting
+    - EProductRented
+  enums.EVisibility:
     enum:
     - 10
     - 20
     - 30
     type: integer
     x-enum-varnames:
-    - ProductVisiblePrivate
-    - ProductVisibleInternal
-    - ProductVisiblePublic
-  enums.Scope:
-    enum:
-    - 10
-    - 20
-    - 30
-    type: integer
-    x-enum-varnames:
-    - Public
-    - Share
-    - Private
-  enums.VisibilityStatus:
-    enum:
-    - 10
-    - 20
-    - 30
-    type: integer
-    x-enum-comments:
-      VisiShow: '"Đang hiển thị"'
-      VisibleInternal: nội bộ
-      VisiblePublic: công khai
-    x-enum-varnames:
-    - VisiShow
-    - VisiblePublic
-    - VisibleInternal
+    - EVisiblePublic
+    - EVisibleInternal
+    - EVisiblePrivate
   models.Amenity:
     properties:
       active:
@@ -741,7 +1440,7 @@ definitions:
       purchasePrice:
         type: number
       rentStatus:
-        $ref: '#/definitions/enums.AssetStatus'
+        $ref: '#/definitions/enums.EAssetStatus'
       splitMergeStatus:
         type: string
       updatedAt:
@@ -911,7 +1610,7 @@ definitions:
       purchasePrice:
         type: number
       rentStatus:
-        $ref: '#/definitions/enums.AssetStatus'
+        $ref: '#/definitions/enums.EAssetStatus'
       splitMergeStatus:
         type: string
       wardId:
@@ -1251,19 +1950,19 @@ definitions:
         type: integer
       rentStatus:
         allOf:
-        - $ref: '#/definitions/enums.ProductStatus'
+        - $ref: '#/definitions/enums.EProductStatus'
         description: 10=Chưa thuê, 20=Đang đăng tin, 30=Đang cho thuê
       rentVisibility:
         allOf:
-        - $ref: '#/definitions/enums.ProductVisibility'
+        - $ref: '#/definitions/enums.EVisibility'
         description: 10=Riêng tư, 20=Nội bộ, 30=Công khai
       saleStatus:
         allOf:
-        - $ref: '#/definitions/enums.ProductStatus'
+        - $ref: '#/definitions/enums.EProductStatus'
         description: 10=Chưa bán, 20=Đang bán, 30=Đã bán
       saleVisibility:
         allOf:
-        - $ref: '#/definitions/enums.ProductVisibility'
+        - $ref: '#/definitions/enums.EVisibility'
         description: 10=Riêng tư, 20=Nội bộ, 30=Công khai
       sourceType:
         type: integer
@@ -1278,7 +1977,7 @@ definitions:
         $ref: '#/definitions/models.ProfileInfo'
       visibility:
         allOf:
-        - $ref: '#/definitions/enums.Scope'
+        - $ref: '#/definitions/enums.EVisibility'
         description: phạm vi
       ward:
         $ref: '#/definitions/models.Region'
@@ -1613,7 +2312,7 @@ definitions:
         description: Name          string            `json:"name,omitempty" binding:"required"`
         type: number
       rentStatus:
-        $ref: '#/definitions/enums.AssetStatus'
+        $ref: '#/definitions/enums.EAssetStatus'
     type: object
   u_post_dto.PostSaveWithProduct:
     properties:
@@ -1638,7 +2337,7 @@ definitions:
       transactionType:
         type: integer
       visibility:
-        $ref: '#/definitions/enums.PostVisibility'
+        $ref: '#/definitions/enums.EVisibility'
     type: object
   u_product_access.AccessRequest:
     properties:
@@ -1724,9 +2423,9 @@ definitions:
       provinceId:
         type: integer
       rentStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
       saleStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
       sourceType:
         type: integer
       transactionType:
@@ -1849,9 +2548,9 @@ definitions:
       provinceId:
         type: integer
       rentStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
       saleStatus:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
       sourceType:
         type: integer
       transactionType:
@@ -1868,7 +2567,7 @@ definitions:
       productId:
         type: integer
       status:
-        $ref: '#/definitions/enums.ProductStatus'
+        $ref: '#/definitions/enums.EProductStatus'
     required:
     - productId
     - status
@@ -1878,10 +2577,56 @@ definitions:
       productId:
         type: integer
       visibility:
-        $ref: '#/definitions/enums.VisibilityStatus'
+        $ref: '#/definitions/enums.EVisibility'
     required:
     - productId
     - visibility
+    type: object
+  user_dto.AssetArchivedDTO:
+    properties:
+      archived:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  user_dto.AssetCreateWithProduct:
+    properties:
+      description:
+        type: string
+      legalItems:
+        items:
+          $ref: '#/definitions/domain.LegalItem'
+        type: array
+      legalStatus:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        description: Name          string            `json:"name,omitempty" binding:"required"`
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.EAssetStatus'
+    type: object
+  user_dto.MergeAssetDTO:
+    properties:
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - ids
+    type: object
+  user_dto.SplitAssetDTO:
+    properties:
+      datas:
+        items:
+          $ref: '#/definitions/domain.Asset'
+        type: array
+      id:
+        type: integer
+    required:
+    - datas
+    - id
     type: object
 info:
   contact: {}
@@ -1889,6 +2634,33 @@ info:
   title: BDSPRO API
   version: "1.0"
 paths:
+  /enums/{type}:
+    get:
+      parameters:
+      - description: 'Tên loại enum (VD: saleStatus)'
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy enum dạng name-value
+      tags:
+      - Enum
   /v1/bdspro/admin/amenity:
     get:
       consumes:
@@ -4021,6 +4793,25 @@ paths:
       summary: Cọc
       tags:
       - User
+  /v1/bdspro/user/product/deposite/{depositeId}:
+    delete:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Deposite ID
+        in: path
+        name: depositeId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Hủy cọc
+      tags:
+      - User
   /v1/bdspro/user/product/deposite/{productId}:
     delete:
       consumes:
@@ -4054,6 +4845,36 @@ paths:
       summary: Gộp toàn bộ sản phẩm con
       tags:
       - User/Product-child
+  /v1/bdspro/user/product/export:
+    post:
+      consumes:
+      - application/json
+      description: API này dùng để xuất dữ liệu sản phẩm ra file Excel
+      parameters:
+      - description: Bộ lọc sản phẩm (nếu có)
+        in: query
+        name: filter
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel file
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/_routes.ResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/_routes.ResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Xuất danh sách sản phẩm ra Excel
+      tags:
+      - User
   /v1/bdspro/user/product/history-child/:id:
     get:
       consumes:
@@ -5509,7 +6330,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/u_asset.ArchivedDTO'
+          $ref: '#/definitions/user_dto.AssetArchivedDTO'
       produces:
       - application/json
       responses: {}
@@ -5527,6 +6348,9 @@ paths:
       - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses: {}
@@ -5544,6 +6368,9 @@ paths:
       - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       - description: ID
         in: path
         name: id
@@ -5618,7 +6445,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/u_asset.MergeDTO'
+          $ref: '#/definitions/user_dto.MergeAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -5740,7 +6567,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/u_asset.SplitDTOSwagger'
+          $ref: '#/definitions/user_dto.SplitAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -5749,6 +6576,48 @@ paths:
       summary: Tách tài sản
       tags:
       - Tài sản
+  /v1/bdspro/v2/user/posts/publish/{profileId}:
+    get:
+      parameters:
+      - description: profileId
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/_routes.ResponseDTO'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.Post'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/_routes.Except'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/_routes.Except'
+      summary: Lấy danh sách tin đăng công khai trên tường của user
+      tags:
+      - Tin đăng
   /v2/bdspro/v2/asset-cost:
     get:
       parameters:

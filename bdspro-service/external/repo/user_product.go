@@ -34,25 +34,25 @@ func NewGormUserProductRepo(db *gorm.DB,
 	}
 }
 
-func (r *GormUserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+func (r *GormUserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_status", status).Error
 }
-func (r *GormUserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+func (r *GormUserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("rent_status", status).Error
 }
-func (r *GormUserProductRepo) UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+func (r *GormUserProductRepo) UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_visibility", vis).Error
 }
-func (r *GormUserProductRepo) UpdateRentVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+func (r *GormUserProductRepo) UpdateRentVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
@@ -317,35 +317,55 @@ func (r *GormUserProductRepo) SearchProductWithOwner(profileId uint64, dto dto.P
 	return results, total, nil
 }
 
-func (r *GormUserProductRepo) SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SearchToExport(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, error) {
 	var results []domain.Product
+
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN product_access pa
+					ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, profileId).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+
+		// Where("pa.user_id = ?", profileId).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("HouseInfo", "deleted_at IS NULL").
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("Amenities", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+
+	query = r.QueryDomain(query, dto)
+
+	err := query.
+		Order("created_at desc").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (r *GormUserProductRepo) SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	var results []domain.ProductMarket
 
 	// Joins(`LEFT JOIN product_access pa
 	// 			ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
 
 	query := r.DB.
 		Debug().
-		Model(domain.Product{}).
-		// Table("products p").
-		// Joins(`LEFT JOIN product_price lp ON lp.product_id = products.id
-		// 	AND lp.created_at = (SELECT MAX(lp.created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		Joins(`LEFT JOIN product_price on product_price.id = products.last_price_id AND product_price.deleted_at IS NULL`).
-		Joins(`LEFT JOIN house_info 
-				ON house_info.product_id = products.id AND house_info.deleted_at IS NULL`).
-		Preload("HouseInfo", "deleted_at IS NULL").
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		// Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.deleted_at IS NULL").
-		Where(`((products.transaction_type = 2 and products.rent_visibility = 1) 
-			OR (products.transaction_type = 1 and products.sale_visibility = 1))`)
+		Model(domain.ProductMarket{})
 
 	if dto.PriceFrom > 0 {
 		query = query.Where("? < product_price.sale_price", dto.PriceFrom)

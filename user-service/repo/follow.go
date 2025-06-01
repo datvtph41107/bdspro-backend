@@ -147,3 +147,18 @@ func (repo *FollowRepo) GetFollowInfoCount(userID uint64) (followerCount int64, 
 
 	return followerCount, followingCount, friendCount, nil
 }
+
+func (repo *FollowRepo) GetFollowing(profileId uint64, targetId uint64) (bool, error) {
+	var exists bool
+
+	err := repo.DB.
+		Raw(`
+			SELECT EXISTS (
+				SELECT 1 FROM follow
+				WHERE created_by = ? AND following_id = ? AND deleted_at IS NULL
+			)
+		`, profileId, targetId).
+		Scan(&exists).Error
+
+	return exists, err
+}

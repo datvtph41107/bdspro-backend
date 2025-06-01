@@ -1,4 +1,4 @@
-package postgre_repo
+package postgre_user_repo
 
 import (
 	"bdspro/internal/domain"
@@ -44,7 +44,7 @@ func (r *GormPostRepo) UpdatePost(c context.Context, post *domain.Post) error {
 	return _db.SaveWithContext(c, post)
 }
 
-func (r *GormPostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error {
+func (r *GormPostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error {
 	var post domain.Post
 	err := r.DB.WithContext(ctx).Where("product_id = ?", productID).First(&post).Error
 
@@ -61,7 +61,7 @@ func (r *GormPostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID u
 	return r.DB.WithContext(ctx).Model(&post).Update("status", status).Error
 }
 
-func (r *GormPostRepo) CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.PostVisibility) error {
+func (r *GormPostRepo) CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.EVisibility) error {
 	var post domain.Post
 	err := r.DB.WithContext(ctx).Where("product_id = ?", productID).First(&post).Error
 
@@ -83,7 +83,7 @@ func (r *GormPostRepo) CreateOrUpdatePostVisibility(ctx context.Context, product
 // 		Update("status", enums.PostHide).Error
 // }
 
-func (r *GormPostRepo) UpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error {
+func (r *GormPostRepo) UpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error {
 	return r.DB.WithContext(ctx).Model(&domain.Post{}).Where("product_id = ?", productID).Update("status", status).Error
 }
 
@@ -325,12 +325,40 @@ func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64
 	return results, nil
 }
 
-// func (r *PostRepo) GetByID(c context.Context, id uint64) (*domain.Post, error) {
-
-// }
+func (r *GormPostRepo) GetByID(id uint64) (*domain.Post, error) {
+	var post domain.Post
+	err := r.DB.
+		Preload("MediaList", "deleted_at is null").
+		Where("id = ? AND deleted_at is null", id).
+		First(&post).Error
+	if err != nil {
+		return nil, err
+	}
+	return &post, nil
+}
 
 func (r *GormPostRepo) Delete(ctx context.Context, profileId, id uint64) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Post{}).
 		Where("id = ? AND created_by = ?", id, profileId).Update("deleted_at", time.Now()).Error
+}
+
+func (r *GormPostRepo) GetPublishByProfileID(ctx context.Context, profileId uint64, dto dto.PostPublishSearch) ([]domain.Post, int64, error) {
+	var results []domain.Post
+
+	query := r.DB.WithContext(ctx).
+		Model(&domain.Post{}).
+		Where("created_by = ? AND deleted_at is null", profileId)
+
+	// query = r.Query(query, dto)
+
+	err := query.
+		Order("created_at desc").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&results).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return results, int64(len(results)), nil
 }

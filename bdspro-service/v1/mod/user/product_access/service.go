@@ -49,8 +49,8 @@ func (s *ProductAccessService) CreateBatch(c *gin.Context, id uint64, dtos []Acc
 	}
 
 	// đổi trạng thái sang nội bộ nếu riêng tư
-	if product.SaleVisibility == enums.ProductVisiblePrivate {
-		product.SaleVisibility = enums.ProductVisibleInternal
+	if product.SaleVisibility == enums.EVisiblePrivate {
+		product.SaleVisibility = enums.EVisibleInternal
 		_db.SaveWithAudit(c, product)
 	}
 	// err := _db.SaveWithAudit(c, &entities)
@@ -87,8 +87,8 @@ func (s *ProductAccessService) BulkSave(c *gin.Context, id uint64, dto BulkReque
 	}
 
 	// đổi trạng thái sang nội bộ nếu riêng tư
-	if product.SaleVisibility == enums.ProductVisiblePrivate {
-		product.SaleVisibility = enums.ProductVisibleInternal
+	if product.SaleVisibility == enums.EVisiblePrivate {
+		product.SaleVisibility = enums.EVisibleInternal
 		_db.SaveWithAudit(c, product)
 	}
 	if len(dto.Datas) > 0 {

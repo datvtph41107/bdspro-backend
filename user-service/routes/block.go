@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_jwt "common/jwt"
 	_routes "common/routes"
 	services "user/services/user"
 
@@ -21,7 +20,6 @@ func NewBlockRouter(service *services.BlockService) *BlockRouter {
 func BlockRoutes(r *gin.Engine, router *BlockRouter) {
 	api := r.Group("/user/block")
 
-	api.Use(_jwt.JWTAuthMiddleware(nil))
 	api.GET("/list", router.ListBlockedUsers)
 	api.POST("/:profileId", router.BlockUser)
 	api.DELETE("/:profileId", router.UnblockUser)

@@ -24,7 +24,7 @@ func (r *GormPostMediaRepo) UpdateMediaItems(c context.Context, postID uint64, m
 	tx := r.DB.WithContext(c).Begin()
 
 	// Xóa các bản ghi cũ trong bảng
-	if err := tx.Where("post_id = ?", postID).Delete(&domain.ProductMedia{}).Error; err != nil {
+	if err := tx.Where("post_id = ?", postID).Delete(&domain.PostMediaEntity{}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -60,7 +60,7 @@ func (r *GormPostMediaRepo) UpdateMediaItems(c context.Context, postID uint64, m
 
 func (r *GormPostMediaRepo) GetMediaList(c context.Context, dto dto.PostMediaGetDTO) ([]domain.PostMedia, error) {
 	var postMedia []domain.PostMedia
-	if err := r.DB.Where("post_id = ?", dto.PostID).Find(&postMedia).Error; err != nil {
+	if err := r.DB.Where("deleted_at is null and post_id = ?", dto.PostID).Find(&postMedia).Error; err != nil {
 		return nil, err
 	}
 	return postMedia, nil

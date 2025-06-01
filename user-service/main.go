@@ -2,6 +2,7 @@ package main
 
 import (
 	"common"
+	_jwt "common/jwt"
 	"user/config"
 	_ "user/docs"
 	"user/models"
@@ -15,6 +16,14 @@ import (
 var publicRoutes = []string{
 	"/user/swagger",
 	"/user/auth/otp",
+	"/user/rate/list",
+	"/user/profile/info/",
+	"/user/profile/find-by-phone",
+	"/user/oauth/",
+	"/user/auth/qr/init",
+	"/user/auth/qr/status",
+	"/user/auth/logout",
+	"/user/auth/token/refresh",
 }
 
 // @title User API
@@ -41,6 +50,8 @@ func main() {
 		app, _ := wire.InitializeApp()
 		models.AutoMigrate()
 
+		r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+
 		routes.AuthRoutes(r, app.Auth)
 		routes.OAuthRoutes(r, app.OAuthRouter)
 		routes.ProfileRoutes(r, app.ProfileRouter)
@@ -49,6 +60,7 @@ func main() {
 		routes.FollowRoutes(r, app.FollowRouter)
 		routes.FriendRoutes(r, app.FriendRouter)
 		routes.GroupRoutes(r, app.GroupRouter)
+		routes.RateRoutes(r, app.RateRouter)
 		// fmt.Sprintf("Data: ", property.AppProperties.ZaloAppID)
 
 		// group.GET("/info", func(c *gin.Context) {

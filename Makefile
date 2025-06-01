@@ -12,3 +12,7 @@ gateway:
 	cd gateway-service && go run main.go http
 bdspro:
 	cd gateway-service && go run main.go grpc
+user:
+	cd user-service && go run main.go http
+admin:
+	cd admin-service && go run main.go grpc

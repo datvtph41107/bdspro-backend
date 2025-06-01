@@ -3,6 +3,7 @@ package repo
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	user_dto "bdspro/internal/dto/user"
 	"common/case/crud3"
 	"context"
 )
@@ -32,7 +33,8 @@ type AssetRepo interface {
 		profileId uint64,
 		assetId uint64,
 		dto *dto.AssetHistoryDTO) (*[]domain.AssetHistory, int64, error)
-	SearchShare(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
-	SearchOwner(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
-	GetAssetsWithChildCount(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error)
+	SearchShare(ctx context.Context, ownerID uint64, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
+	SearchOwner(ctx context.Context, ownerID uint64, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
+	GetAssetsWithChildCount(ctx context.Context, ownerID uint64, dto user_dto.AssetSearchDTO) ([]user_dto.AssetWithChildCountDTO, int64, error)
+	GetAssetPublish(profileId uint64) ([]domain.Asset, int64, error)
 }

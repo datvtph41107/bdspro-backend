@@ -1,26 +1,19 @@
 package enums
 
-type AssetStatus uint
+type EAssetStatus uint
 
 const (
-	AssetStatusOwning  AssetStatus = 10 // đang sở hữu
-	AssetStatusRenting AssetStatus = 20 // đang cho thuê
-	AssetStatusSold    AssetStatus = 30 // đã bán
-	AssetStatusSelling AssetStatus = 40 // đang bán
-	AssetStatusNotSold AssetStatus = 50 // đang bán
+	EAssetStatusOwning  EAssetStatus = 10 // đang sở hữu
+	EAssetStatusRenting EAssetStatus = 20 // đang cho thuê
+	EAssetStatusSold    EAssetStatus = 30 // đã bán
+	EAssetStatusSelling EAssetStatus = 40 // đang bán
+	EAssetStatusNotSold EAssetStatus = 50 // đang bán
 )
 
-// bỏ đã sở hữu
-
-func (s AssetStatus) String() string {
-	switch s {
-	case AssetStatusOwning:
-		return "Đang sở hữu"
-	case AssetStatusRenting:
-		return "Đang cho thuê"
-	case AssetStatusSold:
-		return "Đã bán"
-	default:
-		return ""
-	}
+var EAssetStatusNames = map[EAssetStatus]string{
+	EAssetStatusOwning:  "Đang sở hữu",
+	EAssetStatusRenting: "Đang cho thuê",
+	EAssetStatusSold:    "Đã bán",
+	EAssetStatusSelling: "Đang bán",
+	EAssetStatusNotSold: "Đang bán",
 }

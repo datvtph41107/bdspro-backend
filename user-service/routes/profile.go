@@ -2,33 +2,30 @@ package routes
 
 import (
 	_dto "common/dto"
-	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
-	"encoding/json"
-	"net/http"
 	"user/data"
-	auth_service "user/services/auth"
+	user_service "user/services/user"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ProfileRouter struct {
-	Profile *auth_service.ProfileService
+	Profile *user_service.ProfileService
 }
 
-func NewProfileRouter(profileService *auth_service.ProfileService) *ProfileRouter {
+func NewProfileRouter(profileService *user_service.ProfileService) *ProfileRouter {
 	return &ProfileRouter{
 		Profile: profileService,
 	}
 }
 
-var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
+// var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
 
 func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 	profileGroup := r.Group("/user/profile")
 	{
-		profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+		// profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		profileGroup.GET("/find-by-phone", router.FindByPhone)
 		profileGroup.GET("/chat/find", router.FindOnChat)
 		profileGroup.GET("/find/ids", router.FindByIds)
@@ -248,9 +245,9 @@ func (p *ProfileRouter) ProfileMe(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// UpdateUserInfo cập nhật thông tin người dùng
-// @Summary Cập nhật thông tin người dùng
-// @Description API này cho phép người dùng cập nhật thông tin cá nhân
+// UpdateUserInfo cập nhật thông tin hồ sơ
+// @Summary Cập nhật thông tin hồ sơ
+// @Description API này cho phép người dùng cập nhật thông tin hồ sơ
 // @Tags Profile
 // @Accept json
 // @Produce json
@@ -260,23 +257,21 @@ func (p *ProfileRouter) ProfileMe(c *gin.Context) {
 // @Router /profile/set-info [put]
 func (p *ProfileRouter) SetInfo(c *gin.Context) {
 	var dto data.UserInfoRequest
-	r, _ := json.Marshal(&c.Request.Body)
-	print(r)
-
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
+		_routes.RouteResult(c, nil, err)
 		return
 	}
 	result, err := p.Profile.UpdateUserInfo(c, dto)
 	_routes.RouteResult(c, result, err)
 }
 
-// UpdateUserInfo Thông tin người dùng
-// @Summary Thông tin người dùng
-// @Description API này cho phép người dùng cập nhật thông tin cá nhân
+// UpdateUserInfo Thông tin hồ sơ
+// @Summary Xem thông tin public của người dùng
+// @Description API này gọi không cần Token. dùng trong màn preview profile
 // @Tags Profile
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param profileId path string true "ID của Profile"
 // @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
 // @Router /profile/info/{profileId} [get]

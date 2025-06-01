@@ -71,7 +71,7 @@ func (r *ProductAccessRepo) GetAll() ([]models.ProductAccess, error) {
 // 	return entities, err
 // }
 
-func (r *ProductAccessRepo) OwnerGetByProduct(c *gin.Context, id uint64, targetType enums.TargetTypeEnum) (*[]models.ProductAccessQuery, error) {
+func (r *ProductAccessRepo) OwnerGetByProduct(c *gin.Context, id uint64, targetType enums.ETargetType) (*[]models.ProductAccessQuery, error) {
 	var entities *[]models.ProductAccessQuery
 	err := r.DB.
 		Table("product_access").

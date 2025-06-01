@@ -1,6 +1,8 @@
 package u_product
 
 import (
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/v1/data"
 	product_accecss "bdspro/v1/mod/global/product_access"
@@ -16,7 +18,6 @@ import (
 	"common/case/crud2"
 	_db "common/db"
 	_jwt "common/jwt"
-	_utils "common/utils"
 	"context"
 	"strings"
 
@@ -50,25 +51,25 @@ func NewUserProductRepo(db *gorm.DB,
 	}
 }
 
-func (r *UserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+func (r *UserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_status", status).Error
 }
-func (r *UserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.ProductStatus) error {
+func (r *UserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("rent_status", status).Error
 }
-func (r *UserProductRepo) UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+func (r *UserProductRepo) UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_visibility", vis).Error
 }
-func (r *UserProductRepo) UpdateRentVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error {
+func (r *UserProductRepo) UpdateRentVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.Product{}).
 		Where("id = ? and deleted_at is null", id).
@@ -424,8 +425,8 @@ func (r *UserProductRepo) SearchProductWithOwner(profileId uint64, dto *data.Pro
 	return results, total, nil
 }
 
-func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.ProductSearchRequest, pageable _utils.Page) ([]u_product_dto.ProductMarket, int64, error) {
-	var results []u_product_dto.ProductMarket
+func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	var results []domain.ProductMarket
 
 	// Joins(`LEFT JOIN product_access pa
 	// 			ON (pa.product_id = products.id and pa.user_id = ?)`, profileId).
@@ -460,8 +461,8 @@ func (r *UserProductRepo) SearchProductMarket(profileId uint64, dto data.Product
 
 	err := query.
 		// Order("created_at desc").
-		Limit(pageable.Limit).
-		Offset(pageable.Skip).
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
 		Find(&results).Error
 
 	var total int64

@@ -1,9 +1,15 @@
 package enums
 
-type TargetTypeEnum = int
+type ETargetType = int
 
 const (
-	TargetTypeMember       TargetTypeEnum = 10
-	TargetTypeGroup        TargetTypeEnum = 20
-	TargetTypeOrganization TargetTypeEnum = 30
+	ETargetTypeMember       ETargetType = 10
+	ETargetTypeGroup        ETargetType = 20
+	ETargetTypeOrganization ETargetType = 30
 )
+
+var TargetTypeNames = map[ETargetType]string{
+	ETargetTypeMember:       "Thành viên",
+	ETargetTypeGroup:        "Nhóm",
+	ETargetTypeOrganization: "Tổ chức",
+}

@@ -1,4 +1,4 @@
-package routes
+package user_router
 
 import (
 	"bdspro/internal/dto"
@@ -39,6 +39,7 @@ func (r *UserPostRoute) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("/up-vip", r.GetGlobalPost)
 		group.GET("/marketing", r.GetGlobalPost) // quảng cáo
 		group.GET("/export", r.GetGlobalPost)    // xuất excel
+		group.GET("/publish/:profileId", r.GetPublish)
 	}
 }
 
@@ -158,4 +159,25 @@ func (r *UserPostRoute) Delete(c *gin.Context) {
 
 	err = r.UC.Delete(c, id)
 	_routes.RouteResult(c, nil, err)
+}
+
+func (r *UserPostRoute) GetPublish(c *gin.Context) {
+	profileId, err := strconv.ParseUint(c.Param("profileId"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	query := dto.PostPublishSearch{}
+	if err := _utils.ParseQuery2(c, &query); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, total, err := r.UC.GetPublishByProfileID(c, profileId, query)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }

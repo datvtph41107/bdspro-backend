@@ -153,7 +153,7 @@ func (s *GormUProductChildRepo) ValidatorDevide(parentID uint64) bool {
 
 func (s *GormUProductChildRepo) CreateHistory(
 	c context.Context,
-	action enums.ProductHistory,
+	action enums.EProductHistory,
 	productID *uint64,
 	parentID uint64,
 	childIDs []uint64,

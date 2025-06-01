@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_jwt "common/jwt"
 	_routes "common/routes"
 	"net/http"
 	"strconv"
@@ -35,13 +34,13 @@ func AuthRoutes(r *gin.Engine, router *AuthRouter) {
 
 	api.DELETE("/logout", router.Logout)
 
-	api.DELETE("/delete", _jwt.JWTAuthMiddleware(publicRoutes), router.Delete)
+	api.DELETE("/delete", router.Delete)
 
-	api.PUT("/restore", _jwt.JWTAuthMiddleware(publicRoutes), router.Restore)
+	api.PUT("/restore", router.Restore)
 
 	api.POST("/qr/init", router.QRInit)
 
-	api.POST("/qr/confirm", _jwt.JWTAuthMiddleware(publicRoutes), router.QRConfirm)
+	api.POST("/qr/confirm", router.QRConfirm)
 
 	api.POST("/qr/status", router.QRStatus)
 }

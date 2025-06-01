@@ -141,7 +141,7 @@ func (uc *UserAssetService) DeleteAsset(ctx *gin.Context, id uint64) error {
 		return err
 	}
 
-	if asset.RentStatus != enums.AssetStatusOwning {
+	if asset.RentStatus != enums.EAssetStatusOwning {
 		return errors.New("không thể xóa tài sản do trạng thái tài sản không cho phép")
 	}
 	return uc.Repo.Delete(ctx, id)

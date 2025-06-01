@@ -20,17 +20,28 @@ type ConfigApp struct {
 	FollowRouter  *routes.FollowRouter
 	FriendRouter  *routes.FriendRouter
 	GroupRouter   *routes.GroupRouter
+	RateRouter    *routes.RateRouter
 	// GroupRouter   *routes.GroupRouter
 }
 
 func NewConfigApp(authService *routes.AuthRouter,
 	oAuthRouter *routes.OAuthRouter,
 	profile *routes.ProfileRouter,
+	block *routes.BlockRouter,
+	follow *routes.FollowRouter,
+	friend *routes.FriendRouter,
+	group *routes.GroupRouter,
+	rate *routes.RateRouter,
 ) *ConfigApp {
 	return &ConfigApp{
 		Auth:          authService,
 		OAuthRouter:   oAuthRouter,
 		ProfileRouter: profile,
+		BlockRouter:   block,
+		FollowRouter:  follow,
+		FriendRouter:  friend,
+		GroupRouter:   group,
+		RateRouter:    rate,
 	}
 }
 

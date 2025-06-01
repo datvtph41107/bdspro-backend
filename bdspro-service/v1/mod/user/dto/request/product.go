@@ -26,12 +26,12 @@ type ProductSaveRequest struct {
 	PrivateDataDTO  *models.ProductPrivate `json:"productPrivate"`
 	GoogleMapLink   string                 `json:"googleMapLink"`
 	SourceType      uint                   `json:"sourceType"`
-	SaleStatus      *enums.ProductStatus   `json:"saleStatus"`
+	SaleStatus      *enums.EProductStatus  `json:"saleStatus"`
 	// PostCreate      *u_post_dto.PostSaveWithProduct `json:"post"`
 	// AssetCreate     *u_asset.ArchivedDTO            `json:"asset"`
-	SaleVisibility enums.ProductVisibility `json:"saleVisibility"`
-	RentStatus     uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
-	RentVisibility uint                    `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	SaleVisibility enums.EVisibility `json:"saleVisibility"`
+	RentStatus     uint              `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
+	RentVisibility uint              `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 }
 
 type MediaItem struct {

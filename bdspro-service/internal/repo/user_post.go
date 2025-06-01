@@ -16,9 +16,9 @@ type UPostRepo interface {
 	CreatePost(post *domain.Post) error
 	GetPostByProductID(productID uint64) (*domain.Post, error)
 	UpdatePost(c context.Context, post *domain.Post) error
-	CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error
-	CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.PostVisibility) error
-	UpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error
+	CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error
+	CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.EVisibility) error
+	UpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error
 	CountPost(ctx context.Context, profileId uint64) int64
 	CountPostFromDate(ctx context.Context, from time.Time) int64
 	ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64) bool
@@ -27,4 +27,5 @@ type UPostRepo interface {
 	Global(ctx context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error)
 	SearchLinkToProduct(ctx context.Context, profileId uint64, dto *dto.PostLinkSearch) ([]domain.PostItem, error)
 	Delete(ctx context.Context, profileId, id uint64) error
+	GetPublishByProfileID(ctx context.Context, profileId uint64, dto dto.PostPublishSearch) ([]domain.Post, int64, error)
 }

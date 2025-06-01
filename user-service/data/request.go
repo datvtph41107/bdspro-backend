@@ -2,6 +2,7 @@ package data
 
 import (
 	"time"
+	"user/enums"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -58,17 +59,53 @@ type SessionQRConfirm struct {
 // UserInfoRequest đại diện cho yêu cầu cập nhật thông tin người dùng
 // @swagger:model
 type UserInfoRequest struct {
-	Phone        string     `json:"phone,omitempty"`
-	Email        string     `json:"email,omitempty"`
-	TaxCode      string     `json:"taxCode,omitempty"`
-	FullName     string     `json:"fullname,omitempty"`
-	Address      string     `json:"address,omitempty"`
-	Avatar       string     `json:"avatar,omitempty"`
-	ReferralBy   string     `json:"referralBy,omitempty"`
-	Position     string     `json:"position,omitempty"`
-	DepartmentID uint64     `json:"departmentId,omitempty"`
-	Birth        *time.Time `json:"birth,omitempty" time_format:"2006-01-02T15:04:05"`
-	StartDate    *time.Time `json:"startDate,omitempty" time_format:"2006-01-02T15:04:05"`
+	Phone             string                `json:"phone,omitempty"`
+	Phone2            string                `json:"phone2,omitempty"`
+	Email             string                `json:"email,omitempty"`
+	TaxCode           string                `json:"taxCode,omitempty"`
+	FullName          string                `json:"fullname,omitempty"`
+	Address           string                `json:"address,omitempty"`
+	Avatar            string                `json:"avatar,omitempty"`
+	BackgroundImage   string                `json:"backgroundImage,omitempty"`
+	Position          string                `json:"position,omitempty"`
+	DepartmentID      uint64                `json:"departmentId,omitempty"`
+	Birth             *time.Time            `json:"birth,omitempty" time_format:"2006-01-02T15:04:05"`
+	StartDate         *time.Time            `json:"startDate,omitempty" time_format:"2006-01-02T15:04:05"`
+	FrontIdentify     string                `json:"frontIdentify,omitempty"`
+	BackIdentify      string                `json:"backIdentify,omitempty"`
+	Slogan            string                `json:"slogan,omitempty"`
+	Website           string                `json:"website,omitempty"`
+	Facebook          string                `json:"facebook,omitempty"`
+	Instagram         string                `json:"instagram,omitempty"`
+	Twitter           string                `json:"twitter,omitempty"`
+	Linkedin          string                `json:"linkedin,omitempty"`
+	Youtube           string                `json:"youtube,omitempty"`
+	Introduction      string                `json:"introduction,omitempty"`
+	Visibility        uint8                 `json:"visibility,omitempty"`
+	ProfileVisibility uint8                 `json:"profileVisibility,omitempty"`
+	StatusOnline      enums.EOnlineStatus   `json:"statusOnline,omitempty"`
+	TabDefault        enums.ESettingTab     `json:"tabDefault,omitempty"`
+	RoleRealEstate    enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
+
+	Certifications         []CertificationBatchSave `json:"certifications,omitempty"`
+	CertificationRemoveIds []uint64                 `json:"certificationRemoveIds,omitempty"`
+	Professions            []ProfessionBatchSave    `json:"professions,omitempty"`
+	ProfessionRemoveIds    []uint64                 `json:"professionRemoveIds,omitempty"`
+}
+
+type ProfessionBatchSave struct {
+	Name      string    `json:"name,omitempty"`
+	Issuer    string    `json:"issuer,omitempty"`
+	IssueDate time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
+}
+
+type CertificationBatchSave struct {
+	Name      string    `json:"name,omitempty"`
+	Issuer    string    `json:"issuer,omitempty"`
+	Title     string    `json:"title,omitempty"`
+	Type      uint8     `json:"type,omitempty"`
+	FileURL   string    `json:"fileUrl,omitempty"`
+	IssueDate time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
 }
 
 // Hàm validate để kiểm tra dữ liệu đầu vào

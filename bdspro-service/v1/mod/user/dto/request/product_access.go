@@ -7,6 +7,6 @@ import (
 
 type ProductAccessSearch struct {
 	_dto.Page
-	ProductID  uint64               `form:"productId"`
-	TargetType enums.TargetTypeEnum `form:"targetType"`
+	ProductID  uint64            `form:"productId"`
+	TargetType enums.ETargetType `form:"targetType"`
 }

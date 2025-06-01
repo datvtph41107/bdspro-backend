@@ -11,16 +11,16 @@ import (
 // UProductRepo định nghĩa các phương thức mà GormUserProductRepo cung cấp
 type UProductRepo interface {
 	crud3.CrudRepo[domain.Product]
-	UpdateSaleStatus(ctx context.Context, id uint64, status enums.ProductStatus) error
+	UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductStatus) error
 
 	// Cập nhật trạng thái cho thuê
-	UpdateRentStatus(ctx context.Context, id uint64, status enums.ProductStatus) error
+	UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductStatus) error
 
 	// Cập nhật trạng thái hiển thị bán
-	UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error
+	UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error
 
 	// Cập nhật trạng thái hiển thị cho thuê
-	UpdateRentVisibility(ctx context.Context, id uint64, vis enums.VisibilityStatus) error
+	UpdateRentVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error
 
 	// Cập nhật diện tích sản phẩm
 	UpdateArea(ctx context.Context, id uint64, area float64) error
@@ -40,8 +40,11 @@ type UProductRepo interface {
 	// Tìm kiếm sản phẩm theo chủ sở hữu
 	SearchProductWithOwner(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
+	// Tìm kiếm sản phẩm để export excel
+	SearchToExport(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, error)
+
 	// Tìm kiếm sản phẩm trên thị trường
-	SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error)
 
 	// Tìm kiếm thông minh sản phẩm
 	SmartSearchProduct(profileId uint64, dto dto.TotalSearchParser) ([]domain.Product, int64, error)

@@ -2,6 +2,7 @@ package dto
 
 import (
 	"bdspro/internal/domain"
+	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"time"
 
@@ -27,30 +28,32 @@ type HouseInfoUpdate struct {
 }
 
 type ProductSaveRequest struct {
-	ParentID        *uint64                 `gorm:"size:255" json:"parentId"`
-	Name            string                  `gorm:"size:255" json:"name" binding:"required"`
-	Code            string                  `gorm:"size:15" json:"code"`
-	Area            float64                 `json:"area" binding:"required"`
-	Description     string                  `json:"description"`
-	Note            string                  `json:"note"`
-	PropertyTypeId  *uint64                 `json:"propertyTypeId"`
-	DocTypeId       *uint64                 `json:"docTypeId"`
-	AmenityIds      []uint64                `json:"amenityIds"`
-	ProjectId       *uint64                 `json:"projectId"`
-	ProvinceID      *uint64                 `json:"provinceId"`
-	DistrictID      *uint64                 `json:"districtId"`
-	WardID          *uint64                 `json:"wardId"`
-	TransactionType int                     `json:"transactionType"`
-	PriceDTO        *domain.ProductPrice    `json:"price" binding:"required"`
-	MediaItemDTOs   []MediaItem             `json:"mediaItems"`
-	HouseInfoDTO    *HouseInfoUpdate        `json:"houseInfo"`
-	PrivateDataDTO  *domain.ProductPrivate  `json:"productPrivate"`
-	GoogleMapLink   string                  `json:"googleMapLink"`
-	SourceType      uint                    `json:"sourceType"`
-	SaleStatus      *enums.ProductStatus    `json:"saleStatus"`
-	RentStatus      *enums.ProductStatus    `json:"rentStatus"`
-	PostCreate      *PostSaveWithProduct    `json:"post"`
-	AssetCreate     *AssetCreateWithProduct `json:"asset"`
+	ParentID        *uint64                          `gorm:"size:255" json:"parentId"`
+	Name            string                           `gorm:"size:255" json:"name" binding:"required"`
+	Code            string                           `gorm:"size:15" json:"code"`
+	Area            float64                          `json:"area" binding:"required"`
+	Description     string                           `json:"description"`
+	Note            string                           `json:"note"`
+	PropertyTypeId  *uint64                          `json:"propertyTypeId"`
+	DocTypeId       *uint64                          `json:"docTypeId"`
+	AmenityIds      []uint64                         `json:"amenityIds"`
+	ProjectId       *uint64                          `json:"projectId"`
+	ProvinceID      *uint64                          `json:"provinceId"`
+	DistrictID      *uint64                          `json:"districtId"`
+	WardID          *uint64                          `json:"wardId"`
+	TransactionType int                              `json:"transactionType"`
+	PriceDTO        *domain.ProductPrice             `json:"price" binding:"required"`
+	MediaItemDTOs   []MediaItem                      `json:"mediaItems"`
+	HouseInfoDTO    *HouseInfoUpdate                 `json:"houseInfo"`
+	PrivateDataDTO  *domain.ProductPrivate           `json:"productPrivate"`
+	GoogleMapLink   string                           `json:"googleMapLink"`
+	SourceType      uint                             `json:"sourceType"`
+	SaleStatus      *enums.EProductStatus            `json:"saleStatus"`
+	RentStatus      *enums.EProductStatus            `json:"rentStatus"`
+	PostCreate      *PostSaveWithProduct             `json:"post"`
+	AssetCreate     *user_dto.AssetCreateWithProduct `json:"asset"`
+	SaleVisibility  *enums.EVisibility               `json:"saleVisibility"`
+	RentVisibility  *enums.EVisibility               `json:"rentVisibility"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
@@ -67,13 +70,13 @@ type ArchivedRequest struct {
 }
 
 type StatusUpdate struct {
-	ProductID *uint64             `json:"productId" binding:"required"`
-	Status    enums.ProductStatus `json:"status" binding:"required"`
+	ProductID *uint64              `json:"productId" binding:"required"`
+	Status    enums.EProductStatus `json:"status" binding:"required"`
 }
 
 type VisibilityUpdate struct {
-	ProductID  *uint64                `json:"productId" binding:"required"`
-	Visibility enums.VisibilityStatus `json:"visibility" binding:"required"`
+	ProductID  *uint64           `json:"productId" binding:"required"`
+	Visibility enums.EVisibility `json:"visibility" binding:"required"`
 }
 
 type DepositeRequest struct {

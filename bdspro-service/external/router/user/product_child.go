@@ -1,4 +1,4 @@
-package routes
+package user_router
 
 import (
 	"bdspro/internal/dto"

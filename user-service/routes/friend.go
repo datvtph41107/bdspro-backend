@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_jwt "common/jwt"
 	_routes "common/routes"
 	"user/enums"
 	user_service "user/services/user"
@@ -22,7 +21,6 @@ func NewFriendRouter(service *user_service.FriendService) *FriendRouter {
 func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 	api := r.Group("/user/friend")
 
-	api.Use(_jwt.JWTAuthMiddleware(nil))
 	api.GET("/list", router.FriendList)
 	api.POST("/request/:receiverId", router.FriendRequest)
 	api.PUT("/request/:requestId/accept", router.FriendAccept)
@@ -85,7 +83,7 @@ func (r *FriendRouter) FriendRequest(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /friend/request/{requestId}/accept [put]
 func (r *FriendRouter) FriendAccept(c *gin.Context) {
-	result, err := r.service.ChangeStatus(c, enums.Accepted)
+	result, err := r.service.ChangeStatus(c, enums.EFriendStatusAccepted)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -118,7 +116,7 @@ func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /friend/request/{requestId}/reject [delete]
 func (r *FriendRouter) FriendReject(c *gin.Context) {
-	result, err := r.service.ChangeStatus(c, enums.Reject)
+	result, err := r.service.ChangeStatus(c, enums.EFriendStatusReject)
 
 	_routes.RouteResult(c, result, err)
 }

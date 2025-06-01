@@ -17,6 +17,7 @@ import (
 	"user/enums"
 	auth_model "user/models/auth"
 	user_model "user/models/user"
+	"user/repo"
 	"user/validator"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ type AuthService struct {
 	RedisService  *_redis.RedisService
 	CookieService *CookieService
 	PreePlanID    *uint64
-
+	ProfileRepo   *repo.ProfileRepo
 	// ConfigProperties utils.PropertiesConfiguration
 	// Properties property.AppProperties
 }
@@ -53,12 +54,16 @@ func NewRedisService() *_redis.RedisService {
 	}
 }
 
-func NewAuthService(redisService *_redis.RedisService, cookie *CookieService) *AuthService {
+func NewAuthService(redisService *_redis.RedisService,
+	cookie *CookieService,
+	profileRepo *repo.ProfileRepo,
+) *AuthService {
 	planId := uint64(1)
 	return &AuthService{
 		RedisService:  redisService,
 		CookieService: cookie,
 		PreePlanID:    &planId,
+		ProfileRepo:   profileRepo,
 	}
 }
 
@@ -150,7 +155,7 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 	newSession := s.createSession(c, e, otp)
 	_db.SaveWithAudit(c, newSession)
 
-	infoEntity, err := user_model.ProfileGetByProfileId(e.UserID)
+	infoEntity, err := s.ProfileRepo.GetByProfileID(e.UserID)
 	if err != nil {
 		infoEntity = user_model.MakeUserProfileEntity(e.ID, s.PreePlanID, e.Name, e.Email, e.Phone, e.Avatar)
 		_db.SaveWithAudit(c, infoEntity)
@@ -290,7 +295,7 @@ func (s *AuthService) Restore(c *gin.Context, dto data.RestorePhoneRequest) (*da
 func (s *AuthService) Delete(c *gin.Context) (uint64, error) {
 	// profileId := _jwt.GetProfileId(c)
 	principal := _jwt.GetPrincipal(c)
-	profile, err := user_model.ProfileGetByProfileId(principal.ProfileId)
+	profile, err := s.ProfileRepo.GetByProfileID(principal.ProfileId)
 	if err != nil {
 		return 0, err
 	}
@@ -650,7 +655,7 @@ func (s *AuthService) VerifyQRSession(c *gin.Context, e *data.SessionQRRequest, 
 }
 
 func (s *AuthService) GetPlanID(profileID uint64) (*uint64, *time.Time) {
-	infoEntity, err := user_model.ProfileGetByProfileId(profileID)
+	infoEntity, err := s.ProfileRepo.GetByProfileID(profileID)
 	if err != nil {
 		return nil, nil
 	}
@@ -658,7 +663,7 @@ func (s *AuthService) GetPlanID(profileID uint64) (*uint64, *time.Time) {
 }
 
 func (s *AuthService) GetProfileByID(profileID uint64) *user_model.UserProfileEntity {
-	infoEntity, err := user_model.ProfileGetByProfileId(profileID)
+	infoEntity, err := s.ProfileRepo.GetByProfileID(profileID)
 	if err != nil {
 		return nil
 	}

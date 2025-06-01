@@ -38,7 +38,7 @@ func OAuthRoutes(r *gin.Engine, router *OAuthRouter) {
 // OAuthRoutes thiết lập các route liên quan đến OAuth.
 // @Summary OAuth Login
 // @Description Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).
-// @Tags OAuth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param provider path string true "Tên của provider (google, facebook, zalo, ...)"
@@ -66,7 +66,7 @@ func (route *OAuthRouter) RedirectToLogin(c *gin.Context) {
 
 // @Summary OAuth Callback
 // @Description Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.
-// @Tags OAuth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param provider path string true "Tên của provider (google, facebook, zalo, ...)"

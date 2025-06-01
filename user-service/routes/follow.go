@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_jwt "common/jwt"
 	_routes "common/routes"
 	user_service "user/services/user"
 
@@ -21,7 +20,6 @@ func NewFollowRouter(service *user_service.FollowService) *FollowRouter {
 func FollowRoutes(r *gin.Engine, router *FollowRouter) {
 	api := r.Group("/user/follow")
 
-	api.Use(_jwt.JWTAuthMiddleware(nil))
 	api.GET("/followers", router.FollowerList)
 	api.GET("/following", router.FollowingList)
 	api.POST("/:profileId", router.Add)

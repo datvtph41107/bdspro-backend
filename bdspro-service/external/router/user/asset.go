@@ -1,7 +1,8 @@
-package routes
+package user_router
 
 import (
 	"bdspro/internal/dto"
+	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/usecases"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -12,14 +13,14 @@ import (
 
 type UAssetRoute struct {
 	// crud2.BaseRouter[domain.Asset, *usecases.UAssetUsecase]
-	Service *usecases.UAssetUsecase
+	UC *usecases.UAssetUsecase
 }
 
 func NewUAssetRoute(service *usecases.UAssetUsecase) *UAssetRoute {
 	return &UAssetRoute{
 		// BaseRouter: crud2.BaseRouter[domain.Asset, *usecases.UAssetUsecase]{
 		// },
-		Service: service,
+		UC: service,
 	}
 }
 
@@ -40,62 +41,63 @@ func (r *UAssetRoute) RegisterRoutes(router *gin.RouterGroup) {
 		assetGroup.POST("/split", r.Split)
 		assetGroup.GET("/history/:id", r.History)
 		assetGroup.GET("/history-owner", r.HistoryOwner)
+		assetGroup.GET("/publish/:profileId", r.GetPublish)
 		// assetGroup.GET(":id/share", r.BaseRouter.GetByID)
 	}
 }
 
 func (r *UAssetRoute) CreateAsset(c *gin.Context) {
-	body := dto.AssetSaveRequest{}
+	body := user_dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.CreateAsset(c, &body)
+	result, err := r.UC.CreateAsset(c, &body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) CreateAssetFromProduct(c *gin.Context) {
-	body := dto.AssetSaveRequest{}
+	body := user_dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.CreateAssetFromProduct(c, &body)
+	result, err := r.UC.CreateAssetFromProduct(c, &body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) SearchMe(c *gin.Context) {
-	body := dto.AssetSearchDTO{}
+	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.SearchAssetMe(c, body)
+	result, err := r.UC.SearchAssetMe(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) SearchShare(c *gin.Context) {
-	body := dto.AssetSearchDTO{}
+	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.SearchAssetShare(c, body)
+	result, err := r.UC.SearchAssetShare(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) SearchSplit(c *gin.Context) {
-	body := dto.AssetSearchDTO{}
+	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, total, err := r.Service.GetAssetsWithChildCount(c, body)
+	result, total, err := r.UC.GetAssetsWithChildCount(c, body)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,
@@ -104,35 +106,35 @@ func (r *UAssetRoute) SearchSplit(c *gin.Context) {
 }
 
 func (r *UAssetRoute) Archived(c *gin.Context) {
-	body := dto.AssetArchivedDTO{}
+	body := user_dto.AssetArchivedDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	err := r.Service.ArchiveAsset(c, body.ID, body.Archived)
+	err := r.UC.ArchiveAsset(c, body.ID, body.Archived)
 	_routes.RouteResult(c, nil, err)
 }
 
 func (r *UAssetRoute) Merge(c *gin.Context) {
-	body := dto.MergeAssetDTO{}
+	body := user_dto.MergeAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.MergeAsset(c, body)
+	result, err := r.UC.MergeAsset(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) Split(c *gin.Context) {
-	body := dto.SplitAssetDTO{}
+	body := user_dto.SplitAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.SplitAsset(c, body)
+	result, err := r.UC.SplitAsset(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -145,7 +147,7 @@ func (r *UAssetRoute) History(c *gin.Context) {
 		return
 	}
 
-	result, err := r.Service.History(c, id, body)
+	result, err := r.UC.History(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -156,33 +158,40 @@ func (r *UAssetRoute) HistoryOwner(c *gin.Context) {
 		return
 	}
 
-	result, err := r.Service.HistoryOwner(c, body)
+	result, err := r.UC.HistoryOwner(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) UpdateAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	body := dto.AssetSaveRequest{}
+	body := user_dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.Service.UpdateAsset(c, id, &body)
+	result, err := r.UC.UpdateAsset(c, id, &body)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) GetDetail(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	result, err := r.Service.GetAssetDetail(c, id)
+	result, err := r.UC.GetAssetDetail(c, id)
 	_routes.RouteResult(c, result, err)
 }
 
 func (r *UAssetRoute) DeleteAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	err := r.Service.DeleteAsset(c, id)
+	err := r.UC.DeleteAsset(c, id)
 	_routes.RouteResult(c, nil, err)
+}
+
+func (r *UAssetRoute) GetPublish(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("profileId"), 10, 32)
+
+	result, err := r.UC.GetPublish(c, id)
+	_routes.RouteResult(c, result, err)
 }

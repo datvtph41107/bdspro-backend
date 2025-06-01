@@ -50,8 +50,8 @@ type ProductSaveRequest struct {
 	PrivateDataDTO  *models.ProductPrivate              `json:"productPrivate"`
 	GoogleMapLink   string                              `json:"googleMapLink"`
 	SourceType      uint                                `json:"sourceType"`
-	SaleStatus      *enums.ProductStatus                `json:"saleStatus"`
-	RentStatus      *enums.ProductStatus                `json:"rentStatus"`
+	SaleStatus      *enums.EProductStatus               `json:"saleStatus"`
+	RentStatus      *enums.EProductStatus               `json:"rentStatus"`
 	PostCreate      *u_post_dto.PostSaveWithProduct     `json:"post"`
 	AssetCreate     *u_asset_dto.AssetCreateWithProduct `json:"asset"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`
@@ -69,13 +69,13 @@ type ArchivedRequest struct {
 }
 
 type StatusUpdate struct {
-	ProductID *uint64             `json:"productId" binding:"required"`
-	Status    enums.ProductStatus `json:"status" binding:"required"`
+	ProductID *uint64              `json:"productId" binding:"required"`
+	Status    enums.EProductStatus `json:"status" binding:"required"`
 }
 
 type VisibilityUpdate struct {
-	ProductID  *uint64                `json:"productId" binding:"required"`
-	Visibility enums.VisibilityStatus `json:"visibility" binding:"required"`
+	ProductID  *uint64           `json:"productId" binding:"required"`
+	Visibility enums.EVisibility `json:"visibility" binding:"required"`
 }
 
 type DepositeRequest struct {

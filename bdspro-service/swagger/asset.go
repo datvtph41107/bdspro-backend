@@ -3,7 +3,7 @@ package swagger_gen
 // @Summary Lấy danh sách tài sản của người dùng
 // @Tags Tài sản
 // @Produce json
-// @Param query query dto.AssetSearchDTO true "Size"
+// @Param query query user_dto.AssetSearchDTO true "Size"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/search [get]
 func GetAsset() {}
@@ -11,7 +11,7 @@ func GetAsset() {}
 // @Summary Lấy danh sách tài sản được chia sẻ
 // @Tags Tài sản
 // @Produce json
-// @Param query query dto.AssetSearchDTO true "Size"
+// @Param query query user_dto.AssetSearchDTO true "Size"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/internal [get]
 func GetAssetInternal() {}
@@ -45,7 +45,7 @@ func UpdateAsset() {}
 // @Tags Tài sản
 // @Produce json
 // @Param id path int true "ID"
-// @Param body body u_asset.ArchivedDTO true "Body"
+// @Param body body user_dto.AssetArchivedDTO true "Body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/archived/{id} [put]
 func ArchivedAsset() {}
@@ -61,7 +61,7 @@ func DeleteAsset() {}
 // @Summary Gộp tài sản
 // @Tags Tài sản
 // @Produce json
-// @Param body body u_asset.MergeDTO true "body"
+// @Param body body user_dto.MergeAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/merge [post]
 func MergeAsset() {}
@@ -69,7 +69,7 @@ func MergeAsset() {}
 // @Summary Tách tài sản
 // @Tags Tài sản
 // @Produce json
-// @Param body body u_asset.SplitDTOSwagger true "body"
+// @Param body body user_dto.SplitAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/split [post]
 func SplitAsset() {}
@@ -77,7 +77,7 @@ func SplitAsset() {}
 // @Summary Lịch sử tách gộp tài sản danh cho tài sản
 // @Tags Tài sản
 // @Produce json
-// @Param body query u_asset.HistoryDTO true "body"
+// @Param body query dto.AssetHistoryDTO true "body"
 // @Param id path uint64 true "ID"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/history/:id [get]
@@ -86,7 +86,7 @@ func HistoryAsset() {}
 // @Summary Lịch sử tách gộp tài sản dành cho user
 // @Tags Tài sản
 // @Produce json
-// @Param body query u_asset.HistoryDTO true "body"
+// @Param body query dto.AssetHistoryDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/history-owner [get]
 func HistoryAssetOwner() {}
@@ -94,7 +94,7 @@ func HistoryAssetOwner() {}
 // @Summary Lấy danh sách tài sản có số lượng con
 // @Tags Tài sản
 // @Produce json
-// @Param body query dto.AssetSearchDTO true "body"
+// @Param body query user_dto.AssetSearchDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/assets/split [get]
 func GetAssetsWithChildCount() {}

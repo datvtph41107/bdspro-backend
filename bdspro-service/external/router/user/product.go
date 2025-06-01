@@ -1,22 +1,30 @@
-package routes
+package user_router
 
 import (
+	"bdspro/external/providers"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	_routes "common/routes"
 	_utils "common/utils"
+	"fmt"
+	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 type UProductRouter struct {
-	UserProductService *usecases.UProductUsecase
+	UProductUsecase  *usecases.UProductUsecase
+	UProductProvider *providers.UProductProvider
 }
 
 func NewUProductRoute(product *usecases.UProductUsecase) *UProductRouter {
 	return &UProductRouter{
-		UserProductService: product,
+		UProductUsecase: product,
 	}
 }
 
@@ -28,7 +36,7 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 	api.GET("/me", route.SearchProductWithOwner)
 	api.GET("/link/:id", route.SearchProductWithOwner)
 	api.GET("/public", route.SearchProductWithOwner)
-	api.POST("/new", route.NewProduct)
+	api.POST("/new", route.CreateNewProduct)
 	api.POST("/suggest", route.NewProductWithDetect)
 	api.GET("/:id", route.Detail)
 	api.GET("/:id/posts", route.Posts)
@@ -46,6 +54,7 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 	api.PUT("/rent-visibility", route.RentVisibilityUpdate)
 	api.POST("/deposite", route.Deposite)
 	api.DELETE("/deposite/:depositeId", route.CancelDeposite)
+	api.POST("/export", route.ExportExcel)
 
 	// api.DELETE("/:id", route.Delete)
 }
@@ -59,13 +68,13 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 // @Param product body data.NewProductRequest true "Thông tin sản phẩm"
 // @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
 // @Router /v1/bdspro/user/product/new [post]
-func (route *UProductRouter) NewProduct(c *gin.Context) {
+func (route *UProductRouter) CreateNewProduct(c *gin.Context) {
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UserProductService.CreateProduct(c, body)
+	result, err := route.UProductUsecase.CreateProduct(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -88,7 +97,7 @@ func (route *UProductRouter) Detail(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UserProductService.Detail(c, id)
+	result, err := route.UProductUsecase.Detail(c, id)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -108,7 +117,7 @@ func (route *UProductRouter) Posts(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UserProductService.Posts(c, id, dto)
+	result, err := route.UProductUsecase.Posts(c, id, dto)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -128,7 +137,7 @@ func (route *UProductRouter) Members(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UserProductService.Members(c, id, dto)
+	result, err := route.UProductUsecase.Members(c, id, dto)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -151,7 +160,7 @@ func (route *UProductRouter) History(c *gin.Context) {
 		return
 	}
 
-	result, total, err := route.UserProductService.History(c, id, dto)
+	result, total, err := route.UProductUsecase.History(c, id, dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,
@@ -210,7 +219,7 @@ func (route *UProductRouter) SearchProductWithOwner(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UserProductService.SearchProductWithOwner(c, &body)
+	result, err := route.UProductUsecase.SearchProductWithOwner(c, &body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -233,7 +242,7 @@ func (route *UProductRouter) SearchProductWithOwner(c *gin.Context) {
 func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
 	// _routes.RouteResult(c, nil, nil)
 	body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
-	result, err := route.UserProductService.SearchProductMarket(c, body)
+	result, err := route.UProductUsecase.SearchProductMarket(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -250,7 +259,7 @@ func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
 // @Router /v1/bdspro/user/product/total [get]
 func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
 	body, _ := _utils.ParseQueryToStruct[dto.TextSearchRequest](c.Request.URL.Query())
-	result, err := route.UserProductService.SmartSearch(c, body.Text, body.GetPage(), body.GetSize())
+	result, err := route.UProductUsecase.SmartSearch(c, body.Text, body.GetPage(), body.GetSize())
 	_routes.RouteResult(c, result, err)
 }
 
@@ -272,7 +281,7 @@ func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
 // @Router /v1/bdspro/user/product/suggest [post]
 func (route *UProductRouter) NewProductWithDetect(c *gin.Context) {
 	_body, _ := _utils.ParseBody[dto.ProductSaveDetect](c)
-	result, err := route.UserProductService.CreateProductWithDetect(c, _body)
+	result, err := route.UProductUsecase.CreateProductWithDetect(c, _body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -292,7 +301,7 @@ func (route *UProductRouter) Edit(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UserProductService.Update(c, id, body)
+	result, err := route.UProductUsecase.Update(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -303,7 +312,7 @@ func (route *UProductRouter) Rent(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UserProductService.Rent(c, id, body)
+	result, err := route.UProductUsecase.Rent(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -323,7 +332,7 @@ func (route *UProductRouter) Archived(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.Archived(c, body)
+	err := route.UProductUsecase.Archived(c, body)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -341,7 +350,7 @@ func (route *UProductRouter) Delete(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err = route.UserProductService.Delete(c, id)
+	err = route.UProductUsecase.Delete(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -360,7 +369,7 @@ func (route *UProductRouter) RentStatusUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.RentStatusUpdate(c, status)
+	err := route.UProductUsecase.RentStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -379,7 +388,7 @@ func (route *UProductRouter) SaleStatusUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.SaleStatusUpdate(c, status)
+	err := route.UProductUsecase.SaleStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -398,7 +407,7 @@ func (route *UProductRouter) RentVisibilityUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.RentVisibilityUpdate(c, status)
+	err := route.UProductUsecase.RentVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -417,7 +426,7 @@ func (route *UProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UserProductService.SaleVisibilityUpdate(c, status)
+	err := route.UProductUsecase.SaleVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -436,7 +445,7 @@ func (route *UProductRouter) Deposite(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	deposite, err := route.UserProductService.ProductDeposite(c, dto)
+	deposite, err := route.UProductUsecase.ProductDeposite(c, dto)
 	_routes.RouteResult(c, deposite, err)
 }
 
@@ -455,7 +464,7 @@ func (route *UProductRouter) CancelDeposite(c *gin.Context) {
 		return
 	}
 
-	err = route.UserProductService.CancelDeposite(c, id)
+	err = route.UProductUsecase.CancelDeposite(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -476,3 +485,188 @@ func (route *UProductRouter) CancelDeposite(c *gin.Context) {
 // 	err = route.UserProductService.CancelDeposite(c, id)
 // 	_routes.RouteResult(c, nil, err)
 // }
+
+//	func (route *UProductRouter) ExportExcel(c *gin.Context) {
+//		body := dto.ProductSearchRequest{}
+//		if err := _utils.ParseQuery2(c, &body); err != nil {
+//			_routes.RouteResult(c, nil, err)
+//			return
+//		}
+//		products, total, err := route.UProductProvider.ExportExcel(c, body)
+//		_routes.RouteResult(c, _routes.ResponseDTO{
+//			Code:          0,
+//			Data:          products,
+//			TotalElements: &total,
+//		}, err)
+//	}
+func nilIfNil[T any](ptr *T, getter func() any) any {
+	if ptr == nil {
+		return ""
+	}
+	return getter()
+}
+
+func dereference(value interface{}) interface{} {
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr && !val.IsNil() {
+		return val.Elem().Interface()
+	}
+	return value
+}
+
+// @Summary Xuất danh sách sản phẩm ra Excel
+// @Description API này dùng để xuất dữ liệu sản phẩm ra file Excel
+// @Tags User
+// @Accept json
+// @Produce application/octet-stream
+// @Security BearerAuth
+// @Param filter query string false "Bộ lọc sản phẩm (nếu có)"
+// @Success 200 {file} file "Excel file"
+// @Failure 400 {object} _routes.ResponseDTO
+// @Failure 500 {object} _routes.ResponseDTO
+// @Router /v1/bdspro/user/product/export [post]
+func (route *UProductRouter) ExportExcel(c *gin.Context) {
+	var query dto.ProductSearchRequest
+	if err := _utils.ParseQuery2(c, &query); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	products, err := route.UProductUsecase.SearchToExport(c, &query)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	// Dữ liệu mẫu
+	// users := []dto.ProductSaveRequest{
+	// 	{Name: "Nguyễn Văn A", Area: 25},
+	// 	{Name: "Trần Thị B", Area: 30},
+	// }
+
+	// Tạo file Excel
+	f := excelize.NewFile()
+	sheet := "Sheet1"
+	f.SetSheetName("Sheet1", sheet)
+
+	// Ghi tiêu đề
+	// f.SetCellValue(sheet, "A1", "Họ tên")
+	// f.SetCellValue(sheet, "B1", "Tuổi")
+
+	// Ghi tiêu đề cột
+	headers := []string{
+		"ID", "Ngày tạo", "Ngày cập nhật", "Tên", "Mã", "Danh mục", "Diện tích", "Mô tả", "Loại giao dịch",
+		"Trạng thái bán", "Hiển thị bán", "Trạng thái cho thuê", "Hiển thị thuê", "ID người sở hữu", "ID tổ chức sở hữu",
+		"Link vị trí", "Địa chỉ", "Link Google Maps", "ID tài sản", "ID căn hộ", "Giá giao dịch", "Ngày xóa", "Đã lưu trữ",
+		"Số phòng ngủ", "Số phòng tắm", "Số tầng", "Nội thất", "Hướng", "Mặt tiền", "Chỗ đậu xe", "Số toilet",
+		"Tiện ích", "Ảnh", "Loại ảnh", "Ảnh chính",
+		"Tỉnh/Thành", "Quận/Huyện", "Phường/Xã",
+		"Loại giấy tờ", "Loại bất động sản",
+		"Loại tiền", "Chủ sở hữu giá", "Giá bán", "Hoa hồng bán", "Loại hoa hồng bán",
+		"Giá thuê", "Hoa hồng thuê", "Loại hoa hồng thuê", "Chu kỳ thanh toán thuê",
+		"Giá nhập", "Chi phí vận hành", "Ghi chú nội bộ", "Lợi nhuận kỳ vọng", "Tài liệu riêng", "Tiền đặt cọc",
+	}
+
+	for i, h := range headers {
+		col, _ := excelize.ColumnNumberToName(i + 1)
+		f.SetCellValue(sheet, fmt.Sprintf("%s1", col), h)
+	}
+
+	// Ghi dữ liệu sản phẩm
+	for i, product := range products {
+		row := i + 2
+		mediaUrls := make([]string, len(product.MediaList))
+		for i, media := range product.MediaList {
+			mediaUrls[i] = media.MediaURL
+		}
+		joinedMediaUrls := strings.Join(mediaUrls, ",")
+
+		amenities := make([]string, len(product.Amenities))
+		for i, amenity := range product.Amenities {
+			amenities[i] = amenity.Name
+		}
+		joinedAmenities := strings.Join(amenities, ",")
+
+		values := []interface{}{
+			product.ID,
+			product.CreatedAt,
+			product.UpdatedAt,
+			product.Name,
+			product.Code,
+			product.CategoryID,
+			product.Area,
+			product.Description,
+			product.TransactionType,
+			product.SaleStatus,
+			product.SaleVisibility,
+			product.RentStatus,
+			product.RentVisibility,
+			product.OwnerUserID,
+			product.OwnerOrgID,
+			product.PositionUrl,
+			product.Address,
+			product.GoogleMapLink,
+			product.AssetId,
+			product.ApartmentID,
+			nil, //product.Price.TransactionPrice,
+			product.DeletedAt,
+			product.Archived,
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumBedroom) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumBathroom) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumFloor) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.Furniture) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.Orientation) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumFront) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumCarPark) }),
+			nilIfNil(product.HouseInfo, func() any { return dereference(product.HouseInfo.NumToilet) }),
+			joinedAmenities, //nilIfNil(product.Amenities, func() any { return product.Amenities }),
+			joinedMediaUrls, //strings.Join(product.MediaList, ","),
+			nil,             //strings.Join(product.MediaTypes, ","),
+			nil,             //product.MediaList,
+			nilIfNil(product.Province, func() any { return product.Province.Name }),
+			nilIfNil(product.District, func() any { return product.District.Name }),
+			nilIfNil(product.Ward, func() any { return product.Ward.Name }),
+			nilIfNil(product.DocType, func() any { return product.DocType.Name }),
+			nilIfNil(product.PropertyType, func() any { return product.PropertyType.Name }),
+			dereference(product.Price.Currency),
+			dereference(product.Price.PriceOwner),
+			dereference(product.Price.SalePrice),
+			product.Price.SaleCommission,
+			nil, //product.Price.SaleCommissionType,
+			dereference(product.Price.RentPrice),
+			dereference(product.Price.RentCommission),
+			nil, //product.Price.RentCommissionType,
+			dereference(product.Price.RentPaymentCycle),
+			nil, //product.Price.ImportPrice,
+			nil, //product.Price.OperatingCost,
+			nil, //product.Price.InternalNote,
+			nil, //product.Price.TargetProfit,
+			nil, //product.PrivateDocs,
+			nilIfNil(product.Deposite, func() any { return product.Deposite.Amount }),
+		}
+
+		for j, val := range values {
+			col, _ := excelize.ColumnNumberToName(j + 1)
+			f.SetCellValue(sheet, fmt.Sprintf("%s%d", col, row), val)
+		}
+	}
+
+	// Set active sheet
+	sheetIndex, _ := f.GetSheetIndex(sheet)
+	f.SetActiveSheet(sheetIndex)
+
+	// Header cho việc download
+	filename := fmt.Sprintf("users_%s.xlsx", time.Now().Format("20060102_150405"))
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.Header("Content-Transfer-Encoding", "binary")
+
+	// Ghi file vào response
+	if err := f.Write(c.Writer); err != nil {
+		c.String(http.StatusInternalServerError, "Lỗi khi tạo file Excel: %v", err)
+	}
+}
+
+func toStr(i int) string {
+	return fmt.Sprintf("%d", i)
+}

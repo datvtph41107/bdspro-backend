@@ -11,16 +11,16 @@ import (
 
 type ProductChildHistory struct {
 	_models.BaseEntity
-	ID          uint64               `gorm:"primaryKey;autoIncrement" json:"id"`
-	Action      enums.ProductHistory `gorm:"int" json:"action"`
-	ParentID    *uint64              `json:"-"`
-	Parent      *ProductInfo         `gorm:"foreignKey:ParentID;references:ID" json:"parent"`
-	ProductID   *uint64              `json:"-"`
-	Target      *ProductInfo         `gorm:"foreignKey:ProductID;references:ID" json:"product"`
-	ChildIds    pq.Int64Array        `gorm:"type:bigint[];column:child_ids" json:"-"`
-	Childs      []ProductInfo        `gorm:"-" json:"childs"`
-	Areas       pq.Float64Array      `gorm:"type:double precision[];column:areas" json:"areas"`
-	CreatedUser *ProfileInfo         `gorm:"foreignKey:CreatedBy;references:ProfileId" json:"createdUser"`
+	ID          uint64                `gorm:"primaryKey;autoIncrement" json:"id"`
+	Action      enums.EProductHistory `gorm:"int" json:"action"`
+	ParentID    *uint64               `json:"-"`
+	Parent      *ProductInfo          `gorm:"foreignKey:ParentID;references:ID" json:"parent"`
+	ProductID   *uint64               `json:"-"`
+	Target      *ProductInfo          `gorm:"foreignKey:ProductID;references:ID" json:"product"`
+	ChildIds    pq.Int64Array         `gorm:"type:bigint[];column:child_ids" json:"-"`
+	Childs      []ProductInfo         `gorm:"-" json:"childs"`
+	Areas       pq.Float64Array       `gorm:"type:double precision[];column:areas" json:"areas"`
+	CreatedUser *ProfileInfo          `gorm:"foreignKey:CreatedBy;references:ProfileId" json:"createdUser"`
 }
 
 type ProductInfo struct {

@@ -52,8 +52,8 @@ func (s *ProductAccessUsecase) CreateBatch(c context.Context, id uint64, dtos []
 	}
 
 	// đổi trạng thái sang nội bộ nếu riêng tư
-	if product.SaleVisibility == enums.ProductVisiblePrivate {
-		product.SaleVisibility = enums.ProductVisibleInternal
+	if product.SaleVisibility == enums.EVisiblePrivate {
+		product.SaleVisibility = enums.EVisibleInternal
 		_db.SaveWithContext(c, product)
 	}
 	// err := _db.SaveWithAudit(c, &entities)
@@ -90,8 +90,8 @@ func (s *ProductAccessUsecase) BulkSave(c context.Context, id uint64, dto dto.Pr
 	}
 
 	// đổi trạng thái sang nội bộ nếu riêng tư
-	if product.SaleVisibility == enums.ProductVisiblePrivate {
-		product.SaleVisibility = enums.ProductVisibleInternal
+	if product.SaleVisibility == enums.EVisiblePrivate {
+		product.SaleVisibility = enums.EVisibleInternal
 		_db.SaveWithContext(c, product)
 	}
 	if len(dto.Datas) > 0 {

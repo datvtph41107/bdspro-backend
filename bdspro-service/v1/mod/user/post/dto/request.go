@@ -12,7 +12,7 @@ type PostSaveRequest struct {
 	Content         string                  `json:"content" binding:"required"`
 	Price           float64                 `json:"postPrice"`
 	TransactionType uint                    `json:"transactionType" binding:"required"`
-	Visibility      enums.PostVisibility    `json:"visibility" binding:"required"`
+	Visibility      enums.EVisibility       `json:"visibility" binding:"required"`
 	PackageVisible  uint                    `json:"packageVisible"`
 	ExpiredAt       *time.Time              `json:"expiredAt"`
 	NumDate         int                     `json:"numDate"`
@@ -27,7 +27,7 @@ type PostSaveWithProduct struct {
 	Content         string                  `json:"content"`
 	Price           float64                 `json:"postPrice"`
 	TransactionType uint                    `json:"transactionType"`
-	Visibility      enums.PostVisibility    `json:"visibility"`
+	Visibility      enums.EVisibility       `json:"visibility"`
 	PackageVisible  uint                    `json:"packageVisible"`
 	ExpiredAt       *time.Time              `json:"expiredAt"`
 	NumDate         int                     `json:"numDate"`
@@ -52,7 +52,7 @@ type PostUpdateRequest struct {
 	Price           float64                 `json:"postPrice"`
 	TransactionType uint                    `json:"transactionType"`
 	PackageVisible  uint                    `json:"packageVisible"`
-	Visibility      enums.PostVisibility    `json:"visibility"`
+	Visibility      enums.EVisibility       `json:"visibility"`
 	NumDate         int                     `json:"numDate"`
 	Metadatas       models.ProductMediaItem `json:"metadatas"`
 }

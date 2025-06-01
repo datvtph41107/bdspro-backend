@@ -103,7 +103,7 @@ func (s *UPostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (
 		Visibility:      dto.Visibility,
 		NumDate:         numDate,
 		ExpiredAt:       dto.ExpiredAt,
-		Status:          enums.PostPublic,
+		Status:          enums.EPostPublic,
 		Hidden:          dto.Hidden,
 	}
 	if entity.ExpiredAt == nil {
@@ -299,7 +299,7 @@ func (s *UPostUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	if requiredOwner.Status == enums.PostPublic {
+	if requiredOwner.Status == enums.EPostPublic {
 		return &_routes.Except{
 			Code:    400,
 			Message: "Tin đăng đã được đăng",
@@ -309,4 +309,13 @@ func (s *UPostUsecase) Delete(c context.Context, id uint64) error {
 	profileId := _utils.GetProfileIdWithContext(c)
 	err = s.Repo.Delete(c, profileId, id)
 	return err
+}
+
+func (s *UPostUsecase) GetPublishByProfileID(c context.Context, profileId uint64, dto dto.PostPublishSearch) ([]domain.Post, int64, error) {
+	entities, total, err := s.Repo.GetPublishByProfileID(c, profileId, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return entities, total, nil
 }

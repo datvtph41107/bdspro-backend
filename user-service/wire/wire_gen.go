@@ -25,25 +25,43 @@ import (
 func InitializeApp() (*config.ConfigApp, error) {
 	redisService := auth_service.NewRedisService()
 	cookieService := auth_service.NewCookieService()
-	authService := auth_service.NewAuthService(redisService, cookieService)
+	db, err := _db.NewDB()
+	if err != nil {
+		return nil, err
+	}
+	profileRepo := repo.NewProfileRepo(db)
+	authService := auth_service.NewAuthService(redisService, cookieService, profileRepo)
 	authRouter := routes.NewAuthRoutes(authService)
 	client := auth_service.NewHttpClient()
 	googleAuthService := auth_service.NewGoogleAuthService(client, authService)
 	zaloAuthService := auth_service.NewZaloAuthService(client, authService)
 	facebookAuthService := auth_service.NewFacebookAuthService(authService, client)
 	oAuthRouter := routes.NewOAuthRouter(googleAuthService, zaloAuthService, facebookAuthService)
-	db, err := _db.NewDB()
-	if err != nil {
-		return nil, err
-	}
-	profileRepo := repo.NewProfileRepo(db)
-	profileService := auth_service.NewProfileService(profileRepo)
+	professionRepo := repo.NewProfessionRepo(db)
+	certificationRepo := repo.NewCertificationRepo(db)
+	rateRepo := repo.NewRateRepo(db)
+	friendRepo := repo.NewFriendRepo(db)
+	followRepo := repo.NewFollowRepo(db)
+	profileService := user_service.NewProfileService(profileRepo, professionRepo, certificationRepo, rateRepo, friendRepo, followRepo)
 	profileRouter := routes.NewProfileRouter(profileService)
-	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter)
+	blockRepo := repo.NewBlockRepo(db)
+	contactRepo := repo.NewContactRepo(db)
+	blockService := user_service.NewBlockService(blockRepo, contactRepo, friendRepo, followRepo)
+	blockRouter := routes.NewBlockRouter(blockService)
+	followService := user_service.NewFollowService(followRepo, contactRepo, blockRepo, blockService)
+	followRouter := routes.NewFollowRouter(followService)
+	friendService := user_service.NewFriendService(friendRepo, contactRepo, followRepo, blockRepo, blockService)
+	friendRouter := routes.NewFriendRouter(friendService)
+	groupRepo := repo.NewGroupRepo(db)
+	groupService := user_service.NewGroupService(groupRepo)
+	groupRouter := routes.NewGroupRouter(groupService)
+	rateService := user_service.NewRateService(rateRepo)
+	rateRouter := routes.NewRateRouter(rateService)
+	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, repo.NewProfileRepo, routes.NewProfileRouter, auth_service.NewProfileService, auth_service.NewRedisService, data.NewRefreshResponse, data.NewRequestLoginResponse, data.NewUserInfoResponse, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, repo.NewCertificationRepo, user_service.NewCertificationService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, repo.NewRateRepo, routes.NewRateRouter, user_service.NewRateService, auth_service.NewRedisService, data.NewRefreshResponse, data.NewRequestLoginResponse, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)

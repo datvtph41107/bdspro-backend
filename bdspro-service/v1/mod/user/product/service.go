@@ -1,6 +1,8 @@
 package u_product
 
 import (
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/v1/data"
 	a_doc_type "bdspro/v1/mod/admin/doc_type"
@@ -13,6 +15,7 @@ import (
 	"bdspro/v1/mod/global/product_private"
 	g_region "bdspro/v1/mod/global/region"
 	"bdspro/v1/providers"
+	"context"
 
 	// u_asset "bdspro/v1/mod/user/asset"
 
@@ -52,7 +55,7 @@ type UserProductService struct {
 	UserPostService   iu_post.IUserPostService
 	UserAssetService  iu_asset.IUserAssetService
 
-	CacheProductMarket *providers.ListCacheProvider[u_product_dto.ProductMarket, data.ProductSearchRequest]
+	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 }
 
 func NewUserProductService(productRepo *UserProductRepo,
@@ -84,7 +87,7 @@ func NewUserProductService(productRepo *UserProductRepo,
 		propertyType:       propertyType,
 		amenity:            amenity,
 		memberPlan:         memberPlan,
-		CacheProductMarket: &providers.ListCacheProvider[u_product_dto.ProductMarket, data.ProductSearchRequest]{},
+		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 		// postProvider:      postProvider,
 	}
 	// CacheProvider := &providers.CacheProvider[u_product_dto.ProductMarket]{}
@@ -387,13 +390,13 @@ func (s *UserProductService) SearchProductWithOwner(c *gin.Context, dto *data.Pr
 // 	productCacheMutex sync.RWMutex
 // )
 
-func (s *UserProductService) QueryProductMarket(c *gin.Context, dto *data.ProductSearchRequest) ([]u_product_dto.ProductMarket, int64, error) {
-	var results []u_product_dto.ProductMarket
-	profileId := _jwt.GetProfileId(c)
-	results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto, _utils.GetPage(c))
+func (s *UserProductService) QueryProductMarket(c context.Context, dto *dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	var results []domain.ProductMarket
+	profileId := _utils.GetProfileIdWithContext(c)
+	results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto)
 	return results, total, err
 }
-func (s *UserProductService) SearchProductMarket(c *gin.Context, dto *data.ProductSearchRequest) (_routes.ResponseDTO, error) {
+func (s *UserProductService) SearchProductMarket(c *gin.Context, dto *dto.ProductSearchRequest) (_routes.ResponseDTO, error) {
 	// var results []u_product_dto.ProductMarket
 	// var total int64
 	// var err error
@@ -710,7 +713,7 @@ func (s *UserProductService) Delete(c *gin.Context, id uint64) error {
 	}
 
 	// todo: thêm hoặc có tin active
-	if product.SaleStatus != enums.ProductNotSold || product.RentStatus != enums.ProductNotRent {
+	if product.SaleStatus != enums.EProductNotSold || product.RentStatus != enums.EProductNotRent {
 		return &_routes.Except{
 			Code:    401,
 			Message: "Không thể xóa sản phẩm này",

@@ -1,4 +1,4 @@
-package dto
+package user_dto
 
 import (
 	"bdspro/internal/domain"
@@ -12,7 +12,7 @@ type AssetCreateWithProduct struct {
 	PurchasePrice float64            `json:"purchasePrice,omitempty"`
 	PurchaseDate  *time.Time         `json:"purchaseDate,omitempty"`
 	LegalStatus   uint               `gorm:"default:10" json:"legalStatus,omitempty"`
-	RentStatus    enums.AssetStatus  `gorm:"default:10" json:"rentStatus,omitempty"`
+	RentStatus    enums.EAssetStatus `gorm:"default:10" json:"rentStatus,omitempty"`
 	Description   string             `json:"description,omitempty"`
 	LegalItems    []domain.LegalItem `json:"legalItems"`
 	// Archived      bool              `gorm:"default:false" json:"archived"`

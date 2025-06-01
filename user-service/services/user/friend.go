@@ -88,7 +88,7 @@ func (s *FriendService) Request(c *gin.Context) (*user_model.FriendEntity, error
 	}
 
 	e := &user_model.FriendEntity{
-		Status:     enums.Pending,
+		Status:     enums.EFriendStatusPending,
 		ReceiverID: receiverId,
 	}
 	_db.SaveWithAudit(c, &e)
@@ -105,7 +105,7 @@ func (s *FriendService) RequestSent(c *gin.Context) ([]user_model.FriendEntity, 
 			Message: err.Error(),
 		}
 	}
-	params.Status = enums.Pending
+	params.Status = enums.EFriendStatusPending
 
 	return s.repo.Search(params, &profileId, 0, 10)
 }
@@ -120,12 +120,12 @@ func (s *FriendService) RequestReceived(c *gin.Context) ([]user_model.FriendEnti
 		}
 	}
 	params.ReceiverID = profileId
-	params.Status = enums.Pending
+	params.Status = enums.EFriendStatusPending
 
 	return s.repo.Search(params, nil, 0, 10)
 }
 
-func (s *FriendService) ChangeStatus(c *gin.Context, status enums.FriendStatus) (int, error) {
+func (s *FriendService) ChangeStatus(c *gin.Context, status enums.EFriendStatus) (int, error) {
 	idStr := c.Param("requestId")
 	id, _ := strconv.ParseUint(idStr, 10, 32)
 
@@ -141,7 +141,7 @@ func (s *FriendService) ChangeStatus(c *gin.Context, status enums.FriendStatus) 
 
 	profileId := _jwt.GetProfileId(c)
 
-	if requestEntity.ReceiverID != profileId || requestEntity.Status != enums.Pending {
+	if requestEntity.ReceiverID != profileId || requestEntity.Status != enums.EFriendStatusPending {
 		return 0, errors.New("Không thể thực hiện yêu cầu")
 	}
 
@@ -188,7 +188,7 @@ func (s *FriendService) ChangeGroup(c *gin.Context) (int, error) {
 
 	profileId := _jwt.GetProfileId(c)
 
-	if (requestEntity.ReceiverID != profileId && requestEntity.CreatedBy != &profileId) || requestEntity.Status != enums.Pending {
+	if (requestEntity.ReceiverID != profileId && requestEntity.CreatedBy != &profileId) || requestEntity.Status != enums.EFriendStatusPending {
 		return 0, &_routes.Except{
 			Code:    400,
 			Message: "Không thể thực hiện yêu cầu",

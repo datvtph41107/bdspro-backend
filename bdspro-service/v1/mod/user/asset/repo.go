@@ -45,7 +45,7 @@ func (r *AssetRepo) GetAssetByProductID(id *uint64) (*models.Asset, error) {
 	return &asset, nil
 }
 
-func (r *AssetRepo) UpdateStatus(ctx *gin.Context, assetID *uint64, status enums.AssetStatus) error {
+func (r *AssetRepo) UpdateStatus(ctx *gin.Context, assetID *uint64, status enums.EAssetStatus) error {
 	return r.DB.WithContext(ctx).Model(&models.Asset{}).
 		Where("id = ? and deleted_at is null", assetID).
 		Update("status", status).Error

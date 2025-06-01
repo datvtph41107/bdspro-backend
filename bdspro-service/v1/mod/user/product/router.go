@@ -1,6 +1,7 @@
 package u_product
 
 import (
+	"bdspro/internal/dto"
 	"bdspro/v1/data"
 	user_dto "bdspro/v1/mod/user/dto/request"
 	u_product_dto "bdspro/v1/mod/user/product/dto"
@@ -202,7 +203,7 @@ func (route *UserProductRoute) SearchProductWithOwner(c *gin.Context) {
 // @Router /v1/bdspro/user/product/market [get]
 func (route *UserProductRoute) SearchProductMarket(c *gin.Context) {
 	// _routes.RouteResult(c, nil, nil)
-	body, _ := _utils.ParseQueryToStruct[data.ProductSearchRequest](c.Request.URL.Query())
+	body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
 	result, err := route.UserProductService.SearchProductMarket(c, body)
 	_routes.RouteResult(c, result, err)
 }

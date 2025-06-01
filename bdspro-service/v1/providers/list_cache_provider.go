@@ -1,10 +1,9 @@
 package providers
 
 import (
+	"context"
 	"sync"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type ListCacheProvider[T any, REQ any] struct {
@@ -22,7 +21,7 @@ func (c *ListCacheProvider[T, REQ]) Setup() {
 	c.Lock = sync.RWMutex{}
 }
 
-func (c *ListCacheProvider[T, REQ]) GetDataWithCache(ctx *gin.Context, dto *REQ, f func(*gin.Context, *REQ) ([]T, int64, error)) ([]T, int64, error) {
+func (c *ListCacheProvider[T, REQ]) GetDataWithCache(ctx context.Context, dto *REQ, f func(context.Context, *REQ) ([]T, int64, error)) ([]T, int64, error) {
 	c.Lock.RLock()
 	if time.Now().Before(c.ExpiresAt) && c.Data != nil {
 		data := c.Data

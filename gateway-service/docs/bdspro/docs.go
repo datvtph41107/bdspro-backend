@@ -15,6 +15,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/enums/{type}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enum"
+                ],
+                "summary": "Lấy enum dạng name-value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tên loại enum (VD: saleStatus)",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/bdspro/admin/amenity": {
             "get": {
                 "security": [
@@ -3253,6 +3294,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v1/bdspro/user/product/deposite/{depositeId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Hủy cọc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Deposite ID",
+                        "name": "depositeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v1/bdspro/user/product/deposite/{productId}": {
             "delete": {
                 "security": [
@@ -3304,6 +3375,54 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/v1/bdspro/user/product/export": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này dùng để xuất dữ liệu sản phẩm ra file Excel",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Xuất danh sách sản phẩm ra Excel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bộ lọc sản phẩm (nếu có)",
+                        "name": "filter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Excel file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    }
+                }
             }
         },
         "/v1/bdspro/user/product/history-child/:id": {
@@ -5663,7 +5782,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/u_asset.ArchivedDTO"
+                            "$ref": "#/definitions/user_dto.AssetArchivedDTO"
                         }
                     }
                 ],
@@ -5694,6 +5813,11 @@ const docTemplate = `{
                         "type": "integer",
                         "name": "size",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -5722,6 +5846,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
                         "in": "query"
                     },
                     {
@@ -5843,7 +5972,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/u_asset.MergeDTO"
+                            "$ref": "#/definitions/user_dto.MergeAssetDTO"
                         }
                     }
                 ],
@@ -6043,7 +6172,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/u_asset.SplitDTOSwagger"
+                            "$ref": "#/definitions/user_dto.SplitAssetDTO"
                         }
                     }
                 ],
@@ -6131,6 +6260,76 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/user/posts/publish/{profileId}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tin đăng"
+                ],
+                "summary": "Lấy danh sách tin đăng công khai trên tường của user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "profileId",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/_routes.ResponseDTO"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/domain.Post"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.Except"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.Except"
+                        }
+                    }
+                }
             }
         },
         "/v2/bdspro/v2/asset-cost": {
@@ -7412,6 +7611,41 @@ const docTemplate = `{
                 }
             }
         },
+        "_routes.Except": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "errors": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "_routes.ResponseDTO": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "Data có thể là bất kỳ kiểu dữ liệu nào"
+                },
+                "errors": {},
+                "message": {
+                    "type": "string"
+                },
+                "totalElements": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspro.AssetCostDTO": {
             "type": "object",
             "properties": {
@@ -7585,6 +7819,889 @@ const docTemplate = `{
         "data.StatusResponse": {
             "type": "object"
         },
+        "domain.AmenityItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Apartment": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "integer"
+                },
+                "attributeId": {
+                    "type": "integer"
+                },
+                "buildId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "floor": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ordinal": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ApartmentAttrItem": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "description": "Diện tích",
+                    "type": "integer"
+                },
+                "blueprintUrl": {
+                    "description": "Link bản vẽ",
+                    "type": "string"
+                },
+                "buildId": {
+                    "description": "Diện tích",
+                    "type": "integer"
+                },
+                "furniture": {
+                    "description": "Nội thất",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "Số phòng ngủ (optional)",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "Link bản vẽ",
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ApartmentAttribute": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "description": "Diện tích",
+                    "type": "integer"
+                },
+                "blueprintUrl": {
+                    "description": "Link bản vẽ",
+                    "type": "string"
+                },
+                "buildId": {
+                    "description": "Diện tích",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "furniture": {
+                    "description": "Nội thất",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "Số phòng ngủ (optional)",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ApartmentItem": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "integer"
+                },
+                "attributeId": {
+                    "type": "integer"
+                },
+                "floor": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ordinal": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Asset": {
+            "type": "object",
+            "required": [
+                "area",
+                "name",
+                "purchasePrice",
+                "wardId"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "district": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerOrgId": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/domain.Product"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/domain.PropertyTypeItem"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.EAssetStatus"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "ward": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Attribute": {
+            "type": "object",
+            "properties": {
+                "attribute_values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AttributeValue"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "hint_text": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AttributeProduct": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/domain.Attribute"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "product": {
+                    "$ref": "#/definitions/domain.Product"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AttributeValue"
+                    }
+                }
+            }
+        },
+        "domain.AttributeValue": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/domain.Attribute"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Deposite": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Developer": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "backgroundUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.DeveloperItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.DocTypeItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.HouseInfo": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "furniture": {
+                    "description": "Nội thất: \"full\", \"partial\", \"none\"",
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "description": "Số WC (optional)",
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "description": "Số phòng ngủ (optional)",
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "description": "Số chỗ để ôtô",
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "description": "Số tầng (optional)",
+                    "type": "integer"
+                },
+                "numFront": {
+                    "description": "Số mặt tiền",
+                    "type": "integer"
+                },
+                "numToilet": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "description": "Hướng nhà (Đông, Tây, Nam,...)",
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.LegalItem": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Post": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "expiredAt": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.PostMediaEntity"
+                    }
+                },
+                "numComment": {
+                    "type": "integer"
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "numLike": {
+                    "type": "integer"
+                },
+                "numView": {
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "description": "1: thường, 2: VIP",
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
+                },
+                "priceType": {
+                    "description": "1: chính thức, 2: thỏa thuận",
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/domain.Product"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.EPostStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "1: normal, 2: feed, 3: share",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
+                }
+            }
+        },
+        "domain.PostMediaEntity": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "postId": {
+                    "description": "ID        uint64 ` + "`" + `gorm:\"primaryKey;autoIncrement;not null\" json:\"id\"` + "`" + `",
+                    "type": "integer"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Product": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AmenityItem"
+                    }
+                },
+                "apartment": {
+                    "$ref": "#/definitions/domain.Apartment"
+                },
+                "apartmentAttribute": {
+                    "$ref": "#/definitions/domain.ApartmentAttribute"
+                },
+                "apartmentId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "description": "0=chưa, 1=archive",
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AttributeProduct"
+                    }
+                },
+                "build": {
+                    "$ref": "#/definitions/domain.ProjectBuild"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/domain.ProfileInfo"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "deposite": {
+                    "$ref": "#/definitions/domain.Deposite"
+                },
+                "depositeId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/domain.Developer"
+                },
+                "district": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docType": {
+                    "$ref": "#/definitions/domain.DocTypeItem"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/domain.HouseInfo"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ProductMediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "orgStatus": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerOrgId": {
+                    "description": "Tổ chức sở hữu (nếu cty mua)",
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "description": "Ai sở hữu (nếu đã bán)",
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "positionUrl": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/domain.ProductPrice"
+                },
+                "privateInfo": {
+                    "$ref": "#/definitions/domain.ProductPrivate"
+                },
+                "project": {
+                    "$ref": "#/definitions/domain.Project"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/domain.PropertyTypeItem"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "description": "1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EProductStatus"
+                        }
+                    ]
+                },
+                "rentVisibility": {
+                    "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EVisibility"
+                        }
+                    ]
+                },
+                "saleStatus": {
+                    "description": "1=Chưa bán, 2=Đang bán, 3=Đã bán",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EProductStatus"
+                        }
+                    ]
+                },
+                "saleVisibility": {
+                    "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EVisibility"
+                        }
+                    ]
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "updatedUser": {
+                    "$ref": "#/definitions/domain.ProfileInfo"
+                },
+                "visibility": {
+                    "description": "phạm vi",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EVisibility"
+                        }
+                    ]
+                },
+                "ward": {
+                    "$ref": "#/definitions/domain.Region"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.ProductMediaItem": {
             "type": "object",
             "properties": {
@@ -7692,6 +8809,185 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.ProfileInfo": {
+            "type": "object",
+            "properties": {
+                "fullName": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Project": {
+            "type": "object",
+            "properties": {
+                "builds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ProjectBuildItem"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/domain.DeveloperItem"
+                },
+                "developerId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ProjectBuild": {
+            "type": "object",
+            "properties": {
+                "apartments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ApartmentItem"
+                    }
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ApartmentAttrItem"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "numApartment": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "project": {
+                    "$ref": "#/definitions/domain.ProjectItem"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ProjectBuildItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numApartment": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ProjectItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.PropertyTypeItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Region": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "codeName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.ArchivedRequest": {
             "type": "object",
             "required": [
@@ -7704,27 +9000,6 @@ const docTemplate = `{
                 },
                 "productId": {
                     "type": "integer"
-                }
-            }
-        },
-        "dto.AssetCreateWithProduct": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "legalStatus": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
-                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "$ref": "#/definitions/enums.AssetStatus"
                 }
             }
         },
@@ -7810,6 +9085,9 @@ const docTemplate = `{
         "dto.MediaItem": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "isMain": {
                     "type": "boolean"
                 },
@@ -7877,7 +9155,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "visibility": {
-                    "$ref": "#/definitions/enums.PostVisibility"
+                    "$ref": "#/definitions/enums.EVisibility"
                 }
             }
         },
@@ -7899,7 +9177,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "asset": {
-                    "$ref": "#/definitions/dto.AssetCreateWithProduct"
+                    "$ref": "#/definitions/user_dto.AssetCreateWithProduct"
                 },
                 "code": {
                     "type": "string"
@@ -7953,10 +9231,16 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
+                },
+                "rentVisibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
                 },
                 "saleStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
+                },
+                "saleVisibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -7988,7 +9272,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "asset": {
-                    "$ref": "#/definitions/dto.AssetCreateWithProduct"
+                    "$ref": "#/definitions/user_dto.AssetCreateWithProduct"
                 },
                 "code": {
                     "type": "string"
@@ -8042,10 +9326,16 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
+                },
+                "rentVisibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
                 },
                 "saleStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
+                },
+                "saleVisibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -8069,7 +9359,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 }
             }
         },
@@ -8084,11 +9374,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "visibility": {
-                    "$ref": "#/definitions/enums.VisibilityStatus"
+                    "$ref": "#/definitions/enums.EVisibility"
                 }
             }
         },
-        "enums.AssetStatus": {
+        "enums.EAssetStatus": {
             "type": "integer",
             "enum": [
                 10,
@@ -8098,39 +9388,43 @@ const docTemplate = `{
                 50
             ],
             "x-enum-comments": {
-                "AssetStatusNotSold": "đang bán",
-                "AssetStatusOwning": "đang sở hữu",
-                "AssetStatusRenting": "đang cho thuê",
-                "AssetStatusSelling": "đang bán",
-                "AssetStatusSold": "đã bán"
+                "EAssetStatusNotSold": "đang bán",
+                "EAssetStatusOwning": "đang sở hữu",
+                "EAssetStatusRenting": "đang cho thuê",
+                "EAssetStatusSelling": "đang bán",
+                "EAssetStatusSold": "đã bán"
             },
             "x-enum-varnames": [
-                "AssetStatusOwning",
-                "AssetStatusRenting",
-                "AssetStatusSold",
-                "AssetStatusSelling",
-                "AssetStatusNotSold"
+                "EAssetStatusOwning",
+                "EAssetStatusRenting",
+                "EAssetStatusSold",
+                "EAssetStatusSelling",
+                "EAssetStatusNotSold"
             ]
         },
-        "enums.PostVisibility": {
+        "enums.EPostStatus": {
             "type": "integer",
             "enum": [
                 10,
                 20,
-                30
+                40,
+                50,
+                60,
+                70
             ],
             "x-enum-comments": {
-                "PostVisibleInternal": "Nội bộ",
-                "PostVisiblePublic": "Công khai",
-                "PostVisibleShowing": "Đang hiển thị"
+                "EPostStop": "tùy nghiệp vụ về sau"
             },
             "x-enum-varnames": [
-                "PostVisibleShowing",
-                "PostVisiblePublic",
-                "PostVisibleInternal"
+                "EPostPublic",
+                "EPostFinished",
+                "EPostSold",
+                "EPostRent",
+                "EPostStop",
+                "EPostStatusCompleted"
             ]
         },
-        "enums.ProductStatus": {
+        "enums.EProductStatus": {
             "type": "integer",
             "enum": [
                 10,
@@ -8140,24 +9434,16 @@ const docTemplate = `{
                 50,
                 60
             ],
-            "x-enum-comments": {
-                "ProductNotRent": "Chưa cho thuê",
-                "ProductNotSold": "Chưa bán",
-                "ProductRented": "Đã cho thuê",
-                "ProductRenting": "Đang cho thuê(cọc)",
-                "ProductSelling": "Đang bán(cọc)",
-                "ProductSold": "Đã bán"
-            },
             "x-enum-varnames": [
-                "ProductNotSold",
-                "ProductSelling",
-                "ProductSold",
-                "ProductNotRent",
-                "ProductRenting",
-                "ProductRented"
+                "EProductNotSold",
+                "EProductSelling",
+                "EProductSold",
+                "EProductNotRent",
+                "EProductRenting",
+                "EProductRented"
             ]
         },
-        "enums.ProductVisibility": {
+        "enums.EVisibility": {
             "type": "integer",
             "enum": [
                 10,
@@ -8165,40 +9451,9 @@ const docTemplate = `{
                 30
             ],
             "x-enum-varnames": [
-                "ProductVisiblePrivate",
-                "ProductVisibleInternal",
-                "ProductVisiblePublic"
-            ]
-        },
-        "enums.Scope": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30
-            ],
-            "x-enum-varnames": [
-                "Public",
-                "Share",
-                "Private"
-            ]
-        },
-        "enums.VisibilityStatus": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30
-            ],
-            "x-enum-comments": {
-                "VisiShow": "\"Đang hiển thị\"",
-                "VisibleInternal": "nội bộ",
-                "VisiblePublic": "công khai"
-            },
-            "x-enum-varnames": [
-                "VisiShow",
-                "VisiblePublic",
-                "VisibleInternal"
+                "EVisiblePublic",
+                "EVisibleInternal",
+                "EVisiblePrivate"
             ]
         },
         "models.Amenity": {
@@ -8474,7 +9729,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.AssetStatus"
+                    "$ref": "#/definitions/enums.EAssetStatus"
                 },
                 "splitMergeStatus": {
                     "type": "string"
@@ -8723,7 +9978,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.AssetStatus"
+                    "$ref": "#/definitions/enums.EAssetStatus"
                 },
                 "splitMergeStatus": {
                     "type": "string"
@@ -9222,7 +10477,7 @@ const docTemplate = `{
                     "description": "10=Chưa thuê, 20=Đang đăng tin, 30=Đang cho thuê",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.ProductStatus"
+                            "$ref": "#/definitions/enums.EProductStatus"
                         }
                     ]
                 },
@@ -9230,7 +10485,7 @@ const docTemplate = `{
                     "description": "10=Riêng tư, 20=Nội bộ, 30=Công khai",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.ProductVisibility"
+                            "$ref": "#/definitions/enums.EVisibility"
                         }
                     ]
                 },
@@ -9238,7 +10493,7 @@ const docTemplate = `{
                     "description": "10=Chưa bán, 20=Đang bán, 30=Đã bán",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.ProductStatus"
+                            "$ref": "#/definitions/enums.EProductStatus"
                         }
                     ]
                 },
@@ -9246,7 +10501,7 @@ const docTemplate = `{
                     "description": "10=Riêng tư, 20=Nội bộ, 30=Công khai",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.ProductVisibility"
+                            "$ref": "#/definitions/enums.EVisibility"
                         }
                     ]
                 },
@@ -9270,7 +10525,7 @@ const docTemplate = `{
                     "description": "phạm vi",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.Scope"
+                            "$ref": "#/definitions/enums.EVisibility"
                         }
                     ]
                 },
@@ -9766,7 +11021,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.AssetStatus"
+                    "$ref": "#/definitions/enums.EAssetStatus"
                 }
             }
         },
@@ -9804,7 +11059,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "visibility": {
-                    "$ref": "#/definitions/enums.PostVisibility"
+                    "$ref": "#/definitions/enums.EVisibility"
                 }
             }
         },
@@ -9939,10 +11194,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 },
                 "saleStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -10120,10 +11375,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 },
                 "saleStatus": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -10147,7 +11402,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/enums.ProductStatus"
+                    "$ref": "#/definitions/enums.EProductStatus"
                 }
             }
         },
@@ -10162,7 +11417,77 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "visibility": {
-                    "$ref": "#/definitions/enums.VisibilityStatus"
+                    "$ref": "#/definitions/enums.EVisibility"
+                }
+            }
+        },
+        "user_dto.AssetArchivedDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user_dto.AssetCreateWithProduct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.EAssetStatus"
+                }
+            }
+        },
+        "user_dto.MergeAssetDTO": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "user_dto.SplitAssetDTO": {
+            "type": "object",
+            "required": [
+                "datas",
+                "id"
+            ],
+            "properties": {
+                "datas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Asset"
+                    }
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         }

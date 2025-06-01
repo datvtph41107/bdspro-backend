@@ -55,8 +55,8 @@ func (g *Gateway) ProxyRequest(c *gin.Context) {
 	// targetURL := fmt.Sprintf("http://%s/%s%s", serviceName, service.Port, serviceName, path)
 	targetURL := fmt.Sprintf(
 		"http://%s:%d/%s%s?%s",
-		// "localhost",
-		serviceName,
+		"localhost",
+		// serviceName,
 		serviceIp,
 		serviceName,
 		path,

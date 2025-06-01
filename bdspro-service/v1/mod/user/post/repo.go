@@ -45,7 +45,7 @@ func (r *PostRepo) UpdatePost(c *gin.Context, post *models.Post) error {
 	return _db.SaveWithAudit(c, post)
 }
 
-func (r *PostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error {
+func (r *PostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error {
 	var post models.Post
 	err := r.DB.WithContext(ctx).Where("product_id = ?", productID).First(&post).Error
 
@@ -62,7 +62,7 @@ func (r *PostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint6
 	return r.DB.WithContext(ctx).Model(&post).Update("status", status).Error
 }
 
-func (r *PostRepo) CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.PostVisibility) error {
+func (r *PostRepo) CreateOrUpdatePostVisibility(ctx context.Context, productID uint64, visibility enums.EVisibility) error {
 	var post models.Post
 	err := r.DB.WithContext(ctx).Where("product_id = ?", productID).First(&post).Error
 
@@ -84,7 +84,7 @@ func (r *PostRepo) CreateOrUpdatePostVisibility(ctx context.Context, productID u
 // 		Update("status", enums.PostHide).Error
 // }
 
-func (r *PostRepo) UpdatePostStatus(ctx context.Context, productID uint64, status enums.PostStatus) error {
+func (r *PostRepo) UpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error {
 	return r.DB.WithContext(ctx).Model(&models.Post{}).Where("product_id = ?", productID).Update("status", status).Error
 }
 

@@ -275,6 +275,843 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/block/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách ID của những người mà người dùng hiện tại đã chặn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chặn"
+                ],
+                "summary": "Lấy danh sách người dùng bị chặn",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/block/{profileId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chặn một người dùng với profileId cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chặn"
+                ],
+                "summary": "Chặn một người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng cần chặn",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Bỏ chặn một người dùng với profileId cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chặn"
+                ],
+                "summary": "Bỏ chặn một người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng cần bỏ chặn",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/followers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách những người theo dõi người dùng cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Lấy danh sách người theo dõi của người dùng",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/following": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách những người mà người dùng đang theo dõi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Lấy danh sách người mà người dùng đang theo dõi",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/{profileId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một người vào danh sách theo dõi của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Thêm người vào danh sách theo dõi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã thêm người vào danh sách theo dõi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng hoặc người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa một người khỏi danh sách theo dõi của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Xóa người khỏi danh sách theo dõi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa người khỏi danh sách theo dõi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng hoặc người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/group/{requestId}/{groupId}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gán nhóm cho bạn bè",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Gán nhóm bạn bè",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được chấp nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "responses": {
+                    "200": {
+                        "description": "Số lượng theo dõi và bạn bè",
+                        "schema": {
+                            "$ref": "#/definitions/data.FollowInfoRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả bạn bè của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách bạn bè",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách bạn bè",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/received": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách các lời mời kết bạn mà người dùng đã nhận",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách các lời mời kết bạn đã nhận",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách lời mời đã nhận",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/sent": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách các lời mời kết bạn mà người dùng đã gửi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách các lời mời kết bạn đã gửi",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách lời mời đã gửi",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{receiverId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi lời mời kết bạn đến người dùng khác",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Gửi lời mời kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người nhận lời mời",
+                        "name": "receiverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được gửi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{requestId}/accept": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đồng ý lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Đồng ý kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được chấp nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{requestId}/reject": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Hủy kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã bị từ chối",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/groups": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Lấy danh sách nhóm",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy nhóm",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo một nhóm mới với thông tin được cung cấp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Tạo nhóm mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_model.GroupEntity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Nhóm đã tồn tại",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/groups/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin nhóm hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Cập nhật thông tin nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_model.GroupEntity"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy nhóm",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa một nhóm khỏi hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Xóa nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhóm đã bị xóa",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy nhóm",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/oauth/{provider}/callback": {
             "get": {
                 "description": "Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.",
@@ -285,7 +1122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OAuth"
+                    "Auth"
                 ],
                 "summary": "OAuth Callback",
                 "parameters": [
@@ -338,7 +1175,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "OAuth"
+                    "Auth"
                 ],
                 "summary": "OAuth Login",
                 "parameters": [
@@ -522,7 +1359,12 @@ const docTemplate = `{
         },
         "/profile/info/{profileId}": {
             "get": {
-                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này gọi không cần Token. dùng trong màn preview profile",
                 "consumes": [
                     "application/json"
                 ],
@@ -532,7 +1374,7 @@ const docTemplate = `{
                 "tags": [
                     "Profile"
                 ],
-                "summary": "Thông tin người dùng",
+                "summary": "Xem thông tin public của người dùng",
                 "parameters": [
                     {
                         "type": "string",
@@ -605,7 +1447,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "API này cho phép người dùng cập nhật thông tin cá nhân",
+                "description": "API này cho phép người dùng cập nhật thông tin hồ sơ",
                 "consumes": [
                     "application/json"
                 ],
@@ -615,7 +1457,7 @@ const docTemplate = `{
                 "tags": [
                     "Profile"
                 ],
-                "summary": "Cập nhật thông tin người dùng",
+                "summary": "Cập nhật thông tin hồ sơ",
                 "parameters": [
                     {
                         "description": "Thông tin cập nhật",
@@ -636,9 +1478,234 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/rate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo đánh giá mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Tạo đánh giá",
+                "parameters": [
+                    {
+                        "description": "Thông tin đánh giá",
+                        "name": "rate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_model.Rate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/rate/list/{targetId}/{targetType}": {
+            "get": {
+                "description": "Lấy danh sách đánh giá theo targetId và targetType",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Lấy danh sách đánh giá",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID của target",
+                        "name": "targetId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại của target, 10: user, 20: group, 30: organization",
+                        "name": "targetType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng trên mỗi trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Điểm đánh giá, 1: 1 sao, 2: 2 sao, 3: 3 sao, 4: 4 sao, 5: 5 sao",
+                        "name": "score",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID của đánh giá cha",
+                        "name": "parentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/rate/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật đánh giá theo id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Cập nhật đánh giá",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID của đánh giá",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin đánh giá",
+                        "name": "rate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_model.Rate"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa đánh giá theo id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Xóa đánh giá",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID của đánh giá",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {
+        "data.CertificationBatchSave": {
+            "type": "object",
+            "properties": {
+                "fileUrl": {
+                    "type": "string"
+                },
+                "issueDate": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "data.FollowInfoRes": {
+            "type": "object",
+            "properties": {
+                "numFollower": {
+                    "type": "integer"
+                },
+                "numFollowing": {
+                    "type": "integer"
+                },
+                "numFriend": {
+                    "type": "integer"
+                }
+            }
+        },
+        "data.FriendDTO": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "groupReceiverId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isSender": {
+                    "description": "Group           *FriendGroupDTO ` + "`" + `json:\"group,omitempty\"` + "`" + `\nUserInfo        *AccountDTO     ` + "`" + `json:\"userInfo,omitempty\"` + "`" + `",
+                    "type": "boolean"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "respondedAt": {
+                    "type": "string"
+                },
+                "senderId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.EFriendStatus"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
         "data.OtpRequest": {
             "type": "object",
             "required": [
@@ -685,17 +1752,133 @@ const docTemplate = `{
                 }
             }
         },
+        "data.ProfessionBatchSave": {
+            "type": "object",
+            "properties": {
+                "issueDate": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "data.PublicUserInfo": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
                 "avatar": {
+                    "type": "string"
+                },
+                "backIdentify": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "certifications": {
+                    "description": "transient",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user_model.CertificationItem"
+                    }
+                },
+                "departmentId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "facebook": {
+                    "type": "string"
+                },
+                "frontIdentify": {
                     "type": "string"
                 },
                 "fullname": {
                     "type": "string"
                 },
+                "instagram": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "linkedin": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "professions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user_model.ProfessionItem"
+                    }
+                },
                 "profileId": {
                     "type": "integer"
+                },
+                "rateStats": {
+                    "$ref": "#/definitions/user_model.RateStats"
+                },
+                "referralBy": {
+                    "type": "string"
+                },
+                "referralCode": {
+                    "type": "string"
+                },
+                "relationShip": {
+                    "$ref": "#/definitions/data.RelationShip"
+                },
+                "roleRealEstate": {
+                    "$ref": "#/definitions/enums.ERoleRealEstate"
+                },
+                "slogan": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "statusOnline": {
+                    "$ref": "#/definitions/enums.EOnlineStatus"
+                },
+                "taxCode": {
+                    "type": "string"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "youtube": {
+                    "type": "string"
+                }
+            }
+        },
+        "data.RelationShip": {
+            "type": "object",
+            "properties": {
+                "friendStatus": {
+                    "$ref": "#/definitions/user_model.FriendItem"
+                },
+                "isFollowing": {
+                    "type": "boolean"
                 }
             }
         },
@@ -766,8 +1949,26 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "backIdentify": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
                 "birth": {
                     "type": "string"
+                },
+                "certificationRemoveIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "certifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/data.CertificationBatchSave"
+                    }
                 },
                 "departmentId": {
                     "type": "integer"
@@ -775,22 +1976,76 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "facebook": {
+                    "type": "string"
+                },
+                "frontIdentify": {
+                    "type": "string"
+                },
                 "fullname": {
+                    "type": "string"
+                },
+                "instagram": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "linkedin": {
                     "type": "string"
                 },
                 "phone": {
                     "type": "string"
                 },
+                "phone2": {
+                    "type": "string"
+                },
                 "position": {
                     "type": "string"
                 },
-                "referralBy": {
+                "professionRemoveIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "professions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/data.ProfessionBatchSave"
+                    }
+                },
+                "profileVisibility": {
+                    "type": "integer"
+                },
+                "roleRealEstate": {
+                    "$ref": "#/definitions/enums.ERoleRealEstate"
+                },
+                "slogan": {
                     "type": "string"
                 },
                 "startDate": {
                     "type": "string"
                 },
+                "statusOnline": {
+                    "$ref": "#/definitions/enums.EOnlineStatus"
+                },
+                "tabDefault": {
+                    "$ref": "#/definitions/enums.ESettingTab"
+                },
                 "taxCode": {
+                    "type": "string"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "youtube": {
                     "type": "string"
                 }
             }
@@ -848,6 +2103,274 @@ const docTemplate = `{
                 },
                 "taxCode": {
                     "type": "string"
+                }
+            }
+        },
+        "enums.EFriendStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "EFriendStatusAccepted": "\"ACCEPT\"",
+                "EFriendStatusPending": "\"PENDING\"",
+                "EFriendStatusReject": "\"REJECT\""
+            },
+            "x-enum-varnames": [
+                "EFriendStatusPending",
+                "EFriendStatusAccepted",
+                "EFriendStatusReject"
+            ]
+        },
+        "enums.EOnlineStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "Online",
+                "Offline",
+                "Busy"
+            ]
+        },
+        "enums.ERoleRealEstate": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "ERoleRealEstateBroker",
+                "ERoleRealEstateAppraiser",
+                "ERoleRealEstateLegal"
+            ]
+        },
+        "enums.ESettingTab": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50,
+                60,
+                70,
+                80,
+                90,
+                100,
+                110,
+                120,
+                130
+            ],
+            "x-enum-varnames": [
+                "ETabProfile",
+                "ETabPost",
+                "ETabActivity",
+                "ETabSetting",
+                "EIntrodution",
+                "EEvaluation",
+                "EReaction",
+                "EShare",
+                "ESharePost",
+                "EShareActivity",
+                "EShareSetting",
+                "EShareIntrodution",
+                "EShareEvaluation"
+            ]
+        },
+        "enums.VerifyStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "VerifyPending",
+                "VerifyVerified",
+                "VerifyRejected"
+            ]
+        },
+        "user_model.CertificationItem": {
+            "type": "object",
+            "properties": {
+                "fileUrl": {
+                    "description": "Link tài liệu",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Tên văn bằng",
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "description": "Trạng thái xác minh",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.VerifyStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "user_model.FriendItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "1: Pending, 2: Accepted, 3: Declined",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EFriendStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "user_model.GroupEntity": {
+            "type": "object",
+            "properties": {
+                "backgroundColor": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "textColor": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user_model.ProfessionItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "$ref": "#/definitions/enums.VerifyStatus"
+                }
+            }
+        },
+        "user_model.Rate": {
+            "type": "object",
+            "required": [
+                "comment",
+                "score",
+                "targetId",
+                "targetType"
+            ],
+            "properties": {
+                "anonymous": {
+                    "type": "boolean"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/user_model.UserItem"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "score": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "description": "10: user 20: group 30: organization",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user_model.RateStats": {
+            "type": "object",
+            "properties": {
+                "averageScore": {
+                    "type": "number"
+                },
+                "star1Count": {
+                    "type": "integer"
+                },
+                "star2Count": {
+                    "type": "integer"
+                },
+                "star3Count": {
+                    "type": "integer"
+                },
+                "star4Count": {
+                    "type": "integer"
+                },
+                "star5Count": {
+                    "type": "integer"
+                },
+                "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user_model.UserItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
                 }
             }
         }

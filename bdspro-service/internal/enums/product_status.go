@@ -1,31 +1,21 @@
 package enums
 
-type ProductStatus uint
+type EProductStatus uint
 
 const (
-	ProductNotSold ProductStatus = 10 // Chưa bán
-	ProductSelling ProductStatus = 20 // Đang bán(cọc)
-	ProductSold    ProductStatus = 30 // Đã bán
-	ProductNotRent ProductStatus = 40 // Chưa cho thuê
-	ProductRenting ProductStatus = 50 // Đang cho thuê(cọc)
-	ProductRented  ProductStatus = 60 // Đã cho thuê
+	EProductNotSold EProductStatus = 10
+	EProductSelling EProductStatus = 20
+	EProductSold    EProductStatus = 30
+	EProductNotRent EProductStatus = 40
+	EProductRenting EProductStatus = 50
+	EProductRented  EProductStatus = 60
 )
 
-func (s ProductStatus) String() string {
-	switch s {
-	case ProductNotSold:
-		return "Chưa bán"
-	case ProductSelling:
-		return "Đang bán"
-	case ProductSold:
-		return "Đã bán"
-	case ProductNotRent:
-		return "Chưa cho thuê"
-	case ProductRenting:
-		return "Đang cho thuê"
-	case ProductRented:
-		return "Đã cho thuê"
-	default:
-		return ""
-	}
+var EProductStatusNames = map[EProductStatus]string{
+	EProductNotSold: "Chưa bán",
+	EProductSelling: "Đang bán",
+	EProductSold:    "Đã bán",
+	EProductNotRent: "Chưa cho thuê",
+	EProductRenting: "Đang cho thuê",
+	EProductRented:  "Đã cho thuê",
 }

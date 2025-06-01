@@ -3,10 +3,9 @@ package data
 import (
 	"encoding/json"
 	"time"
+	"user/enums"
 	auth_model "user/models/auth"
 	user_model "user/models/user"
-
-	"github.com/jinzhu/copier"
 )
 
 // AuthLoginResponse đại diện cho phản hồi đăng nhập
@@ -109,10 +108,45 @@ type UserInfoResponse struct {
 }
 
 type PublicUserInfo struct {
-	ProfileID uint64 `json:"profileId"`
-	FullName  string `json:"fullname,omitempty"`
-	Avatar    string `json:"avatar,omitempty"`
-	// Birth     *time.Time `json:"birth,omitempty"`
+	ProfileID       uint64                `json:"profileId,omitempty"`
+	FullName        string                `json:"fullname,omitempty"`
+	Avatar          string                `json:"avatar,omitempty"`
+	Phone           string                `json:"phone,omitempty"`
+	Phone2          string                `json:"phone2,omitempty"`
+	Email           string                `json:"email,omitempty"`
+	TaxCode         string                `json:"taxCode,omitempty"`
+	Address         string                `json:"address,omitempty"`
+	BackgroundImage string                `json:"backgroundImage,omitempty"`
+	ReferralCode    string                `json:"referralCode,omitempty"`
+	ReferralBy      string                `json:"referralBy,omitempty"`
+	RoleRealEstate  enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
+	Position        string                `json:"position,omitempty"`
+	DepartmentID    uint64                `json:"departmentId,omitempty"`
+	Birth           *time.Time            `json:"birth,omitempty"`
+	StartDate       *time.Time            `json:"startDate,omitempty"`
+	FrontIdentify   string                `json:"frontIdentify,omitempty"`
+	BackIdentify    string                `json:"backIdentify,omitempty"`
+	Slogan          string                `json:"slogan,omitempty"`
+	Website         string                `json:"website,omitempty"`
+	Facebook        string                `json:"facebook,omitempty"`
+	Instagram       string                `json:"instagram,omitempty"`
+	Twitter         string                `json:"twitter,omitempty"`
+	Linkedin        string                `json:"linkedin,omitempty"`
+	Youtube         string                `json:"youtube,omitempty"`
+	Introduction    string                `json:"introduction,omitempty"`
+	StatusOnline    enums.EOnlineStatus   `json:"statusOnline,omitempty"`
+
+	// transient
+	Certification []user_model.CertificationItem `json:"certifications,omitempty"`
+	Profession    []user_model.ProfessionItem    `json:"professions,omitempty"`
+	RateStats     user_model.RateStats           `json:"rateStats,omitempty"`
+	FriendStatus  *user_model.FriendItem         `json:"relationShip,omitempty"`
+	Following     bool                           `json:"following,omitempty"`
+}
+
+type RelationShip struct {
+	FriendStatus *user_model.FriendItem `json:"friendStatus,omitempty"`
+	IsFollowing  bool                   `json:"isFollowing,omitempty"`
 }
 
 type JwtTokenProperties struct {
@@ -127,17 +161,17 @@ type JwtTokenProperties struct {
 
 // }
 
-// NewUserInfoResponse tạo mới từ UserProfileEntity
-func NewUserInfoResponse(e *user_model.UserProfileEntity) *UserInfoResponse {
-	if e == nil {
-		return nil
-	}
-	var response UserInfoResponse
-	copier.Copy(&response, e)
-	return &response
-	// return UserInfoResponse{
-	// 	Phone:    e.Phone,
-	// 	Email:    e.Email,
-	// 	Fullname: e.FullName,
-	// }
-}
+// // NewUserInfoResponse tạo mới từ UserProfileEntity
+// func MakeUserInfoResponse(e *user_model.UserProfileEntity) *UserInfoResponse {
+// 	if e == nil {
+// 		return nil
+// 	}
+// 	var response UserInfoResponse
+// 	copier.Copy(&response, e)
+// 	return &response
+// 	// return UserInfoResponse{
+// 	// 	Phone:    e.Phone,
+// 	// 	Email:    e.Email,
+// 	// 	Fullname: e.FullName,
+// 	// }
+// }

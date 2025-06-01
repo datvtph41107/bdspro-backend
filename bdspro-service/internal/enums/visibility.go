@@ -1,16 +1,15 @@
 package enums
 
-type VisibilityStatus uint
+type EVisibility uint
 
 const (
-	VisiShow        VisibilityStatus = 10 //"Đang hiển thị"
-	VisiblePublic   VisibilityStatus = 20 // công khai
-	VisibleInternal VisibilityStatus = 30 // nội bộ
+	EVisiblePublic   EVisibility = 10
+	EVisibleInternal EVisibility = 20
+	EVisiblePrivate  EVisibility = 30
 )
 
-// type A struct {
-// 	B *B
-// }
-// type B struct {
-// 	A *A
-// }
+var EVisibilityNames = map[EVisibility]string{
+	EVisiblePublic:   "Công khai",
+	EVisibleInternal: "Nội bộ",
+	EVisiblePrivate:  "Riêng tư",
+}

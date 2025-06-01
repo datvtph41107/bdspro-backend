@@ -1,9 +1,9 @@
 package enums
 
-type FriendStatus int
+type EFriendStatus int
 
 const (
-	Pending  FriendStatus = 1 //"PENDING"
-	Accepted FriendStatus = 2 //"ACCEPT"
-	Reject   FriendStatus = 3 //"REJECT"
+	EFriendStatusPending  EFriendStatus = 10 //"PENDING"
+	EFriendStatusAccepted EFriendStatus = 20 //"ACCEPT"
+	EFriendStatusReject   EFriendStatus = 30 //"REJECT"
 )

@@ -3,6 +3,7 @@ package usecases
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	_routes "common/routes"
@@ -77,7 +78,7 @@ func (s *UAssetUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Ass
 }
 
 // UC3: Chỉnh sửa thông tin tài sản trực tiếp từ danh sách
-func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
+func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *user_dto.AssetSaveRequest) (*domain.Asset, error) {
 	if id == 0 {
 		return nil, errors.New("asset ID is required")
 	}
@@ -102,6 +103,7 @@ func (uc *UAssetUsecase) UpdateAsset(ctx context.Context, id uint64, assetData *
 	asset.PurchasePrice = assetData.PurchasePrice
 	asset.PurchaseDate = assetData.PurchaseDate
 	asset.LegalStatus = assetData.LegalStatus
+	asset.PropertyTypeId = assetData.PropertyTypeId
 	// asset.Archived = assetData.Archived
 	asset.RentStatus = assetData.RentStatus
 	asset.Area = assetData.Area
@@ -130,7 +132,7 @@ func (uc *UAssetUsecase) DeleteAsset(ctx context.Context, id uint64) error {
 		return err
 	}
 
-	if asset.RentStatus != enums.AssetStatusOwning {
+	if asset.RentStatus != enums.EAssetStatusOwning {
 		return errors.New("không thể xóa tài sản do trạng thái tài sản không cho phép")
 	}
 	return uc.AssetRepo.Delete(ctx, id)
@@ -154,7 +156,7 @@ func (uc *UAssetUsecase) DeleteAsset(ctx context.Context, id uint64) error {
 // }
 
 // UC7: Tạo mới tài sản bằng nút truy cập nhanh
-func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
+func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *user_dto.AssetSaveRequest) (*domain.Asset, error) {
 	if assetData.Name == "" || assetData.Area <= 0 || assetData.Address == "" {
 		return nil, errors.New("missing required fields: name, area, or address")
 	}
@@ -172,7 +174,7 @@ func (uc *UAssetUsecase) CreateAsset(ctx context.Context, assetData *dto.AssetSa
 }
 
 // UC8: Tạo tài sản từ sản phẩm có sẵn
-func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *dto.AssetSaveRequest) (*domain.Asset, error) {
+func (uc *UAssetUsecase) CreateAssetFromProduct(ctx *gin.Context, assetData *user_dto.AssetSaveRequest) (*domain.Asset, error) {
 	// if req.ProductId == nil {
 	// 	return nil, fmt.Errorf("product_id is required")
 	// }
@@ -319,7 +321,7 @@ func (uc *UAssetUsecase) ArchiveAsset(ctx context.Context, assetID uint64, archi
 }
 
 // UC13: Gộp tài sản
-func (uc *UAssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (*domain.Asset, error) {
+func (uc *UAssetUsecase) MergeAsset(ctx context.Context, dto user_dto.MergeAssetDTO) (*domain.Asset, error) {
 	// if len(dto.IDs) < 1 {
 	// 	return nil, &_routes.Except{
 	// 		Code:    401,
@@ -421,7 +423,7 @@ func (uc *UAssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) 
 }
 
 // UC13: Tách tài sản
-func (uc *UAssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) ([]domain.Asset, error) {
+func (uc *UAssetUsecase) SplitAsset(ctx context.Context, dto user_dto.SplitAssetDTO) ([]domain.Asset, error) {
 	currentAsset, err := uc.RequiredOwner(ctx, dto.ID)
 	if err != nil {
 		return nil, err
@@ -503,7 +505,7 @@ func (uc *UAssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) 
 	return dto.Datas, nil
 }
 
-func (uc *UAssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+func (uc *UAssetUsecase) SearchAssetMe(ctx context.Context, dto user_dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	assets, total, err := uc.AssetRepo.SearchOwner(ctx, profileId, dto)
 	if err != nil {
@@ -517,7 +519,7 @@ func (uc *UAssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchD
 }
 
 // UC6: Tìm kiếm tài sản theo từ khóa hoặc mã tài sản
-func (uc *UAssetUsecase) SearchAssetShare(ctx context.Context, dto dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+func (uc *UAssetUsecase) SearchAssetShare(ctx context.Context, dto user_dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	results, total, err := uc.AssetRepo.SearchShare(ctx, profileId, dto)
 	if err != nil {
@@ -557,7 +559,7 @@ func (uc *UAssetUsecase) HistoryOwner(ctx context.Context, dto dto.AssetHistoryD
 	}, nil
 }
 
-func (uc *UAssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
+func (uc *UAssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto user_dto.AssetSearchDTO) ([]user_dto.AssetWithChildCountDTO, int64, error) {
 	// Validate input if needed
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
@@ -576,4 +578,12 @@ func (uc *UAssetUsecase) GetAssetDetail(ctx context.Context, assetID uint64) (*d
 		return nil, err
 	}
 	return asset, nil
+}
+
+func (uc *UAssetUsecase) GetPublish(ctx context.Context, profileId uint64) ([]domain.Asset, error) {
+	assets, _, err := uc.AssetRepo.GetAssetPublish(profileId)
+	if err != nil {
+		return nil, err
+	}
+	return assets, nil
 }

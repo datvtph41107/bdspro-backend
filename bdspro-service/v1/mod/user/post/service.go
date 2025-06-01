@@ -98,7 +98,7 @@ func (s *UserPostService) CreatePost(c *gin.Context, dto *u_post_dto.PostSaveReq
 		Visibility:      dto.Visibility,
 		NumDate:         numDate,
 		ExpiredAt:       dto.ExpiredAt,
-		Status:          enums.PostPublic,
+		Status:          enums.EPostPublic,
 		Hidden:          dto.Hidden,
 	}
 	if entity.ExpiredAt == nil {

@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_jwt "common/jwt"
 	_routes "common/routes"
 	user_service "user/services/user"
 
@@ -32,7 +31,6 @@ func NewGroupRouter(service *user_service.GroupService) *GroupRouter {
 func GroupRoutes(r *gin.Engine, router *GroupRouter) {
 	api := r.Group("/user/groups")
 
-	api.Use(_jwt.JWTAuthMiddleware(nil))
 	api.GET("", router.ListGroups)
 	api.POST("", router.CreateGroup)
 	api.PUT("/:id", router.UpdateGroup)

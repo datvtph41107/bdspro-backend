@@ -40,7 +40,7 @@ func ConvertToPQArrayFloat(areas []float64) pq.Float64Array {
 
 func (s *PostgreHistoryRepo) CreateHistory(
 	c context.Context,
-	action enums.ProductHistory,
+	action enums.EProductHistory,
 	productID *uint64,
 	parentID uint64,
 	childIDs []uint64,

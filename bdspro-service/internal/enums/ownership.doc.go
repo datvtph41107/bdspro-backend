@@ -1,22 +1,15 @@
 package enums
 
-type OwnershipDocType int8
+type EDocType uint
 
 const (
-	RedBook         OwnershipDocType = 10 // sổ đỏ
-	PinkBook        OwnershipDocType = 20 // sổ hồng
-	NotarizedRecord OwnershipDocType = 30 // vi bằng
+	ERedBook         EDocType = 10 // sổ đỏ
+	EPinkBook        EDocType = 20 // sổ hồng
+	ENotarizedRecord EDocType = 30 // vi bằng
 )
 
-func (s OwnershipDocType) String() string {
-	switch s {
-	case RedBook:
-		return "Sổ đỏ"
-	case PinkBook:
-		return "Sổ hồng"
-	case NotarizedRecord:
-		return "Vi bằng"
-	default:
-		return ""
-	}
+var EDocTypeNames = map[EDocType]string{
+	ERedBook:         "Sổ đỏ",
+	EPinkBook:        "Sổ hồng",
+	ENotarizedRecord: "Vi bằng",
 }

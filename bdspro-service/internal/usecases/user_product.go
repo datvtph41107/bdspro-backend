@@ -3,9 +3,11 @@ package usecases
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"bdspro/internal/utils"
+	"bdspro/v1/providers"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -33,6 +35,7 @@ type UProductUsecase struct {
 	UserPostUsecase    *UPostUsecase
 	UAssetUsecase      *UAssetUsecase
 	DepositeRepo       repo.DepositeRepo
+	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 }
 
 func NewUProductUsecase(productRepo repo.UProductRepo,
@@ -52,7 +55,7 @@ func NewUProductUsecase(productRepo repo.UProductRepo,
 	UAssetUsecase *UAssetUsecase,
 	depositeRepo repo.DepositeRepo,
 ) *UProductUsecase {
-	return &UProductUsecase{
+	uc := &UProductUsecase{
 		ProductRepo:        productRepo,
 		AssetRepo:          assetRepo,
 		ProductAccessRepo:  productAccessRepo,
@@ -69,7 +72,10 @@ func NewUProductUsecase(productRepo repo.UProductRepo,
 		ProductHistoryRepo: ProductHistoryRepo,
 		UAssetUsecase:      UAssetUsecase,
 		DepositeRepo:       depositeRepo,
+		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 	}
+	uc.CacheProductMarket.Setup()
+	return uc
 }
 
 func (s *UProductUsecase) CreateProduct(c context.Context, product *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
@@ -148,7 +154,7 @@ func (s *UProductUsecase) CreateProduct(c context.Context, product *dto.ProductS
 			// Description:    assetInfo.Description,
 		}
 
-		assetEntity, err = s.UAssetUsecase.CreateAsset(c, &dto.AssetSaveRequest{
+		assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
 			Asset:      *assetEntity,
 			LegalItems: assetInfo.LegalItems,
 		})
@@ -200,10 +206,26 @@ func (s *UProductUsecase) SearchProductWithOwner(c context.Context, dto *dto.Pro
 	}, err
 }
 
-func (s *UProductUsecase) SearchProductMarket(c context.Context, dto *dto.ProductSearchRequest) (_routes.ResponseDTO, error) {
+func (s *UProductUsecase) SearchToExport(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
 	// profileId := _jwt.GetProfileId(c)
 	profileId := _utils.GetProfileIdWithContext(c)
+	results, err := s.ProductRepo.SearchToExport(profileId, *dto)
+	return results, err
+}
+
+func (s *UProductUsecase) QueryProductMarket(c context.Context, dto *dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	var results []domain.ProductMarket
+	profileId := _utils.GetProfileIdWithContext(c)
 	results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto)
+	return results, total, err
+}
+
+func (s *UProductUsecase) SearchProductMarket(c context.Context, dto *dto.ProductSearchRequest) (_routes.ResponseDTO, error) {
+	// profileId := _jwt.GetProfileId(c)
+	// profileId := _utils.GetProfileIdWithContext(c)
+	results, total, err := s.CacheProductMarket.GetDataWithCache(c, dto, s.QueryProductMarket)
+
+	// results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto)
 	return _routes.ResponseDTO{
 		Code:          0,
 		Data:          results,
@@ -487,7 +509,7 @@ func (s *UProductUsecase) Delete(c context.Context, id uint64) error {
 	}
 
 	// todo: thêm hoặc có tin active
-	if product.SaleStatus != enums.ProductNotSold || product.RentStatus != enums.ProductNotRent {
+	if product.SaleStatus != enums.EProductNotSold || product.RentStatus != enums.EProductNotRent {
 		return &_routes.Except{
 			Code:    401,
 			Message: "Không thể xóa sản phẩm này",
