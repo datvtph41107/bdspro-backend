@@ -8,6 +8,7 @@ service:
     notification: 8004
     payment: 8805
     bdspro: 8202
+    organization: 50052
 
 jwt:
   key-generate: key-generate-jwt-token-authentication

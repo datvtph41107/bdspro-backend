@@ -6,9 +6,9 @@ import (
 )
 
 var HttpGatewayCmd = &cobra.Command{
-	Use: "http-gateway",
-	Short: "HTTP Gateway",
-	Long: "HTTP Gateway",
+	Use: "http-server",
+	Short: "HTTP Server",
+	Long: "HTTP Server",
 	Run: func(cmd *cobra.Command, args []string) {
 		appconfig.InitConfig()
 		httpServer := InitializeHttpServer()

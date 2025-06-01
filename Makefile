@@ -16,3 +16,5 @@ user:
 	cd user-service && go run main.go http
 admin:
 	cd admin-service && go run main.go grpc
+organization:
+	cd organization-service && go run main.go grpc-server

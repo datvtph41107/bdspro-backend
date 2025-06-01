@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
 )
 
 type OrganizationHandler struct {

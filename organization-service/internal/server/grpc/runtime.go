@@ -7,11 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	organizationpb "pb/types/organization"
+
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
-	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
+	"github.com/tuandq2112/organization-service/internal/server/grpc/interceptors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -44,10 +46,17 @@ func (s *GRPCServer) Start() {
 }
 
 func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler) (func() error, func(error)) {
-	unaryInts := []grpc.UnaryServerInterceptor{}
-	streamInts := []grpc.StreamServerInterceptor{}
+	unaryInts := []grpc.UnaryServerInterceptor{
+		interceptors.UnaryLoggerInterceptor(logger),
+		interceptors.UnaryRecoveryInterceptor(logger),
+	}
+	streamInts := []grpc.StreamServerInterceptor{
+		interceptors.StreamLoggerInterceptor(logger),
+		interceptors.StreamRecoveryInterceptor(logger),
+	}
+	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
-		fmt.Sprintf(":%s", appconfig.GRPC_PORT),
+		fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),
 		func(s *grpc.Server) {
 			logger.Info("Registering OrganizationServiceServer")
 			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)

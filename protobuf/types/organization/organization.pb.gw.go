@@ -2,11 +2,11 @@
 // source: organization/organization.proto
 
 /*
-Package organization is a reverse proxy.
+Package pb_organization is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package organization
+package pb_organization
 
 import (
 	"context"
@@ -71,7 +71,7 @@ func RegisterOrganizationServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/organization.OrganizationService/CreateOrganization", runtime.WithHTTPPathPattern("/organization/api/v1/organizations"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationService/CreateOrganization", runtime.WithHTTPPathPattern("/v2/organization/create-organization"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -129,7 +129,7 @@ func RegisterOrganizationServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/organization.OrganizationService/CreateOrganization", runtime.WithHTTPPathPattern("/organization/api/v1/organizations"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationService/CreateOrganization", runtime.WithHTTPPathPattern("/v2/organization/create-organization"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -146,7 +146,7 @@ func RegisterOrganizationServiceHandlerClient(ctx context.Context, mux *runtime.
 }
 
 var (
-	pattern_OrganizationService_CreateOrganization_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"organization", "api", "v1", "organizations"}, ""))
+	pattern_OrganizationService_CreateOrganization_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "organization", "create-organization"}, ""))
 )
 
 var (

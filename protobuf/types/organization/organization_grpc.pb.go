@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: organization/organization.proto
 
-package organization
+package pb_organization
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	OrganizationService_CreateOrganization_FullMethodName = "/organization.OrganizationService/CreateOrganization"
+	OrganizationService_CreateOrganization_FullMethodName = "/pb_organization.OrganizationService/CreateOrganization"
 )
 
 // OrganizationServiceClient is the client API for OrganizationService service.
@@ -96,7 +96,7 @@ func _OrganizationService_CreateOrganization_Handler(srv interface{}, ctx contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OrganizationService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "organization.OrganizationService",
+	ServiceName: "pb_organization.OrganizationService",
 	HandlerType: (*OrganizationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

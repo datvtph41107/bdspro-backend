@@ -1,8 +1,9 @@
 package validator
 
 import (
+	organizationpb "pb/types/organization"
+
 	"github.com/tuandq2112/organization-service/internal/custom_error"
-	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -23,7 +24,7 @@ func (o *organizationValidator) ValidateCreateOrganizationRequest(request *organ
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field: "name",
+					Field:       "name",
 					Description: "name is required",
 				},
 			},
@@ -33,7 +34,7 @@ func (o *organizationValidator) ValidateCreateOrganizationRequest(request *organ
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field: "tax_code",
+					Field:       "tax_code",
 					Description: "tax code is required",
 				},
 			},
@@ -43,7 +44,7 @@ func (o *organizationValidator) ValidateCreateOrganizationRequest(request *organ
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field: "phone",
+					Field:       "phone",
 					Description: "phone is required",
 				},
 			},

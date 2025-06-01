@@ -4,15 +4,17 @@ import (
 	_jwt "common/jwt"
 	"context"
 	"fmt"
-	"gateway/config"
-	"gateway/pkg"
 	"log"
 	"net/http"
+	"time"
+
+	"gateway/config"
+	"gateway/pkg"
 
 	pb_bdspro "pb/types/bdspro"
 	pb_noti "pb/types/notification"
+	pb_organization "pb/types/organization"
 	pb_payment "pb/types/payment"
-	"time"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -98,6 +100,7 @@ var publicRoutes = []string{
 	"/v1/membership/plan/list",
 	"/v1/membership/user/plans",
 	"/v1/search",
+	"/v2/organization/create-organization",
 	// "/v1/search/plan/list",
 }
 
@@ -136,9 +139,8 @@ var HttpCmd = &cobra.Command{
 		notification_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
 		payment_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.payment"))
 		bdspro_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.bdspro"))
-
-		log.Println("payment_endpoint", payment_endpoint)
-
+		organization_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.organization"))
+		
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
 			// runtime.WithMetadata(CustomMetadataMethod),
@@ -159,8 +161,8 @@ var HttpCmd = &cobra.Command{
 		_ = pb_bdspro.RegisterAssetCostServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
+		_ = pb_organization.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
 			service := c.Param("service")
@@ -190,7 +192,7 @@ var HttpCmd = &cobra.Command{
 		}))
 		r.Any("/v1/:service/*path", gateway.ProxyRequest)
 		r.Any("/v2/*any", gin.WrapH(mux))
-
+		log.Println("Start server at port", port)
 		if err := r.Run(":" + port); err != nil {
 			log.Fatalf("Gin server failed: %v", err)
 		}

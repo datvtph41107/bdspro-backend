@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package organization;
+package pb_organization;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/tuandq2112/go-microservices/shared/proto/types/organization";
+option go_package = "types/pb_organization";
 
 service OrganizationService {
     rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
         option (google.api.http) = {
-            post: "/organization/api/v1/organizations"
+            post: "/v2/organization/create-organization"
             body: "*"
         };
     }

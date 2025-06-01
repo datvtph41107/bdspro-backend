@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/organization/api/v1/organizations": {
+    "/v2/organization/create-organization": {
       "post": {
         "operationId": "OrganizationService_CreateOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationCreateOrganizationResponse"
+              "$ref": "#/definitions/pb_organizationCreateOrganizationResponse"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationCreateOrganizationRequest"
+              "$ref": "#/definitions/pb_organizationCreateOrganizationRequest"
             }
           }
         ],
@@ -50,7 +50,7 @@
     }
   },
   "definitions": {
-    "organizationCreateOrganizationRequest": {
+    "pb_organizationCreateOrganizationRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -79,7 +79,7 @@
         }
       }
     },
-    "organizationCreateOrganizationResponse": {
+    "pb_organizationCreateOrganizationResponse": {
       "type": "object",
       "properties": {
         "id": {

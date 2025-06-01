@@ -6,6 +6,6 @@ Database:
 WhitelistMethods:
   GET_PATH:
   POST_PATH:
-    - /organization/api/v1/organizations
+    - /v2/organization/create-organization
   PUT_PATH:
   DELETE_PATH:

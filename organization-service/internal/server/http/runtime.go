@@ -12,7 +12,7 @@ import (
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/server/http/middlewares"
-	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
+	organizationpb "pb/types/organization"
 )
 
 type HttpServer struct {

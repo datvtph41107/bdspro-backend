@@ -2,7 +2,7 @@ package transformer
 
 import (
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	organizationpb "github.com/tuandq2112/organization-service/proto/types/organization"
+	organizationpb "pb/types/organization"
 )
 
 type OrganizationTransformer interface {
