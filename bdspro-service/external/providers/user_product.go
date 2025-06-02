@@ -20,5 +20,5 @@ func NewUProductProvider(productRepo repo.UProductRepo) *UProductProvider {
 
 func (s *UProductProvider) ExportExcel(ctx context.Context, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
-	return s.ProductRepo.SearchProductWithOwner(profileId, dto)
+	return s.ProductRepo.SearchProductWithOwner(&profileId, dto)
 }

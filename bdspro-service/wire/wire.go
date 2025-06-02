@@ -12,11 +12,15 @@ import (
 	bdspro_external_providers "bdspro/external/providers"
 	bdspro_external_repo "bdspro/external/repo"
 	bdspro_external_repo_user "bdspro/external/repo/user"
+	bdspro_external_router_group "bdspro/external/router/group"
+	bdspro_external_router_org "bdspro/external/router/org"
 	bdspro_external_router_public "bdspro/external/router/public"
 	bdspro_external_router_user "bdspro/external/router/user"
 	bdspro_external_services "bdspro/external/services"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_usecases "bdspro/internal/usecases"
+	bdspro_internal_usecases_group "bdspro/internal/usecases/group"
+	bdspro_internal_usecases_org "bdspro/internal/usecases/org"
 	bdspro_v1_mod_admin "bdspro/v1/mod/admin"
 	bdspro_v1_mod_admin_amenity "bdspro/v1/mod/admin/amenity"
 	bdspro_v1_mod_admin_apartment "bdspro/v1/mod/admin/apartment"
@@ -183,6 +187,9 @@ var wireSet = wire.NewSet(
 	bdspro_external_repo.NewGormUProductChildRepo,
 	bdspro_external_repo.NewGormUserProductRepo,
 	bdspro_external_repo.NewGromProductAccessRepo,
+	bdspro_external_router_group.NewGroupProductRouter,
+	bdspro_internal_usecases_group.NewGroupProductUsecase,
+	bdspro_external_router_group.NewGroupRouter,
 	bdspro_external_handler.NewGrpcService,
 	bdspro_v1_mod_global_house_info.NewHouseInfoRepo,
 	bdspro_external_services.NewIncomeDocumentServer,
@@ -194,6 +201,11 @@ var wireSet = wire.NewSet(
 	bdspro_v1_providers.NewMemberPlanService,
 	bdspro_external_services.NewMemberPlanUsecase,
 	bdspro_v1_providers.NewNotiService,
+	bdspro_external_router_org.NewOrgAccessRoute,
+	bdspro_internal_usecases.NewOrgMemAccessUsecase,
+	bdspro_external_router_org.NewOrgProductRouter,
+	bdspro_internal_usecases_org.NewOrgProductUsecase,
+	bdspro_external_router_org.NewOrgRouterManager,
 	bdspro_v1_mod_user_post.NewPostRepo,
 	bdspro_v1_mod_user_post.NewPostRouter,
 	bdspro_external_repo.NewPostgreHistoryRepo,
@@ -223,6 +235,7 @@ var wireSet = wire.NewSet(
 	bdspro_external_router_user.NewRouterManager,
 	bdspro_v1_mod_user_transaction.NewTransactionRepo,
 	bdspro_v1_mod_user_transaction.NewTransactionService,
+	bdspro_external_providers.NewTransmitProvider,
 	bdspro_external_router_user.NewUAssetLegalRoute,
 	bdspro_external_router_user.NewUAssetRoute,
 	bdspro_internal_usecases.NewUAssetUsecase,

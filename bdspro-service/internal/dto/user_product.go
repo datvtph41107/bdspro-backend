@@ -61,7 +61,7 @@ type ProductSaveRequest struct {
 }
 
 type ProductSaveDetect struct {
-	Content string `json:"content"`
+	Content string `json:"content" form:"content"`
 }
 
 type ArchivedRequest struct {
@@ -80,11 +80,11 @@ type VisibilityUpdate struct {
 }
 
 type DepositeRequest struct {
-	ProductID     uint64 `json:"productId" binding:"required"`
-	CustomerName  string `json:"customerName" binding:"required,min=2"`
-	CustomerPhone string `json:"customerPhone" binding:"required,min=9"`
-	Amount        uint64 `json:"amount" binding:"required"`
-	Note          string `json:"note"`
+	ProductID     *uint64 `json:"productId" binding:"required"`
+	CustomerName  string  `json:"customerName" binding:"required,min=2"`
+	CustomerPhone string  `json:"customerPhone" binding:"required,min=9"`
+	Amount        uint64  `json:"amount" binding:"required"`
+	Note          string  `json:"note"`
 }
 
 type CreateResponse struct {

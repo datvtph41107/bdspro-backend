@@ -7,6 +7,7 @@ import (
 	app_validator "bdspro/v1/validator"
 	w "bdspro/wire"
 	"common"
+	_jwt "common/jwt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -60,9 +61,12 @@ var HttpCmd = &cobra.Command{
 			models.AutoMigrate()
 			db.MigrateDomain()
 
+			engine.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 			app.AdminRouter.RegisterAdminRouter(engine)
 			app.UserRoute.RegisterUserRouter(engine)
-			app.RouterManager.RegisterRouter(engine)
+			app.UserRouter.RegisterRouter(engine)
+			app.OrgRouter.RegisterRoutes(engine)
+			app.GroupRouter.RegisterRoutes(engine)
 			app.EnumRoute.RegisterRoutes(engine)
 		})
 		// fmt.Println("Running HTTP server on :8080")

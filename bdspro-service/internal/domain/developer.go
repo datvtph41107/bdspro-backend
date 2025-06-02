@@ -9,15 +9,15 @@ type Developer struct {
 	_models.BaseEntity
 	Name          string     `gorm:"size:255" json:"name"`
 	Slug          string     `gorm:"size:15" json:"slug"`
-	LogoUrl       string     `json:"logoUrl"`
-	BackgroundUrl string     `json:"backgroundUrl"`
-	Description   string     `json:"description"`
-	Address       string     `gorm:"size:15" json:"address"`
-	Phone         string     `gorm:"size:15" json:"phone"`
-	Email         string     `gorm:"size:255" json:"email"`
-	Website       string     `json:"website"`
-	FoundedAt     *time.Time `json:"foundedAt"`
-	Status        uint       `json:"status"`
+	LogoUrl       string     `json:"logoUrl,omitempty"`
+	BackgroundUrl string     `json:"backgroundUrl,omitempty"`
+	Description   string     `json:"description,omitempty"`
+	Address       string     `gorm:"size:15" json:"address,omitempty"`
+	Phone         string     `gorm:"size:15" json:"phone,omitempty"`
+	Email         string     `gorm:"size:255" json:"email,omitempty"`
+	Website       string     `json:"website,omitempty"`
+	FoundedAt     *time.Time `json:"foundedAt,omitempty"`
+	Status        uint       `json:"status,omitempty"`
 }
 
 func (Developer) TableName() string {

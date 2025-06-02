@@ -38,7 +38,7 @@ type UProductRepo interface {
 	UpdateProductAmenityIds(productID uint64, amenityIDs []uint64) error
 
 	// Tìm kiếm sản phẩm theo chủ sở hữu
-	SearchProductWithOwner(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	// Tìm kiếm sản phẩm để export excel
 	SearchToExport(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, error)
@@ -61,4 +61,14 @@ type UProductRepo interface {
 	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
 	CancelDeposite(ctx context.Context, id uint64) error
+
+	SearchProductByOwner(ownerID *uint64, ownerType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	SearchExport(ownerID *uint64, ownerType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, error)
+	SmartSearch(ownerID *uint64, ownerType enums.ETargetType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
+	Archived(ctx context.Context, productId *uint64, archived bool) error
+	SetRentStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error
+	SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error
+	SetRentVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
+	SetSaleVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
+	GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error)
 }

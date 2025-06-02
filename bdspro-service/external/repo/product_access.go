@@ -3,10 +3,12 @@ package postgre_repo
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 	"common/case/crud3"
 	"context"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // @bind: bdspro/internal/repo.ProductAccessRepo
@@ -112,3 +114,38 @@ func (r *GormProductAccessRepo) UpdateCommission(c context.Context,
 // func (r *GormProductAccessRepo)	Delete(c context.Context, id uint64) error{
 
 // }
+
+func (r *GormProductAccessRepo) GetProductAccessByOrgID(ctx context.Context, orgID int64, dto dto.ProductAccessSearch) ([]*domain.ProductAccess, error) {
+	var entities []*domain.ProductAccess
+	err := r.DB.WithContext(ctx).
+		Where("deleted_at is null and target_type = ? and target_id = ?", enums.ETargetTypeOrganization, orgID).
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&entities).Error
+	return entities, err
+}
+
+func (r *GormProductAccessRepo) BulkSave(c context.Context, id uint64, dto dto.ProductAccessBulkRequest) (*[]domain.ProductAccess, error) {
+	var entities []domain.ProductAccess
+
+	assignments := append(
+		clause.AssignmentColumns([]string{"fields", "commission"}),
+		clause.Assignment{
+			Column: clause.Column{Name: "deleted_at"},
+			Value:  gorm.Expr("NULL"),
+		},
+	)
+
+	err := r.DB.WithContext(c).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "product_id"},
+				{Name: "target_id"},
+				{Name: "target_type"},
+			},
+			DoUpdates: clause.Set(assignments),
+		}).
+		Create(&entities).Error
+
+	return &entities, err
+}

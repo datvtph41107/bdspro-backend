@@ -227,7 +227,7 @@ func (r *GormUserProductRepo) UpdateProductAmenityIds(productID uint64, amenityI
 	return nil
 }
 
-func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto dto.ProductSearchRequest) *gorm.DB {
+func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearchRequest) *gorm.DB {
 	if dto.ParentID != nil && *dto.ParentID == 0 {
 		query = query.Where("products.parent_id is null")
 	} else if dto.ParentID != nil && *dto.ParentID > 0 {
@@ -272,7 +272,7 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto dto.ProductSearchR
 	return query
 }
 
-func (r *GormUserProductRepo) SearchProductWithOwner(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	var results []domain.Product
 
 	query := r.DB.
@@ -298,7 +298,7 @@ func (r *GormUserProductRepo) SearchProductWithOwner(profileId uint64, dto dto.P
 		Preload("MediaList", "deleted_at IS NULL").
 		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
 
-	query = r.QueryDomain(query, dto)
+	query = r.QueryDomain(query, &dto)
 
 	err := query.
 		Order("created_at desc").
@@ -344,7 +344,7 @@ func (r *GormUserProductRepo) SearchToExport(profileId uint64, dto dto.ProductSe
 		Preload("MediaList", "deleted_at IS NULL").
 		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
 
-	query = r.QueryDomain(query, dto)
+	query = r.QueryDomain(query, &dto)
 
 	err := query.
 		Order("created_at desc").
@@ -567,4 +567,83 @@ func (r *GormUserProductRepo) CancelDeposite(ctx context.Context, id uint64) err
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("deposite_id", nil).Error
+}
+
+func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	var results []domain.Product
+
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		// Joins(`LEFT JOIN product_access pa
+		// 			ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, ownerID).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+
+		// Where("pa.user_id = ?", profileId).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("products.owner_user_id = ? and products.owner_type = ? and products.deleted_at is NULL", ownerID, ownerType)
+
+	query = r.QueryDomain(query, dto)
+
+	err := query.
+		Order("created_at desc").
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
+		Find(&results).Error
+
+	// err := query.Find(&results).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}
+
+func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
+	return nil, nil
+}
+
+func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerType enums.ETargetType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error) {
+	return nil, 0, nil
+}
+
+func (r *GormUserProductRepo) Archived(ctx context.Context, productId *uint64, archived bool) error {
+	return r.DB.WithContext(ctx).Model(domain.Product{}).
+		Where("id = ? and deleted_at is null", productId).
+		Update("archived", archived).Error
+}
+
+func (r *GormUserProductRepo) SetRentStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
+	return nil
+}
+
+func (r *GormUserProductRepo) SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
+	return nil
+}
+
+func (r *GormUserProductRepo) SetRentVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error {
+	return nil
+}
+
+func (r *GormUserProductRepo) SetSaleVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error {
+	return nil
+}
+
+func (r *GormUserProductRepo) GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error) {
+	return nil, nil
 }

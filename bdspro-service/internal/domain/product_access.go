@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bdspro/internal/enums"
 	_models "common/models"
 	"strings"
 )
@@ -8,12 +9,12 @@ import (
 type ProductAccess struct {
 	// UserId     uint64
 	_models.BaseEntity
-	Product    *ProductItem `json:"product"`
-	ProductID  uint64       `json:"productId"`
-	Fields     string       `json:"fields"`
-	TargetType uint         `json:"targetType"` // 1: cá nhân, 2: nhóm, 3: tổ chức
-	TargetId   uint64       `json:"targetId"`
-	Commission float32      `json:"commission"`
+	Product    *ProductItem      `json:"product"`
+	ProductID  uint64            `json:"productId"`
+	Fields     string            `json:"fields"`
+	TargetType enums.ETargetType `json:"targetType"` // 1: cá nhân, 2: nhóm, 3: tổ chức
+	TargetId   uint64            `json:"targetId"`
+	Commission float32           `json:"commission"`
 }
 
 // GORM table name override

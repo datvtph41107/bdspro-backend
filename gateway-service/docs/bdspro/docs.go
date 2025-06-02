@@ -5726,6 +5726,806 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v1/bdspro/v2/org/product-access/{org_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách sản phẩm được chia sẻ của tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Org/Product-access"
+                ],
+                "summary": "Get product access by org ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Org ID",
+                        "name": "org_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.ProductAccess"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/archived": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Cập nhật sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ArchivedRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/deposite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Cọc",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DepositeRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/deposite/{depositeId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Hủy cọc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Deposite ID",
+                        "name": "depositeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/export": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này dùng để xuất dữ liệu sản phẩm ra file Excel",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Xuất danh sách sản phẩm ra Excel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bộ lọc sản phẩm (nếu có)",
+                        "name": "filter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Excel file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Lấy danh sách sản phẩm của user hiện tại",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product code",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Product area",
+                        "name": "area",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product price",
+                        "name": "price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "null=\u003eall; 0=\u003eparent; \u003e0=\u003echildrent",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product description",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Additional notes",
+                        "name": "note",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Skip results",
+                        "name": "skip",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/new": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để tạo một sản phẩm mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Tạo sản phẩm mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Sản phẩm được tạo thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/publish": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để đăng tin sản phẩm lên hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Đăng tin sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin đăng tin",
+                        "name": "publish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.StatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tin được đăng thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/rent-status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.StatusUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/rent-visibility": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Trạng thái sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.VisibilityUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/revert/:id": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để hoàn tác trạng thái sản phẩm về trạng thái trước đó",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Hoàn tác trạng thái sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin hoàn tác",
+                        "name": "revert",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.StatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái sản phẩm đã được hoàn tác",
+                        "schema": {
+                            "$ref": "#/definitions/data.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/sale-status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.StatusUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/sale-visibility": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Trạng thái sản phẩm",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.VisibilityUpdate"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/suggest": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Gợi ý các trường thông tin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product code",
+                        "name": "code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Product area",
+                        "name": "area",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product price",
+                        "name": "price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product description",
+                        "name": "description",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Additional notes",
+                        "name": "note",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Skip results",
+                        "name": "skip",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/bdspro/v2/org/product/total": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of products based on search filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Tìm kiếm tổng hợp",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Text",
+                        "name": "text",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Sizet results",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"price_asc\"",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để tạo một sản phẩm mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Tạo sản phẩm mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin sản phẩm",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Sản phẩm được tạo thành công",
+                        "schema": {
+                            "$ref": "#/definitions/data.NewProductRequest"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bdspro/v2/org/product/{productId}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Cập nhật sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin sản phẩm cần cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductSaveRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Xóa sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v1/bdspro/v2/user/assets": {
             "post": {
                 "security": [
@@ -8544,9 +9344,6 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
-                "createdUser": {
-                    "$ref": "#/definitions/domain.ProfileInfo"
-                },
                 "customerId": {
                     "type": "integer"
                 },
@@ -8607,6 +9404,14 @@ const docTemplate = `{
                 "ownerOrgId": {
                     "description": "Tổ chức sở hữu (nếu cty mua)",
                     "type": "integer"
+                },
+                "ownerType": {
+                    "description": "1=Cá nhân, 2=Tổ chức",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ETargetType"
+                        }
+                    ]
                 },
                 "ownerUserId": {
                     "description": "Ai sở hữu (nếu đã bán)",
@@ -8683,9 +9488,6 @@ const docTemplate = `{
                 "updatedBy": {
                     "type": "integer"
                 },
-                "updatedUser": {
-                    "$ref": "#/definitions/domain.ProfileInfo"
-                },
                 "visibility": {
                     "description": "phạm vi",
                     "allOf": [
@@ -8699,6 +9501,64 @@ const docTemplate = `{
                 },
                 "wardId": {
                     "type": "integer"
+                }
+            }
+        },
+        "domain.ProductAccess": {
+            "type": "object",
+            "properties": {
+                "commission": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "fields": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/domain.ProductItem"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "description": "1: cá nhân, 2: nhóm, 3: tổ chức",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.ETargetType"
+                        }
+                    ]
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.ProductItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -8805,17 +9665,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.ProfileInfo": {
-            "type": "object",
-            "properties": {
-                "fullName": {
-                    "type": "string"
-                },
-                "profileId": {
                     "type": "integer"
                 }
             }
@@ -9441,6 +10290,19 @@ const docTemplate = `{
                 "EProductNotRent",
                 "EProductRenting",
                 "EProductRented"
+            ]
+        },
+        "enums.ETargetType": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "ETargetTypeMember",
+                "ETargetTypeGroup",
+                "ETargetTypeOrganization"
             ]
         },
         "enums.EVisibility": {

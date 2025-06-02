@@ -198,7 +198,7 @@ func (s *UProductUsecase) CheckAccessProduct(c context.Context, profileId, produ
 func (s *UProductUsecase) SearchProductWithOwner(c context.Context, dto *dto.ProductSearchRequest) (_routes.ResponseDTO, error) {
 	// profileId := _jwt.GetProfileId(c)
 	profileId := _utils.GetProfileIdWithContext(c)
-	results, total, err := s.ProductRepo.SearchProductWithOwner(profileId, *dto)
+	results, total, err := s.ProductRepo.SearchProductWithOwner(&profileId, *dto)
 	return _routes.ResponseDTO{
 		Code:          0,
 		Data:          results,
@@ -475,8 +475,8 @@ func (s *UProductUsecase) CreateProductWithDetect(c context.Context, body *dto.P
 	return searchs, nil
 }
 
-func (s *UProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Product, error) {
-	product, err := s.ProductRepo.GetByID(id)
+func (s *UProductUsecase) RequiredOwner(c context.Context, id *uint64) (*domain.Product, error) {
+	product, err := s.ProductRepo.GetProductByID(c, id)
 	if err != nil {
 		return nil, err
 	}
@@ -494,7 +494,7 @@ func (s *UProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.P
 }
 
 func (s *UProductUsecase) Archived(c context.Context, dto dto.ArchivedRequest) error {
-	if _, err := s.RequiredOwner(c, *dto.ProductId); err != nil {
+	if _, err := s.RequiredOwner(c, dto.ProductId); err != nil {
 		return err
 	}
 
@@ -503,7 +503,7 @@ func (s *UProductUsecase) Archived(c context.Context, dto dto.ArchivedRequest) e
 
 func (s *UProductUsecase) Delete(c context.Context, id uint64) error {
 	// sản phẩm đang cọc
-	product, err := s.RequiredOwner(c, id)
+	product, err := s.RequiredOwner(c, &id)
 	if err != nil {
 		return err
 	}
@@ -519,7 +519,7 @@ func (s *UProductUsecase) Delete(c context.Context, id uint64) error {
 }
 
 func (s *UProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdate) error {
-	_, err := s.RequiredOwner(c, *dto.ProductID)
+	_, err := s.RequiredOwner(c, dto.ProductID)
 	if err != nil {
 		return err
 	}
@@ -527,7 +527,7 @@ func (s *UProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpda
 }
 
 func (s *UProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpdate) error {
-	_, err := s.RequiredOwner(c, *dto.ProductID)
+	_, err := s.RequiredOwner(c, dto.ProductID)
 	if err != nil {
 		return err
 	}
@@ -535,7 +535,7 @@ func (s *UProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpda
 }
 
 func (s *UProductUsecase) RentVisibilityUpdate(c context.Context, dto dto.VisibilityUpdate) error {
-	_, err := s.RequiredOwner(c, *dto.ProductID)
+	_, err := s.RequiredOwner(c, dto.ProductID)
 	if err != nil {
 		return err
 	}
@@ -543,7 +543,7 @@ func (s *UProductUsecase) RentVisibilityUpdate(c context.Context, dto dto.Visibi
 }
 
 func (s *UProductUsecase) SaleVisibilityUpdate(c context.Context, dto dto.VisibilityUpdate) error {
-	_, err := s.RequiredOwner(c, *dto.ProductID)
+	_, err := s.RequiredOwner(c, dto.ProductID)
 	if err != nil {
 		return err
 	}

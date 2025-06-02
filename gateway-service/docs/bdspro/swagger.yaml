@@ -642,8 +642,6 @@ definitions:
       createdBy:
         description: gorm.Model
         type: integer
-      createdUser:
-        $ref: '#/definitions/domain.ProfileInfo'
       customerId:
         type: integer
       deposite:
@@ -685,6 +683,10 @@ definitions:
       ownerOrgId:
         description: Tổ chức sở hữu (nếu cty mua)
         type: integer
+      ownerType:
+        allOf:
+        - $ref: '#/definitions/enums.ETargetType'
+        description: 1=Cá nhân, 2=Tổ chức
       ownerUserId:
         description: Ai sở hữu (nếu đã bán)
         type: integer
@@ -730,8 +732,6 @@ definitions:
         type: string
       updatedBy:
         type: integer
-      updatedUser:
-        $ref: '#/definitions/domain.ProfileInfo'
       visibility:
         allOf:
         - $ref: '#/definitions/enums.EVisibility'
@@ -740,6 +740,43 @@ definitions:
         $ref: '#/definitions/domain.Region'
       wardId:
         type: integer
+    type: object
+  domain.ProductAccess:
+    properties:
+      commission:
+        type: number
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      fields:
+        type: string
+      id:
+        type: integer
+      product:
+        $ref: '#/definitions/domain.ProductItem'
+      productId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        allOf:
+        - $ref: '#/definitions/enums.ETargetType'
+        description: '1: cá nhân, 2: nhóm, 3: tổ chức'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.ProductItem:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   domain.ProductMediaItem:
     properties:
@@ -810,13 +847,6 @@ definitions:
       updatedAt:
         type: string
       updatedBy:
-        type: integer
-    type: object
-  domain.ProfileInfo:
-    properties:
-      fullName:
-        type: string
-      profileId:
         type: integer
     type: object
   domain.Project:
@@ -1248,6 +1278,16 @@ definitions:
     - EProductNotRent
     - EProductRenting
     - EProductRented
+  enums.ETargetType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ETargetTypeMember
+    - ETargetTypeGroup
+    - ETargetTypeOrganization
   enums.EVisibility:
     enum:
     - 10
@@ -6248,6 +6288,518 @@ paths:
       summary: Lấy theo ID loại thu nhập
       tags:
       - Danh mục loại
+  /v1/bdspro/v2/org/product-access/{org_id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách sản phẩm được chia sẻ của tổ chức
+      parameters:
+      - description: Org ID
+        in: path
+        name: org_id
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Product ID
+        in: query
+        name: productId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.ProductAccess'
+            type: array
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi server
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get product access by org ID
+      tags:
+      - Org/Product-access
+  /v1/bdspro/v2/org/product/{id}:
+    post:
+      consumes:
+      - application/json
+      description: API để tạo một sản phẩm mới
+      parameters:
+      - description: Thông tin sản phẩm
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/data.NewProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sản phẩm được tạo thành công
+          schema:
+            $ref: '#/definitions/data.NewProductRequest'
+      security:
+      - BearerAuth: []
+      summary: Tạo sản phẩm mới
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/{productId}:
+    delete:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - Organization
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được
+        gửi lên.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProductSaveRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/archived:
+    put:
+      consumes:
+      - application/json
+      description: API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được
+        gửi lên.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ArchivedRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/deposite:
+    post:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DepositeRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cọc
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/deposite/{depositeId}:
+    delete:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Deposite ID
+        in: path
+        name: depositeId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Hủy cọc
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/export:
+    post:
+      consumes:
+      - application/json
+      description: API này dùng để xuất dữ liệu sản phẩm ra file Excel
+      parameters:
+      - description: Bộ lọc sản phẩm (nếu có)
+        in: query
+        name: filter
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel file
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/_routes.ResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/_routes.ResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Xuất danh sách sản phẩm ra Excel
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product code
+        in: query
+        name: code
+        type: string
+      - description: Product area
+        in: query
+        name: area
+        type: number
+      - description: Product price
+        in: query
+        name: price
+        type: integer
+      - description: null=>all; 0=>parent; >0=>childrent
+        in: query
+        name: parentId
+        type: integer
+      - description: Product description
+        in: query
+        name: description
+        type: string
+      - description: Additional notes
+        in: query
+        name: note
+        type: string
+      - default: 10
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Skip results
+        in: query
+        name: skip
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách sản phẩm của user hiện tại
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/new:
+    post:
+      consumes:
+      - application/json
+      description: API để tạo một sản phẩm mới
+      parameters:
+      - description: Thông tin sản phẩm
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/data.NewProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sản phẩm được tạo thành công
+          schema:
+            $ref: '#/definitions/data.NewProductRequest'
+      security:
+      - BearerAuth: []
+      summary: Tạo sản phẩm mới
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/publish:
+    put:
+      consumes:
+      - application/json
+      description: API để đăng tin sản phẩm lên hệ thống
+      parameters:
+      - description: Thông tin đăng tin
+        in: body
+        name: publish
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tin được đăng thành công
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Đăng tin sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/rent-status:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/rent-visibility:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VisibilityUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Trạng thái sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/revert/:id:
+    put:
+      consumes:
+      - application/json
+      description: API để hoàn tác trạng thái sản phẩm về trạng thái trước đó
+      parameters:
+      - description: Thông tin hoàn tác
+        in: body
+        name: revert
+        required: true
+        schema:
+          $ref: '#/definitions/data.StatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trạng thái sản phẩm đã được hoàn tác
+          schema:
+            $ref: '#/definitions/data.StatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Hoàn tác trạng thái sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/sale-status:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/sale-visibility:
+    put:
+      consumes:
+      - application/json
+      description: API
+      parameters:
+      - description: Thông tin sản phẩm cần cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VisibilityUpdate'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Trạng thái sản phẩm
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/suggest:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product code
+        in: query
+        name: code
+        type: string
+      - description: Product area
+        in: query
+        name: area
+        type: number
+      - description: Product price
+        in: query
+        name: price
+        type: integer
+      - description: Product description
+        in: query
+        name: description
+        type: string
+      - description: Additional notes
+        in: query
+        name: note
+        type: string
+      - default: 10
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Skip results
+        in: query
+        name: skip
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gợi ý các trường thông tin
+      tags:
+      - Organization
+  /v1/bdspro/v2/org/product/total:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of products based on search filters
+      parameters:
+      - description: Text
+        in: query
+        name: text
+        required: true
+        type: string
+      - default: 10
+        description: Sizet results
+        in: query
+        name: size
+        type: integer
+      - default: 0
+        description: Page
+        in: query
+        name: page
+        type: integer
+      - default: '"price_asc"'
+        description: Sort order
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách sản phẩm
+          schema:
+            $ref: '#/definitions/_routes.ResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm tổng hợp
+      tags:
+      - Organization
   /v1/bdspro/v2/user/assets:
     post:
       parameters:

@@ -1,11 +1,11 @@
 package usecases
 
 import (
+	"bdspro/external/providers"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
-	"bdspro/v1/providers"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -28,20 +28,20 @@ type ProductAccessUsecase struct {
 
 func NewUProductAccessUsecase(
 	repo repo.ProductAccessRepo,
-	UserProductService *UProductUsecase,
+	UProductUC *UProductUsecase,
 	NotiService *providers.TransmitProvider,
 ) *ProductAccessUsecase {
 	return &ProductAccessUsecase{
 		// BaseService:        crud2.BaseService[domain.ProductAccess, *product_accecss.ProductAccessRepo]{Repo: repo},
 		Repo:        repo,
-		UProductUC:  UserProductService,
+		UProductUC:  UProductUC,
 		NotiService: NotiService,
 	}
 }
 
 func (s *ProductAccessUsecase) CreateBatch(c context.Context, id uint64, dtos []dto.ProductAccessRequest) (*[]domain.ProductAccess, error) {
 	var entities []domain.ProductAccess
-	product, err := s.UProductUC.RequiredOwner(c, id)
+	product, err := s.UProductUC.RequiredOwner(c, &id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (s *ProductAccessUsecase) CreateBatch(c context.Context, id uint64, dtos []
 
 func (s *ProductAccessUsecase) BulkSave(c context.Context, id uint64, dto dto.ProductAccessBulkRequest) (*[]domain.ProductAccess, error) {
 	var entities []domain.ProductAccess
-	product, err := s.UProductUC.RequiredOwner(c, id)
+	product, err := s.UProductUC.RequiredOwner(c, &id)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *ProductAccessUsecase) Search(c *gin.Context, dto dto.ProductAccessSearc
 	// var entities []domain.ProductAccess
 	// productId := *dto.ProductID
 	// if dto.ProductID
-	_, err := s.UProductUC.RequiredOwner(c, dto.ProductID)
+	_, err := s.UProductUC.RequiredOwner(c, &dto.ProductID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (s *ProductAccessUsecase) UpdateCommission(c context.Context, dto dto.Produ
 	// var entities []domain.ProductAccess
 	// productId := *dto.ProductID
 	// if dto.ProductID
-	_, err := s.UProductUC.RequiredOwner(c, dto.ProductID)
+	_, err := s.UProductUC.RequiredOwner(c, &dto.ProductID)
 	if err != nil {
 		return err
 	}

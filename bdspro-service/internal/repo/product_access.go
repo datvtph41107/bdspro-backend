@@ -18,4 +18,6 @@ type ProductAccessRepo interface {
 	) error
 	GetByID(id uint64) (*domain.ProductAccess, error)
 	Delete(c context.Context, id uint64) error
+	// GetProductAccessByOrgID(ctx context.Context, orgID int64, dto dto.ProductAccessSearch) ([]*domain.ProductAccess, error)
+	// BulkSave(c context.Context, id uint64, dto dto.ProductAccessBulkRequest) (*[]domain.ProductAccess, error)
 }

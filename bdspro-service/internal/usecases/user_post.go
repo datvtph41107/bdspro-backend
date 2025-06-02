@@ -64,7 +64,7 @@ func (s *UPostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (
 	}
 
 	// _, err := s.UserProductService.RequiredOwner(c, dto.ProductID)
-	_, err := s.UProductUsecase.RequiredOwner(c, dto.ProductID)
+	_, err := s.UProductUsecase.RequiredOwner(c, &dto.ProductID)
 	if err != nil {
 		return nil, err
 	}
