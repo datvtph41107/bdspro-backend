@@ -4,21 +4,28 @@ import (
 	"time"
 )
 
-// OrganizationMember represents the organization member entity
+type OrganizationMemberRole string
+
+const (
+	OrganizationMemberRoleAdmin  OrganizationMemberRole = "admin"
+	OrganizationMemberRoleMember OrganizationMemberRole = "member"
+)
+
+type OrganizationMemberStatus string
+
+const (
+	OrganizationMemberStatusActive   OrganizationMemberStatus = "active"
+	OrganizationMemberStatusInactive OrganizationMemberStatus = "inactive"
+)
+
 type OrganizationMember struct {
-	ID             uint32     `json:"id" gorm:"primary_key;auto_increment"`
-	OrganizationID uint32     `json:"organization_id" gorm:"not null"`
-	UserID         uint32     `json:"user_id" gorm:"not null"`
-	Role           string     `json:"role" gorm:"not null"`
-	Status         string     `json:"status" gorm:"default:active"`
-	JoinedAt       time.Time  `json:"joined_at" gorm:"not null"`
-	RemovedAt      *time.Time `json:"removed_at"`
+	ID             uint32
+	OrganizationID uint32
+	UserID         uint32
+	Role           OrganizationMemberRole
+	Status         OrganizationMemberStatus
+	JoinedAt       time.Time
+	RemovedAt      *time.Time
 
-	// Relationships
-	Organization *Organization `json:"organization" gorm:"foreignKey:OrganizationID"`
+	Organization *Organization
 }
-
-// TableName specifies the table name for the OrganizationMember entity
-func (OrganizationMember) TableName() string {
-	return "organization_members"
-} 

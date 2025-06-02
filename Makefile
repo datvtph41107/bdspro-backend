@@ -5,6 +5,7 @@ gen:
 	cd protobuf/schema && buf generate --template ./payment/buf.gen.yaml --path payment
 	cd protobuf/schema && buf generate --template ./spec/buf.gen.yaml --path spec
 	cd protobuf/schema && buf generate --template ./generic/buf.gen.yaml --path generic
+	cd protobuf/schema && buf generate --template ./organization/buf.gen.yaml --path organization
 
 payment:
 	cd payment-service && go run main.go http

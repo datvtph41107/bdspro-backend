@@ -100,7 +100,6 @@ var publicRoutes = []string{
 	"/v1/membership/plan/list",
 	"/v1/membership/user/plans",
 	"/v1/search",
-	"/v2/organization/create-organization",
 	// "/v1/search/plan/list",
 }
 
@@ -140,7 +139,7 @@ var HttpCmd = &cobra.Command{
 		payment_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.payment"))
 		bdspro_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.bdspro"))
 		organization_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.organization"))
-		
+
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
 			// runtime.WithMetadata(CustomMetadataMethod),

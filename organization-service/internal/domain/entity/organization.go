@@ -17,4 +17,6 @@ type Organization struct {
 	Status             string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+	CreatedBy          uint32
+	UpdatedBy          uint32
 }

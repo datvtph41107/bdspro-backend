@@ -20,7 +20,7 @@ import (
 
 type GRPCServer struct {
 	organizationHandler *handler.OrganizationHandler
-	logger *flogging.FabricLogger
+	logger              *flogging.FabricLogger
 }
 
 func NewGRPCServer(organizationHandler *handler.OrganizationHandler) *GRPCServer {
@@ -47,13 +47,11 @@ func (s *GRPCServer) Start() {
 
 func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
+		interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
-	streamInts := []grpc.StreamServerInterceptor{
-		interceptors.StreamLoggerInterceptor(logger),
-		interceptors.StreamRecoveryInterceptor(logger),
-	}
+	streamInts := []grpc.StreamServerInterceptor{}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
 		fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),

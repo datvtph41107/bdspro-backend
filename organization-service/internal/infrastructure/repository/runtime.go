@@ -16,7 +16,7 @@ func NewRepository() repository.OrganizationRepository {
 		if err != nil {
 			log.Fatalf("Failed to connect to database: %v", err)
 		}
-		db.AutoMigrate(&postgres.OrganizationModel{})
+		db.AutoMigrate(&postgres.OrganizationModel{}, &postgres.OrganizationMemberModel{})
 		return postgres.NewOrganizationPostgresRepository(db)
 	}
 	return nil
