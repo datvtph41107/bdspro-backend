@@ -14,17 +14,20 @@ import (
 )
 
 var repositorySet = wire.NewSet(
-	repository.NewRepository,
+	repository.NewOrganizationRepository,
+	repository.NewOrganizationMemberRepository,
 )
 
 var usecaseSet = wire.NewSet(
 	usecase.NewOrganizationUsecase,
+	usecase.NewOrganizationMemberUsecase,
 )
 
 var handlerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
 	validator.NewOrganizationValidator,
 	handler.NewOrganizationHandler,
+	handler.NewOrganizationMemberHandler,
 )
 
 func InitializeGRPCServer() *grpc.GRPCServer {

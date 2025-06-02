@@ -19,21 +19,23 @@ import (
 )
 
 type GRPCServer struct {
-	organizationHandler *handler.OrganizationHandler
-	logger              *flogging.FabricLogger
+	organizationHandler       *handler.OrganizationHandler
+	organizationMemberHandler *handler.OrganizationMemberHandler
+	logger                    *flogging.FabricLogger
 }
 
-func NewGRPCServer(organizationHandler *handler.OrganizationHandler) *GRPCServer {
+func NewGRPCServer(organizationHandler *handler.OrganizationHandler, organizationMemberHandler *handler.OrganizationMemberHandler) *GRPCServer {
 	return &GRPCServer{
-		organizationHandler: organizationHandler,
-		logger:              flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		organizationHandler:       organizationHandler,
+		organizationMemberHandler: organizationMemberHandler,
+		logger:                    flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
 
 func (s *GRPCServer) Start() {
 	g := &run.Group{}
 
-	start, stop := buildGRPCServer(s.logger, s.organizationHandler)
+	start, stop := buildGRPCServer(s.logger, s.organizationHandler, s.organizationMemberHandler)
 
 	g.Add(start, stop)
 
@@ -45,10 +47,10 @@ func (s *GRPCServer) Start() {
 	}
 }
 
-func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler) (func() error, func(error)) {
+func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler, organizationMemberHandler *handler.OrganizationMemberHandler) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
-		interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryLoggerInterceptor(logger),
+		interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
@@ -58,6 +60,7 @@ func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler
 		func(s *grpc.Server) {
 			logger.Info("Registering OrganizationServiceServer")
 			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)
+			organizationpb.RegisterOrganizationMemberServiceServer(s, organizationMemberHandler)
 		},
 		unaryInts,
 		streamInts,

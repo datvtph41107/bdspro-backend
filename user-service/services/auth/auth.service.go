@@ -20,9 +20,13 @@ import (
 	"user/repo"
 	"user/validator"
 
+	organizationpb "pb/types/organization"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthService struct {
@@ -34,10 +38,11 @@ type AuthService struct {
 	// JWTProvider      utils.JwtProvider
 	// AuthValidator    utils.AuthValidator
 	// AuditService     utils.AuditService
-	RedisService  *_redis.RedisService
-	CookieService *CookieService
-	PreePlanID    *uint64
-	ProfileRepo   *repo.ProfileRepo
+	RedisService       *_redis.RedisService
+	CookieService      *CookieService
+	PreePlanID         *uint64
+	ProfileRepo        *repo.ProfileRepo
+	OrganizationClient organizationpb.OrganizationMemberServiceClient
 	// ConfigProperties utils.PropertiesConfiguration
 	// Properties property.AppProperties
 }
@@ -54,16 +59,25 @@ func NewRedisService() *_redis.RedisService {
 	}
 }
 
+func NewOrganizationClient() organizationpb.OrganizationMemberServiceClient {
+	conn, err := grpc.NewClient(viper.GetString("grpc.organization.host"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to organization service: %v", err)
+	}
+	return organizationpb.NewOrganizationMemberServiceClient(conn)
+}
+
 func NewAuthService(redisService *_redis.RedisService,
 	cookie *CookieService,
 	profileRepo *repo.ProfileRepo,
 ) *AuthService {
 	planId := uint64(1)
 	return &AuthService{
-		RedisService:  redisService,
-		CookieService: cookie,
-		PreePlanID:    &planId,
-		ProfileRepo:   profileRepo,
+		RedisService:       redisService,
+		CookieService:      cookie,
+		PreePlanID:         &planId,
+		ProfileRepo:        profileRepo,
+		OrganizationClient: NewOrganizationClient(),
 	}
 }
 
@@ -348,6 +362,7 @@ func (s *AuthService) RequestIsRegister(c *gin.Context, dto data.OtpRequest) (*a
 
 	return e, nil
 }
+
 func (s *AuthService) NewUser(c *gin.Context, oauthId uint64) (*data.AuthParam, error) {
 	// Tạo UserStatusEntity mới
 	statusEntity := &auth_model.UserStatusEntity{
@@ -533,7 +548,6 @@ func (s *AuthService) CreateQRSession(c *gin.Context, e *data.SessionQRRequest, 
 	if session == nil {
 		session = s.CreateSession(c, nil, nil)
 	} else {
-
 		// copier.Copy(&session, &e)
 		// session.Activate
 		// e.SessionId = sessionId
@@ -676,4 +690,59 @@ func (s *AuthService) GenRefreshToken(c *gin.Context, authEntity *auth_model.Use
 	s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	log.Println("refreshToken=", refreshToken)
 	return refreshToken
+}
+
+func (s *AuthService) SwitchOrganization(c *gin.Context, organizationID uint32) (*data.AuthLoginResponse, error) {
+	principal := _jwt.GetPrincipal(c)
+	if principal == nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Không thể xác thực phiên đăng nhập",
+		}
+	}
+	clientResponse, err := s.OrganizationClient.SwitchOrganization(c, &organizationpb.SwitchOrganizationRequest{
+		OrganizationId: organizationID,
+		UserId:         uint32(principal.ProfileId),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !clientResponse.IsSuccess {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Không thể chuyển đổi tổ chức",
+		}
+	}
+	authEntity, err := auth_model.AuthGetWithId(principal.UserID)
+	if err != nil {
+		return nil, err
+	}
+	profile := s.GetProfileByID(principal.UserID)
+	payload := _jwt.JwtTokenProperties{
+		AuthID:    principal.UserID,
+		ProfileID: principal.UserID,
+		SessionID: uint64(principal.Session),
+		Role:      "ROLE_USER",
+		Type:      "ACCESS",
+		PlanID:    profile.PlanID,
+		PlanAt:    profile.PlanAt,
+	}
+	payload.AdditionalInfo = map[string]interface{}{
+		"organization_id": clientResponse.Id,
+	}
+	newAccessToken, err := _jwt.GenerateToken(payload)
+	if err != nil {
+		return nil, err
+	}
+	response := &data.AuthLoginResponse{
+		AuthID:         principal.UserID,
+		AccessToken:    newAccessToken,
+		Role:           "ROLE_USER",
+		Username:       profile.FullName,
+		ProfileID:      profile.ProfileID,
+		RefreshToken:   s.GetRefreshToken(authEntity, uint64(principal.Session)),
+		OrganizationID: clientResponse.Id,
+	}
+
+	return response, nil
 }

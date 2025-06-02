@@ -1,9 +1,12 @@
 package postgres
 
 import (
+	"context"
 	"time"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"gorm.io/gorm"
 )
 
 type OrganizationMemberModel struct {
@@ -44,4 +47,18 @@ func OrganizationMemberEntityToModel(entity entity.OrganizationMember) Organizat
 		JoinedAt:       entity.JoinedAt,
 		RemovedAt:      entity.RemovedAt,
 	}
+}
+
+type OrganizationMemberPostgresRepository struct {
+	db *gorm.DB
+}
+
+func NewOrganizationMemberPostgresRepository(db *gorm.DB) repository.OrganizationMemberRepository {
+	return &OrganizationMemberPostgresRepository{db: db}
+}
+
+func (r *OrganizationMemberPostgresRepository) ExistByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("user_id = ? AND organization_id = ?", userId, organizationId).Count(&count).Error
+	return count > 0, err
 }

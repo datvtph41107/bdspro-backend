@@ -19,6 +19,9 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterce
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
+		if info.FullMethod == "/pb_organization.OrganizationMemberService/SwitchOrganization" {
+			return handler(ctx, req)
+		}
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Unauthenticated, "missing metadata")
@@ -35,7 +38,6 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterce
 			logger.Error("Invalid token", err)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-
 		newCtx := context.WithValue(ctx, appconfig.USER_CONTEXT, claims)
 		return handler(newCtx, req)
 	}

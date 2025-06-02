@@ -4,6 +4,7 @@ import (
 	_routes "common/routes"
 	"net/http"
 	"strconv"
+
 	"user/config/property"
 	"user/data"
 	auth_service "user/services/auth"
@@ -43,6 +44,8 @@ func AuthRoutes(r *gin.Engine, router *AuthRouter) {
 	api.POST("/qr/confirm", router.QRConfirm)
 
 	api.POST("/qr/status", router.QRStatus)
+
+	api.POST("/switch/organization", router.SwitchOrganization)
 }
 
 // @Tags Auth
@@ -218,5 +221,24 @@ func (router *AuthRouter) QRStatus(c *gin.Context) {
 func (p *AuthRouter) Delete(c *gin.Context) {
 	result, err := p.Service.Delete(c)
 
+	_routes.RouteResult(c, result, err)
+}
+
+// @Summary Chuyển đổi tổ chức
+// @Description API này cho phép người dùng chuyển đổi tổ chức
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body data.SwitchOrganizationRequest true "Thông tin chuyển đổi tổ chức"
+// @Router /auth/switch/organization [post]
+func (router *AuthRouter) SwitchOrganization(c *gin.Context) {
+	var dto data.SwitchOrganizationRequest
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	result, err := router.Service.SwitchOrganization(c, dto.OrganizationID)
 	_routes.RouteResult(c, result, err)
 }

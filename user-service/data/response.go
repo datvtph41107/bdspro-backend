@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"time"
+
 	"user/enums"
 	auth_model "user/models/auth"
 	user_model "user/models/user"
@@ -10,12 +11,13 @@ import (
 
 // AuthLoginResponse đại diện cho phản hồi đăng nhập
 type AuthLoginResponse struct {
-	AccessToken  string `json:"accessToken,omitempty"`
-	AuthID       uint64 `json:"authId,omitempty"`
-	Role         string `json:"role,omitempty"`
-	Username     string `json:"username,omitempty"`
-	ProfileID    uint64 `json:"profileId,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
+	AccessToken    string `json:"accessToken,omitempty"`
+	AuthID         uint64 `json:"authId,omitempty"`
+	Role           string `json:"role,omitempty"`
+	Username       string `json:"username,omitempty"`
+	ProfileID      uint64 `json:"profileId,omitempty"`
+	RefreshToken   string `json:"refreshToken,omitempty"`
+	OrganizationID uint32 `json:"organizationId,omitempty"`
 }
 
 type FollowInfoRes struct {

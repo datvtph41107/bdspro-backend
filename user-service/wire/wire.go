@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"user/config"
 	user_config "user/config"
@@ -16,6 +15,8 @@ import (
 	user_services_auth "user/services/auth"
 	user_services_user "user/services/user"
 	user_validator "user/validator"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -56,12 +57,14 @@ var wireSet = wire.NewSet(
 	user_routes.NewRateRouter,
 	user_services_user.NewRateService,
 	user_services_auth.NewRedisService,
+	user_services_auth.NewOrganizationClient,
 	user_data.NewRefreshResponse,
 	user_data.NewRequestLoginResponse,
 	user_models_auth.NewUserOTPRepository,
 	user_models_user.NewUserProfileEntityWithRequest,
 	user_services_auth.NewZaloAuthService,
 )
+
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

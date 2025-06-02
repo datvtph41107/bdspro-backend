@@ -29,3 +29,4 @@ message CreateOrganizationRequest {
 message CreateOrganizationResponse {
     uint32 id = 1 [json_name = "id"];
 }
+

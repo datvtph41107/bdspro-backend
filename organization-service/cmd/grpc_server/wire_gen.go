@@ -19,19 +19,22 @@ import (
 // Injectors from wire.go:
 
 func InitializeGRPCServer() *grpc.GRPCServer {
-	organizationRepository := repository.NewRepository()
+	organizationRepository := repository.NewOrganizationRepository()
 	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository)
 	organizationTransformer := transformer.NewOrganizationTransformer()
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
-	grpcServer := grpc.NewGRPCServer(organizationHandler)
+	organizationMemberRepository := repository.NewOrganizationMemberRepository()
+	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository)
+	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase)
+	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler)
 	return grpcServer
 }
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewRepository)
+var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewOrganizationUsecase)
+var usecaseSet = wire.NewSet(usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase)
 
-var handlerSet = wire.NewSet(transformer.NewOrganizationTransformer, validator.NewOrganizationValidator, handler.NewOrganizationHandler)
+var handlerSet = wire.NewSet(transformer.NewOrganizationTransformer, validator.NewOrganizationValidator, handler.NewOrganizationHandler, handler.NewOrganizationMemberHandler)

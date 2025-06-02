@@ -9,7 +9,7 @@ import (
 	"github.com/tuandq2112/organization-service/internal/infrastructure/repository/postgres"
 )
 
-func NewRepository() repository.OrganizationRepository {
+func NewOrganizationRepository() repository.OrganizationRepository {
 	switch appconfig.PRIMARY_DB_TYPE {
 	case appconfig.DBTypePostgres:
 		db, err := database.NewPostgresDB(appconfig.DB_DNS)
@@ -18,6 +18,19 @@ func NewRepository() repository.OrganizationRepository {
 		}
 		db.AutoMigrate(&postgres.OrganizationModel{}, &postgres.OrganizationMemberModel{})
 		return postgres.NewOrganizationPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewOrganizationMemberRepository() repository.OrganizationMemberRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.OrganizationMemberModel{})
+		return postgres.NewOrganizationMemberPostgresRepository(db)
 	}
 	return nil
 }

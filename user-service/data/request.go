@@ -2,6 +2,7 @@ package data
 
 import (
 	"time"
+
 	"user/enums"
 
 	"github.com/go-playground/validator/v10"
@@ -116,4 +117,8 @@ func ValidateStruct(s interface{}) error {
 
 type ProfileIDsRequest struct {
 	IDs []uint64 `form:"ids"`
+}
+
+type SwitchOrganizationRequest struct {
+	OrganizationID uint32 `json:"organizationId" binding:"required" validate:"required"`
 }

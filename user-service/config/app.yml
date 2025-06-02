@@ -88,3 +88,7 @@ otp:
   limit-otp-ip: 100
   cooldown-seconds: 300
   ip-cooldown-seconds: 900
+
+grpc:
+  organization:
+    host: localhost:50052

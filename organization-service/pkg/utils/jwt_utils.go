@@ -6,15 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func GetUserFromContext(ctx context.Context, key string) any {
 	if ctx == nil {
 		return nil
 	}
-	claims, ok := ctx.Value(key).(jwt.MapClaims)
+	claims, ok := ctx.Value(key).(any)
 	if !ok {
 		return nil
 	}
@@ -27,13 +25,7 @@ func GetUserID(ctx context.Context, key string) uint32 {
 	if claims == nil {
 		return 0
 	}
-
-	mapClaims, ok := claims.(jwt.MapClaims)
-	if !ok {
-		return 0
-	}
-
-	id, ok := mapClaims["id"].(float64)
+	id, ok := claims.(map[string]interface{})["profile"].(float64)
 	if !ok {
 		return 0
 	}

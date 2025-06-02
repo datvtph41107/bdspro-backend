@@ -36,8 +36,7 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
 	organization.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
-	user := utils.GetUserFromContext(ctx, appconfig.USER_CONTEXT)
-	fmt.Println(user)
+	fmt.Println("gothẻe", organization.CreatedBy)
 	member := &entity.OrganizationMember{
 		UserID:   organization.CreatedBy,
 		Role:     entity.OrganizationMemberRoleAdmin,

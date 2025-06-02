@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	grpcserver "github.com/tuandq2112/organization-service/cmd/grpc_server"
-	httpserver "github.com/tuandq2112/organization-service/cmd/http_server"
 )
 
 var RootCmd = &cobra.Command{
@@ -13,6 +12,5 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(httpserver.HttpGatewayCmd)
 	RootCmd.AddCommand(grpcserver.GrpcServerCmd)
 }

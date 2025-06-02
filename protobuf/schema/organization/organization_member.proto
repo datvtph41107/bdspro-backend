@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb_organization;
+
+option go_package = "types/pb_organization";
+
+service OrganizationMemberService {
+    rpc SwitchOrganization(SwitchOrganizationRequest) returns (SwitchOrganizationResponse) {}
+}
+
+message SwitchOrganizationRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    uint32 userId = 2 [json_name = "userId"];
+}
+
+message SwitchOrganizationResponse {
+    uint32 id = 1 [json_name = "id"];
+    uint32 userId = 2 [json_name = "userId"];
+    bool isSuccess = 3 [json_name = "isSuccess"];
+}
