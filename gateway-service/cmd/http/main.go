@@ -161,6 +161,9 @@ var HttpCmd = &cobra.Command{
 		_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		_ = pb_organization.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_organization.RegisterOrganizationMemberServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_organization.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_organization.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {

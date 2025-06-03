@@ -19,23 +19,36 @@ import (
 )
 
 type GRPCServer struct {
-	organizationHandler       *handler.OrganizationHandler
-	organizationMemberHandler *handler.OrganizationMemberHandler
-	logger                    *flogging.FabricLogger
+	organizationHandler           *handler.OrganizationHandler
+	organizationMemberHandler     *handler.OrganizationMemberHandler
+	organizationRoleHandler       *handler.OrganizationRoleHandler
+	organizationPermissionHandler *handler.OrganizationPermissionHandler
+	logger                        *flogging.FabricLogger
 }
 
-func NewGRPCServer(organizationHandler *handler.OrganizationHandler, organizationMemberHandler *handler.OrganizationMemberHandler) *GRPCServer {
+func NewGRPCServer(
+	organizationHandler *handler.OrganizationHandler,
+	organizationMemberHandler *handler.OrganizationMemberHandler,
+	organizationRoleHandler *handler.OrganizationRoleHandler,
+	organizationPermissionHandler *handler.OrganizationPermissionHandler,
+) *GRPCServer {
 	return &GRPCServer{
-		organizationHandler:       organizationHandler,
-		organizationMemberHandler: organizationMemberHandler,
-		logger:                    flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		organizationHandler:           organizationHandler,
+		organizationMemberHandler:     organizationMemberHandler,
+		organizationRoleHandler:       organizationRoleHandler,
+		organizationPermissionHandler: organizationPermissionHandler,
+		logger:                        flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
 
 func (s *GRPCServer) Start() {
 	g := &run.Group{}
 
-	start, stop := buildGRPCServer(s.logger, s.organizationHandler, s.organizationMemberHandler)
+	start, stop := buildGRPCServer(s.logger,
+		s.organizationHandler,
+		s.organizationMemberHandler,
+		s.organizationRoleHandler,
+		s.organizationPermissionHandler)
 
 	g.Add(start, stop)
 
@@ -47,7 +60,12 @@ func (s *GRPCServer) Start() {
 	}
 }
 
-func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler.OrganizationHandler, organizationMemberHandler *handler.OrganizationMemberHandler) (func() error, func(error)) {
+func buildGRPCServer(logger *flogging.FabricLogger,
+	organizationHandler *handler.OrganizationHandler,
+	organizationMemberHandler *handler.OrganizationMemberHandler,
+	organizationRoleHandler *handler.OrganizationRoleHandler,
+	organizationPermissionHandler *handler.OrganizationPermissionHandler,
+) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryAuthInterceptor(logger),
@@ -61,6 +79,8 @@ func buildGRPCServer(logger *flogging.FabricLogger, organizationHandler *handler
 			logger.Info("Registering OrganizationServiceServer")
 			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)
 			organizationpb.RegisterOrganizationMemberServiceServer(s, organizationMemberHandler)
+			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
+			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
 		},
 		unaryInts,
 		streamInts,

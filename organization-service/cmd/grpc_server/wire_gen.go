@@ -20,21 +20,37 @@ import (
 
 func InitializeGRPCServer() *grpc.GRPCServer {
 	organizationRepository := repository.NewOrganizationRepository()
-	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository)
+	organizationMemberRepository := repository.NewOrganizationMemberRepository()
+	organizationRoleRepository := repository.NewOrganizationRoleRepository()
+	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository, organizationMemberRepository, organizationRoleRepository)
 	organizationTransformer := transformer.NewOrganizationTransformer()
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
-	organizationMemberRepository := repository.NewOrganizationMemberRepository()
-	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository)
-	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase)
-	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler)
+	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository)
+	organizationMemberTransformer := transformer.NewOrganizationMemberTransformer()
+	organizationMemberValidator := validator.NewOrganizationMemberValidator()
+	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator)
+	organizationPermissionRepository := repository.NewOrganizationPermissionRepository()
+	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationMemberRepository, organizationRepository)
+	organizationRoleTransformer := transformer.NewOrganizationRoleTransformer()
+	organizationRoleValidator := validator.NewOrganizationRoleValidator()
+	organizationRoleHandler := handler.NewOrganizationRoleHandler(organizationRoleUsecase, organizationRoleTransformer, organizationRoleValidator)
+	organizationPermissionUsecase := usecase.NewOrganizationPermissionUsecase(organizationPermissionRepository, organizationRoleRepository, organizationMemberRepository, organizationRepository)
+	organizationPermissionTransformer := transformer.NewOrganizationPermissionTransformer()
+	organizationPermissionValidator := validator.NewOrganizationPermissionValidator()
+	organizationPermissionHandler := handler.NewOrganizationPermissionHandler(organizationPermissionUsecase, organizationPermissionTransformer, organizationPermissionValidator)
+	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler, organizationRoleHandler, organizationPermissionHandler)
 	return grpcServer
 }
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository)
+var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository, repository.NewOrganizationRoleRepository, repository.NewOrganizationPermissionRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase)
+var usecaseSet = wire.NewSet(usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase, usecase.NewOrganizationRoleUsecase, usecase.NewOrganizationPermissionUsecase)
 
-var handlerSet = wire.NewSet(transformer.NewOrganizationTransformer, validator.NewOrganizationValidator, handler.NewOrganizationHandler, handler.NewOrganizationMemberHandler)
+var transformerSet = wire.NewSet(transformer.NewOrganizationTransformer, transformer.NewOrganizationMemberTransformer, transformer.NewOrganizationRoleTransformer, transformer.NewOrganizationPermissionTransformer)
+
+var validatorSet = wire.NewSet(validator.NewOrganizationValidator, validator.NewOrganizationMemberValidator, validator.NewOrganizationRoleValidator, validator.NewOrganizationPermissionValidator)
+
+var handlerSet = wire.NewSet(handler.NewOrganizationHandler, handler.NewOrganizationMemberHandler, handler.NewOrganizationRoleHandler, handler.NewOrganizationPermissionHandler)

@@ -231,7 +231,7 @@ func RegisterOrganizationMemberServiceHandlerServer(ctx context.Context, mux *ru
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/CreateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/create-organization-member"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/CreateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -251,7 +251,7 @@ func RegisterOrganizationMemberServiceHandlerServer(ctx context.Context, mux *ru
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/UpdateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/update-organization-member/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/UpdateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -271,7 +271,7 @@ func RegisterOrganizationMemberServiceHandlerServer(ctx context.Context, mux *ru
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/DeleteOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/delete-organization-member/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/DeleteOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -291,7 +291,7 @@ func RegisterOrganizationMemberServiceHandlerServer(ctx context.Context, mux *ru
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/GetOrganizationMembers", runtime.WithHTTPPathPattern("/v2/organization/get-organization-members/{organizationId}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/GetOrganizationMembers", runtime.WithHTTPPathPattern("/v2/organization-member/{organizationId}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -366,7 +366,7 @@ func RegisterOrganizationMemberServiceHandlerClient(ctx context.Context, mux *ru
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/CreateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/create-organization-member"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/CreateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -383,7 +383,7 @@ func RegisterOrganizationMemberServiceHandlerClient(ctx context.Context, mux *ru
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/UpdateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/update-organization-member/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/UpdateOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -400,7 +400,7 @@ func RegisterOrganizationMemberServiceHandlerClient(ctx context.Context, mux *ru
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/DeleteOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization/delete-organization-member/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/DeleteOrganizationMember", runtime.WithHTTPPathPattern("/v2/organization-member/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -417,7 +417,7 @@ func RegisterOrganizationMemberServiceHandlerClient(ctx context.Context, mux *ru
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/GetOrganizationMembers", runtime.WithHTTPPathPattern("/v2/organization/get-organization-members/{organizationId}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_organization.OrganizationMemberService/GetOrganizationMembers", runtime.WithHTTPPathPattern("/v2/organization-member/{organizationId}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -435,10 +435,10 @@ func RegisterOrganizationMemberServiceHandlerClient(ctx context.Context, mux *ru
 
 var (
 	pattern_OrganizationMemberService_SwitchOrganization_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_organization.OrganizationMemberService", "SwitchOrganization"}, ""))
-	pattern_OrganizationMemberService_CreateOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "organization", "create-organization-member"}, ""))
-	pattern_OrganizationMemberService_UpdateOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "organization", "update-organization-member", "id"}, ""))
-	pattern_OrganizationMemberService_DeleteOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "organization", "delete-organization-member", "id"}, ""))
-	pattern_OrganizationMemberService_GetOrganizationMembers_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "organization", "get-organization-members", "organizationId"}, ""))
+	pattern_OrganizationMemberService_CreateOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "organization-member"}, ""))
+	pattern_OrganizationMemberService_UpdateOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "organization-member", "id"}, ""))
+	pattern_OrganizationMemberService_DeleteOrganizationMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "organization-member", "id"}, ""))
+	pattern_OrganizationMemberService_GetOrganizationMembers_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "organization-member", "organizationId"}, ""))
 )
 
 var (

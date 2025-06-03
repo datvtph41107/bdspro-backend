@@ -13,25 +13,25 @@ service OrganizationMemberService {
     rpc SwitchOrganization(SwitchOrganizationRequest) returns (SwitchOrganizationResponse) {}
     rpc CreateOrganizationMember(CreateOrganizationMemberRequest) returns (CreateOrganizationMemberResponse) {
         option (google.api.http) = {
-            post: "/v2/organization/create-organization-member"
+            post: "/v2/organization-member"
             body: "*"
         };
     }
     rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {
         option (google.api.http) = {
-            put: "/v2/organization/update-organization-member/{id}"
+            put: "/v2/organization-member/{id}"
             body: "*"
         };
     }
     rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest) returns (DeleteOrganizationMemberResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization/delete-organization-member/{id}"
+            delete: "/v2/organization-member/{id}"
         };
     }
 
     rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/get-organization-members/{organizationId}"
+            get: "/v2/organization-member/{organizationId}"
         };
     }
 
@@ -48,16 +48,10 @@ message SwitchOrganizationResponse {
     bool isSuccess = 3 [json_name = "isSuccess"];
 }
 
-enum OrganizationMemberRole {
-    ORGANIZATION_MEMBER_ROLE_UNSPECIFIED = 0;
-    ORGANIZATION_MEMBER_ROLE_ADMIN = 1;
-    ORGANIZATION_MEMBER_ROLE_MEMBER = 2;
-  }
-
 message CreateOrganizationMemberRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];
     uint32 userId = 2 [json_name = "userId"];
-    OrganizationMemberRole role = 3 [json_name = "role", (validate.rules).enum = {defined_only: true, not_in: [0]}];
+    uint32 role = 3 [json_name = "role"];
 }
 
 message CreateOrganizationMemberResponse {
@@ -66,7 +60,7 @@ message CreateOrganizationMemberResponse {
 
 message UpdateOrganizationMemberRequest {
     uint32 id = 1 [json_name = "id"];
-    OrganizationMemberRole role = 2 [json_name = "role", (validate.rules).enum = {defined_only: true, not_in: [0]}];
+    uint32 role = 2 [json_name = "role"];
 }
 
 message UpdateOrganizationMemberResponse {
@@ -88,7 +82,7 @@ message GetOrganizationMembersRequest {
 message OrganizationMember {
     uint32 id = 1 [json_name = "id"];
     uint32 userId = 2 [json_name = "userId"];
-    OrganizationMemberRole role = 3 [json_name = "role"];
+    uint32 role = 3 [json_name = "role"];
     string status = 4 [json_name = "status"];
 }
 message GetOrganizationMembersResponse {

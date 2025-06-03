@@ -4,18 +4,31 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
+	"github.com/tuandq2112/organization-service/appconfig"
+	"github.com/tuandq2112/organization-service/internal/interface/transformer"
+	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type OrganizationMemberHandler struct {
 	organizationpb.UnimplementedOrganizationMemberServiceServer
-	OrganizationMemberUsecase usecase.OrganizationMemberUsecase
+	OrganizationMemberUsecase     usecase.OrganizationMemberUsecase
+	OrganizationMemberTransformer transformer.OrganizationMemberTransformer
+	OrganizationMemberValidator   validator.OrganizationMemberValidator
 }
 
-func NewOrganizationMemberHandler(organizationMemberUsecase usecase.OrganizationMemberUsecase) *OrganizationMemberHandler {
-	return &OrganizationMemberHandler{OrganizationMemberUsecase: organizationMemberUsecase}
+func NewOrganizationMemberHandler(organizationMemberUsecase usecase.OrganizationMemberUsecase,
+	organizationMemberTransformer transformer.OrganizationMemberTransformer,
+	organizationMemberValidator validator.OrganizationMemberValidator,
+) *OrganizationMemberHandler {
+	return &OrganizationMemberHandler{
+		OrganizationMemberUsecase:     organizationMemberUsecase,
+		OrganizationMemberTransformer: organizationMemberTransformer,
+		OrganizationMemberValidator:   organizationMemberValidator,
+	}
 }
 
 func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req *organizationpb.SwitchOrganizationRequest) (*organizationpb.SwitchOrganizationResponse, error) {
@@ -31,4 +44,45 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 		Id:        req.OrganizationId,
 		UserId:    req.UserId,
 	}, nil
+}
+
+func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context, req *organizationpb.CreateOrganizationMemberRequest) (*organizationpb.CreateOrganizationMemberResponse, error) {
+	organizationMember := h.OrganizationMemberTransformer.CreateOrganizationMemberRequestToEntity(req)
+	if err := h.OrganizationMemberValidator.ValidateCreateOrganizationMemberRequest(req); err != nil {
+		return nil, err
+	}
+	organizationMember, err := h.OrganizationMemberUsecase.CreateOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organizationMember)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationMemberTransformer.EntityToCreateOrganizationMemberResponse(organizationMember), nil
+}
+
+
+func (h *OrganizationMemberHandler) UpdateOrganizationMember(ctx context.Context, req *organizationpb.UpdateOrganizationMemberRequest) (*organizationpb.UpdateOrganizationMemberResponse, error) {
+	organizationMember := h.OrganizationMemberTransformer.UpdateOrganizationMemberRequestToEntity(req)
+	if err := h.OrganizationMemberValidator.ValidateUpdateOrganizationMemberRequest(req); err != nil {
+		return nil, err
+	}
+	organizationMember, err := h.OrganizationMemberUsecase.UpdateOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organizationMember)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationMemberTransformer.EntityToUpdateOrganizationMemberResponse(organizationMember), nil
+}
+
+func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context, req *organizationpb.DeleteOrganizationMemberRequest) (*organizationpb.DeleteOrganizationMemberResponse, error) {
+	organizationMember, err := h.OrganizationMemberUsecase.DeleteOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationMemberTransformer.EntityToDeleteOrganizationMemberResponse(organizationMember), nil
+}
+
+func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
+	organizationMembers, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.OrganizationId)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(organizationMembers), nil
 }

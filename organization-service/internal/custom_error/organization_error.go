@@ -14,6 +14,7 @@ var (
 	InvalidTaxCodeCode codes.Code = 3003
 	UserAlreadyInOrganizationCode codes.Code = 3004
 	InternalServerErrorCode codes.Code = 3005
+	InvalidOrganizationIDCode codes.Code = 3006
 )
 
 func InvalidRequest(details ...protoadapt.MessageV1 ) error {
@@ -34,4 +35,16 @@ func UserAlreadyInOrganization() error {
 
 func InternalServerError() error {
 	return NewError(int32(InternalServerErrorCode), errors.New("internal server error"))
+}
+
+func InvalidOrganizationID() error {
+	return NewError(int32(InvalidOrganizationIDCode), errors.New("invalid organization id"))
+}
+
+func Forbidden(message string) error {
+	return NewError(int32(codes.PermissionDenied), errors.New(message))
+}
+
+func RecordNotFound(message string) error {
+	return NewError(int32(codes.NotFound), errors.New(message))
 }

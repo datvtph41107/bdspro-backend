@@ -9,21 +9,21 @@ option go_package = "types/pb_organization";
 service OrganizationService {
     rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
         option (google.api.http) = {
-            post: "/v2/organization/create-organization"
+            post: "/v2/organization"
             body: "*"
         };
     }
 
     rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {
         option (google.api.http) = {
-            put: "/v2/organization/update-organization/{id}"
+            put: "/v2/organization/{id}"
             body: "*"
         };
     }
 
     rpc GetOrganizations(GetOrganizationsRequest) returns (GetOrganizationsResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/get-organizations"
+            get: "/v2/organization"
         };
     }
     

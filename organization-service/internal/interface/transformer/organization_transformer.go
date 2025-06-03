@@ -9,6 +9,9 @@ import (
 type OrganizationTransformer interface {
 	EntityToCreateOrganizationResponse(organization *entity.Organization) *organizationpb.CreateOrganizationResponse
 	CreateOrganizationRequestToEntity(request *organizationpb.CreateOrganizationRequest) *entity.Organization
+	UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization
+	EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse
+	EntityToGetOrganizationsResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationsResponse
 }
 
 type organizationTransformer struct{}
@@ -33,5 +36,45 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 		Email:              request.Email,
 		Website:            request.Website,
 		LogoUrl:            request.LogoUrl,
+	}
+}
+
+func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization {
+	return &entity.Organization{
+		ID: request.Id,
+		Name: request.Name,
+		TaxCode: request.TaxCode,
+		BusinessLicenseUrl: request.BusinessLicenseUrl,
+		Address: request.Address,
+		Phone: request.Phone,	
+		Email: request.Email,
+		Website: request.Website,
+		LogoUrl: request.LogoUrl,
+	}
+}
+
+func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse {
+	return &organizationpb.UpdateOrganizationResponse{
+		Id: organization.ID,
+	}
+}
+
+func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationsResponse {
+	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
+	for i, organization := range organizations {
+		organizationsResponse[i] = &organizationpb.Organization{
+			Id: organization.ID,
+			Name: organization.Name,
+			TaxCode: organization.TaxCode,
+			BusinessLicenseUrl: organization.BusinessLicenseUrl,
+			Address: organization.Address,
+			Phone: organization.Phone,
+			Email: organization.Email,
+			Website: organization.Website,
+			LogoUrl: organization.LogoUrl,			
+		}
+	}
+	return &organizationpb.GetOrganizationsResponse{
+		Organizations: organizationsResponse,
 	}
 }

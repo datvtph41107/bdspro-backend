@@ -4,25 +4,21 @@ import (
 	"time"
 )
 
-type OrganizationMemberRole string
+
+
+type OrganizationMemberStatus uint32
 
 const (
-	OrganizationMemberRoleAdmin  OrganizationMemberRole = "admin"
-	OrganizationMemberRoleMember OrganizationMemberRole = "member"
-)
-
-type OrganizationMemberStatus string
-
-const (
-	OrganizationMemberStatusActive   OrganizationMemberStatus = "active"
-	OrganizationMemberStatusInactive OrganizationMemberStatus = "inactive"
+	OrganizationMemberStatusActive   OrganizationMemberStatus = 1
+	OrganizationMemberStatusInactive OrganizationMemberStatus = 2
+	OrganizationMemberStatusPending  OrganizationMemberStatus = 3
 )
 
 type OrganizationMember struct {
 	ID             uint32
 	OrganizationID uint32
 	UserID         uint32
-	Role           OrganizationMemberRole
+	RoleId           uint32
 	Status         OrganizationMemberStatus
 	JoinedAt       time.Time
 	RemovedAt      *time.Time

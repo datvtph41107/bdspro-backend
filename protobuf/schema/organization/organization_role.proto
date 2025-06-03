@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package pb_organization;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "types/pb_organization";
+
+service OrganizationRoleService {
+    rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {
+        option (google.api.http) = {
+            post: "/v2/organization-role"
+            body: "*"
+        };
+    }
+
+    rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option (google.api.http) = {
+            put: "/v2/organization-role/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {
+        option (google.api.http) = {
+            delete: "/v2/organization-role/{id}"
+        };
+    }
+
+    rpc GetRoles(GetRolesRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization-role"
+        };
+    }
+    
+}
+
+message CreateRoleRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    uint32 organizationId = 3 [json_name = "organizationId"];
+}
+
+message CreateRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdateRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+}
+
+message UpdateRoleResponse {    
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetRolesRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+}
+message Role {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+}
+
+message GetRolesResponse {
+    repeated Role roles = 1 [json_name = "roles"];
+}
+

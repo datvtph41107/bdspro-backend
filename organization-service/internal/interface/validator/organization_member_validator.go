@@ -1,0 +1,57 @@
+package validator
+
+import (
+	organizationpb "pb/types/organization"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type OrganizationMemberValidator interface {
+	ValidateCreateOrganizationMemberRequest(request *organizationpb.CreateOrganizationMemberRequest) error
+	ValidateUpdateOrganizationMemberRequest(request *organizationpb.UpdateOrganizationMemberRequest) error
+}
+
+type organizationMemberValidator struct{}
+
+func NewOrganizationMemberValidator() OrganizationMemberValidator {
+	return &organizationMemberValidator{}
+}
+
+func (o *organizationMemberValidator) ValidateCreateOrganizationMemberRequest(request *organizationpb.CreateOrganizationMemberRequest) error {
+	if request == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if request.OrganizationId == 0 {
+		return status.Errorf(codes.InvalidArgument, "organizationId is required")
+	}
+
+	if request.UserId == 0 {
+		return status.Errorf(codes.InvalidArgument, "userId is required")
+	}
+
+	if request.Role == 0 {
+		return status.Errorf(codes.InvalidArgument, "role is required")
+	}
+
+	return nil
+}
+
+
+func (o *organizationMemberValidator) ValidateUpdateOrganizationMemberRequest(request *organizationpb.UpdateOrganizationMemberRequest) error {
+	if request == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if request.Id == 0 {
+		return status.Errorf(codes.InvalidArgument, "id is required")
+	}
+
+	if request.Role == 0 {
+		return status.Errorf(codes.InvalidArgument, "role is required")
+	}
+
+	return nil
+}
+

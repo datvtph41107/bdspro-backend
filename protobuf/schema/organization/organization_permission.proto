@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package pb_organization;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "types/pb_organization";
+
+service OrganizationPermissionService {
+  
+    rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {
+        option (google.api.http) = {
+            post: "/v2/organization-permission"
+            body: "*"
+        };
+    }
+
+    rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {
+        option (google.api.http) = {
+            put: "/v2/organization-permission/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {
+        option (google.api.http) = {
+            delete: "/v2/organization-permission/{id}"
+        };
+    }
+
+    rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization-permission"
+        };
+    }
+}
+
+message CreatePermissionRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    uint32 organizationId = 3 [json_name = "organizationId"];
+}
+
+message CreatePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdatePermissionRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+}
+
+message UpdatePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeletePermissionRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeletePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetPermissionsRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+}
+message Permission {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+}
+
+message GetPermissionsResponse {
+    repeated Permission permissions = 1 [json_name = "permissions"];
+}
+

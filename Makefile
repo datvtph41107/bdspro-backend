@@ -6,6 +6,10 @@ gen:
 	cd protobuf/schema && buf generate --template ./spec/buf.gen.yaml --path spec
 	cd protobuf/schema && buf generate --template ./generic/buf.gen.yaml --path generic
 	cd protobuf/schema && buf generate --template ./organization/buf.gen.yaml --path organization
+init:
+	cd gateway-service && go mod tidy
+	cd user-service && go mod tidy
+	cd organization-service && go mod tidy
 
 payment:
 	cd payment-service && go run main.go http

@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
 	"gorm.io/gorm"
@@ -34,8 +36,8 @@ func (OrganizationModel) TableName() string {
 	return "organizations"
 }
 
-func OrganizationModelToEntity(model OrganizationModel) entity.Organization {
-	return entity.Organization{
+func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
+	return &entity.Organization{
 		ID:                 model.ID,
 		Name:               model.Name,
 		TaxCode:            model.TaxCode,
@@ -53,8 +55,8 @@ func OrganizationModelToEntity(model OrganizationModel) entity.Organization {
 	}
 }
 
-func OrganizationEntityToModel(entity entity.Organization) OrganizationModel {
-	return OrganizationModel{
+func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
+	return &OrganizationModel{
 		ID:                 entity.ID,
 		Name:               entity.Name,
 		TaxCode:            entity.TaxCode,
@@ -72,6 +74,14 @@ func OrganizationEntityToModel(entity entity.Organization) OrganizationModel {
 	}
 }
 
+func OrganizationModelsToEntities(models []*OrganizationModel) []*entity.Organization {
+	entities := make([]*entity.Organization, len(models))
+	for i, model := range models {
+		entities[i] = OrganizationModelToEntity(model)
+	}
+	return entities
+}
+
 func NewOrganizationPostgresRepository(db *gorm.DB) repository.OrganizationRepository {
 	return &organizationPostgresRepository{db: db}
 }
@@ -86,14 +96,25 @@ func (o *organizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 			tx.Rollback()
 		}
 	}()
-	organizationModel := OrganizationEntityToModel(*organization)
+	organizationModel := OrganizationEntityToModel(organization)
 	if err := tx.Create(&organizationModel).Error; err != nil {
+		tx.Rollback()
+		return nil, nil, err
+
+	}
+	role := &OrganizationRoleModel{
+		Name:           "Admin",
+		Key:            appconfig.ADMIN_ROLE_KEY,
+		OrganizationId: organizationModel.ID,
+	}
+	if err := tx.Create(&role).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
 
-	memberModel := OrganizationMemberEntityToModel(*member)
+	memberModel := OrganizationMemberEntityToModel(member)
 	memberModel.OrganizationID = organizationModel.ID
+	memberModel.Role = role.ID
 	if err := tx.Create(&memberModel).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
@@ -103,15 +124,43 @@ func (o *organizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		tx.Rollback()
 		return nil, nil, err
 	}
-	org := OrganizationModelToEntity(organizationModel)
-	mem := OrganizationMemberModelToEntity(memberModel)
-	return &org, &mem, nil
+	return OrganizationModelToEntity(organizationModel), OrganizationMemberModelToEntity(memberModel), nil
 }
 
-func (o *organizationPostgresRepository) ExistByTaxCode(ctx context.Context, taxCode string) (bool, error) {
-	var count int64
-	if err := o.db.WithContext(ctx).Model(&OrganizationModel{}).Where("tax_code = ?", taxCode).Count(&count).Error; err != nil {
-		return false, err
+func (o *organizationPostgresRepository) FindByTaxCode(ctx context.Context, taxCode string) (*entity.Organization, error) {
+	var organizationModel *OrganizationModel
+	if err := o.db.WithContext(ctx).Where("tax_code = ?", taxCode).First(&organizationModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
 	}
-	return count > 0, nil
+	return OrganizationModelToEntity(organizationModel), nil
+}
+
+func (o *organizationPostgresRepository) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
+	model := OrganizationEntityToModel(organization)
+	if err := o.db.WithContext(ctx).Model(&model).Where("id = ?", organization.ID).Updates(model).Error; err != nil {
+		return nil, err
+	}
+	return OrganizationModelToEntity(model), nil
+}
+
+func (o *organizationPostgresRepository) FindById(ctx context.Context, id uint32) (*entity.Organization, error) {
+	var organizationModel *OrganizationModel
+	if err := o.db.WithContext(ctx).Where("id = ?", id).First(&organizationModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return OrganizationModelToEntity(organizationModel), nil
+}
+
+func (o *organizationPostgresRepository) FindByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
+	var organizations []*OrganizationModel
+	if err := o.db.WithContext(ctx).Where("created_by = ?", userId).Find(&organizations).Error; err != nil {
+		return nil, err
+	}
+	return OrganizationModelsToEntities(organizations), nil
 }

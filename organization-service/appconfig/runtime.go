@@ -23,6 +23,7 @@ const (
 	DefaultDBDNS    = "host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable"
 	DefaultHTTPPort = "8080"
 	DefaultGRPCPort = "50052"
+	ADMIN_ROLE_KEY  = "admin"
 )
 
 var (

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	organizationpb "pb/types/organization"
 	"time"
 
@@ -36,10 +35,8 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
 	organization.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
-	fmt.Println("gothẻe", organization.CreatedBy)
 	member := &entity.OrganizationMember{
 		UserID:   organization.CreatedBy,
-		Role:     entity.OrganizationMemberRoleAdmin,
 		Status:   entity.OrganizationMemberStatusActive,
 		JoinedAt: time.Now(),
 	}
@@ -51,4 +48,24 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 		return nil, err
 	}
 	return h.OrganizationTransformer.EntityToCreateOrganizationResponse(organization), nil
+}
+
+
+func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organizationpb.UpdateOrganizationRequest) (*organizationpb.UpdateOrganizationResponse, error) {
+	organization := h.OrganizationTransformer.UpdateOrganizationRequestToEntity(req)
+	organization.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+
+	organization, err := h.OrganizationUsecase.UpdateOrganization(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organization)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationTransformer.EntityToUpdateOrganizationResponse(organization), nil
+}
+
+func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organizationpb.GetOrganizationsRequest) (*organizationpb.GetOrganizationsResponse, error) {
+	organizations, err := h.OrganizationUsecase.GetOrganizations(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT))
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations), nil
 }

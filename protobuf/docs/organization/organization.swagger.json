@@ -16,7 +16,36 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization/create-organization": {
+    "/v2/organization": {
+      "get": {
+        "operationId": "OrganizationService_GetOrganizations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      },
       "post": {
         "operationId": "OrganizationService_CreateOrganization",
         "responses": {
@@ -48,38 +77,7 @@
         ]
       }
     },
-    "/v2/organization/get-organizations": {
-      "get": {
-        "operationId": "OrganizationService_GetOrganizations",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "OrganizationService"
-        ]
-      }
-    },
-    "/v2/organization/update-organization/{id}": {
+    "/v2/organization/{id}": {
       "put": {
         "operationId": "OrganizationService_UpdateOrganization",
         "responses": {

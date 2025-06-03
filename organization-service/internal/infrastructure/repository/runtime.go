@@ -34,3 +34,29 @@ func NewOrganizationMemberRepository() repository.OrganizationMemberRepository {
 	}
 	return nil
 }
+
+func NewOrganizationRoleRepository() repository.OrganizationRoleRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.OrganizationRoleModel{})
+		return postgres.NewOrganizationRolePostgresRepository(db)
+	}
+	return nil
+}
+
+func NewOrganizationPermissionRepository() repository.OrganizationPermissionRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.OrganizationPermissionModel{})
+		return postgres.NewOrganizationPermissionPostgresRepository(db)
+	}
+	return nil
+}

@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization/create-organization-member": {
+    "/v2/organization-member": {
       "post": {
         "operationId": "OrganizationMemberService_CreateOrganizationMember",
         "responses": {
@@ -48,7 +48,7 @@
         ]
       }
     },
-    "/v2/organization/delete-organization-member/{id}": {
+    "/v2/organization-member/{id}": {
       "delete": {
         "operationId": "OrganizationMemberService_DeleteOrganizationMember",
         "responses": {
@@ -77,40 +77,7 @@
         "tags": [
           "OrganizationMemberService"
         ]
-      }
-    },
-    "/v2/organization/get-organization-members/{organizationId}": {
-      "get": {
-        "operationId": "OrganizationMemberService_GetOrganizationMembers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationMembersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "OrganizationMemberService"
-        ]
-      }
-    },
-    "/v2/organization/update-organization-member/{id}": {
+      },
       "put": {
         "operationId": "OrganizationMemberService_UpdateOrganizationMember",
         "responses": {
@@ -148,6 +115,37 @@
           "OrganizationMemberService"
         ]
       }
+    },
+    "/v2/organization-member/{organizationId}": {
+      "get": {
+        "operationId": "OrganizationMemberService_GetOrganizationMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationMemberService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -155,7 +153,8 @@
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/pb_organizationOrganizationMemberRole"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -171,7 +170,8 @@
           "format": "int64"
         },
         "role": {
-          "$ref": "#/definitions/pb_organizationOrganizationMemberRole"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -217,21 +217,13 @@
           "format": "int64"
         },
         "role": {
-          "$ref": "#/definitions/pb_organizationOrganizationMemberRole"
+          "type": "integer",
+          "format": "int64"
         },
         "status": {
           "type": "string"
         }
       }
-    },
-    "pb_organizationOrganizationMemberRole": {
-      "type": "string",
-      "enum": [
-        "ORGANIZATION_MEMBER_ROLE_UNSPECIFIED",
-        "ORGANIZATION_MEMBER_ROLE_ADMIN",
-        "ORGANIZATION_MEMBER_ROLE_MEMBER"
-      ],
-      "default": "ORGANIZATION_MEMBER_ROLE_UNSPECIFIED"
     },
     "pb_organizationSwitchOrganizationResponse": {
       "type": "object",
