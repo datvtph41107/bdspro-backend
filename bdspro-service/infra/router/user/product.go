@@ -1,7 +1,7 @@
 package user_router
 
 import (
-	"bdspro/external/providers"
+	"bdspro/infra/providers"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	_routes "common/routes"
@@ -67,7 +67,7 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 // @Security BearerAuth
 // @Param product body data.NewProductRequest true "Thông tin sản phẩm"
 // @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
-// @Router /v1/bdspro/user/product/new [post]
+// @Router /v1/bdspro/v2/user/product/new [post]
 func (route *UProductRouter) CreateNewProduct(c *gin.Context) {
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
 	if err != nil {
@@ -86,7 +86,7 @@ func (route *UProductRouter) CreateNewProduct(c *gin.Context) {
 // @Security BearerAuth
 // @Param product body data.NewProductRequest true "Thông tin sản phẩm"
 // @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
-// @Router /v1/bdspro/user/product/{id} [post]
+// @Router /v1/bdspro/v2/user/product/{id} [post]
 func (route *UProductRouter) Detail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -176,7 +176,7 @@ func (route *UProductRouter) History(c *gin.Context) {
 // @Security BearerAuth
 // @Param publish body data.StatusRequest true "Thông tin đăng tin"
 // @Success 200 {object} data.StatusResponse "Tin được đăng thành công"
-// @Router /v1/bdspro/user/product/publish [put]
+// @Router /v1/bdspro/v2/user/product/publish [put]
 func (route *UProductRouter) PublishProduct(e *gin.Context) {
 
 }
@@ -189,7 +189,7 @@ func (route *UProductRouter) PublishProduct(e *gin.Context) {
 // @Security BearerAuth
 // @Param revert body data.StatusRequest true "Thông tin hoàn tác"
 // @Success 200 {object} data.StatusResponse "Trạng thái sản phẩm đã được hoàn tác"
-// @Router /v1/bdspro/user/product/revert/:id [put]
+// @Router /v1/bdspro/v2/user/product/revert/:id [put]
 func (route *UProductRouter) RevertProduct(e *gin.Context) {
 
 }
@@ -211,7 +211,7 @@ func (route *UProductRouter) RevertProduct(e *gin.Context) {
 // @Param limit query int false "Limit results" default(10)
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/user/product/me [get]
+// @Router /v1/bdspro/v2/user/product/me [get]
 func (route *UProductRouter) SearchProductWithOwner(c *gin.Context) {
 	body := dto.ProductSearchRequest{}
 	err := _utils.ParseQuery2(c, &body)
@@ -238,7 +238,7 @@ func (route *UProductRouter) SearchProductWithOwner(c *gin.Context) {
 // @Param limit query int false "Limit results" default(10)
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/user/product/market [get]
+// @Router /v1/bdspro/v2/user/product/market [get]
 func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
 	// _routes.RouteResult(c, nil, nil)
 	body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
@@ -256,7 +256,7 @@ func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
 // @Param size query int false "Sizet results" default(10)
 // @Param page query int false "Page" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/user/product/total [get]
+// @Router /v1/bdspro/v2/user/product/total [get]
 func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
 	body, _ := _utils.ParseQueryToStruct[dto.TextSearchRequest](c.Request.URL.Query())
 	result, err := route.UProductUsecase.SmartSearch(c, body.Text, body.GetPage(), body.GetSize())
@@ -278,7 +278,7 @@ func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
 // @Param limit query int false "Limit results" default(10)
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/user/product/suggest [post]
+// @Router /v1/bdspro/v2/user/product/suggest [post]
 func (route *UProductRouter) NewProductWithDetect(c *gin.Context) {
 	_body, _ := _utils.ParseBody[dto.ProductSaveDetect](c)
 	result, err := route.UProductUsecase.CreateProductWithDetect(c, _body)
@@ -293,7 +293,7 @@ func (route *UProductRouter) NewProductWithDetect(c *gin.Context) {
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/{productId} [put]
+// @Router /v1/bdspro/v2/user/product/{productId} [put]
 func (route *UProductRouter) Edit(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
@@ -324,7 +324,7 @@ func (route *UProductRouter) Rent(c *gin.Context) {
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Param body body dto.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/archived [put]
+// @Router /v1/bdspro/v2/user/product/archived [put]
 func (route *UProductRouter) Archived(c *gin.Context) {
 	body := dto.ArchivedRequest{}
 
@@ -343,7 +343,7 @@ func (route *UProductRouter) Archived(c *gin.Context) {
 // @Produce json
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
-// @Router /v1/bdspro/user/product/{productId} [delete]
+// @Router /v1/bdspro/v2/user/product/{productId} [delete]
 func (route *UProductRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -361,7 +361,7 @@ func (route *UProductRouter) Delete(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/rent-status [put]
+// @Router /v1/bdspro/v2/user/product/rent-status [put]
 func (route *UProductRouter) RentStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
@@ -380,7 +380,7 @@ func (route *UProductRouter) RentStatusUpdate(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/sale-status [put]
+// @Router /v1/bdspro/v2/user/product/sale-status [put]
 func (route *UProductRouter) SaleStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
@@ -399,7 +399,7 @@ func (route *UProductRouter) SaleStatusUpdate(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/rent-visibility [put]
+// @Router /v1/bdspro/v2/user/product/rent-visibility [put]
 func (route *UProductRouter) RentVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
@@ -418,7 +418,7 @@ func (route *UProductRouter) RentVisibilityUpdate(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/sale-visibility [put]
+// @Router /v1/bdspro/v2/user/product/sale-visibility [put]
 func (route *UProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
@@ -437,7 +437,7 @@ func (route *UProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/user/product/deposite [post]
+// @Router /v1/bdspro/v2/user/product/deposite [post]
 func (route *UProductRouter) Deposite(c *gin.Context) {
 	dto := dto.DepositeRequest{}
 
@@ -456,7 +456,7 @@ func (route *UProductRouter) Deposite(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param depositeId path int true "Deposite ID"
-// @Router /v1/bdspro/user/product/deposite/{depositeId} [delete]
+// @Router /v1/bdspro/v2/user/product/deposite/{depositeId} [delete]
 func (route *UProductRouter) CancelDeposite(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("depositeId"), 10, 64)
 	if err != nil {
@@ -474,7 +474,7 @@ func (route *UProductRouter) CancelDeposite(c *gin.Context) {
 // // @Accept json
 // // @Produce json
 // // @Security BearerAuth
-// // @Router /v1/bdspro/user/product/access-share [post]
+// // @Router /v1/bdspro/v2/user/product/access-share [post]
 // func (route *UProductRouter) Share(c *gin.Context) {
 // 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 // 	if err != nil {
@@ -524,7 +524,7 @@ func dereference(value interface{}) interface{} {
 // @Success 200 {file} file "Excel file"
 // @Failure 400 {object} _routes.ResponseDTO
 // @Failure 500 {object} _routes.ResponseDTO
-// @Router /v1/bdspro/user/product/export [post]
+// @Router /v1/bdspro/v2/user/product/export [post]
 func (route *UProductRouter) ExportExcel(c *gin.Context) {
 	var query dto.ProductSearchRequest
 	if err := _utils.ParseQuery2(c, &query); err != nil {

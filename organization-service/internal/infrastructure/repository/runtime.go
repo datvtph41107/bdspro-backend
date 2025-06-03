@@ -5,8 +5,8 @@ import (
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/database"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/repository/postgres"
+	"github.com/tuandq2112/organization-service/internal/infra/database"
+	"github.com/tuandq2112/organization-service/internal/infra/repository/postgres"
 )
 
 func NewOrganizationRepository() repository.OrganizationRepository {

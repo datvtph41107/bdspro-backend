@@ -647,3 +647,42 @@ func (r *GormUserProductRepo) SetSaleVisibility(ctx context.Context, id *uint64,
 func (r *GormUserProductRepo) GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error) {
 	return nil, nil
 }
+
+func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN product_access pa
+					ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = ?)`, targetID, targetType).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+
+		// Where("pa.user_id = ?", profileId).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("pa.deleted_at is NULL and pa.target_id is not null")
+
+	var results []domain.Product
+	if err := query.
+		Order("created_at desc").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&results).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}

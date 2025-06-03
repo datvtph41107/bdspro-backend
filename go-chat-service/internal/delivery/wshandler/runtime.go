@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/infrastructure/redis"
+	"github.com/tuandq3/go-chat-service/infra/redis"
 	"github.com/tuandq3/go-chat-service/internal/constants"
 	"github.com/tuandq3/go-chat-service/utils"
 )

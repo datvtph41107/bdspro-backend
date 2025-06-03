@@ -51,7 +51,7 @@ func (route *UProductChildRoute) RegisterRoute(r *gin.RouterGroup) {
 // @Param productId path int false "Product ID"
 // @Security BearerAuth
 // @Param body body dto.SaveProductChildRequest true "Thông tin sản phẩm con"
-// @Router /v1/bdspro/user/product/split [post]
+// @Router /v1/bdspro/v2/user/product/split [post]
 func (route *UProductChildRoute) CreateChild(c *gin.Context) {
 	_body := dto.SaveProductChildRequest{}
 
@@ -70,7 +70,7 @@ func (route *UProductChildRoute) CreateChild(c *gin.Context) {
 // @Produce json
 // @Param productId path int false "Product ID"
 // @Security BearerAuth
-// @Router /v1/bdspro/user/product/split [post]
+// @Router /v1/bdspro/v2/user/product/split [post]
 func (route *UProductChildRoute) InfoArea(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -93,7 +93,7 @@ func (route *UProductChildRoute) InfoArea(c *gin.Context) {
 // @Param productId path int false "Product ID"
 // @Security BearerAuth
 // @Param body body dto.MergeProductChildRequest true "Thông tin sản phẩm con"
-// @Router /v1/bdspro/user/product/merge [post]
+// @Router /v1/bdspro/v2/user/product/merge [post]
 func (route *UProductChildRoute) MergeChild(c *gin.Context) {
 	_body := dto.MergeProductChildRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &_body); err != nil {
@@ -112,7 +112,7 @@ func (route *UProductChildRoute) MergeChild(c *gin.Context) {
 // @Produce json
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
-// @Router /v1/bdspro/user/product/merge-all/{productId} [post]
+// @Router /v1/bdspro/v2/user/product/merge-all/{productId} [post]
 func (route *UProductChildRoute) MergeAll(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -130,7 +130,7 @@ func (route *UProductChildRoute) MergeAll(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.DevideChildRequest true "Thông tin sản phẩm con"
-// @Router /v1/bdspro/user/product/devide [post]
+// @Router /v1/bdspro/v2/user/product/devide [post]
 func (route *UProductChildRoute) DevideChild(c *gin.Context) {
 	_body := dto.DevideChildRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &_body); err != nil {
@@ -148,7 +148,7 @@ func (route *UProductChildRoute) DevideChild(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
-// @Router /v1/bdspro/user/product/history-child/:id [get]
+// @Router /v1/bdspro/v2/user/product/history-child/:id [get]
 func (route *UProductChildRoute) History(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

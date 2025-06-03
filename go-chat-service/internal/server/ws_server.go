@@ -11,7 +11,7 @@ import (
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/infrastructure/database/postgres"
+	"github.com/tuandq3/go-chat-service/infra/database/postgres"
 	"github.com/tuandq3/go-chat-service/internal/constants"
 	middlewares "github.com/tuandq3/go-chat-service/internal/delivery/middleware"
 	"github.com/tuandq3/go-chat-service/internal/delivery/wshandler"
@@ -22,7 +22,7 @@ import (
 var wsLogger = flogging.MustGetLogger("ws_server")
 
 type WSServer struct {
-	server      *http.Server
+	server *http.Server
 }
 
 func NewWSServer(port string) *WSServer {
@@ -87,4 +87,3 @@ func (s *WSServer) Start() {
 		wsLogger.Errorf("WebSocket server shutdown error: %v", err)
 	}
 }
-

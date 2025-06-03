@@ -37,6 +37,7 @@ func main() {
 
 	updatedFuncs := mergeFunctions(existingFuncs, newFuncs)
 	binds := findBinds("./", rootPackage)
+	// log.Println("binds: ", binds)
 
 	writeWireFile(updatedFuncs, binds, rootPackage, prefix, wireFile)
 	fmt.Println("✅ wire.go updated successfully!")
@@ -322,7 +323,6 @@ func findBinds(root string, rootPackage string) []BindEntry {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			line := strings.TrimSpace(scanner.Text())
-
 			if matches := bindRe.FindStringSubmatch(line); len(matches) == 4 {
 				interfacePkgPath := matches[1] + "/" + matches[2]
 				interfaceAlias := generateAlias(interfacePkgPath)
@@ -341,7 +341,7 @@ func findBinds(root string, rootPackage string) []BindEntry {
 			// Expect: type Xxx struct {
 			if pendingBind != nil && strings.HasPrefix(line, "type ") && strings.Contains(line, "struct") {
 				words := strings.Fields(line)
-				if len(words) >= 3 && words[2] == "struct" {
+				if len(words) >= 3 && strings.HasPrefix(words[2], "struct") {
 					pendingBind.StructName = words[1]
 					binds = append(binds, *pendingBind)
 					pendingBind = nil

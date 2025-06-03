@@ -49,7 +49,7 @@ func (r *UProductAccessRoute) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 201 {object} models.ProductAccess
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /v1/bdspro/user/product-access/{productId}/bulk [post]
+// @Router /v1/bdspro/v2/user/product-access/{productId}/bulk [post]
 func (r *UProductAccessRoute) BulkSave(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -78,7 +78,7 @@ func (r *UProductAccessRoute) BulkSave(c *gin.Context) {
 // @Success 201 {object} models.ProductAccess
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /v1/bdspro/user/product-access/{productId}/batch [post]
+// @Router /v1/bdspro/v2/user/product-access/{productId}/batch [post]
 func (r *UProductAccessRoute) CreateBatch(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -119,7 +119,7 @@ func (r *UProductAccessRoute) UpdateCommission(c *gin.Context) {
 // // @Success 200 {object} models.ProductAccess
 // // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // // @Failure 500 {object} map[string]string "Không thể cập nhật dữ liệu"
-// // @Router /v1/bdspro/user/product-access/{id} [put]
+// // @Router /v1/bdspro/v2/user/product-access/{id} [put]
 // func (r *UserProductAccessRoute) Update(c *gin.Context) {}
 
 // @Summary Xóa Dự án
@@ -132,7 +132,7 @@ func (r *UProductAccessRoute) UpdateCommission(c *gin.Context) {
 // @Success 200 {object} map[string]bool "Trạng thái xóa"
 // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /v1/bdspro/user/product-access/{id} [delete]
+// @Router /v1/bdspro/v2/user/product-access/{id} [delete]
 func (r *UProductAccessRoute) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -154,7 +154,7 @@ func (r *UProductAccessRoute) Delete(c *gin.Context) {
 // // @Success 200 {object} models.ProductAccess
 // // @Failure 400 {object} map[string]string "ID không hợp lệ"
 // // @Failure 404 {object} map[string]string "Không tìm thấy dữ liệu"
-// // @Router /v1/bdspro/user/product-access/{id} [get]
+// // @Router /v1/bdspro/v2/user/product-access/{id} [get]
 // func (r *UserProductAccessRoute) GetByID(c *gin.Context) {}
 
 // @Summary Lấy danh sách Dự án
@@ -165,7 +165,7 @@ func (r *UProductAccessRoute) Delete(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.ProductAccess
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /v1/bdspro/user/product-access [get]
+// @Router /v1/bdspro/v2/user/product-access [get]
 func (r *UProductAccessRoute) Search(c *gin.Context) {
 	var dto dto.ProductAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -185,7 +185,7 @@ func (r *UProductAccessRoute) Search(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {array} models.ProductAccess
 // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /v1/bdspro/user/product-access/private-fields [get]
+// @Router /v1/bdspro/v2/user/product-access/private-fields [get]
 func (r *UProductAccessRoute) GetFields(c *gin.Context) {
 	// fields := []struct {
 	// 	Value string `json:"value"`

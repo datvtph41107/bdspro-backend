@@ -1,12 +1,12 @@
 package config
 
 import (
-	server "bdspro/external/handler"
-	group_router "bdspro/external/router/group"
-	org_router "bdspro/external/router/org"
-	public_router "bdspro/external/router/public"
-	user_router "bdspro/external/router/user"
-	service "bdspro/external/services"
+	server "bdspro/infra/handler"
+	group_router "bdspro/infra/router/group"
+	org_router "bdspro/infra/router/org"
+	public_router "bdspro/infra/router/public"
+	user_router "bdspro/infra/router/user"
+	service "bdspro/infra/services"
 	"bdspro/v1/mod/admin"
 	"bdspro/v1/mod/user"
 	"bytes"

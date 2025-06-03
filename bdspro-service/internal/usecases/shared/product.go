@@ -36,10 +36,9 @@ type ProductUsecase struct {
 	UAssetUsecase      *usecases.UAssetUsecase
 	DepositeRepo       repo.DepositeRepo
 	ProductUsecase     iusecase.IProductUsecase
-	OwnerType          enums.ETargetType
 }
 
-func MakeProductUsecase(productRepo repo.UProductRepo,
+func NewProductUsecase(productRepo repo.UProductRepo,
 	ProductHistoryRepo repo.ProductHistoryRepo,
 	assetRepo repo.AssetRepo,
 	mediaRepo repo.ProductMediaRepo,
@@ -55,10 +54,8 @@ func MakeProductUsecase(productRepo repo.UProductRepo,
 	UserPostUsecase *usecases.UPostUsecase,
 	UAssetUsecase *usecases.UAssetUsecase,
 	depositeRepo repo.DepositeRepo,
-	ownerType enums.ETargetType,
-	productUsecase iusecase.IProductUsecase,
-) ProductUsecase {
-	return ProductUsecase{
+) *ProductUsecase {
+	return &ProductUsecase{
 		ProductRepo:        productRepo,
 		AssetRepo:          assetRepo,
 		ProductAccessRepo:  productAccessRepo,
@@ -75,8 +72,6 @@ func MakeProductUsecase(productRepo repo.UProductRepo,
 		ProductHistoryRepo: ProductHistoryRepo,
 		UAssetUsecase:      UAssetUsecase,
 		DepositeRepo:       depositeRepo,
-		OwnerType:          ownerType,
-		ProductUsecase:     productUsecase,
 	}
 }
 
@@ -115,7 +110,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 
 	entity.LastPriceID = &product.PriceDTO.ID
 	entity.OwnerUserID = ownerId
-	entity.OwnerType = s.OwnerType
+	entity.OwnerType = s.ProductUsecase.GetOwnerType(c)
 	_db.SaveWithContext(c, entity)
 	// err := s.productRepo.UpdateProduct(c, entity.ID, entity)
 	// err := s.UpdateReference(c, entity, product)
@@ -272,7 +267,7 @@ func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.Produc
 	if err != nil {
 		return nil, 0, err
 	}
-	return s.ProductRepo.SearchProductByOwner(ownerID, s.OwnerType, dto)
+	return s.ProductRepo.SearchProductByOwner(ownerID, s.ProductUsecase.GetOwnerType(c), dto)
 }
 
 func (s *ProductUsecase) SearchExport(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
@@ -280,7 +275,7 @@ func (s *ProductUsecase) SearchExport(c context.Context, dto *dto.ProductSearchR
 	if err != nil {
 		return nil, err
 	}
-	results, err := s.ProductRepo.SearchExport(ownerID, s.OwnerType, dto)
+	results, err := s.ProductRepo.SearchExport(ownerID, s.ProductUsecase.GetOwnerType(c), dto)
 	return results, err
 }
 
@@ -346,7 +341,7 @@ func (s *ProductUsecase) SmartSearch(c context.Context, text string, p _dto.Page
 	if err != nil {
 		return nil, 0, err
 	}
-	return s.ProductRepo.SmartSearch(ownerID, s.OwnerType, &searchs)
+	return s.ProductRepo.SmartSearch(ownerID, s.ProductUsecase.GetOwnerType(c), &searchs)
 }
 
 func (s *ProductUsecase) UpdatePrice(c context.Context, priceID uint64, entity *domain.ProductPrice) error {
@@ -640,4 +635,8 @@ func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.P
 	}
 
 	return entities, total, nil
+}
+
+func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	return s.ProductRepo.SearchByProductAccess(c, targetID, targetType, dto)
 }

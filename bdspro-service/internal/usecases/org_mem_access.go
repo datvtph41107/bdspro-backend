@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"bdspro/external/providers"
+	"bdspro/infra/providers"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"

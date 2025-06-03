@@ -5,7 +5,7 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/repository"
+	"github.com/tuandq2112/organization-service/internal/infra/repository"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
