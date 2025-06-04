@@ -17,19 +17,16 @@ type OrganizationUsecase interface {
 
 type organizationUsecase struct {
 	OrganizationRepository       repository.OrganizationRepository
-	organizationMemberRepository repository.OrganizationMemberRepository
-	organizationRoleRepository   repository.OrganizationRoleRepository
+	organizationAuthUsecase OrganizationAuthUsecase
 }
 
 func NewOrganizationUsecase(
 	organizationRepository repository.OrganizationRepository,
-	organizationMemberRepository repository.OrganizationMemberRepository,
-	organizationRoleRepository repository.OrganizationRoleRepository,
+	organizationAuthUsecase OrganizationAuthUsecase,
 ) OrganizationUsecase {
 	return &organizationUsecase{
 		OrganizationRepository:       organizationRepository,
-		organizationMemberRepository: organizationMemberRepository,
-		organizationRoleRepository:   organizationRoleRepository,
+		organizationAuthUsecase: organizationAuthUsecase,
 	}
 }
 
@@ -55,8 +52,12 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 }
 
 func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUserId uint32, organization *entity.Organization) (*entity.Organization, error) {
-	if err := o.checkPermission(ctx, currentUserId, organization.ID); err != nil {
+	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, organization.ID, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
 		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	org, err := o.OrganizationRepository.FindById(ctx, organization.ID)
 	if err != nil {
@@ -84,23 +85,7 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	return org, nil
 }
 
-func (o *organizationUsecase) checkPermission(ctx context.Context, currentUserId uint32, organizationId uint32) error {
-	member, err := o.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, currentUserId, organizationId)
-	if err != nil {
-		return err
-	}
-	if member == nil {
-		return custom_error.Forbidden("You are not authorized to access this resource")
-	}
-	role, err := o.organizationRoleRepository.FindById(ctx, member.RoleId)
-	if err != nil {
-		return err
-	}
-	if role.Key != appconfig.ADMIN_ROLE_KEY {
-		return custom_error.Forbidden("You are not authorized to access this resource")
-	}
-	return nil
-}
+
 func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
 	return o.OrganizationRepository.FindByUserId(ctx, userId)
 }

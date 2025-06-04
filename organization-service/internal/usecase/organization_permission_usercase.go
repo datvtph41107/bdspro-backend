@@ -20,21 +20,21 @@ type OrganizationPermissionUsecase interface {
 type organizationPermissionUsecase struct {
 	organizationPermissionRepository repository.OrganizationPermissionRepository
 	organizationRoleRepository repository.OrganizationRoleRepository
-	organizationMemberRepository repository.OrganizationMemberRepository
 	organizationRepository repository.OrganizationRepository
+	organizationAuthUsecase OrganizationAuthUsecase
 }
 
 func NewOrganizationPermissionUsecase(
 	organizationPermissionRepository repository.OrganizationPermissionRepository, 
 	organizationRoleRepository repository.OrganizationRoleRepository,
-	organizationMemberRepository repository.OrganizationMemberRepository,
 	organizationRepository repository.OrganizationRepository,
+	organizationAuthUsecase OrganizationAuthUsecase,
 ) OrganizationPermissionUsecase {
 	return &organizationPermissionUsecase{
 		organizationPermissionRepository: organizationPermissionRepository,
 		organizationRoleRepository: organizationRoleRepository,
-		organizationMemberRepository: organizationMemberRepository,
 		organizationRepository: organizationRepository,
+		organizationAuthUsecase: organizationAuthUsecase,
 	}
 }
 
@@ -73,8 +73,12 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, cu
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
-	if err := u.isAdmin(ctx, currentUserId, organization.ID); err != nil {
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organization.ID, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
 		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	existPermission.Name = permission.Name
 	existPermission.Key = permission.Key
@@ -83,8 +87,12 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, cu
 
 
 func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationPermission, error) {
-	if err := u.isAdmin(ctx, currentUserId, organizationId); err != nil {
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
 		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	return u.organizationPermissionRepository.FindByOrganizationId(ctx, organizationId)
 }
@@ -101,27 +109,14 @@ func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, cu
 	if organization == nil {
 		return custom_error.RecordNotFound("Organization not found")
 	}
-	if err := u.isAdmin(ctx, currentUserId, organization.ID); err != nil {
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organization.ID, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
 		return err
+	}
+	if !hasRole {
+		return custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	return u.organizationPermissionRepository.Delete(ctx, permissionId)
 }
 
 
-func (u *organizationPermissionUsecase) isAdmin(ctx context.Context, userId uint32, organizationId uint32) error {
-	organizationMember, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, userId, organizationId)
-	if err != nil {
-		return err
-	}
-	if organizationMember == nil {
-		return custom_error.RecordNotFound("Organization member not found")
-	}
-	role, err := u.organizationRoleRepository.FindById(ctx, organizationMember.RoleId)
-	if err != nil {
-		return err
-	}
-	if role.Key != appconfig.ADMIN_ROLE_KEY {
-		return custom_error.Forbidden("You are not authorized to access this resource")
-	}
-	return nil
-}
