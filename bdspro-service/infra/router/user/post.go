@@ -2,7 +2,7 @@ package user_router
 
 import (
 	"bdspro/internal/dto"
-	"bdspro/internal/usecases"
+	user_usecase "bdspro/internal/usecases/user"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -10,18 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserPostRoute struct {
-	UC *usecases.UPostUsecase
+type UserPostRouter struct {
+	UC *user_usecase.UserPostUC
 }
 
-func NewUserPostRoute(uc *usecases.UPostUsecase) *UserPostRoute {
-	return &UserPostRoute{
+func NewUserPostRoute(uc *user_usecase.UserPostUC) *UserPostRouter {
+	return &UserPostRouter{
 		UC: uc,
 	}
 }
 
-func (r *UserPostRoute) RegisterRoutes(router *gin.RouterGroup) {
-	group := router.Group("/posts")
+func (r *UserPostRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
+	group := router.Group(path)
 	{
 		// todo:
 		group.POST("", r.CreatePost)
@@ -43,7 +43,13 @@ func (r *UserPostRoute) RegisterRoutes(router *gin.RouterGroup) {
 	}
 }
 
-func (r *UserPostRoute) CreatePost(c *gin.Context) {
+// @Summary Tạo bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param body body dto.PostSaveRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post [post]
+func (r *UserPostRouter) CreatePost(c *gin.Context) {
 	body := dto.PostSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -54,7 +60,14 @@ func (r *UserPostRoute) CreatePost(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UserPostRoute) UpdatePost(c *gin.Context) {
+// @Summary Cập nhật bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param id path int64 true "ID bài đăng"
+// @Param body body dto.PostUpdateRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/{id} [put]
+func (r *UserPostRouter) UpdatePost(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -71,7 +84,13 @@ func (r *UserPostRoute) UpdatePost(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UserPostRoute) UpdateHidden(c *gin.Context) {
+// @Summary Cập nhật trạng thái ẩn
+// @Tags User: Tin đăng
+// @Produce json
+// @Param body body dto.UpdateHiddenRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/hidden [put]
+func (r *UserPostRouter) UpdateHidden(c *gin.Context) {
 	body := dto.UpdateHiddenRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -93,7 +112,13 @@ func (r *UserPostRoute) UpdateHidden(c *gin.Context) {
 // 	_routes.RouteResult(c, result, err)
 // }
 
-func (r *UserPostRoute) GetDetail(c *gin.Context) {
+// @Summary Lấy chi tiết bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param id path int64 true "ID bài đăng"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/{id} [get]
+func (r *UserPostRouter) GetDetail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -104,7 +129,13 @@ func (r *UserPostRoute) GetDetail(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UserPostRoute) GetPersonalPost(c *gin.Context) {
+// @Summary Lấy danh sách bài đăng cá nhân
+// @Tags User: Tin đăng
+// @Produce json
+// @Param query query dto.PostSearchRequest true "Query"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/personal [get]
+func (r *UserPostRouter) GetPersonalPost(c *gin.Context) {
 	query := dto.PostSearchRequest{}
 	if err := _utils.ParseQuery2(c, &query); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -115,7 +146,13 @@ func (r *UserPostRoute) GetPersonalPost(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UserPostRoute) GetGlobalPost(c *gin.Context) {
+// @Summary Lấy danh sách bài đăng toàn cục
+// @Tags User: Tin đăng
+// @Produce json
+// @Param query query dto.PostSearchRequest true "Query"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/global [get]
+func (r *UserPostRouter) GetGlobalPost(c *gin.Context) {
 	query := dto.PostSearchRequest{}
 	if err := _utils.ParseQuery2(c, &query); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -127,7 +164,13 @@ func (r *UserPostRoute) GetGlobalPost(c *gin.Context) {
 }
 
 // todo: logic thanh toán chưa rõ ràng
-func (r *UserPostRoute) NewExpiredPost(c *gin.Context) {
+// @Summary Tạo bài đăng hết hạn
+// @Tags User: Tin đăng
+// @Produce json
+// @Param body body dto.PostExpiredRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/new-expired [post]
+func (r *UserPostRouter) NewExpiredPost(c *gin.Context) {
 	body := dto.PostExpiredRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -139,7 +182,13 @@ func (r *UserPostRoute) NewExpiredPost(c *gin.Context) {
 }
 
 // todo: logic thanh toán chưa rõ ràng
-func (r *UserPostRoute) Share(c *gin.Context) {
+// @Summary Chia sẻ bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param body body dto.PostExpiredRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/share [post]
+func (r *UserPostRouter) Share(c *gin.Context) {
 	body := dto.PostExpiredRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -150,7 +199,13 @@ func (r *UserPostRoute) Share(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UserPostRoute) Delete(c *gin.Context) {
+// @Summary Xóa bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param id path int64 true "ID bài đăng"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/{id} [delete]
+func (r *UserPostRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -161,7 +216,13 @@ func (r *UserPostRoute) Delete(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-func (r *UserPostRoute) GetPublish(c *gin.Context) {
+// @Summary Lấy danh sách bài đăng đã đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param profileId path int64 true "ID người dùng"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/publish/{profileId} [get]
+func (r *UserPostRouter) GetPublish(c *gin.Context) {
 	profileId, err := strconv.ParseUint(c.Param("profileId"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)

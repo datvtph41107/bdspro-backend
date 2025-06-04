@@ -61,7 +61,7 @@ func (s *PostgreHistoryRepo) History(
 	productId uint64,
 	dto dto.ProductHistorySearch,
 ) (*[]domain.ProductHistory, int64, error) {
-	// var results []models.ProductChildHistory
+	// var results []domain.ProductChildHistory
 
 	type rawResult struct {
 		domain.ProductHistory
@@ -106,7 +106,7 @@ ORDER BY h.created_at DESC
 
 	var result []domain.ProductHistory
 	for _, r := range raws {
-		// var childs []models.ProductInfo
+		// var childs []domain.ProductInfo
 		if r.ChildsRaw != nil {
 			if err := json.Unmarshal(r.ChildsRaw, &r.ProductHistory.Childs); err != nil {
 				return nil, 0, err
@@ -140,7 +140,7 @@ ORDER BY h.created_at DESC
 		totalElements = raws[0].TotalElement
 	}
 	// err := s.DB.
-	// 	// Model(&models.ProductChildHistory{}).
+	// 	// Model(&domain.ProductChildHistory{}).
 	// 	Preload("ProductData").
 	// 	Where("created_by = ? AND deleted_at is null", profileId).
 	// 	Find(&results).Error

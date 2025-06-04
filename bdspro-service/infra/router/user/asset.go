@@ -3,7 +3,7 @@ package user_router
 import (
 	"bdspro/internal/dto"
 	user_dto "bdspro/internal/dto/user"
-	"bdspro/internal/usecases"
+	user_usecase "bdspro/internal/usecases/user"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -11,21 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UAssetRoute struct {
-	// crud2.BaseRouter[domain.Asset, *usecases.UAssetUsecase]
-	UC *usecases.UAssetUsecase
+type UserAssetRouter struct {
+	UC *user_usecase.UserAssetUsecase
 }
 
-func NewUAssetRoute(service *usecases.UAssetUsecase) *UAssetRoute {
-	return &UAssetRoute{
-		// BaseRouter: crud2.BaseRouter[domain.Asset, *usecases.UAssetUsecase]{
-		// },
-		UC: service,
-	}
+func NewUserAssetRouter(uc *user_usecase.UserAssetUsecase) *UserAssetRouter {
+	return &UserAssetRouter{UC: uc}
 }
 
-func (r *UAssetRoute) RegisterRoutes(router *gin.RouterGroup) {
-	assetGroup := router.Group("/assets")
+func (r *UserAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
+	assetGroup := router.Group(path)
 	{
 		assetGroup.GET("/internal", r.SearchMe)
 		assetGroup.GET("/share", r.SearchShare)
@@ -46,7 +41,13 @@ func (r *UAssetRoute) RegisterRoutes(router *gin.RouterGroup) {
 	}
 }
 
-func (r *UAssetRoute) CreateAsset(c *gin.Context) {
+// @Summary Tạo mới
+// @Tags User: Tài sản
+// @Produce json
+// @Param body body domain.Asset true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset [post]
+func (r *UserAssetRouter) CreateAsset(c *gin.Context) {
 	body := user_dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -57,7 +58,13 @@ func (r *UAssetRoute) CreateAsset(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) CreateAssetFromProduct(c *gin.Context) {
+// @Summary Tạo từ sản phẩm
+// @Tags User: Tài sản
+// @Produce json
+// @Param body body user_dto.AssetSaveRequest true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/from-product [post]
+func (r *UserAssetRouter) CreateAssetFromProduct(c *gin.Context) {
 	body := user_dto.AssetSaveRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -68,7 +75,13 @@ func (r *UAssetRoute) CreateAssetFromProduct(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) SearchMe(c *gin.Context) {
+// @Summary Lấy danh sách tài sản của người dùng
+// @Tags User: Tài sản
+// @Produce json
+// @Param query query user_dto.AssetSearchDTO true "Size"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/search [get]
+func (r *UserAssetRouter) SearchMe(c *gin.Context) {
 	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -79,7 +92,7 @@ func (r *UAssetRoute) SearchMe(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) SearchShare(c *gin.Context) {
+func (r *UserAssetRouter) SearchShare(c *gin.Context) {
 	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -90,7 +103,13 @@ func (r *UAssetRoute) SearchShare(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) SearchSplit(c *gin.Context) {
+// @Summary Lấy danh sách tài sản có số lượng con
+// @Tags User: Tài sản
+// @Produce json
+// @Param body query user_dto.AssetSearchDTO true "body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/split [get]
+func (r *UserAssetRouter) SearchSplit(c *gin.Context) {
 	body := user_dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -105,7 +124,14 @@ func (r *UAssetRoute) SearchSplit(c *gin.Context) {
 	}, err)
 }
 
-func (r *UAssetRoute) Archived(c *gin.Context) {
+// @Summary Lấy theo ID
+// @Tags User: Tài sản
+// @Produce json
+// @Param id path int true "ID"
+// @Param body body user_dto.AssetArchivedDTO true "Body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/archived/{id} [put]
+func (r *UserAssetRouter) Archived(c *gin.Context) {
 	body := user_dto.AssetArchivedDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -116,7 +142,13 @@ func (r *UAssetRoute) Archived(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-func (r *UAssetRoute) Merge(c *gin.Context) {
+// @Summary Gộp tài sản
+// @Tags User: Tài sản
+// @Produce json
+// @Param body body user_dto.MergeAssetDTO true "body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/merge [post]
+func (r *UserAssetRouter) Merge(c *gin.Context) {
 	body := user_dto.MergeAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -127,7 +159,13 @@ func (r *UAssetRoute) Merge(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) Split(c *gin.Context) {
+// @Summary Tách tài sản
+// @Tags User: Tài sản
+// @Produce json
+// @Param body body user_dto.SplitAssetDTO true "body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/split [post]
+func (r *UserAssetRouter) Split(c *gin.Context) {
 	body := user_dto.SplitAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -138,7 +176,14 @@ func (r *UAssetRoute) Split(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) History(c *gin.Context) {
+// @Summary Lịch sử tách gộp tài sản danh cho tài sản
+// @Tags User: Tài sản
+// @Produce json
+// @Param body query dto.AssetHistoryDTO true "body"
+// @Param id path uint64 true "ID"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/history/:id [get]
+func (r *UserAssetRouter) History(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	body := dto.AssetHistoryDTO{}
@@ -151,7 +196,13 @@ func (r *UAssetRoute) History(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) HistoryOwner(c *gin.Context) {
+// @Summary Lịch sử tách gộp tài sản dành cho user
+// @Tags User: Tài sản
+// @Produce json
+// @Param body query dto.AssetHistoryDTO true "body"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/history-owner [get]
+func (r *UserAssetRouter) HistoryOwner(c *gin.Context) {
 	body := dto.AssetHistoryDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -162,7 +213,7 @@ func (r *UAssetRoute) HistoryOwner(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) UpdateAsset(c *gin.Context) {
+func (r *UserAssetRouter) UpdateAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	body := user_dto.AssetSaveRequest{}
@@ -175,21 +226,39 @@ func (r *UAssetRoute) UpdateAsset(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) GetDetail(c *gin.Context) {
+// @Summary Xem chi tiết
+// @Tags User: Tài sản
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/{id} [get]
+func (r *UserAssetRouter) GetDetail(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	result, err := r.UC.GetAssetDetail(c, id)
 	_routes.RouteResult(c, result, err)
 }
 
-func (r *UAssetRoute) DeleteAsset(c *gin.Context) {
+// @Summary Xóa
+// @Tags User: Tài sản
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/{id} [delete]
+func (r *UserAssetRouter) DeleteAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	err := r.UC.DeleteAsset(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
-func (r *UAssetRoute) GetPublish(c *gin.Context) {
+// @Summary Lấy danh sách tài sản đã đăng
+// @Tags User: Tài sản
+// @Produce json
+// @Param profileId path int true "ID"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/asset/publish/{profileId} [get]
+func (r *UserAssetRouter) GetPublish(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("profileId"), 10, 32)
 
 	result, err := r.UC.GetPublish(c, id)

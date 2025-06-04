@@ -7,7 +7,6 @@ package main
 // // @Produce json
 // // @Security BearerAuth
 // // @Param publish body data.StatusRequest true "Thông tin đăng tin"
-// // @Success 200 {object} data.StatusResponse "Tin được đăng thành công"
 // // @Router /v1/bdspro/user/product/internal [get]
 // func ProductInternal() {}
 

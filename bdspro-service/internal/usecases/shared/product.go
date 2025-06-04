@@ -3,11 +3,10 @@ package shared_usecase
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
+	user_repo "bdspro/internal/repo/user"
 	"bdspro/internal/usecases"
-	iusecase "bdspro/internal/usecases/interface"
 	"bdspro/internal/utils"
 	_db "common/db"
 	_dto "common/dto"
@@ -18,9 +17,17 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+type IProductUsecase interface {
+	GetOwnerID(c context.Context) (*uint64, error)
+	HasPermission(c context.Context, productId *uint64, permission enums.EPermission) (bool, error)
+	GetOwnerType(c context.Context) enums.EOwnerType
+	// CheckPermission(c context.Context, productID uint64, dto *dto.ProductSearchRequest) error
+}
+
 type ProductUsecase struct {
-	ProductRepo        repo.UProductRepo
-	AssetRepo          repo.AssetRepo
+	This               IProductUsecase
+	ProductRepo        user_repo.UProductRepo
+	AssetRepo          user_repo.UAssetRepo
 	MediaRepo          repo.ProductMediaRepo
 	ProductAccessRepo  repo.ProductAccessRepo
 	HouseInfoRepo      repo.HouseInfoRepo
@@ -32,15 +39,17 @@ type ProductUsecase struct {
 	Amenity            repo.AmenityRepo
 	ProductHistoryRepo repo.ProductHistoryRepo
 	MemberPlan         usecases.PlanUsecase
-	UserPostUsecase    *usecases.UPostUsecase
-	UAssetUsecase      *usecases.UAssetUsecase
-	DepositeRepo       repo.DepositeRepo
-	ProductUsecase     iusecase.IProductUsecase
+	PostUsecase        *PostUsecase
+	// UserPostUsecase    *UPostUsecase
+	// UAssetUsecase      *UAssetUsecase
+	DepositeRepo repo.DepositeRepo
+	OwnerType    enums.EOwnerType
 }
 
-func NewProductUsecase(productRepo repo.UProductRepo,
+func MakeProductUsecase(
+	productRepo user_repo.UProductRepo,
 	ProductHistoryRepo repo.ProductHistoryRepo,
-	assetRepo repo.AssetRepo,
+	assetRepo user_repo.UAssetRepo,
 	mediaRepo repo.ProductMediaRepo,
 	productAccessRepo repo.ProductAccessRepo,
 	houseInfoRepo repo.HouseInfoRepo,
@@ -51,9 +60,10 @@ func NewProductUsecase(productRepo repo.UProductRepo,
 	propertyType repo.PropertyTypeRepo,
 	amenity repo.AmenityRepo,
 	memberPlan usecases.PlanUsecase,
-	UserPostUsecase *usecases.UPostUsecase,
-	UAssetUsecase *usecases.UAssetUsecase,
+	PostUsecase *PostUsecase,
+	// UAssetUsecase *UAssetUsecase,
 	depositeRepo repo.DepositeRepo,
+	ownerType enums.EOwnerType,
 ) *ProductUsecase {
 	return &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -68,15 +78,16 @@ func NewProductUsecase(productRepo repo.UProductRepo,
 		PropertyType:       propertyType,
 		Amenity:            amenity,
 		MemberPlan:         memberPlan,
-		UserPostUsecase:    UserPostUsecase,
 		ProductHistoryRepo: ProductHistoryRepo,
-		UAssetUsecase:      UAssetUsecase,
-		DepositeRepo:       depositeRepo,
+		PostUsecase:        PostUsecase,
+		// UAssetUsecase:      UAssetUsecase,
+		DepositeRepo: depositeRepo,
+		OwnerType:    ownerType,
 	}
 }
 
 func (s *ProductUsecase) CheckPermission(c context.Context, productId *uint64, permission enums.EPermission) error {
-	hasPermission, err := s.ProductUsecase.HasPermission(c, productId, permission)
+	hasPermission, err := s.This.HasPermission(c, productId, permission)
 	if !hasPermission {
 		return &_routes.Except{
 			Code:    401,
@@ -94,7 +105,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	}
 
 	// ownerId là id của tổ chức, hoặc của cá nhân
-	ownerId, err := s.ProductUsecase.GetOwnerID(c)
+	ownerId, err := s.This.GetOwnerID(c)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +121,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 
 	entity.LastPriceID = &product.PriceDTO.ID
 	entity.OwnerUserID = ownerId
-	entity.OwnerType = s.ProductUsecase.GetOwnerType(c)
+	entity.OwnerType = s.This.GetOwnerType(c)
 	_db.SaveWithContext(c, entity)
 	// err := s.productRepo.UpdateProduct(c, entity.ID, entity)
 	// err := s.UpdateReference(c, entity, product)
@@ -133,7 +144,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 
 	postInfo := product.PostCreate
 	var postEntity *domain.Post
-	if postInfo != nil {
+	if postInfo != nil && s.PostUsecase != nil {
 		postInfo.ProductID = entity.ID
 		postInfo.Content = entity.Description
 		postInfo.TransactionType = entity.TransactionType
@@ -146,7 +157,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		dto := dto.PostSaveRequest{}
 		copier.Copy(&dto, &postInfo)
 
-		postEntity, err = s.UserPostUsecase.CreatePost(c, &dto)
+		postEntity, err = s.PostUsecase.CreatePost(c, &dto)
 		if err != nil {
 			return nil, err
 		}
@@ -172,10 +183,10 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			// Description:    assetInfo.Description,
 		}
 
-		assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
-			Asset:      *assetEntity,
-			LegalItems: assetInfo.LegalItems,
-		})
+		// assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
+		// 	Asset:      *assetEntity,
+		// 	LegalItems: assetInfo.LegalItems,
+		// })
 		if err != nil {
 			return nil, err
 		}
@@ -263,19 +274,19 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 
 func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	// profileId := _jwt.GetProfileId(c)
-	ownerID, err := s.ProductUsecase.GetOwnerID(c)
+	ownerID, err := s.This.GetOwnerID(c)
 	if err != nil {
 		return nil, 0, err
 	}
-	return s.ProductRepo.SearchProductByOwner(ownerID, s.ProductUsecase.GetOwnerType(c), dto)
+	return s.ProductRepo.SearchProductByOwner(ownerID, s.This.GetOwnerType(c), dto)
 }
 
 func (s *ProductUsecase) SearchExport(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
-	ownerID, err := s.ProductUsecase.GetOwnerID(c)
+	ownerID, err := s.This.GetOwnerID(c)
 	if err != nil {
 		return nil, err
 	}
-	results, err := s.ProductRepo.SearchExport(ownerID, s.ProductUsecase.GetOwnerType(c), dto)
+	results, err := s.ProductRepo.SearchExport(ownerID, s.This.GetOwnerType(c), dto)
 	return results, err
 }
 
@@ -325,7 +336,7 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 	return entity, nil
 }
 
-func (s *ProductUsecase) SmartSearch(c context.Context, text string, p _dto.Page) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) SmartSearch(c context.Context, text string, dto *dto.TextSearchRequest) ([]domain.Product, int64, error) {
 	searchs, err := utils.InferSearchText(text)
 
 	regionIds, _ := s.Region.InterText(text, 10)
@@ -335,13 +346,16 @@ func (s *ProductUsecase) SmartSearch(c context.Context, text string, p _dto.Page
 	searchs.RegionIds = regionIds
 	searchs.DocTypeIds = docTypeIds
 	searchs.PropertyTypeIds = propertyTypeIds
-	searchs.Page = p
+	searchs.Page = _dto.Page{
+		Page: dto.GetPage(),
+		Size: dto.GetSize(),
+	}
 
-	ownerID, err := s.ProductUsecase.GetOwnerID(c)
+	ownerID, err := s.This.GetOwnerID(c)
 	if err != nil {
 		return nil, 0, err
 	}
-	return s.ProductRepo.SmartSearch(ownerID, s.ProductUsecase.GetOwnerType(c), &searchs)
+	return s.ProductRepo.SmartSearch(ownerID, s.This.GetOwnerType(c), &searchs)
 }
 
 func (s *ProductUsecase) UpdatePrice(c context.Context, priceID uint64, entity *domain.ProductPrice) error {
@@ -429,12 +443,12 @@ func (s *ProductUsecase) SuggestFields(c context.Context, body *dto.ProductSaveD
 		}
 	}
 	if ward != nil && (district == nil || district.ID != ward.ParentID) {
-		district, _ = s.Region.GetByID(ward.ParentID)
-		province, _ = s.Region.GetByID(district.ParentID)
+		district, _ = s.Region.GetByID(c, ward.ParentID)
+		province, _ = s.Region.GetByID(c, district.ParentID)
 	}
 
 	if district != nil && (province == nil || province.ID != district.ParentID) {
-		province, _ = s.Region.GetByID(district.ParentID)
+		province, _ = s.Region.GetByID(c, district.ParentID)
 	}
 	// ---- xong ----
 
@@ -610,8 +624,11 @@ func (s *ProductUsecase) CancelDeposite(c context.Context, id uint64) error {
 }
 
 func (uc *ProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSearch) (*[]domain.PostItem, error) {
-	results, err := uc.UserPostUsecase.ProductPostLink(c, id, &dto)
-	return results, err
+	if uc.PostUsecase != nil {
+		results, err := uc.PostUsecase.ProductPostLink(c, id, &dto)
+		return results, err
+	}
+	return nil, nil
 }
 
 func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.ProductAccessSearch) (*[]domain.ProductAccessQuery, error) {
@@ -637,6 +654,6 @@ func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.P
 	return entities, total, nil
 }
 
-func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.ETargetType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.ProductRepo.SearchByProductAccess(c, targetID, targetType, dto)
 }

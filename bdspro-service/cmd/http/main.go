@@ -3,8 +3,7 @@ package cmd_http
 import (
 	"bdspro/config"
 	"bdspro/db"
-	"bdspro/v1/models"
-	app_validator "bdspro/v1/validator"
+	app_validator "bdspro/internal/validator"
 	w "bdspro/wire"
 	"common"
 	_jwt "common/jwt"
@@ -58,12 +57,11 @@ var HttpCmd = &cobra.Command{
 			app, _ := w.InitializeApp()
 			log.Printf("Data: ", config.AppProperties)
 
-			models.AutoMigrate()
+			// domain.AutoMigrate()
 			db.MigrateDomain()
 
 			engine.Use(_jwt.JWTAuthMiddleware(publicRoutes))
-			app.AdminRouter.RegisterAdminRouter(engine)
-			app.UserRoute.RegisterUserRouter(engine)
+			// app.AdminRouter.RegisterAdminRouter(engine)
 			app.UserRouter.RegisterRouter(engine)
 			app.OrgRouter.RegisterRoutes(engine)
 			app.GroupRouter.RegisterRoutes(engine)

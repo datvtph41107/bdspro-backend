@@ -6,6 +6,9 @@ import (
 	org_dto "bdspro/internal/dto/org"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
+	user_repo "bdspro/internal/repo/user"
+	"bdspro/internal/usecases"
+	iusecase "bdspro/internal/usecases/interface"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_db "common/db"
 	_routes "common/routes"
@@ -16,20 +19,47 @@ import (
 type GroupProductUsecase struct {
 	*shared_usecase.ProductUsecase
 	ProductAccessRepo repo.ProductAccessRepo
-	ClientRepo        repo.IClientRepo
+	ClientRepo        iusecase.IClientUC
 }
 
 func NewGroupProductUsecase(
-	productUsecase *shared_usecase.ProductUsecase,
-	clientRepo repo.IClientRepo,
+	productRepo user_repo.UProductRepo,
+	ProductHistoryRepo repo.ProductHistoryRepo,
+	assetRepo user_repo.UAssetRepo,
+	mediaRepo repo.ProductMediaRepo,
+	productAccessRepo repo.ProductAccessRepo,
+	houseInfoRepo repo.HouseInfoRepo,
+	priceRepo repo.ProductPriceRepo,
+	productPrivate repo.ProductPrivateRepo,
+	region repo.RegionRepo,
+	docTypeRepo repo.DocTypeRepo,
+	propertyType repo.PropertyTypeRepo,
+	amenity repo.AmenityRepo,
+	memberPlan usecases.PlanUsecase,
+	depositeRepo repo.DepositeRepo,
+	clientRepo iusecase.IClientUC,
 ) *GroupProductUsecase {
-	uc := &GroupProductUsecase{}
-	clone := *productUsecase
-	newPtr := &clone
-
-	newPtr.ProductUsecase = uc
-	uc.ProductUsecase = newPtr
-	uc.ClientRepo = clientRepo
+	uc := &GroupProductUsecase{
+		ProductUsecase: shared_usecase.MakeProductUsecase(
+			productRepo,
+			ProductHistoryRepo,
+			assetRepo,
+			mediaRepo,
+			productAccessRepo,
+			houseInfoRepo,
+			priceRepo,
+			productPrivate,
+			region,
+			docTypeRepo,
+			propertyType,
+			amenity,
+			memberPlan,
+			nil,
+			depositeRepo,
+			enums.EOwnerTypeGroup,
+		),
+		ClientRepo: clientRepo,
+	}
 
 	return uc
 }
@@ -38,8 +68,8 @@ func (u *GroupProductUsecase) GetOwnerID(c context.Context) (*uint64, error) {
 	return nil, nil
 }
 
-func (u *GroupProductUsecase) GetOwnerType(c context.Context) enums.ETargetType {
-	return enums.ETargetTypeGroup
+func (u *GroupProductUsecase) GetOwnerType(c context.Context) enums.EOwnerType {
+	return enums.EOwnerTypeGroup
 }
 
 func (u *GroupProductUsecase) HasPermission(c context.Context, productId *uint64, permission enums.EPermission) (bool, error) {
@@ -58,7 +88,7 @@ func (u *GroupProductUsecase) GetProduct(c context.Context, groupId uint64, dto 
 			Message: "Bạn không trong nhóm này",
 		}
 	}
-	return u.ProductUsecase.SearchByProductAccess(c, &groupId, enums.ETargetTypeGroup, &dto)
+	return u.ProductUsecase.SearchByProductAccess(c, &groupId, enums.EOwnerTypeGroup, &dto)
 }
 
 func (u *GroupProductUsecase) ShareProduct(c context.Context, dto org_dto.ProductShareRequest) (*domain.ProductAccess, error) {
@@ -82,7 +112,7 @@ func (u *GroupProductUsecase) ShareProduct(c context.Context, dto org_dto.Produc
 	productAccess := domain.ProductAccess{
 		ProductID:  dto.ProductID,
 		TargetId:   dto.GroupID,
-		TargetType: enums.ETargetTypeGroup,
+		TargetType: enums.EOwnerTypeGroup,
 	}
 
 	err = _db.SaveWithContext(c, &productAccess)

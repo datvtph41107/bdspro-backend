@@ -1,9 +1,8 @@
 package user_router
 
 import (
-	"bdspro/infra/providers"
 	"bdspro/internal/dto"
-	"bdspro/internal/usecases"
+	user_usecase "bdspro/internal/usecases/user"
 	_routes "common/routes"
 	_utils "common/utils"
 	"fmt"
@@ -17,19 +16,19 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type UProductRouter struct {
-	UProductUsecase  *usecases.UProductUsecase
-	UProductProvider *providers.UProductProvider
+type UserProductRouter struct {
+	UC *user_usecase.UserProductUC
+	// UProductProvider *providers.UProductProvider
 }
 
-func NewUProductRoute(product *usecases.UProductUsecase) *UProductRouter {
-	return &UProductRouter{
-		UProductUsecase: product,
+func NewUserProductRouter(product *user_usecase.UserProductUC) *UserProductRouter {
+	return &UserProductRouter{
+		UC: product,
 	}
 }
 
-func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
-	api := r.Group("/product")
+func (route *UserProductRouter) RegisterRoutes(r *gin.RouterGroup, path string) {
+	api := r.Group(path)
 	api.GET("/market", route.SearchProductMarket)
 	api.GET("/total", route.SearchSmartProduct)
 
@@ -37,14 +36,14 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 	api.GET("/link/:id", route.SearchProductWithOwner)
 	api.GET("/public", route.SearchProductWithOwner)
 	api.POST("/new", route.CreateNewProduct)
-	api.POST("/suggest", route.NewProductWithDetect)
+	api.GET("/suggest", route.SuggestProduct)
 	api.GET("/:id", route.Detail)
 	api.GET("/:id/posts", route.Posts)
 	api.GET("/:id/members", route.Members)
 	api.GET("/:id/history", route.History)
 	api.PUT("/edit/:id", route.Edit)
-	api.PUT("/publish", route.PublishProduct)
-	api.PUT("/revert", route.RevertProduct)
+	// api.PUT("/publish", route.PublishProduct)
+	// api.PUT("/revert", route.RevertProduct)
 
 	api.PUT("/archived", route.Archived)
 	api.DELETE("/:id", route.Delete)
@@ -61,33 +60,33 @@ func (route *UProductRouter) RegisterRoutes(r *gin.RouterGroup) {
 
 // @Summary Tạo sản phẩm mới
 // @Description API để tạo một sản phẩm mới
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param product body data.NewProductRequest true "Thông tin sản phẩm"
-// @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
+// @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
+// @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
 // @Router /v1/bdspro/v2/user/product/new [post]
-func (route *UProductRouter) CreateNewProduct(c *gin.Context) {
+func (route *UserProductRouter) CreateNewProduct(c *gin.Context) {
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UProductUsecase.CreateProduct(c, body)
+	result, err := route.UC.CreateProduct(c, body)
 	_routes.RouteResult(c, result, err)
 }
 
 // @Summary Tạo sản phẩm mới
 // @Description API để tạo một sản phẩm mới
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param product body data.NewProductRequest true "Thông tin sản phẩm"
-// @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
+// @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
+// @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
 // @Router /v1/bdspro/v2/user/product/{id} [post]
-func (route *UProductRouter) Detail(c *gin.Context) {
+func (route *UserProductRouter) Detail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -97,11 +96,19 @@ func (route *UProductRouter) Detail(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UProductUsecase.Detail(c, id)
+	result, err := route.UC.Detail(c, id)
 	_routes.RouteResult(c, result, err)
 }
 
-func (route *UProductRouter) Posts(c *gin.Context) {
+// @Summary Lấy danh sách bài viết liên quan
+// @Description Returns a list of posts related to a product
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Router /v1/bdspro/v2/user/product/{id}/posts [get]
+func (route *UserProductRouter) Posts(c *gin.Context) {
 	var dto dto.PostLinkSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -117,11 +124,19 @@ func (route *UProductRouter) Posts(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UProductUsecase.Posts(c, id, dto)
+	result, err := route.UC.Posts(c, id, dto)
 	_routes.RouteResult(c, result, err)
 }
 
-func (route *UProductRouter) Members(c *gin.Context) {
+// @Summary Lấy danh sách thành viên của sản phẩm
+// @Description Returns a list of members of a product
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Router /v1/bdspro/v2/user/product/{id}/members [get]
+func (route *UserProductRouter) Members(c *gin.Context) {
 	var dto dto.ProductAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
@@ -137,11 +152,19 @@ func (route *UProductRouter) Members(c *gin.Context) {
 		return
 	}
 
-	result, err := route.UProductUsecase.Members(c, id, dto)
+	result, err := route.UC.Members(c, id, dto)
 	_routes.RouteResult(c, result, err)
 }
 
-func (route *UProductRouter) History(c *gin.Context) {
+// @Summary Lấy danh sách lịch sử của sản phẩm
+// @Description Returns a list of history of a product
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Router /v1/bdspro/v2/user/product/{id}/history [get]
+func (route *UserProductRouter) History(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -160,7 +183,7 @@ func (route *UProductRouter) History(c *gin.Context) {
 		return
 	}
 
-	result, total, err := route.UProductUsecase.History(c, id, dto)
+	result, total, err := route.UC.History(c, id, dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,
@@ -168,36 +191,10 @@ func (route *UProductRouter) History(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Đăng tin sản phẩm
-// @Description API để đăng tin sản phẩm lên hệ thống
-// @Tags User
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param publish body data.StatusRequest true "Thông tin đăng tin"
-// @Success 200 {object} data.StatusResponse "Tin được đăng thành công"
-// @Router /v1/bdspro/v2/user/product/publish [put]
-func (route *UProductRouter) PublishProduct(e *gin.Context) {
-
-}
-
-// @Summary Hoàn tác trạng thái sản phẩm
-// @Description API để hoàn tác trạng thái sản phẩm về trạng thái trước đó
-// @Tags User
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param revert body data.StatusRequest true "Thông tin hoàn tác"
-// @Success 200 {object} data.StatusResponse "Trạng thái sản phẩm đã được hoàn tác"
-// @Router /v1/bdspro/v2/user/product/revert/:id [put]
-func (route *UProductRouter) RevertProduct(e *gin.Context) {
-
-}
-
 // SearchProductWithOwner godoc
 // @Summary Lấy danh sách sản phẩm của user hiện tại
 // @Description Returns a list of products based on search filters
-// @Tags User/Product-search
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -212,43 +209,50 @@ func (route *UProductRouter) RevertProduct(e *gin.Context) {
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v1/bdspro/v2/user/product/me [get]
-func (route *UProductRouter) SearchProductWithOwner(c *gin.Context) {
+func (route *UserProductRouter) SearchProductWithOwner(c *gin.Context) {
 	body := dto.ProductSearchRequest{}
 	err := _utils.ParseQuery2(c, &body)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UProductUsecase.SearchProductWithOwner(c, &body)
-	_routes.RouteResult(c, result, err)
+	result, total, err := route.UC.SearchProductByOwner(c, &body)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // @Summary Lấy danh sách sản phẩm trang chủ
 // @Description Returns a list of products based on search filters
-// @Tags User/Product-search
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
-// @Security BearerAuth
 // @Param name query string false "Product name"
 // @Param code query string false "Product code"
 // @Param area query number false "Product area"
 // @Param price query integer false "Product price"
 // @Param description query string false "Product description"
 // @Param note query string false "Additional notes"
-// @Param limit query int false "Limit results" default(10)
-// @Param skip query int false "Skip results" default(0)
+// @Param size query int false "Size results" default(10)
+// @Param page query int false "Page" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v1/bdspro/v2/user/product/market [get]
-func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
+func (route *UserProductRouter) SearchProductMarket(c *gin.Context) {
 	// _routes.RouteResult(c, nil, nil)
 	body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
-	result, err := route.UProductUsecase.SearchProductMarket(c, body)
-	_routes.RouteResult(c, result, err)
+	result, total, err := route.UC.SearchProductMarket(c, body)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // @Summary Tìm kiếm tổng hợp
 // @Description Returns a list of products based on search filters
-// @Tags User/Product-search
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -257,15 +261,24 @@ func (route *UProductRouter) SearchProductMarket(c *gin.Context) {
 // @Param page query int false "Page" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v1/bdspro/v2/user/product/total [get]
-func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
-	body, _ := _utils.ParseQueryToStruct[dto.TextSearchRequest](c.Request.URL.Query())
-	result, err := route.UProductUsecase.SmartSearch(c, body.Text, body.GetPage(), body.GetSize())
-	_routes.RouteResult(c, result, err)
+func (route *UserProductRouter) SearchSmartProduct(c *gin.Context) {
+	query := dto.TextSearchRequest{}
+	if err := _utils.ParseQuery2(c, &query); err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, total, err := route.UC.SmartSearch(c, query.Text, &query)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // @Summary Gợi ý các trường thông tin
 // @Description Returns a list of products based on search filters
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -278,193 +291,182 @@ func (route *UProductRouter) SearchSmartProduct(c *gin.Context) {
 // @Param limit query int false "Limit results" default(10)
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/v2/user/product/suggest [post]
-func (route *UProductRouter) NewProductWithDetect(c *gin.Context) {
+// @Router /v1/bdspro/v2/user/product/suggest [get]
+func (route *UserProductRouter) SuggestProduct(c *gin.Context) {
 	_body, _ := _utils.ParseBody[dto.ProductSaveDetect](c)
-	result, err := route.UProductUsecase.CreateProductWithDetect(c, _body)
+	result, err := route.UC.SuggestFields(c, _body)
 	_routes.RouteResult(c, result, err)
 }
 
 // @Summary Cập nhật sản phẩm
 // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/{productId} [put]
-func (route *UProductRouter) Edit(c *gin.Context) {
+func (route *UserProductRouter) Edit(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.UProductUsecase.Update(c, id, body)
-	_routes.RouteResult(c, result, err)
-}
-
-func (route *UProductRouter) Rent(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	result, err := route.UProductUsecase.Rent(c, id, body)
+	result, err := route.UC.Update(c, id, body)
 	_routes.RouteResult(c, result, err)
 }
 
 // @Summary Cập nhật sản phẩm
 // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Param body body dto.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/archived [put]
-func (route *UProductRouter) Archived(c *gin.Context) {
+func (route *UserProductRouter) Archived(c *gin.Context) {
 	body := dto.ArchivedRequest{}
 
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UProductUsecase.Archived(c, body)
+	err := route.UC.Archived(c, body)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/product/{productId} [delete]
-func (route *UProductRouter) Delete(c *gin.Context) {
+func (route *UserProductRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err = route.UProductUsecase.Delete(c, id)
+	err = route.UC.Delete(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/rent-status [put]
-func (route *UProductRouter) RentStatusUpdate(c *gin.Context) {
+func (route *UserProductRouter) RentStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
 	if err := _utils.ParseBodyWithValidator(c, &status); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UProductUsecase.RentStatusUpdate(c, status)
+	err := route.UC.RentStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/sale-status [put]
-func (route *UProductRouter) SaleStatusUpdate(c *gin.Context) {
+func (route *UserProductRouter) SaleStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
 	if err := _utils.ParseBodyWithValidator(c, &status); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UProductUsecase.SaleStatusUpdate(c, status)
+	err := route.UC.SaleStatusUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Trạng thái sản phẩm
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/rent-visibility [put]
-func (route *UProductRouter) RentVisibilityUpdate(c *gin.Context) {
+func (route *UserProductRouter) RentVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
 	if err := _utils.ParseBodyWithValidator(c, &status); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UProductUsecase.RentVisibilityUpdate(c, status)
+	err := route.UC.RentVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Trạng thái sản phẩm
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/sale-visibility [put]
-func (route *UProductRouter) SaleVisibilityUpdate(c *gin.Context) {
+func (route *UserProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
 	if err := _utils.ParseBodyWithValidator(c, &status); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	err := route.UProductUsecase.SaleVisibilityUpdate(c, status)
+	err := route.UC.SaleVisibilityUpdate(c, status)
 	_routes.RouteResult(c, nil, err)
 }
 
 // @Summary Cọc
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v1/bdspro/v2/user/product/deposite [post]
-func (route *UProductRouter) Deposite(c *gin.Context) {
+func (route *UserProductRouter) Deposite(c *gin.Context) {
 	dto := dto.DepositeRequest{}
 
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	deposite, err := route.UProductUsecase.ProductDeposite(c, dto)
+	deposite, err := route.UC.ProductDeposite(c, dto)
 	_routes.RouteResult(c, deposite, err)
 }
 
 // @Summary Hủy cọc
 // @Description API
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param depositeId path int true "Deposite ID"
 // @Router /v1/bdspro/v2/user/product/deposite/{depositeId} [delete]
-func (route *UProductRouter) CancelDeposite(c *gin.Context) {
+func (route *UserProductRouter) CancelDeposite(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("depositeId"), 10, 64)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	err = route.UProductUsecase.CancelDeposite(c, id)
+	err = route.UC.CancelDeposite(c, id)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -516,7 +518,7 @@ func dereference(value interface{}) interface{} {
 
 // @Summary Xuất danh sách sản phẩm ra Excel
 // @Description API này dùng để xuất dữ liệu sản phẩm ra file Excel
-// @Tags User
+// @Tags User: Sản phẩm
 // @Accept json
 // @Produce application/octet-stream
 // @Security BearerAuth
@@ -525,14 +527,14 @@ func dereference(value interface{}) interface{} {
 // @Failure 400 {object} _routes.ResponseDTO
 // @Failure 500 {object} _routes.ResponseDTO
 // @Router /v1/bdspro/v2/user/product/export [post]
-func (route *UProductRouter) ExportExcel(c *gin.Context) {
+func (route *UserProductRouter) ExportExcel(c *gin.Context) {
 	var query dto.ProductSearchRequest
 	if err := _utils.ParseQuery2(c, &query); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	products, err := route.UProductUsecase.SearchToExport(c, &query)
+	products, err := route.UC.SearchExport(c, &query)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

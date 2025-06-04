@@ -1,8 +1,6 @@
 package domain
 
-import (
-	_models "common/models"
-)
+import _models "common/models"
 
 // Amenity struct cho bảng AMENITY
 type Amenity struct {

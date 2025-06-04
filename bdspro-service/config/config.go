@@ -1,14 +1,10 @@
 package config
 
 import (
-	server "bdspro/infra/handler"
 	group_router "bdspro/infra/router/group"
 	org_router "bdspro/infra/router/org"
 	public_router "bdspro/infra/router/public"
 	user_router "bdspro/infra/router/user"
-	service "bdspro/infra/services"
-	"bdspro/v1/mod/admin"
-	"bdspro/v1/mod/user"
 	"bytes"
 	_ "embed"
 	"log"
@@ -51,61 +47,59 @@ var ConfigFile []byte
 
 type ConfigApp struct {
 	// GrpcServer        *server.BdsproGrpcServer
-	GrpcGenericServer *server.GenericGrpcServer
-	UserRoute         *user.UserRoute
-	AdminRouter       *admin.AdminRoute
-	UserRouter        *user_router.RouterManager
-	OrgRouter         *org_router.RouterManager
-	GroupRouter       *group_router.GroupManager
-	EnumRoute         *public_router.PublicRouter
+	// GrpcGenericServer *server.GenericGrpcServer
+	UserRouter *user_router.RouterManager
+	OrgRouter  *org_router.RouterManager
+	// AdminRouter *admin_router.RouterManager
+	// UserRouter        *user_router.RouterManager
+	GroupRouter *group_router.GroupManager
+	EnumRoute   *public_router.PublicRouter
 
 	// @bind: register_server_config
-	CostDocumentServer      *service.CostDocumentServer
-	IncomeDocumentServer    *service.IncomeDocumentServer
-	AssetIncomeTypeServer   *service.AssetIncomeTypeServer
-	AssetExploitationServer *service.AssetExploitationServer
-	AssetCostTypeServer     *service.AssetCostTypeServer
-	AssetCostServer         *service.AssetCostServer
-	AssetLegalServer        *service.AssetLegalServer
-	AssetSplitHistoryServer *service.AssetSplitHistoryServer
+	// CostDocumentServer *service.CostDocumentServer
+	// IncomeDocumentServer    *service.IncomeDocumentServer
+	// AssetIncomeTypeServer   *service.AssetIncomeTypeServer
+	// AssetExploitationServer *service.AssetExploitationServer
+	// AssetCostTypeServer     *service.AssetCostTypeServer
+	// AssetCostServer         *service.AssetCostServer
+	// AssetLegalServer        *service.AssetLegalServer
+	// AssetSplitHistoryServer *service.AssetSplitHistoryServer
 }
 
 func NewConfigApp(
-	GrpcGenericServer *server.GenericGrpcServer,
-	userRoute *user.UserRoute,
-	adminRoute *admin.AdminRoute,
+	// GrpcGenericServer *server.GenericGrpcServer,
+	userRouter *user_router.RouterManager,
+	orgRouter *org_router.RouterManager,
+	groupRouter *group_router.GroupManager,
+	enumRouter *public_router.PublicRouter,
+	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
-	CostDocumentServer *service.CostDocumentServer,
-	IncomeDocumentServer *service.IncomeDocumentServer,
-	AssetIncomeTypeServer *service.AssetIncomeTypeServer,
-	AssetExploitationServer *service.AssetExploitationServer,
-	AssetCostTypeServer *service.AssetCostTypeServer,
-	AssetCostServer *service.AssetCostServer,
-	AssetLegalServer *service.AssetLegalServer,
-	AssetSplitHistoryServer *service.AssetSplitHistoryServer,
-	RouterManager *user_router.RouterManager,
-	OrgRouter *org_router.RouterManager,
-	GroupRouter *group_router.GroupManager,
-	EnumRoute *public_router.PublicRouter,
+	// CostDocumentServer *service.CostDocumentServer,
+	// IncomeDocumentServer *service.IncomeDocumentServer,
+	// AssetIncomeTypeServer *service.AssetIncomeTypeServer,
+	// AssetExploitationServer *service.AssetExploitationServer,
+	// AssetCostTypeServer *service.AssetCostTypeServer,
+	// AssetCostServer *service.AssetCostServer,
+	// AssetLegalServer *service.AssetLegalServer,
+	// AssetSplitHistoryServer *service.AssetSplitHistoryServer,
 ) *ConfigApp {
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
-		GrpcGenericServer: GrpcGenericServer,
-		UserRoute:         userRoute,
-		AdminRouter:       adminRoute,
+		// GrpcGenericServer: GrpcGenericServer,
+		UserRouter:  userRouter,
+		OrgRouter:   orgRouter,
+		GroupRouter: groupRouter,
+		EnumRoute:   enumRouter,
+		// AdminRouter: adminRoute,
 		// @bind: register_server_new
-		CostDocumentServer:      CostDocumentServer,
-		IncomeDocumentServer:    IncomeDocumentServer,
-		AssetIncomeTypeServer:   AssetIncomeTypeServer,
-		AssetExploitationServer: AssetExploitationServer,
-		AssetCostTypeServer:     AssetCostTypeServer,
-		AssetCostServer:         AssetCostServer,
-		AssetLegalServer:        AssetLegalServer,
-		AssetSplitHistoryServer: AssetSplitHistoryServer,
-		UserRouter:              RouterManager,
-		OrgRouter:               OrgRouter,
-		GroupRouter:             GroupRouter,
-		EnumRoute:               EnumRoute,
+		// CostDocumentServer: CostDocumentServer,
+		// IncomeDocumentServer:    IncomeDocumentServer,
+		// AssetIncomeTypeServer:   AssetIncomeTypeServer,
+		// AssetExploitationServer: AssetExploitationServer,
+		// AssetCostTypeServer:     AssetCostTypeServer,
+		// AssetCostServer:         AssetCostServer,
+		// AssetLegalServer:        AssetLegalServer,
+		// AssetSplitHistoryServer: AssetSplitHistoryServer,
 	}
 }
 

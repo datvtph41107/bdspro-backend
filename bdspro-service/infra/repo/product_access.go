@@ -29,7 +29,7 @@ func NewGromProductAccessRepo(db *gorm.DB) *GormProductAccessRepo {
 func (repo *GormProductAccessRepo) ExistsByUserAndProduct(userId, productId uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&domain.ProductAccess{}).
-		Where("target_type = 1 AND target_id = ? AND product_id = ? and deleted_at is null", userId, productId).
+		Where("target_type = 10 AND target_id = ? AND product_id = ? and deleted_at is null", userId, productId).
 		Count(&count).Error
 
 	if err != nil {
@@ -118,7 +118,7 @@ func (r *GormProductAccessRepo) UpdateCommission(c context.Context,
 func (r *GormProductAccessRepo) GetProductAccessByOrgID(ctx context.Context, orgID int64, dto dto.ProductAccessSearch) ([]*domain.ProductAccess, error) {
 	var entities []*domain.ProductAccess
 	err := r.DB.WithContext(ctx).
-		Where("deleted_at is null and target_type = ? and target_id = ?", enums.ETargetTypeOrganization, orgID).
+		Where("deleted_at is null and target_type = ? and target_id = ?", enums.EOwnerTypeOrgnization, orgID).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Find(&entities).Error

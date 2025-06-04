@@ -1,8 +1,6 @@
 package domain
 
-import (
-	_models "common/models"
-)
+import _models "common/models"
 
 // ProjectInventory struct cho bảng project_inventory
 type ProjectInventory struct {

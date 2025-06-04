@@ -2,11 +2,12 @@ package repo
 
 import (
 	"bdspro/internal/domain"
-	"common/case/crud3"
+	"bdspro/internal/dto"
+	"context"
 )
 
 type AmenityRepo interface {
-	crud3.CrudRepo[domain.Amenity]
+	GetAll(c context.Context, dto *dto.AmenitySearchDTO) ([]domain.AmenityItem, error)
 	InterText(text string, limit int) ([]uint64, error)
 	InterTextToEntity(text string, limit int) ([]domain.AmenityItem, error)
 }

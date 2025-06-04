@@ -3,14 +3,12 @@ package cmd_grpc
 import (
 	"bdspro/config"
 	"bdspro/db"
-	w "bdspro/wire"
 	"common"
 	_db "common/db"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	pb_bdspro "pb/types/bdspro"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -29,8 +27,8 @@ var GrpcCmd = &cobra.Command{
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, _ := w.InitializeApp()
-		// _db.DB.AutoMigrate(&models.Order{})
+		// app, _ := w.InitializeApp()
+		// _db.DB.AutoMigrate(&domain.Order{})
 		// config.ConfigDB = RootApp.DB
 		db.MigrateDomain()
 
@@ -60,14 +58,14 @@ var GrpcCmd = &cobra.Command{
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server
-		pb_bdspro.RegisterCostDocumentServiceServer(s, app.CostDocumentServer)
-		pb_bdspro.RegisterIncomeDocumentServiceServer(s, app.IncomeDocumentServer)
-		pb_bdspro.RegisterAssetIncomeTypeServiceServer(s, app.AssetIncomeTypeServer)
-		pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationServer)
-		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeServer)
-		pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostServer)
-		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
-		pb_bdspro.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
+		// pb_bdspro.RegisterCostDocumentServiceServer(s, app.CostDocumentServer)
+		// pb_bdspro.RegisterIncomeDocumentServiceServer(s, app.IncomeDocumentServer)
+		// pb_bdspro.RegisterAssetIncomeTypeServiceServer(s, app.AssetIncomeTypeServer)
+		// pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationServer)
+		// pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeServer)
+		// pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostServer)
+		// pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
+		// pb_bdspro.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
 
 		log.Printf("Listen: %v", port)
 

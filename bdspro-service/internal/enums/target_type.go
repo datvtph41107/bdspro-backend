@@ -3,13 +3,13 @@ package enums
 type ETargetType = int
 
 const (
-	ETargetTypeMember       ETargetType = 10
-	ETargetTypeGroup        ETargetType = 20
-	ETargetTypeOrganization ETargetType = 30
+	ETargetTypeProduct ETargetType = 10
+	ETargetTypeAsset   ETargetType = 20
+	ETargetTypePost    ETargetType = 30
 )
 
 var TargetTypeNames = map[ETargetType]string{
-	ETargetTypeMember:       "Thành viên",
-	ETargetTypeGroup:        "Nhóm",
-	ETargetTypeOrganization: "Tổ chức",
+	ETargetTypeProduct: "Sản phẩm",
+	ETargetTypeAsset:   "Tài sản",
+	ETargetTypePost:    "Bài viết",
 }

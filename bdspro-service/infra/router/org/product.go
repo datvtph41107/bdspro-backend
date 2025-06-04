@@ -17,16 +17,17 @@ import (
 )
 
 type OrgProductRouter struct {
-	OrgProductUsecase *org_usecase.OrgProductUsecase
+	OrgProductUsecase *org_usecase.OrgProductUC
 }
 
-func NewOrgProductRouter(uc *org_usecase.OrgProductUsecase) *OrgProductRouter {
+func NewOrgProductRouter(uc *org_usecase.OrgProductUC) *OrgProductRouter {
 	return &OrgProductRouter{OrgProductUsecase: uc}
 }
 
-func (r *OrgProductRouter) RegisterRoutes(router *gin.RouterGroup) {
-	api := router.Group("/product")
+func (r *OrgProductRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
+	api := router.Group(path)
 	{
+		api.GET("/total", r.SearchSmartProduct)
 		api.GET("/me", r.SearchProductWithOwner)
 		api.GET("/link/:id", r.SearchProductWithOwner)
 		api.GET("/public", r.SearchProductWithOwner)
@@ -37,8 +38,8 @@ func (r *OrgProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 		api.GET("/:id/members", r.Members)
 		api.GET("/:id/history", r.History)
 		api.PUT("/edit/:id", r.Edit)
-		api.PUT("/publish", r.PublishProduct)
-		api.PUT("/revert", r.RevertProduct)
+		// api.PUT("/publish", r.PublishProduct)
+		// api.PUT("/revert", r.RevertProduct)
 
 		api.PUT("/archived", r.Archived)
 		api.DELETE("/:id", r.Delete)
@@ -54,12 +55,11 @@ func (r *OrgProductRouter) RegisterRoutes(router *gin.RouterGroup) {
 
 // @Summary Tạo sản phẩm mới
 // @Description API để tạo một sản phẩm mới
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param product body data.NewProductRequest true "Thông tin sản phẩm"
-// @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
+// @Param product body dto.NewProductRequest true "Thông tin sản phẩm"
 // @Router /v1/bdspro/v2/org/product/new [post]
 func (route *OrgProductRouter) CreateNewProduct(c *gin.Context) {
 	body := dto.ProductSaveRequest{}
@@ -74,13 +74,13 @@ func (route *OrgProductRouter) CreateNewProduct(c *gin.Context) {
 
 // @Summary Tạo sản phẩm mới
 // @Description API để tạo một sản phẩm mới
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param product body data.NewProductRequest true "Thông tin sản phẩm"
-// @Success 201 {object} data.NewProductRequest "Sản phẩm được tạo thành công"
-// @Router /v1/bdspro/v2/org/product/{id} [post]
+// @Param id path int true "ID của sản phẩm"
+// @Success 200 {object} domain.Product "Sản phẩm được tạo thành công"
+// @Router /v1/bdspro/v2/org/product/{id} [get]
 func (route *OrgProductRouter) Detail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -95,6 +95,16 @@ func (route *OrgProductRouter) Detail(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
+// @Summary Lấy danh sách bài viết liên quan
+// @Description Returns a list of posts related to a product
+// @Tags Tổ chức: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của sản phẩm"
+// @Param post body dto.PostLinkSearch true "Thông tin bài viết"
+// @Success 200 {object} domain.Post "Bài viết được tạo thành công"
+// @Router /v1/bdspro/v2/org/product/{id}/posts [get]
 func (route *OrgProductRouter) Posts(c *gin.Context) {
 	var dto dto.PostLinkSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -115,6 +125,15 @@ func (route *OrgProductRouter) Posts(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
+// @Summary Lấy danh sách thành viên của sản phẩm
+// @Description Returns a list of members of a product
+// @Tags Tổ chức: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của sản phẩm"
+// @Param members body dto.ProductAccessSearch true "Thông tin thành viên"
+// @Router /v1/bdspro/v2/org/product/{id}/members [get]
 func (route *OrgProductRouter) Members(c *gin.Context) {
 	var dto dto.ProductAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -135,6 +154,16 @@ func (route *OrgProductRouter) Members(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
+// @Summary Lấy danh sách lịch sử của sản phẩm
+// @Description Returns a list of history of a product
+// @Tags Tổ chức: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của sản phẩm"
+// @Param history body dto.ProductHistorySearch true "Thông tin lịch sử"
+// @Success 200 {object} domain.ProductHistory "Danh sách lịch sử"
+// @Router /v1/bdspro/v2/org/product/{id}/history [get]
 func (route *OrgProductRouter) History(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -162,36 +191,10 @@ func (route *OrgProductRouter) History(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Đăng tin sản phẩm
-// @Description API để đăng tin sản phẩm lên hệ thống
-// @Tags Organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param publish body data.StatusRequest true "Thông tin đăng tin"
-// @Success 200 {object} data.StatusResponse "Tin được đăng thành công"
-// @Router /v1/bdspro/v2/org/product/publish [put]
-func (route *OrgProductRouter) PublishProduct(e *gin.Context) {
-
-}
-
-// @Summary Hoàn tác trạng thái sản phẩm
-// @Description API để hoàn tác trạng thái sản phẩm về trạng thái trước đó
-// @Tags Organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param revert body data.StatusRequest true "Thông tin hoàn tác"
-// @Success 200 {object} data.StatusResponse "Trạng thái sản phẩm đã được hoàn tác"
-// @Router /v1/bdspro/v2/org/product/revert/:id [put]
-func (route *OrgProductRouter) RevertProduct(e *gin.Context) {
-
-}
-
 // SearchProductWithOwner godoc
 // @Summary Lấy danh sách sản phẩm của user hiện tại
 // @Description Returns a list of products based on search filters
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -223,12 +226,12 @@ func (route *OrgProductRouter) SearchProductWithOwner(c *gin.Context) {
 
 // @Summary Tìm kiếm tổng hợp
 // @Description Returns a list of products based on search filters
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param text query string true "Text"
-// @Param size query int false "Sizet results" default(10)
+// @Param size query int false "Size results" default(10)
 // @Param page query int false "Page" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Success 200 {object} _routes.ResponseDTO "Danh sách sản phẩm"
@@ -240,7 +243,7 @@ func (route *OrgProductRouter) SearchSmartProduct(c *gin.Context) {
 		return
 	}
 
-	result, total, err := route.OrgProductUsecase.SmartSearch(c, body.Text, body.Page)
+	result, total, err := route.OrgProductUsecase.SmartSearch(c, body.Text, &body)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,
@@ -250,7 +253,7 @@ func (route *OrgProductRouter) SearchSmartProduct(c *gin.Context) {
 
 // @Summary Gợi ý các trường thông tin
 // @Description Returns a list of products based on search filters
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -277,7 +280,7 @@ func (route *OrgProductRouter) SuggestFields(c *gin.Context) {
 
 // @Summary Cập nhật sản phẩm
 // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
@@ -297,7 +300,7 @@ func (route *OrgProductRouter) Edit(c *gin.Context) {
 
 // @Summary Cập nhật sản phẩm
 // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
@@ -317,7 +320,7 @@ func (route *OrgProductRouter) Archived(c *gin.Context) {
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Param productId path int true "Product ID"
@@ -335,7 +338,7 @@ func (route *OrgProductRouter) Delete(c *gin.Context) {
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -354,7 +357,7 @@ func (route *OrgProductRouter) RentStatusUpdate(c *gin.Context) {
 
 // @Summary Xóa sản phẩm
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -373,7 +376,7 @@ func (route *OrgProductRouter) SaleStatusUpdate(c *gin.Context) {
 
 // @Summary Trạng thái sản phẩm
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -392,7 +395,7 @@ func (route *OrgProductRouter) RentVisibilityUpdate(c *gin.Context) {
 
 // @Summary Trạng thái sản phẩm
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -411,7 +414,7 @@ func (route *OrgProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 
 // @Summary Cọc
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -430,7 +433,7 @@ func (route *OrgProductRouter) Deposite(c *gin.Context) {
 
 // @Summary Hủy cọc
 // @Description API
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -449,7 +452,7 @@ func (route *OrgProductRouter) CancelDeposite(c *gin.Context) {
 
 // // @Summary Chia sẻ co-broker
 // // @Description API
-// // @Tags Organization
+// // @Tags Tổ chức: Sản phẩm
 // // @Accept json
 // // @Produce json
 // // @Security BearerAuth
@@ -495,7 +498,7 @@ func dereference(value interface{}) interface{} {
 
 // @Summary Xuất danh sách sản phẩm ra Excel
 // @Description API này dùng để xuất dữ liệu sản phẩm ra file Excel
-// @Tags Organization
+// @Tags Tổ chức: Sản phẩm
 // @Accept json
 // @Produce application/octet-stream
 // @Security BearerAuth

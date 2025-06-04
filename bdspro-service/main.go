@@ -73,7 +73,7 @@ func main() {
 	// 	config.LoadProperties()
 	// 	log.Printf("Data: ", property.AppProperties)
 
-	// 	models.AutoMigrate()
+	// 	domain.AutoMigrate()
 
 	// 	app.adminRouter.RegisterAdminRouter(engine)
 	// 	app.userRoute.RegisterUserRouter(engine)

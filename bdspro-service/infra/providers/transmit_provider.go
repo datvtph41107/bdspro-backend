@@ -10,10 +10,9 @@ import (
 type TransmitProvider struct {
 	NotiClient pb_noti.NotificationServiceClient
 	TaskClient pb_task.TaskServiceClient
-	// OrgClient  pb_org.OrgServiceClient
 }
 
-func NewTransmitProvider() *TransmitProvider {
+func NewNotiService() *TransmitProvider {
 	conn, err := grpc.Dial("localhost:8004", grpc.WithInsecure())
 	if err != nil {
 		return &TransmitProvider{}

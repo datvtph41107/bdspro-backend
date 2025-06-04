@@ -17,6 +17,9 @@ func MigrateDomain() {
 		// &domain.CostDocument{},
 		// &domain.IncomeDocument{},
 		// &domain.PostMediaEntity{},
-		&domain.Product{},
+		// &domain.Product{},
+		// &domain.AssetCostType{},
+		// &domain.AssetCost{},
+		&domain.Post{},
 	)
 }

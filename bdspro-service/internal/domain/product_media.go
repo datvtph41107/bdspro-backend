@@ -1,8 +1,6 @@
 package domain
 
-import (
-	_models "common/models"
-)
+import _models "common/models"
 
 type ProductMedia struct {
 	_models.BaseEntity

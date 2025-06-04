@@ -1,6 +1,7 @@
 package _owner
 
 import (
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -8,11 +9,11 @@ import (
 )
 
 type IOwnerRepo[T IOwnerModel] interface {
-	Create(c *gin.Context, entity *OwnerModel[T]) error
-	Update(c *gin.Context, id uint64, entity *OwnerModel[T]) error
-	Delete(c *gin.Context, id uint64) error
-	Search(c *gin.Context, profileId uint64, offset, limit int) ([]OwnerModel[T], error)
-	GetByID(c *gin.Context, id uint64) (*OwnerModel[T], error)
+	Create(c context.Context, entity *OwnerModel[T]) error
+	Update(c context.Context, id uint64, entity *OwnerModel[T]) error
+	Delete(c context.Context, id uint64) error
+	Search(c context.Context, profileId uint64, offset, limit int) ([]OwnerModel[T], error)
+	GetByID(c context.Context, id uint64) (*OwnerModel[T], error)
 }
 
 type OwnerRepo[M IOwnerModel] struct {

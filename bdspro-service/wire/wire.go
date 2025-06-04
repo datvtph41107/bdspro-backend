@@ -9,7 +9,9 @@ import (
 	"bdspro/config"
 	bdspro_config "bdspro/config"
 	bdspro_infra_client "bdspro/infra/client"
-	bdspro_infra_handler "bdspro/infra/handler"
+	bdspro_infra_postgre "bdspro/infra/postgre"
+	bdspro_infra_postgre_org "bdspro/infra/postgre/org"
+	bdspro_infra_postgre_user "bdspro/infra/postgre/user"
 	bdspro_infra_providers "bdspro/infra/providers"
 	bdspro_infra_repo "bdspro/infra/repo"
 	bdspro_infra_repo_user "bdspro/infra/repo/user"
@@ -19,165 +21,74 @@ import (
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_services "bdspro/infra/services"
 	bdspro_internal_repo "bdspro/internal/repo"
+	bdspro_internal_repo_org "bdspro/internal/repo/org"
+	bdspro_internal_repo_user "bdspro/internal/repo/user"
 	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_internal_usecases_group "bdspro/internal/usecases/group"
+	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
 	bdspro_internal_usecases_org "bdspro/internal/usecases/org"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
-	bdspro_v1_mod_admin "bdspro/v1/mod/admin"
-	bdspro_v1_mod_admin_amenity "bdspro/v1/mod/admin/amenity"
-	bdspro_v1_mod_admin_apartment "bdspro/v1/mod/admin/apartment"
-	bdspro_v1_mod_admin_build_room "bdspro/v1/mod/admin/build_room"
-	bdspro_v1_mod_admin_developer "bdspro/v1/mod/admin/developer"
-	bdspro_v1_mod_admin_district "bdspro/v1/mod/admin/district"
-	bdspro_v1_mod_admin_doc_type "bdspro/v1/mod/admin/doc_type"
-	bdspro_v1_mod_admin_product "bdspro/v1/mod/admin/product"
-	bdspro_v1_mod_admin_product_access "bdspro/v1/mod/admin/product_access"
-	bdspro_v1_mod_admin_project "bdspro/v1/mod/admin/project"
-	bdspro_v1_mod_admin_project_build "bdspro/v1/mod/admin/project_build"
-	bdspro_v1_mod_admin_property_type "bdspro/v1/mod/admin/property_type"
-	bdspro_v1_mod_admin_province "bdspro/v1/mod/admin/province"
-	bdspro_v1_mod_admin_ward "bdspro/v1/mod/admin/ward"
-	bdspro_v1_mod_global_amenity "bdspro/v1/mod/global/amenity"
-	bdspro_v1_mod_global_apartment_attribute "bdspro/v1/mod/global/apartment_attribute"
-	bdspro_v1_mod_global_history_asset "bdspro/v1/mod/global/history/asset"
-	bdspro_v1_mod_global_house_info "bdspro/v1/mod/global/house_info"
-	bdspro_v1_mod_global_product_access "bdspro/v1/mod/global/product_access"
-	bdspro_v1_mod_global_product_history "bdspro/v1/mod/global/product_history"
-	bdspro_v1_mod_global_product_media "bdspro/v1/mod/global/product_media"
-	bdspro_v1_mod_global_product_price "bdspro/v1/mod/global/product_price"
-	bdspro_v1_mod_global_product_private "bdspro/v1/mod/global/product_private"
-	bdspro_v1_mod_global_region "bdspro/v1/mod/global/region"
-	bdspro_v1_mod_user "bdspro/v1/mod/user"
-	bdspro_v1_mod_user_action "bdspro/v1/mod/user/action"
-	bdspro_v1_mod_user_apartment "bdspro/v1/mod/user/apartment"
-	bdspro_v1_mod_user_asset "bdspro/v1/mod/user/asset"
-	bdspro_v1_mod_user_asset2 "bdspro/v1/mod/user/asset2"
-	bdspro_v1_mod_user_asset_cost "bdspro/v1/mod/user/asset_cost"
-	bdspro_v1_mod_user_asset_cost_type "bdspro/v1/mod/user/asset_cost_type"
-	bdspro_v1_mod_user_asset_exploitation "bdspro/v1/mod/user/asset_exploitation"
-	bdspro_v1_mod_user_asset_income_type "bdspro/v1/mod/user/asset_income_type"
-	bdspro_v1_mod_user_asset_legal "bdspro/v1/mod/user/asset_legal"
-	bdspro_v1_mod_user_asset_share "bdspro/v1/mod/user/asset_share"
-	bdspro_v1_mod_user_build_room "bdspro/v1/mod/user/build_room"
-	bdspro_v1_mod_user_like "bdspro/v1/mod/user/like"
-	bdspro_v1_mod_user_list "bdspro/v1/mod/user/list"
-	bdspro_v1_mod_user_post "bdspro/v1/mod/user/post"
-	bdspro_v1_mod_user_product "bdspro/v1/mod/user/product"
-	bdspro_v1_mod_user_product_access "bdspro/v1/mod/user/product_access"
-	bdspro_v1_mod_user_product_child "bdspro/v1/mod/user/product_child"
-	bdspro_v1_mod_user_product_interface "bdspro/v1/mod/user/product/interface"
-	bdspro_v1_mod_user_project_build "bdspro/v1/mod/user/project_build"
-	bdspro_v1_mod_user_transaction "bdspro/v1/mod/user/transaction"
-	bdspro_v1_providers "bdspro/v1/providers"
+	bdspro_internal_usecases_user "bdspro/internal/usecases/user"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
-	wire.Bind(new(bdspro_internal_repo.IClientRepo), new(*bdspro_infra_client.ServiceClient)),
-	wire.Bind(new(bdspro_internal_repo.AmenityRepo), new(*bdspro_infra_repo.GormAmenityRepo)),
-	wire.Bind(new(bdspro_internal_repo.AssetCostRepo), new(*bdspro_infra_repo.GormAssetCostRepo)),
-	wire.Bind(new(bdspro_internal_repo.AssetCostTypeRepo), new(*bdspro_infra_repo.GormAssetCostTypeRepo)),
-	wire.Bind(new(bdspro_internal_repo.AssetExploitationRepo), new(*bdspro_infra_repo.GormAssetExploitationRepo)),
+	wire.Bind(new(bdspro_internal_usecases_interface.IClientUC), new(*bdspro_infra_client.ServiceClient)),
+	wire.Bind(new(bdspro_internal_repo.AmenityRepo), new(*bdspro_infra_postgre.PostgreAmenity)),
+	wire.Bind(new(bdspro_internal_repo.ApartmentRepo), new(*bdspro_infra_postgre.PostgreApartment)),
+	wire.Bind(new(bdspro_internal_repo_user.UAssetRepo), new(*bdspro_infra_postgre.PostgreAsset)),
+	wire.Bind(new(bdspro_internal_repo.AssetShareRepo), new(*bdspro_infra_postgre.AssetShareRepo)),
+	wire.Bind(new(bdspro_internal_repo.DocTypeRepo), new(*bdspro_infra_postgre.PostgreDocType)),
+	wire.Bind(new(bdspro_internal_repo_org.OrgAssetCostRepo), new(*bdspro_infra_postgre_org.PostgreOrgAssetCost)),
+	wire.Bind(new(bdspro_internal_repo_org.OrgAssetExploitationRepo), new(*bdspro_infra_postgre_org.PostgreOrgAssetExploitation)),
+	wire.Bind(new(bdspro_internal_repo_org.OrgCostTypeRepo), new(*bdspro_infra_postgre_org.PostgreOrgCostType)),
+	wire.Bind(new(bdspro_internal_repo.ProjectRepo), new(*bdspro_infra_postgre.PostgreProject)),
+	wire.Bind(new(bdspro_internal_repo.PropertyTypeRepo), new(*bdspro_infra_postgre.PostgrePropertyType)),
+	wire.Bind(new(bdspro_internal_repo.RecordHistoryRepo), new(*bdspro_infra_postgre.PostgreReportHistory)),
+	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_infra_postgre.PostgreRegion)),
+	wire.Bind(new(bdspro_internal_repo_user.UserAssetCostRepo), new(*bdspro_infra_postgre_user.PostgreUserAssetCost)),
+	wire.Bind(new(bdspro_internal_repo_user.UserAssetExploitationRepo), new(*bdspro_infra_postgre_user.PostgreUserAssetExploitation)),
+	wire.Bind(new(bdspro_internal_repo_user.UserCostTypeRepo), new(*bdspro_infra_postgre_user.PostgreUserCostType)),
+	wire.Bind(new(bdspro_internal_usecases_interface.IPlanUC), new(*bdspro_infra_providers.MemberPlanProvider)),
 	wire.Bind(new(bdspro_internal_repo.AssetIncomeTypeRepo), new(*bdspro_infra_repo.GormAssetIncomeTypeRepo)),
 	wire.Bind(new(bdspro_internal_repo.CostDocumentRepo), new(*bdspro_infra_repo.GormCostDocumentRepo)),
 	wire.Bind(new(bdspro_internal_repo.DepositeRepo), new(*bdspro_infra_repo.GormDepositeRepo)),
-	wire.Bind(new(bdspro_internal_repo.DocTypeRepo), new(*bdspro_infra_repo.GormDocTypeRepo)),
 	wire.Bind(new(bdspro_internal_repo.HouseInfoRepo), new(*bdspro_infra_repo.GormHouseInfoRepo)),
 	wire.Bind(new(bdspro_internal_repo.IncomeDocumentRepo), new(*bdspro_infra_repo.GormIncomeDocumentRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductAccessRepo), new(*bdspro_infra_repo.GormProductAccessRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductHistoryRepo), new(*bdspro_infra_repo.PostgreHistoryRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPriceRepo), new(*bdspro_infra_repo.GormProductPriceRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPrivateRepo), new(*bdspro_infra_repo.GormProductPrivateRepo)),
-	wire.Bind(new(bdspro_internal_repo.PropertyTypeRepo), new(*bdspro_infra_repo.GormPropertyTypeRepo)),
-	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_infra_repo.GormRegionRepo)),
-	wire.Bind(new(bdspro_internal_repo.AssetRepo), new(*bdspro_infra_repo_user.GormAssetRepo)),
 	wire.Bind(new(bdspro_internal_repo.UPostRepo), new(*bdspro_infra_repo_user.GormPostRepo)),
 	wire.Bind(new(bdspro_internal_repo.UAssetHistoryRepo), new(*bdspro_infra_repo.GormAssetHistoryRepo)),
 	wire.Bind(new(bdspro_internal_repo.AssetLegalRepo), new(*bdspro_infra_repo.GormAssetLegalRepo)),
 	wire.Bind(new(bdspro_internal_repo.PostMediaRepo), new(*bdspro_infra_repo.GormPostMediaRepo)),
-	wire.Bind(new(bdspro_internal_repo.UProductRepo), new(*bdspro_infra_repo.GormUserProductRepo)),
-	wire.Bind(new(bdspro_internal_repo.UProductChildRepo), new(*bdspro_infra_repo.GormUProductChildRepo)),
+	wire.Bind(new(bdspro_internal_repo_user.UProductRepo), new(*bdspro_infra_repo.GormUserProductRepo)),
+	wire.Bind(new(bdspro_internal_repo.UProductChildRepo), new(*bdspro_infra_repo.PostgreProductChild)),
 	wire.Bind(new(bdspro_internal_repo.ProductMediaRepo), new(*bdspro_infra_repo.GormProductMediaRepo)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_services.MemberPlanUsecase)),
-	wire.Bind(new(bdspro_v1_mod_user_product_interface.IUserProductService), new(*bdspro_v1_mod_user_product.UserProductService)),
-	bdspro_v1_mod_user_action.NewActionRepo,
-	bdspro_v1_mod_user_action.NewActionRouter,
-	bdspro_v1_mod_user_action.NewActionService,
-	bdspro_v1_mod_admin_product.NewAdminProductRepo,
-	bdspro_v1_mod_admin_product.NewAdminProductRouter,
-	bdspro_v1_mod_admin_product.NewAdminProductService,
-	bdspro_v1_mod_admin.NewAdminRoute,
-	bdspro_v1_mod_global_amenity.NewAmenityRepo,
-	bdspro_v1_mod_admin_amenity.NewAmenityRouter,
-	bdspro_v1_mod_admin_amenity.NewAmenityService,
-	bdspro_v1_mod_global_apartment_attribute.NewApartmentAttrRepo,
-	bdspro_v1_mod_admin_apartment.NewApartmentRepo,
-	bdspro_v1_mod_admin_apartment.NewApartmentRouter,
-	bdspro_v1_mod_admin_apartment.NewApartmentService,
-	bdspro_v1_mod_user_asset_cost.NewAssetCostRepo,
-	bdspro_v1_mod_user_asset_cost.NewAssetCostRouter,
-	bdspro_infra_services.NewAssetCostServer,
-	bdspro_v1_mod_user_asset_cost.NewAssetCostService,
-	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeRepo,
-	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeRouter,
-	bdspro_infra_services.NewAssetCostTypeServer,
-	bdspro_v1_mod_user_asset_cost_type.NewAssetCostTypeService,
-	bdspro_internal_usecases.NewAssetCostTypeUc,
-	bdspro_internal_usecases.NewAssetCostUc,
-	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationRepo,
-	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationRouter,
-	bdspro_infra_services.NewAssetExploitationServer,
-	bdspro_v1_mod_user_asset_exploitation.NewAssetExploitationService,
-	bdspro_internal_usecases.NewAssetExploitationUc,
-	bdspro_v1_mod_global_history_asset.NewAssetHistoryRepo,
-	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeRepo,
-	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeRouter,
+	bdspro_infra_postgre.NewActionRepo,
+	bdspro_internal_usecases_shared.NewApartmentUsecase,
 	bdspro_infra_services.NewAssetIncomeTypeServer,
-	bdspro_v1_mod_user_asset_income_type.NewAssetIncomeTypeService,
 	bdspro_internal_usecases.NewAssetIncomeTypeUc,
-	bdspro_v1_mod_user_asset_legal.NewAssetLegalRepo,
-	bdspro_v1_mod_user_asset_legal.NewAssetLegalRouter,
 	bdspro_infra_services.NewAssetLegalServer,
-	bdspro_v1_mod_user_asset_legal.NewAssetLegalService,
 	bdspro_internal_usecases.NewAssetLegalUc,
-	bdspro_v1_mod_user_asset.NewAssetRepo,
-	bdspro_v1_mod_user_asset2.NewAssetRepo2,
-	bdspro_v1_mod_user_asset.NewAssetRouter,
-	bdspro_v1_mod_user_asset2.NewAssetRouter2,
-	bdspro_v1_mod_user_asset2.NewAssetService2,
-	bdspro_v1_mod_user_asset_share.NewAssetShareRepo,
-	bdspro_v1_mod_user_asset_share.NewAssetShareRouter,
-	bdspro_v1_mod_user_asset_share.NewAssetShareService,
+	bdspro_infra_postgre.NewAssetShareRepo,
+	bdspro_infra_router_user.NewAssetShareRouter,
+	bdspro_internal_usecases.NewAssetShareUC,
 	bdspro_infra_services.NewAssetSplitHistoryServer,
 	bdspro_internal_usecases.NewAssetSplitHistoryUc,
-	bdspro_v1_mod_admin_build_room.NewBuildRoomRepo,
-	bdspro_v1_mod_admin_build_room.NewBuildRoomRouter,
-	bdspro_v1_mod_admin_build_room.NewBuildRoomService,
 	bdspro_config.NewConfigApp,
 	bdspro_infra_services.NewCostDocumentServer,
 	bdspro_internal_usecases.NewCostDocumentUc,
-	bdspro_v1_mod_admin_developer.NewDeveloperRepo,
-	bdspro_v1_mod_admin_developer.NewDeveloperRouter,
-	bdspro_v1_mod_admin_developer.NewDeveloperService,
-	bdspro_v1_mod_admin_district.NewDistrictRepo,
-	bdspro_v1_mod_admin_district.NewDistrictRouter,
-	bdspro_v1_mod_admin_district.NewDistrictService,
-	bdspro_v1_mod_admin_doc_type.NewDocTypeRepo,
-	bdspro_v1_mod_admin_doc_type.NewDocTypeRouter,
-	bdspro_v1_mod_admin_doc_type.NewDocTypeService,
-	bdspro_infra_handler.NewGenericService,
-	bdspro_infra_repo.NewGormAmenityRepo,
-	bdspro_infra_repo.NewGormAssetCostRepo,
-	bdspro_infra_repo.NewGormAssetCostTypeRepo,
-	bdspro_infra_repo.NewGormAssetExploitationRepo,
+	bdspro_internal_repo.NewDeveloperRepo,
+	bdspro_infra_postgre.NewGormAssetCostRepo,
 	bdspro_infra_repo.NewGormAssetIncomeTypeRepo,
 	bdspro_infra_repo.NewGormAssetLegalRepo,
-	bdspro_infra_repo_user.NewGormAssetRepo,
 	bdspro_infra_repo.NewGormAssetSplitHistoryRepo,
 	bdspro_infra_repo.NewGormCostDocumentRepo,
 	bdspro_infra_repo.NewGormDepositeRepo,
-	bdspro_infra_repo.NewGormDocTypeRepo,
 	bdspro_infra_repo.NewGormHouseInfoRepo,
 	bdspro_infra_repo.NewGormIncomeDocumentRepo,
 	bdspro_infra_repo.NewGormPostMediaRepo,
@@ -185,99 +96,81 @@ var wireSet = wire.NewSet(
 	bdspro_infra_repo.NewGormProductMediaRepo,
 	bdspro_infra_repo.NewGormProductPriceRepo,
 	bdspro_infra_repo.NewGormProductPrivateRepo,
-	bdspro_infra_repo.NewGormPropertyTypeRepo,
-	bdspro_infra_repo.NewGormRegionRepo,
-	bdspro_infra_repo.NewGormUProductChildRepo,
 	bdspro_infra_repo.NewGormUserProductRepo,
 	bdspro_infra_repo.NewGromProductAccessRepo,
+	bdspro_infra_router_group.NewGroupAssetRouter,
+	bdspro_internal_usecases_group.NewGroupAssetUsecase,
 	bdspro_infra_router_group.NewGroupProductRouter,
 	bdspro_internal_usecases_group.NewGroupProductUsecase,
 	bdspro_infra_router_group.NewGroupRouter,
-	bdspro_infra_handler.NewGrpcService,
-	bdspro_v1_mod_global_house_info.NewHouseInfoRepo,
 	bdspro_infra_services.NewIncomeDocumentServer,
 	bdspro_internal_usecases.NewIncomeDocumentUc,
-	bdspro_v1_mod_user_like.NewLikeRepo,
-	bdspro_v1_mod_user_like.NewLikeRouter,
-	bdspro_v1_mod_user_like.NewLikeService,
-	bdspro_v1_mod_user_list.NewListRoute,
-	bdspro_v1_providers.NewMemberPlanService,
+	bdspro_infra_router_user.NewListRouter,
+	bdspro_internal_usecases.NewListUsecase,
+	bdspro_infra_providers.NewMemberPlanService,
 	bdspro_infra_services.NewMemberPlanUsecase,
-	bdspro_v1_providers.NewNotiService,
-	bdspro_infra_router_org.NewOrgAccessRoute,
-	bdspro_internal_usecases.NewOrgMemAccessUsecase,
+	bdspro_infra_providers.NewNotiService,
+	bdspro_infra_router_org.NewOrgAssetCostRouter,
+	bdspro_internal_usecases_org.NewOrgAssetCostUc,
+	bdspro_infra_router_org.NewOrgAssetExploitationRouter,
+	bdspro_internal_usecases_org.NewOrgAssetExploitationUc,
+	bdspro_infra_router_org.NewOrgAssetRouter,
+	bdspro_internal_usecases_org.NewOrgAssetUsecase,
+	bdspro_infra_router_org.NewOrgCostTypeRouter,
+	bdspro_internal_usecases_org.NewOrgCostTypeUc,
+	bdspro_infra_router_org.NewOrgPostRoute,
+	bdspro_internal_usecases_org.NewOrgPostUsecase,
+	bdspro_infra_router_org.NewOrgProductChildRouter,
+	bdspro_internal_usecases_org.NewOrgProductChildUsecase,
 	bdspro_infra_router_org.NewOrgProductRouter,
 	bdspro_internal_usecases_org.NewOrgProductUsecase,
 	bdspro_infra_router_org.NewOrgRouterManager,
-	bdspro_v1_mod_user_post.NewPostRepo,
-	bdspro_v1_mod_user_post.NewPostRouter,
+	bdspro_infra_router_user.NewPostMediaRoute,
+	bdspro_infra_postgre.NewPostgreAmenity,
+	bdspro_infra_postgre.NewPostgreApartmentRepo,
+	bdspro_infra_postgre.NewPostgreAsset,
+	bdspro_infra_postgre.NewPostgreDocType,
 	bdspro_infra_repo.NewPostgreHistoryRepo,
-	bdspro_v1_mod_global_product_access.NewProductAccessRepo,
-	bdspro_v1_mod_admin_product_access.NewProductAccessRouter,
-	bdspro_v1_mod_admin_product_access.NewProductAccessService,
-	bdspro_v1_mod_user_product_child.NewProductChildService,
-	bdspro_v1_mod_global_product_history.NewProductHistoryRepo,
-	bdspro_v1_mod_global_product_media.NewProductMediaRepo,
-	bdspro_v1_mod_global_product_price.NewProductPriceRepo,
-	bdspro_v1_mod_global_product_private.NewProductPrivateRepo,
-	bdspro_internal_usecases_shared.NewProductUsecase,
-	bdspro_v1_mod_admin_project_build.NewProjectBuildRepo,
-	bdspro_v1_mod_admin_project_build.NewProjectBuildRouter,
-	bdspro_v1_mod_admin_project_build.NewProjectBuildService,
-	bdspro_v1_mod_admin_project.NewProjectRepo,
-	bdspro_v1_mod_admin_project.NewProjectRouter,
-	bdspro_v1_mod_admin_project.NewProjectService,
-	bdspro_v1_mod_admin_property_type.NewPropertyTypeRepo,
-	bdspro_v1_mod_admin_property_type.NewPropertyTypeRouter,
-	bdspro_v1_mod_admin_property_type.NewPropertyTypeService,
-	bdspro_v1_mod_admin_province.NewProvinceRepo,
-	bdspro_v1_mod_admin_province.NewProvinceRouter,
-	bdspro_v1_mod_admin_province.NewProvinceService,
+	bdspro_infra_postgre_org.NewPostgreOrgAssetCost,
+	bdspro_infra_postgre_org.NewPostgreOrgAssetExploitation,
+	bdspro_infra_postgre_org.NewPostgreOrgCostType,
+	bdspro_infra_repo.NewPostgreProductChildRepo,
+	bdspro_infra_postgre.NewPostgreProject,
+	bdspro_infra_postgre.NewPostgrePropertyType,
+	bdspro_infra_postgre.NewPostgreRegion,
+	bdspro_infra_postgre.NewPostgreReportHistory,
+	bdspro_infra_postgre_user.NewPostgreUserAssetCost,
+	bdspro_infra_postgre_user.NewPostgreUserAssetExploitation,
+	bdspro_infra_postgre_user.NewPostgreUserCostType,
+	bdspro_internal_usecases.NewProjectBuildUsecase,
+	bdspro_internal_usecases.NewPropertyTypeUsecase,
 	bdspro_infra_router_public.NewPublicRouter,
-	bdspro_v1_providers.NewRedisProvider,
-	bdspro_v1_mod_global_region.NewRegionRepo,
+	bdspro_internal_usecases.NewRecordHistoryUsecase,
+	bdspro_infra_providers.NewRedisProvider,
 	bdspro_infra_router_user.NewRouterManager,
 	bdspro_infra_client.NewServiceClient,
-	bdspro_v1_mod_user_transaction.NewTransactionRepo,
-	bdspro_v1_mod_user_transaction.NewTransactionService,
-	bdspro_infra_providers.NewTransmitProvider,
 	bdspro_infra_router_user.NewUAssetLegalRoute,
-	bdspro_infra_router_user.NewUAssetRoute,
-	bdspro_internal_usecases.NewUAssetUsecase,
-	bdspro_infra_router_user.NewUPostMediaRoute,
+	bdspro_internal_usecases_shared.NewUAssetUsecase,
 	bdspro_internal_usecases.NewUPostMediaUsecase,
-	bdspro_internal_usecases.NewUPostUsecase,
-	bdspro_infra_router_user.NewUProductAccessRoute,
-	bdspro_internal_usecases.NewUProductAccessUsecase,
-	bdspro_infra_router_user.NewUProductChildRoute,
-	bdspro_internal_usecases.NewUProductChildUsecase,
+	bdspro_infra_router_user.NewUProductAccessRouter,
 	bdspro_infra_providers.NewUProductProvider,
-	bdspro_infra_router_user.NewUProductRoute,
-	bdspro_internal_usecases.NewUProductUsecase,
-	bdspro_v1_mod_user_apartment.NewUserApartmentRepo,
-	bdspro_v1_mod_user_apartment.NewUserApartmentRouter,
-	bdspro_v1_mod_user_apartment.NewUserApartmentService,
-	bdspro_v1_mod_user_asset.NewUserAssetService,
-	bdspro_v1_mod_user_build_room.NewUserBuildRoomRepo,
-	bdspro_v1_mod_user_build_room.NewUserBuildRoomRouter,
-	bdspro_v1_mod_user_build_room.NewUserBuildRoomService,
-	bdspro_v1_mod_user_list.NewUserListService,
+	bdspro_infra_router_user.NewUserAssetCostRouter,
+	bdspro_internal_usecases_user.NewUserAssetCostUc,
+	bdspro_infra_router_user.NewUserAssetExploitationRouter,
+	bdspro_internal_usecases_user.NewUserAssetExploitationUc,
+	bdspro_infra_router_user.NewUserAssetRouter,
+	bdspro_internal_usecases_user.NewUserAssetUsecase,
+	bdspro_infra_router_user.NewUserCostTypeRouter,
+	bdspro_internal_usecases_user.NewUserCostTypeUc,
+	bdspro_internal_usecases_user.NewUserHandler,
 	bdspro_infra_router_user.NewUserPostRoute,
-	bdspro_v1_mod_user_post.NewUserPostService,
-	bdspro_v1_mod_user_product_access.NewUserProductAccessRoute,
-	bdspro_v1_mod_user_product_access.NewUserProductAccessService,
-	bdspro_v1_mod_user_product_child.NewUserProductChildRepo,
-	bdspro_v1_mod_user_product_child.NewUserProductChildRoute,
-	bdspro_v1_mod_user_product.NewUserProductRepo,
-	bdspro_v1_mod_user_product.NewUserProductRoute,
-	bdspro_v1_mod_user_product.NewUserProductService,
-	bdspro_v1_mod_user_project_build.NewUserProjectBuildRepo,
-	bdspro_v1_mod_user_project_build.NewUserProjectBuildRouter,
-	bdspro_v1_mod_user_project_build.NewUserProjectBuildService,
-	bdspro_v1_mod_user.NewUserRoute,
-	bdspro_v1_mod_admin_ward.NewWardRepo,
-	bdspro_v1_mod_admin_ward.NewWardRouter,
-	bdspro_v1_mod_admin_ward.NewWardService,
+	bdspro_internal_usecases_user.NewUserPostUsecase,
+	bdspro_internal_usecases_user.NewUserProductAccessUsecase,
+	bdspro_infra_router_user.NewUserProductChildRouter,
+	bdspro_internal_usecases_user.NewUserProductChildUsecase,
+	bdspro_infra_router_user.NewUserProductRouter,
+	bdspro_internal_usecases_user.NewUserProductUsecase,
+	bdspro_infra_router_user.NewUserProjectBuildRouter,
 )
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)

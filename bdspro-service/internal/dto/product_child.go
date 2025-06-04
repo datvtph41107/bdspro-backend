@@ -37,10 +37,10 @@ type SaveProductChildRequest struct {
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	// RentVisibility  uint                    `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	// PriceDTO        *models.ProductPrice    `json:"price"`
+	// PriceDTO        *domain.ProductPrice    `json:"price"`
 	// MediaItemDTOs   []data.MediaItem        `json:"mediaItems"`
 	// HouseInfoDTO    *data.HouseInfoUpdate   `json:"houseInfo"`
-	// PrivateDataDTO  *models.ProductPrivate  `json:"productPrivate"`
+	// PrivateDataDTO  *domain.ProductPrivate  `json:"productPrivate"`
 	// GoogleMapLink   string                  `json:"googleMapLink"`
 }
 
@@ -66,9 +66,9 @@ type ProductChildSearch struct {
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	// RentVisibility  uint                    `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	// PriceDTO        *models.ProductPrice    `json:"price"`
+	// PriceDTO        *domain.ProductPrice    `json:"price"`
 	// MediaItemDTOs   []data.MediaItem        `json:"mediaItems"`
 	// HouseInfoDTO    *data.HouseInfoUpdate   `json:"houseInfo"`
-	// PrivateDataDTO  *models.ProductPrivate  `json:"productPrivate"`
+	// PrivateDataDTO  *domain.ProductPrivate  `json:"productPrivate"`
 	// GoogleMapLink   string                  `json:"googleMapLink"`
 }

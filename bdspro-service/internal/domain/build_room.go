@@ -1,8 +1,6 @@
 package domain
 
-import (
-	_models "common/models"
-)
+import _models "common/models"
 
 // Project struct represents the projects table
 // TableName sets the table name explicitly

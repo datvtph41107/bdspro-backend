@@ -3,12 +3,12 @@ package repo
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	"common/case/crud3"
+	"context"
 )
 
 type RegionRepo interface {
-	crud3.CrudRepo[domain.Region]
-	Search(dto *dto.RegionRequest) ([]domain.Region, int64, error)
+	GetByID(c context.Context, id uint64) (*domain.Region, error)
+	Search(c context.Context, dto *dto.RegionRequest) ([]domain.Region, int64, error)
 	InterText(text string, limit int) ([]uint64, error)
 	InterTextToItem(text string, limit int) ([]domain.Region, error)
 }

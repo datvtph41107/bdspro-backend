@@ -50,7 +50,7 @@ type Product struct {
 	RentVisibility  enums.EVisibility    `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	OwnerUserID     *uint64              `gorm:"type:int8" json:"ownerUserId,omitempty"`                  // Ai sở hữu (nếu đã bán)
 	OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)
-	OwnerType       enums.ETargetType    `gorm:"type:smallint;not null;default:10" json:"ownerType"`      // 1=Cá nhân, 2=Tổ chức
+	OwnerType       enums.EOwnerType     `gorm:"type:smallint;not null;default:10" json:"ownerType"`      // 1=Cá nhân, 2=Tổ chức
 	ProvinceID      *uint64              `json:"provinceId,omitempty"`
 	Province        *Region              `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	DistrictID      *uint64              `json:"districtId,omitempty"`

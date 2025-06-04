@@ -1,8 +1,6 @@
 package domain
 
-import (
-	_models "common/models"
-)
+import _models "common/models"
 
 // DocType struct cho bảng doc_type (Loại pháp lý)
 type DocType struct {

@@ -5,35 +5,48 @@ import (
 	"bdspro/internal/usecases"
 	_routes "common/routes"
 	_utils "common/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-type UPostMediaRoute struct {
-	UC *usecases.UPostMediaUsecase
+type PostMediaRouter struct {
+	UC *usecases.PostMediaUsecase
 }
 
-func NewUPostMediaRoute(uc *usecases.UPostMediaUsecase) *UPostMediaRoute {
-	return &UPostMediaRoute{
+func NewPostMediaRoute(uc *usecases.PostMediaUsecase) *PostMediaRouter {
+	return &PostMediaRouter{
 		UC: uc,
 	}
 }
 
-func (r *UPostMediaRoute) RegisterRoutes(router *gin.RouterGroup) {
-	group := router.Group("/post-media")
+func (r *PostMediaRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
+	group := router.Group(path)
 	{
-		group.GET("", r.Search)
+		group.GET("/:postId", r.Search)
 	}
 }
 
-func (s *UPostMediaRoute) Search(c *gin.Context) {
+// @Summary Lấy danh sách media của bài đăng
+// @Tags User: Tin đăng
+// @Produce json
+// @Param postId query string true "ID của bài đăng"
+// @Security BearerAuth
+// @Router /v1/bdspro/v2/user/post/media/{postId} [get]
+func (s *PostMediaRouter) Search(c *gin.Context) {
 	dto := dto.PostMediaGetDTO{}
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := s.UC.GetMediaList(c, dto)
+	postId, err := strconv.ParseUint(c.Param("postId"), 10, 64)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
+	result, err := s.UC.GetMediaList(c, postId, dto)
 
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code: 0,

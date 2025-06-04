@@ -29,6 +29,14 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 	return profileId.(uint64)
 }
 
+func GetOrganizationIdFromContext(c context.Context) uint64 {
+	organizationId := c.Value("profileId")
+	if organizationId == nil {
+		return 0
+	}
+	return organizationId.(uint64)
+}
+
 // func GetProfileIdFromContext(ctx context.Context) uint64 {
 // 	return ctx.Value("profileId").(uint64)
 // 	// if claims, ok := clms.(*Principal); ok {

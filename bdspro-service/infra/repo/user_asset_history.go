@@ -1,8 +1,8 @@
 package postgre_repo
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/enums"
-	"bdspro/v1/models"
 	_db "common/db"
 	"context"
 
@@ -28,11 +28,11 @@ func (*GormAssetHistoryRepo) CreateHistory(
 	BeforeData *string,
 	AfterData *string,
 ) error {
-	return _db.SaveWithContext(c, &models.AssetHistory{
-		AssetID:    assetID,
-		ActionType: action,
-		BeforeData: BeforeData,
-		AfterData:  AfterData,
+	return _db.SaveWithContext(c, &domain.AssetHistory{
+		// AssetID:    assetID,
+		// ActionType: action,
+		// BeforeData: BeforeData,
+		// AfterData:  AfterData,
 		// ParentID: &parentID,
 		// ChildAssetIDs: ConvertToPQArray(childIDs),
 	})
