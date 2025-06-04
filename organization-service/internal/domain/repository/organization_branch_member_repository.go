@@ -1,0 +1,14 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/tuandq2112/organization-service/internal/domain/entity"
+)
+
+type OrganizationBranchMemberRepository interface {
+	CreateOrganizationBranchMember(ctx context.Context, organizationBranchMember *entity.OrganizationBranchMember) (*entity.OrganizationBranchMember, error)
+	DeleteOrganizationBranchMember(ctx context.Context, id uint32) error
+	GetOrganizationBranchMemberByOrganizationBranchId(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error)
+	GetOrganizationBranchMemberByUserIdAndOrganizationBranchId(ctx context.Context, userId uint32, organizationBranchId uint32) (*entity.OrganizationBranchMember, error)
+}

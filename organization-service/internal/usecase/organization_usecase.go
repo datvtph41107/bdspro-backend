@@ -16,7 +16,7 @@ type OrganizationUsecase interface {
 }
 
 type organizationUsecase struct {
-	OrganizationRepository       repository.OrganizationRepository
+	OrganizationRepository  repository.OrganizationRepository
 	organizationAuthUsecase OrganizationAuthUsecase
 }
 
@@ -25,15 +25,12 @@ func NewOrganizationUsecase(
 	organizationAuthUsecase OrganizationAuthUsecase,
 ) OrganizationUsecase {
 	return &organizationUsecase{
-		OrganizationRepository:       organizationRepository,
+		OrganizationRepository:  organizationRepository,
 		organizationAuthUsecase: organizationAuthUsecase,
 	}
 }
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
-	
-	
-
 	org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
 	if err != nil {
 		return nil, nil, err
@@ -41,8 +38,6 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 	if org != nil {
 		return nil, nil, custom_error.InvalidTaxCode()
 	}
-
-
 
 	organization, member, err = o.OrganizationRepository.CreateOrganizationWithMember(ctx, organization, member)
 	if err != nil {
@@ -84,7 +79,6 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	}
 	return org, nil
 }
-
 
 func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
 	return o.OrganizationRepository.FindByUserId(ctx, userId)

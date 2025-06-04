@@ -20,7 +20,7 @@ type organizationRoleUsecase struct {
 	organizationRoleRepository       repository.OrganizationRoleRepository
 	organizationPermissionRepository repository.OrganizationPermissionRepository
 	organizationRepository           repository.OrganizationRepository
-	organizationAuthUsecase         OrganizationAuthUsecase
+	organizationAuthUsecase          OrganizationAuthUsecase
 }
 
 func NewOrganizationRoleUsecase(
@@ -33,7 +33,7 @@ func NewOrganizationRoleUsecase(
 		organizationRoleRepository:       organizationRoleRepository,
 		organizationPermissionRepository: organizationPermissionRepository,
 		organizationRepository:           organizationRepository,
-		organizationAuthUsecase:         organizationAuthUsecase,
+		organizationAuthUsecase:          organizationAuthUsecase,
 	}
 }
 
@@ -91,7 +91,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, currentUserId 
 	if existRole == nil {
 		return nil, custom_error.RecordNotFound("Role not found")
 	}
-	if  existRole.Id != model.Id && existRole.Key == model.Key {
+	if existRole.Id != model.Id && existRole.Key == model.Key {
 		return nil, custom_error.RoleKeyAlreadyExists()
 	}
 
@@ -102,8 +102,6 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, currentUserId 
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	existRole.Name = model.Name
-	existRole.Key = model.Key
 
 	return u.organizationRoleRepository.Update(ctx, existRole)
 }
@@ -125,4 +123,3 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, currentUserId 
 	}
 	return u.organizationRoleRepository.Delete(ctx, existRole.Id)
 }
-

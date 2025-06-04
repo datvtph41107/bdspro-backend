@@ -101,7 +101,7 @@ func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*
 func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := RoleEntityToModel(role)
 
-	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).Where("id = ?", model.ID).Updates(model).Error; err != nil {
 		return nil, err
 	}
 

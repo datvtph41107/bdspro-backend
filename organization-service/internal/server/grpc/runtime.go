@@ -23,6 +23,7 @@ type GRPCServer struct {
 	organizationMemberHandler     *handler.OrganizationMemberHandler
 	organizationRoleHandler       *handler.OrganizationRoleHandler
 	organizationPermissionHandler *handler.OrganizationPermissionHandler
+	organizationBranchHandler     *handler.OrganizationBranchHandler
 	logger                        *flogging.FabricLogger
 }
 
@@ -31,12 +32,14 @@ func NewGRPCServer(
 	organizationMemberHandler *handler.OrganizationMemberHandler,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
+	organizationBranchHandler *handler.OrganizationBranchHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
 		organizationMemberHandler:     organizationMemberHandler,
 		organizationRoleHandler:       organizationRoleHandler,
 		organizationPermissionHandler: organizationPermissionHandler,
+		organizationBranchHandler:     organizationBranchHandler,
 		logger:                        flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
@@ -48,7 +51,8 @@ func (s *GRPCServer) Start() {
 		s.organizationHandler,
 		s.organizationMemberHandler,
 		s.organizationRoleHandler,
-		s.organizationPermissionHandler)
+		s.organizationPermissionHandler,
+		s.organizationBranchHandler)
 
 	g.Add(start, stop)
 
@@ -65,6 +69,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	organizationMemberHandler *handler.OrganizationMemberHandler,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
+	organizationBranchHandler *handler.OrganizationBranchHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -81,6 +86,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationMemberServiceServer(s, organizationMemberHandler)
 			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
+			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
 		},
 		unaryInts,
 		streamInts,

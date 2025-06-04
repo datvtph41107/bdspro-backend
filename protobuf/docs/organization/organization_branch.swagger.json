@@ -1,0 +1,440 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "organization/organization_branch.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "OrganizationBranchService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/organization-branch": {
+      "get": {
+        "operationId": "OrganizationBranchService_GetOrganizationBranches",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationBranchesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      },
+      "post": {
+        "operationId": "OrganizationBranchService_CreateOrganizationBranch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationCreateOrganizationBranchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_organizationCreateOrganizationBranchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    },
+    "/v2/organization-branch/{id}": {
+      "delete": {
+        "operationId": "OrganizationBranchService_DeleteOrganizationBranch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationDeleteOrganizationBranchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      },
+      "put": {
+        "operationId": "OrganizationBranchService_UpdateOrganizationBranch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationUpdateOrganizationBranchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrganizationBranchServiceUpdateOrganizationBranchBody"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    },
+    "/v2/organization-branch/{id}/add-member": {
+      "post": {
+        "operationId": "OrganizationBranchService_AddMemberToOrganizationBranch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationAddMemberToOrganizationBranchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrganizationBranchServiceAddMemberToOrganizationBranchBody"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    },
+    "/v2/organization-branch/{id}/members": {
+      "get": {
+        "operationId": "OrganizationBranchService_GetOrganizationBranchMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationBranchMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    },
+    "/v2/organization-branch/{id}/remove-member/{userId}": {
+      "delete": {
+        "operationId": "OrganizationBranchService_RemoveMemberFromOrganizationBranch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationRemoveMemberFromOrganizationBranchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "OrganizationBranchServiceAddMemberToOrganizationBranchBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "OrganizationBranchServiceUpdateOrganizationBranchBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_organizationAddMemberToOrganizationBranchResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_organizationCreateOrganizationBranchRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "managerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_organizationCreateOrganizationBranchResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_organizationDeleteOrganizationBranchResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pb_organizationGetOrganizationBranchMembersResponse": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_organizationOrganizationBranchMember"
+          }
+        }
+      }
+    },
+    "pb_organizationGetOrganizationBranchesResponse": {
+      "type": "object",
+      "properties": {
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_organizationOrganizationBranch"
+          }
+        }
+      }
+    },
+    "pb_organizationOrganizationBranch": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_organizationOrganizationBranchMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_organizationRemoveMemberFromOrganizationBranchResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_organizationUpdateOrganizationBranchResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

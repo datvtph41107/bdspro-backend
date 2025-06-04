@@ -80,8 +80,7 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, cu
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	existPermission.Name = permission.Name
-	existPermission.Key = permission.Key
+
 	return u.organizationPermissionRepository.Update(ctx, permission)
 }
 

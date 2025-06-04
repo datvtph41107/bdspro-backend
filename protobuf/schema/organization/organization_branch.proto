@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package pb_organization;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "types/pb_organization";
+
+
+
+service OrganizationBranchService {
+    rpc CreateOrganizationBranch(CreateOrganizationBranchRequest) returns (CreateOrganizationBranchResponse) {
+        option (google.api.http) = {
+            post: "/v2/organization-branch"
+            body: "*"
+        };
+    }
+    rpc UpdateOrganizationBranch(UpdateOrganizationBranchRequest) returns (UpdateOrganizationBranchResponse) {
+        option (google.api.http) = {
+            put: "/v2/organization-branch/{id}"
+            body: "*"
+        };
+    }
+    rpc DeleteOrganizationBranch(DeleteOrganizationBranchRequest) returns (DeleteOrganizationBranchResponse) {
+        option (google.api.http) = {
+            delete: "/v2/organization-branch/{id}"
+        };
+    }
+    rpc AddMemberToOrganizationBranch(AddMemberToOrganizationBranchRequest) returns (AddMemberToOrganizationBranchResponse) {
+        option (google.api.http) = {
+            post: "/v2/organization-branch/{id}/add-member"
+            body: "*"
+        };
+    }
+    rpc RemoveMemberFromOrganizationBranch(RemoveMemberFromOrganizationBranchRequest) returns (RemoveMemberFromOrganizationBranchResponse) {
+        option (google.api.http) = {
+            delete: "/v2/organization-branch/{id}/remove-member/{userId}"
+        };
+    }
+    rpc GetOrganizationBranchMembers(GetOrganizationBranchMembersRequest) returns (GetOrganizationBranchMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization-branch/{id}/members"
+        };
+    }
+    rpc GetOrganizationBranches(GetOrganizationBranchesRequest) returns (GetOrganizationBranchesResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization-branch"
+        };
+    }
+}
+
+message CreateOrganizationBranchRequest {
+    string name = 1;
+    string address = 2;
+    string phone = 3;
+    string email = 4;
+    uint32 managerId = 5;
+    uint32 organizationId = 6;
+}
+
+message CreateOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message UpdateOrganizationBranchRequest {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+}
+
+message UpdateOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message DeleteOrganizationBranchRequest {
+    uint32 id = 1;
+}
+
+message DeleteOrganizationBranchResponse {
+    bool success = 1;
+}
+
+message AddMemberToOrganizationBranchRequest {
+    uint32 id = 1;
+    uint32 userId = 2;
+}
+
+message AddMemberToOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message RemoveMemberFromOrganizationBranchRequest {
+    uint32 id = 1;
+    uint32 userId = 2;
+}
+
+message RemoveMemberFromOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message GetOrganizationBranchMembersRequest {
+    uint32 id = 1;
+}
+
+message OrganizationBranchMember {
+    uint32 id = 1;
+    uint32 userId = 2;
+}
+
+message GetOrganizationBranchMembersResponse {
+    repeated OrganizationBranchMember members = 1;
+}
+
+message GetOrganizationBranchesRequest {
+    uint32 organizationId = 1;
+}
+
+message OrganizationBranch {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+}
+
+message GetOrganizationBranchesResponse {
+    repeated OrganizationBranch branches = 1;
+}
+

@@ -80,7 +80,7 @@ func (r *organizationPermissionRepository) FindById(ctx context.Context, id uint
 
 func (r *organizationPermissionRepository) Update(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {	
 	model := OrganizationPermissionEntityToModel(permission)
-	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationPermissionModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
 		return nil, err
 	}
 	return OrganizationPermissionModelToEntity(model), nil
