@@ -47,7 +47,7 @@ definitions:
     - Pending
     - Accepted
     - Reject
-  models.GroupEntity:
+  domain.GroupEntity:
     properties:
       backgroundColor:
         type: string
@@ -512,7 +512,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.GroupEntity'
+          $ref: '#/definitions/domain.GroupEntity'
       produces:
       - application/json
       responses:
@@ -575,7 +575,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.GroupEntity'
+          $ref: '#/definitions/domain.GroupEntity'
       - description: ID của lời mời kết bạn
         in: path
         name: id

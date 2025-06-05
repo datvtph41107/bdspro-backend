@@ -1,0 +1,879 @@
+basePath: /v1/crm
+definitions:
+  domain.CustomerEntity:
+    properties:
+      address:
+        type: string
+      chargeId:
+        type: integer
+      chargeType:
+        $ref: '#/definitions/enums.EOwnerType'
+      contactId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      customerSource:
+        $ref: '#/definitions/enums.ESourceCustomer'
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      phone:
+        type: string
+      pipelineId:
+        type: integer
+      stageId:
+        type: integer
+      step:
+        $ref: '#/definitions/enums.EStep'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - fullName
+    - ownerType
+    type: object
+  domain.GroupEntity:
+    properties:
+      backgroundColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      textColor:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.PipelineEntity:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      pipelineName:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - ownerId
+    - ownerType
+    - pipelineName
+    type: object
+  domain.RuleEntity:
+    properties:
+      active:
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      cycleSeconds:
+        type: integer
+      deadline:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      rule:
+        $ref: '#/definitions/enums.ERule'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  domain.StageEntity:
+    properties:
+      active:
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      pipelineId:
+        type: integer
+      ruleId:
+        type: integer
+      stageName:
+        type: string
+      step:
+        $ref: '#/definitions/enums.EStep'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - orderNumber
+    - pipelineId
+    - stageName
+    type: object
+  enums.EOwnerType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - EOwnerTypeMember
+    - EOwnerTypeGroup
+    - EOwnerTypeOrgnization
+  enums.ERule:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - RuleCycle
+    - RuleWarnLabel
+    - RuleSwitchStatus
+  enums.ESourceCustomer:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    type: integer
+    x-enum-varnames:
+    - SourceCustomerPost
+    - SourceCustomerAdvise
+    - SourceCustomerContact
+    - SourceCustomerZalo
+    - SourceCustomerFacebook
+    - SourceCustomerOther
+  enums.EStep:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-varnames:
+    - StepNew
+    - StepContacted
+    - StepNegotiate
+    - StepDeposite
+    - StepClose
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: CRM API
+  version: "1.0"
+paths:
+  /contact:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách liên hệ
+      tags:
+      - Liên hệ
+  /contact/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một liên hệ khỏi hệ thống
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa liên hệ
+      tags:
+      - Liên hệ
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin liên hệ hiện tại
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin liên hệ
+      tags:
+      - Liên hệ
+  /customer:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một khách hàng mới với thông tin được cung cấp
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "409":
+          description: Nhóm đã tồn tại
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Tạo khách hàng mới
+      tags:
+      - Khách hàng
+  /customer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một khách hàng khỏi hệ thống
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa khách hàng
+      tags:
+      - Khách hàng
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin khách hàng hiện tại
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin khách hàng
+      tags:
+      - Khách hàng
+  /customer/{id}/assign:
+    put:
+      consumes:
+      - application/json
+      description: Gán khách hàng hiện tại
+      parameters:
+      - description: ID của khách hàng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CustomerEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán khách hàng
+      tags:
+      - Khách hàng
+  /customer/{id}/note:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật ghi chú khách hàng hiện tại
+      parameters:
+      - description: ID của khách hàng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CustomerEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật ghi chú khách hàng
+      tags:
+      - Khách hàng
+  /customer/{id}/stage:
+    put:
+      consumes:
+      - application/json
+      description: Chuyển giai đoạn khách hàng hiện tại
+      parameters:
+      - description: ID của khách hàng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CustomerEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển giai đoạn khách hàng
+      tags:
+      - Khách hàng
+  /customer/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - description: ID của chủ sở hữu
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Loại chủ sở hữu
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: chargeId
+        type: integer
+      - enum:
+        - 10
+        - 20
+        - 30
+        in: query
+        name: chargeType
+        type: integer
+        x-enum-varnames:
+        - EOwnerTypeMember
+        - EOwnerTypeGroup
+        - EOwnerTypeOrgnization
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - 10
+          - 20
+          - 30
+          - 40
+          - 50
+          - 60
+          type: integer
+        name: customerSources
+        type: array
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: fullName
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: phone
+        type: string
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - 10
+          - 20
+          - 30
+          - 40
+          - 50
+          type: integer
+        name: steps
+        type: array
+      - in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách khách hàng
+      tags:
+      - Khách hàng
+  /groups:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một liên hệ mới với thông tin được cung cấp
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "409":
+          description: Nhóm đã tồn tại
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Tạo liên hệ mới
+      tags:
+      - Liên hệ
+  /histories/{id}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lịch sử
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Owner Type
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách lịch sử
+      tags:
+      - Lịch sử
+  /pipelines:
+    post:
+      consumes:
+      - application/json
+      description: Tạo quy trình
+      parameters:
+      - description: Pipeline entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.PipelineEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quy trình
+      tags:
+      - Quy trình
+  /pipelines/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quy trình
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quy trình
+      tags:
+      - Quy trình
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quy trình
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Pipeline entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.PipelineEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quy trình
+      tags:
+      - Quy trình
+  /pipelines/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy trình
+      parameters:
+      - description: Owner ID
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Owner Type
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: active
+        type: boolean
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: color
+        type: array
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pipelineName
+        type: string
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - 10
+          - 20
+          - 30
+          - 40
+          - 50
+          type: integer
+        name: steps
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy trình
+      tags:
+      - Quy trình
+  /rule:
+    post:
+      consumes:
+      - application/json
+      description: Tạo quy tắc
+      parameters:
+      - description: Rule entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RuleEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quy tắc
+      tags:
+      - Quy tắc
+  /rule/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quy tắc
+      tags:
+      - Quy tắc
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Rule entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RuleEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quy tắc
+      tags:
+      - Quy tắc
+  /rule/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy tắc
+      parameters:
+      - description: Owner ID
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Owner Type
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy tắc
+      tags:
+      - Quy tắc
+  /stages:
+    post:
+      consumes:
+      - application/json
+      description: Tạo giai đoạn
+      parameters:
+      - description: Stage entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.StageEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo giai đoạn
+      tags:
+      - Giai đoạn
+  /stages/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa giai đoạn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa giai đoạn
+      tags:
+      - Giai đoạn
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật giai đoạn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stage entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.StageEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật giai đoạn
+      tags:
+      - Giai đoạn
+  /stages/{pipelineId}:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm giai đoạn theo pipeline
+      parameters:
+      - description: Pipeline ID
+        in: path
+        name: pipelineId
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: stageName
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm giai đoạn theo pipeline
+      tags:
+      - Giai đoạn
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

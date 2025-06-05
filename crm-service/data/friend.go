@@ -1,7 +1,7 @@
 package data
 
 import (
-	"crm/enums"
+	"crm/internal/enums"
 	"time"
 )
 

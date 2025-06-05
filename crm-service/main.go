@@ -2,44 +2,23 @@ package main
 
 import (
 	"common"
+	_jwt "common/jwt"
 	"crm/config"
-	"crm/models"
+	"crm/infra/db"
+	"crm/wire"
 
-	_ "common/models"
 	_ "crm/docs"
-	"crm/routes"
 	"log"
 
 	"github.com/gin-gonic/gin"
 )
-
-type ConfigApp struct {
-	friend *routes.FriendRouter
-	group  *routes.GroupRouter
-	follow *routes.FollowRouter
-	block  *routes.BlockRouter
-}
-
-func NewConfigApp(
-	friend *routes.FriendRouter,
-	group *routes.GroupRouter,
-	follow *routes.FollowRouter,
-	block *routes.BlockRouter,
-) *ConfigApp {
-	return &ConfigApp{
-		friend: friend,
-		group:  group,
-		follow: follow,
-		block:  block,
-	}
-}
 
 var publicRoutes = []string{"/public"}
 
 // @title CRM API
 // @version 1.0
 // @description API quản lý người dùng
-// @BasePath /crm
+// @BasePath /v1/crm
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
@@ -56,21 +35,12 @@ func main() {
 
 	common.SetupRestfulAPI(parameters, func() {
 		config.LoadProperties()
-		log.Printf("Data: ", property.AppProperties)
+		log.Printf("Data: ", config.AppProperties)
 
-		app, _ := InitializeApp()
-		models.AutoMigrate()
+		app, _ := wire.InitializeApp()
+		db.AutoMigrate()
 
-		routes.FriendRoutes(r, app.friend)
-		routes.GroupRoutes(r, app.group)
-		routes.FollowRoutes(r, app.follow)
-		routes.BlockRoutes(r, app.block)
-		// routes.OAuthRoutes(r, app.OAuthRouter)
-		// routes.ProfileRoutes(r, app.ProfileRouter)
-		// // fmt.Sprintf("Data: ", property.AppProperties.ZaloAppID)
-
-		// group.GET("/info", func(c *gin.Context) {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})
-		// })
+		r.Use(_jwt.JWTAuthMiddleware(nil))
+		app.RuntimeRouter.RuntimeRoutes(r)
 	})
 }

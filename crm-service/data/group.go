@@ -9,11 +9,11 @@ type GroupDTO struct {
 }
 
 // NewGroupDTO is a constructor for creating a new FriendGroupDTO instance
-func NewGroupDTO(id uint, name, textColor, backgroundColor string) *GroupDTO {
-	return &GroupDTO{
-		ID:              id,
-		Name:            name,
-		TextColor:       textColor,
-		BackgroundColor: backgroundColor,
-	}
-}
+// func NewGroupDTO(id uint, name, textColor, backgroundColor string) *GroupDTO {
+// 	return &GroupDTO{
+// 		ID:              id,
+// 		Name:            name,
+// 		TextColor:       textColor,
+// 		BackgroundColor: backgroundColor,
+// 	}
+// }

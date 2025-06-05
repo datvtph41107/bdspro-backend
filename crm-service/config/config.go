@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crm/infra/router"
 	_ "embed"
 	"log"
 
@@ -26,6 +27,18 @@ type UserProperties struct {
 }
 
 var AppProperties UserProperties
+
+type ConfigApp struct {
+	RuntimeRouter *router.RuntimeRouter
+}
+
+func NewConfigApp(
+	runtimeRouter *router.RuntimeRouter,
+) *ConfigApp {
+	return &ConfigApp{
+		RuntimeRouter: runtimeRouter,
+	}
+}
 
 // LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
 func LoadProperties() {

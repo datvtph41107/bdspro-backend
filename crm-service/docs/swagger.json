@@ -719,7 +719,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
+                            "$ref": "#/definitions/domain.GroupEntity"
                         }
                     }
                 ],
@@ -764,7 +764,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
+                            "$ref": "#/definitions/domain.GroupEntity"
                         }
                     },
                     {
@@ -912,7 +912,7 @@
                 "Reject"
             ]
         },
-        "models.GroupEntity": {
+        "domain.GroupEntity": {
             "type": "object",
             "properties": {
                 "backgroundColor": {

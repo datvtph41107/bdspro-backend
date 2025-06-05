@@ -40,7 +40,6 @@ type ProductUsecase struct {
 	ProductHistoryRepo repo.ProductHistoryRepo
 	MemberPlan         usecases.PlanUsecase
 	PostUsecase        *PostUsecase
-	// UserPostUsecase    *UPostUsecase
 	// UAssetUsecase      *UAssetUsecase
 	DepositeRepo repo.DepositeRepo
 	OwnerType    enums.EOwnerType
