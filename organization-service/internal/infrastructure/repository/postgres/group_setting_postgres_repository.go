@@ -92,3 +92,15 @@ func (r *groupSettingPostgresRepository) GetByID(ctx context.Context, id uint32)
 	}
 	return GroupSettingModelToEntity(model), nil
 }
+
+func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupSetting, error) {
+	var models []*GroupSettingModel
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupSetting, len(models))
+	for i, model := range models {
+		entities[i] = GroupSettingModelToEntity(model)
+	}
+	return entities, nil
+}

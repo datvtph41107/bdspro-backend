@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package pb_group;
+
+import "google/api/annotations.proto";
+
+option go_package = "types/pb_group";
+
+service GroupService {
+    rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
+        option (google.api.http) = {
+            post: "/v2/group"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
+        option (google.api.http) = {
+            put: "/v2/group/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
+        option (google.api.http) = {
+            delete: "/v2/group/{id}"
+        };
+    }
+
+    rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+        option (google.api.http) = {
+            get: "/v2/group/{id}"
+        };
+    }
+    
+    rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
+        option (google.api.http) = {
+            get: "/v2/group"
+        };
+    }
+}
+
+
+message CreateGroupRequest {
+    string name = 1;
+    string description = 2;
+    string type = 3;
+    string status = 4;
+}
+
+message CreateGroupResponse {
+    uint32 id = 1;
+}
+
+message UpdateGroupRequest {
+    uint32 id = 1;
+    string name = 2;
+    string description = 3;
+    string type = 4;
+    string status = 5;
+}
+
+message UpdateGroupResponse {
+    uint32 id = 1;
+}
+
+message DeleteGroupRequest {
+    uint32 id = 1;
+}
+
+message DeleteGroupResponse {
+    uint32 id = 1;
+}
+
+message GetGroupRequest {
+    uint32 id = 1;
+}
+
+message GetGroupResponse {
+    uint32 id = 1;
+}
+
+message GetGroupsRequest {
+    optional uint32 page = 1;
+    optional uint32 size = 2;
+}
+
+message GetGroupsResponse {
+    repeated Group groups = 1;
+    uint32 total = 2;
+}
+
+message Group {
+    uint32 id = 1;
+    string name = 2;
+    string description = 3;
+    string type = 4;
+    string status = 5;
+}

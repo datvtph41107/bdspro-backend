@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package pb_group;
+
+import "google/api/annotations.proto";
+
+option go_package = "types/pb_group";
+
+service GroupMemberService {
+    rpc CreateGroupMember(CreateGroupMemberRequest) returns (CreateGroupMemberResponse) {
+        option (google.api.http) = {
+            post: "/v2/group-member"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroupMember(UpdateGroupMemberRequest) returns (UpdateGroupMemberResponse) {
+        option (google.api.http) = {
+            put: "/v2/group-member/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroupMember(DeleteGroupMemberRequest) returns (DeleteGroupMemberResponse) {
+        option (google.api.http) = {
+            delete: "/v2/group-member/{id}"
+        };
+    }
+
+    rpc GetGroupMember(GetGroupMemberRequest) returns (GetGroupMemberResponse) {
+        option (google.api.http) = {
+            get: "/v2/group-member/{id}"
+        };
+    }
+    
+    rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/group-member"
+        };
+    }
+}
+
+message CreateGroupMemberRequest {
+    string group_id = 1;
+    string user_id = 2;
+    string role = 3;
+}
+
+message CreateGroupMemberResponse {
+    string id = 1;
+}
+
+message UpdateGroupMemberRequest {
+    string id = 1;
+    string role = 2;
+}
+
+message UpdateGroupMemberResponse {
+    string id = 1;
+}
+
+message DeleteGroupMemberRequest {
+    string id = 1;
+}
+
+message DeleteGroupMemberResponse {
+    string id = 1;
+}
+
+message GetGroupMemberRequest {
+    string id = 1;
+}
+
+message GetGroupMemberResponse {
+    string id = 1;
+}
+
+message GetGroupMembersRequest {
+    string group_id = 1;
+}
+
+message GetGroupMembersResponse {
+    repeated GroupMember members = 1;
+}
+
+message GroupMember {
+    string id = 1;
+    string group_id = 2;
+    string user_id = 3;
+    string role = 4;
+}

@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package pb_group;
+
+import "google/api/annotations.proto";
+
+option go_package = "types/pb_group";
+
+service GroupDealService {
+    rpc CreateGroupDeal(CreateGroupDealRequest) returns (CreateGroupDealResponse) {
+        option (google.api.http) = {
+            post: "/v2/group/deal"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroupDeal(UpdateGroupDealRequest) returns (UpdateGroupDealResponse) {
+        option (google.api.http) = {
+            put: "/v2/group/deal/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroupDeal(DeleteGroupDealRequest) returns (DeleteGroupDealResponse) {
+        option (google.api.http) = {
+            delete: "/v2/group/deal/{id}"
+        };
+    }
+
+    rpc GetGroupDeal(GetGroupDealRequest) returns (GetGroupDealResponse) {
+        option (google.api.http) = {
+            get: "/v2/group/deal/{id}"
+        };
+    }
+
+    rpc GetGroupDeals(GetGroupDealsRequest) returns (GetGroupDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/group/deal"
+        };
+    }
+
+    rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
+        option (google.api.http) = {
+            put: "/v2/group/deal/{id}/status"
+            body: "*"
+        };
+    }
+
+}
+
+
+message CreateGroupDealRequest {
+    string name = 1;
+    double amount = 2;
+    string status = 3;
+}
+
+message CreateGroupDealResponse {
+    string id = 1;
+}   
+
+message UpdateGroupDealRequest {
+    string id = 1;
+    string name = 2;
+    double amount = 3;
+    string status = 4;
+}
+
+message UpdateGroupDealResponse {
+    string id = 1;
+}
+
+message DeleteGroupDealRequest {
+    string id = 1;
+}
+
+message DeleteGroupDealResponse {
+    string id = 1;
+}
+
+message GetGroupDealRequest {
+    string id = 1;
+}
+
+message GetGroupDealResponse {
+    string id = 1;
+}
+
+message GetGroupDealsRequest {
+    string group_id = 1;
+}
+
+message GetGroupDealsResponse {
+    repeated GroupDeal deals = 1;
+}
+
+message UpdateGroupDealStatusRequest {
+    string id = 1;
+    string status = 2;
+}
+
+message UpdateGroupDealStatusResponse {
+    string id = 1;
+}
+
+message GroupDeal {
+    string id = 1;
+    string name = 2;
+    double amount = 3;
+    string status = 4;
+}
