@@ -14,4 +14,5 @@ type OrganizationMemberRepository interface {
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error)
+	CountMemberByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error)
 }

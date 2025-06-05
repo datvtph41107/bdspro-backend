@@ -24,6 +24,7 @@ type organizationMemberUsecase struct {
 	organizationRepository       repository.OrganizationRepository
 	organizationRoleRepository   repository.OrganizationRoleRepository
 	organizationAuthUsecase      OrganizationAuthUsecase
+	planLimit                    map[string]uint32
 }
 
 func NewOrganizationMemberUsecase(
@@ -67,6 +68,14 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 		return nil, custom_error.InvalidOrganizationID()
 	}
 
+	count, err := u.organizationMemberRepository.CountMemberByOrganizationId(ctx, organizationMember.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	limit := 10
+	if count >= uint32(limit) {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
 	exist, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, organizationMember.UserID, organizationMember.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -126,7 +135,6 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	organizationMember.Status = entity.OrganizationMemberStatusInactive
 	return u.organizationMemberRepository.DeleteOrganizationMember(ctx, organizationMember)
 }
-
 
 func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, userId uint32, organizationId uint32) ([]*entity.OrganizationMember, error) {
 	return u.organizationMemberRepository.FindByOrganizationId(ctx, organizationId)

@@ -161,3 +161,12 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationId(ctx context.
 	}
 	return OrganizationMemberModelsToEntities(organizationMembers), nil
 }
+
+func (r *OrganizationMemberPostgresRepository) CountMemberByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("organization_id = ?", organizationId).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint32(count), nil
+}
