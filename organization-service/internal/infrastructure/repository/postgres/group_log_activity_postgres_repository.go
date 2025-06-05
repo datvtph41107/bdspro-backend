@@ -1,0 +1,100 @@
+package postgres
+
+	import (
+	"context"
+	"time"
+
+	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"gorm.io/gorm"
+)
+
+type GroupLogActivityModel struct {
+	Id uint32 `gorm:"primaryKey;autoIncrement"`	
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	CreatedBy uint32 `gorm:"not null"`
+	UpdatedBy uint32 `gorm:"not null"`
+
+	GroupId uint32 `gorm:"not null"`
+	ActorId uint32 `gorm:"not null"`
+	LogType string `gorm:"not null"`
+}
+
+func (GroupLogActivityModel) TableName() string {
+	return "group_log_activities"
+}
+
+func GroupLogActivityModelToEntity(model *GroupLogActivityModel) *entity.GroupLogActivity {
+	return &entity.GroupLogActivity{
+		Id: model.Id,
+		CreatedAt: model.CreatedAt,
+		UpdatedAt: model.UpdatedAt,
+		CreatedBy: model.CreatedBy,
+		UpdatedBy: model.UpdatedBy,
+		GroupId: model.GroupId,
+		ActorId: model.ActorId,
+		LogType: model.LogType,
+	}
+}
+
+func GroupLogActivityEntityToModel(entity *entity.GroupLogActivity) *GroupLogActivityModel {
+	return &GroupLogActivityModel{
+		Id: entity.Id,
+		CreatedAt: entity.CreatedAt,
+		UpdatedAt: entity.UpdatedAt,
+		CreatedBy: entity.CreatedBy,
+		UpdatedBy: entity.UpdatedBy,
+		GroupId: entity.GroupId,
+		ActorId: entity.ActorId,
+		LogType: entity.LogType,
+	}
+}
+
+type groupLogActivityPostgresRepository struct {
+	db *gorm.DB
+}
+
+func NewGroupLogActivityPostgresRepository(db *gorm.DB) repository.GroupLogActivityRepository {
+	return &groupLogActivityPostgresRepository{db: db}
+}
+
+func (r *groupLogActivityPostgresRepository) Create(ctx context.Context, log *entity.GroupLogActivity) (*entity.GroupLogActivity, error) {
+	model := GroupLogActivityEntityToModel(log)
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		return nil, err
+	}
+	return GroupLogActivityModelToEntity(model), nil
+}
+
+func (r *groupLogActivityPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupLogActivity, error) {
+	var model *GroupLogActivityModel
+	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+		return nil, err
+	}
+	return GroupLogActivityModelToEntity(model), nil
+}
+
+func (r *groupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupLogActivity, error) {
+	var models []*GroupLogActivityModel
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupLogActivity, len(models))
+	for i, model := range models {
+		entities[i] = GroupLogActivityModelToEntity(model)
+	}
+	return entities, nil
+}
+
+func (r *groupLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.GroupLogActivity, error) {
+	var models []*GroupLogActivityModel
+	if err := r.db.WithContext(ctx).Where("actor_id = ?", actorID).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupLogActivity, len(models))
+	for i, model := range models {
+		entities[i] = GroupLogActivityModelToEntity(model)
+	}
+	return entities, nil
+}

@@ -1,0 +1,14 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/tuandq2112/organization-service/internal/domain/entity"
+)
+
+type GroupLogActivityRepository interface {
+	Create(ctx context.Context, log *entity.GroupLogActivity) (*entity.GroupLogActivity, error)
+	GetByID(ctx context.Context, id uint32) (*entity.GroupLogActivity, error)
+	GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupLogActivity, error)
+	GetByActorID(ctx context.Context, actorID uint32) ([]*entity.GroupLogActivity, error)
+} 

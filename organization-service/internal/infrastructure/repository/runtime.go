@@ -86,3 +86,83 @@ func NewOrganizationBranchMemberRepository() repository.OrganizationBranchMember
 	}
 	return nil
 }
+
+func NewGroupRepository() repository.GroupRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupModel{})
+		return postgres.NewGroupPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewGroupSettingRepository() repository.GroupSettingRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupSettingModel{})
+
+		return postgres.NewGroupSettingPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewGroupMemberRepository() repository.GroupMemberRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupMemberModel{})
+		return postgres.NewGroupMemberPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewGroupLogActivityRepository() repository.GroupLogActivityRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupLogActivityModel{})
+		return postgres.NewGroupLogActivityPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewGroupNotificationRepository() repository.GroupNotificationRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupNotificationModel{})
+		return postgres.NewGroupNotificationPostgresRepository(db)
+	}
+	return nil
+}
+
+func NewGroupDealRepository() repository.GroupDealRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}	
+		db.AutoMigrate(&postgres.GroupDealModel{})
+		return postgres.NewGroupDealPostgresRepository(db)
+	}
+	return nil
+}
+

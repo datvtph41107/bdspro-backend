@@ -1,0 +1,123 @@
+package postgres
+
+import (
+	"context"
+	"time"
+
+	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"gorm.io/gorm"
+)
+
+type GroupMemberModel struct {
+	Id uint32 `gorm:"primaryKey;autoIncrement"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	CreatedBy uint32 `gorm:"not null"`
+	UpdatedBy uint32 `gorm:"not null"`
+
+	GroupId uint32 `gorm:"not null"`
+	UserId uint32 `gorm:"not null"`
+	Role entity.GroupMemberRole `gorm:"not null"`
+	Status entity.GroupMemberStatus `gorm:"not null"`
+}
+
+func (GroupMemberModel) TableName() string {
+	return "group_members"
+}
+
+func GroupMemberModelToEntity(model *GroupMemberModel) *entity.GroupMember {
+	return &entity.GroupMember{
+		Id: model.Id,
+		CreatedAt: model.CreatedAt,
+		UpdatedAt: model.UpdatedAt,
+		CreatedBy: model.CreatedBy,
+		UpdatedBy: model.UpdatedBy,
+		GroupId: model.GroupId,
+		UserId: model.UserId,
+		Role: model.Role,
+		Status: model.Status,
+	}
+}
+
+func GroupMemberEntityToModel(entity *entity.GroupMember) *GroupMemberModel {	
+	return &GroupMemberModel{
+		Id: entity.Id,
+		CreatedAt: entity.CreatedAt,
+		UpdatedAt: entity.UpdatedAt,
+		CreatedBy: entity.CreatedBy,
+		UpdatedBy: entity.UpdatedBy,
+		GroupId: entity.GroupId,
+		UserId: entity.UserId,
+		Role: entity.Role,
+		Status: entity.Status,
+	}
+}
+type groupMemberPostgresRepository struct {
+	db *gorm.DB
+}
+
+func NewGroupMemberPostgresRepository(db *gorm.DB) repository.GroupMemberRepository {
+	return &groupMemberPostgresRepository{db: db}
+}
+
+func (r *groupMemberPostgresRepository) Create(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
+	model := GroupMemberEntityToModel(member)
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		return nil, err
+	}
+	return GroupMemberModelToEntity(model), nil
+}
+
+func (r *groupMemberPostgresRepository) Update(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {		
+	model := GroupMemberEntityToModel(member)
+	if err := r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
+		return nil, err
+	}
+	return GroupMemberModelToEntity(model), nil
+}
+
+func (r *groupMemberPostgresRepository) Delete(ctx context.Context, id uint32) error {
+	return r.db.WithContext(ctx).Delete(&GroupMemberModel{}, id).Error
+}
+
+func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
+	var model *GroupMemberModel
+	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+		return nil, err
+	}
+	return GroupMemberModelToEntity(model), nil
+}		
+
+func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
+	var models []*GroupMemberModel
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupMember, len(models))
+	for i, model := range models {
+		entities[i] = GroupMemberModelToEntity(model)
+	}
+	return entities, nil
+}
+
+func (r *groupMemberPostgresRepository) GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error) {
+	var models []*GroupMemberModel
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupMember, len(models))
+	for i, model := range models {
+		entities[i] = GroupMemberModelToEntity(model)
+	}
+	return entities, nil
+}	
+
+
+func (r *groupMemberPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.GroupMemberStatus) error {
+	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *groupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint32, role entity.GroupMemberRole) error {
+	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", id).Update("role", role).Error
+}
