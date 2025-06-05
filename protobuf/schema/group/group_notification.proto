@@ -15,7 +15,7 @@ service GroupNotificationService {
 }
 
 message GetGroupNotificationsRequest {
-    uint32 group_id = 1;
+    uint32 groupId = 1;
     optional uint32 page = 2;
     optional uint32 size = 3;
 }
@@ -27,9 +27,9 @@ message GetGroupNotificationsResponse {
 
 message GroupNotification {
     uint32 id = 1;
-    uint32 group_id = 2;
+    uint32 groupId = 2;
     string type = 3;
-    string content = 4;
-    string created_at = 5;
-    string updated_at = 6;
+    string content = 4; 
+    string createdAt = 5;
+    string updatedAt = 6;
 }

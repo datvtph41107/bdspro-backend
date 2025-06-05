@@ -1,0 +1,51 @@
+package handler
+
+import (
+	"context"
+	grouppb "pb/types/group"
+
+	"github.com/tuandq2112/organization-service/internal/interface/transformer"
+	"github.com/tuandq2112/organization-service/internal/interface/validator"
+	"github.com/tuandq2112/organization-service/internal/usecase"
+)
+
+type GroupNotificationHandler struct {
+	grouppb.UnimplementedGroupNotificationServiceServer
+	GroupNotificationUsecase     usecase.GroupNotificationUsecase
+	GroupNotificationTransformer transformer.GroupNotificationTransformer
+	GroupNotificationValidator   validator.GroupNotificationValidator
+}
+
+func NewGroupNotificationHandler(
+	groupNotificationUsecase usecase.GroupNotificationUsecase,
+	groupNotificationTransformer transformer.GroupNotificationTransformer,
+	groupNotificationValidator validator.GroupNotificationValidator,
+) *GroupNotificationHandler {
+	return &GroupNotificationHandler{
+		GroupNotificationUsecase:     groupNotificationUsecase,
+		GroupNotificationTransformer: groupNotificationTransformer,
+		GroupNotificationValidator:   groupNotificationValidator,
+	}
+}
+
+func (h *GroupNotificationHandler) GetGroupNotifications(ctx context.Context, req *grouppb.GetGroupNotificationsRequest) (*grouppb.GetGroupNotificationsResponse, error) {
+	if err := h.GroupNotificationValidator.ValidateGetGroupNotificationsRequest(req); err != nil {
+		return nil, err
+	}
+
+	page := int(*req.Page)
+	size := int(*req.Size)
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 {
+		size = 10
+	}
+
+	notifications, err := h.GroupNotificationUsecase.GetGroupNotificationsByGroupID(ctx, req.GroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupNotificationTransformer.EntityToGetGroupNotificationsResponse(notifications), nil
+} 

@@ -16,7 +16,7 @@ service GroupLogActivityService {
 }
 
 message GetGroupLogActivitiesRequest {
-    string group_id = 1;
+    uint32 groupId = 1;
     optional uint32 page = 2;
     optional uint32 size = 3;
 }
@@ -27,9 +27,9 @@ message GetGroupLogActivitiesResponse {
 }
 
 message GroupLogActivity {
-    string id = 1;
-    string group_id = 2;
-    string actor_id = 3;
+    uint32 id = 1;
+    uint32 groupId = 2;
+    string actorId = 3;
     string action = 4;
     string description = 5;
 }

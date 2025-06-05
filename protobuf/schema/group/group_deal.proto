@@ -56,38 +56,38 @@ message CreateGroupDealRequest {
 }
 
 message CreateGroupDealResponse {
-    string id = 1;
+    uint32 id = 1;
 }   
 
 message UpdateGroupDealRequest {
-    string id = 1;
+    uint32 id = 1;
     string name = 2;
     double amount = 3;
     string status = 4;
 }
 
 message UpdateGroupDealResponse {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message DeleteGroupDealRequest {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message DeleteGroupDealResponse {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message GetGroupDealRequest {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message GetGroupDealResponse {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message GetGroupDealsRequest {
-    string group_id = 1;
+    uint32 groupId = 1;
 }
 
 message GetGroupDealsResponse {
@@ -95,16 +95,16 @@ message GetGroupDealsResponse {
 }
 
 message UpdateGroupDealStatusRequest {
-    string id = 1;
+    uint32 id = 1;
     string status = 2;
 }
 
 message UpdateGroupDealStatusResponse {
-    string id = 1;
+    uint32 id = 1;
 }
 
 message GroupDeal {
-    string id = 1;
+    uint32 id = 1;
     string name = 2;
     double amount = 3;
     string status = 4;

@@ -38,7 +38,8 @@
             "name": "groupId",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "page",
@@ -82,10 +83,12 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "groupId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "actorId": {
           "type": "string"

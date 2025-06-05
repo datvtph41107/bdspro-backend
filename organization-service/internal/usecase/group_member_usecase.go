@@ -14,7 +14,6 @@ type GroupMemberUsecase interface {
 	DeleteGroupMember(ctx context.Context, id uint32) error
 	GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error)
 	GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error)
-	GetGroupMembersByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error)
 }
 
 type groupMemberUsecase struct {
@@ -56,8 +55,4 @@ func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) 
 
 func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
 	return u.groupMemberRepository.GetByGroupID(ctx, groupID)
-}
-
-func (u *groupMemberUsecase) GetGroupMembersByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error) {
-	return u.groupMemberRepository.GetByUserID(ctx, userID)
 }

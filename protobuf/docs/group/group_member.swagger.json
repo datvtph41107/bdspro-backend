@@ -38,7 +38,8 @@
             "name": "groupId",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -98,7 +99,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -126,7 +128,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -154,7 +157,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "body",
@@ -184,10 +188,12 @@
       "type": "object",
       "properties": {
         "groupId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "userId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "role": {
           "type": "string"
@@ -198,7 +204,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -206,7 +213,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -214,7 +222,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -234,13 +243,16 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "groupId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "userId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "role": {
           "type": "string"
@@ -251,7 +263,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

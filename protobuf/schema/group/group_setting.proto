@@ -41,7 +41,7 @@ service GroupSettingService {
 }
 
 message CreateGroupSettingRequest {
-    uint32 group_id = 1;
+    uint32 groupId = 1;
     string configKey = 2;
     string configValue = 3;
 }
@@ -77,7 +77,7 @@ message GetGroupSettingResponse {
 }
 
 message GetGroupSettingsRequest {
-    uint32 group_id = 1;
+    uint32 groupId = 1;
     optional uint32 page = 2;
     optional uint32 size = 3;
 }

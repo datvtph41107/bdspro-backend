@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	grouppb "pb/types/group"
 	organizationpb "pb/types/organization"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -23,6 +24,13 @@ type GRPCServer struct {
 	organizationRoleHandler       *handler.OrganizationRoleHandler
 	organizationPermissionHandler *handler.OrganizationPermissionHandler
 	organizationBranchHandler     *handler.OrganizationBranchHandler
+
+	groupHandler                  *handler.GroupHandler
+	groupDealHandler              *handler.GroupDealHandler
+	groupLogActivityHandler       *handler.GroupLogActivityHandler
+	groupNotificationHandler      *handler.GroupNotificationHandler
+	groupSettingHandler           *handler.GroupSettingHandler
+	groupMemberHandler            *handler.GroupMemberHandler
 	logger                        *flogging.FabricLogger
 }
 
@@ -31,7 +39,14 @@ func NewGRPCServer(
 	organizationMemberHandler *handler.OrganizationMemberHandler,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
-	organizationBranchHandler *handler.OrganizationBranchHandler,
+	organizationBranchHandler *handler.OrganizationBranchHandler,	
+
+	groupHandler                  *handler.GroupHandler,
+	groupDealHandler              *handler.GroupDealHandler,
+	groupLogActivityHandler       *handler.GroupLogActivityHandler,
+	groupNotificationHandler      *handler.GroupNotificationHandler,
+	groupSettingHandler           *handler.GroupSettingHandler,
+	groupMemberHandler            *handler.GroupMemberHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -39,6 +54,13 @@ func NewGRPCServer(
 		organizationRoleHandler:       organizationRoleHandler,
 		organizationPermissionHandler: organizationPermissionHandler,
 		organizationBranchHandler:     organizationBranchHandler,
+
+		groupHandler:                  groupHandler,
+		groupDealHandler:              groupDealHandler,
+		groupLogActivityHandler:       groupLogActivityHandler,
+		groupNotificationHandler:      groupNotificationHandler,
+		groupSettingHandler:           groupSettingHandler,
+		groupMemberHandler:            groupMemberHandler,
 		logger:                        flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
@@ -51,7 +73,14 @@ func (s *GRPCServer) Start() {
 		s.organizationMemberHandler,
 		s.organizationRoleHandler,
 		s.organizationPermissionHandler,
-		s.organizationBranchHandler)
+		s.organizationBranchHandler,
+		s.groupHandler,
+		s.groupDealHandler,
+		s.groupLogActivityHandler,
+		s.groupNotificationHandler,
+		s.groupSettingHandler,
+		s.groupMemberHandler,
+	)
 
 	g.Add(start, stop)
 
@@ -69,6 +98,13 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
 	organizationBranchHandler *handler.OrganizationBranchHandler,
+
+	groupHandler                  *handler.GroupHandler,
+	groupDealHandler              *handler.GroupDealHandler,
+	groupLogActivityHandler       *handler.GroupLogActivityHandler,
+	groupNotificationHandler      *handler.GroupNotificationHandler,
+	groupSettingHandler           *handler.GroupSettingHandler,
+	groupMemberHandler            *handler.GroupMemberHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -86,6 +122,13 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
 			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
+
+			grouppb.RegisterGroupServiceServer(s, groupHandler)
+			grouppb.RegisterGroupDealServiceServer(s, groupDealHandler)
+			grouppb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
+			grouppb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
+			grouppb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
+			grouppb.RegisterGroupMemberServiceServer(s, groupMemberHandler)
 		},
 		unaryInts,
 		streamInts,

@@ -20,6 +20,12 @@ var repositorySet = wire.NewSet(
 	repository.NewOrganizationPermissionRepository,
 	repository.NewOrganizationBranchRepository,
 	repository.NewOrganizationBranchMemberRepository,
+	repository.NewGroupRepository,
+	repository.NewGroupDealRepository,
+	repository.NewGroupLogActivityRepository,
+	repository.NewGroupNotificationRepository,
+	repository.NewGroupSettingRepository,
+	repository.NewGroupMemberRepository,
 )
 
 var usecaseSet = wire.NewSet(
@@ -29,6 +35,12 @@ var usecaseSet = wire.NewSet(
 	usecase.NewOrganizationRoleUsecase,
 	usecase.NewOrganizationPermissionUsecase,
 	usecase.NewOrganizationBranchUsecase,
+	usecase.NewGroupUsecase,
+	usecase.NewGroupDealUsecase,
+	usecase.NewGroupLogActivityUsecase,
+	usecase.NewGroupNotificationUsecase,
+	usecase.NewGroupSettingUsecase,
+	usecase.NewGroupMemberUsecase,
 )
 var transformerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
@@ -36,6 +48,12 @@ var transformerSet = wire.NewSet(
 	transformer.NewOrganizationRoleTransformer,
 	transformer.NewOrganizationPermissionTransformer,
 	transformer.NewOrganizationBranchTransformer,
+	transformer.NewGroupTransformer,
+	transformer.NewGroupDealTransformer,
+	transformer.NewGroupLogActivityTransformer,
+	transformer.NewGroupNotificationTransformer,
+	transformer.NewGroupSettingTransformer,
+	transformer.NewGroupMemberTransformer,
 )
 var validatorSet = wire.NewSet(
 	validator.NewOrganizationValidator,
@@ -43,6 +61,12 @@ var validatorSet = wire.NewSet(
 	validator.NewOrganizationRoleValidator,
 	validator.NewOrganizationPermissionValidator,
 	validator.NewOrganizationBranchValidator,
+	validator.NewGroupValidator,
+	validator.NewGroupDealValidator,
+	validator.NewGroupLogActivityValidator,
+	validator.NewGroupNotificationValidator,
+	validator.NewGroupSettingValidator,
+	validator.NewGroupMemberValidator,
 )
 
 var handlerSet = wire.NewSet(
@@ -51,6 +75,12 @@ var handlerSet = wire.NewSet(
 	handler.NewOrganizationRoleHandler,
 	handler.NewOrganizationPermissionHandler,
 	handler.NewOrganizationBranchHandler,
+	handler.NewGroupHandler,
+	handler.NewGroupDealHandler,
+	handler.NewGroupLogActivityHandler,
+	handler.NewGroupNotificationHandler,
+	handler.NewGroupSettingHandler,
+	handler.NewGroupMemberHandler,
 )
 
 func InitializeGRPCServer() *grpc.GRPCServer {
