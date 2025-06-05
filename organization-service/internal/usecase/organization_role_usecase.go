@@ -103,7 +103,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, currentUserId 
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	return u.organizationRoleRepository.Update(ctx, existRole)
+	return u.organizationRoleRepository.Update(ctx, model)
 }
 
 func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, currentUserId uint32, roleId uint32) error {

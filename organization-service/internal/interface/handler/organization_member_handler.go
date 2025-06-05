@@ -32,17 +32,20 @@ func NewOrganizationMemberHandler(organizationMemberUsecase usecase.Organization
 }
 
 func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req *organizationpb.SwitchOrganizationRequest) (*organizationpb.SwitchOrganizationResponse, error) {
-	exist, err := h.OrganizationMemberUsecase.ExistByUserIdAndOrganizationId(ctx, req.UserId, req.OrganizationId)
+	member, err := h.OrganizationMemberUsecase.FindByUserIdAndOrganizationIdWithRole(ctx, req.UserId, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}
-	if !exist {
+	
+	if member == nil {
 		return nil, status.Errorf(codes.NotFound, "user not in organization")
 	}
 	return &organizationpb.SwitchOrganizationResponse{
 		IsSuccess: true,
 		Id:        req.OrganizationId,
 		UserId:    req.UserId,
+		Role:      member.Role,
+		Permissions: member.Permissions,
 	}, nil
 }
 

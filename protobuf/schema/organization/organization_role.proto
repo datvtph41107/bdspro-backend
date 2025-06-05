@@ -50,6 +50,7 @@ message UpdateRoleRequest {
     uint32 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
+    repeated uint32 permissionIds = 4 [json_name = "permissionIds"];
 }
 
 message UpdateRoleResponse {    

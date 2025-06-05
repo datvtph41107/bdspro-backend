@@ -704,6 +704,7 @@ func (s *AuthService) SwitchOrganization(c *gin.Context, organizationID uint32) 
 		OrganizationId: organizationID,
 		UserId:         uint32(principal.ProfileId),
 	})
+	fmt.Printf("clientResponse=%+v\n", clientResponse)
 	if err != nil {
 		return nil, err
 	}

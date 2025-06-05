@@ -36,6 +36,7 @@ func (t *organizationRoleTransformer) UpdateRoleRequestToEntity(req *organizatio
 		Id: req.Id,
 		Name: req.Name,
 		Key: req.Key,
+		PermissionIds: req.PermissionIds,
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 type OrganizationMemberRepository interface {
-	ExistByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (bool, error)
+	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
 	FindByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	FindById(ctx context.Context, id uint32) (*entity.OrganizationMember, error)

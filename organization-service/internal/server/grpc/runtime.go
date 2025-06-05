@@ -14,7 +14,6 @@ import (
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/server/grpc/interceptors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -60,7 +59,7 @@ func (s *GRPCServer) Start() {
 	g.Add(signalStart, signalStop)
 
 	if err := g.Run(); err != nil {
-		s.logger.Error("Server exited", zap.Error(err))
+		s.logger.Errorf("Server exited: %v", err)
 	}
 }
 

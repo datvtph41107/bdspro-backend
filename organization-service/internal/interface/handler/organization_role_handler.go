@@ -14,9 +14,9 @@ import (
 
 type OrganizationRoleHandler struct {
 	organizationpb.UnimplementedOrganizationRoleServiceServer
-	OrganizationRoleUsecase usecase.OrganizationRoleUsecase
+	OrganizationRoleUsecase     usecase.OrganizationRoleUsecase
 	OrganizationRoleTransformer transformer.OrganizationRoleTransformer
-	OrganizationRoleValidator validator.OrganizationRoleValidator
+	OrganizationRoleValidator   validator.OrganizationRoleValidator
 }
 
 func NewOrganizationRoleHandler(
@@ -25,14 +25,14 @@ func NewOrganizationRoleHandler(
 	organizationRoleValidator validator.OrganizationRoleValidator,
 ) *OrganizationRoleHandler {
 	return &OrganizationRoleHandler{
-		OrganizationRoleUsecase: organizationRoleUsecase,
+		OrganizationRoleUsecase:     organizationRoleUsecase,
 		OrganizationRoleTransformer: organizationRoleTransformer,
-		OrganizationRoleValidator: organizationRoleValidator,
+		OrganizationRoleValidator:   organizationRoleValidator,
 	}
 }
 
 func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizationpb.CreateRoleRequest) (*organizationpb.CreateRoleResponse, error) {
-	fmt.Println("go1",h.OrganizationRoleUsecase)
+	fmt.Println("go1", h.OrganizationRoleUsecase)
 
 	role := h.OrganizationRoleTransformer.CreateRoleRequestToEntity(req)
 	fmt.Println("go2")
@@ -47,10 +47,8 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 	return h.OrganizationRoleTransformer.EntityToCreateRoleResponse(role), nil
 }
 
-
 func (h *OrganizationRoleHandler) UpdateRole(ctx context.Context, req *organizationpb.UpdateRoleRequest) (*organizationpb.UpdateRoleResponse, error) {
 	role := h.OrganizationRoleTransformer.UpdateRoleRequestToEntity(req)
-
 	if err := h.OrganizationRoleValidator.ValidateUpdateRoleRequest(req); err != nil {
 		return nil, err
 	}
@@ -60,7 +58,6 @@ func (h *OrganizationRoleHandler) UpdateRole(ctx context.Context, req *organizat
 	}
 	return h.OrganizationRoleTransformer.EntityToUpdateRoleResponse(role), nil
 }
-
 
 func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizationpb.DeleteRoleRequest) (*organizationpb.DeleteRoleResponse, error) {
 	if err := h.OrganizationRoleValidator.ValidateDeleteRoleRequest(req); err != nil {
@@ -75,7 +72,6 @@ func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizat
 	}, nil
 }
 
-
 func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizationpb.GetRolesRequest) (*organizationpb.GetRolesResponse, error) {
 	if err := h.OrganizationRoleValidator.ValidateGetRolesRequest(req); err != nil {
 		return nil, err
@@ -86,5 +82,3 @@ func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizatio
 	}
 	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles), nil
 }
-
-

@@ -46,6 +46,8 @@ message SwitchOrganizationResponse {
     uint32 id = 1 [json_name = "id"];
     uint32 userId = 2 [json_name = "userId"];
     bool isSuccess = 3 [json_name = "isSuccess"];
+    string role = 4 [json_name = "role"];
+    repeated string permissions = 5 [json_name = "permissions"];
 }
 
 message CreateOrganizationMemberRequest {

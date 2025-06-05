@@ -10,6 +10,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hyperledger/fabric v2.1.1+incompatible
+	github.com/lib/pq v1.10.9
 	github.com/oklog/run v1.1.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1

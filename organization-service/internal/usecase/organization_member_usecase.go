@@ -12,7 +12,7 @@ import (
 )
 
 type OrganizationMemberUsecase interface {
-	ExistByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (bool, error)
+	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, userId uint32, memberId uint32) (*entity.OrganizationMember, error)
@@ -40,8 +40,15 @@ func NewOrganizationMemberUsecase(
 	}
 }
 
-func (u *organizationMemberUsecase) ExistByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (bool, error) {
-	return u.organizationMemberRepository.ExistByUserIdAndOrganizationId(ctx, userId, organizationId)
+func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error) {
+	member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationIdWithRole(ctx, userId, organizationId)
+	if err != nil {
+		return nil, err
+	}
+	if member == nil {
+		return nil, nil
+	}
+	return member, nil
 }
 
 func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
@@ -60,11 +67,11 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 		return nil, custom_error.InvalidOrganizationID()
 	}
 
-	exist, err := u.organizationMemberRepository.ExistByUserIdAndOrganizationId(ctx, organizationMember.UserID, organizationMember.OrganizationID)
+	exist, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, organizationMember.UserID, organizationMember.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
-	if exist {
+	if exist != nil {
 		return nil, status.Errorf(codes.AlreadyExists, "Organization member already exists")
 	}
 	organizationMember.Status = entity.OrganizationMemberStatusPending

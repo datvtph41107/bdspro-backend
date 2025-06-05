@@ -11,13 +11,13 @@ import (
 )
 
 type OrganizationRoleModel struct {
-	ID            uint32    `gorm:"primaryKey;autoIncrement"`
-	Name          string    `gorm:"not null"`
-	Key           string    `gorm:"not null"`
-	CreatedAt     time.Time `gorm:"autoCreateTime"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime"`
-	Permissions   []OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
-	OrganizationId uint32 `gorm:"not null"`
+	ID             uint32                         `gorm:"primaryKey;autoIncrement"`
+	Name           string                         `gorm:"not null"`
+	Key            string                         `gorm:"not null"`
+	CreatedAt      time.Time                      `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time                      `gorm:"autoUpdateTime"`
+	Permissions    []*OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
+	OrganizationId uint32                         `gorm:"not null"`
 }
 
 func (OrganizationRoleModel) TableName() string {
@@ -27,23 +27,30 @@ func (OrganizationRoleModel) TableName() string {
 func RoleModelToEntity(model *OrganizationRoleModel) *entity.OrganizationRole {
 	permissions := make([]*entity.OrganizationPermission, len(model.Permissions))
 	for i, permission := range model.Permissions {
-		permissions[i] = OrganizationPermissionModelToEntity(&permission)
+		permissions[i] = OrganizationPermissionModelToEntity(permission)
 	}
 	return &entity.OrganizationRole{
-		Id:            model.ID,
-		Name:          model.Name,
-		Key:           model.Key,
-		Permissions:   permissions,
+		Id:             model.ID,
+		Name:           model.Name,
+		Key:            model.Key,
+		Permissions:    permissions,
 		OrganizationId: model.OrganizationId,
 	}
 }
 
 func RoleEntityToModel(entity *entity.OrganizationRole) *OrganizationRoleModel {
+	permissions := make([]*OrganizationPermissionModel, len(entity.PermissionIds))
+	for i, permission := range entity.PermissionIds {
+		permissions[i] = &OrganizationPermissionModel{
+			Id: permission,
+		}
+	}
 	return &OrganizationRoleModel{
-		ID:            entity.Id,
-		Name:          entity.Name,
-		Key:           entity.Key,
+		ID:             entity.Id,
+		Name:           entity.Name,
+		Key:            entity.Key,
 		OrganizationId: entity.OrganizationId,
+		Permissions:    permissions,
 	}
 }
 
@@ -65,8 +72,8 @@ func NewOrganizationRolePostgresRepository(db *gorm.DB) repository.OrganizationR
 
 func (r *organizationRoleRepository) Create(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := &OrganizationRoleModel{
-		Name: role.Name,
-		Key:  role.Key,
+		Name:           role.Name,
+		Key:            role.Key,
 		OrganizationId: role.OrganizationId,
 	}
 
@@ -100,9 +107,12 @@ func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*
 
 func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := RoleEntityToModel(role)
-
 	if err := r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).Where("id = ?", model.ID).Updates(model).Error; err != nil {
 		return nil, err
+	} else {
+		if err := r.db.WithContext(ctx).Model(model).Association("Permissions").Replace(model.Permissions); err != nil {
+			return nil, err
+		}
 	}
 
 	return RoleModelToEntity(model), nil
