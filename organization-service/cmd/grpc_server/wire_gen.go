@@ -24,15 +24,18 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	organizationRoleRepository := repository.NewOrganizationRoleRepository()
 	organizationPermissionRepository := repository.NewOrganizationPermissionRepository()
 	organizationAuthUsecase := usecase.NewOrganizationAuthUsecase(organizationMemberRepository, organizationRoleRepository, organizationPermissionRepository)
-	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository, organizationAuthUsecase)
+	organizationLogActivityRepository := repository.NewOrganizationLogActivityRepository()
+	organizationLogActivityUsecase := usecase.NewOrganizationLogActivityUsecase(organizationLogActivityRepository)
+	organizationLogWorker := usecase.NewOrganizationLogWorker(organizationLogActivityUsecase)
+	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository, organizationAuthUsecase, organizationLogWorker)
 	organizationTransformer := transformer.NewOrganizationTransformer()
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
-	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationAuthUsecase)
+	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationAuthUsecase, organizationLogWorker)
 	organizationMemberTransformer := transformer.NewOrganizationMemberTransformer()
 	organizationMemberValidator := validator.NewOrganizationMemberValidator()
 	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator)
-	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationRepository, organizationAuthUsecase)
+	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationRepository, organizationAuthUsecase, organizationLogWorker)
 	organizationRoleTransformer := transformer.NewOrganizationRoleTransformer()
 	organizationRoleValidator := validator.NewOrganizationRoleValidator()
 	organizationRoleHandler := handler.NewOrganizationRoleHandler(organizationRoleUsecase, organizationRoleTransformer, organizationRoleValidator)
@@ -82,18 +85,21 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	groupMemberValidator := validator.NewGroupMemberValidator()
 	groupMemberTransformer := transformer.NewGroupMemberTransformer()
 	groupMemberHandler := handler.NewGroupMemberHandler(groupMemberUsecase, groupMemberValidator, groupMemberTransformer)
-	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler, organizationRoleHandler, organizationPermissionHandler, organizationBranchHandler, groupDocumentHandler, groupHandler, groupDealHandler, groupLogActivityHandler, groupNotificationHandler, groupSettingHandler, groupMemberHandler)
+	organizationLogActivityTransformer := transformer.NewOrganizationLogActivityTransformer()
+	organizationLogActivityValidator := validator.NewOrganizationLogActivityValidator()
+	organizationLogActivityHandler := handler.NewOrganizationLogActivityHandler(organizationLogActivityUsecase, organizationLogActivityTransformer, organizationLogActivityValidator)
+	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler, organizationRoleHandler, organizationPermissionHandler, organizationBranchHandler, groupDocumentHandler, groupHandler, groupDealHandler, groupLogActivityHandler, groupNotificationHandler, groupSettingHandler, groupMemberHandler, organizationLogActivityHandler)
 	return grpcServer
 }
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository, repository.NewOrganizationRoleRepository, repository.NewOrganizationPermissionRepository, repository.NewOrganizationBranchRepository, repository.NewOrganizationBranchMemberRepository, repository.NewGroupRepository, repository.NewGroupDealRepository, repository.NewGroupLogActivityRepository, repository.NewGroupNotificationRepository, repository.NewGroupSettingRepository, repository.NewGroupMemberRepository, repository.NewGroupDocumentRepository)
+var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository, repository.NewOrganizationRoleRepository, repository.NewOrganizationPermissionRepository, repository.NewOrganizationBranchRepository, repository.NewOrganizationBranchMemberRepository, repository.NewGroupRepository, repository.NewGroupDealRepository, repository.NewGroupLogActivityRepository, repository.NewGroupNotificationRepository, repository.NewGroupSettingRepository, repository.NewGroupMemberRepository, repository.NewGroupDocumentRepository, repository.NewOrganizationLogActivityRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewOrganizationAuthUsecase, usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase, usecase.NewOrganizationRoleUsecase, usecase.NewOrganizationPermissionUsecase, usecase.NewOrganizationBranchUsecase, usecase.NewGroupLogActivityUsecase, usecase.NewLogWorker, usecase.NewGroupUsecase, usecase.NewGroupDealUsecase, usecase.NewGroupNotificationUsecase, usecase.NewGroupSettingUsecase, usecase.NewGroupMemberUsecase, usecase.NewGroupDocumentUsecase)
+var usecaseSet = wire.NewSet(usecase.NewOrganizationLogActivityUsecase, usecase.NewOrganizationLogWorker, usecase.NewOrganizationAuthUsecase, usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase, usecase.NewOrganizationRoleUsecase, usecase.NewOrganizationPermissionUsecase, usecase.NewOrganizationBranchUsecase, usecase.NewGroupLogActivityUsecase, usecase.NewLogWorker, usecase.NewGroupUsecase, usecase.NewGroupDealUsecase, usecase.NewGroupNotificationUsecase, usecase.NewGroupSettingUsecase, usecase.NewGroupMemberUsecase, usecase.NewGroupDocumentUsecase)
 
-var transformerSet = wire.NewSet(transformer.NewOrganizationTransformer, transformer.NewOrganizationMemberTransformer, transformer.NewOrganizationRoleTransformer, transformer.NewOrganizationPermissionTransformer, transformer.NewOrganizationBranchTransformer, transformer.NewGroupTransformer, transformer.NewGroupDealTransformer, transformer.NewGroupLogActivityTransformer, transformer.NewGroupNotificationTransformer, transformer.NewGroupSettingTransformer, transformer.NewGroupMemberTransformer, transformer.NewGroupDocumentTransformer)
+var transformerSet = wire.NewSet(transformer.NewOrganizationTransformer, transformer.NewOrganizationMemberTransformer, transformer.NewOrganizationRoleTransformer, transformer.NewOrganizationPermissionTransformer, transformer.NewOrganizationBranchTransformer, transformer.NewGroupTransformer, transformer.NewGroupDealTransformer, transformer.NewGroupLogActivityTransformer, transformer.NewGroupNotificationTransformer, transformer.NewGroupSettingTransformer, transformer.NewGroupMemberTransformer, transformer.NewGroupDocumentTransformer, transformer.NewOrganizationLogActivityTransformer)
 
-var validatorSet = wire.NewSet(validator.NewOrganizationValidator, validator.NewOrganizationMemberValidator, validator.NewOrganizationRoleValidator, validator.NewOrganizationPermissionValidator, validator.NewOrganizationBranchValidator, validator.NewGroupValidator, validator.NewGroupDealValidator, validator.NewGroupLogActivityValidator, validator.NewGroupNotificationValidator, validator.NewGroupSettingValidator, validator.NewGroupMemberValidator, validator.NewGroupDocumentValidator)
+var validatorSet = wire.NewSet(validator.NewOrganizationValidator, validator.NewOrganizationMemberValidator, validator.NewOrganizationRoleValidator, validator.NewOrganizationPermissionValidator, validator.NewOrganizationBranchValidator, validator.NewGroupValidator, validator.NewGroupDealValidator, validator.NewGroupLogActivityValidator, validator.NewGroupNotificationValidator, validator.NewGroupSettingValidator, validator.NewGroupMemberValidator, validator.NewGroupDocumentValidator, validator.NewOrganizationLogActivityValidator)
 
-var handlerSet = wire.NewSet(handler.NewOrganizationHandler, handler.NewOrganizationMemberHandler, handler.NewOrganizationRoleHandler, handler.NewOrganizationPermissionHandler, handler.NewOrganizationBranchHandler, handler.NewGroupHandler, handler.NewGroupDealHandler, handler.NewGroupLogActivityHandler, handler.NewGroupNotificationHandler, handler.NewGroupSettingHandler, handler.NewGroupMemberHandler, handler.NewGroupDocumentHandler)
+var handlerSet = wire.NewSet(handler.NewOrganizationHandler, handler.NewOrganizationMemberHandler, handler.NewOrganizationRoleHandler, handler.NewOrganizationPermissionHandler, handler.NewOrganizationBranchHandler, handler.NewGroupHandler, handler.NewGroupDealHandler, handler.NewGroupLogActivityHandler, handler.NewGroupNotificationHandler, handler.NewGroupSettingHandler, handler.NewGroupMemberHandler, handler.NewGroupDocumentHandler, handler.NewOrganizationLogActivityHandler)

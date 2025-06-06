@@ -25,6 +25,7 @@ type organizationMemberUsecase struct {
 	organizationRoleRepository   repository.OrganizationRoleRepository
 	organizationAuthUsecase      OrganizationAuthUsecase
 	planLimit                    map[string]uint32
+	logWorker                    *OrganizationLogWorker
 }
 
 func NewOrganizationMemberUsecase(
@@ -32,12 +33,14 @@ func NewOrganizationMemberUsecase(
 	organizationRepository repository.OrganizationRepository,
 	organizationRoleRepository repository.OrganizationRoleRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
+	logWorker *OrganizationLogWorker,
 ) OrganizationMemberUsecase {
 	return &organizationMemberUsecase{
 		organizationMemberRepository: organizationMemberRepository,
 		organizationRepository:       organizationRepository,
 		organizationRoleRepository:   organizationRoleRepository,
 		organizationAuthUsecase:      organizationAuthUsecase,
+		logWorker:                    logWorker,
 	}
 }
 
@@ -84,7 +87,20 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 		return nil, status.Errorf(codes.AlreadyExists, "Organization member already exists")
 	}
 	organizationMember.Status = entity.OrganizationMemberStatusPending
-	return u.organizationMemberRepository.CreateOrganizationMember(ctx, organizationMember)
+	member, err := u.organizationMemberRepository.CreateOrganizationMember(ctx, organizationMember)
+	if err != nil {
+		return nil, err
+	}
+
+	// Log member creation
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: organizationMember.OrganizationID,
+		ActorId:       userId,
+		LogType:       "MEMBER_CREATE",
+		LogData:       "Added new member to organization",
+	})
+
+	return member, nil
 }
 
 func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
@@ -109,7 +125,20 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	return u.organizationMemberRepository.UpdateOrganizationMember(ctx, organizationMember)
+	member, err := u.organizationMemberRepository.UpdateOrganizationMember(ctx, organizationMember)
+	if err != nil {
+		return nil, err
+	}
+
+	// Log member update
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: existMember.OrganizationID,
+		ActorId:       userId,
+		LogType:       "MEMBER_UPDATE",
+		LogData:       "Updated member details",
+	})
+
+	return member, nil
 }
 
 func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context, userId uint32, memberId uint32) (*entity.OrganizationMember, error) {
@@ -133,7 +162,20 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	organizationMember.Status = entity.OrganizationMemberStatusInactive
-	return u.organizationMemberRepository.DeleteOrganizationMember(ctx, organizationMember)
+	member, err := u.organizationMemberRepository.DeleteOrganizationMember(ctx, organizationMember)
+	if err != nil {
+		return nil, err
+	}
+
+	// Log member deletion
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: organizationMember.OrganizationID,
+		ActorId:       userId,
+		LogType:       "MEMBER_DELETE",
+		LogData:       "Removed member from organization",
+	})
+
+	return member, nil
 }
 
 func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, userId uint32, organizationId uint32) ([]*entity.OrganizationMember, error) {

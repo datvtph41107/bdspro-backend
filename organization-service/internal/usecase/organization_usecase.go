@@ -18,15 +18,18 @@ type OrganizationUsecase interface {
 type organizationUsecase struct {
 	OrganizationRepository  repository.OrganizationRepository
 	organizationAuthUsecase OrganizationAuthUsecase
+	logWorker              *OrganizationLogWorker
 }
 
 func NewOrganizationUsecase(
 	organizationRepository repository.OrganizationRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
+	logWorker *OrganizationLogWorker,
 ) OrganizationUsecase {
 	return &organizationUsecase{
 		OrganizationRepository:  organizationRepository,
 		organizationAuthUsecase: organizationAuthUsecase,
+		logWorker:              logWorker,
 	}
 }
 
@@ -43,6 +46,15 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Log organization creation
+	o.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: organization.ID,
+		ActorId:       organization.CreatedBy,
+		LogType:       "CREATE",
+		LogData:       "Created new organization",
+	})
+
 	return organization, member, nil
 }
 
@@ -63,7 +75,6 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	}
 
 	if organization.TaxCode != org.TaxCode {
-
 		org, err = o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
 		if err != nil {
 			return nil, err
@@ -77,6 +88,15 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	if err != nil {
 		return nil, err
 	}
+
+	// Log organization update
+	o.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: organization.ID,
+		ActorId:       currentUserId,
+		LogType:       "UPDATE",
+		LogData:       "Updated organization details",
+	})
+
 	return org, nil
 }
 

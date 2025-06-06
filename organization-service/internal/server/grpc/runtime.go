@@ -25,15 +25,17 @@ type GRPCServer struct {
 	organizationPermissionHandler *handler.OrganizationPermissionHandler
 	organizationBranchHandler     *handler.OrganizationBranchHandler
 
-	groupDocumentHandler          *handler.GroupDocumentHandler
+	groupDocumentHandler *handler.GroupDocumentHandler
 
-	groupHandler                  *handler.GroupHandler
-	groupDealHandler              *handler.GroupDealHandler
-	groupLogActivityHandler       *handler.GroupLogActivityHandler
-	groupNotificationHandler      *handler.GroupNotificationHandler
-	groupSettingHandler           *handler.GroupSettingHandler
-	groupMemberHandler            *handler.GroupMemberHandler
-	logger                        *flogging.FabricLogger
+	groupHandler             *handler.GroupHandler
+	groupDealHandler         *handler.GroupDealHandler
+	groupLogActivityHandler  *handler.GroupLogActivityHandler
+	groupNotificationHandler *handler.GroupNotificationHandler
+	groupSettingHandler      *handler.GroupSettingHandler
+	groupMemberHandler       *handler.GroupMemberHandler
+
+	organizationLogActivityHandler *handler.OrganizationLogActivityHandler
+	logger                         *flogging.FabricLogger
 }
 
 func NewGRPCServer(
@@ -44,12 +46,14 @@ func NewGRPCServer(
 	organizationBranchHandler *handler.OrganizationBranchHandler,
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
-	groupHandler                  *handler.GroupHandler,
-	groupDealHandler              *handler.GroupDealHandler,
-	groupLogActivityHandler       *handler.GroupLogActivityHandler,
-	groupNotificationHandler      *handler.GroupNotificationHandler,
-	groupSettingHandler           *handler.GroupSettingHandler,
-	groupMemberHandler            *handler.GroupMemberHandler,
+	groupHandler *handler.GroupHandler,
+	groupDealHandler *handler.GroupDealHandler,
+	groupLogActivityHandler *handler.GroupLogActivityHandler,
+	groupNotificationHandler *handler.GroupNotificationHandler,
+	groupSettingHandler *handler.GroupSettingHandler,
+	groupMemberHandler *handler.GroupMemberHandler,
+
+	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -58,15 +62,17 @@ func NewGRPCServer(
 		organizationPermissionHandler: organizationPermissionHandler,
 		organizationBranchHandler:     organizationBranchHandler,
 
-		groupDocumentHandler:          groupDocumentHandler,
+		groupDocumentHandler: groupDocumentHandler,
 
-		groupHandler:                  groupHandler,
-		groupDealHandler:              groupDealHandler,
-		groupLogActivityHandler:       groupLogActivityHandler,
-		groupNotificationHandler:      groupNotificationHandler,
-		groupSettingHandler:           groupSettingHandler,
-		groupMemberHandler:            groupMemberHandler,
-		logger:                        flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		groupHandler:             groupHandler,
+		groupDealHandler:         groupDealHandler,
+		groupLogActivityHandler:  groupLogActivityHandler,
+		groupNotificationHandler: groupNotificationHandler,
+		groupSettingHandler:      groupSettingHandler,
+		groupMemberHandler:       groupMemberHandler,
+
+		organizationLogActivityHandler: organizationLogActivityHandler,
+		logger:                         flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
 
@@ -86,6 +92,7 @@ func (s *GRPCServer) Start() {
 		s.groupNotificationHandler,
 		s.groupSettingHandler,
 		s.groupMemberHandler,
+		s.organizationLogActivityHandler,
 	)
 
 	g.Add(start, stop)
@@ -106,12 +113,14 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	organizationBranchHandler *handler.OrganizationBranchHandler,
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
-	groupHandler                  *handler.GroupHandler,
-	groupDealHandler              *handler.GroupDealHandler,
-	groupLogActivityHandler       *handler.GroupLogActivityHandler,
-	groupNotificationHandler      *handler.GroupNotificationHandler,
-	groupSettingHandler           *handler.GroupSettingHandler,
-	groupMemberHandler            *handler.GroupMemberHandler,
+	groupHandler *handler.GroupHandler,
+	groupDealHandler *handler.GroupDealHandler,
+	groupLogActivityHandler *handler.GroupLogActivityHandler,
+	groupNotificationHandler *handler.GroupNotificationHandler,
+	groupSettingHandler *handler.GroupSettingHandler,
+	groupMemberHandler *handler.GroupMemberHandler,
+
+	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -138,6 +147,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			grouppb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
 			grouppb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
 			grouppb.RegisterGroupMemberServiceServer(s, groupMemberHandler)
+
+			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
 		},
 		unaryInts,
 		streamInts,

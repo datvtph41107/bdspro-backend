@@ -166,6 +166,7 @@ var HttpCmd = &cobra.Command{
 		_ = pb_organization.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_organization.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_organization.RegisterOrganizationBranchServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_organization.RegisterOrganizationLogActivityServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_group.RegisterGroupServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_group.RegisterGroupDealServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_group.RegisterGroupLogActivityServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)

@@ -178,3 +178,16 @@ func NewGroupDocumentRepository() repository.GroupDocumentRepository {
 	}
 	return nil
 }
+
+func NewOrganizationLogActivityRepository() repository.OrganizationLogActivityRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.OrganizationLogActivityModel{})
+		return postgres.NewOrganizationLogActivityPostgresRepository(db)
+	}
+	return nil
+}
