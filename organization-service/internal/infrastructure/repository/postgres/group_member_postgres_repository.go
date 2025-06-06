@@ -91,7 +91,7 @@ func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) 
 
 func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
 	var models []*GroupMemberModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
 	entities := make([]*entity.GroupMember, len(models))
@@ -120,4 +120,12 @@ func (r *groupMemberPostgresRepository) UpdateStatus(ctx context.Context, id uin
 
 func (r *groupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint32, role entity.GroupMemberRole) error {
 	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", id).Update("role", role).Error
+}
+
+func (r *groupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error) {
+	var model *GroupMemberModel
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id = ?", groupID, userID).First(&model).Error; err != nil {
+		return nil, err
+	}
+	return GroupMemberModelToEntity(model), nil
 }

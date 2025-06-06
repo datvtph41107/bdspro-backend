@@ -4,11 +4,9 @@ import (
 	"context"
 	grouppb "pb/types/group"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupSettingHandler struct {
@@ -36,7 +34,6 @@ func (h *GroupSettingHandler) CreateGroupSetting(ctx context.Context, req *group
 	}
 
 	setting := h.GroupSettingTransformer.CreateGroupSettingRequestToEntity(req)
-	setting.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	setting, err := h.GroupSettingUsecase.CreateGroupSetting(ctx, setting)
 	if err != nil {
@@ -52,7 +49,6 @@ func (h *GroupSettingHandler) UpdateGroupSetting(ctx context.Context, req *group
 	}
 
 	setting := h.GroupSettingTransformer.UpdateGroupSettingRequestToEntity(req)
-	setting.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	setting, err := h.GroupSettingUsecase.UpdateGroupSetting(ctx, setting)
 	if err != nil {
@@ -93,19 +89,19 @@ func (h *GroupSettingHandler) GetGroupSettings(ctx context.Context, req *grouppb
 		return nil, err
 	}
 
-	page := int(*req.Page)
-	size := int(*req.Size)
-	if page <= 0 {
-		page = 1
+	page :=0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
 	}
-	if size <= 0 {
-		size = 10
+	if req.Size != nil {
+		size = int(*req.Size)
 	}
 
-	settings, err := h.GroupSettingUsecase.GetGroupSettingsByGroupID(ctx, req.GroupId)
+	settings, total, err := h.GroupSettingUsecase.GetGroupSettingsByGroupID(ctx, req.GroupId, page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupSettingTransformer.EntityToGetGroupSettingsResponse(settings), nil
+	return h.GroupSettingTransformer.EntityToGetGroupSettingsResponse(settings, total), nil
 } 

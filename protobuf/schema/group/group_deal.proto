@@ -9,39 +9,39 @@ option go_package = "types/pb_group";
 service GroupDealService {
     rpc CreateGroupDeal(CreateGroupDealRequest) returns (CreateGroupDealResponse) {
         option (google.api.http) = {
-            post: "/v2/group/deal"
+            post: "/v2/group-deal"
             body: "*"
         };
     }
 
     rpc UpdateGroupDeal(UpdateGroupDealRequest) returns (UpdateGroupDealResponse) {
         option (google.api.http) = {
-            put: "/v2/group/deal/{id}"
+            put: "/v2/group-deal/{id}"
             body: "*"
         };
     }
 
     rpc DeleteGroupDeal(DeleteGroupDealRequest) returns (DeleteGroupDealResponse) {
         option (google.api.http) = {
-            delete: "/v2/group/deal/{id}"
+            delete: "/v2/group-deal/{id}"
         };
     }
 
     rpc GetGroupDeal(GetGroupDealRequest) returns (GetGroupDealResponse) {
         option (google.api.http) = {
-            get: "/v2/group/deal/{id}"
+            get: "/v2/group-deal/{id}"
         };
     }
 
     rpc GetGroupDeals(GetGroupDealsRequest) returns (GetGroupDealsResponse) {
         option (google.api.http) = {
-            get: "/v2/group/deal"
+            get: "/v2/group-deal"
         };
     }
 
     rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
         option (google.api.http) = {
-            put: "/v2/group/deal/{id}/status"
+            put: "/v2/group-deal/{id}/status"
             body: "*"
         };
     }
@@ -53,6 +53,8 @@ message CreateGroupDealRequest {
     string name = 1;
     double amount = 2;
     string status = 3;
+    uint32 groupId = 5;
+
 }
 
 message CreateGroupDealResponse {
@@ -83,15 +85,18 @@ message GetGroupDealRequest {
 }
 
 message GetGroupDealResponse {
-    uint32 id = 1;
+    GroupDeal deal = 1;
 }
 
 message GetGroupDealsRequest {
     uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
 }
 
 message GetGroupDealsResponse {
     repeated GroupDeal deals = 1;
+    uint32 total = 2;
 }
 
 message UpdateGroupDealStatusRequest {

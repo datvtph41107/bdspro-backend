@@ -237,9 +237,8 @@
     "pb_groupGetGroupSettingResponse": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
+        "setting": {
+          "$ref": "#/definitions/pb_groupGroupSetting"
         }
       }
     },

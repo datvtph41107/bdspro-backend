@@ -262,7 +262,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/CreateGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/CreateGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -282,7 +282,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -302,7 +302,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/DeleteGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/DeleteGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -322,7 +322,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -342,7 +342,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeals", runtime.WithHTTPPathPattern("/v2/group/deal"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeals", runtime.WithHTTPPathPattern("/v2/group-deal"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -362,7 +362,7 @@ func RegisterGroupDealServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDealStatus", runtime.WithHTTPPathPattern("/v2/group/deal/{id}/status"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDealStatus", runtime.WithHTTPPathPattern("/v2/group-deal/{id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -420,7 +420,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/CreateGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/CreateGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -437,7 +437,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -454,7 +454,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/DeleteGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/DeleteGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -471,7 +471,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeal", runtime.WithHTTPPathPattern("/v2/group/deal/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeal", runtime.WithHTTPPathPattern("/v2/group-deal/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -488,7 +488,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeals", runtime.WithHTTPPathPattern("/v2/group/deal"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/GetGroupDeals", runtime.WithHTTPPathPattern("/v2/group-deal"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -505,7 +505,7 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDealStatus", runtime.WithHTTPPathPattern("/v2/group/deal/{id}/status"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_group.GroupDealService/UpdateGroupDealStatus", runtime.WithHTTPPathPattern("/v2/group-deal/{id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -522,12 +522,12 @@ func RegisterGroupDealServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 }
 
 var (
-	pattern_GroupDealService_CreateGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "group", "deal"}, ""))
-	pattern_GroupDealService_UpdateGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "group", "deal", "id"}, ""))
-	pattern_GroupDealService_DeleteGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "group", "deal", "id"}, ""))
-	pattern_GroupDealService_GetGroupDeal_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "group", "deal", "id"}, ""))
-	pattern_GroupDealService_GetGroupDeals_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "group", "deal"}, ""))
-	pattern_GroupDealService_UpdateGroupDealStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "group", "deal", "id", "status"}, ""))
+	pattern_GroupDealService_CreateGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "group-deal"}, ""))
+	pattern_GroupDealService_UpdateGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "group-deal", "id"}, ""))
+	pattern_GroupDealService_DeleteGroupDeal_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "group-deal", "id"}, ""))
+	pattern_GroupDealService_GetGroupDeal_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "group-deal", "id"}, ""))
+	pattern_GroupDealService_GetGroupDeals_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "group-deal"}, ""))
+	pattern_GroupDealService_UpdateGroupDealStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "group-deal", "id", "status"}, ""))
 )
 
 var (

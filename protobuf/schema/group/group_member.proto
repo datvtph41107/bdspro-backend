@@ -72,7 +72,7 @@ message GetGroupMemberRequest {
 }
 
 message GetGroupMemberResponse {
-    uint32 id = 1;
+    GroupMember member = 1;
 }
 
 message GetGroupMembersRequest {

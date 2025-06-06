@@ -14,7 +14,7 @@ type GroupDocumentTransformer interface {
 	EntityToCreateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.CreateGroupDocumentResponse
 	EntityToUpdateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.UpdateGroupDocumentResponse
 	EntityToGetGroupDocumentResponse(document *entity.GroupDocument) *grouppb.GetGroupDocumentResponse
-	EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument) *grouppb.GetGroupDocumentsResponse
+	EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *grouppb.GetGroupDocumentsResponse
 }
 
 type groupDocumentTransformer struct{}
@@ -73,7 +73,7 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentResponse(document *en
 	}
 }
 
-func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument) *grouppb.GetGroupDocumentsResponse {
+func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *grouppb.GetGroupDocumentsResponse {
 	documentsResponse := make([]*grouppb.GroupDocument, len(documents))
 	for i, document := range documents {
 		documentsResponse[i] = &grouppb.GroupDocument{
@@ -90,6 +90,6 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents [
 	}
 	return &grouppb.GetGroupDocumentsResponse{
 		Documents: documentsResponse,
-		Total:     uint32(len(documents)),
+		Total:     total,
 	}
 } 

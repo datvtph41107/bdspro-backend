@@ -32,6 +32,7 @@ var repositorySet = wire.NewSet(
 
 
 var usecaseSet = wire.NewSet(
+	usecase.NewGroupAuthUsecase,
 	usecase.NewOrganizationLogActivityUsecase,
 	usecase.NewOrganizationLogWorker,
 	usecase.NewOrganizationAuthUsecase,

@@ -33,19 +33,20 @@ func (h *GroupLogActivityHandler) GetGroupLogActivities(ctx context.Context, req
 		return nil, err
 	}
 
-	page := int(*req.Page)
-	size := int(*req.Size)
-	if page <= 0 {
-		page = 1
+	page := 0
+	size := 10
+
+	if req.Page != nil {
+		page = int(*req.Page)
 	}
-	if size <= 0 {
-		size = 10
+	if req.Size != nil {
+		size = int(*req.Size)
 	}
 
-	logActivities, err := h.GroupLogActivityUsecase.GetGroupLogActivitiesByGroupID(ctx, uint32(req.GroupId))
+	logActivities, total, err := h.GroupLogActivityUsecase.GetGroupLogActivitiesByGroupID(ctx, uint32(req.GroupId), page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupLogActivityTransformer.EntityToGetGroupLogActivitiesResponse(logActivities), nil
+	return h.GroupLogActivityTransformer.EntityToGetGroupLogActivitiesResponse(logActivities, total), nil
 } 

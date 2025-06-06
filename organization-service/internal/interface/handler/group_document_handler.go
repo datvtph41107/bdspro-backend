@@ -95,10 +95,18 @@ func (h *GroupDocumentHandler) GetGroupDocuments(ctx context.Context, req *group
 		return nil, err
 	}
 
-	documents, err := h.GroupDocumentUsecase.GetGroupDocumentsByGroupID(ctx, req.GroupId)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+	documents, total, err := h.GroupDocumentUsecase.GetGroupDocumentsByGroupID(ctx, req.GroupId, page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDocumentTransformer.EntityToGetGroupDocumentsResponse(documents), nil
+	return h.GroupDocumentTransformer.EntityToGetGroupDocumentsResponse(documents, total), nil
 } 

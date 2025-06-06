@@ -55,6 +55,18 @@ func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *grouppb.Cre
 			},
 		})
 	}
+
+	if request.GroupId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "group_id",
+					Description: "group_id is required",
+				},
+			},
+		})
+	}
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
@@ -189,4 +201,4 @@ func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *group
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

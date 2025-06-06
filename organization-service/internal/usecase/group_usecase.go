@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
+	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupUsecase interface {
@@ -13,22 +14,28 @@ type GroupUsecase interface {
 	UpdateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error)
 	DeleteGroup(ctx context.Context, id uint32) error
 	GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error)
-	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, error)
+	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, uint32, error)
 }
 
 type groupUsecase struct {
-	groupRepository repository.GroupRepository
+	groupRepository    repository.GroupRepository
 	logActivityUsecase GroupLogActivityUsecase
+	groupAuthUsecase   GroupAuthUsecase
 }
 
-func NewGroupUsecase(groupRepository repository.GroupRepository, logActivityUsecase GroupLogActivityUsecase) GroupUsecase {
+func NewGroupUsecase(groupRepository repository.GroupRepository, logActivityUsecase GroupLogActivityUsecase, groupAuthUsecase GroupAuthUsecase) GroupUsecase {
 	return &groupUsecase{
-		groupRepository: groupRepository,
+		groupRepository:    groupRepository,
 		logActivityUsecase: logActivityUsecase,
+		groupAuthUsecase:   groupAuthUsecase,
 	}
 }
 
 func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	group.CreatedBy = currentUserId
+	group.UpdatedBy = currentUserId
+
 	createdGroup, err := u.groupRepository.Create(ctx, group)
 	if err != nil {
 		return nil, err
@@ -48,19 +55,13 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	existedGroup, err := u.groupRepository.GetByID(ctx, group.Id)
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, group.Id, currentUserId)
 	if err != nil {
 		return nil, err
 	}
-
-	if existedGroup == nil {
-		return nil, custom_error.RecordNotFound("group not found")
-	}
-
-	if group.CreatedBy != existedGroup.CreatedBy {
-		return nil, custom_error.Forbidden("you are not allowed to update this group")
-	}
-
+	group.UpdatedBy = currentUserId
 	updatedGroup, err := u.groupRepository.Update(ctx, group)
 	if err != nil {
 		return nil, err
@@ -80,13 +81,15 @@ func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
-	group, err := u.groupRepository.GetByID(ctx, id)
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, id, currentUserId)
 	if err != nil {
 		return err
 	}
 
-	if group == nil {
-		return custom_error.RecordNotFound("group not found")
+	group, err := u.groupRepository.GetByID(ctx, id)
+	if err != nil {
+		return err
 	}
 
 	err = u.groupRepository.Delete(ctx, id)
@@ -108,9 +111,17 @@ func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
 }
 
 func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+
 	return u.groupRepository.GetByID(ctx, id)
 }
 
-func (u *groupUsecase) GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, error) {
-	return u.groupRepository.List(ctx, offset, limit)
+func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity.Group, uint32, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+
+	return u.groupRepository.List(ctx, page, size, currentUserId)
 }

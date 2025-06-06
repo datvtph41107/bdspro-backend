@@ -12,7 +12,7 @@ type GroupDealTransformer interface {
 	EntityToCreateGroupDealResponse(deal *entity.Deal) *grouppb.CreateGroupDealResponse
 	EntityToUpdateGroupDealResponse(deal *entity.Deal) *grouppb.UpdateGroupDealResponse
 	EntityToGetGroupDealResponse(deal *entity.Deal) *grouppb.GetGroupDealResponse
-	EntityToGetGroupDealsResponse(deals []*entity.Deal) *grouppb.GetGroupDealsResponse
+	EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *grouppb.GetGroupDealsResponse
 }
 
 type groupDealTransformer struct{}
@@ -26,6 +26,7 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *grouppb.C
 		Name:   request.Name,
 		Amount: request.Amount,
 		Status: entity.DealStatus(request.Status),
+		GroupId: request.GroupId,
 	}
 }
 
@@ -52,11 +53,16 @@ func (t *groupDealTransformer) EntityToUpdateGroupDealResponse(deal *entity.Deal
 
 func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *grouppb.GetGroupDealResponse {
 	return &grouppb.GetGroupDealResponse{
-		Id: deal.Id,
+		Deal: &grouppb.GroupDeal{
+			Id:     deal.Id,
+			Name:   deal.Name,
+			Amount: deal.Amount,
+			Status: string(deal.Status),
+		},
 	}
 }
 
-func (t *groupDealTransformer) EntityToGetGroupDealsResponse(deals []*entity.Deal) *grouppb.GetGroupDealsResponse {
+func (t *groupDealTransformer) EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *grouppb.GetGroupDealsResponse {
 	dealsResponse := make([]*grouppb.GroupDeal, len(deals))
 	for i, deal := range deals {
 		dealsResponse[i] = &grouppb.GroupDeal{
@@ -67,5 +73,6 @@ func (t *groupDealTransformer) EntityToGetGroupDealsResponse(deals []*entity.Dea
 	}
 	return &grouppb.GetGroupDealsResponse{
 		Deals: dealsResponse,
+		Total: total,
 	}
 }

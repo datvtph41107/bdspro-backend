@@ -191,12 +191,6 @@
         },
         "description": {
           "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
         }
       }
     },
@@ -209,10 +203,7 @@
         "description": {
           "type": "string"
         },
-        "type": {
-          "type": "string"
-        },
-        "status": {
+        "avatarUrl": {
           "type": "string"
         }
       }
@@ -238,9 +229,8 @@
     "pb_groupGetGroupResponse": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
+        "group": {
+          "$ref": "#/definitions/pb_groupGroup"
         }
       }
     },
@@ -273,10 +263,7 @@
         "description": {
           "type": "string"
         },
-        "type": {
-          "type": "string"
-        },
-        "status": {
+        "avatarUrl": {
           "type": "string"
         }
       }

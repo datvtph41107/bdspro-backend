@@ -96,14 +96,18 @@ func (r *groupSettingPostgresRepository) GetByID(ctx context.Context, id uint32)
 	return GroupSettingModelToEntity(model), nil
 }
 
-func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupSetting, error) {
+func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupSetting, uint32, error) {
 	var models []*GroupSettingModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
-		return nil, err
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+		return nil, 0, err
 	}
 	entities := make([]*entity.GroupSetting, len(models))
 	for i, model := range models {
 		entities[i] = GroupSettingModelToEntity(model)
 	}
-	return entities, nil
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&GroupSettingModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
 }

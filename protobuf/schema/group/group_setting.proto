@@ -73,7 +73,7 @@ message GetGroupSettingRequest {
 }
 
 message GetGroupSettingResponse {
-    uint32 id = 1;
+    GroupSetting setting = 1;
 }
 
 message GetGroupSettingsRequest {

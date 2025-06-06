@@ -88,14 +88,19 @@ func (r *groupPostgresRepository) GetByID(ctx context.Context, id uint32) (*enti
 	return GroupModelToEntity(model), nil
 }
 
-func (r *groupPostgresRepository) List(ctx context.Context, offset, limit int) ([]*entity.Group, error) {
+func (r *groupPostgresRepository) List(ctx context.Context, page, size int, currentUserId uint32) ([]*entity.Group, uint32, error) {
 	var models []*GroupModel
-	if err := r.db.WithContext(ctx).Offset(offset).Limit(limit).Find(&models).Error; err != nil {
-		return nil, err
+	if err := r.db.WithContext(ctx).Offset(page * size).Limit(size).Where("created_by = ?", currentUserId).Find(&models).Error; err != nil {
+		return nil, 0, err
 	}
 	entities := make([]*entity.Group, len(models))
 	for i, model := range models {
 		entities[i] = GroupModelToEntity(model)
 	}
-	return entities, nil
+
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&GroupModel{}).Where("created_by = ?", currentUserId).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
 }

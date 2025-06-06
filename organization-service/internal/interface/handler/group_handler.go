@@ -4,11 +4,9 @@ import (
 	"context"
 	grouppb "pb/types/group"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupHandler struct {
@@ -36,7 +34,6 @@ func (h *GroupHandler) CreateGroup(ctx context.Context, req *grouppb.CreateGroup
 	}
 
 	group := h.GroupTransformer.CreateGroupRequestToEntity(req)
-	group.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	group, err := h.GroupUsecase.CreateGroup(ctx, group)
 	if err != nil {
@@ -52,7 +49,6 @@ func (h *GroupHandler) UpdateGroup(ctx context.Context, req *grouppb.UpdateGroup
 	}
 
 	group := h.GroupTransformer.UpdateGroupRequestToEntity(req)
-	group.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	group, err := h.GroupUsecase.UpdateGroup(ctx, group)
 	if err != nil {
@@ -66,7 +62,6 @@ func (h *GroupHandler) DeleteGroup(ctx context.Context, req *grouppb.DeleteGroup
 	if err := h.GroupValidator.ValidateDeleteGroupRequest(req); err != nil {
 		return nil, err
 	}
-
 	err := h.GroupUsecase.DeleteGroup(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -93,20 +88,19 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *grouppb.GetGroupsRequ
 		return nil, err
 	}
 
-	page := int(*req.Page)
-	size := int(*req.Size)
-	if page <= 0 {
-		page = 1
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
 	}
-	if size <= 0 {
-		size = 10
+	if req.Size != nil {
+		size = int(*req.Size)
 	}
 
-	offset := (page - 1) * size
-	groups, err := h.GroupUsecase.GetGroups(ctx, offset, size)
+	groups, total, err := h.GroupUsecase.GetGroups(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupTransformer.EntityToGetGroupsResponse(groups), nil
-} 
+	return h.GroupTransformer.EntityToGetGroupsResponse(groups, total), nil
+}

@@ -74,6 +74,18 @@ func (v *groupDocumentValidator) ValidateCreateGroupDocumentRequest(request *gro
 			},
 		})
 	}
+
+	if request.GroupId == 0 {
+		return custom_error.InvalidRequest(&errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "group_id",
+					Description: "group_id is required",
+				},
+			},
+		})
+	}
+	
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}

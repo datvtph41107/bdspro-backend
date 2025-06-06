@@ -12,7 +12,7 @@ type GroupSettingTransformer interface {
 	EntityToCreateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.CreateGroupSettingResponse
 	EntityToUpdateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.UpdateGroupSettingResponse
 	EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *grouppb.GetGroupSettingResponse
-	EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting) *grouppb.GetGroupSettingsResponse
+	EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *grouppb.GetGroupSettingsResponse
 }
 
 type groupSettingTransformer struct{}
@@ -51,11 +51,15 @@ func (t *groupSettingTransformer) EntityToUpdateGroupSettingResponse(setting *en
 
 func (t *groupSettingTransformer) EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *grouppb.GetGroupSettingResponse {
 	return &grouppb.GetGroupSettingResponse{
-		Id: setting.Id,
+		Setting: &grouppb.GroupSetting{
+			Id:          setting.Id,
+			ConfigKey:   setting.ConfigKey,
+			ConfigValue: setting.ConfigValue,
+		},
 	}
 }
 
-func (t *groupSettingTransformer) EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting) *grouppb.GetGroupSettingsResponse {
+func (t *groupSettingTransformer) EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *grouppb.GetGroupSettingsResponse {
 	settingsResponse := make([]*grouppb.GroupSetting, len(settings))
 	for i, setting := range settings {
 		settingsResponse[i] = &grouppb.GroupSetting{
@@ -66,6 +70,6 @@ func (t *groupSettingTransformer) EntityToGetGroupSettingsResponse(settings []*e
 	}
 	return &grouppb.GetGroupSettingsResponse{
 		Settings: settingsResponse,
-		Total:    uint32(len(settings)),
+		Total:    total,
 	}
 } 

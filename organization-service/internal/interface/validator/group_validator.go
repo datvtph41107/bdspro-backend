@@ -34,26 +34,7 @@ func (v *groupValidator) ValidateCreateGroupRequest(request *grouppb.CreateGroup
 			},
 		})
 	}
-	if request.Type == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "type",
-					Description: "type is required",
-				},
-			},
-		})
-	}
-	if request.Status == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "status",
-					Description: "status is required",
-				},
-			},
-		})
-	}
+	
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
@@ -82,26 +63,7 @@ func (v *groupValidator) ValidateUpdateGroupRequest(request *grouppb.UpdateGroup
 			},
 		})
 	}
-	if request.Type == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "type",
-					Description: "type is required",
-				},
-			},
-		})
-	}
-	if request.Status == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "status",
-					Description: "status is required",
-				},
-			},
-		})
-	}
+	
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}

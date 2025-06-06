@@ -94,12 +94,20 @@ func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *grouppb.GetGr
 		return nil, err
 	}
 
-	deals, err := h.GroupDealUsecase.GetGroupDealsByGroupID(ctx, req.GroupId)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+	deals, total, err := h.GroupDealUsecase.GetGroupDealsByGroupID(ctx, req.GroupId, page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals), nil
+	return h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total), nil
 }
 
 func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *grouppb.UpdateGroupDealStatusRequest) (*grouppb.UpdateGroupDealStatusResponse, error) {

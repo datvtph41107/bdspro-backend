@@ -5,9 +5,11 @@ import (
 
 	grouppb "pb/types/group"
 
+	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupMemberHandler struct {
@@ -35,6 +37,11 @@ func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *gro
 	}
 
 	member := h.groupMemberTransformer.CreateGroupMemberRequestToEntity(request)
+
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	member.CreatedBy = currentUserId
+	member.UpdatedBy = currentUserId
+
 	createdMember, err := h.groupMemberUsecase.CreateGroupMember(ctx, member)
 	if err != nil {
 		return nil, err
@@ -49,6 +56,10 @@ func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *gro
 	}
 
 	member := h.groupMemberTransformer.UpdateGroupMemberRequestToEntity(request)
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	member.UpdatedBy = currentUserId
+	member.CreatedBy = currentUserId
+
 	updatedMember, err := h.groupMemberUsecase.UpdateGroupMember(ctx, member)
 	if err != nil {
 		return nil, err

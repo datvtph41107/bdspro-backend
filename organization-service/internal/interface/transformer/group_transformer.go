@@ -12,7 +12,7 @@ type GroupTransformer interface {
 	EntityToCreateGroupResponse(group *entity.Group) *grouppb.CreateGroupResponse
 	EntityToUpdateGroupResponse(group *entity.Group) *grouppb.UpdateGroupResponse
 	EntityToGetGroupResponse(group *entity.Group) *grouppb.GetGroupResponse
-	EntityToGetGroupsResponse(groups []*entity.Group) *grouppb.GetGroupsResponse
+	EntityToGetGroupsResponse(groups []*entity.Group, total uint32) *grouppb.GetGroupsResponse
 }
 
 type groupTransformer struct{}
@@ -25,6 +25,7 @@ func (t *groupTransformer) CreateGroupRequestToEntity(request *grouppb.CreateGro
 	return &entity.Group{
 		Name:        request.Name,
 		Description: request.Description,
+		AvatarUrl:   request.AvatarUrl,
 	}
 }
 
@@ -50,21 +51,27 @@ func (t *groupTransformer) EntityToUpdateGroupResponse(group *entity.Group) *gro
 
 func (t *groupTransformer) EntityToGetGroupResponse(group *entity.Group) *grouppb.GetGroupResponse {
 	return &grouppb.GetGroupResponse{
-		Id: group.Id,
+		Group: &grouppb.Group{
+			Id:          group.Id,
+			Name:        group.Name,
+			Description: group.Description,
+			AvatarUrl:   group.AvatarUrl,
+		},
 	}
 }
 
-func (t *groupTransformer) EntityToGetGroupsResponse(groups []*entity.Group) *grouppb.GetGroupsResponse {
+func (t *groupTransformer) EntityToGetGroupsResponse(groups []*entity.Group, total uint32) *grouppb.GetGroupsResponse {
 	groupsResponse := make([]*grouppb.Group, len(groups))
 	for i, group := range groups {
 		groupsResponse[i] = &grouppb.Group{
 			Id:          group.Id,
 			Name:        group.Name,
 			Description: group.Description,
+			AvatarUrl:   group.AvatarUrl,
 		}
 	}
 	return &grouppb.GetGroupsResponse{
 		Groups: groupsResponse,
-		Total:  uint32(len(groups)),
+		Total:  total,
 	}
 }

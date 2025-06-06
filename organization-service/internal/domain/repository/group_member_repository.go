@@ -13,4 +13,5 @@ type GroupMemberRepository interface {
 	GetByID(ctx context.Context, id uint32) (*entity.GroupMember, error)
 	GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error)
 	GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error)
+	GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error)
 } 

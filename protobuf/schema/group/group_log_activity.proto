@@ -29,7 +29,9 @@ message GetGroupLogActivitiesResponse {
 message GroupLogActivity {
     uint32 id = 1;
     uint32 groupId = 2;
-    string actorId = 3;
-    string action = 4;
-    string description = 5;
+    uint32 actorId = 3;
+    string logType = 4;
+    string logData = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
 }

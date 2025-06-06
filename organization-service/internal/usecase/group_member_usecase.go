@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
+	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupMemberUsecase interface {
@@ -18,17 +21,41 @@ type GroupMemberUsecase interface {
 
 type groupMemberUsecase struct {
 	groupMemberRepository repository.GroupMemberRepository
-	logActivityUsecase GroupLogActivityUsecase
+	groupRepository       repository.GroupRepository
+	logActivityUsecase    GroupLogActivityUsecase
+	groupAuthUsecase      GroupAuthUsecase
 }
 
-func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository, logActivityUsecase GroupLogActivityUsecase) GroupMemberUsecase {
+func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
+	groupRepository repository.GroupRepository,
+	logActivityUsecase GroupLogActivityUsecase,
+	groupAuthUsecase GroupAuthUsecase,
+) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,
-		logActivityUsecase: logActivityUsecase,
+		groupRepository:       groupRepository,
+		logActivityUsecase:    logActivityUsecase,
+		groupAuthUsecase:      groupAuthUsecase,
 	}
 }
 
 func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+
+	existedMember, err := u.groupMemberRepository.GetByGroupIDAndUserID(ctx, member.GroupId, member.UserId)
+	if err != nil {
+		return nil, err
+	}
+	if existedMember != nil {
+		return nil, custom_error.RecordNotFound(fmt.Sprintf("user %d is already a member of group %d", member.UserId, member.GroupId))
+	}
+
+	member.CreatedBy = currentUserId
+	member.UpdatedBy = currentUserId
 	createdMember, err := u.groupMemberRepository.Create(ctx, member)
 	if err != nil {
 		return nil, err
@@ -48,19 +75,13 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 }
 
 func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
-	existedMember, err := u.groupMemberRepository.GetByID(ctx, member.Id)
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
 	if err != nil {
 		return nil, err
 	}
 
-	if existedMember == nil {
-		return nil, custom_error.RecordNotFound("group member not found")
-	}
-
-	if member.CreatedBy != existedMember.CreatedBy {
-		return nil, custom_error.Forbidden("you are not allowed to update this group member")
-	}
-
+	member.UpdatedBy = currentUserId
 	updatedMember, err := u.groupMemberRepository.Update(ctx, member)
 	if err != nil {
 		return nil, err
@@ -85,8 +106,10 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 		return err
 	}
 
-	if member == nil {
-		return custom_error.RecordNotFound("group member not found")
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err = u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
+	if err != nil {
+		return err
 	}
 
 	err = u.groupMemberRepository.Delete(ctx, id)
@@ -108,9 +131,21 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 }
 
 func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+
 	return u.groupMemberRepository.GetByID(ctx, id)
 }
 
 func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	err := u.groupAuthUsecase.IsMemberGroup(ctx, groupID, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+
 	return u.groupMemberRepository.GetByGroupID(ctx, groupID)
 }

@@ -90,19 +90,22 @@ func (r *groupDealPostgresRepository) GetByID(ctx context.Context, id uint32) (*
 	return GroupDealModelToEntity(&model), nil
 }
 
-func (r *groupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.Deal, error) {	
+func (r *groupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.Deal, uint32, error) {
 	var models []GroupDealModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
-		return nil, err
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+		return nil, 0, err
 	}
 	entities := make([]*entity.Deal, len(models))
 	for i, model := range models {
 		entities[i] = GroupDealModelToEntity(&model)
-	}	
-	return entities, nil
+	}
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
 }
 
 func (r *groupDealPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.DealStatus) error {
 	return r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("id = ?", id).Update("status", status).Error
 }
-

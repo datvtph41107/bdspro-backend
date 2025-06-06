@@ -50,7 +50,12 @@ func (t *groupMemberTransformer) EntityToUpdateGroupMemberResponse(member *entit
 
 func (t *groupMemberTransformer) EntityToGetGroupMemberResponse(member *entity.GroupMember) *grouppb.GetGroupMemberResponse {
 	return &grouppb.GetGroupMemberResponse{
-		Id: member.Id,
+		Member: &grouppb.GroupMember{
+			Id:      member.Id,
+			GroupId: member.GroupId,
+			UserId:  member.UserId,
+			Role:    string(member.Role),
+		},
 	}
 }
 

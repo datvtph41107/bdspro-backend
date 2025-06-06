@@ -19,6 +19,7 @@ type GroupLogActivityModel struct {
 	GroupId uint32 `gorm:"not null;index:idx_group_log_activities_group_id"`
 	ActorId uint32 `gorm:"not null;index:idx_group_log_activities_actor_id"`
 	LogType string `gorm:"not null;index:idx_group_log_activities_type"`
+	LogData string `gorm:"not null"`
 }
 
 func (GroupLogActivityModel) TableName() string {
@@ -35,6 +36,7 @@ func GroupLogActivityModelToEntity(model *GroupLogActivityModel) *entity.GroupLo
 		GroupId: model.GroupId,
 		ActorId: model.ActorId,
 		LogType: model.LogType,
+		LogData: model.LogData,
 	}
 }
 
@@ -48,6 +50,7 @@ func GroupLogActivityEntityToModel(entity *entity.GroupLogActivity) *GroupLogAct
 		GroupId: entity.GroupId,
 		ActorId: entity.ActorId,
 		LogType: entity.LogType,
+		LogData: entity.LogData,
 	}
 }
 
@@ -75,16 +78,20 @@ func (r *groupLogActivityPostgresRepository) GetByID(ctx context.Context, id uin
 	return GroupLogActivityModelToEntity(model), nil
 }
 
-func (r *groupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupLogActivity, error) {
+func (r *groupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupLogActivity, uint32, error) {
 	var models []*GroupLogActivityModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
-		return nil, err
+	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+		return nil, 0, err
 	}
 	entities := make([]*entity.GroupLogActivity, len(models))
 	for i, model := range models {
 		entities[i] = GroupLogActivityModelToEntity(model)
 	}
-	return entities, nil
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&GroupLogActivityModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
 }
 
 func (r *groupLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.GroupLogActivity, error) {

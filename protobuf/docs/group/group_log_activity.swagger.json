@@ -91,12 +91,19 @@
           "format": "int64"
         },
         "actorId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "logType": {
           "type": "string"
         },
-        "action": {
+        "logData": {
           "type": "string"
         },
-        "description": {
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
           "type": "string"
         }
       }
