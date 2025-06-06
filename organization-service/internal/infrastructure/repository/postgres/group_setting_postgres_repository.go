@@ -17,6 +17,7 @@ type GroupSettingModel struct {
 	CreatedBy uint32    `gorm:"not null"`
 	UpdatedBy uint32    `gorm:"not null"`
 
+	GroupId     uint32 `gorm:"not null"`
 	ConfigKey   string `gorm:"not null"`
 	ConfigValue string `gorm:"not null"`
 }
@@ -32,6 +33,7 @@ func GroupSettingModelToEntity(model *GroupSettingModel) *entity.GroupSetting {
 		UpdatedAt:   model.UpdatedAt,
 		CreatedBy:   model.CreatedBy,
 		UpdatedBy:   model.UpdatedBy,
+		GroupId:     model.GroupId,
 		ConfigKey:   model.ConfigKey,
 		ConfigValue: model.ConfigValue,
 	}
@@ -44,6 +46,7 @@ func GroupSettingEntityToModel(entity *entity.GroupSetting) *GroupSettingModel {
 		UpdatedAt:   entity.UpdatedAt,
 		CreatedBy:   entity.CreatedBy,
 		UpdatedBy:   entity.UpdatedBy,
+		GroupId:     entity.GroupId,
 		ConfigKey:   entity.ConfigKey,
 		ConfigValue: entity.ConfigValue,
 	}

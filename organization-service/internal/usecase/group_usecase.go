@@ -18,14 +18,33 @@ type GroupUsecase interface {
 
 type groupUsecase struct {
 	groupRepository repository.GroupRepository
+	logActivityUsecase GroupLogActivityUsecase
 }
 
-func NewGroupUsecase(groupRepository repository.GroupRepository) GroupUsecase {
-	return &groupUsecase{groupRepository: groupRepository}
+func NewGroupUsecase(groupRepository repository.GroupRepository, logActivityUsecase GroupLogActivityUsecase) GroupUsecase {
+	return &groupUsecase{
+		groupRepository: groupRepository,
+		logActivityUsecase: logActivityUsecase,
+	}
 }
 
 func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	return u.groupRepository.Create(ctx, group)
+	createdGroup, err := u.groupRepository.Create(ctx, group)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: createdGroup.Id,
+			ActorId: createdGroup.CreatedBy,
+			LogType: "CREATE",
+			LogData: "Created new group",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return createdGroup, nil
 }
 
 func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
@@ -42,11 +61,50 @@ func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*e
 		return nil, custom_error.Forbidden("you are not allowed to update this group")
 	}
 
-	return u.groupRepository.Update(ctx, group)
+	updatedGroup, err := u.groupRepository.Update(ctx, group)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: updatedGroup.Id,
+			ActorId: updatedGroup.CreatedBy,
+			LogType: "UPDATE",
+			LogData: "Updated group information",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return updatedGroup, nil
 }
 
 func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
-	return u.groupRepository.Delete(ctx, id)
+	group, err := u.groupRepository.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if group == nil {
+		return custom_error.RecordNotFound("group not found")
+	}
+
+	err = u.groupRepository.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: id,
+			ActorId: group.CreatedBy,
+			LogType: "DELETE",
+			LogData: "Deleted group",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return nil
 }
 
 func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error) {

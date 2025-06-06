@@ -24,6 +24,7 @@ const (
 	DefaultHTTPPort = "8080"
 	DefaultGRPCPort = "50052"
 	ADMIN_ROLE_KEY  = "admin"
+	LOG_WORKER_QUEUE_SIZE = 1000
 )
 
 var (

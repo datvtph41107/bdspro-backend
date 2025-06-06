@@ -9,6 +9,7 @@ type GroupSetting struct {
 	CreatedBy uint32
 	UpdatedBy uint32
 	
+	GroupId uint32
 	ConfigKey string
 	ConfigValue string
 }

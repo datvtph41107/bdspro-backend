@@ -89,6 +89,7 @@ message GetGroupSettingsResponse {
 
 message GroupSetting {
     uint32 id = 1;
+    uint32 groupId = 2;
     string configKey = 3;
     string configValue = 4;
 }

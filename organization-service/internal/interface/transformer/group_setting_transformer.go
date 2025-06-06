@@ -23,6 +23,7 @@ func NewGroupSettingTransformer() GroupSettingTransformer {
 
 func (t *groupSettingTransformer) CreateGroupSettingRequestToEntity(request *grouppb.CreateGroupSettingRequest) *entity.GroupSetting {
 	return &entity.GroupSetting{
+		GroupId:     request.GroupId,
 		ConfigKey:   request.ConfigKey,
 		ConfigValue: request.ConfigValue,
 	}

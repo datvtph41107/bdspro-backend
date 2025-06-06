@@ -18,14 +18,30 @@ type GroupSettingUsecase interface {
 
 type groupSettingUsecase struct {
 	groupSettingRepository repository.GroupSettingRepository
+	logWorker             *LogWorker
 }
 
-func NewGroupSettingUsecase(groupSettingRepository repository.GroupSettingRepository) GroupSettingUsecase {
-	return &groupSettingUsecase{groupSettingRepository: groupSettingRepository}
+func NewGroupSettingUsecase(groupSettingRepository repository.GroupSettingRepository, logWorker *LogWorker) GroupSettingUsecase {
+	return &groupSettingUsecase{
+		groupSettingRepository: groupSettingRepository,
+		logWorker:             logWorker,
+	}
 }
 
 func (u *groupSettingUsecase) CreateGroupSetting(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
-	return u.groupSettingRepository.Create(ctx, setting)
+	createdSetting, err := u.groupSettingRepository.Create(ctx, setting)
+	if err != nil {
+		return nil, err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: createdSetting.GroupId,
+		ActorId: createdSetting.CreatedBy,
+		LogType: "CREATE_SETTING",
+		LogData: "Created new group setting",
+	})
+
+	return createdSetting, nil
 }
 
 func (u *groupSettingUsecase) UpdateGroupSetting(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
@@ -42,11 +58,44 @@ func (u *groupSettingUsecase) UpdateGroupSetting(ctx context.Context, setting *e
 		return nil, custom_error.Forbidden("you are not allowed to update this group setting")
 	}
 	
-	return u.groupSettingRepository.Update(ctx, setting)
+	updatedSetting, err := u.groupSettingRepository.Update(ctx, setting)
+	if err != nil {
+		return nil, err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: updatedSetting.GroupId,
+		ActorId: updatedSetting.CreatedBy,
+		LogType: "UPDATE_SETTING",
+		LogData: "Updated group setting",
+	})
+
+	return updatedSetting, nil
 }
 
 func (u *groupSettingUsecase) DeleteGroupSetting(ctx context.Context, id uint32) error {
-	return u.groupSettingRepository.Delete(ctx, id)
+	setting, err := u.groupSettingRepository.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if setting == nil {
+		return custom_error.RecordNotFound("group setting not found")
+	}
+
+	err = u.groupSettingRepository.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: setting.GroupId,
+		ActorId: setting.CreatedBy,
+		LogType: "DELETE_SETTING",
+		LogData: "Deleted group setting",
+	})
+
+	return nil
 }
 
 func (u *groupSettingUsecase) GetGroupSettingByID(ctx context.Context, id uint32) (*entity.GroupSetting, error) {

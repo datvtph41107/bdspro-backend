@@ -18,14 +18,33 @@ type GroupMemberUsecase interface {
 
 type groupMemberUsecase struct {
 	groupMemberRepository repository.GroupMemberRepository
+	logActivityUsecase GroupLogActivityUsecase
 }
 
-func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository) GroupMemberUsecase {
-	return &groupMemberUsecase{groupMemberRepository: groupMemberRepository}
+func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository, logActivityUsecase GroupLogActivityUsecase) GroupMemberUsecase {
+	return &groupMemberUsecase{
+		groupMemberRepository: groupMemberRepository,
+		logActivityUsecase: logActivityUsecase,
+	}
 }
 
 func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
-	return u.groupMemberRepository.Create(ctx, member)
+	createdMember, err := u.groupMemberRepository.Create(ctx, member)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: createdMember.GroupId,
+			ActorId: createdMember.CreatedBy,
+			LogType: "CREATE_MEMBER",
+			LogData: "Added new member to group",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return createdMember, nil
 }
 
 func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
@@ -42,11 +61,50 @@ func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *enti
 		return nil, custom_error.Forbidden("you are not allowed to update this group member")
 	}
 
-	return u.groupMemberRepository.Update(ctx, member)
+	updatedMember, err := u.groupMemberRepository.Update(ctx, member)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: updatedMember.GroupId,
+			ActorId: updatedMember.CreatedBy,
+			LogType: "UPDATE_MEMBER",
+			LogData: "Updated member information",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return updatedMember, nil
 }
 
 func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) error {
-	return u.groupMemberRepository.Delete(ctx, id)
+	member, err := u.groupMemberRepository.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if member == nil {
+		return custom_error.RecordNotFound("group member not found")
+	}
+
+	err = u.groupMemberRepository.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log := &entity.GroupLogActivity{
+			GroupId: member.GroupId,
+			ActorId: member.CreatedBy,
+			LogType: "DELETE_MEMBER",
+			LogData: "Removed member from group",
+		}
+		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+	}()
+
+	return nil
 }
 
 func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {

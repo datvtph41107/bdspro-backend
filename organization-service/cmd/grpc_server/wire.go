@@ -29,6 +29,7 @@ var repositorySet = wire.NewSet(
 	repository.NewGroupDocumentRepository,
 )
 
+
 var usecaseSet = wire.NewSet(
 	usecase.NewOrganizationAuthUsecase,
 	usecase.NewOrganizationUsecase,
@@ -36,14 +37,17 @@ var usecaseSet = wire.NewSet(
 	usecase.NewOrganizationRoleUsecase,
 	usecase.NewOrganizationPermissionUsecase,
 	usecase.NewOrganizationBranchUsecase,
+	usecase.NewGroupLogActivityUsecase,
+	usecase.NewLogWorker,
 	usecase.NewGroupUsecase,
 	usecase.NewGroupDealUsecase,
-	usecase.NewGroupLogActivityUsecase,
 	usecase.NewGroupNotificationUsecase,
 	usecase.NewGroupSettingUsecase,
 	usecase.NewGroupMemberUsecase,
 	usecase.NewGroupDocumentUsecase,
 )
+
+
 var transformerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
 	transformer.NewOrganizationMemberTransformer,
