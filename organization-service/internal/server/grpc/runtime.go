@@ -25,6 +25,8 @@ type GRPCServer struct {
 	organizationPermissionHandler *handler.OrganizationPermissionHandler
 	organizationBranchHandler     *handler.OrganizationBranchHandler
 
+	groupDocumentHandler          *handler.GroupDocumentHandler
+
 	groupHandler                  *handler.GroupHandler
 	groupDealHandler              *handler.GroupDealHandler
 	groupLogActivityHandler       *handler.GroupLogActivityHandler
@@ -39,8 +41,9 @@ func NewGRPCServer(
 	organizationMemberHandler *handler.OrganizationMemberHandler,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
-	organizationBranchHandler *handler.OrganizationBranchHandler,	
+	organizationBranchHandler *handler.OrganizationBranchHandler,
 
+	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler                  *handler.GroupHandler,
 	groupDealHandler              *handler.GroupDealHandler,
 	groupLogActivityHandler       *handler.GroupLogActivityHandler,
@@ -54,6 +57,8 @@ func NewGRPCServer(
 		organizationRoleHandler:       organizationRoleHandler,
 		organizationPermissionHandler: organizationPermissionHandler,
 		organizationBranchHandler:     organizationBranchHandler,
+
+		groupDocumentHandler:          groupDocumentHandler,
 
 		groupHandler:                  groupHandler,
 		groupDealHandler:              groupDealHandler,
@@ -74,6 +79,7 @@ func (s *GRPCServer) Start() {
 		s.organizationRoleHandler,
 		s.organizationPermissionHandler,
 		s.organizationBranchHandler,
+		s.groupDocumentHandler,
 		s.groupHandler,
 		s.groupDealHandler,
 		s.groupLogActivityHandler,
@@ -99,6 +105,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
 	organizationBranchHandler *handler.OrganizationBranchHandler,
 
+	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler                  *handler.GroupHandler,
 	groupDealHandler              *handler.GroupDealHandler,
 	groupLogActivityHandler       *handler.GroupLogActivityHandler,
@@ -122,6 +129,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
 			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
+
+			grouppb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
 
 			grouppb.RegisterGroupServiceServer(s, groupHandler)
 			grouppb.RegisterGroupDealServiceServer(s, groupDealHandler)

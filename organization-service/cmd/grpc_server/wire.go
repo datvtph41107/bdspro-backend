@@ -26,6 +26,7 @@ var repositorySet = wire.NewSet(
 	repository.NewGroupNotificationRepository,
 	repository.NewGroupSettingRepository,
 	repository.NewGroupMemberRepository,
+	repository.NewGroupDocumentRepository,
 )
 
 var usecaseSet = wire.NewSet(
@@ -41,6 +42,7 @@ var usecaseSet = wire.NewSet(
 	usecase.NewGroupNotificationUsecase,
 	usecase.NewGroupSettingUsecase,
 	usecase.NewGroupMemberUsecase,
+	usecase.NewGroupDocumentUsecase,
 )
 var transformerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
@@ -54,6 +56,7 @@ var transformerSet = wire.NewSet(
 	transformer.NewGroupNotificationTransformer,
 	transformer.NewGroupSettingTransformer,
 	transformer.NewGroupMemberTransformer,
+	transformer.NewGroupDocumentTransformer,
 )
 var validatorSet = wire.NewSet(
 	validator.NewOrganizationValidator,
@@ -67,6 +70,7 @@ var validatorSet = wire.NewSet(
 	validator.NewGroupNotificationValidator,
 	validator.NewGroupSettingValidator,
 	validator.NewGroupMemberValidator,
+	validator.NewGroupDocumentValidator,
 )
 
 var handlerSet = wire.NewSet(
@@ -81,6 +85,7 @@ var handlerSet = wire.NewSet(
 	handler.NewGroupNotificationHandler,
 	handler.NewGroupSettingHandler,
 	handler.NewGroupMemberHandler,
+	handler.NewGroupDocumentHandler,
 )
 
 func InitializeGRPCServer() *grpc.GRPCServer {

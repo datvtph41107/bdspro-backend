@@ -166,3 +166,15 @@ func NewGroupDealRepository() repository.GroupDealRepository {
 	return nil
 }
 
+func NewGroupDocumentRepository() repository.GroupDocumentRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupDocumentModel{})
+		return postgres.NewGroupDocumentPostgresRepository(db)
+	}
+	return nil
+}

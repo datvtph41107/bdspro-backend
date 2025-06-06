@@ -15,6 +15,7 @@ import (
 	pb_noti "pb/types/notification"
 	pb_organization "pb/types/organization"
 	pb_payment "pb/types/payment"
+	pb_group "pb/types/group"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -165,6 +166,13 @@ var HttpCmd = &cobra.Command{
 		_ = pb_organization.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_organization.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		_ = pb_organization.RegisterOrganizationBranchServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupDealServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupLogActivityServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupNotificationServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupSettingServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupMemberServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		_ = pb_group.RegisterGroupDocumentServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
 		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
