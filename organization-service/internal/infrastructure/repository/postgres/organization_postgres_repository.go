@@ -17,18 +17,18 @@ type organizationPostgresRepository struct {
 
 type OrganizationModel struct {
 	ID                 uint32 `gorm:"primaryKey;autoIncrement"`
-	Name               string `gorm:"not null"`
-	TaxCode            string `gorm:"not null"`
+	Name               string `gorm:"not null;index"`
+	TaxCode            string `gorm:"not null;index:idx_organizations_tax_code"`
 	BusinessLicenseUrl *string
 	Address            *string
 	Phone              *string
 	Email              *string
 	Website            *string
 	LogoUrl            *string
-	Status             string
-	CreatedAt          time.Time `gorm:"autoCreateTime"`
+	Status             string `gorm:"index:idx_organizations_status_created_at"`
+	CreatedAt          time.Time `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
-	CreatedBy          uint32
+	CreatedBy          uint32 `gorm:"index:idx_organizations_created_by"`
 	UpdatedBy          uint32
 }
 

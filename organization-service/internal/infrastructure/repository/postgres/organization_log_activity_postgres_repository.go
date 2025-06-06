@@ -11,14 +11,14 @@ import (
 
 type OrganizationLogActivityModel struct {
 	Id uint32 `gorm:"primaryKey;autoIncrement"`	
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_org_log_activities_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32 `gorm:"not null"`
+	CreatedBy uint32 `gorm:"not null;index:idx_org_log_activities_created_by"`
 	UpdatedBy uint32 `gorm:"not null"`
 
-	OrganizationId uint32 `gorm:"not null"`
-	ActorId uint32 `gorm:"not null"`
-	LogType string `gorm:"not null"`
+	OrganizationId uint32 `gorm:"not null;index:idx_org_log_activities_org_id"`
+	ActorId uint32 `gorm:"not null;index:idx_org_log_activities_actor_id"`
+	LogType string `gorm:"not null;index:idx_org_log_activities_type"`
 	LogData string `gorm:"not null"`
 }
 

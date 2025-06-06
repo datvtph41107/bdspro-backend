@@ -12,9 +12,9 @@ import (
 
 type OrganizationPermissionModel struct {
 	Id   uint32 `gorm:"primaryKey;autoIncrement"`
-	Name string `gorm:"not null"`
-	Key  string `gorm:"not null"`
-	OrganizationId uint32 `gorm:"not null"`
+	Name string `gorm:"not null;index"`
+	Key  string `gorm:"not null;index:idx_org_permissions_key"`
+	OrganizationId uint32 `gorm:"not null;index:idx_org_permissions_org_id"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

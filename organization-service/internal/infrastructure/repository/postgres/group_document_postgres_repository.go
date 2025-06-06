@@ -11,16 +11,16 @@ import (
 
 type GroupDocumentModel struct {
 	Id          uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;index:idx_group_documents_created_at"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-	CreatedBy   uint32    `gorm:"not null"`
+	CreatedBy   uint32    `gorm:"not null;index:idx_group_documents_created_by"`
 	UpdatedBy   uint32    `gorm:"not null"`
 
-	GroupId     uint32 `gorm:"not null"`
-	Name        string `gorm:"not null"`
+	GroupId     uint32 `gorm:"not null;index:idx_group_documents_group_id"`
+	Name        string `gorm:"not null;index:idx_group_documents_name"`
 	Description string
 	FileUrl     string `gorm:"not null"`
-	FileType    string `gorm:"not null"`
+	FileType    string `gorm:"not null;index:idx_group_documents_file_type"`
 	FileSize    uint64 `gorm:"not null"`
 }
 

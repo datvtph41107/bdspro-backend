@@ -11,15 +11,15 @@ import (
 
 type GroupMemberModel struct {
 	Id uint32 `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_members_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32 `gorm:"not null"`
+	CreatedBy uint32 `gorm:"not null;index:idx_group_members_created_by"`
 	UpdatedBy uint32 `gorm:"not null"`
 
-	GroupId uint32 `gorm:"not null"`
-	UserId uint32 `gorm:"not null"`
-	Role entity.GroupMemberRole `gorm:"not null"`
-	Status entity.GroupMemberStatus `gorm:"not null"`
+	GroupId uint32 `gorm:"not null;index:idx_group_members_group_id,priority:1;index:idx_group_members_group_user,priority:1"`
+	UserId uint32 `gorm:"not null;index:idx_group_members_user_id;index:idx_group_members_group_user,priority:2"`
+	Role entity.GroupMemberRole `gorm:"not null;index:idx_group_members_role"`
+	Status entity.GroupMemberStatus `gorm:"not null;index:idx_group_members_status"`
 }
 
 func (GroupMemberModel) TableName() string {

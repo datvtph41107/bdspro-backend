@@ -12,12 +12,12 @@ import (
 
 type OrganizationRoleModel struct {
 	ID             uint32                         `gorm:"primaryKey;autoIncrement"`
-	Name           string                         `gorm:"not null"`
-	Key            string                         `gorm:"not null"`
+	Name           string                         `gorm:"not null;index"`
+	Key            string                         `gorm:"not null;index:idx_org_roles_key"`
 	CreatedAt      time.Time                      `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time                      `gorm:"autoUpdateTime"`
 	Permissions    []*OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
-	OrganizationId uint32                         `gorm:"not null"`
+	OrganizationId uint32                         `gorm:"not null;index:idx_org_roles_organization_id"`
 }
 
 func (OrganizationRoleModel) TableName() string {

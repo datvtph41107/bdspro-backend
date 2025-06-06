@@ -12,13 +12,13 @@ import (
 
 type GroupSettingModel struct {
 	Id        uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_settings_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32    `gorm:"not null"`
+	CreatedBy uint32    `gorm:"not null;index:idx_group_settings_created_by"`
 	UpdatedBy uint32    `gorm:"not null"`
 
-	GroupId     uint32 `gorm:"not null"`
-	ConfigKey   string `gorm:"not null"`
+	GroupId     uint32 `gorm:"not null;index:idx_group_settings_group_id"`
+	ConfigKey   string `gorm:"not null;index:idx_group_settings_config_key"`
 	ConfigValue string `gorm:"not null"`
 }
 

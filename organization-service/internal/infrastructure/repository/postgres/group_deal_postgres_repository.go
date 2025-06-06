@@ -11,15 +11,15 @@ import (
 
 type GroupDealModel struct {
 	Id        uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_deals_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32
+	CreatedBy uint32    `gorm:"index:idx_group_deals_created_by"`
 	UpdatedBy uint32
 
-	GroupId uint32            `gorm:"not null"`
-	Name    string            `gorm:"not null"`
+	GroupId uint32            `gorm:"not null;index:idx_group_deals_group_id"`
+	Name    string            `gorm:"not null;index:idx_group_deals_name"`
 	Amount  float64           `gorm:"not null"`
-	Status  entity.DealStatus `gorm:"not null"`
+	Status  entity.DealStatus `gorm:"not null;index:idx_group_deals_status"`
 }
 
 func (GroupDealModel) TableName() string {

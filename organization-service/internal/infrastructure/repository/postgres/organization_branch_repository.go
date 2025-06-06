@@ -11,15 +11,15 @@ import (
 
 type OrganizationBranchModel struct {
 	Id             uint32 `gorm:"primaryKey;autoIncrement"`
-	OrganizationId uint32 `gorm:"not null"`
-	Name           string
+	OrganizationId uint32 `gorm:"not null;index:idx_org_branches_org_id"`
+	Name           string `gorm:"index:idx_org_branches_name"`
 	Address        string
 	Phone          string
 	Email          string
-	ManagerId      uint32    `gorm:"autoIncrement"`
-	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	ManagerId      uint32    `gorm:"autoIncrement;index:idx_org_branches_manager_id"`
+	CreatedAt      time.Time `gorm:"autoCreateTime;index:idx_org_branches_created_at"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
-	CreatedBy      uint32
+	CreatedBy      uint32    `gorm:"index:idx_org_branches_created_by"`
 }
 
 func (m *OrganizationBranchModel) TableName() string {

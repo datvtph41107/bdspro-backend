@@ -13,10 +13,10 @@ import (
 
 type OrganizationMemberModel struct {
 	ID             uint32    `gorm:"primaryKey;autoIncrement"`
-	OrganizationID uint32    `gorm:"not null"`
-	UserID         uint32    `gorm:"not null"`
-	Role           uint32    `gorm:"not null"`
-	Status         uint32    `gorm:"default:1"`
+	OrganizationID uint32    `gorm:"not null;index:idx_org_members_organization_id,priority:1;index:idx_org_members_user_org,priority:2;index:idx_org_members_status_org,priority:2"`
+	UserID         uint32    `gorm:"not null;index:idx_org_members_user_org,priority:1"`
+	Role           uint32    `gorm:"not null;index:idx_org_members_role"`
+	Status         uint32    `gorm:"default:1;index:idx_org_members_status_org,priority:1"`
 	JoinedAt       time.Time `gorm:"autoCreateTime"`
 	RemovedAt      *time.Time
 

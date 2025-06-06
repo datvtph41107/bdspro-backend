@@ -1,6 +1,6 @@
 package postgres
 
-	import (
+import (
 	"context"
 	"time"
 
@@ -11,14 +11,14 @@ package postgres
 
 type GroupLogActivityModel struct {
 	Id uint32 `gorm:"primaryKey;autoIncrement"`	
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_log_activities_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32 `gorm:"not null"`
+	CreatedBy uint32 `gorm:"not null;index:idx_group_log_activities_created_by"`
 	UpdatedBy uint32 `gorm:"not null"`
 
-	GroupId uint32 `gorm:"not null"`
-	ActorId uint32 `gorm:"not null"`
-	LogType string `gorm:"not null"`
+	GroupId uint32 `gorm:"not null;index:idx_group_log_activities_group_id"`
+	ActorId uint32 `gorm:"not null;index:idx_group_log_activities_actor_id"`
+	LogType string `gorm:"not null;index:idx_group_log_activities_type"`
 }
 
 func (GroupLogActivityModel) TableName() string {
