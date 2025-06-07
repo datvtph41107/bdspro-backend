@@ -2,7 +2,7 @@
 
 ## Overview
 
-Group API cung cấp các endpoint để quản lý nhóm và thành viên trong nhóm. API này cho phép tạo mới, cập nhật, xóa và truy vấn thông tin nhóm, cũng như quản lý thành viên trong nhóm.
+Group API cung cấp các endpoint để quản lý thông tin cơ bản của các nhóm, bao gồm tạo mới, cập nhật, xóa và truy vấn thông tin nhóm.
 
 ## Base URL
 
@@ -20,9 +20,7 @@ Authorization: Bearer <token>
 
 ## API Endpoints
 
-### Group
-
-#### Create Group
+### Create Group
 
 ```http
 POST /v2/group
@@ -33,9 +31,9 @@ Tạo mới một nhóm.
 **Request Body:**
 ```json
 {
-  "name": "string",           // required
-  "description": "string",    // required
-  "avatarUrl": "string"       // required
+  "name": "string",           // required, max 255 chars
+  "description": "string",    // optional
+  "avatarUrl": "string"       // optional
 }
 ```
 
@@ -50,7 +48,7 @@ Tạo mới một nhóm.
 - 400: Invalid request body
 - 500: Internal server error
 
-#### Update Group
+### Update Group
 
 ```http
 PUT /v2/group/{id}
@@ -61,9 +59,9 @@ Cập nhật thông tin của một nhóm.
 **Request Body:**
 ```json
 {
-  "id": "uint32",            // required
-  "name": "string",          // required
-  "description": "string"    // required
+  "id": "uint32",           // required
+  "name": "string",         // required, max 255 chars
+  "description": "string"   // optional
 }
 ```
 
@@ -76,11 +74,10 @@ Cập nhật thông tin của một nhóm.
 
 **Error Codes:**
 - 400: Invalid request body
-- 403: Forbidden - not authorized
 - 404: Group not found
 - 500: Internal server error
 
-#### Delete Group
+### Delete Group
 
 ```http
 DELETE /v2/group/{id}
@@ -104,11 +101,10 @@ Xóa một nhóm.
 
 **Error Codes:**
 - 400: Invalid request parameters
-- 403: Forbidden - not authorized
 - 404: Group not found
 - 500: Internal server error
 
-#### Get Group
+### Get Group
 
 ```http
 GET /v2/group/{id}
@@ -140,19 +136,19 @@ Lấy thông tin chi tiết của một nhóm.
 - 404: Group not found
 - 500: Internal server error
 
-#### Get Groups
+### Get Groups
 
 ```http
 GET /v2/group
 ```
 
-Lấy danh sách các nhóm.
+Lấy danh sách các nhóm. Kết quả được phân trang.
 
 **Request Parameters:**
 ```json
 {
-  "page": "uint32",  // optional, default: 1
-  "size": "uint32"   // optional, default: 10
+  "page": "uint32",    // optional, default: 1
+  "size": "uint32"     // optional, default: 20, max: 100
 }
 ```
 
@@ -167,17 +163,66 @@ Lấy danh sách các nhóm.
       "avatarUrl": "string"
     }
   ],
-  "total": "uint32"  // total number of groups
+  "total": "uint32"
 }
 ```
 
 **Error Codes:**
-- 400: Invalid request parameters
 - 500: Internal server error
 
-### Group Member
+## Data Models
 
-#### Create Member
+### Group
+
+```json
+{
+  "id": "uint32",
+  "name": "string",           // required, max 255 chars
+  "description": "string",    // optional
+  "avatarUrl": "string"       // optional
+}
+```
+
+## Validation Rules
+
+1. **Group Name**
+   - Required
+   - Maximum length: 255 characters
+
+2. **Description**
+   - Optional
+   - Maximum length: 1000 characters
+
+3. **Avatar URL**
+   - Optional
+   - Must be a valid URL format
+   - Must be an image file (jpg, png, gif)
+
+## Error Codes
+
+- 400: Bad Request - Invalid input data
+- 401: Unauthorized - Missing or invalid authentication
+- 403: Forbidden - Insufficient permissions
+- 404: Not Found - Resource not found
+- 500: Internal Server Error - Server-side error
+
+## Rate Limiting
+
+- Maximum 100 requests per minute per IP
+- Maximum 1000 requests per hour per IP
+
+## Logging
+
+Service logs các sự kiện sau:
+
+1. **Group Events**
+   - GROUP_CREATE: Tạo mới nhóm
+   - GROUP_UPDATE: Cập nhật thông tin nhóm
+   - GROUP_DELETE: Xóa nhóm
+
+## Group Member Management
+
+### Create Member
 
 ```http
 POST /v2/group/member
@@ -208,7 +253,7 @@ Thêm một thành viên mới vào nhóm.
 - 409: Member already exists
 - 500: Internal server error
 
-#### Update Member
+### Update Member
 
 ```http
 PUT /v2/group/member
@@ -237,7 +282,7 @@ Cập nhật vai trò của thành viên trong nhóm.
 - 404: Member not found
 - 500: Internal server error
 
-#### Delete Member
+### Delete Member
 
 ```http
 DELETE /v2/group/member
@@ -687,7 +732,6 @@ Service logs các sự kiện sau:
    - GROUP_CREATE: Tạo mới nhóm
    - GROUP_UPDATE: Cập nhật thông tin nhóm
    - GROUP_DELETE: Xóa nhóm
-   - GROUP_STATUS_CHANGE: Thay đổi trạng thái nhóm
 
 2. **Member Events**
    - MEMBER_ADD: Thêm thành viên vào nhóm
