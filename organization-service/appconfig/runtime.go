@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 	"strings"
-
+	"time"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
 )
@@ -23,6 +23,8 @@ const (
 	DefaultHTTPPort = "8080"
 	DefaultGRPCPort = "50052"
 
+	CHAT_SERVICE_HOST = "localhost"
+	CHAT_SERVICE_PORT = "50053"
 
 	LOG_WORKER_QUEUE_SIZE = 1000
 )
@@ -38,6 +40,7 @@ var (
 	WHITELIST_METHODS_PUT_PATH    []string
 	WHITELIST_METHODS_DELETE_PATH []string
 	GRPC_PORT                     = DefaultGRPCPort
+	SUB_PROCESS_CONTEXT_TIMEOUT   = 10 * time.Second
 )
 
 func InitConfig() {

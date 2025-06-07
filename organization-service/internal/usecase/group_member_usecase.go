@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/appconfig"
+	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
 	"github.com/tuandq2112/organization-service/pkg/utils"
@@ -24,18 +24,21 @@ type groupMemberUsecase struct {
 	groupRepository       repository.GroupRepository
 	logActivityUsecase    GroupLogActivityUsecase
 	groupAuthUsecase      GroupAuthUsecase
+	groupChatUsecase      GroupChatUsecase
 }
 
 func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
 	groupRepository repository.GroupRepository,
 	logActivityUsecase GroupLogActivityUsecase,
 	groupAuthUsecase GroupAuthUsecase,
+	groupChatUsecase GroupChatUsecase,
 ) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,
 		groupRepository:       groupRepository,
 		logActivityUsecase:    logActivityUsecase,
 		groupAuthUsecase:      groupAuthUsecase,
+		groupChatUsecase:      groupChatUsecase,
 	}
 }
 
@@ -53,7 +56,10 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 	if existedMember != nil {
 		return nil, custom_error.RecordNotFound(fmt.Sprintf("user %d is already a member of group %d", member.UserId, member.GroupId))
 	}
-
+	err = u.groupChatUsecase.AddUserToGroupChat(ctx, member.GroupId, member.UserId)
+	if err != nil {
+		return nil, err
+	}
 	member.CreatedBy = currentUserId
 	member.UpdatedBy = currentUserId
 	createdMember, err := u.groupMemberRepository.Create(ctx, member)
@@ -108,6 +114,11 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
+	if err != nil {
+		return err
+	}
+
+	err = u.groupChatUsecase.RemoveUserFromGroupChat(ctx, member.GroupId, member.UserId)
 	if err != nil {
 		return err
 	}

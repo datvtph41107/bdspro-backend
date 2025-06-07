@@ -5,7 +5,8 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
-	"github.com/tuandq2112/organization-service/internal/infra/repository"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/repository"
 	"github.com/tuandq2112/organization-service/internal/interface/handler"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
@@ -28,10 +29,15 @@ var repositorySet = wire.NewSet(
 	repository.NewGroupMemberRepository,
 	repository.NewGroupDocumentRepository,
 	repository.NewOrganizationLogActivityRepository,
+	repository.NewGroupChatRepository,
 )
 
+var clientSet = wire.NewSet(
+	client.NewChatClient,
+)
 
 var usecaseSet = wire.NewSet(
+	usecase.NewGroupChatUsecase,
 	usecase.NewGroupAuthUsecase,
 	usecase.NewOrganizationLogActivityUsecase,
 	usecase.NewOrganizationLogWorker,
@@ -51,7 +57,6 @@ var usecaseSet = wire.NewSet(
 	usecase.NewGroupDocumentUsecase,
 )
 
-
 var transformerSet = wire.NewSet(
 	transformer.NewOrganizationTransformer,
 	transformer.NewOrganizationMemberTransformer,
@@ -67,6 +72,7 @@ var transformerSet = wire.NewSet(
 	transformer.NewGroupDocumentTransformer,
 	transformer.NewOrganizationLogActivityTransformer,
 )
+
 var validatorSet = wire.NewSet(
 	validator.NewOrganizationValidator,
 	validator.NewOrganizationMemberValidator,
@@ -102,6 +108,7 @@ var handlerSet = wire.NewSet(
 func InitializeGRPCServer() *grpc.GRPCServer {
 	wire.Build(
 		repositorySet,
+		clientSet,
 		usecaseSet,
 		transformerSet,
 		validatorSet,

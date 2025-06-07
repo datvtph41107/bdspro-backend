@@ -34,7 +34,7 @@ func loadConfig() {
 	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
 		file = envFile
 	}
-    flogging.ActivateSpec("debug")
+	flogging.ActivateSpec("debug")
 
 	cfg = viper.New()
 	cfg.SetConfigType("yaml")
@@ -53,7 +53,6 @@ func loadConfig() {
 	DB_TYPE = cfg.GetString("database.type")
 	DNS = cfg.GetString("database.dns")
 	TRANSACTION_TIMEOUT = cfg.GetDuration("timeout.transaction")
-
 	IDLE_TIMEOUT = cfg.GetDuration("timeout.idle")
 	READ_TIMEOUT = cfg.GetDuration("timeout.read")
 	WRITE_TIMEOUT = cfg.GetDuration("timeout.write")

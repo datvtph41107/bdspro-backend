@@ -13,6 +13,10 @@ var RootCmd = &cobra.Command{
 func init() {
 	serveCmd.Flags().String("httpPort", "8080", "httpPort")
 	RootCmd.AddCommand(serveCmd)
+
+	grpcServeCmd.Flags().String("grpcPort", "50053", "grpcPort")
+	RootCmd.AddCommand(grpcServeCmd)
+
 	wsCmd.Flags().String("wsPort", "3003", "wsPort")
 	RootCmd.AddCommand(wsCmd)
 	RootCmd.AddCommand(swaggerCMD)

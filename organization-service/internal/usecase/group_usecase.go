@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
@@ -21,13 +22,22 @@ type groupUsecase struct {
 	groupRepository    repository.GroupRepository
 	logActivityUsecase GroupLogActivityUsecase
 	groupAuthUsecase   GroupAuthUsecase
+	groupChatUsecase   GroupChatUsecase
+	logger             *flogging.FabricLogger
 }
 
-func NewGroupUsecase(groupRepository repository.GroupRepository, logActivityUsecase GroupLogActivityUsecase, groupAuthUsecase GroupAuthUsecase) GroupUsecase {
+func NewGroupUsecase(
+	groupRepository repository.GroupRepository,
+	logActivityUsecase GroupLogActivityUsecase,
+	groupAuthUsecase GroupAuthUsecase,
+	groupChatUsecase GroupChatUsecase,
+) GroupUsecase {
 	return &groupUsecase{
 		groupRepository:    groupRepository,
 		logActivityUsecase: logActivityUsecase,
 		groupAuthUsecase:   groupAuthUsecase,
+		groupChatUsecase:   groupChatUsecase,
+		logger:             flogging.MustGetLogger("group_usecase"),
 	}
 }
 
@@ -42,13 +52,24 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 	}
 
 	go func() {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), appconfig.SUB_PROCESS_CONTEXT_TIMEOUT)
+		defer cancel()
+		_, err = u.groupChatUsecase.CreateGroupChat(timeoutCtx, createdGroup.Id, []uint32{currentUserId}, group.Name, group.AvatarUrl)
+		if err != nil {
+			u.logger.Errorf("Failed to create group chat: %v", err)
+		}
+	}()
+
+	go func() {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), appconfig.SUB_PROCESS_CONTEXT_TIMEOUT)
+		defer cancel()
 		log := &entity.GroupLogActivity{
 			GroupId: createdGroup.Id,
 			ActorId: createdGroup.CreatedBy,
 			LogType: "CREATE",
 			LogData: "Created new group",
 		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
+		u.logActivityUsecase.CreateGroupLogActivity(timeoutCtx, log)
 	}()
 
 	return createdGroup, nil

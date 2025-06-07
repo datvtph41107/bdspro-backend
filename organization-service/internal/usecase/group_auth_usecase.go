@@ -30,7 +30,6 @@ func (u *groupAuthUsecase) IsLeaderGroup(ctx context.Context, groupId uint32, us
 	if err != nil {
 		return err
 	}
-
 	if group == nil {
 		return custom_error.RecordNotFound(fmt.Sprintf("group %d not found", groupId))
 	}

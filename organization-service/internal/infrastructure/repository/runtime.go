@@ -5,8 +5,8 @@ import (
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/infra/database"
-	"github.com/tuandq2112/organization-service/internal/infra/repository/postgres"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/database"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/repository/postgres"
 )
 
 func NewOrganizationRepository() repository.OrganizationRepository {
@@ -191,3 +191,17 @@ func NewOrganizationLogActivityRepository() repository.OrganizationLogActivityRe
 	}
 	return nil
 }
+
+func NewGroupChatRepository() repository.GroupChatRepository {
+	switch appconfig.PRIMARY_DB_TYPE {
+	case appconfig.DBTypePostgres:
+		db, err := database.NewPostgresDB(appconfig.DB_DNS)
+		if err != nil {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+		db.AutoMigrate(&postgres.GroupChatModel{})
+		return postgres.NewGroupChatPostgresRepository(db)
+	}
+	return nil
+}
+

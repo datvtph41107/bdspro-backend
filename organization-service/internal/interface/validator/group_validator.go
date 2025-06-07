@@ -108,26 +108,8 @@ func (v *groupValidator) ValidateGetGroupRequest(request *grouppb.GetGroupReques
 
 func (v *groupValidator) ValidateGetGroupsRequest(request *grouppb.GetGroupsRequest) error {
 	details := []protoadapt.MessageV1{}
-	if request.Page != nil && *request.Page < 1 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "page",
-					Description: "page must be greater than 0",
-				},
-			},
-		})
-	}
-	if request.Size != nil && *request.Size < 1 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "size",
-					Description: "size must be greater than 0",
-				},
-			},
-		})
-	}
+	
+	
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}

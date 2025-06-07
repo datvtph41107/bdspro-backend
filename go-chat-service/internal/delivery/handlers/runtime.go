@@ -6,6 +6,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	chatpb "github.com/tuandq3/go-chat-service/proto/types/chat"
 	externalpb "github.com/tuandq3/go-chat-service/proto/types/external"
+	"google.golang.org/grpc"
 )
 
 type Delivery struct {
@@ -42,4 +43,9 @@ func (d *Delivery) RegisterHTTPServer(ctx context.Context, mux *runtime.ServeMux
 		return err
 	}
 	return nil
+}
+
+func (d *Delivery) RegisterGRPCServer(server *grpc.Server) {
+	chatpb.RegisterChatServiceServer(server, d.chatHandler)
+	externalpb.RegisterBackgroundImageServiceServer(server, d.externalHandler)
 }

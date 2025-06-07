@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
@@ -125,6 +126,9 @@ func (r *groupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint3
 func (r *groupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error) {
 	var model *GroupMemberModel
 	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id = ?", groupID, userID).First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return GroupMemberModelToEntity(model), nil
