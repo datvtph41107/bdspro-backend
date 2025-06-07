@@ -4,11 +4,9 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -36,15 +34,15 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if member == nil {
 		return nil, status.Errorf(codes.NotFound, "user not in organization")
 	}
 	return &organizationpb.SwitchOrganizationResponse{
-		IsSuccess: true,
-		Id:        req.OrganizationId,
-		UserId:    req.UserId,
-		Role:      member.Role,
+		IsSuccess:   true,
+		Id:          req.OrganizationId,
+		UserId:      req.UserId,
+		Role:        member.Role,
 		Permissions: member.Permissions,
 	}, nil
 }
@@ -54,20 +52,19 @@ func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context
 	if err := h.OrganizationMemberValidator.ValidateCreateOrganizationMemberRequest(req); err != nil {
 		return nil, err
 	}
-	organizationMember, err := h.OrganizationMemberUsecase.CreateOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organizationMember)
+	organizationMember, err := h.OrganizationMemberUsecase.CreateOrganizationMember(ctx, organizationMember)
 	if err != nil {
 		return nil, err
 	}
 	return h.OrganizationMemberTransformer.EntityToCreateOrganizationMemberResponse(organizationMember), nil
 }
 
-
 func (h *OrganizationMemberHandler) UpdateOrganizationMember(ctx context.Context, req *organizationpb.UpdateOrganizationMemberRequest) (*organizationpb.UpdateOrganizationMemberResponse, error) {
 	organizationMember := h.OrganizationMemberTransformer.UpdateOrganizationMemberRequestToEntity(req)
 	if err := h.OrganizationMemberValidator.ValidateUpdateOrganizationMemberRequest(req); err != nil {
 		return nil, err
 	}
-	organizationMember, err := h.OrganizationMemberUsecase.UpdateOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organizationMember)
+	organizationMember, err := h.OrganizationMemberUsecase.UpdateOrganizationMember(ctx, organizationMember)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +72,7 @@ func (h *OrganizationMemberHandler) UpdateOrganizationMember(ctx context.Context
 }
 
 func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context, req *organizationpb.DeleteOrganizationMemberRequest) (*organizationpb.DeleteOrganizationMemberResponse, error) {
-	organizationMember, err := h.OrganizationMemberUsecase.DeleteOrganizationMember(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id)
+	organizationMember, err := h.OrganizationMemberUsecase.DeleteOrganizationMember(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +80,7 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 }
 
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
-	organizationMembers, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.OrganizationId)
+	organizationMembers, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}

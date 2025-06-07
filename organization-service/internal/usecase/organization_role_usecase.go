@@ -7,13 +7,14 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationRoleUsecase interface {
-	CreateNewRole(ctx context.Context, currentUserId uint32, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
-	UpdateRole(ctx context.Context, currentUserId uint32, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
-	DeleteRole(ctx context.Context, currentUserId uint32, roleId uint32) error
-	GetRoleByOrganizationId(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationRole, error)
+	CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
+	UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
+	DeleteRole(ctx context.Context, roleId uint32) error
+	GetRoleByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error)
 }
 
 type organizationRoleUsecase struct {
@@ -40,7 +41,8 @@ func NewOrganizationRoleUsecase(
 	}
 }
 
-func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, currentUserId uint32, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, model.OrganizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -72,15 +74,16 @@ func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, currentUser
 	// Log role creation
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: model.OrganizationId,
-		ActorId:       currentUserId,
-		LogType:       "ROLE_CREATE",
-		LogData:       "Created new role in organization",
+		ActorId:        currentUserId,
+		LogType:        "ROLE_CREATE",
+		LogData:        "Created new role in organization",
 	})
 
 	return role, nil
 }
 
-func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -95,7 +98,8 @@ func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context, c
 	return roles, nil
 }
 
-func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, currentUserId uint32, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, model.OrganizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -112,15 +116,16 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, currentUserId 
 	// Log role update
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: model.OrganizationId,
-		ActorId:       currentUserId,
-		LogType:       "ROLE_UPDATE",
-		LogData:       "Updated role details",
+		ActorId:        currentUserId,
+		LogType:        "ROLE_UPDATE",
+		LogData:        "Updated role details",
 	})
 
 	return role, nil
 }
 
-func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, currentUserId uint32, roleId uint32) error {
+func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	role, err := u.organizationRoleRepository.FindById(ctx, roleId)
 	if err != nil {
 		return err
@@ -145,9 +150,9 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, currentUserId 
 	// Log role deletion
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: role.OrganizationId,
-		ActorId:       currentUserId,
-		LogType:       "ROLE_DELETE",
-		LogData:       "Deleted role from organization",
+		ActorId:        currentUserId,
+		LogType:        "ROLE_DELETE",
+		LogData:        "Deleted role from organization",
 	})
 
 	return nil

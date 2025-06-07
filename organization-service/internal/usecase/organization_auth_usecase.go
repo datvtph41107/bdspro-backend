@@ -10,6 +10,7 @@ import (
 type OrganizationAuthUsecase interface {
 	HasPermission(ctx context.Context, userId uint32, organizationId uint32, permission string) (bool, error)
 	HasRole(ctx context.Context, userId uint32, organizationId uint32, role string) (bool, error)
+	IsMemberOrganization(ctx context.Context, userId uint32, organizationId uint32) (bool, error)
 }
 
 type organizationAuthUsecase struct {
@@ -62,4 +63,12 @@ func (u *organizationAuthUsecase) HasRole(ctx context.Context, userId uint32, or
 		return false, err	
 	}
 	return roleEntity.Key == role, nil
+}
+
+func (u *organizationAuthUsecase) IsMemberOrganization(ctx context.Context, userId uint32, organizationId uint32) (bool, error) {
+	organizationMember, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, userId, organizationId)
+	if err != nil {
+		return false, err
+	}
+	return organizationMember != nil, nil
 }

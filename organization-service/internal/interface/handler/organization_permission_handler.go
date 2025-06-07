@@ -4,30 +4,27 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationPermissionHandler struct {
 	organizationpb.UnimplementedOrganizationPermissionServiceServer
-	OrganizationPermissionUsecase usecase.OrganizationPermissionUsecase
+	OrganizationPermissionUsecase     usecase.OrganizationPermissionUsecase
 	OrganizationPermissionTransformer transformer.OrganizationPermissionTransformer
-	OrganizationPermissionValidator validator.OrganizationPermissionValidator
+	OrganizationPermissionValidator   validator.OrganizationPermissionValidator
 }
 
 func NewOrganizationPermissionHandler(
-	organizationPermissionUsecase usecase.OrganizationPermissionUsecase, 
+	organizationPermissionUsecase usecase.OrganizationPermissionUsecase,
 	organizationPermissionTransformer transformer.OrganizationPermissionTransformer,
 	organizationPermissionValidator validator.OrganizationPermissionValidator,
 ) *OrganizationPermissionHandler {
-
 	return &OrganizationPermissionHandler{
-		OrganizationPermissionUsecase: organizationPermissionUsecase,
+		OrganizationPermissionUsecase:     organizationPermissionUsecase,
 		OrganizationPermissionTransformer: organizationPermissionTransformer,
-		OrganizationPermissionValidator: organizationPermissionValidator,
+		OrganizationPermissionValidator:   organizationPermissionValidator,
 	}
 }
 
@@ -36,7 +33,7 @@ func (h *OrganizationPermissionHandler) CreatePermission(ctx context.Context, re
 	if err := h.OrganizationPermissionValidator.ValidateCreatePermissionRequest(req); err != nil {
 		return nil, err
 	}
-	permission, err := h.OrganizationPermissionUsecase.CreateNewPermission(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), permission)
+	permission, err := h.OrganizationPermissionUsecase.CreateNewPermission(ctx, permission)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +45,7 @@ func (h *OrganizationPermissionHandler) UpdatePermission(ctx context.Context, re
 	if err := h.OrganizationPermissionValidator.ValidateUpdatePermissionRequest(req); err != nil {
 		return nil, err
 	}
-	permission, err := h.OrganizationPermissionUsecase.UpdatePermission(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), permission)
+	permission, err := h.OrganizationPermissionUsecase.UpdatePermission(ctx, permission)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +56,7 @@ func (h *OrganizationPermissionHandler) DeletePermission(ctx context.Context, re
 	if err := h.OrganizationPermissionValidator.ValidateDeletePermissionRequest(req); err != nil {
 		return nil, err
 	}
-	err := h.OrganizationPermissionUsecase.DeletePermission(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id)
+	err := h.OrganizationPermissionUsecase.DeletePermission(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +69,7 @@ func (h *OrganizationPermissionHandler) GetPermissions(ctx context.Context, req 
 	if err := h.OrganizationPermissionValidator.ValidateGetPermissionsRequest(req); err != nil {
 		return nil, err
 	}
-	permissions, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.OrganizationId)
+	permissions, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}

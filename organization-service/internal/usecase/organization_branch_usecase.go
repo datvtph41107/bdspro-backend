@@ -8,16 +8,17 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationBranchUsecase interface {
-	CreateOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
-	UpdateOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
-	DeleteOrganizationBranch(ctx context.Context, currentUserId uint32, id uint32) error
-	AddMemberToOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error)
-	RemoveMemberFromOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranchId uint32, userId uint32) error
-	GetOrganizationBranchMembers(ctx context.Context, currentUserId uint32, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error)
-	GetOrganizationBranches(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationBranch, error)
+	CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
+	UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
+	DeleteOrganizationBranch(ctx context.Context, id uint32) error
+	AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error)
+	RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error
+	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error)
+	GetOrganizationBranches(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error)
 }
 
 type organizationBranchUsecase struct {
@@ -41,7 +42,9 @@ func NewOrganizationBranchUsecase(
 	}
 }
 
-func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -60,7 +63,8 @@ func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context
 	return u.organizationBranchRepository.CreateOrganizationBranch(ctx, organizationBranch)
 }
 
-func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	branch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranch.Id)
 	if err != nil {
 		return nil, err
@@ -85,7 +89,8 @@ func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context
 	return u.organizationBranchRepository.UpdateOrganizationBranch(ctx, organizationBranch)
 }
 
-func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context, currentUserId uint32, id uint32) error {
+func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context, id uint32) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, id)
 	if err != nil {
 		return err
@@ -103,7 +108,8 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 	return u.organizationBranchRepository.DeleteOrganizationBranch(ctx, id)
 }
 
-func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error) {
+func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
 		return nil, err
@@ -138,7 +144,8 @@ func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Co
 	return organizationBranchMember, nil
 }
 
-func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx context.Context, currentUserId uint32, organizationBranchId uint32, userId uint32) error {
+func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
 		return err
@@ -157,7 +164,8 @@ func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx conte
 	return u.organizationBranchMemberRepository.DeleteOrganizationBranchMember(ctx, userId)
 }
 
-func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Context, currentUserId uint32, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error) {
+func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
 		return nil, err
@@ -177,7 +185,15 @@ func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Con
 	return u.organizationBranchMemberRepository.GetOrganizationBranchMemberByOrganizationBranchId(ctx, organizationBranchId)
 }
 
-func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationBranch, error) {
+func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	isMember, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, organizationId)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
 	organization, err := u.organizationRepository.FindById(ctx, organizationId)
 	if err != nil {
 		return nil, err

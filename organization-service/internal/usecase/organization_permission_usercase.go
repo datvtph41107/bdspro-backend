@@ -7,13 +7,14 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationPermissionUsecase interface {
-	CreateNewPermission(ctx context.Context, currentUserId uint32, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
-	UpdatePermission(ctx context.Context, currentUserId uint32, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
-	GetPermissionsByOrganizationId(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationPermission, error)
-	DeletePermission(ctx context.Context, currentUserId uint32, permissionId uint32) error
+	CreateNewPermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
+	UpdatePermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
+	GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error)
+	DeletePermission(ctx context.Context, permissionId uint32) error
 
 }
 
@@ -38,8 +39,15 @@ func NewOrganizationPermissionUsecase(
 	}
 }
 
-func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context, currentUserId uint32, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
-
+func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, permission.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
 	organization, err := u.organizationRepository.FindById(ctx, permission.OrganizationId)
 	if err != nil {
 		return nil, err
@@ -58,7 +66,8 @@ func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context,
 	return u.organizationPermissionRepository.Create(ctx, permission)
 }
 
-func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, currentUserId uint32, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
+func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	existPermission, err := u.organizationPermissionRepository.FindById(ctx, permission.Id)
 	if err != nil {
 		return nil, err
@@ -85,7 +94,8 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, cu
 }
 
 
-func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx context.Context, currentUserId uint32, organizationId uint32) ([]*entity.OrganizationPermission, error) {
+func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -96,7 +106,8 @@ func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx conte
 	return u.organizationPermissionRepository.FindByOrganizationId(ctx, organizationId)
 }
 
-func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, currentUserId uint32, permissionId uint32) error {
+func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, permissionId uint32) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	permission, err := u.organizationPermissionRepository.FindById(ctx, permissionId)
 	if err != nil {
 		return err

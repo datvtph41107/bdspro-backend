@@ -4,11 +4,9 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationBranchHandler struct {
@@ -35,8 +33,7 @@ func (h *OrganizationBranchHandler) CreateOrganizationBranch(ctx context.Context
 		return nil, err
 	}
 	reqEntity := h.transformer.CreateOrganizationBranchRequestToEntity(req)
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	branch, err := h.usecase.CreateOrganizationBranch(ctx, currentUserId, reqEntity)
+	branch, err := h.usecase.CreateOrganizationBranch(ctx, reqEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +47,7 @@ func (h *OrganizationBranchHandler) UpdateOrganizationBranch(ctx context.Context
 		return nil, err
 	}
 	reqEntity := h.transformer.UpdateOrganizationBranchRequestToEntity(req)
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	branch, err := h.usecase.UpdateOrganizationBranch(ctx, currentUserId, reqEntity)
+	branch, err := h.usecase.UpdateOrganizationBranch(ctx, reqEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +60,7 @@ func (h *OrganizationBranchHandler) DeleteOrganizationBranch(ctx context.Context
 	if err := h.validator.ValidateDeleteOrganizationBranch(req); err != nil {
 		return nil, err
 	}
-	err := h.usecase.DeleteOrganizationBranch(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id)
+	err := h.usecase.DeleteOrganizationBranch(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +73,7 @@ func (h *OrganizationBranchHandler) AddMemberToOrganizationBranch(ctx context.Co
 	if err := h.validator.ValidateAddMemberToOrganizationBranch(req); err != nil {
 		return nil, err
 	}
-	branch, err := h.usecase.AddMemberToOrganizationBranch(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id, req.UserId)
+	branch, err := h.usecase.AddMemberToOrganizationBranch(ctx, req.Id, req.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +86,8 @@ func (h *OrganizationBranchHandler) RemoveMemberFromOrganizationBranch(ctx conte
 	if err := h.validator.ValidateRemoveMemberFromOrganizationBranch(req); err != nil {
 		return nil, err
 	}
-	
-	err := h.usecase.RemoveMemberFromOrganizationBranch(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id, req.UserId)
+
+	err := h.usecase.RemoveMemberFromOrganizationBranch(ctx, req.Id, req.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -104,14 +100,14 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 	if err := h.validator.ValidateGetOrganizationBranchMembers(req); err != nil {
 		return nil, err
 	}
-	members, err := h.usecase.GetOrganizationBranchMembers(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.Id)
+	members, err := h.usecase.GetOrganizationBranchMembers(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 	membersResponse := make([]*organizationpb.OrganizationBranchMember, len(members))
 	for i, member := range members {
 		membersResponse[i] = &organizationpb.OrganizationBranchMember{
-			Id: member.Id,
+			Id:     member.Id,
 			UserId: member.UserId,
 		}
 	}
@@ -121,19 +117,18 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 }
 
 func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context, req *organizationpb.GetOrganizationBranchesRequest) (*organizationpb.GetOrganizationBranchesResponse, error) {
-	
-	branches, err := h.usecase.GetOrganizationBranches(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), req.OrganizationId)
+	branches, err := h.usecase.GetOrganizationBranches(ctx, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}
 	branchesResponse := make([]*organizationpb.OrganizationBranch, len(branches))
 	for i, branch := range branches {
 		branchesResponse[i] = &organizationpb.OrganizationBranch{
-			Id: branch.Id,
-			Name: branch.Name,
+			Id:      branch.Id,
+			Name:    branch.Name,
 			Address: branch.Address,
-			Phone: branch.Phone,
-			Email: branch.Email,
+			Phone:   branch.Phone,
+			Email:   branch.Email,
 		}
 	}
 	return &organizationpb.GetOrganizationBranchesResponse{

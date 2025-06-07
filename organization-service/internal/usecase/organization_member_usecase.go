@@ -7,16 +7,17 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type OrganizationMemberUsecase interface {
 	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
-	CreateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
-	UpdateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
-	DeleteOrganizationMember(ctx context.Context, userId uint32, memberId uint32) (*entity.OrganizationMember, error)
-	GetOrganizationMembers(ctx context.Context, userId uint32, organizationId uint32) ([]*entity.OrganizationMember, error)
+	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
+	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
+	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
+	GetOrganizationMembers(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error)
 }
 
 type organizationMemberUsecase struct {
@@ -55,8 +56,9 @@ func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx co
 	return member, nil
 }
 
-func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, userId, organizationMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
+func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	// Log member creation
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: organizationMember.OrganizationID,
-		ActorId:       userId,
+		ActorId:       currentUserId,
 		LogType:       "MEMBER_CREATE",
 		LogData:       "Added new member to organization",
 	})
@@ -103,7 +105,8 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	return member, nil
 }
 
-func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, userId uint32, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
+func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	existMember, err := u.organizationMemberRepository.FindById(ctx, organizationMember.ID)
 	if err != nil {
 		return nil, err
@@ -118,7 +121,7 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	if role.Key != appconfig.ADMIN_ROLE_KEY {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, userId, existMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, existMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +136,7 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	// Log member update
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: existMember.OrganizationID,
-		ActorId:       userId,
+		ActorId:       currentUserId,
 		LogType:       "MEMBER_UPDATE",
 		LogData:       "Updated member details",
 	})
@@ -141,12 +144,13 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	return member, nil
 }
 
-func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context, userId uint32, memberId uint32) (*entity.OrganizationMember, error) {
+func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationMember, err := u.organizationMemberRepository.FindById(ctx, memberId)
 	if err != nil {
 		return nil, err
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, userId, organizationMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationMember.OrganizationID, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +174,7 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	// Log member deletion
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: organizationMember.OrganizationID,
-		ActorId:       userId,
+		ActorId:       currentUserId,
 		LogType:       "MEMBER_DELETE",
 		LogData:       "Removed member from organization",
 	})
@@ -178,6 +182,14 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	return member, nil
 }
 
-func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, userId uint32, organizationId uint32) ([]*entity.OrganizationMember, error) {
+func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	isMember, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, organizationId)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
 	return u.organizationMemberRepository.FindByOrganizationId(ctx, organizationId)
 }
