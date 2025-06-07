@@ -1,188 +1,269 @@
-# Group Service API Documentation
+# Group API Documentation
 
-## Table of Contents
-1. [Group Management](#group-management)
-2. [Group Member Management](#group-member-management)
-3. [Group Document Management](#group-document-management)
-4. [Group Deal Management](#group-deal-management)
-5. [Group Settings Management](#group-settings-management)
-6. [Group Notification Management](#group-notification-management)
+## Overview
 
-## Group Management
+Group API cung cấp các endpoint để quản lý nhóm và thành viên trong nhóm. API này cho phép tạo mới, cập nhật, xóa và truy vấn thông tin nhóm, cũng như quản lý thành viên trong nhóm.
 
-### 1. Create Group
-**Endpoint:** `POST /v2/group`
+## Base URL
 
-#### Request
+```
+http://localhost:8080/v2
+```
+
+## Authentication
+
+Tất cả các request cần phải có header `Authorization` với JWT token:
+
+```
+Authorization: Bearer <token>
+```
+
+## API Endpoints
+
+### Group
+
+#### Create Group
+
+```http
+POST /v2/group
+```
+
+Tạo mới một nhóm.
+
+**Request Body:**
 ```json
 {
-    "name": "string",           // Required
-    "description": "string",    // Optional
-    "organizationId": "number", // Required
-    "type": "string",          // Required
-    "status": "string"         // Required
+  "name": "string",           // required
+  "description": "string",    // required
+  "avatarUrl": "string"       // required
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "id": "number"  // Group ID
+  "id": "uint32"  // ID of created group
 }
 ```
 
-#### Authorization
-- Requires valid JWT token
-- User must be a member of the organization
-- User must have appropriate permissions in the organization
+**Error Codes:**
+- 400: Invalid request body
+- 500: Internal server error
 
-### 2. Update Group
-**Endpoint:** `PUT /v2/group/{id}`
+#### Update Group
 
-#### Request
+```http
+PUT /v2/group/{id}
+```
+
+Cập nhật thông tin của một nhóm.
+
+**Request Body:**
 ```json
 {
-    "id": "number",            // Required
-    "name": "string",          // Required
-    "description": "string",   // Optional
-    "type": "string",          // Required
-    "status": "string"         // Required
+  "id": "uint32",            // required
+  "name": "string",          // required
+  "description": "string"    // required
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "id": "number"
+  "id": "uint32"  // ID of updated group
 }
 ```
 
-#### Authorization
-- Requires valid JWT token
-- User must be a member of the group
-- User must have appropriate permissions
+**Error Codes:**
+- 400: Invalid request body
+- 403: Forbidden - not authorized
+- 404: Group not found
+- 500: Internal server error
 
-### 3. Get Groups
-**Endpoint:** `GET /v2/group`
+#### Delete Group
 
-#### Request
+```http
+DELETE /v2/group/{id}
+```
+
+Xóa một nhóm.
+
+**Request Parameters:**
 ```json
 {
-    "organizationId": "number",  // Required
-    "type": "string",           // Optional
-    "status": "string"          // Optional
+  "id": "uint32"  // required, group ID
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "groups": [
-        {
-            "id": "number",
-            "name": "string",
-            "description": "string",
-            "organizationId": "number",
-            "type": "string",
-            "status": "string",
-            "createdAt": "string",
-            "updatedAt": "string"
-        }
-    ]
+  "id": "uint32"  // ID of deleted group
 }
 ```
 
-## Group Member Management
+**Error Codes:**
+- 400: Invalid request parameters
+- 403: Forbidden - not authorized
+- 404: Group not found
+- 500: Internal server error
 
-### 1. Create Group Member
-**Endpoint:** `POST /v2/group-member`
+#### Get Group
 
-#### Request
+```http
+GET /v2/group/{id}
+```
+
+Lấy thông tin chi tiết của một nhóm.
+
+**Request Parameters:**
 ```json
 {
-    "groupId": "number",       // Required
-    "userId": "number",        // Required
-    "role": "string",          // Required
-    "status": "string"         // Required
+  "id": "uint32"  // required, group ID
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "id": "number"
+  "group": {
+    "id": "uint32",
+    "name": "string",
+    "description": "string",
+    "avatarUrl": "string"
+  }
 }
 ```
 
-#### Authorization
-- Requires valid JWT token
-- User must be a member of the group
-- User must have appropriate permissions
+**Error Codes:**
+- 400: Invalid request parameters
+- 404: Group not found
+- 500: Internal server error
 
-### 2. Update Group Member
-**Endpoint:** `PUT /v2/group-member/{id}`
+#### Get Groups
 
-#### Request
+```http
+GET /v2/group
+```
+
+Lấy danh sách các nhóm.
+
+**Request Parameters:**
 ```json
 {
-    "id": "number",           // Required
-    "role": "string",         // Required
-    "status": "string"        // Required
+  "page": "uint32",  // optional, default: 1
+  "size": "uint32"   // optional, default: 10
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "id": "number"
+  "groups": [
+    {
+      "id": "uint32",
+      "name": "string",
+      "description": "string",
+      "avatarUrl": "string"
+    }
+  ],
+  "total": "uint32"  // total number of groups
 }
 ```
 
-#### Authorization
-- Requires valid JWT token
-- User must be a member of the group
-- User must have appropriate permissions
+**Error Codes:**
+- 400: Invalid request parameters
+- 500: Internal server error
 
-### 3. Delete Group Member
-**Endpoint:** `DELETE /v2/group-member/{id}`
+### Group Member
 
-#### Request
+#### Create Member
+
+```http
+POST /v2/group/member
+```
+
+Thêm một thành viên mới vào nhóm.
+
+**Request Body:**
 ```json
 {
-    "id": "number"  // Required
+  "groupId": "uint32",  // required
+  "userId": "uint32",   // required
+  "role": "uint32"      // required, role ID
 }
 ```
 
-#### Response
+**Response:**
 ```json
 {
-    "id": "number"
+  "id": "uint32"  // ID of created member
 }
 ```
 
-#### Authorization
-- Requires valid JWT token
-- User must be a member of the group
-- User must have appropriate permissions
+**Error Codes:**
+- 400: Invalid request body
+- 403: Forbidden - not authorized
+- 404: Group not found
+- 409: Member already exists
+- 500: Internal server error
 
-### 4. Get Group Members
-**Endpoint:** `GET /v2/group-member/{groupId}`
+#### Update Member
 
-#### Response
+```http
+PUT /v2/group/member
+```
+
+Cập nhật vai trò của thành viên trong nhóm.
+
+**Request Body:**
 ```json
 {
-    "members": [
-        {
-            "id": "number",
-            "groupId": "number",
-            "userId": "number",
-            "role": "string",
-            "status": "string",
-            "joinedAt": "string"
-        }
-    ]
+  "id": "uint32",      // required
+  "role": "uint32"     // required, role ID
 }
 ```
+
+**Response:**
+```json
+{
+  "id": "uint32"  // ID of updated member
+}
+```
+
+**Error Codes:**
+- 400: Invalid request body
+- 403: Forbidden - not authorized
+- 404: Member not found
+- 500: Internal server error
+
+#### Delete Member
+
+```http
+DELETE /v2/group/member
+```
+
+Xóa một thành viên khỏi nhóm.
+
+**Request Body:**
+```json
+{
+  "id": "uint32"  // required, member ID
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uint32"  // ID of deleted member
+}
+```
+
+**Error Codes:**
+- 400: Invalid request body
+- 403: Forbidden - not authorized
+- 404: Member not found
+- 500: Internal server error
 
 ## Group Document Management
 

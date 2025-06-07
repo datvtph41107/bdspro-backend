@@ -25,7 +25,7 @@ Authorization: Bearer <token>
 #### Create Organization
 
 ```http
-POST /organization
+POST /v2/organization
 ```
 
 Tạo mới một tổ chức và thêm người tạo làm admin.
@@ -59,7 +59,7 @@ Tạo mới một tổ chức và thêm người tạo làm admin.
 #### Update Organization
 
 ```http
-PUT /organization/{id}
+PUT /v2/organization/{id}
 ```
 
 Cập nhật thông tin của một tổ chức. Chỉ admin mới có quyền cập nhật.
@@ -97,10 +97,17 @@ Cập nhật thông tin của một tổ chức. Chỉ admin mới có quyền c
 #### Get Organizations
 
 ```http
-GET /organization
+GET /v2/organization
 ```
 
 Lấy danh sách các tổ chức mà user là creator hoặc member. Kết quả được sắp xếp theo thời gian tạo mới nhất.
+
+**Request Parameters:**
+```json
+{
+  "id": "uint32"  // optional, filter by organization ID
+}
+```
 
 **Response:**
 ```json
@@ -130,7 +137,7 @@ Lấy danh sách các tổ chức mà user là creator hoặc member. Kết qu�
 #### Create Member
 
 ```http
-POST /organization/member
+POST /v2/organization/member
 ```
 
 Thêm một thành viên mới vào tổ chức. Chỉ admin mới có quyền thêm thành viên.
@@ -161,7 +168,7 @@ Thêm một thành viên mới vào tổ chức. Chỉ admin mới có quyền t
 #### Update Member
 
 ```http
-PUT /organization/member
+PUT /v2/organization/member
 ```
 
 Cập nhật vai trò của thành viên. Chỉ admin mới có quyền cập nhật.
@@ -190,7 +197,7 @@ Cập nhật vai trò của thành viên. Chỉ admin mới có quyền cập nh
 #### Delete Member
 
 ```http
-DELETE /organization/member
+DELETE /v2/organization/member
 ```
 
 Xóa một thành viên khỏi tổ chức. Chỉ admin mới có quyền xóa thành viên.
@@ -198,7 +205,7 @@ Xóa một thành viên khỏi tổ chức. Chỉ admin mới có quyền xóa t
 **Request Body:**
 ```json
 {
-  "id": "uint32"  // required
+  "id": "uint32"  // required, member ID
 }
 ```
 
@@ -213,39 +220,6 @@ Xóa một thành viên khỏi tổ chức. Chỉ admin mới có quyền xóa t
 - 400: Invalid request body
 - 403: Forbidden - not admin
 - 404: Member not found
-- 500: Internal server error
-
-#### Get Members
-
-```http
-GET /organization/members
-```
-
-Lấy danh sách thành viên của một tổ chức. Chỉ admin mới có quyền xem danh sách.
-
-**Query Parameters:**
-- organizationId: uint32 (required)
-
-**Response:**
-```json
-{
-  "organizationMembers": [
-    {
-      "id": "uint32",
-      "userId": "uint32",
-      "role": "uint32",
-      "status": "uint32",
-      "joinedAt": "string",
-      "removedAt": "string"
-    }
-  ]
-}
-```
-
-**Error Codes:**
-- 400: Invalid request parameters
-- 403: Forbidden - not admin
-- 404: Organization not found
 - 500: Internal server error
 
 ## Data Models
