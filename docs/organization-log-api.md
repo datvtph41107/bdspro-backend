@@ -23,7 +23,41 @@ Authorization: Bearer <token>
 ### Get Organization Logs
 
 ```http
-GET /v2/organization-log
+GET /v2/organization/log/{id}
+```
+
+Lấy thông tin chi tiết của một log.
+
+**Request Parameters:**
+```json
+{
+  "id": "uint32"  // required
+}
+```
+
+**Response:**
+```json
+{
+  "log": {
+    "id": "uint32",
+    "organizationId": "uint32",
+    "userId": "uint32",
+    "eventType": "string",
+    "eventData": "string",     // JSON string containing event details
+    "createdAt": "string"      // ISO 8601 format
+  }
+}
+```
+
+**Error Codes:**
+- 400: Invalid request parameters
+- 404: Log not found
+- 500: Internal server error
+
+### Get Organization Logs By Organization ID
+
+```http
+GET /v2/organization/{organization_id}/logs
 ```
 
 Lấy danh sách log của một tổ chức. Có thể lọc theo loại sự kiện, thời gian và người thực hiện.
@@ -31,13 +65,9 @@ Lấy danh sách log của một tổ chức. Có thể lọc theo loại sự k
 **Request Parameters:**
 ```json
 {
-  "organizationId": "uint32",    // required
-  "eventType": "string",         // optional, filter by event type
-  "startTime": "string",         // optional, ISO 8601 format
-  "endTime": "string",           // optional, ISO 8601 format
-  "userId": "uint32",            // optional, filter by user who performed the action
-  "page": "uint32",              // optional, default: 1
-  "pageSize": "uint32"           // optional, default: 20, max: 100
+  "organization_id": "uint32",  // required
+  "page": "uint32",            // optional, default: 0
+  "size": "uint32"             // optional, default: 10
 }
 ```
 
@@ -54,15 +84,52 @@ Lấy danh sách log của một tổ chức. Có thể lọc theo loại sự k
       "createdAt": "string"      // ISO 8601 format
     }
   ],
-  "total": "uint32",
-  "page": "uint32",
-  "pageSize": "uint32"
+  "total": "uint32"  // Tổng số bản ghi
 }
 ```
 
 **Error Codes:**
 - 400: Invalid request parameters
 - 404: Organization not found
+- 500: Internal server error
+
+### Get Organization Logs By Actor ID
+
+```http
+GET /v2/organization/logs/actor/{actor_id}
+```
+
+Lấy danh sách log của một người dùng trong tổ chức.
+
+**Request Parameters:**
+```json
+{
+  "actor_id": "uint32",  // required
+  "page": "uint32",      // optional, default: 0
+  "size": "uint32"       // optional, default: 10
+}
+```
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": "uint32",
+      "organizationId": "uint32",
+      "userId": "uint32",
+      "eventType": "string",
+      "eventData": "string",     // JSON string containing event details
+      "createdAt": "string"      // ISO 8601 format
+    }
+  ],
+  "total": "uint32"  // Tổng số bản ghi
+}
+```
+
+**Error Codes:**
+- 400: Invalid request parameters
+- 404: Actor not found
 - 500: Internal server error
 
 ### Get Organization Member Logs
@@ -80,8 +147,8 @@ Lấy danh sách log liên quan đến thành viên của tổ chức.
   "memberId": "uint32",          // optional, filter by member ID
   "startTime": "string",         // optional, ISO 8601 format
   "endTime": "string",           // optional, ISO 8601 format
-  "page": "uint32",              // optional, default: 1
-  "pageSize": "uint32"           // optional, default: 20, max: 100
+  "page": "uint32",              // optional, default: 0
+  "size": "uint32"               // optional, default: 10
 }
 ```
 
@@ -99,9 +166,7 @@ Lấy danh sách log liên quan đến thành viên của tổ chức.
       "createdAt": "string"      // ISO 8601 format
     }
   ],
-  "total": "uint32",
-  "page": "uint32",
-  "pageSize": "uint32"
+  "total": "uint32"  // Tổng số bản ghi
 }
 ```
 

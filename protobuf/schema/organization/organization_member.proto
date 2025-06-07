@@ -79,6 +79,8 @@ message DeleteOrganizationMemberResponse {
 
 message GetOrganizationMembersRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
 }
 
 message OrganizationMember {
@@ -87,6 +89,8 @@ message OrganizationMember {
     uint32 role = 3 [json_name = "role"];
     string status = 4 [json_name = "status"];
 }
+
 message GetOrganizationMembersResponse {
     repeated OrganizationMember organizationMembers = 1 [json_name = "organizationMembers"];
+    uint32 total = 2 [json_name = "total"];
 }

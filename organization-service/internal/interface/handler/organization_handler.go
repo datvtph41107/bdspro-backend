@@ -66,9 +66,24 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 }
 
 func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organizationpb.GetOrganizationsRequest) (*organizationpb.GetOrganizationsResponse, error) {
-	organizations, err := h.OrganizationUsecase.GetOrganizations(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT))
+	// Get pagination parameters
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Calculate offset
+	offset := page * size
+
+	// Get organizations with pagination
+	organizations, total, err := h.OrganizationUsecase.GetOrganizations(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), offset, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations), nil
+
+	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations, total), nil
 }

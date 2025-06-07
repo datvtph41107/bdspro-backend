@@ -12,7 +12,7 @@ type OrganizationPermissionTransformer interface {
 	UpdatePermissionRequestToEntity(req *organizationpb.UpdatePermissionRequest) *entity.OrganizationPermission
 	EntityToUpdatePermissionResponse(entity *entity.OrganizationPermission) *organizationpb.UpdatePermissionResponse
 	EntityToDeletePermissionResponse(entity *entity.OrganizationPermission) *organizationpb.DeletePermissionResponse
-	EntityToGetPermissionsResponse(entities []*entity.OrganizationPermission) *organizationpb.GetPermissionsResponse
+	EntityToGetPermissionsResponse(entities []*entity.OrganizationPermission, total uint32) *organizationpb.GetPermissionsResponse
 }
 type organizationPermissionTransformer struct {
 }
@@ -55,17 +55,20 @@ func (t *organizationPermissionTransformer) EntityToDeletePermissionResponse(ent
 	}
 }
 
-func (t *organizationPermissionTransformer) EntityToGetPermissionsResponse(entities []*entity.OrganizationPermission) *organizationpb.GetPermissionsResponse {
-	permissions := make([]*organizationpb.Permission, 0)	
-	for _, permission := range entities {
-		permissions = append(permissions, &organizationpb.Permission{
-			Id: permission.Id,
+
+
+func (t *organizationPermissionTransformer) EntityToGetPermissionsResponse(permissions []*entity.OrganizationPermission, total uint32) *organizationpb.GetPermissionsResponse {
+	permissionsResponse := make([]*organizationpb.Permission, len(permissions))
+	for i, permission := range permissions {
+		permissionsResponse[i] = &organizationpb.Permission{
+			Id:   permission.Id,
 			Name: permission.Name,
-			Key: permission.Key,
-		})
+			Key:  permission.Key,
+		}
 	}
 	return &organizationpb.GetPermissionsResponse{
-		Permissions: permissions,
+		Permissions: permissionsResponse,
+		Total:      total,
 	}
 }
 

@@ -103,6 +103,8 @@ message RemoveMemberFromOrganizationBranchResponse {
 
 message GetOrganizationBranchMembersRequest {
     uint32 id = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
 }
 
 message OrganizationBranchMember {
@@ -112,10 +114,13 @@ message OrganizationBranchMember {
 
 message GetOrganizationBranchMembersResponse {
     repeated OrganizationBranchMember members = 1;
+    uint32 total = 2;
 }
 
 message GetOrganizationBranchesRequest {
     uint32 organizationId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
 }
 
 message OrganizationBranch {
@@ -128,5 +133,6 @@ message OrganizationBranch {
 
 message GetOrganizationBranchesResponse {
     repeated OrganizationBranch branches = 1;
+    uint32 total = 2;
 }
 

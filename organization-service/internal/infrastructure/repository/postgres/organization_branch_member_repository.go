@@ -87,3 +87,23 @@ func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByUserId
 	}
 	return OrganizationBranchMemberModelToEntity(&model), nil
 }
+
+func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByOrganizationBranchIdWithPagination(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error) {
+	var models []OrganizationBranchMemberModel
+	err := r.db.WithContext(ctx).Where("organization_branch_id = ?", organizationBranchId).Offset(page * size).Limit(size).Find(&models).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	entities := make([]*entity.OrganizationBranchMember, len(models))
+	for i, model := range models {
+		entities[i] = OrganizationBranchMemberModelToEntity(&model)
+	}
+
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&OrganizationBranchMemberModel{}).Where("organization_branch_id = ?", organizationBranchId).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return entities, uint32(total), nil
+}

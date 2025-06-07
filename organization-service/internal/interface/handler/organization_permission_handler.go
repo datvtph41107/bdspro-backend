@@ -69,9 +69,18 @@ func (h *OrganizationPermissionHandler) GetPermissions(ctx context.Context, req 
 	if err := h.OrganizationPermissionValidator.ValidateGetPermissionsRequest(req); err != nil {
 		return nil, err
 	}
-	permissions, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, req.OrganizationId)
+
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+	permissions, total, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationPermissionTransformer.EntityToGetPermissionsResponse(permissions), nil
+	return h.OrganizationPermissionTransformer.EntityToGetPermissionsResponse(permissions, total), nil
 }

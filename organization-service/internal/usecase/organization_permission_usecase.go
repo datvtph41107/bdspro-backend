@@ -13,7 +13,7 @@ import (
 type OrganizationPermissionUsecase interface {
 	CreateNewPermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
 	UpdatePermission(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
-	GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error)
+	GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationPermission, uint32, error)
 	DeletePermission(ctx context.Context, permissionId uint32) error
 
 }
@@ -55,7 +55,7 @@ func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context,
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
-	existPermissionByKey, err := u.organizationPermissionRepository.FindByKeyAndOrganizationId(ctx, permission.Key, organization.ID)
+	existPermissionByKey, err := u.organizationPermissionRepository.FindByOrganizationIdAndKey(ctx, organization.ID, permission.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +94,16 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, pe
 }
 
 
-func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error) {
+func (u *organizationPermissionUsecase) GetPermissionsByOrganizationId(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationPermission, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !hasRole {
-		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	return u.organizationPermissionRepository.FindByOrganizationId(ctx, organizationId)
+	return u.organizationPermissionRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
 }
 
 func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, permissionId uint32) error {

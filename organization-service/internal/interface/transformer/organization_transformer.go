@@ -11,7 +11,7 @@ type OrganizationTransformer interface {
 	CreateOrganizationRequestToEntity(request *organizationpb.CreateOrganizationRequest) *entity.Organization
 	UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization
 	EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse
-	EntityToGetOrganizationsResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationsResponse
+	EntityToGetOrganizationsResponse(organizations []*entity.Organization, total uint32) *organizationpb.GetOrganizationsResponse
 }
 
 type organizationTransformer struct{}
@@ -59,22 +59,23 @@ func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organizatio
 	}
 }
 
-func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationsResponse {
+func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations []*entity.Organization, total uint32) *organizationpb.GetOrganizationsResponse {
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
-	for i, organization := range organizations {
+	for i, org := range organizations {
 		organizationsResponse[i] = &organizationpb.Organization{
-			Id: organization.ID,
-			Name: organization.Name,
-			TaxCode: organization.TaxCode,
-			BusinessLicenseUrl: organization.BusinessLicenseUrl,
-			Address: organization.Address,
-			Phone: organization.Phone,
-			Email: organization.Email,
-			Website: organization.Website,
-			LogoUrl: organization.LogoUrl,			
+			Id:                  org.ID,
+			Name:               org.Name,
+			TaxCode:            org.TaxCode,
+			BusinessLicenseUrl: org.BusinessLicenseUrl,
+			Address:            org.Address,
+			Phone:              org.Phone,
+			Email:              org.Email,
+			Website:            org.Website,
+			LogoUrl:            org.LogoUrl,
 		}
 	}
 	return &organizationpb.GetOrganizationsResponse{
 		Organizations: organizationsResponse,
+		Total:        total,
 	}
 }

@@ -15,6 +15,7 @@ type OrganizationRoleUsecase interface {
 	UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	DeleteRole(ctx context.Context, roleId uint32) error
 	GetRoleByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error)
+	GetRoles(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error)
 }
 
 type organizationRoleUsecase struct {
@@ -156,4 +157,22 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32)
 	})
 
 	return nil
+}
+
+func (u *organizationRoleUsecase) GetRoles(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return roles, total, nil
 }

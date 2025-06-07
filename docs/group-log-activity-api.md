@@ -26,14 +26,14 @@ Authorization: Bearer <token>
 GET /v2/group/log-activity
 ```
 
-Lấy danh sách các hoạt động của nhóm. Kết quả được phân trang.
+Lấy danh sách các hoạt động của một nhóm.
 
 **Request Parameters:**
 ```json
 {
   "groupId": "uint32",    // required
-  "page": "uint32",       // optional, default: 1
-  "size": "uint32"        // optional, default: 20, max: 100
+  "page": "uint32",       // optional, default: 0
+  "size": "uint32"        // optional, default: 10
 }
 ```
 
@@ -51,7 +51,7 @@ Lấy danh sách các hoạt động của nhóm. Kết quả được phân tra
       "updatedAt": "string"   // ISO 8601 format
     }
   ],
-  "total": "uint32"
+  "total": "uint32"  // Tổng số bản ghi
 }
 ```
 

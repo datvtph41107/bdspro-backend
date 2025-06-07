@@ -123,7 +123,9 @@ Lấy danh sách quyền của một tổ chức.
 **Request Parameters:**
 ```json
 {
-  "organizationId": "uint32"  // required
+  "organizationId": "uint32",  // required
+  "page": "uint32",           // optional, default: 0
+  "size": "uint32"            // optional, default: 10
 }
 ```
 
@@ -134,10 +136,10 @@ Lấy danh sách quyền của một tổ chức.
     {
       "id": "uint32",
       "name": "string",
-      "key": "string",
-      "description": "string"
+      "key": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số quyền
 }
 ```
 

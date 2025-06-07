@@ -151,7 +151,9 @@ Lấy danh sách thành viên của một tổ chức.
 **Request Parameters:**
 ```json
 {
-  "organizationId": "uint32"  // required
+  "organizationId": "uint32",  // required
+  "page": "uint32",           // optional, default: 0
+  "size": "uint32"            // optional, default: 10
 }
 ```
 
@@ -165,7 +167,8 @@ Lấy danh sách thành viên của một tổ chức.
       "role": "uint32",
       "status": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số thành viên
 }
 ```
 

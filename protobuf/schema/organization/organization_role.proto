@@ -67,7 +67,10 @@ message DeleteRoleResponse {
 
 message GetRolesRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
 }
+
 message Role {
     uint32 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
@@ -76,5 +79,6 @@ message Role {
 
 message GetRolesResponse {
     repeated Role roles = 1 [json_name = "roles"];
+    uint32 total = 2 [json_name = "total"];
 }
 

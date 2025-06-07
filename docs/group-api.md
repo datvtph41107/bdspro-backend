@@ -142,13 +142,13 @@ Lấy thông tin chi tiết của một nhóm.
 GET /v2/group
 ```
 
-Lấy danh sách các nhóm. Kết quả được phân trang.
+Lấy danh sách các nhóm của người dùng hiện tại. Kết quả được phân trang.
 
 **Request Parameters:**
 ```json
 {
-  "page": "uint32",    // optional, default: 1
-  "size": "uint32"     // optional, default: 20, max: 100
+  "page": "uint32",     // optional, default: 0
+  "size": "uint32"      // optional, default: 10
 }
 ```
 
@@ -160,14 +160,18 @@ Lấy danh sách các nhóm. Kết quả được phân trang.
       "id": "uint32",
       "name": "string",
       "description": "string",
-      "avatarUrl": "string"
+      "avatarUrl": "string",
+      "createdAt": "string",  // ISO 8601 format
+      "updatedAt": "string"   // ISO 8601 format
     }
   ],
-  "total": "uint32"
+  "total": "uint32"  // Tổng số nhóm
 }
 ```
 
 **Error Codes:**
+- 400: Invalid request parameters
+- 401: Unauthorized
 - 500: Internal server error
 
 ## Data Models
@@ -391,22 +395,32 @@ Xóa một thành viên khỏi nhóm.
 ### 4. Get Group Documents
 **Endpoint:** `GET /v2/group-document/{groupId}`
 
-#### Response
+**Request Parameters:**
 ```json
 {
-    "documents": [
-        {
-            "id": "number",
-            "groupId": "number",
-            "name": "string",
-            "description": "string",
-            "fileUrl": "string",
-            "type": "string",
-            "status": "string",
-            "createdAt": "string",
-            "updatedAt": "string"
-        }
-    ]
+  "groupId": "number",  // Required
+  "page": "number",     // Optional, default: 0
+  "size": "number"      // Optional, default: 10
+}
+```
+
+**Response:**
+```json
+{
+  "documents": [
+    {
+      "id": "number",
+      "groupId": "number",
+      "name": "string",
+      "description": "string",
+      "fileUrl": "string",
+      "type": "string",
+      "status": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "total": "number"  // Tổng số tài liệu
 }
 ```
 
@@ -493,23 +507,33 @@ Xóa một thành viên khỏi nhóm.
 ### 4. Get Group Deals
 **Endpoint:** `GET /v2/group-deal/{groupId}`
 
-#### Response
+**Request Parameters:**
 ```json
 {
-    "deals": [
-        {
-            "id": "number",
-            "groupId": "number",
-            "name": "string",
-            "description": "string",
-            "value": "number",
-            "status": "string",
-            "startDate": "string",
-            "endDate": "string",
-            "createdAt": "string",
-            "updatedAt": "string"
-        }
-    ]
+  "groupId": "number",  // Required
+  "page": "number",     // Optional, default: 0
+  "size": "number"      // Optional, default: 10
+}
+```
+
+**Response:**
+```json
+{
+  "deals": [
+    {
+      "id": "number",
+      "groupId": "number",
+      "name": "string",
+      "description": "string",
+      "value": "number",
+      "status": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "total": "number"  // Tổng số deals
 }
 ```
 

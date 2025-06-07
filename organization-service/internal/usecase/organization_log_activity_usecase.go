@@ -10,8 +10,8 @@ import (
 type OrganizationLogActivityUsecase interface {
 	CreateOrganizationLogActivity(ctx context.Context, log *entity.OrganizationLogActivity) (*entity.OrganizationLogActivity, error)
 	GetOrganizationLogActivityByID(ctx context.Context, id uint32) (*entity.OrganizationLogActivity, error)
-	GetOrganizationLogActivitiesByOrganizationID(ctx context.Context, organizationID uint32) ([]*entity.OrganizationLogActivity, error)
-	GetOrganizationLogActivitiesByActorID(ctx context.Context, actorID uint32) ([]*entity.OrganizationLogActivity, error)
+	GetOrganizationLogActivitiesByOrganizationID(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error)
+	GetOrganizationLogActivitiesByActorID(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error)
 }
 
 type organizationLogActivityUsecase struct {
@@ -32,10 +32,10 @@ func (u *organizationLogActivityUsecase) GetOrganizationLogActivityByID(ctx cont
 	return u.organizationLogActivityRepository.GetByID(ctx, id)
 }
 
-func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByOrganizationID(ctx context.Context, organizationID uint32) ([]*entity.OrganizationLogActivity, error) {
-	return u.organizationLogActivityRepository.GetByOrganizationID(ctx, organizationID)
+func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByOrganizationID(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
+	return u.organizationLogActivityRepository.GetByOrganizationIDWithPagination(ctx, organizationID, page, size)
 }
 
-func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByActorID(ctx context.Context, actorID uint32) ([]*entity.OrganizationLogActivity, error) {
-	return u.organizationLogActivityRepository.GetByActorID(ctx, actorID)
+func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByActorID(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
+	return u.organizationLogActivityRepository.GetByActorIDWithPagination(ctx, actorID, page, size)
 } 

@@ -22,8 +22,8 @@ type OrganizationUsecase interface {
 
 	// GetOrganizations retrieves all organizations where the user is either a creator or a member
 	// Results are sorted by creation time in descending order
-	// Returns a list of organizations and any error that occurred
-	GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error)
+	// Returns a list of organizations, total count and any error that occurred
+	GetOrganizations(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error)
 }
 
 // organizationUsecase implements OrganizationUsecase interface
@@ -132,7 +132,8 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 }
 
 // GetOrganizations retrieves all organizations where the user is either a creator or a member
-// Results are sorted by creation time in descending order (newest first)
-func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
-	return o.OrganizationRepository.FindByUserId(ctx, userId)
+// Results are sorted by creation time in descending order
+// Returns a list of organizations, total count and any error that occurred
+func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error) {
+	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, userId, offset, limit)
 }

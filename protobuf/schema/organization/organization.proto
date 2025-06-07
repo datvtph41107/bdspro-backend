@@ -63,6 +63,8 @@ message UpdateOrganizationResponse {
 
 message GetOrganizationsRequest {
     uint32 id = 1 [json_name = "id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
 }
 
 message Organization {
@@ -79,4 +81,5 @@ message Organization {
 
 message GetOrganizationsResponse {
     repeated Organization organizations = 1 [json_name = "organizations"];
+    uint32 total = 2 [json_name = "total"];
 }

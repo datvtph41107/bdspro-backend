@@ -100,7 +100,17 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 	if err := h.validator.ValidateGetOrganizationBranchMembers(req); err != nil {
 		return nil, err
 	}
-	members, err := h.usecase.GetOrganizationBranchMembers(ctx, req.Id)
+
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	members, total, err := h.usecase.GetOrganizationBranchMembers(ctx, req.Id, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +123,20 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 	}
 	return &organizationpb.GetOrganizationBranchMembersResponse{
 		Members: membersResponse,
+		Total:   total,
 	}, nil
 }
 
 func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context, req *organizationpb.GetOrganizationBranchesRequest) (*organizationpb.GetOrganizationBranchesResponse, error) {
-	branches, err := h.usecase.GetOrganizationBranches(ctx, req.OrganizationId)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}	
+	branches, total, err := h.usecase.GetOrganizationBranches(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -133,5 +152,6 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 	}
 	return &organizationpb.GetOrganizationBranchesResponse{
 		Branches: branchesResponse,
+		Total:    total,
 	}, nil
 }

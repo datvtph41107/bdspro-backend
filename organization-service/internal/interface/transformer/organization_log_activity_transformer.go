@@ -8,8 +8,8 @@ import (
 
 type OrganizationLogActivityTransformer interface {
 	EntityToGetOrganizationLogActivityByIDResponse(log *entity.OrganizationLogActivity) *organizationpb.GetOrganizationLogActivityByIDResponse
-	EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs []*entity.OrganizationLogActivity) *organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse
-	EntityToGetOrganizationLogActivitiesByActorIDResponse(logs []*entity.OrganizationLogActivity) *organizationpb.GetOrganizationLogActivitiesByActorIDResponse
+	EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs []*entity.OrganizationLogActivity, total uint32) *organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse
+	EntityToGetOrganizationLogActivitiesByActorIDResponse(logs []*entity.OrganizationLogActivity, total uint32) *organizationpb.GetOrganizationLogActivitiesByActorIDResponse
 }
 
 type organizationLogActivityTransformer struct{}
@@ -37,12 +37,13 @@ func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivityB
 	}
 }
 
-func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs []*entity.OrganizationLogActivity) *organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse {
+func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs []*entity.OrganizationLogActivity, total uint32) *organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse {
 	if logs == nil {
 		return nil
 	}
 	response := &organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse{
 		Logs: make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
+		Total: total,
 	}
 	for _, log := range logs {
 		response.Logs = append(response.Logs, &organizationpb.OrganizationLogActivity{
@@ -60,12 +61,13 @@ func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitie
 	return response
 }
 
-func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitiesByActorIDResponse(logs []*entity.OrganizationLogActivity) *organizationpb.GetOrganizationLogActivitiesByActorIDResponse {
+func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitiesByActorIDResponse(logs []*entity.OrganizationLogActivity, total uint32) *organizationpb.GetOrganizationLogActivitiesByActorIDResponse {
 	if logs == nil {
 		return nil
 	}
 	response := &organizationpb.GetOrganizationLogActivitiesByActorIDResponse{
 		Logs: make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
+		Total: total,
 	}
 	for _, log := range logs {
 		response.Logs = append(response.Logs, &organizationpb.OrganizationLogActivity{

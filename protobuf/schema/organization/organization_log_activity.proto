@@ -36,18 +36,24 @@ message GetOrganizationLogActivityByIDResponse {
 
 message GetOrganizationLogActivitiesByOrganizationIDRequest {
     uint32 organization_id = 1 [json_name = "organization_id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
 }
 
 message GetOrganizationLogActivitiesByOrganizationIDResponse {
     repeated OrganizationLogActivity logs = 1 [json_name = "logs"];
+    uint32 total = 2 [json_name = "total"];
 }
 
 message GetOrganizationLogActivitiesByActorIDRequest {
     uint32 actor_id = 1 [json_name = "actor_id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
 }
 
 message GetOrganizationLogActivitiesByActorIDResponse {
     repeated OrganizationLogActivity logs = 1 [json_name = "logs"];
+    uint32 total = 2 [json_name = "total"];
 }
 
 message OrganizationLogActivity {

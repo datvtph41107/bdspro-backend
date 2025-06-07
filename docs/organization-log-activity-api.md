@@ -26,12 +26,12 @@ Authorization: Bearer <token>
 GET /v2/organization/log/{id}
 ```
 
-Lấy thông tin chi tiết của một hoạt động theo ID.
+Lấy thông tin chi tiết về một hoạt động trong tổ chức.
 
 **Request Parameters:**
 ```json
 {
-  "id": "uint32"  // required, log activity ID
+  "id": "uint32"  // required
 }
 ```
 
@@ -54,7 +54,7 @@ Lấy thông tin chi tiết của một hoạt động theo ID.
 
 **Error Codes:**
 - 400: Invalid request parameters
-- 404: Log activity not found
+- 404: Log not found
 - 500: Internal server error
 
 ### Get Organization Log Activities By Organization ID
@@ -68,7 +68,9 @@ Lấy danh sách các hoạt động của một tổ chức.
 **Request Parameters:**
 ```json
 {
-  "organization_id": "uint32"  // required
+  "organization_id": "uint32",  // required
+  "page": "uint32",            // optional, default: 0
+  "size": "uint32"             // optional, default: 10
 }
 ```
 
@@ -87,7 +89,8 @@ Lấy danh sách các hoạt động của một tổ chức.
       "log_type": "string",
       "log_data": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số bản ghi
 }
 ```
 
@@ -107,7 +110,9 @@ Lấy danh sách các hoạt động của một người dùng trong tổ chứ
 **Request Parameters:**
 ```json
 {
-  "actor_id": "uint32"  // required
+  "actor_id": "uint32",  // required
+  "page": "uint32",      // optional, default: 0
+  "size": "uint32"       // optional, default: 10
 }
 ```
 
@@ -126,7 +131,8 @@ Lấy danh sách các hoạt động của một người dùng trong tổ chứ
       "log_type": "string",
       "log_data": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số bản ghi
 }
 ```
 

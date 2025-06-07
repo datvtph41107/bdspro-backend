@@ -4,12 +4,10 @@ import (
 	"context"
 	grouppb "pb/types/group"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupDealHandler struct {
@@ -37,7 +35,6 @@ func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *grouppb.Cre
 	}
 
 	deal := h.GroupDealTransformer.CreateGroupDealRequestToEntity(req)
-	deal.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	deal, err := h.GroupDealUsecase.CreateGroupDeal(ctx, deal)
 	if err != nil {
@@ -53,7 +50,6 @@ func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *grouppb.Upd
 	}
 
 	deal := h.GroupDealTransformer.UpdateGroupDealRequestToEntity(req)
-	deal.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	deal, err := h.GroupDealUsecase.UpdateGroupDeal(ctx, deal)
 	if err != nil {
@@ -121,4 +117,4 @@ func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *group
 	}
 
 	return &grouppb.UpdateGroupDealStatusResponse{Id: req.Id}, nil
-} 
+}

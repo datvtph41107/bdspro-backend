@@ -154,14 +154,14 @@ Lấy thông tin chi tiết của một tài liệu.
 GET /v2/group/{groupId}/documents
 ```
 
-Lấy danh sách tài liệu của một nhóm. Kết quả được phân trang.
+Lấy danh sách tài liệu của một nhóm.
 
 **Request Parameters:**
 ```json
 {
-  "groupId": "uint32",    // required
-  "page": "uint32",       // optional, default: 1
-  "size": "uint32"        // optional, default: 20, max: 100
+  "groupId": "uint32",  // required
+  "page": "uint32",     // optional, default: 0
+  "size": "uint32"      // optional, default: 10
 }
 ```
 
@@ -181,7 +181,7 @@ Lấy danh sách tài liệu của một nhóm. Kết quả được phân trang
       "updatedAt": "string"   // ISO 8601 format
     }
   ],
-  "total": "uint32"
+  "total": "uint32"  // Tổng số tài liệu
 }
 ```
 

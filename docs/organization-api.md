@@ -33,13 +33,13 @@ Tạo mới một tổ chức và thêm người tạo làm admin.
 **Request Body:**
 ```json
 {
-  "name": "string",           // required, max 255 chars
-  "taxCode": "string",        // required, max 50 chars, unique
+  "name": "string",           // required
+  "taxCode": "string",        // required
   "businessLicenseUrl": "string", // optional
   "address": "string",        // optional
-  "phone": "string",          // optional, valid phone format
-  "email": "string",          // optional, valid email format
-  "website": "string",        // optional, must start with http:// or https://
+  "phone": "string",          // optional
+  "email": "string",          // optional
+  "website": "string",        // optional
   "logoUrl": "string"         // optional
 }
 ```
@@ -68,15 +68,15 @@ Cập nhật thông tin của một tổ chức. Chỉ admin mới có quyền c
 ```json
 {
   "id": "uint32",            // required
-  "name": "string",          // required, max 255 chars
-  "taxCode": "string",       // required, max 50 chars
+  "name": "string",          // required
+  "taxCode": "string",       // required
   "businessLicenseUrl": "string", // optional
   "address": "string",       // optional
-  "phone": "string",         // optional, valid phone format
-  "email": "string",         // optional, valid email format
-  "website": "string",       // optional, must start with http:// or https://
+  "phone": "string",         // optional
+  "email": "string",         // optional
+  "website": "string",       // optional
   "logoUrl": "string",       // optional
-  "status": "string"         // optional, one of: active, inactive, pending
+  "status": "string"         // optional
 }
 ```
 
@@ -105,7 +105,9 @@ Lấy danh sách các tổ chức mà user là creator hoặc member. Kết qu�
 **Request Parameters:**
 ```json
 {
-  "id": "uint32"  // optional, filter by organization ID
+  "id": "uint32",    // optional, filter by organization ID
+  "page": "uint32",  // optional, default: 0
+  "size": "uint32"   // optional, default: 10
 }
 ```
 
@@ -122,10 +124,10 @@ Lấy danh sách các tổ chức mà user là creator hoặc member. Kết qu�
       "phone": "string",
       "email": "string",
       "website": "string",
-      "logoUrl": "string",
-      "status": "string"
+      "logoUrl": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số tổ chức
 }
 ```
 
@@ -229,19 +231,14 @@ Xóa một thành viên khỏi tổ chức. Chỉ admin mới có quyền xóa t
 ```json
 {
   "id": "uint32",
-  "name": "string",           // required, max 255 chars
-  "taxCode": "string",        // required, max 50 chars, unique
+  "name": "string",           // required
+  "taxCode": "string",        // required
   "businessLicenseUrl": "string", // optional
   "address": "string",        // optional
-  "phone": "string",          // optional, valid phone format
-  "email": "string",          // optional, valid email format
-  "website": "string",        // optional, must start with http:// or https://
-  "logoUrl": "string",        // optional
-  "status": "string",         // active, inactive, pending
-  "createdAt": "string",
-  "updatedAt": "string",
-  "createdBy": "uint32",
-  "updatedBy": "uint32"
+  "phone": "string",          // optional
+  "email": "string",          // optional
+  "website": "string",        // optional
+  "logoUrl": "string"         // optional
 }
 ```
 

@@ -72,6 +72,8 @@ func local_request_OrganizationLogActivityService_GetOrganizationLogActivityByID
 	return msg, metadata, err
 }
 
+var filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID_0 = &utilities.DoubleArray{Encoding: map[string]int{"organization_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 func request_OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID_0(ctx context.Context, marshaler runtime.Marshaler, client OrganizationLogActivityServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetOrganizationLogActivitiesByOrganizationIDRequest
@@ -86,6 +88,12 @@ func request_OrganizationLogActivityService_GetOrganizationLogActivitiesByOrgani
 	protoReq.OrganizationId, err = runtime.Uint32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organization_id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetOrganizationLogActivitiesByOrganizationID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -105,9 +113,17 @@ func local_request_OrganizationLogActivityService_GetOrganizationLogActivitiesBy
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "organization_id", err)
 	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetOrganizationLogActivitiesByOrganizationID(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID_0 = &utilities.DoubleArray{Encoding: map[string]int{"actor_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID_0(ctx context.Context, marshaler runtime.Marshaler, client OrganizationLogActivityServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
@@ -123,6 +139,12 @@ func request_OrganizationLogActivityService_GetOrganizationLogActivitiesByActorI
 	protoReq.ActorId, err = runtime.Uint32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "actor_id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetOrganizationLogActivitiesByActorID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -141,6 +163,12 @@ func local_request_OrganizationLogActivityService_GetOrganizationLogActivitiesBy
 	protoReq.ActorId, err = runtime.Uint32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "actor_id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetOrganizationLogActivitiesByActorID(ctx, &protoReq)
 	return msg, metadata, err

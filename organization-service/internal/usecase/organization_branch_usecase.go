@@ -2,13 +2,14 @@ package usecase
 
 import (
 	"context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
 	"github.com/tuandq2112/organization-service/pkg/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type OrganizationBranchUsecase interface {
@@ -17,8 +18,8 @@ type OrganizationBranchUsecase interface {
 	DeleteOrganizationBranch(ctx context.Context, id uint32) error
 	AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error)
 	RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error
-	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error)
-	GetOrganizationBranches(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error)
+	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error)
+	GetOrganizationBranches(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error)
 }
 
 type organizationBranchUsecase struct {
@@ -164,42 +165,42 @@ func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx conte
 	return u.organizationBranchMemberRepository.DeleteOrganizationBranchMember(ctx, userId)
 }
 
-func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error) {
+func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if organizationBranch == nil {
-		return nil, custom_error.RecordNotFound("Organization branch not found")
+		return nil, 0, custom_error.RecordNotFound("Organization branch not found")
 	}
 
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if !hasRole && currentUserId != organizationBranch.ManagerId {
-		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	return u.organizationBranchMemberRepository.GetOrganizationBranchMemberByOrganizationBranchId(ctx, organizationBranchId)
+	return u.organizationBranchMemberRepository.GetOrganizationBranchMemberByOrganizationBranchIdWithPagination(ctx, organizationBranchId, page, size)
 }
 
-func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error) {
+func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	isMember, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, organizationId)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !isMember {
-		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	organization, err := u.organizationRepository.FindById(ctx, organizationId)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if organization == nil {
-		return nil, custom_error.RecordNotFound("Organization not found")
+		return nil, 0, custom_error.RecordNotFound("Organization not found")
 	}
-	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationId(ctx, organizationId)
+	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationIdWithPagination(ctx, organizationId, page, size)
 }

@@ -84,9 +84,21 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 }
 
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
-	organizationMembers, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, req.OrganizationId)
+	// Get pagination parameters
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Get members with pagination
+	members, total, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(organizationMembers), nil
+
+	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
 }

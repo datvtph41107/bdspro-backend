@@ -45,12 +45,19 @@ func (h *OrganizationLogActivityHandler) GetOrganizationLogActivitiesByOrganizat
 	if err := h.OrganizationLogActivityValidator.ValidateGetOrganizationLogActivitiesByOrganizationIDRequest(req); err != nil {
 		return nil, err
 	}
-
-	logs, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByOrganizationID(ctx, req.OrganizationId)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}	
+	logs,total, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByOrganizationID(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationLogActivityTransformer.EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs), nil
+	return h.OrganizationLogActivityTransformer.EntityToGetOrganizationLogActivitiesByOrganizationIDResponse(logs, total), nil
 }
 
 func (h *OrganizationLogActivityHandler) GetOrganizationLogActivitiesByActorID(ctx context.Context, req *organizationpb.GetOrganizationLogActivitiesByActorIDRequest) (*organizationpb.GetOrganizationLogActivitiesByActorIDResponse, error) {
@@ -58,9 +65,18 @@ func (h *OrganizationLogActivityHandler) GetOrganizationLogActivitiesByActorID(c
 		return nil, err
 	}
 
-	logs, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByActorID(ctx, req.ActorId)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	logs, total, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByActorID(ctx, req.ActorId, page, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationLogActivityTransformer.EntityToGetOrganizationLogActivitiesByActorIDResponse(logs), nil
+	return h.OrganizationLogActivityTransformer.EntityToGetOrganizationLogActivitiesByActorIDResponse(logs, total), nil
 } 

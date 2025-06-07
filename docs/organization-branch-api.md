@@ -185,7 +185,9 @@ Lấy danh sách thành viên của một chi nhánh.
 **Request Parameters:**
 ```json
 {
-  "id": "uint32"  // required, branch ID
+  "id": "uint32",        // required, branch ID
+  "page": "uint32",      // optional, default: 0
+  "size": "uint32"       // optional, default: 10
 }
 ```
 
@@ -195,9 +197,10 @@ Lấy danh sách thành viên của một chi nhánh.
   "members": [
     {
       "id": "uint32",
-      "userId": "uint32"
+      "user_id": "uint32"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số thành viên
 }
 ```
 
@@ -260,7 +263,7 @@ Lấy danh sách chi nhánh của một tổ chức.
 ```json
 {
   "id": "uint32",
-  "userId": "uint32"
+  "user_id": "uint32"
 }
 ```
 

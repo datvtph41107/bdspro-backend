@@ -19,7 +19,7 @@ type OrganizationMemberUsecase interface {
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
-	GetOrganizationMembers(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error)
+	GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationMember, uint32, error)
 }
 
 type organizationMemberUsecase struct {
@@ -184,20 +184,16 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	return deletedMember, nil
 }
 
-func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error) {
+// GetOrganizationMembers retrieves all members of an organization with pagination
+func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationMember, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !hasRole {
-		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	members, err := u.organizationMemberRepository.FindByOrganizationId(ctx, organizationId)
-	if err != nil {
-		return nil, err
-	}
-
-	return members, nil
+	return u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
 }

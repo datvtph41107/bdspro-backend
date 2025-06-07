@@ -32,8 +32,8 @@ Lấy danh sách thông báo của một nhóm. Kết quả được phân trang
 ```json
 {
   "groupId": "uint32",    // required
-  "page": "uint32",       // optional, default: 1
-  "size": "uint32"        // optional, default: 20, max: 100
+  "page": "uint32",       // optional, default: 0
+  "size": "uint32"        // optional, default: 10
 }
 ```
 
@@ -50,7 +50,7 @@ Lấy danh sách thông báo của một nhóm. Kết quả được phân trang
       "updatedAt": "string"  // ISO 8601 format
     }
   ],
-  "total": "uint32"
+  "total": "uint32"  // Tổng số thông báo
 }
 ```
 

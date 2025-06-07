@@ -108,3 +108,53 @@ func (r *organizationPermissionRepository) FindByOrganizationId(ctx context.Cont
 	}
 	return OrganizationPermissionModelsToEntities(models), nil
 }
+
+func (r *organizationPermissionRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationPermission, uint32, error) {
+	var permissions []*entity.OrganizationPermission
+	var total int64
+
+	// Get total count
+	err := r.db.Model(&OrganizationPermissionModel{}).Where("organization_id = ?", organizationId).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated data
+	offset := (page - 1) * size
+	err = r.db.Where("organization_id = ?", organizationId).
+		Offset(offset).
+		Limit(size).
+		Find(&permissions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return permissions, uint32(total), nil
+}
+
+func (r *organizationPermissionRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationPermission, error) {
+	var model OrganizationPermissionModel
+	err := r.db.Where("organization_id = ? AND key = ?", organizationId, key).First(&model).Error
+	if err != nil {
+		return nil, err
+	}
+	return OrganizationPermissionModelToEntity(&model), nil
+}
+
+func (r *organizationPermissionRepository) GetAll(ctx context.Context) ([]*entity.OrganizationPermission, error) {
+	var models []*OrganizationPermissionModel
+	err := r.db.Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return OrganizationPermissionModelsToEntities(models), nil
+}
+
+func (r *organizationPermissionRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationPermission, error) {
+	var model OrganizationPermissionModel
+	err := r.db.Where("key = ?", key).First(&model).Error
+	if err != nil {
+		return nil, err
+	}
+	return OrganizationPermissionModelToEntity(&model), nil
+}

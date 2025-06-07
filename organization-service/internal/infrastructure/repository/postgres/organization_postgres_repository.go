@@ -169,3 +169,20 @@ func (o *organizationPostgresRepository) FindByUserId(ctx context.Context, userI
 	}
 	return OrganizationModelsToEntities(organizations), nil
 }
+
+func (r *organizationPostgresRepository) FindByUserIdWithPagination(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error) {
+	var models []*OrganizationModel
+	if err := r.db.WithContext(ctx).Offset(offset).Limit(limit).Where("created_by = ?", userId).Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+	entities := make([]*entity.Organization, len(models))
+	for i, model := range models {
+		entities[i] = OrganizationModelToEntity(model)
+	}
+
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&OrganizationModel{}).Where("created_by = ?", userId).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
+}

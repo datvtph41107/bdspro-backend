@@ -140,7 +140,7 @@ Lấy thông tin chi tiết của một thành viên trong nhóm.
 ### Get Group Members
 
 ```http
-GET /v2/group-member
+GET /v2/group-member/{groupId}
 ```
 
 Lấy danh sách thành viên của một nhóm.
@@ -148,7 +148,9 @@ Lấy danh sách thành viên của một nhóm.
 **Request Parameters:**
 ```json
 {
-  "groupId": "uint32"  // required
+  "groupId": "uint32",  // required
+  "page": "uint32",     // optional, default: 0
+  "size": "uint32"      // optional, default: 10
 }
 ```
 
@@ -158,11 +160,12 @@ Lấy danh sách thành viên của một nhóm.
   "members": [
     {
       "id": "uint32",
-      "groupId": "uint32",
       "userId": "uint32",
-      "role": "string"
+      "role": "string",
+      "status": "string"
     }
-  ]
+  ],
+  "total": "uint32"  // Tổng số thành viên
 }
 ```
 

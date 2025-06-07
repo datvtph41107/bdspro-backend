@@ -13,7 +13,7 @@ type OrganizationMemberTransformer interface {
 	EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToDeleteOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.DeleteOrganizationMemberResponse
-	EntityToGetOrganizationMembersResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.GetOrganizationMembersResponse
+	EntityToGetOrganizationMembersResponse(organizationMembers []*entity.OrganizationMember, total uint32) *organizationpb.GetOrganizationMembersResponse
 }
 
 type organizationMemberTransformer struct{}
@@ -60,16 +60,18 @@ func (o *organizationMemberTransformer) EntityToDeleteOrganizationMemberResponse
 	}
 }
 
-func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.GetOrganizationMembersResponse {
-	organizationMembersResponse := make([]*organizationpb.OrganizationMember, len(organizationMembers))
-	for i, organizationMember := range organizationMembers {
-		organizationMembersResponse[i] = &organizationpb.OrganizationMember{
-			Id: organizationMember.ID,
-			UserId: organizationMember.UserID,
-			Role: organizationMember.RoleId,
+func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*entity.OrganizationMember, total uint32) *organizationpb.GetOrganizationMembersResponse {
+	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
+	for i, member := range members {
+		membersResponse[i] = &organizationpb.OrganizationMember{
+			Id:     member.ID,
+			UserId: member.UserID,
+			Role:   member.RoleId,
+			Status: string(member.Status),
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{
-		OrganizationMembers: organizationMembersResponse,
+		OrganizationMembers: membersResponse,
+		Total:              total,
 	}
 }

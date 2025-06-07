@@ -77,10 +77,13 @@ message GetGroupMemberResponse {
 
 message GetGroupMembersRequest {
     uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
 }
 
 message GetGroupMembersResponse {
     repeated GroupMember members = 1;
+    uint32 total = 2;
 }
 
 message GroupMember {

@@ -66,12 +66,24 @@ func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizat
 }
 
 func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizationpb.GetRolesRequest) (*organizationpb.GetRolesResponse, error) {
-	if err := h.OrganizationRoleValidator.ValidateGetRolesRequest(req); err != nil {
-		return nil, err
+	// Set default pagination values
+	page := 1
+	size := 10
+
+	// Get pagination parameters from request
+	if req.Page != nil {
+		page = int(*req.Page)
 	}
-	roles, err := h.OrganizationRoleUsecase.GetRoleByOrganizationId(ctx, req.OrganizationId)
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Get roles with pagination
+	roles, total, err := h.OrganizationRoleUsecase.GetRoles(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles), nil
+
+	// Transform to response
+	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, total), nil
 }

@@ -151,3 +151,26 @@ func (r *organizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Cont
 	}
 	return RoleModelToEntity(&model), nil
 }
+
+func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
+	var roles []*entity.OrganizationRole
+	var total int64
+
+	// Get total count
+	err := r.db.Model(&OrganizationRoleModel{}).Where("organization_id = ?", organizationId).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated data
+	offset := (page - 1) * size
+	err = r.db.Where("organization_id = ?", organizationId).
+		Offset(offset).
+		Limit(size).
+		Find(&roles).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return roles, uint32(total), nil
+}

@@ -9,7 +9,7 @@ import (
 type OrganizationRoleTransformer interface {
 	CreateRoleRequestToEntity(req *organizationpb.CreateRoleRequest) *entity.OrganizationRole
 	EntityToCreateRoleResponse(entity *entity.OrganizationRole) *organizationpb.CreateRoleResponse
-	EntityToGetRolesResponse(entities []*entity.OrganizationRole) *organizationpb.GetRolesResponse
+	EntityToGetRolesResponse(entities []*entity.OrganizationRole, total uint32) *organizationpb.GetRolesResponse
 	EntityToUpdateRoleResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleResponse
 	EntityToDeleteRoleResponse(entity *entity.OrganizationRole) *organizationpb.DeleteRoleResponse
 	EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRolesResponse
@@ -46,17 +46,18 @@ func (t *organizationRoleTransformer) EntityToCreateRoleResponse(entity *entity.
 	}
 }
 
-func (t *organizationRoleTransformer) EntityToGetRolesResponse(entities []*entity.OrganizationRole) *organizationpb.GetRolesResponse {
-	roles := make([]*organizationpb.Role, 0)
-	for _, entity := range entities {
-		roles = append(roles, &organizationpb.Role{
-			Id: entity.Id,
-			Name: entity.Name,
-			Key: entity.Key,
-		})
+func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.OrganizationRole, total uint32) *organizationpb.GetRolesResponse {
+	rolesResponse := make([]*organizationpb.Role, len(roles))
+	for i, role := range roles {
+		rolesResponse[i] = &organizationpb.Role{
+			Id:   role.Id,
+			Name: role.Name,
+			Key:  role.Key,
+		}
 	}
 	return &organizationpb.GetRolesResponse{
-		Roles: roles,
+		Roles: rolesResponse,
+		Total: total,
 	}
 }
 
