@@ -21,19 +21,19 @@ type GroupDealUsecase interface {
 
 type groupDealUsecase struct {
 	groupDealRepository repository.GroupDealRepository
-	logActivityUsecase  GroupLogActivityUsecase
 	groupAuthUsecase    GroupAuthUsecase
+	logWorker           *LogWorker
 }
 
 func NewGroupDealUsecase(
 	groupDealRepository repository.GroupDealRepository,
-	logActivityUsecase GroupLogActivityUsecase,
 	groupAuthUsecase GroupAuthUsecase,
+	logWorker *LogWorker,
 ) GroupDealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository: groupDealRepository,
-		logActivityUsecase:  logActivityUsecase,
 		groupAuthUsecase:    groupAuthUsecase,
+		logWorker:           logWorker,
 	}
 }
 
@@ -50,15 +50,12 @@ func (u *groupDealUsecase) CreateGroupDeal(ctx context.Context, deal *entity.Dea
 		return nil, err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: createdDeal.GroupId,
-			ActorId: createdDeal.CreatedBy,
-			LogType: "CREATE_DEAL",
-			LogData: "Created new deal",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: createdDeal.GroupId,
+		ActorId: createdDeal.CreatedBy,
+		LogType: "CREATE_DEAL",
+		LogData: "Created new deal",
+	})
 
 	return createdDeal, nil
 }
@@ -81,15 +78,12 @@ func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Dea
 		return nil, err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: updatedDeal.GroupId,
-			ActorId: updatedDeal.CreatedBy,
-			LogType: "UPDATE_DEAL",
-			LogData: "Updated deal information",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: updatedDeal.GroupId,
+		ActorId: updatedDeal.CreatedBy,
+		LogType: "UPDATE_DEAL",
+		LogData: "Updated deal information",
+	})
 
 	return updatedDeal, nil
 }
@@ -115,21 +109,17 @@ func (u *groupDealUsecase) DeleteGroupDeal(ctx context.Context, id uint32) error
 		return err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: deal.GroupId,
-			ActorId: deal.CreatedBy,
-			LogType: "DELETE_DEAL",
-			LogData: "Deleted deal",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: deal.GroupId,
+		ActorId: deal.CreatedBy,
+		LogType: "DELETE_DEAL",
+		LogData: "Deleted deal",
+	})
 
 	return nil
 }
 
 func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint32) (*entity.Deal, error) {
-
 	deal, err := u.groupDealRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -151,7 +141,6 @@ func (u *groupDealUsecase) GetGroupDealsByGroupID(ctx context.Context, groupID u
 		return nil, 0, custom_error.Forbidden("you are not allowed to get deals")
 	}
 	return u.groupDealRepository.GetByGroupID(ctx, groupID, page, size)
-
 }
 
 func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint32, status entity.DealStatus) error {
@@ -175,15 +164,12 @@ func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint32,
 		return err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: deal.GroupId,
-			ActorId: deal.CreatedBy,
-			LogType: "UPDATE_DEAL_STATUS",
-			LogData: "Updated deal status to " + string(status),
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: deal.GroupId,
+		ActorId: deal.CreatedBy,
+		LogType: "UPDATE_DEAL_STATUS",
+		LogData: "Updated deal status to " + string(status),
+	})
 
 	return nil
 }

@@ -22,21 +22,21 @@ type GroupMemberUsecase interface {
 type groupMemberUsecase struct {
 	groupMemberRepository repository.GroupMemberRepository
 	groupRepository       repository.GroupRepository
-	logActivityUsecase    GroupLogActivityUsecase
+	logWorker             *LogWorker
 	groupAuthUsecase      GroupAuthUsecase
 	groupChatUsecase      GroupChatUsecase
 }
 
 func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
 	groupRepository repository.GroupRepository,
-	logActivityUsecase GroupLogActivityUsecase,
+	logWorker *LogWorker,
 	groupAuthUsecase GroupAuthUsecase,
 	groupChatUsecase GroupChatUsecase,
 ) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,
 		groupRepository:       groupRepository,
-		logActivityUsecase:    logActivityUsecase,
+		logWorker:             logWorker,
 		groupAuthUsecase:      groupAuthUsecase,
 		groupChatUsecase:      groupChatUsecase,
 	}
@@ -67,15 +67,12 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 		return nil, err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: createdMember.GroupId,
-			ActorId: createdMember.CreatedBy,
-			LogType: "CREATE_MEMBER",
-			LogData: "Added new member to group",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: createdMember.GroupId,
+		ActorId: createdMember.CreatedBy,
+		LogType: "CREATE_MEMBER",
+		LogData: "Added new member to group",
+	})
 
 	return createdMember, nil
 }
@@ -93,15 +90,12 @@ func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *enti
 		return nil, err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: updatedMember.GroupId,
-			ActorId: updatedMember.CreatedBy,
-			LogType: "UPDATE_MEMBER",
-			LogData: "Updated member information",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: updatedMember.GroupId,
+		ActorId: updatedMember.CreatedBy,
+		LogType: "UPDATE_MEMBER",
+		LogData: "Updated member information",
+	})
 
 	return updatedMember, nil
 }
@@ -128,15 +122,12 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 		return err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: member.GroupId,
-			ActorId: member.CreatedBy,
-			LogType: "DELETE_MEMBER",
-			LogData: "Removed member from group",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: member.GroupId,
+		ActorId: member.CreatedBy,
+		LogType: "DELETE_MEMBER",
+		LogData: "Removed member from group",
+	})
 
 	return nil
 }

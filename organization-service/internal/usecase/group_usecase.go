@@ -19,25 +19,25 @@ type GroupUsecase interface {
 }
 
 type groupUsecase struct {
-	groupRepository    repository.GroupRepository
-	logActivityUsecase GroupLogActivityUsecase
-	groupAuthUsecase   GroupAuthUsecase
-	groupChatUsecase   GroupChatUsecase
-	logger             *flogging.FabricLogger
+	groupRepository  repository.GroupRepository
+	logWorker        *LogWorker
+	groupAuthUsecase GroupAuthUsecase
+	groupChatUsecase GroupChatUsecase
+	logger           *flogging.FabricLogger
 }
 
 func NewGroupUsecase(
 	groupRepository repository.GroupRepository,
-	logActivityUsecase GroupLogActivityUsecase,
+	logWorker *LogWorker,
 	groupAuthUsecase GroupAuthUsecase,
 	groupChatUsecase GroupChatUsecase,
 ) GroupUsecase {
 	return &groupUsecase{
-		groupRepository:    groupRepository,
-		logActivityUsecase: logActivityUsecase,
-		groupAuthUsecase:   groupAuthUsecase,
-		groupChatUsecase:   groupChatUsecase,
-		logger:             flogging.MustGetLogger("group_usecase"),
+		groupRepository:  groupRepository,
+		logWorker:        logWorker,
+		groupAuthUsecase: groupAuthUsecase,
+		groupChatUsecase: groupChatUsecase,
+		logger:           flogging.MustGetLogger("group_usecase"),
 	}
 }
 
@@ -51,26 +51,17 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 		return nil, err
 	}
 
-	go func() {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), appconfig.SUB_PROCESS_CONTEXT_TIMEOUT)
-		defer cancel()
-		_, err = u.groupChatUsecase.CreateGroupChat(timeoutCtx, createdGroup.Id, []uint32{currentUserId}, group.Name, group.AvatarUrl)
-		if err != nil {
-			u.logger.Errorf("Failed to create group chat: %v", err)
-		}
-	}()
+	_, err = u.groupChatUsecase.CreateGroupChat(context.Background(), createdGroup.Id, []uint32{currentUserId}, group.Name, group.AvatarUrl)
+	if err != nil {
+		u.logger.Errorf("Failed to create group chat: %v", err)
+	}
 
-	go func() {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), appconfig.SUB_PROCESS_CONTEXT_TIMEOUT)
-		defer cancel()
-		log := &entity.GroupLogActivity{
-			GroupId: createdGroup.Id,
-			ActorId: createdGroup.CreatedBy,
-			LogType: "CREATE",
-			LogData: "Created new group",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(timeoutCtx, log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: createdGroup.Id,
+		ActorId: createdGroup.CreatedBy,
+		LogType: "CREATE_GROUP",
+		LogData: "Created new group",
+	})
 
 	return createdGroup, nil
 }
@@ -88,15 +79,12 @@ func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*e
 		return nil, err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: updatedGroup.Id,
-			ActorId: updatedGroup.CreatedBy,
-			LogType: "UPDATE",
-			LogData: "Updated group information",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: updatedGroup.Id,
+		ActorId: updatedGroup.CreatedBy,
+		LogType: "UPDATE",
+		LogData: "Updated group information",
+	})
 
 	return updatedGroup, nil
 }
@@ -118,15 +106,12 @@ func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
 		return err
 	}
 
-	go func() {
-		log := &entity.GroupLogActivity{
-			GroupId: id,
-			ActorId: group.CreatedBy,
-			LogType: "DELETE",
-			LogData: "Deleted group",
-		}
-		u.logActivityUsecase.CreateGroupLogActivity(context.Background(), log)
-	}()
+	u.logWorker.Push(LogEvent{
+		GroupId: id,
+		ActorId: group.CreatedBy,
+		LogType: "DELETE_GROUP",
+		LogData: "Deleted group",
+	})
 
 	return nil
 }
