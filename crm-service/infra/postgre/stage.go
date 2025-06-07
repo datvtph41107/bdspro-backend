@@ -28,10 +28,11 @@ func (r *PostgreStage) Search(c context.Context, pipelineId uint64, dto dto.Stag
 		query = query.Where("stage_name LIKE ?", "%"+dto.StageName+"%")
 	}
 
-	if err := query.Find(&entities).
-		Order("order_number ASC").
+	if err := query.
+		Order("order_number asc").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
+		Find(&entities).
 		Error; err != nil {
 		return nil, 0, err
 	}

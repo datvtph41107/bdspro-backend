@@ -34,6 +34,49 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách liên hệ",
                 "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo một liên hệ mới với thông tin được cung cấp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Liên hệ"
+                ],
+                "summary": "Tạo liên hệ mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.ContactEntity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Liên hệ đã tồn tại",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/contact/{id}": {
@@ -128,7 +171,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.GroupEntity"
+                            "$ref": "#/definitions/domain.CustomerEntity"
                         }
                     }
                 ],
@@ -140,7 +183,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Nhóm đã tồn tại",
+                        "description": "Khách hàng đã tồn tại",
                         "schema": {
                             "type": "string"
                         }
@@ -148,191 +191,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/customer/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật thông tin khách hàng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Khách hàng"
-                ],
-                "summary": "Cập nhật thông tin khách hàng",
-                "parameters": [
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.GroupEntity"
-                        }
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID của lời mời kết bạn",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa một khách hàng khỏi hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Khách hàng"
-                ],
-                "summary": "Xóa khách hàng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của liên hệ",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/customer/{id}/assign": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Gán khách hàng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Khách hàng"
-                ],
-                "summary": "Gán khách hàng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của khách hàng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.CustomerEntity"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/customer/{id}/note": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật ghi chú khách hàng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Khách hàng"
-                ],
-                "summary": "Cập nhật ghi chú khách hàng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của khách hàng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.CustomerEntity"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/customer/{id}/stage": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Chuyển giai đoạn khách hàng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Khách hàng"
-                ],
-                "summary": "Chuyển giai đoạn khách hàng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của khách hàng",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.CustomerEntity"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/customer/{ownerId}/{ownerType}": {
+        "/customer/list/{ownerId}/{ownerType}": {
             "get": {
                 "security": [
                     {
@@ -371,8 +230,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "name": "chargeId",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "chargeIds",
                         "in": "query"
                     },
                     {
@@ -387,6 +250,7 @@ const docTemplate = `{
                             "EOwnerTypeGroup",
                             "EOwnerTypeOrgnization"
                         ],
+                        "description": "deprecated",
                         "name": "chargeType",
                         "in": "query"
                     },
@@ -428,6 +292,16 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "todo: add product care",
+                        "name": "productCareIds",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "name": "size",
                         "in": "query"
@@ -435,6 +309,15 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "stageIds",
                         "in": "query"
                     },
                     {
@@ -462,14 +345,14 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/groups": {
-            "post": {
+        "/customer/{id}": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Tạo một liên hệ mới với thông tin được cung cấp",
+                "description": "Lấy thông tin khách hàng hiện tại",
                 "consumes": [
                     "application/json"
                 ],
@@ -477,9 +360,37 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Liên hệ"
+                    "Khách hàng"
                 ],
-                "summary": "Tạo liên hệ mới",
+                "summary": "Lấy thông tin khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin khách hàng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Cập nhật thông tin khách hàng",
                 "parameters": [
                     {
                         "description": "Thông tin cập nhật",
@@ -487,24 +398,163 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.GroupEntity"
+                            "$ref": "#/definitions/domain.CustomerEntity"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa một khách hàng khỏi hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Xóa khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/{id}/assign": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gán khách hàng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Gán khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CustomerDTO"
                         }
                     }
                 ],
-                "responses": {
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
+                "responses": {}
+            }
+        },
+        "/customer/{id}/note": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật ghi chú khách hàng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Cập nhật ghi chú khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     },
-                    "409": {
-                        "description": "Nhóm đã tồn tại",
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/dto.CustomerDTO"
                         }
                     }
-                }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/{id}/stage": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chuyển giai đoạn khách hàng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Chuyển giai đoạn khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của khách hàng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CustomerDTO"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/histories/{id}/{ownerType}": {
@@ -544,12 +594,117 @@ const docTemplate = `{
                         "name": "ownerType",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30,
+                            40,
+                            50,
+                            60,
+                            70,
+                            80,
+                            90,
+                            100,
+                            110,
+                            120,
+                            130,
+                            140,
+                            150,
+                            160,
+                            170,
+                            180,
+                            190,
+                            200,
+                            210
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "HistoryCreateStep",
+                            "HistoryDelete",
+                            "HistoryAssignRole",
+                            "HistorySettingAuto",
+                            "HistoryReminder",
+                            "HistoryCreateCustomer",
+                            "HistoryUpdateCustomer",
+                            "HistoryDeleteCustomer",
+                            "HistoryAssignCustomer",
+                            "HistorySwitchStage",
+                            "HistoryUpdateNote",
+                            "HistoryPipelineCreate",
+                            "HistoryPipelineUpdate",
+                            "HistoryPipelineDelete",
+                            "HistoryStageCreate",
+                            "HistoryStageUpdate",
+                            "HistoryStageDelete",
+                            "HistoryRuleCreate",
+                            "HistoryRuleUpdate",
+                            "HistoryRuleDelete",
+                            "HistoryRuleEvent"
+                        ],
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30,
+                            40,
+                            50
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "TargetHistoryCustomer",
+                            "TargetHistoryContact",
+                            "TargetHistoryPipeline",
+                            "TargetHistoryStage",
+                            "TargetHistoryRule"
+                        ],
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
             }
         },
-        "/pipelines": {
+        "/pipeline": {
             "post": {
                 "security": [
                     {
@@ -581,7 +736,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/pipelines/{id}": {
+        "/pipeline/{id}": {
             "put": {
                 "security": [
                     {
@@ -648,7 +803,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/pipelines/{ownerId}/{ownerType}": {
+        "/pipeline/{ownerId}/{ownerType}": {
             "get": {
                 "security": [
                     {
@@ -883,6 +1038,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "name": "ruleName",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "name": "size",
                         "in": "query"
@@ -896,7 +1056,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/stages": {
+        "/stage": {
             "post": {
                 "security": [
                     {
@@ -928,7 +1088,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/stages/{id}": {
+        "/stage/{id}": {
             "put": {
                 "security": [
                     {
@@ -995,7 +1155,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/stages/{pipelineId}": {
+        "/stage/{pipelineId}": {
             "get": {
                 "security": [
                     {
@@ -1047,14 +1207,59 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.CustomerEntity": {
+        "domain.ContactEntity": {
             "type": "object",
             "required": [
                 "fullName",
                 "ownerType"
             ],
             "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
+                "phone": {
+                    "description": "OwnerID   uint64  ` + "`" + `gorm:\"column:owner_id\" json:\"ownerId\"` + "`" + ` =\u003e createdBy",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.CustomerEntity": {
+            "type": "object",
+            "required": [
+                "fullName",
+                "ownerId",
+                "ownerType"
+            ],
+            "properties": {
                 "address": {
+                    "type": "string"
+                },
+                "assignNote": {
+                    "type": "string"
+                },
+                "birthday": {
                     "type": "string"
                 },
                 "chargeId": {
@@ -1102,9 +1307,6 @@ const docTemplate = `{
                 },
                 "stageId": {
                     "type": "integer"
-                },
-                "step": {
-                    "$ref": "#/definitions/enums.EStep"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -1187,9 +1389,22 @@ const docTemplate = `{
         },
         "domain.RuleEntity": {
             "type": "object",
+            "required": [
+                "condition",
+                "conditionValue",
+                "ruleName",
+                "trigger",
+                "triggerValue"
+            ],
             "properties": {
                 "active": {
                     "type": "boolean"
+                },
+                "condition": {
+                    "$ref": "#/definitions/enums.ECondition"
+                },
+                "conditionValue": {
+                    "type": "string"
                 },
                 "createdAt": {
                     "type": "string"
@@ -1197,12 +1412,6 @@ const docTemplate = `{
                 "createdBy": {
                     "description": "gorm.Model",
                     "type": "integer"
-                },
-                "cycleSeconds": {
-                    "type": "integer"
-                },
-                "deadline": {
-                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -1216,8 +1425,14 @@ const docTemplate = `{
                 "ownerType": {
                     "$ref": "#/definitions/enums.EOwnerType"
                 },
-                "rule": {
+                "ruleName": {
+                    "type": "string"
+                },
+                "trigger": {
                     "$ref": "#/definitions/enums.ERule"
+                },
+                "triggerValue": {
+                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -1271,6 +1486,122 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CustomerDTO": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "assignNote": {
+                    "type": "string"
+                },
+                "birthday": {
+                    "type": "string"
+                },
+                "chargeId": {
+                    "type": "integer"
+                },
+                "chargeType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "pipelineId": {
+                    "type": "integer"
+                },
+                "source": {
+                    "$ref": "#/definitions/enums.ESourceCustomer"
+                },
+                "stageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "enums.ECondition": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ],
+            "x-enum-varnames": [
+                "ConditionDateNotHistory",
+                "ConditionStage",
+                "ConditionTag",
+                "ConditionBirth",
+                "ConditionEventDate"
+            ]
+        },
+        "enums.EHistory": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50,
+                60,
+                70,
+                80,
+                90,
+                100,
+                110,
+                120,
+                130,
+                140,
+                150,
+                160,
+                170,
+                180,
+                190,
+                200,
+                210
+            ],
+            "x-enum-varnames": [
+                "HistoryCreateStep",
+                "HistoryDelete",
+                "HistoryAssignRole",
+                "HistorySettingAuto",
+                "HistoryReminder",
+                "HistoryCreateCustomer",
+                "HistoryUpdateCustomer",
+                "HistoryDeleteCustomer",
+                "HistoryAssignCustomer",
+                "HistorySwitchStage",
+                "HistoryUpdateNote",
+                "HistoryPipelineCreate",
+                "HistoryPipelineUpdate",
+                "HistoryPipelineDelete",
+                "HistoryStageCreate",
+                "HistoryStageUpdate",
+                "HistoryStageDelete",
+                "HistoryRuleCreate",
+                "HistoryRuleUpdate",
+                "HistoryRuleDelete",
+                "HistoryRuleEvent"
+            ]
+        },
         "enums.EOwnerType": {
             "type": "integer",
             "enum": [
@@ -1289,12 +1620,14 @@ const docTemplate = `{
             "enum": [
                 10,
                 20,
-                30
+                30,
+                40
             ],
             "x-enum-varnames": [
-                "RuleCycle",
-                "RuleWarnLabel",
-                "RuleSwitchStatus"
+                "RuleThenReminder",
+                "RuleThenLabel",
+                "RuleThenAssignLead",
+                "RuleThenSwitchStage"
             ]
         },
         "enums.ESourceCustomer": {
@@ -1332,6 +1665,23 @@ const docTemplate = `{
                 "StepDeposite",
                 "StepClose"
             ]
+        },
+        "enums.ETargetHistory": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ],
+            "x-enum-varnames": [
+                "TargetHistoryCustomer",
+                "TargetHistoryContact",
+                "TargetHistoryPipeline",
+                "TargetHistoryStage",
+                "TargetHistoryRule"
+            ]
         }
     },
     "securityDefinitions": {
@@ -1347,10 +1697,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/v1/crm",
+	BasePath:         "/v2/crm",
 	Schemes:          []string{},
 	Title:            "CRM API",
-	Description:      "API quản lý người dùng",
+	Description:      "API phần logic chính của CRM. Đã chuyển sang grpc",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -110,8 +110,9 @@ func SetupRestfulAPI(parameters SetupParameters, setup func()) {
 	setup()
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.port"))
-	log.Println("Chat server is running on", port)
+	log.Println("Server is running on", port)
 	parameters.Engine.Run(port)
+	log.Println("Server is running on", port, "done")
 }
 
 // LoadConfig đọc cấu hình từ file config.yml

@@ -6990,6 +6990,12 @@ const docTemplate = `{
                 "numView": {
                     "type": "integer"
                 },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
                 "packageVisible": {
                     "description": "1: thường, 2: VIP",
                     "type": "integer"

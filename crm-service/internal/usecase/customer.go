@@ -12,15 +12,18 @@ import (
 type CustomerUsecase struct {
 	customerRepo repo.CustomerRepo
 	permissionUC PermissionUsecase
+	historyRepo  repo.HistoryRepo
 }
 
 func NewCustomerUsecase(
 	customerRepo repo.CustomerRepo,
 	permissionUsecase PermissionUsecase,
+	historyUsecase repo.HistoryRepo,
 ) *CustomerUsecase {
 	return &CustomerUsecase{
 		customerRepo: customerRepo,
 		permissionUC: permissionUsecase,
+		historyRepo:  historyUsecase,
 	}
 }
 
@@ -30,7 +33,7 @@ func (u *CustomerUsecase) Search(ctx context.Context, ownerId uint64, ownerType 
 		return nil, 0, err
 	}
 
-	return u.customerRepo.Search(ctx, dto)
+	return u.customerRepo.Search(ctx, ownerId, ownerType, dto)
 }
 
 func (u *CustomerUsecase) Create(ctx context.Context, customer *domain.CustomerEntity) (*domain.CustomerEntity, error) {
@@ -50,7 +53,22 @@ func (u *CustomerUsecase) Create(ctx context.Context, customer *domain.CustomerE
 		}
 	}
 
-	return u.customerRepo.Create(ctx, customer)
+	customer, err = u.customerRepo.Create(ctx, customer)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Tạo khách hàng " + customer.FullName,
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistoryCreateCustomer,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+		// AfterStage: ,
+	})
+
+	return customer, nil
 }
 
 func (u *CustomerUsecase) Update(ctx context.Context, id uint64, customer *domain.CustomerEntity) (*domain.CustomerEntity, error) {
@@ -59,7 +77,21 @@ func (u *CustomerUsecase) Update(ctx context.Context, id uint64, customer *domai
 		return nil, err
 	}
 
-	return u.customerRepo.Update(ctx, id, customer)
+	customer, err = u.customerRepo.Update(ctx, id, customer)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Cập nhật khách hàng " + customer.FullName,
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistoryUpdateCustomer,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+	})
+
+	return customer, nil
 }
 
 func (u *CustomerUsecase) Delete(ctx context.Context, id uint64) error {
@@ -73,10 +105,24 @@ func (u *CustomerUsecase) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 
-	return u.customerRepo.Delete(ctx, id)
+	err = u.customerRepo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Xóa khách hàng " + customer.FullName,
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistoryDeleteCustomer,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+	})
+
+	return nil
 }
 
-func (u *CustomerUsecase) UpdateNote(ctx context.Context, id uint64, entity *domain.CustomerEntity) (*domain.CustomerEntity, error) {
+func (u *CustomerUsecase) UpdateNote(ctx context.Context, id uint64, dto *dto.CustomerDTO) (*domain.CustomerEntity, error) {
 	customer, err := u.customerRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -87,10 +133,24 @@ func (u *CustomerUsecase) UpdateNote(ctx context.Context, id uint64, entity *dom
 		return nil, err
 	}
 
-	return u.customerRepo.UpdateNote(ctx, id, entity.Note)
+	customer, err = u.customerRepo.UpdateNote(ctx, id, dto.Note)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Ghi chú cho khách hàng " + customer.FullName + " nội dung:\n\"" + dto.Note + "\"",
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistoryUpdateNote,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+	})
+
+	return customer, nil
 }
 
-func (u *CustomerUsecase) Assign(ctx context.Context, id uint64, entity *domain.CustomerEntity) (*domain.CustomerEntity, error) {
+func (u *CustomerUsecase) Assign(ctx context.Context, id uint64, dto *dto.CustomerDTO) (*domain.CustomerEntity, error) {
 	customer, err := u.customerRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -101,7 +161,21 @@ func (u *CustomerUsecase) Assign(ctx context.Context, id uint64, entity *domain.
 		return nil, err
 	}
 
-	return u.customerRepo.Assign(ctx, id, entity)
+	_, err = u.customerRepo.Assign(ctx, id, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Phân công khách hàng " + customer.FullName + " cho " + dto.FullName,
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistoryAssignCustomer,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+	})
+
+	return customer, nil
 }
 
 func (u *CustomerUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint64) (*domain.CustomerEntity, error) {
@@ -115,5 +189,33 @@ func (u *CustomerUsecase) SwitchStage(ctx context.Context, id uint64, stageID *u
 		return nil, err
 	}
 
-	return u.customerRepo.SwitchStage(ctx, id, stageID)
+	customer, err = u.customerRepo.SwitchStage(ctx, id, stageID)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+		Note:       "Chuyển trạng thái khách hàng " + customer.FullName,
+		TargetId:   customer.ID,
+		TargetType: enums.TargetHistoryCustomer,
+		ActionType: enums.HistorySwitchStage,
+		OwnerID:    customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+	})
+
+	return customer, nil
+}
+
+func (u *CustomerUsecase) GetByID(ctx context.Context, id uint64) (*domain.CustomerEntity, error) {
+	customer, err := u.customerRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerView)
+	if err != nil {
+		return nil, err
+	}
+
+	return customer, nil
 }

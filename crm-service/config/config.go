@@ -1,11 +1,10 @@
 package config
 
 import (
+	grpc_service "crm/infra/grpc"
 	"crm/infra/router"
+	"crm/internal/usecase"
 	_ "embed"
-	"log"
-
-	"github.com/spf13/viper"
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
@@ -29,26 +28,50 @@ type UserProperties struct {
 var AppProperties UserProperties
 
 type ConfigApp struct {
-	RuntimeRouter *router.RuntimeRouter
+	RuntimeRouter    *router.RuntimeRouter
+	RuleUsecase      *usecase.RuleUsecase
+	RuleEventUsecase *usecase.RuleEventUsecase
+	PipelineService  *grpc_service.PipelineService
+	ContactService   *grpc_service.ContactService
+	CustomerService  *grpc_service.CustomerService
+	StageService     *grpc_service.StageService
+	HistoryService   *grpc_service.HistoryService
+	RuleService      *grpc_service.RuleService
 }
 
 func NewConfigApp(
 	runtimeRouter *router.RuntimeRouter,
+	ruleUsecase *usecase.RuleUsecase,
+	ruleEventUsecase *usecase.RuleEventUsecase,
+	pipelineService *grpc_service.PipelineService,
+	contactService *grpc_service.ContactService,
+	customerService *grpc_service.CustomerService,
+	stageService *grpc_service.StageService,
+	historyService *grpc_service.HistoryService,
+	ruleService *grpc_service.RuleService,
 ) *ConfigApp {
 	return &ConfigApp{
-		RuntimeRouter: runtimeRouter,
+		RuntimeRouter:    runtimeRouter,
+		RuleUsecase:      ruleUsecase,
+		RuleEventUsecase: ruleEventUsecase,
+		PipelineService:  pipelineService,
+		ContactService:   contactService,
+		CustomerService:  customerService,
+		StageService:     stageService,
+		HistoryService:   historyService,
+		RuleService:      ruleService,
 	}
 }
 
-// LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
-func LoadProperties() {
-	log.Printf("Đọc config")
+// // LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
+// func LoadProperties() {
+// 	log.Printf("Đọc config")
 
-	// var config UserProperties
-	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
-		// return nil, err
-	}
+// 	// var config UserProperties
+// 	if err := viper.Unmarshal(&AppProperties); err != nil {
+// 		log.Fatalf("Lỗi parse config: %v", err)
+// 		// return nil, err
+// 	}
 
-	// return &config, nil
-}
+// 	// return &config, nil
+// }

@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	_routes "common/routes"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/repo"
 )
 
@@ -11,17 +13,23 @@ type StageUsecase struct {
 	stageRepo         repo.StageRepo
 	permissionUsecase PermissionUsecase
 	pipelineRepo      repo.PipelineRepo
+	historyRepo       repo.HistoryRepo
+	customerRepo      repo.CustomerRepo
 }
 
 func NewStageUsecase(
 	stageRepo repo.StageRepo,
 	permissionUsecase PermissionUsecase,
 	pipelineRepo repo.PipelineRepo,
+	historyRepo repo.HistoryRepo,
+	customerRepo repo.CustomerRepo,
 ) *StageUsecase {
 	return &StageUsecase{
 		stageRepo:         stageRepo,
 		permissionUsecase: permissionUsecase,
 		pipelineRepo:      pipelineRepo,
+		historyRepo:       historyRepo,
+		customerRepo:      customerRepo,
 	}
 }
 
@@ -46,10 +54,24 @@ func (u *StageUsecase) Search(c context.Context, pipelineId uint64, dto dto.Stag
 }
 
 func (u *StageUsecase) Create(c context.Context, entity *domain.StageEntity) (*domain.StageEntity, error) {
-	if _, err := u.CheckPermission(c, entity.PipelineID); err != nil {
+	pipeline, err := u.CheckPermission(c, entity.PipelineID)
+	if err != nil {
 		return nil, err
 	}
-	return u.stageRepo.Create(c, entity)
+	stage, err := u.stageRepo.Create(c, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
+		Note:       "Tạo giai đoạn " + stage.StageName,
+		TargetId:   stage.ID,
+		TargetType: enums.TargetHistoryStage,
+		ActionType: enums.HistoryStageCreate,
+		OwnerID:    &pipeline.OwnerID,
+		OwnerType:  pipeline.OwnerType,
+	})
+	return stage, nil
 }
 
 func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.StageEntity) (*domain.StageEntity, error) {
@@ -58,7 +80,8 @@ func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.Stage
 		return nil, err
 	}
 
-	if _, err := u.CheckPermission(c, stage.PipelineID); err != nil {
+	pipeline, err := u.CheckPermission(c, stage.PipelineID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -69,12 +92,58 @@ func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.Stage
 	stage.RuleID = entity.RuleID
 	stage.PipelineID = entity.PipelineID
 
-	return u.stageRepo.Update(c, stage)
+	stage, err = u.stageRepo.Update(c, stage)
+	if err != nil {
+		return nil, err
+	}
+
+	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
+		Note:       "Cập nhật giai đoạn " + stage.StageName,
+		TargetId:   stage.ID,
+		TargetType: enums.TargetHistoryStage,
+		ActionType: enums.HistoryStageUpdate,
+		OwnerID:    &pipeline.OwnerID,
+		OwnerType:  pipeline.OwnerType,
+	})
+
+	return stage, nil
 }
 
 func (u *StageUsecase) Delete(c context.Context, id uint64) error {
-	if _, err := u.CheckPermission(c, id); err != nil {
+	stage, err := u.stageRepo.GetByID(c, id)
+	if err != nil {
 		return err
 	}
-	return u.stageRepo.Delete(c, id)
+
+	pipeline, err := u.CheckPermission(c, stage.PipelineID)
+	if err != nil {
+		return err
+	}
+
+	existed, err := u.customerRepo.ExistedWithStageID(c, id)
+	if err != nil {
+		return err
+	}
+	if existed {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Giai đoạn này đang có khách hàng",
+		}
+	}
+
+	err = u.stageRepo.Delete(c, id)
+	if err != nil {
+		return err
+	}
+
+	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
+		Note:       "Xóa giai đoạn " + stage.StageName,
+		TargetId:   stage.ID,
+		TargetType: enums.TargetHistoryStage,
+		ActionType: enums.HistoryStageDelete,
+		OwnerID:    &pipeline.OwnerID,
+		OwnerType:  pipeline.OwnerType,
+	})
+
+	return nil
 }

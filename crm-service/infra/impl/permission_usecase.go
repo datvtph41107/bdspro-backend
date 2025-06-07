@@ -21,7 +21,7 @@ func (u *PermissionUsecase) UserCanAccessTarget(c context.Context, ownerID uint6
 	return nil
 }
 
-func (u *PermissionUsecase) HasRoleWithOwner(c context.Context, ownerID uint64, ownerType enums.EOwnerType, roleValue enums.EAuth) error {
+func (u *PermissionUsecase) HasRoleWithOwner(c context.Context, ownerID *uint64, ownerType enums.EOwnerType, roleValue enums.EAuth) error {
 	return nil
 }
 

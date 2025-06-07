@@ -12,3 +12,12 @@ type PipelineSearchDTO struct {
 	Colors       []string      `form:"color"`
 	Active       bool          `form:"active"`
 }
+
+type PipelineDTO struct {
+	ID           uint64           `json:"id"`
+	PipelineName string           `json:"pipelineName"`
+	Color        string           `json:"color"`
+	Active       bool             `json:"active"`
+	OwnerID      uint64           `json:"ownerId"`
+	OwnerType    enums.EOwnerType `json:"ownerType"`
+}

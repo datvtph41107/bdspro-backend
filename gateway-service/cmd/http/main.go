@@ -11,11 +11,7 @@ import (
 	"gateway/config"
 	"gateway/pkg"
 
-	pb_bdspro "pb/types/bdspro"
-	pb_noti "pb/types/notification"
-	pb_organization "pb/types/organization"
-	pb_payment "pb/types/payment"
-	pb_group "pb/types/group"
+	"gateway/service"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -125,21 +121,13 @@ var HttpCmd = &cobra.Command{
 	Short: "Run the HTTP server",
 	Run: func(cmd *cobra.Command, args []string) {
 		config.LoadConfig()
-
-		// apiKey := viper.GetString("api.key")
 		port := viper.GetString("server.port")
-
-		// url := fmt.Sprintf("http://%s:%s")
 		gateway := pkg.NewGateway("url")
 		// gateway.FetchServices()
 
 		r := gin.Default()
 
 		url := viper.GetString("service.domain")
-		notification_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
-		payment_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.payment"))
-		bdspro_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.bdspro"))
-		organization_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.organization"))
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
@@ -147,33 +135,16 @@ var HttpCmd = &cobra.Command{
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
+			runtime.WithMarshalerOption(runtime.MIMEWildcard, &CustomMarshaler{}),
 		)
 		ctx := context.Background()
 		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-		_ = pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notification_endpoint, opts)
-		_ = pb_payment.RegisterPaymentServiceHandlerFromEndpoint(ctx, mux, payment_endpoint, opts)
-		_ = pb_bdspro.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterIncomeDocumentServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetIncomeTypeServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetExploitationServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetCostTypeServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetCostServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationMemberServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationBranchServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_organization.RegisterOrganizationLogActivityServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupDealServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupLogActivityServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupNotificationServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupSettingServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupMemberServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
-		_ = pb_group.RegisterGroupDocumentServiceHandlerFromEndpoint(ctx, mux, organization_endpoint, opts)
+		service.RegisterNotificationService(ctx, mux, url, opts)
+		service.RegisterPaymentService(ctx, mux, url, opts)
+		service.RegisterOrganizationService(ctx, mux, url, opts)
+		service.RegisterBdsproService(ctx, mux, url, opts)
+		service.RegisterCrmService(ctx, mux, url, opts)
+
 		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {

@@ -4,4 +4,5 @@ import _dto "common/dto"
 
 type RuleSearchDTO struct {
 	_dto.Page
+	RuleName string `json:"ruleName"`
 }

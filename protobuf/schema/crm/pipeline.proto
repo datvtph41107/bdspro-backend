@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "types/crm";
+
+message PipelineSearchRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+
+    string pipelineName = 3;
+    repeated string colors = 4;
+    bool active = 5;
+
+    uint64 ownerId = 6;
+    uint32 ownerType = 7;
+}
+
+message PipelineDTO {
+    uint64 id = 1;
+    string pipelineName = 2;
+	string color = 3;
+	bool active = 4;
+	uint64 ownerId = 5;
+	uint32 ownerType = 6;
+}
+
+message PipelineListDTO {
+    repeated PipelineDTO data = 1;
+    uint32 totalElements = 2;
+}
+
+service PipelineService {
+    rpc Search (PipelineSearchRequest) returns (PipelineListDTO);
+    rpc Detail (PipelineDTO) returns (PipelineDTO);
+    rpc Create (PipelineDTO) returns (PipelineDTO);
+    rpc Update (PipelineDTO) returns (PipelineDTO);
+    rpc Delete (PipelineDTO) returns (PipelineDTO);
+}

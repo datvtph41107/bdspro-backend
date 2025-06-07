@@ -31,6 +31,7 @@ func (r *HistoryRouter) HistoryRoutes(engine *gin.RouterGroup) {
 // @Produce json
 // @Param id path int true "ID"
 // @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param dto query dto.HistorySearchDTO true "Thông tin tìm kiếm"
 // @Security BearerAuth
 // @Router /histories/{id}/{ownerType} [get]
 func (r *HistoryRouter) Search(c *gin.Context) {

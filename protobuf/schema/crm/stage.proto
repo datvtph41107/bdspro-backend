@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "types/crm";
+
+message StageSearchRequest {
+    uint64 pipelineId = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string stageName = 4;
+}
+
+message StageDTO {
+    uint64 id = 1;
+    string stageName = 2;
+    int32 orderNumber = 3;
+    uint64 pipelineId = 4;
+    uint64 ruleId = 5;
+    uint32 step = 6;
+    bool active = 7;
+}
+
+message StageListDTO {
+    repeated StageDTO data = 1;
+    uint32 totalElements = 2;
+}
+
+service StageService {
+    rpc Search (StageSearchRequest) returns (StageListDTO);
+    rpc Detail (StageDTO) returns (StageDTO);
+    rpc Create (StageDTO) returns (StageDTO);
+    rpc Update (StageDTO) returns (StageDTO);
+    rpc Delete (StageDTO) returns (StageDTO);
+}

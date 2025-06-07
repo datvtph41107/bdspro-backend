@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "types/crm";
+
+service ContactService {
+  rpc Search (ContactSearchRequest) returns (ContactListDTO);
+  rpc Detail (ContactDTO) returns (ContactDTO);
+  rpc Create (ContactDTO) returns (ContactDTO);
+  rpc Update (ContactDTO) returns (ContactDTO);
+  rpc Delete (ContactDTO) returns (ContactDTO);
+}
+
+message ContactSearchRequest {
+  uint64 page = 1;
+  uint32 size = 2;
+  string text = 3;
+}
+
+message ContactDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  uint64 ownerId = 4;
+  int32 ownerType = 5;
+  string createdAt = 6;
+  optional uint64 createdBy = 7;
+}
+
+message ContactListDTO {
+    repeated ContactDTO data = 1;
+    uint32 totalElements = 2;
+}

@@ -3,16 +3,23 @@ package domain
 import (
 	_models "common/models"
 	"crm/internal/enums"
-	"time"
 )
 
 type RuleEntity struct {
 	_models.BaseEntity
-	OwnerID      uint64           `json:"ownerId"`
-	OwnerType    enums.EOwnerType `json:"ownerType"`
-	Rule         enums.ERule      `json:"rule"`
-	CycleSeconds int64            `json:"cycleSeconds"`
-	Deadline     *time.Time       `json:"deadline"`
-	Active       bool             `json:"active"`
-	Note         string           `json:"note"`
+	OwnerID        uint64           `json:"ownerId"`
+	OwnerType      enums.EOwnerType `json:"ownerType"`
+	Active         bool             `json:"active"`
+	RuleName       string           `json:"ruleName" binding:"required"`
+	Note           string           `json:"note"`
+	Condition      enums.ECondition `json:"condition" binding:"required"`
+	ConditionValue string           `json:"conditionValue" binding:"required"`
+	Trigger        enums.ERule      `json:"trigger" binding:"required"`
+	TriggerValue   string           `json:"triggerValue" binding:"required"`
+	// CycleSeconds int64            `json:"cycleSeconds"`
+	// Deadline *time.Time `json:"deadline"`
+}
+
+func (e *RuleEntity) TableName() string {
+	return "rules"
 }

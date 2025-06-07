@@ -27,15 +27,6 @@ func (r *StageRouter) StageRoutes(engine *gin.RouterGroup) {
 	api.DELETE("/:id", r.Delete)
 }
 
-// @Summary Tìm kiếm giai đoạn theo pipeline
-// @Description Tìm kiếm giai đoạn theo pipeline
-// @Tags Giai đoạn
-// @Accept json
-// @Produce json
-// @Param pipelineId path int true "Pipeline ID"
-// @Param dto query dto.StageSearchDTO true "Stage search dto"
-// @Security BearerAuth
-// @Router /stages/{pipelineId} [get]
 func (r *StageRouter) Search(c *gin.Context) {
 	pipelineId, err := strconv.ParseUint(c.Param("pipelineId"), 10, 64)
 	if err != nil {
@@ -61,14 +52,6 @@ func (r *StageRouter) Search(c *gin.Context) {
 	}, nil)
 }
 
-// @Summary Tạo giai đoạn
-// @Description Tạo giai đoạn
-// @Tags Giai đoạn
-// @Accept json
-// @Produce json
-// @Param entity body domain.StageEntity true "Stage entity"
-// @Security BearerAuth
-// @Router /stages [post]
 func (r *StageRouter) Create(c *gin.Context) {
 	entity := &domain.StageEntity{}
 	if err := _utils.ParseBodyWithValidator(c, entity); err != nil {
@@ -80,15 +63,6 @@ func (r *StageRouter) Create(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật giai đoạn
-// @Description Cập nhật giai đoạn
-// @Tags Giai đoạn
-// @Accept json
-// @Produce json
-// @Param id path int true "ID"
-// @Param entity body domain.StageEntity true "Stage entity"
-// @Security BearerAuth
-// @Router /stages/{id} [put]
 func (r *StageRouter) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -106,14 +80,6 @@ func (r *StageRouter) Update(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Xóa giai đoạn
-// @Description Xóa giai đoạn
-// @Tags Giai đoạn
-// @Accept json
-// @Produce json
-// @Param id path int true "ID"
-// @Security BearerAuth
-// @Router /stages/{id} [delete]
 func (r *StageRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

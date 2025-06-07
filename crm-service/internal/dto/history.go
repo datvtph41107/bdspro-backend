@@ -8,8 +8,10 @@ import (
 
 type HistorySearchDTO struct {
 	_dto.Page
-	UserID     uint64         `form:"userId"`
-	FromDate   *time.Time     `form:"fromDate"`
-	ToDate     *time.Time     `form:"toDate"`
-	ActionType enums.EHistory `form:"actionType"`
+	UserID     uint64                `form:"userId"`
+	FromDate   *time.Time            `form:"fromDate"`
+	ToDate     *time.Time            `form:"toDate"`
+	ActionType *enums.EHistory       `form:"actionType"`
+	TargetType *enums.ETargetHistory `form:"targetType"`
+	TargetId   *uint64               `form:"targetId"`
 }

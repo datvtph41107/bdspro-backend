@@ -23,3 +23,5 @@ admin:
 	cd admin-service && go run main.go grpc
 organization:
 	cd organization-service && go run main.go grpc-server
+buf-crm:
+	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm

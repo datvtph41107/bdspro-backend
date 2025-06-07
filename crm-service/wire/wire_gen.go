@@ -9,6 +9,7 @@ package wire
 import (
 	"common/db"
 	"crm/config"
+	"crm/infra/grpc"
 	"crm/infra/impl"
 	"crm/infra/postgre"
 	"crm/infra/router"
@@ -30,22 +31,31 @@ func InitializeApp() (*config.ConfigApp, error) {
 	historyRouter := router.NewHistoryRouter(historyUsecase)
 	postgreStage := postgre.NewPostgreStage(db)
 	postgrePipeline := postgre.NewPostgrePipeline(db)
-	stageUsecase := usecase.NewStageUsecase(postgreStage, permissionUsecase, postgrePipeline)
+	postgreCustomer := postgre.NewPostgreCustomer(db)
+	stageUsecase := usecase.NewStageUsecase(postgreStage, permissionUsecase, postgrePipeline, historyRepo, postgreCustomer)
 	stageRouter := router.NewStageRouter(stageUsecase)
-	pipelineUsecase := usecase.NewPipelineUsecase(postgrePipeline, permissionUsecase)
+	pipelineUsecase := usecase.NewPipelineUsecase(postgrePipeline, permissionUsecase, historyRepo, postgreCustomer)
 	pipelineRouter := router.NewPipelineRouter(pipelineUsecase)
 	postgreRule := postgre.NewPostgreRule(db)
-	ruleUsecase := usecase.NewRuleUsecase(postgreRule)
+	ruleUsecase := usecase.NewRuleUsecase(postgreRule, permissionUsecase, historyRepo, postgreCustomer)
 	ruleRouter := router.NewRuleRouter(ruleUsecase)
-	postgreCustomer := postgre.NewPostgreCustomer(db)
-	customerUsecase := usecase.NewCustomerUsecase(postgreCustomer, permissionUsecase)
+	customerUsecase := usecase.NewCustomerUsecase(postgreCustomer, permissionUsecase, historyRepo)
 	customerRouter := router.NewCustomerRouter(customerUsecase)
 	runtimeRouter := router.NewRuntimeRouter(historyRouter, stageRouter, pipelineRouter, ruleRouter, customerRouter)
-	configApp := config.NewConfigApp(runtimeRouter)
+	ruleEventUsecase := usecase.NewRuleEventUsecase(postgreRule, postgreCustomer, historyRepo)
+	pipelineService := grpc_service.NewPipelineService(pipelineUsecase)
+	postgreContact := postgre.NewContactRepo(db)
+	contactUsecase := usecase.NewContactUsecase(postgreContact)
+	contactService := grpc_service.NewContactService(contactUsecase)
+	customerService := grpc_service.NewCustomerService(customerUsecase)
+	stageService := grpc_service.NewStageService(stageUsecase)
+	historyService := grpc_service.NewHistoryService(historyUsecase)
+	ruleService := grpc_service.NewRuleService(ruleUsecase)
+	configApp := config.NewConfigApp(runtimeRouter, ruleUsecase, ruleEventUsecase, pipelineService, contactService, customerService, stageService, historyService, ruleService)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(usecase.PermissionUsecase), new(*impl.PermissionUsecase)), wire.Bind(new(repo.CustomerRepo), new(*postgre.PostgreCustomer)), wire.Bind(new(repo.HistoryRepo), new(*postgre.HistoryRepo)), wire.Bind(new(repo.PipelineRepo), new(*postgre.PostgrePipeline)), wire.Bind(new(repo.RuleRepo), new(*postgre.PostgreRule)), wire.Bind(new(repo.StageRepo), new(*postgre.PostgreStage)), postgre.NewBlockRepo, config.NewConfigApp, postgre.NewContactRepo, router.NewContactRouter, usecase.NewContactService, router.NewCustomerRouter, usecase.NewCustomerUsecase, postgre.NewFollowRepo, postgre.NewFriendRepo, postgre.NewGroupRepo, postgre.NewHistoryRepo, router.NewHistoryRouter, usecase.NewHistoryUsecase, impl.NewPermissionUsecase, router.NewPipelineRouter, usecase.NewPipelineUsecase, postgre.NewPostgreCustomer, postgre.NewPostgrePipeline, postgre.NewPostgreRule, postgre.NewPostgreStage, router.NewRuleRouter, usecase.NewRuleUsecase, router.NewRuntimeRouter, router.NewStageRouter, usecase.NewStageUsecase)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(usecase.PermissionUsecase), new(*impl.PermissionUsecase)), wire.Bind(new(repo.ContactRepo), new(*postgre.PostgreContact)), wire.Bind(new(repo.CustomerRepo), new(*postgre.PostgreCustomer)), wire.Bind(new(repo.HistoryRepo), new(*postgre.HistoryRepo)), wire.Bind(new(repo.PipelineRepo), new(*postgre.PostgrePipeline)), wire.Bind(new(repo.RuleRepo), new(*postgre.PostgreRule)), wire.Bind(new(repo.StageRepo), new(*postgre.PostgreStage)), postgre.NewBlockRepo, config.NewConfigApp, postgre.NewContactRepo, router.NewContactRouter, grpc_service.NewContactService, usecase.NewContactUsecase, router.NewCustomerRouter, grpc_service.NewCustomerService, usecase.NewCustomerUsecase, postgre.NewFollowRepo, postgre.NewFriendRepo, postgre.NewGroupRepo, postgre.NewHistoryRepo, router.NewHistoryRouter, grpc_service.NewHistoryService, usecase.NewHistoryUsecase, router.NewPermissionRouter, impl.NewPermissionUsecase, router.NewPipelineRouter, grpc_service.NewPipelineService, usecase.NewPipelineUsecase, postgre.NewPostgreCustomer, postgre.NewPostgrePipeline, postgre.NewPostgreRule, postgre.NewPostgreStage, usecase.NewRuleEventUsecase, router.NewRuleRouter, grpc_service.NewRuleService, usecase.NewRuleUsecase, router.NewRuntimeRouter, router.NewStageRouter, grpc_service.NewStageService, usecase.NewStageUsecase)

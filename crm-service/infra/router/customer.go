@@ -22,25 +22,16 @@ func NewCustomerRouter(UC *usecase.CustomerUsecase) *CustomerRouter {
 
 func (r *CustomerRouter) CustomerRoutes(engine *gin.RouterGroup) {
 	group := engine.Group("/customer")
-	group.GET("/:ownerId/:ownerType", r.Search)
+	group.GET("/list/:ownerId/:ownerType", r.Search)
 	group.POST("", r.Create)
 	group.PUT("/:id", r.Update)
 	group.DELETE("/:id", r.Delete)
+	group.GET("/:id", r.GetByID)
 	group.PUT("/:id/note", r.UpdateNote)
 	group.PUT("/:id/assign", r.Assign)
 	group.PUT("/:id/stage", r.SwitchStage)
 }
 
-// @Summary Lấy danh sách khách hàng
-// @Description Lấy danh sách
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param ownerId path int true "ID của chủ sở hữu"
-// @Param ownerType path enums.EOwnerType true "Loại chủ sở hữu"
-// @Param dto query dto.CustomerSearchDTO true "Thông tin tìm kiếm"
-// @Router /customer/{ownerId}/{ownerType} [get]
 // Lấy danh sách liên hệ
 func (r *CustomerRouter) Search(c *gin.Context) {
 	dto := dto.CustomerSearchDTO{}
@@ -69,11 +60,11 @@ func (r *CustomerRouter) Search(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body domain.GroupEntity true "Thông tin cập nhật"
+// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
-// @Failure 409 {string} string "Nhóm đã tồn tại"
+// @Failure 409 {string} string "Khách hàng đã tồn tại"
 // @Router /customer [post]
-// Thêm nhóm
+// Thêm khách hàng
 func (r *CustomerRouter) Create(c *gin.Context) {
 	entity := domain.CustomerEntity{}
 	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
@@ -89,8 +80,8 @@ func (r *CustomerRouter) Create(c *gin.Context) {
 // @Tags Khách hàng
 // @Accept json
 // @Produce json
-// @Param request body domain.GroupEntity true "Thông tin cập nhật"
-// @Param id path int true "ID của lời mời kết bạn"
+// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
+// @Param id path int true "ID của khách hàng"
 // @Security BearerAuth
 // @Router /customer/{id} [put]
 func (r *CustomerRouter) Update(c *gin.Context) {
@@ -116,7 +107,7 @@ func (r *CustomerRouter) Update(c *gin.Context) {
 // @Tags Khách hàng
 // @Accept json
 // @Produce json
-// @Param id path int true "ID của liên hệ"
+// @Param id path int true "ID của khách hàng"
 // @Security BearerAuth
 // @Router /customer/{id} [delete]
 func (r *CustomerRouter) Delete(c *gin.Context) {
@@ -138,7 +129,7 @@ func (r *CustomerRouter) Delete(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID của khách hàng"
-// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
+// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
 // @Security BearerAuth
 // @Router /customer/{id}/note [put]
 func (r *CustomerRouter) UpdateNote(c *gin.Context) {
@@ -150,12 +141,12 @@ func (r *CustomerRouter) UpdateNote(c *gin.Context) {
 		})
 		return
 	}
-	entity := domain.CustomerEntity{}
-	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
+	dto := dto.CustomerDTO{}
+	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := r.UC.UpdateNote(c, id, &entity)
+	result, err := r.UC.UpdateNote(c, id, &dto)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -165,7 +156,7 @@ func (r *CustomerRouter) UpdateNote(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID của khách hàng"
-// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
+// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
 // @Security BearerAuth
 // @Router /customer/{id}/assign [put]
 func (r *CustomerRouter) Assign(c *gin.Context) {
@@ -177,12 +168,12 @@ func (r *CustomerRouter) Assign(c *gin.Context) {
 		})
 		return
 	}
-	entity := domain.CustomerEntity{}
-	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
+	dto := dto.CustomerDTO{}
+	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := r.UC.Assign(c, id, &entity)
+	result, err := r.UC.Assign(c, id, &dto)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -192,7 +183,7 @@ func (r *CustomerRouter) Assign(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID của khách hàng"
-// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
+// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
 // @Security BearerAuth
 // @Router /customer/{id}/stage [put]
 func (r *CustomerRouter) SwitchStage(c *gin.Context) {
@@ -205,11 +196,32 @@ func (r *CustomerRouter) SwitchStage(c *gin.Context) {
 		return
 	}
 
-	dto := domain.CustomerEntity{}
+	dto := dto.CustomerDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 	result, err := r.UC.SwitchStage(c, id, dto.StageID)
+	_routes.RouteResult(c, result, err)
+}
+
+// @Summary Lấy thông tin khách hàng
+// @Description Lấy thông tin khách hàng hiện tại
+// @Tags Khách hàng
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của khách hàng"
+// @Security BearerAuth
+// @Router /customer/{id} [get]
+func (r *CustomerRouter) GetByID(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		_routes.RouteResult(c, nil, &_routes.Except{
+			Code:    400,
+			Message: "ID không hợp lệ",
+		})
+		return
+	}
+	result, err := r.UC.GetByID(c, id)
 	_routes.RouteResult(c, result, err)
 }

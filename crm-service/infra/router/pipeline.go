@@ -37,7 +37,7 @@ func (r *PipelineRouter) PipelineRoutes(engine *gin.RouterGroup) {
 // @Param ownerType path enums.EOwnerType true "Owner Type"
 // @Param dto query dto.PipelineSearchDTO true "Pipeline search dto"
 // @Security BearerAuth
-// @Router /pipelines/{ownerId}/{ownerType} [get]
+// @Router /pipeline/{ownerId}/{ownerType} [get]
 func (r *PipelineRouter) Search(c *gin.Context) {
 	var dto dto.PipelineSearchDTO
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -77,7 +77,7 @@ func (r *PipelineRouter) Search(c *gin.Context) {
 // @Produce json
 // @Param entity body domain.PipelineEntity true "Pipeline entity"
 // @Security BearerAuth
-// @Router /pipelines [post]
+// @Router /pipeline [post]
 func (r *PipelineRouter) Create(c *gin.Context) {
 	entity := &domain.PipelineEntity{}
 	if err := _utils.ParseBodyWithValidator(c, entity); err != nil {
@@ -97,7 +97,7 @@ func (r *PipelineRouter) Create(c *gin.Context) {
 // @Param id path int true "ID"
 // @Param entity body domain.PipelineEntity true "Pipeline entity"
 // @Security BearerAuth
-// @Router /pipelines/{id} [put]
+// @Router /pipeline/{id} [put]
 func (r *PipelineRouter) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -115,14 +115,6 @@ func (r *PipelineRouter) Update(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Xóa quy trình
-// @Description Xóa quy trình
-// @Tags Quy trình
-// @Accept json
-// @Produce json
-// @Param id path int true "ID"
-// @Security BearerAuth
-// @Router /pipelines/{id} [delete]
 func (r *PipelineRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

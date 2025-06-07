@@ -28,6 +28,13 @@ func NewRuntimeRouter(
 	}
 }
 
+// @title CRM API
+// @version 1.0
+// @description API phần logic chính của CRM. Đã chuyển sang grpc
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @BasePath /v2/crm
+// @name Authorization
 func (r *RuntimeRouter) RuntimeRoutes(engine *gin.Engine) {
 	group := engine.Group("/crm")
 

@@ -19,7 +19,7 @@ type PermissionUsecase interface {
 	) error
 	HasRoleWithOwner(
 		c context.Context,
-		ownerId uint64,
+		ownerId *uint64,
 		ownerType enums.EOwnerType,
 		roleValue enums.EAuth,
 	) error

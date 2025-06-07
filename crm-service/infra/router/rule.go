@@ -5,8 +5,8 @@ import (
 	_utils "common/utils"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	"crm/internal/usecase"
+	"crm/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -45,18 +45,11 @@ func (r *RuleRouter) Search(c *gin.Context) {
 		return
 	}
 
-	ownerId, err := strconv.ParseUint(c.Param("ownerId"), 10, 64)
+	ownerId, ownerType, err := utils.GetOwnerFromContext(c)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-
-	ownerTypeValue, err := strconv.ParseUint(c.Param("ownerType"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	ownerType := enums.EOwnerType(ownerTypeValue)
 
 	rules, total, err := r.UC.Search(c, ownerId, ownerType, dto)
 	if err != nil {

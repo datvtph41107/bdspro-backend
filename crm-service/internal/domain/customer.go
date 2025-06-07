@@ -3,6 +3,7 @@ package domain
 import (
 	_models "common/models"
 	"crm/internal/enums"
+	"time"
 )
 
 type CustomerEntity struct {
@@ -13,13 +14,19 @@ type CustomerEntity struct {
 	Source     enums.ESourceCustomer `json:"customerSource"`
 	Email      string                `json:"email"`
 	Address    string                `json:"address"`
-	Step       enums.EStep           `gorm:"default:10" json:"step"`
+	Birthday   *time.Time            `json:"birthday"`
 	Note       string                `json:"note"`
+	AssignNote string                `json:"assignNote"`
 	PipelineID *uint64               `json:"pipelineId"`
 	StageID    *uint64               `json:"stageId"`
-	ChargeId   uint64                `json:"chargeId"`
+	ChargeId   *uint64               `json:"chargeId"`
 	ChargeType enums.EOwnerType      `json:"chargeType"`
-	OwnerID    uint64                `json:"ownerId"`
+	OwnerID    *uint64               `json:"ownerId" binding:"required"`
 	OwnerType  enums.EOwnerType      `json:"ownerType" binding:"required"`
+	// Step       enums.EStep           `gorm:"default:10" json:"step"`
 	// todo: sắp trễ/ chưa phân công
+}
+
+func (e *CustomerEntity) TableName() string {
+	return "customers"
 }

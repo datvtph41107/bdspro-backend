@@ -7,12 +7,14 @@ import (
 
 type HistoryEntity struct {
 	_models.BaseEntity
-	TargetId   uint64         `json:"targetId"`
-	TargetType int8           `json:"targetType"`
-	ActionType enums.EHistory `json:"actionType"`
-	Note       string         `json:"note,omitempty"`
-	PreStage   string         `json:"preStage,omitempty"`
-	AfterStage string         `json:"afterStage,omitempty"`
+	TargetId   uint64               `json:"targetId"`
+	TargetType enums.ETargetHistory `json:"targetType"`
+	ActionType enums.EHistory       `json:"actionType"`
+	Note       string               `json:"note,omitempty"`
+	PreStage   string               `json:"preStage,omitempty"`
+	AfterStage string               `json:"afterStage,omitempty"`
+	OwnerID    *uint64              `json:"ownerId"`
+	OwnerType  enums.EOwnerType     `json:"ownerType"`
 }
 
 func (HistoryEntity) TableName() string {

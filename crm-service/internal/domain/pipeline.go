@@ -7,6 +7,7 @@ import (
 
 type PipelineEntity struct {
 	_models.BaseEntity
+	ID           uint64           `gorm:"primaryKey" json:"id"`
 	PipelineName string           `json:"pipelineName" binding:"required"`
 	Color        string           `gorm:"type:varchar(15)" json:"color"`
 	Active       bool             `json:"active"`

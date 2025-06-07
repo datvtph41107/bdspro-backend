@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "types/crm";
+import "google/protobuf/timestamp.proto";
+
+service CustomerService {
+  rpc Search (CustomerSearchRequest) returns (CustomerListDTO);
+  rpc Detail (CustomerDTO) returns (CustomerDTO);
+  rpc Create (CustomerDTO) returns (CustomerDTO);
+  rpc Update (CustomerDTO) returns (CustomerDTO);
+  rpc Delete (CustomerDTO) returns (CustomerDTO);
+  rpc Assign (CustomerAssignRequest) returns (CustomerDTO);
+  rpc Note (CustomerNoteRequest) returns (CustomerDTO);
+  rpc Stage (CustomerStageRequest) returns (CustomerDTO);
+}
+
+message CustomerSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+
+  string phone = 3;
+  string fullName = 4;
+
+  repeated int32 steps = 5;                 // EStep (int32)
+  repeated uint64 stageIds = 6;
+  repeated int32 sources = 7;               // ESourceCustomer (int32)
+  repeated uint64 chargeIds = 8;
+
+  int32 chargeType = 9; // [deprecated = true]; // EOwnerType (int32), deprecated
+
+  google.protobuf.Timestamp fromDate = 10;
+  google.protobuf.Timestamp toDate = 11;
+
+  repeated uint64 productCareIds = 12;
+
+  uint64 ownerId = 13;
+  int32 ownerType = 14;
+}
+
+message CustomerDTO {
+  optional uint64 contactId = 1;
+  string fullName = 2;
+  string phone = 3;
+  int32 source = 4;                        // ESourceCustomer (int32)
+  string email = 5;
+  string address = 6;
+  string birthday = 7;
+  string note = 8;
+  string assignNote = 10;
+
+  optional uint64 pipelineId = 11;
+  optional uint64 stageId = 12;
+  optional uint64 chargeId = 13;
+
+  int32 chargeType = 15;                 // EOwnerType (int32)
+  optional uint64 ownerId = 16;
+  int32 ownerType = 17;                  // EOwnerType (int32)
+  uint64 id = 18;
+}
+
+message CustomerListDTO {
+    repeated CustomerDTO data = 1;
+    uint32 totalElements = 2;
+}
+
+message CustomerAssignRequest {
+  uint64 customerId = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+  uint64 chargeId = 4;
+  int32 chargeType = 5;
+  string noteAssign = 6;
+}
+
+message CustomerNoteRequest {
+  uint64 customerId = 1;
+  string note = 2;
+} 
+
+message CustomerStageRequest {
+  uint64 customerId = 1;
+  uint64 stageId = 2;
+}

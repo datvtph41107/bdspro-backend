@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -30,4 +31,8 @@ func TimeNow() string {
 func ValidatePhoneNumber(phone string) bool {
 	re := regexp.MustCompile(`^(?:\+?84|0)(3|5|7|8|9)[0-9]{8}$`)
 	return re.MatchString(phone)
+}
+
+func IsParsableToInt(s string) (int, error) {
+	return strconv.Atoi(s)
 }

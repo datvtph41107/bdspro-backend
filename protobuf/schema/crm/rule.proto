@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "types/crm";
+
+service RuleService {
+  rpc Search (RuleSearchRequest) returns (RuleListDTO);
+  rpc Detail (RuleDTO) returns (RuleDTO);
+  rpc Create (RuleDTO) returns (RuleDTO);
+  rpc Update (RuleDTO) returns (RuleDTO);
+  rpc Delete (RuleDTO) returns (RuleDTO);
+}
+
+message RuleSearchRequest {
+  uint64 page = 1;
+  uint32 size = 2;
+  string name = 3;
+  uint64 ownerId = 4;
+  int32 ownerType = 5;
+}
+
+message RuleDTO {
+  uint64 id = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+  bool active = 4;
+  string ruleName = 5;
+  string note = 6;
+  int32 condition = 7;
+  string conditionValue = 8;
+  int32 trigger = 9;
+  string triggerValue = 10;
+}
+
+message RuleListDTO {
+  repeated RuleDTO data = 1;
+  uint32 totalElements = 2;
+}
