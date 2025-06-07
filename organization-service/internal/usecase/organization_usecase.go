@@ -9,30 +9,53 @@ import (
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
 )
 
+// OrganizationUsecase defines the business logic for organization management
 type OrganizationUsecase interface {
+	// CreateOrganization creates a new organization and adds the creator as an admin member
+	// Returns the created organization, member info, and any error that occurred
 	CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error)
+
+	// UpdateOrganization updates an existing organization's details
+	// Only users with admin role can update the organization
+	// Returns the updated organization and any error that occurred
 	UpdateOrganization(ctx context.Context, currentUserId uint32, organization *entity.Organization) (*entity.Organization, error)
+
+	// GetOrganizations retrieves all organizations where the user is either a creator or a member
+	// Results are sorted by creation time in descending order
+	// Returns a list of organizations and any error that occurred
 	GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error)
 }
 
+// organizationUsecase implements OrganizationUsecase interface
 type organizationUsecase struct {
-	OrganizationRepository  repository.OrganizationRepository
-	organizationAuthUsecase OrganizationAuthUsecase
-	logWorker              *OrganizationLogWorker
+	OrganizationRepository      repository.OrganizationRepository
+	OrganizationMemberRepository repository.OrganizationMemberRepository
+	organizationAuthUsecase     OrganizationAuthUsecase
+	logWorker                   *OrganizationLogWorker
 }
 
+// NewOrganizationUsecase creates a new instance of OrganizationUsecase
 func NewOrganizationUsecase(
 	organizationRepository repository.OrganizationRepository,
+	organizationMemberRepository repository.OrganizationMemberRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
 ) OrganizationUsecase {
 	return &organizationUsecase{
-		OrganizationRepository:  organizationRepository,
-		organizationAuthUsecase: organizationAuthUsecase,
-		logWorker:              logWorker,
+		OrganizationRepository:      organizationRepository,
+		OrganizationMemberRepository: organizationMemberRepository,
+		organizationAuthUsecase:     organizationAuthUsecase,
+		logWorker:                   logWorker,
 	}
 }
 
+// CreateOrganization creates a new organization and adds the creator as an admin member
+// It performs the following steps:
+// 1. Validates the organization data
+// 2. Checks for duplicate tax code
+// 3. Creates the organization
+// 4. Creates the creator as an admin member
+// 5. Logs the creation event
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
 	org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
 	if err != nil {
@@ -58,6 +81,13 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 	return organization, member, nil
 }
 
+// UpdateOrganization updates an existing organization's details
+// It performs the following steps:
+// 1. Verifies the user has admin role
+// 2. Validates the organization exists
+// 3. Checks for duplicate tax code if tax code is being changed
+// 4. Updates the organization
+// 5. Logs the update event
 func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUserId uint32, organization *entity.Organization) (*entity.Organization, error) {
 	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, organization.ID, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
@@ -66,6 +96,7 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
+
 	org, err := o.OrganizationRepository.FindById(ctx, organization.ID)
 	if err != nil {
 		return nil, err
@@ -100,6 +131,8 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	return org, nil
 }
 
+// GetOrganizations retrieves all organizations where the user is either a creator or a member
+// Results are sorted by creation time in descending order (newest first)
 func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
 	return o.OrganizationRepository.FindByUserId(ctx, userId)
 }

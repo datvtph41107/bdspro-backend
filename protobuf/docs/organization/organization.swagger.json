@@ -144,6 +144,9 @@
         },
         "logoUrl": {
           "type": "string"
+        },
+        "status": {
+          "type": "string"
         }
       }
     },

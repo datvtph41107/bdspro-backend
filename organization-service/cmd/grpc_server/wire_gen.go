@@ -27,7 +27,7 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	organizationLogActivityRepository := repository.NewOrganizationLogActivityRepository()
 	organizationLogActivityUsecase := usecase.NewOrganizationLogActivityUsecase(organizationLogActivityRepository)
 	organizationLogWorker := usecase.NewOrganizationLogWorker(organizationLogActivityUsecase)
-	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository, organizationAuthUsecase, organizationLogWorker)
+	organizationUsecase := usecase.NewOrganizationUsecase(organizationRepository, organizationMemberRepository, organizationAuthUsecase, organizationLogWorker)
 	organizationTransformer := transformer.NewOrganizationTransformer()
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)

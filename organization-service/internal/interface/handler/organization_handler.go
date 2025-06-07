@@ -50,8 +50,11 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 	return h.OrganizationTransformer.EntityToCreateOrganizationResponse(organization), nil
 }
 
-
 func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organizationpb.UpdateOrganizationRequest) (*organizationpb.UpdateOrganizationResponse, error) {
+	if err := h.OrganizationValidator.ValidateUpdateOrganizationRequest(req); err != nil {
+		return nil, err
+	}
+
 	organization := h.OrganizationTransformer.UpdateOrganizationRequestToEntity(req)
 	organization.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 

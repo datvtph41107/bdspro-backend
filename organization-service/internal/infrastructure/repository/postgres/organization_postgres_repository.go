@@ -91,19 +91,18 @@ func (o *organizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 	member *entity.OrganizationMember,
 ) (*entity.Organization, *entity.OrganizationMember, error) {
 	tx := o.db.WithContext(ctx).Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+	if tx.Error != nil {
+		return nil, nil, tx.Error
+	}
+
 	organizationModel := OrganizationEntityToModel(organization)
 	if err := tx.Create(&organizationModel).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
-
 	}
+
 	role := &OrganizationRoleModel{
-		Name:           "Admin",
+		Name:           appconfig.ADMIN_ROLE_NAME,
 		Key:            appconfig.ADMIN_ROLE_KEY,
 		OrganizationId: organizationModel.ID,
 	}
@@ -124,6 +123,7 @@ func (o *organizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		tx.Rollback()
 		return nil, nil, err
 	}
+
 	return OrganizationModelToEntity(organizationModel), OrganizationMemberModelToEntity(memberModel), nil
 }
 
@@ -159,7 +159,12 @@ func (o *organizationPostgresRepository) FindById(ctx context.Context, id uint32
 
 func (o *organizationPostgresRepository) FindByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
 	var organizations []*OrganizationModel
-	if err := o.db.WithContext(ctx).Where("created_by = ?", userId).Find(&organizations).Error; err != nil {
+	if err := o.db.WithContext(ctx).
+		Joins("LEFT JOIN organization_members ON organizations.id = organization_members.organization_id").
+		Where("organizations.created_by = ? OR organization_members.user_id = ?", userId, userId).
+		Distinct().
+		Order("organizations.created_at DESC").
+		Find(&organizations).Error; err != nil {
 		return nil, err
 	}
 	return OrganizationModelsToEntities(organizations), nil

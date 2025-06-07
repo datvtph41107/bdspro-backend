@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+const (
+	OrganizationStatusActive   = "active"
+	OrganizationStatusInactive = "inactive"
+	OrganizationStatusPending  = "pending"
+)
+
 type Organization struct {
 	ID                 uint32
 	Name               string

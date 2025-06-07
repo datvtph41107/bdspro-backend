@@ -54,6 +54,7 @@ message UpdateOrganizationRequest {
     optional string email = 7 [json_name = "email"];
     optional string website = 8 [json_name = "website"];
     optional string logoUrl = 9 [json_name = "logoUrl"];
+    optional string status = 10 [json_name = "status"];
 }
 
 message UpdateOrganizationResponse {

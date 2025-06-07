@@ -79,33 +79,53 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		ID             uint32 `gorm:"column:id"`
 		UserID         uint32 `gorm:"column:user_id"`
 		OrganizationID uint32 `gorm:"column:organization_id"`
+		RoleId         uint32 `gorm:"column:role"`
+		Status         uint32 `gorm:"column:status"`
+		JoinedAt       time.Time `gorm:"column:joined_at"`
+		RemovedAt      *time.Time `gorm:"column:removed_at"`
 		RoleKey        string `gorm:"column:role_key"`
+		RoleName       string `gorm:"column:role_name"`
 		Permissions    string `gorm:"column:permissions"`
 	}
 
 	err := r.db.WithContext(ctx).
 		Table("organization_members om").
-		Select("om.id, om.user_id, om.organization_id, or2.key as role_key, string_agg(op.key, ',') as permissions").
+		Select("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key as role_key, or2.name as role_name, string_agg(op.key, ',') as permissions").
 		Joins("left join organization_roles or2 on om.role = or2.id").
 		Joins("left join role_permissions rp on or2.id = rp.organization_role_model_id").
 		Joins("left join organization_permissions op on rp.organization_permission_model_id = op.id").
 		Where("om.user_id = ? AND om.organization_id = ?", userId, organizationId).
-		Group("om.id, om.user_id, om.organization_id, or2.key").
+		Group("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name").
 		First(&result).Error
 	if err != nil {
-
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
+
 	permissions := strings.Split(result.Permissions, ",")
+	role := &entity.OrganizationRole{
+		Id:   result.RoleId,
+		Name: result.RoleName,
+		Key:  result.RoleKey,
+		Permissions: make([]*entity.OrganizationPermission, len(permissions)),
+	}
+	for i, p := range permissions {
+		role.Permissions[i] = &entity.OrganizationPermission{
+			Key: p,
+		}
+	}
+
 	return &entity.OrganizationMember{
 		ID:             result.ID,
 		UserID:         result.UserID,
 		OrganizationID: result.OrganizationID,
-		Role:           result.RoleKey,
-		Permissions:    permissions,
+		RoleId:         result.RoleId,
+		Status:         entity.OrganizationMemberStatus(result.Status),
+		JoinedAt:       result.JoinedAt,
+		RemovedAt:      result.RemovedAt,
+		Role:           role,
 	}, nil
 }
 

@@ -38,12 +38,16 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 	if member == nil {
 		return nil, status.Errorf(codes.NotFound, "user not in organization")
 	}
+	permissions := make([]string, len(member.Role.Permissions))
+	for i, permission := range member.Role.Permissions {
+		permissions[i] = permission.Key
+	}
 	return &organizationpb.SwitchOrganizationResponse{
 		IsSuccess:   true,
 		Id:          req.OrganizationId,
 		UserId:      req.UserId,
-		Role:        member.Role,
-		Permissions: member.Permissions,
+		Role:        member.Role.Key,
+		Permissions: permissions,
 	}, nil
 }
 
