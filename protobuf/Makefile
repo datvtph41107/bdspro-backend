@@ -6,5 +6,6 @@ gen:
 	cd schema && buf generate --template ./spec/buf.gen.yaml --path spec
 	cd schema && buf generate --template ./buf.gen.yaml --path organization
 	cd schema && buf generate --template ./buf.gen.yaml --path group
+	cd schema && buf generate --template ./buf.gen.yaml --path appointment
 
 

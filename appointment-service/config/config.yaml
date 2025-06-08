@@ -1,0 +1,15 @@
+HTTP:
+  PORT: 8080
+Database:
+  PRIMARY_DB_TYPE: postgres
+  DB_DNS: host=localhost user=postgres password=postgres dbname=appointment port=5432 sslmode=disable
+WhitelistMethods:
+  GET_PATH:
+    - /api/v1/appointments
+    - /api/v1/appointments/:id
+  POST_PATH:
+    - /api/v1/appointments
+  PUT_PATH:
+    - /api/v1/appointments/:id
+  DELETE_PATH:
+    - /api/v1/appointments/:id 

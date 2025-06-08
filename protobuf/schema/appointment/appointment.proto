@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package appointment;
+
+option go_package = "github.com/tuandq2112/protobuf/schema/appointment";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Appointment service definition
+service AppointmentService {
+  // Create a new appointment
+  rpc CreateAppointment(CreateAppointmentRequest) returns (Appointment) {}
+  
+  // Get an appointment by ID
+  rpc GetAppointment(GetAppointmentRequest) returns (Appointment) {}
+  
+  // Update an existing appointment
+  rpc UpdateAppointment(UpdateAppointmentRequest) returns (Appointment) {}
+  
+  // Delete an appointment
+  rpc DeleteAppointment(DeleteAppointmentRequest) returns (google.protobuf.Empty) {}
+  
+  // List appointments with optional filters
+  rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse) {}
+}
+
+// Appointment message definition
+message Appointment {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp end_time = 5;
+  string status = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Request messages
+message CreateAppointmentRequest {
+  string title = 1;
+  string description = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  string status = 5;
+}
+
+message GetAppointmentRequest {
+  string id = 1;
+}
+
+message UpdateAppointmentRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp end_time = 5;
+  string status = 6;
+}
+
+message DeleteAppointmentRequest {
+  string id = 1;
+}
+
+message ListAppointmentsRequest {
+  // Optional filters
+  string title = 1;
+  string status = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  int32 page = 5;
+  int32 size = 6;
+}
+
+message ListAppointmentsResponse {
+  repeated Appointment appointments = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+} 

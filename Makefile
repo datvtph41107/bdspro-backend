@@ -10,6 +10,7 @@ init:
 	cd gateway-service && go mod tidy
 	cd user-service && go mod tidy
 	cd organization-service && go mod tidy
+	cd appointment-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm

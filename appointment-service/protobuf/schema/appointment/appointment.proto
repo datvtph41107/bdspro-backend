@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package appointment;
+
+option go_package = "pb/types/appointment";
+
+service AppointmentService {
+  rpc CreateAppointment(CreateAppointmentRequest) returns (Appointment);
+  rpc GetAppointment(GetAppointmentRequest) returns (Appointment);
+  rpc UpdateAppointment(UpdateAppointmentRequest) returns (Appointment);
+  rpc DeleteAppointment(DeleteAppointmentRequest) returns (DeleteAppointmentResponse);
+  rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse);
+}
+
+message Empty {}
+
+message Appointment {
+  string id = 1;
+  uint32 userId = 2;
+  string title = 3;
+  string description = 4;
+  string startTime = 5;
+  string endTime = 6;
+  string status = 7;
+  uint32 createdBy = 8;
+  uint32 updatedBy = 9;
+  string createdAt = 10;
+  string updatedAt = 11;
+}
+
+message CreateAppointmentRequest {
+  string title = 1;
+  string description = 2;
+  string startTime = 3;
+  string endTime = 4;
+  string status = 5;
+}
+
+message GetAppointmentRequest {
+  string id = 1;
+}
+
+message UpdateAppointmentRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string startTime = 4;
+  string endTime = 5;
+  string status = 6;
+}
+
+message DeleteAppointmentRequest {
+  string id = 1;
+}
+
+message DeleteAppointmentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListAppointmentsRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message ListAppointmentsResponse {
+  repeated Appointment appointments = 1;
+  int32 total = 2;
+} 
