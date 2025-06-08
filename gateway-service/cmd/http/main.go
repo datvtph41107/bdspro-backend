@@ -120,6 +120,17 @@ var publicRoutes = []string{
 // var public
 
 // httpCmd represents the http command
+// func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.MD {
+// 	authHeader := r.Header.Get("Authorization")
+// 	if authHeader == "" {
+// 		// Gán lỗi vào context để ErrorHandler xử lý sau
+// 		ctx = context.WithValue(ctx, "token_error", errors.New("Missing Authorization token"))
+// 		return metadata.MD{}
+// 	}
+
+// 	return metadata.Pairs("authorization", authHeader)
+// }
+
 var HttpCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Run the HTTP server",
@@ -134,8 +145,16 @@ var HttpCmd = &cobra.Command{
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
-			// runtime.WithMetadata(CustomMetadataMethod),
+			// // runtime.WithMetadata(CustomMetadataMethod),
+			// runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
+			// 	_jwt.ErrorToGatewayResponse(ctx, w, err)
+			// }),
+			// runtime.WithMetadata(ExtractMetadataFromRequest),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
+				if tokenErr, ok := ctx.Value("token_error").(error); ok {
+					http.Error(w, tokenErr.Error(), http.StatusUnauthorized)
+					return
+				}
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &CustomMarshaler{}),
@@ -148,7 +167,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
 		service.RegisterSocialService(ctx, mux, env, opts)
-		r.Any("/v2/*any", gin.WrapH(mux))
+		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {

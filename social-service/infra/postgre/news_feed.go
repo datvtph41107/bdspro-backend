@@ -19,11 +19,8 @@ func NewPostgreNewsFeed(db *gorm.DB) *PostgreNewsFeed {
 }
 
 func (r *PostgreNewsFeed) Create(ctx context.Context, post *domain.NewsFeed) (*domain.NewsFeed, error) {
-	err := r.db.WithContext(ctx).Create(post).Error
-	if err != nil {
-		return nil, err
-	}
-	return post, nil
+	err := GetDB(ctx, r.db).Create(post).Error
+	return post, err
 }
 
 func (r *PostgreNewsFeed) Update(ctx context.Context, post *domain.NewsFeed) (*domain.NewsFeed, error) {
@@ -53,18 +50,31 @@ func (r *PostgreNewsFeed) Delete(ctx context.Context, post *domain.NewsFeed) err
 	return nil
 }
 
-func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
-	var newsFeeds []*domain.NewsFeed
-	var total int64
+func (r *PostgreNewsFeed) QuerySeach(ctx context.Context, dto *dto.NewsFeedGlobalSearch) (*gorm.DB, error) {
 	query := r.db.WithContext(ctx).
 		Model(&domain.NewsFeed{}).
 		Where("deleted_at IS NULL and visibility = 10")
 
-	if post.Text != "" {
-		query = query.Where("title LIKE ?", "%"+post.Text+"%")
+	if dto.Text != "" {
+		query = query.Where("title LIKE ?", "%"+dto.Text+"%")
 	}
 
-	err := query.
+	return query, nil
+}
+
+func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+	var newsFeeds []*domain.NewsFeed
+	var total int64
+	query, err := r.QuerySeach(ctx, post)
+	if err != nil {
+		return nil, 0, err
+	}
+	err = query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = query.
 		Order("created_at DESC").
 		Offset(post.GetOffset()).
 		Limit(post.GetLimit()).
@@ -72,15 +82,22 @@ func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGloba
 	if err != nil {
 		return nil, 0, err
 	}
-	query.Count(&total)
+
 	return newsFeeds, int32(total), nil
 }
 
-func (r *PostgreNewsFeed) UpdateLike(ctx context.Context, newFeedID uint64, numLike int) error {
+func (r *PostgreNewsFeed) UpdateLikeNumber(ctx context.Context, newFeedID uint64, totalLike int) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.NewsFeed{}).
-		Where("id = ?", newFeedID).
-		Update("like_number", numLike).Error
+		Where("id = ? and deleted_at is null", newFeedID).
+		Update("num_like", totalLike).Error
+}
+
+func (r *PostgreNewsFeed) UpdateCommentNumber(ctx context.Context, newFeedID uint64, totalComment int) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ? and deleted_at is null", newFeedID).
+		Update("num_comment", totalComment).Error
 }
 
 func (r *PostgreNewsFeed) UpdateComment(ctx context.Context, newFeedID uint64, numComment int) error {
@@ -130,4 +147,34 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 		First(&newsFeed).
 		Error
 	return newsFeed, err
+}
+
+func (r *PostgreNewsFeed) GetLastUpdated(ctx context.Context, id uint64) (*time.Time, error) {
+	var updatedTime time.Time
+	err := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Select("updated_at").
+		Where("id = ? AND deleted_at IS NULL", id).
+		Order("updated_at DESC").
+		Limit(1).
+		Pluck("updated_at", &updatedTime).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedTime, nil
+}
+
+func (r *PostgreNewsFeed) IncrementNumberShare(ctx context.Context, newsFeedID uint64) error {
+	return r.db.WithContext(ctx).
+		Transaction(func(tx *gorm.DB) error {
+			err := tx.Model(&domain.NewsFeed{}).
+				Where("id = ? AND deleted_at IS NULL", newsFeedID).
+				UpdateColumn("num_share", gorm.Expr("COALESCE(num_share, 0) + ?", 1)).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 }

@@ -11,6 +11,7 @@ type Comment struct {
 	Content    string  `json:"content"`
 	ParentID   *uint64 `json:"parent_id"`
 	NumLike    uint32  `json:"num_like"`
+	NumDisLike uint32  `json:"num_dislike"`
 	NumReply   uint32  `json:"num_reply"`
 }
 

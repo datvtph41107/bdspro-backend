@@ -8,6 +8,7 @@ import (
 	_db "common/db"
 	"social/config"
 	social_config "social/config"
+	social_infra_client "social/infra/client"
 	social_infra_impl "social/infra/impl"
 	social_infra_postgre "social/infra/postgre"
 	social_infra_service "social/infra/service"
@@ -19,28 +20,45 @@ import (
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	wire.Bind(new(social_internal_interface.BdsproClient), new(*social_infra_client.BdsproClient)),
+	wire.Bind(new(social_internal_interface.ChatClient), new(*social_infra_client.ChatClient)),
+	wire.Bind(new(social_internal_interface.UserClient), new(*social_infra_client.UserClient)),
 	wire.Bind(new(social_internal_interface.PermissionUsecase), new(*social_infra_impl.PermissionImpl)),
 	wire.Bind(new(social_internal_repo.CommentRepo), new(*social_infra_postgre.PostgreComment)),
+	wire.Bind(new(social_internal_repo.FriendTagRepo), new(*social_infra_postgre.PostgreFriendTag)),
 	wire.Bind(new(social_internal_repo.LikeRepo), new(*social_infra_postgre.LikeRepo)),
 	wire.Bind(new(social_internal_repo.NewsFeedRepo), new(*social_infra_postgre.PostgreNewsFeed)),
+	wire.Bind(new(social_internal_repo.NewsFeedMediaRepo), new(*social_infra_postgre.PostgreNewsFeedMedia)),
+	wire.Bind(new(social_internal_repo.NewsFeedShareRepo), new(*social_infra_postgre.PostgreNewsFeedShare)),
 	wire.Bind(new(social_internal_repo.ReportRepo), new(*social_infra_postgre.PostgreReport)),
 	wire.Bind(new(social_internal_repo.ReportReasonRepo), new(*social_infra_postgre.PostgreReportReason)),
+	wire.Bind(new(social_internal_interface.ITransaction), new(*social_infra_postgre.PostgreTransaction)),
+	social_infra_client.NewBdsproClient,
+	social_infra_client.NewChatClient,
 	social_infra_service.NewCommentService,
 	social_internal_usecase.NewCommentUsecase,
 	social_config.NewConfigApp,
+	social_internal_usecase.NewFriendTagUsecase,
 	social_infra_postgre.NewLikeRepo,
 	social_infra_service.NewLikeService,
 	social_internal_usecase.NewLikeUsecase,
 	social_infra_service.NewNewsFeedService,
+	social_internal_usecase.NewNewsFeedShareUsecase,
 	social_internal_usecase.NewNewsFeedUsecase,
+	social_internal_usecase.NewNumberUpdateUsecase,
 	social_infra_impl.NewPermissionImpl,
 	social_infra_postgre.NewPostgreComment,
+	social_infra_postgre.NewPostgreFriendTag,
 	social_infra_postgre.NewPostgreNewsFeed,
+	social_infra_postgre.NewPostgreNewsFeedMedia,
+	social_infra_postgre.NewPostgreNewsFeedShare,
 	social_infra_postgre.NewPostgreReport,
 	social_infra_postgre.NewPostgreReportReason,
+	social_infra_postgre.NewPostgreTransaction,
 	social_internal_usecase.NewReportReasonUsecase,
 	social_infra_service.NewReportService,
 	social_internal_usecase.NewReportUsecase,
+	social_infra_client.NewUserClient,
 )
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)

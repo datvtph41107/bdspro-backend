@@ -14,3 +14,13 @@ if [ "$1" = "wire" ]; then
 
   exit 1
 fi
+
+
+if [ "$1" = "social" ]; then
+  echo "Usage: $1 swag [extra_flags]"
+  cd social-service 
+  swag init --parseDependency --output ../gateway-service/docs/social
+  go run ../code/script/gen_wire.go social
+  exit 1
+fi
+

@@ -172,7 +172,7 @@ func (s *GatewayNotiService) mapToPB(noti *domain.NotificationEntity) *pb_noti.N
 		Id:        noti.ID,
 		UserId:    noti.TargetID,
 		Title:     noti.Title,
-		Message:   []string{noti.Message},
+		Message:   []string{"", "Người dùng ẩn danh ", noti.Message},
 		Link:      noti.Link,
 		Type:      int32(noti.Type),
 		Timestamp: _utils.FormatTimeToString(noti.CreatedAt),

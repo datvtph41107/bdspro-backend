@@ -11,4 +11,5 @@ type LikeRepo interface {
 	GetByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (*domain.Like, error)
 	ExistByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (bool, error)
 	Delete(ctx context.Context, like *domain.Like) error
+	Count(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (int, error)
 }

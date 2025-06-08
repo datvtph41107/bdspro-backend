@@ -149,28 +149,28 @@
             "format": "int32"
           },
           {
-            "name": "likeNumber",
+            "name": "numLike",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "commentNumber",
+            "name": "numComment",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "shareNumber",
+            "name": "numShare",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "viewNumber",
+            "name": "numView",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -188,6 +188,17 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "friendTagIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -232,117 +243,14 @@
         ]
       }
     },
-    "/v2/social/news-feed/{id}/like": {
-      "post": {
-        "operationId": "NewsFeedService_LikeNewsFeed",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_socialEmpty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "title",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "content",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "image",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "link",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "visibility",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "likeNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "commentNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "shareNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "viewNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "updatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "postId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "NewsFeedService"
-        ]
-      }
-    },
-    "/v2/social/news-feed/{id}/share": {
+    "/v2/social/news-feed/{newsFeedId}/share": {
       "post": {
         "operationId": "NewsFeedService_ShareNewsFeed",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_socialEmpty"
+              "$ref": "#/definitions/pb_socialShareResponse"
             }
           },
           "default": {
@@ -353,142 +261,20 @@
           }
         },
         "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
           {
             "name": "newsFeedId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "targetId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "content",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "targetType",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "NewsFeedService"
-        ]
-      }
-    },
-    "/v2/social/news-feed/{id}/view": {
-      "post": {
-        "operationId": "NewsFeedService_ViewNewsFeed",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_socialEmpty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
             "format": "uint64"
           },
           {
-            "name": "title",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "content",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "image",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "link",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "visibility",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "likeNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "commentNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "shareNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "viewNumber",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "updatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "postId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewsFeedServiceShareNewsFeedBody"
+            }
           }
         ],
         "tags": [
@@ -498,6 +284,22 @@
     }
   },
   "definitions": {
+    "NewsFeedServiceShareNewsFeedBody": {
+      "type": "object",
+      "properties": {
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "shareType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
     "NewsFeedServiceUpdateNewsFeedBody": {
       "type": "object",
       "properties": {
@@ -517,19 +319,19 @@
           "type": "integer",
           "format": "int32"
         },
-        "likeNumber": {
+        "numLike": {
           "type": "integer",
           "format": "int32"
         },
-        "commentNumber": {
+        "numComment": {
           "type": "integer",
           "format": "int32"
         },
-        "shareNumber": {
+        "numShare": {
           "type": "integer",
           "format": "int32"
         },
-        "viewNumber": {
+        "numView": {
           "type": "integer",
           "format": "int32"
         },
@@ -539,6 +341,20 @@
         "postId": {
           "type": "string",
           "format": "uint64"
+        },
+        "mediaFeeds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_socialNewsFeedMedia"
+          }
+        },
+        "friendTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -584,19 +400,19 @@
           "type": "integer",
           "format": "int32"
         },
-        "likeNumber": {
+        "numLike": {
           "type": "integer",
           "format": "int32"
         },
-        "commentNumber": {
+        "numComment": {
           "type": "integer",
           "format": "int32"
         },
-        "shareNumber": {
+        "numShare": {
           "type": "integer",
           "format": "int32"
         },
-        "viewNumber": {
+        "numView": {
           "type": "integer",
           "format": "int32"
         },
@@ -606,6 +422,51 @@
         "postId": {
           "type": "string",
           "format": "uint64"
+        },
+        "mediaFeeds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_socialNewsFeedMedia"
+          }
+        },
+        "friendTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "pb_socialNewsFeedMedia": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "orderNumber": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "pb_socialShareResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "success": {
+          "type": "boolean"
         }
       }
     },

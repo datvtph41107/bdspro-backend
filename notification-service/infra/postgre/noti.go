@@ -93,3 +93,10 @@ func (repo *PostgreNotification) ListNotiWithTargetIdAndOwnerType(ctx context.Co
 		Find(&notifications).Error
 	return notifications, err
 }
+
+func (repo *PostgreNotification) DeleteIds(ctx context.Context, ids []uint64) error {
+	return repo.DB.Model(&domain.NotificationEntity{}).
+		Where("id IN (?)", ids).
+		Update("deleted_at", time.Now()).
+		Error
+}

@@ -43,6 +43,13 @@ definitions:
     type: object
   social.Empty:
     type: object
+  social.LikeCommentRequest:
+    properties:
+      commentId:
+        type: integer
+      dislike:
+        type: boolean
+    type: object
   social.LikeResponse:
     properties:
       createdAt:
@@ -76,30 +83,49 @@ definitions:
     type: object
   social.NewsFeed:
     properties:
-      comment_number:
-        type: integer
       content:
         type: string
+      friendTagIds:
+        items:
+          type: integer
+        type: array
       id:
         type: integer
       image:
         type: string
-      like_number:
-        type: integer
       link:
         type: string
-      postId:
+      mediaFeeds:
+        items:
+          $ref: '#/definitions/social.NewsFeedMedia'
+        type: array
+      numComment:
         type: integer
-      share_number:
+      numLike:
+        type: integer
+      numShare:
+        type: integer
+      numView:
+        type: integer
+      postId:
         type: integer
       title:
         type: string
       updated_at:
         type: string
-      view_number:
-        type: integer
       visibility:
         type: integer
+    type: object
+  social.NewsFeedMedia:
+    properties:
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      type:
+        type: string
+      url:
+        type: string
     type: object
   social.ReportReason:
     properties:
@@ -140,6 +166,24 @@ definitions:
         type: integer
       reasonId:
         type: integer
+    type: object
+  social.ShareRequest:
+    properties:
+      content:
+        type: string
+      newsFeedId:
+        type: integer
+      shareType:
+        type: integer
+      targetId:
+        type: integer
+    type: object
+  social.ShareResponse:
+    properties:
+      id:
+        type: integer
+      success:
+        type: boolean
     type: object
 info:
   contact: {}
@@ -301,6 +345,12 @@ paths:
         name: commentId
         required: true
         type: integer
+      - description: LikeCommentRequest
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/social.LikeCommentRequest'
       produces:
       - application/json
       responses:
@@ -308,6 +358,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/social.LikeResponse'
+      security:
+      - BearerAuth: []
       tags:
       - Like
   /like/comment/list/{commentId}:
@@ -348,6 +400,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/social.LikeResponse'
+      security:
+      - BearerAuth: []
       tags:
       - Like
     post:
@@ -444,11 +498,14 @@ paths:
       description: Update news feed
       parameters:
       - in: query
-        name: comment_number
-        type: integer
-      - in: query
         name: content
         type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: friendTagIds
+        type: array
       - in: query
         name: id
         type: integer
@@ -456,16 +513,22 @@ paths:
         name: image
         type: string
       - in: query
-        name: like_number
-        type: integer
-      - in: query
         name: link
         type: string
       - in: query
-        name: postId
+        name: numComment
         type: integer
       - in: query
-        name: share_number
+        name: numLike
+        type: integer
+      - in: query
+        name: numShare
+        type: integer
+      - in: query
+        name: numView
+        type: integer
+      - in: query
+        name: postId
         type: integer
       - in: query
         name: title
@@ -473,9 +536,6 @@ paths:
       - in: query
         name: updated_at
         type: string
-      - in: query
-        name: view_number
-        type: integer
       - in: query
         name: visibility
         type: integer
@@ -489,6 +549,35 @@ paths:
       security:
       - BearerAuth: []
       summary: Update news feed
+      tags:
+      - News Feed
+  /news-feed/{newsFeedId}/share:
+    post:
+      consumes:
+      - application/json
+      description: Share news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - description: ShareRequest
+        in: body
+        name: shareRequest
+        required: true
+        schema:
+          $ref: '#/definitions/social.ShareRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ShareResponse'
+      security:
+      - BearerAuth: []
+      summary: Share news feed
       tags:
       - News Feed
   /news-feed/public:

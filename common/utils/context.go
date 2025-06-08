@@ -44,3 +44,12 @@ func GetOrganizationIdFromContext(c context.Context) uint64 {
 // 	// }
 // 	// return 0
 // }
+
+func CloneContext(ctx context.Context) context.Context {
+	cloneCtx := context.Background()
+	profileId := GetProfileIdWithContext(ctx)
+	organizationId := GetOrganizationIdFromContext(ctx)
+	cloneCtx = context.WithValue(cloneCtx, "profileId", profileId)
+	cloneCtx = context.WithValue(cloneCtx, "organizationId", organizationId)
+	return cloneCtx
+}

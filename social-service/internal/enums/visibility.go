@@ -4,8 +4,8 @@ type Visibility int
 
 const (
 	VisibilityPublic  Visibility = 10
-	VisibilityFriend  Visibility = 30
-	VisibilityPrivate Visibility = 20
+	VisibilityFriend  Visibility = 20
+	VisibilityPrivate Visibility = 30
 	VisibilityGroup   Visibility = 40
 )
 

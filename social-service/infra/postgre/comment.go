@@ -109,3 +109,56 @@ func (r *PostgreComment) GetByID(ctx context.Context, id uint64) (*domain.Commen
 	}
 	return &comment, nil
 }
+
+func (r *PostgreComment) GetLastUpdated(ctx context.Context, id uint64) (*time.Time, error) {
+	var updatedTime time.Time
+	err := r.db.WithContext(ctx).
+		Model(&domain.Comment{}).
+		Select("updated_at").
+		Where("id = ? AND deleted_at IS NULL", id).
+		Order("updated_at DESC").
+		Limit(1).
+		Pluck("updated_at", &updatedTime).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedTime, nil
+}
+
+func (r *PostgreComment) UpdateLikeNumber(ctx context.Context, newFeedID uint64, totalLike int, dislike bool) error {
+	field := "num_like"
+	if dislike {
+		field = "num_dis_like"
+	}
+	return r.db.WithContext(ctx).
+		Model(&domain.Comment{}).
+		Where("id = ? and deleted_at is null", newFeedID).
+		Update(field, totalLike).Error
+}
+
+func (r *PostgreComment) UpdateNumberReply(ctx context.Context, commentID uint64, totalReply int) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Comment{}).
+		Where("id = ? and deleted_at is null", commentID).
+		Update("num_reply", totalReply).Error
+}
+
+func (r *PostgreComment) CountReply(ctx context.Context, commentID uint64) (int, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.Comment{}).
+		Where("parent_id = ? and deleted_at is null", commentID).
+		Count(&count).Error
+	return int(count), err
+}
+
+func (r *PostgreComment) CountByNewsFeedID(ctx context.Context, newsFeedID uint64) (int, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.Comment{}).
+		Where("news_feed_id = ? and deleted_at is null", newsFeedID).
+		Count(&count).Error
+	return int(count), err
+}

@@ -119,6 +119,8 @@ func local_request_LikeService_LikeNewsFeed_0(ctx context.Context, marshaler run
 	return msg, metadata, err
 }
 
+var filter_LikeService_UnlikeComment_0 = &utilities.DoubleArray{Encoding: map[string]int{"commentId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 func request_LikeService_UnlikeComment_0(ctx context.Context, marshaler runtime.Marshaler, client LikeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq LikeCommentRequest
@@ -133,6 +135,12 @@ func request_LikeService_UnlikeComment_0(ctx context.Context, marshaler runtime.
 	protoReq.CommentId, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "commentId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_UnlikeComment_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.UnlikeComment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -152,9 +160,17 @@ func local_request_LikeService_UnlikeComment_0(ctx context.Context, marshaler ru
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "commentId", err)
 	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_UnlikeComment_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.UnlikeComment(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_LikeService_UnlikeNewsFeed_0 = &utilities.DoubleArray{Encoding: map[string]int{"newsFeedId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_LikeService_UnlikeNewsFeed_0(ctx context.Context, marshaler runtime.Marshaler, client LikeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
@@ -170,6 +186,12 @@ func request_LikeService_UnlikeNewsFeed_0(ctx context.Context, marshaler runtime
 	protoReq.NewsFeedId, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_UnlikeNewsFeed_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.UnlikeNewsFeed(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -189,9 +211,17 @@ func local_request_LikeService_UnlikeNewsFeed_0(ctx context.Context, marshaler r
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
 	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_UnlikeNewsFeed_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.UnlikeNewsFeed(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_LikeService_GetListLikeComment_0 = &utilities.DoubleArray{Encoding: map[string]int{"commentId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_LikeService_GetListLikeComment_0(ctx context.Context, marshaler runtime.Marshaler, client LikeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
@@ -207,6 +237,12 @@ func request_LikeService_GetListLikeComment_0(ctx context.Context, marshaler run
 	protoReq.CommentId, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "commentId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_GetListLikeComment_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetListLikeComment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -226,9 +262,17 @@ func local_request_LikeService_GetListLikeComment_0(ctx context.Context, marshal
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "commentId", err)
 	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_GetListLikeComment_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetListLikeComment(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_LikeService_GetListLikeNewsFeed_0 = &utilities.DoubleArray{Encoding: map[string]int{"newsFeedId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_LikeService_GetListLikeNewsFeed_0(ctx context.Context, marshaler runtime.Marshaler, client LikeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
@@ -244,6 +288,12 @@ func request_LikeService_GetListLikeNewsFeed_0(ctx context.Context, marshaler ru
 	protoReq.NewsFeedId, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_GetListLikeNewsFeed_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetListLikeNewsFeed(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -262,6 +312,12 @@ func local_request_LikeService_GetListLikeNewsFeed_0(ctx context.Context, marsha
 	protoReq.NewsFeedId, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LikeService_GetListLikeNewsFeed_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetListLikeNewsFeed(ctx, &protoReq)
 	return msg, metadata, err

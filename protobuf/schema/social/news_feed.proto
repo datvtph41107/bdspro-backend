@@ -30,25 +30,23 @@ service NewsFeedService {
             get: "/v2/social/news-feed/public"
         };
     };
-    rpc LikeNewsFeed(NewsFeed) returns (Empty) {
+    rpc ShareNewsFeed(ShareRequest) returns (ShareResponse) {
         option (google.api.http) = {
-            post: "/v2/social/news-feed/{id}/like"
-        };
-    };
-    rpc ShareNewsFeed(ShareRequest) returns (Empty) {
-        option (google.api.http) = {
-            post: "/v2/social/news-feed/{id}/share"
-        };
-    };
-    rpc ViewNewsFeed(NewsFeed) returns (Empty) {
-        option (google.api.http) = {
-            post: "/v2/social/news-feed/{id}/view"
+            post: "/v2/social/news-feed/{newsFeedId}/share"
+            body: "*"
         };
     };
 }
 
 
 message Empty {}
+
+message NewsFeedMedia {
+    uint64 id = 1;
+    string url = 2;
+    string type = 3;
+    int32 orderNumber = 4;
+}
 
 message NewsFeed {
     uint64 id = 1;
@@ -57,12 +55,14 @@ message NewsFeed {
     string image = 4;
     string link = 5;
     int32 visibility = 6;
-    int32 like_number = 7;
-    int32 comment_number = 8;
-    int32 share_number = 9;
-    int32 view_number = 10;
+    int32 numLike = 7;
+    int32 numComment = 8;
+    int32 numShare = 9;
+    int32 numView = 10;
     string updated_at = 11;
     uint64 postId = 12;
+    repeated NewsFeedMedia mediaFeeds = 13;
+    repeated uint64 friendTagIds = 14;
 }
 
 message NewsFeedSearch {
@@ -83,9 +83,13 @@ message NewsFeedGlobalSearch {
 }
 
 message ShareRequest {
-    uint64 id = 1;
-    uint64 newsFeedId = 2;
-    uint64 targetId = 3;
+    uint64 newsFeedId = 1;
+    uint64 targetId = 2;
+    int32 shareType = 3;
     string content = 4;
-    int32 targetType = 5;
+}
+
+message ShareResponse {
+    uint64 id = 1;
+    bool success = 2;
 }

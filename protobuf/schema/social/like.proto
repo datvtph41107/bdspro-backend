@@ -43,10 +43,12 @@ service LikeService {
 
 message LikeCommentRequest {
     uint64 commentId = 1;
+    bool dislike = 2;
 }
 
 message LikeNewsFeedRequest {
     uint64 newsFeedId = 1;
+    bool dislike = 2;
 }
 
 message LikeResponse {
@@ -69,8 +71,10 @@ message ListLikeResponse {
 
 message LikeNewsFeedSearch {
     uint64 newsFeedId = 1;
+    bool dislike = 2;
 }
 
 message LikeCommentSearch {
     uint64 commentId = 1;
+    bool dislike = 2;
 }

@@ -1,4 +1,4 @@
-package exception
+package _errors
 
 import (
 	"net/http"

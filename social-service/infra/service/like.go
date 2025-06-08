@@ -20,11 +20,13 @@ func NewLikeService(likeUsecase *usecase.LikeUsecase) *LikeService {
 // @Tags Like
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param commentId path int true "CommentId"
+// @Param body body pb_social.LikeCommentRequest true "LikeCommentRequest"
 // @Success 200 {object} pb_social.LikeResponse
 // @Router /like/comment/{commentId} [post]
 func (s *LikeService) LikeComment(ctx context.Context, req *pb_social.LikeCommentRequest) (*pb_social.LikeResponse, error) {
-	like, err := s.likeUsecase.LikeComment(ctx, req.CommentId)
+	like, err := s.likeUsecase.LikeComment(ctx, req.CommentId, req.Dislike)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +66,7 @@ func (s *LikeService) UnlikeComment(ctx context.Context, req *pb_social.LikeComm
 // @Tags Like
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param newsFeedId path int true "NewsFeedId"
 // @Success 200 {object} pb_social.LikeResponse
 // @Router /like/news-feed/{newsFeedId} [delete]

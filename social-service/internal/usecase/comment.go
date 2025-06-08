@@ -11,13 +11,26 @@ import (
 )
 
 type CommentUsecase struct {
-	commentRepo       repo.CommentRepo
-	permissionUsecase iusecase.PermissionUsecase
-	newsFeedRepo      repo.NewsFeedRepo
+	commentRepo         repo.CommentRepo
+	permissionUsecase   iusecase.PermissionUsecase
+	newsFeedRepo        repo.NewsFeedRepo
+	likeRepo            repo.LikeRepo
+	numberUpdateUsecase *NumberUpdateUsecase
 }
 
-func NewCommentUsecase(commentRepo repo.CommentRepo, permissionUsecase iusecase.PermissionUsecase, newsFeedRepo repo.NewsFeedRepo) *CommentUsecase {
-	return &CommentUsecase{commentRepo: commentRepo, permissionUsecase: permissionUsecase, newsFeedRepo: newsFeedRepo}
+func NewCommentUsecase(commentRepo repo.CommentRepo,
+	permissionUsecase iusecase.PermissionUsecase,
+	newsFeedRepo repo.NewsFeedRepo,
+	likeRepo repo.LikeRepo,
+	numberUpdateUsecase *NumberUpdateUsecase,
+) *CommentUsecase {
+	return &CommentUsecase{
+		commentRepo:         commentRepo,
+		permissionUsecase:   permissionUsecase,
+		newsFeedRepo:        newsFeedRepo,
+		likeRepo:            likeRepo,
+		numberUpdateUsecase: numberUpdateUsecase,
+	}
 }
 
 func (u *CommentUsecase) CreateComment(ctx context.Context, comment *domain.Comment) (*domain.Comment, error) {
@@ -46,6 +59,15 @@ func (u *CommentUsecase) CreateComment(ctx context.Context, comment *domain.Comm
 	if err != nil {
 		return nil, err
 	}
+
+	bg := context.Background()
+	newCtx := context.WithValue(bg, "profileId", profileID)
+	if result.ParentID != nil {
+		go u.numberUpdateUsecase.UpdateNumberReplyComment(newCtx, *result.ParentID, result.NewsFeedID)
+	} else {
+		go u.numberUpdateUsecase.UpdateNumberComment(newCtx, result.NewsFeedID)
+	}
+
 	return result, nil
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"social/internal/domain"
 	"social/internal/enums"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -40,7 +39,7 @@ func (r *LikeRepo) ExistByTargetIdAndTypeAndUserId(ctx context.Context, targetId
 	query := `
         SELECT EXISTS (
             SELECT 1 FROM tb_like
-            WHERE user_id = $1 AND target_id = $2 AND target_type = $3
+            WHERE user_id = $1 AND target_id = $2 AND target_type = $3 and deleted_at is null
         )
     `
 	err := r.db.WithContext(ctx).
@@ -54,6 +53,15 @@ func (r *LikeRepo) Delete(ctx context.Context, like *domain.Like) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.Like{}).
 		Where("target_id = ? AND target_type = ? AND user_id = ?", like.TargetID, like.TargetType, like.UserID).
-		Update("deleted_at", time.Now()).
+		Delete(&domain.Like{}).
 		Error
+}
+
+func (r *LikeRepo) Count(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (int, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.Like{}).
+		Where("target_id = ? AND target_type = ? and dis_like = ?", targetId, targetType, dislike).
+		Count(&count).Error
+	return int(count), err
 }

@@ -82,26 +82,7 @@ func ForwardingRequest(g *Gateway, env string) func(c *gin.Context) {
 				// fmt.Println(key, value, " _HEADER_RESPONSE")
 			}
 		}
-
-		// c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Không được dùng "*"
-		// fmt.Println(resp.Body(), " _BODY_RESPONSE")
-		// ✅ Gửi dữ liệu về FE
-		// "Access-Control-Allow-Origin"
-		// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8102")
-		// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		// fmt.Println(c.Writer.Header(), "HEADER_REPONSE.......")
 		c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
-
-		// ✅ Đảm bảo CORS cho phép gửi Cookie
-
-		// target, _ := url.Parse("http://userservice:8080") // Đổi thành URL của User Service
-		// proxy := httputil.NewSingleHostReverseProxy(target)
-		// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
-		// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		// proxy.ServeHTTP(c.Writer, c.Request)
-
-		// c.Data(resp.StatusCode(), contentType, resp.Body())
 	}
 
 }

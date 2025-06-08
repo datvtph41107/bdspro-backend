@@ -8,11 +8,12 @@ import (
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
 		&domain.NewsFeed{},
-		&domain.TagFriend{},
-		&domain.Media{},
+		&domain.FriendTag{},
+		&domain.NewsFeedMedia{},
 		&domain.ReportReason{},
 		&domain.Report{},
 		&domain.Comment{},
 		&domain.Like{},
+		&domain.NewsFeedShare{},
 	)
 }
