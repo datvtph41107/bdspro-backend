@@ -85,3 +85,11 @@ func (repo *PostgreNotification) Delete(ctx context.Context, profileId, id uint6
 		Update("deleted_at", time.Now()).
 		Error
 }
+
+func (repo *PostgreNotification) ListNotiWithTargetIdAndOwnerType(ctx context.Context, targetId uint64, ownerType int32, hour int) ([]domain.NotificationEntity, error) {
+	var notifications []domain.NotificationEntity
+	err := repo.DB.WithContext(ctx).
+		Where("target_id = ? AND owner_type = ? and deleted_at is null AND created_at >= NOW() - INTERVAL '? HOURS'", targetId, ownerType, hour).
+		Find(&notifications).Error
+	return notifications, err
+}

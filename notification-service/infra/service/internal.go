@@ -2,14 +2,11 @@ package service
 
 import (
 	"context"
-	"noti/enums"
 	"noti/internal/domain"
 	"noti/internal/dto"
+	"noti/internal/enums"
 	"noti/internal/usecase"
 	pb_noti "pb/types/notification"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type InternalNotiService struct {
@@ -23,14 +20,17 @@ func NewInternalNotiService() *InternalNotiService {
 
 func (s *InternalNotiService) Create(ctx context.Context, req *pb_noti.NotiNewRequest) (*pb_noti.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
-		Title:   req.Title,
-		Message: req.Message,
-		Link:    req.Link,
-		Type:    enums.TypeEnum(req.Type),
+		Title:        req.Title,
+		Message:      req.Message,
+		Link:         req.Link,
+		Type:         enums.TypeEnum(req.Type),
+		TargetID:     req.TargetId,
+		OwnerType:    enums.OwnerType(req.TargetType),
+		SendToDevice: req.SendToDevice,
 	}
 	notification, err := s.Usecase.Create(ctx, dto)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "method Send not implemented")
+		return nil, err
 	}
 
 	response := s.mapToPB(notification)

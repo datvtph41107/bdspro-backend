@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"noti/enums"
 	"noti/internal/domain"
+	"noti/internal/enums"
 	"time"
 )
 

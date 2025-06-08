@@ -2,21 +2,21 @@ package dto
 
 import (
 	"errors"
-	"noti/enums"
+	"noti/internal/enums"
 	"time"
 
 	_dto "common/dto"
 )
 
 type NotiNewRequest struct {
-	TargetID     uint64         `json:"targetId" binding:"required"`
-	OwnerType    int32          `json:"ownerType" binding:"required"`
-	Title        string         `json:"title" binding:"required"`
-	Message      string         `json:"message" binding:"required"`
-	Link         string         `json:"link,omitempty"`
-	Type         enums.TypeEnum `json:"type" binding:"required"`
-	VisibleAt    *time.Time     `json:"visibleAt,omitempty"`
-	SendToDevice bool           `json:"sendToDevice,omitempty"`
+	TargetID     uint64          `json:"targetId" binding:"required"`
+	OwnerType    enums.OwnerType `json:"ownerType" binding:"required"`
+	Title        string          `json:"title" binding:"required"`
+	Message      string          `json:"message" binding:"required"`
+	Link         string          `json:"link,omitempty"`
+	Type         enums.TypeEnum  `json:"type" binding:"required"`
+	VisibleAt    *time.Time      `json:"visibleAt,omitempty"`
+	SendToDevice bool            `json:"sendToDevice,omitempty"`
 }
 
 // SearchNotiRequest đại diện cho request tìm kiếm thông báo

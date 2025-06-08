@@ -59,6 +59,7 @@ service GatewayNotificationService {
 
 message NotiBatchRequest {
     repeated NotiNewRequest datas = 1;
+    bool sendToDevice = 2;
 }
 
 message PushTopicRequest {
@@ -117,6 +118,7 @@ message NotiNewRequest {
     uint64 targetId = 5;
     int32 targetType = 6;
     google.protobuf.Timestamp visibleAt = 7;
+    bool sendToDevice = 8;
 }
 
 message GatewayNotiNewRequest {

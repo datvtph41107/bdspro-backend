@@ -2,7 +2,7 @@ package domain
 
 import (
 	_models "common/models"
-	"noti/enums"
+	"noti/internal/enums"
 	"time"
 )
 

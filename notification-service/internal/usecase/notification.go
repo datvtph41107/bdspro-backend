@@ -6,9 +6,9 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"noti/enums"
 	"noti/internal/domain"
 	"noti/internal/dto"
+	"noti/internal/enums"
 	"noti/internal/repo"
 	pb_noti "pb/types/notification"
 	"time"
@@ -28,13 +28,12 @@ func NewNotificationService(repo repo.NotificationRepo) *NotificationUsecase {
 // CreateNotification: Tạo thông báo mới
 func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
-	// metadata := _jwt.MetadataFromContext(c)
-	// if metadata == nil {
-	// 	return nil, &_routes.Except{
-	// 		Code:    400,
-	// 		Message: "Thông tin không chính xác",
-	// 	}
-	// }
+	if profileId == 0 {
+		return nil, &_routes.Except{
+			Code:    401,
+			Message: "Không thể tạo thông báo",
+		}
+	}
 
 	var visibleAt *time.Time
 	if request.VisibleAt != nil {
@@ -42,7 +41,7 @@ func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto
 	}
 	notification := domain.NotificationEntity{
 		TargetID:  profileId,
-		OwnerType: request.OwnerType,
+		OwnerType: int32(request.OwnerType),
 		Title:     request.Title,
 		Message:   request.Message,
 		Link:      request.Link,
@@ -135,7 +134,37 @@ func (s *NotificationUsecase) Remove(c context.Context, id uint64) (uint64, erro
 
 // --- Internal ---
 func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
-	return nil, nil
+	// notifications, err := s.Repo.ListNotiWithTargetIdAndOwnerType(c, dto.TargetID, int32(dto.OwnerType), 4)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	notification := domain.NotificationEntity{
+		TargetID:  dto.TargetID,
+		OwnerType: int32(dto.OwnerType),
+		Title:     dto.Title,
+		Message:   dto.Message,
+		Link:      dto.Link,
+		Type:      enums.TypeEnum(dto.Type),
+		VisibleAt: dto.VisibleAt,
+	}
+
+	// todo: delete old notifications
+	// if len(notifications) > 0 {
+	// 	ids := []uint64{}
+	// 	for _, notification := range notifications {
+	// 		ids = append(ids, notification.ID)
+	// 	}
+	// 	if err := s.Repo.DeleteIds(c, ids); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	if err := s.Repo.Create(c, &notification); err != nil {
+		return nil, err
+	}
+
+	return &notification, nil
 }
 
 func (s *NotificationUsecase) SendBatch(c context.Context, dto *dto.NotiNewRequest) (*domain.NotificationEntity, error) {

@@ -13,4 +13,6 @@ type NotificationRepo interface {
 	ReadAll(ctx context.Context, profileId uint64) (int64, error)
 	Count(ctx context.Context, profileId uint64) (int64, error)
 	Delete(ctx context.Context, profileId uint64, id uint64) error
+	ListNotiWithTargetIdAndOwnerType(ctx context.Context, targetId uint64, ownerType int32, hour int) ([]domain.NotificationEntity, error)
+	DeleteIds(ctx context.Context, ids []uint64) error
 }
