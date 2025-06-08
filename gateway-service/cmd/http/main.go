@@ -97,6 +97,9 @@ var publicRoutes = []string{
 	"/v1/membership/plan/list",
 	"/v1/membership/user/plans",
 	"/v1/search",
+	"/v2/social/news-feed/public",
+	"/v2/social/report/reasons",
+	"/v2/social/comment/list",
 	// "/v1/search/plan/list",
 }
 
@@ -144,6 +147,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterOrganizationService(ctx, mux, url, opts)
 		service.RegisterBdsproService(ctx, mux, url, opts)
 		service.RegisterCrmService(ctx, mux, url, opts)
+		service.RegisterSocialService(ctx, mux, url, opts)
 
 		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		r.Static("/swagger-doc", "docs")

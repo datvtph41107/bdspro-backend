@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package social;
+
+option go_package = "pb/types/social";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+service CommentService {
+    rpc CreateComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/comment"
+            body: "*"
+        };
+    };
+    rpc UpdateComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            put: "/v2/social/comment/{id}"
+            body: "*"
+        };
+    };
+    rpc DeleteComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            delete: "/v2/social/comment/{id}"
+        };
+    };
+    rpc GetListComment(CommentRequest) returns (CommentListResponse) { 
+        option (google.api.http) = {
+            get: "/v2/social/comment/list/{newsFeedId}"
+        };
+    };
+    rpc LikeComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/comment/{id}/like"
+        };
+    };
+    rpc ReplyComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/comment/{id}/reply"
+            body: "*"
+        };
+    };
+}
+
+message CommentRequest {
+    uint64 id = 1;
+    string content = 2;
+    optional uint64 parentId = 3;
+    uint64 newsFeedId = 4;
+    uint64 page = 5;
+    uint64 size = 6;
+}
+
+message CommentResponse {
+    uint64 id = 1;
+    string content = 2;
+    optional uint64 parentId = 3;
+    uint64 newsFeedId = 4;
+    string updatedAt = 5;
+    uint32 numLike = 6;
+    uint32 numReply = 7;
+}
+
+message CommentListResponse {
+    repeated CommentResponse data = 1;
+    uint64 total = 2;
+}

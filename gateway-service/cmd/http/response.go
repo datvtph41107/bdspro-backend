@@ -26,7 +26,9 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 		val = val.Elem()
 	}
 
-	if val.Kind() != reflect.Array {
+	// Lấy trường theo tên
+	fieldVal := val.FieldByName("Data")
+	if !fieldVal.IsValid() || !fieldVal.CanInterface() || val.Kind() == reflect.Array {
 		return json.Marshal(map[string]interface{}{
 			"code":    0,
 			"message": "success",
@@ -44,7 +46,7 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 			if fieldVal.CanInterface() {
 				data = fieldVal.Interface()
 			}
-		case "TotalElements":
+		case "Total":
 			if fieldVal.CanInterface() {
 				totalElements = fieldVal.Interface()
 			}

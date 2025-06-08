@@ -11,6 +11,13 @@ init:
 	cd user-service && go mod tidy
 	cd organization-service && go mod tidy
 
+buf-crm:
+	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
+# buf-social:
+# 	cd protobuf/schema && buf generate --template ./social/buf.gen.yaml --path social
+buf-social:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
+
 payment:
 	cd payment-service && go run main.go http
 gateway:
@@ -23,5 +30,3 @@ admin:
 	cd admin-service && go run main.go grpc
 organization:
 	cd organization-service && go run main.go grpc-server
-buf-crm:
-	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm

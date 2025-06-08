@@ -1,0 +1,15 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    - selector: pb_social.SocialService.CreatePost
+      post: /v2/social/v2/posts/create
+      body: "*"
+
+    - selector: pb_social.SocialService.UpdatePost
+      put: /v2/social/v2/posts/{id}
+      body: "*"
+
+    - selector: pb_social.SocialService.DeletePost
+      delete: /v2/social/v2/posts/{id}

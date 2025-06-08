@@ -1,0 +1,423 @@
+basePath: /v2/social
+definitions:
+  social.CommentListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/social.CommentResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  social.CommentRequest:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      newsFeedId:
+        type: integer
+      page:
+        type: integer
+      parentId:
+        type: integer
+      size:
+        type: integer
+    type: object
+  social.CommentResponse:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      newsFeedId:
+        type: integer
+      numComment:
+        type: integer
+      numLike:
+        type: integer
+      numReply:
+        type: integer
+      parentId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  social.Empty:
+    type: object
+  social.ListNewsFeed:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/social.NewsFeed'
+        type: array
+      total:
+        type: integer
+    type: object
+  social.NewsFeed:
+    properties:
+      comment_number:
+        type: integer
+      content:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      like_number:
+        type: integer
+      link:
+        type: string
+      postId:
+        type: integer
+      share_number:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      view_number:
+        type: integer
+      visibility:
+        type: integer
+    type: object
+  social.ReportReason:
+    properties:
+      active:
+        type: boolean
+      id:
+        type: integer
+      reasonName:
+        type: string
+    type: object
+  social.ReportReasonResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/social.ReportReason'
+        type: array
+      total:
+        type: integer
+    type: object
+  social.ReportRequest:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      newsFeedId:
+        type: integer
+      reasonId:
+        type: integer
+    type: object
+  social.ReportResponse:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      newsFeedId:
+        type: integer
+      reasonId:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Social Service
+  title: Social Service
+  version: "1.0"
+paths:
+  /comment:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentRequest
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/social.CommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+  /comment/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: newsFeedId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentRequest
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/social.CommentRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+  /comment/list/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: newsFeedId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.CommentListResponse'
+      tags:
+      - Comment
+  /news-feed:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa news feed
+      parameters:
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.Empty'
+      security:
+      - BearerAuth: []
+      summary: Xóa news feed
+      tags:
+      - News Feed
+    post:
+      consumes:
+      - application/json
+      description: Create a new news feed
+      parameters:
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Create a new news feed
+      tags:
+      - News Feed
+    put:
+      consumes:
+      - application/json
+      description: Update news feed
+      parameters:
+      - in: query
+        name: comment_number
+        type: integer
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: image
+        type: string
+      - in: query
+        name: like_number
+        type: integer
+      - in: query
+        name: link
+        type: string
+      - in: query
+        name: postId
+        type: integer
+      - in: query
+        name: share_number
+        type: integer
+      - in: query
+        name: title
+        type: string
+      - in: query
+        name: updated_at
+        type: string
+      - in: query
+        name: view_number
+        type: integer
+      - in: query
+        name: visibility
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Update news feed
+      tags:
+      - News Feed
+  /news-feed/public:
+    get:
+      consumes:
+      - application/json
+      description: Get global news feed
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ListNewsFeed'
+      summary: Lấy danh sách news feed
+      tags:
+      - News Feed
+  /report/reasons:
+    get:
+      consumes:
+      - application/json
+      description: Danh sách lý do báo cáo
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ReportReasonResponse'
+      summary: Danh sách lý do báo cáo
+      tags:
+      - Report
+  /report/submit:
+    post:
+      consumes:
+      - application/json
+      description: Gửi báo cáo
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/social.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Gửi báo cáo
+      tags:
+      - Report
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

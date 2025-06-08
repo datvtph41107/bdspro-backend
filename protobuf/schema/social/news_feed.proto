@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package pb_social;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "types/social";
+
+service NewsFeedService {
+    rpc CreateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed"
+            body: "*"
+        };
+    };
+    rpc UpdateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/news-feed/{id}"
+            body: "*"
+        };
+    };
+    rpc DeleteNewsFeed(NewsFeed) returns (Empty) {
+        option (google.api.http) = {
+            delete: "/v2/social/news-feed/{id}"
+        };
+    };
+    rpc GetGlobalNewsFeed(NewsFeedGlobalSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/public"
+        };
+    };
+    rpc LikeNewsFeed(NewsFeed) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed/{id}/like"
+        };
+    };
+    rpc ShareNewsFeed(ShareRequest) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed/{id}/share"
+        };
+    };
+    rpc ViewNewsFeed(NewsFeed) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed/{id}/view"
+        };
+    };
+}
+
+
+message Empty {}
+
+message NewsFeed {
+    uint64 id = 1;
+    string title = 2;
+    string content = 3;
+    string image = 4;
+    string link = 5;
+    int32 visibility = 6;
+    int32 like_number = 7;
+    int32 comment_number = 8;
+    int32 share_number = 9;
+    int32 view_number = 10;
+    string updated_at = 11;
+    uint64 postId = 12;
+}
+
+message NewsFeedSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+}
+
+message ListNewsFeed {
+    repeated NewsFeed data = 1;
+    optional int32 total = 2;
+}
+
+message NewsFeedGlobalSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+}
+
+message ShareRequest {
+    uint64 id = 1;
+    uint64 newsFeedId = 2;
+    uint64 targetId = 3;
+    string content = 4;
+    int32 targetType = 5;
+}

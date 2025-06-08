@@ -58,35 +58,14 @@ var GrpcCmd = &cobra.Command{
 
 		url := viper.GetString("service.domain")
 		notification_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
-
-		// r.GET("/swagger/:service/*any", func(c *gin.Context) {
-		// 	service := c.Param("service")
-
-		// 	var swaggerPath string
-
-		// 	switch service {
-		// 	case "notification":
-		// 		swaggerPath = "/swagger-doc/notification/notification.swagger.json"
-		// 	case "bdspro":
-		// 		swaggerPath = "/swagger-doc/bdspro/bdspro.swagger.json"
-		// 	case "order":
-		// 		swaggerPath = "/swagger-doc/order/order.swagger.json"
-		// 	default:
-		// 		c.JSON(404, gin.H{"error": "Service not found"})
-		// 		return
-		// 	}
-
-		// 	swaggerURL := ginSwagger.URL(swaggerPath)
-		// 	ginSwagger.WrapHandler(swaggerFiles.Handler, swaggerURL)(c)
-		// })
-
 		r := gin.Default()
 
 		// 1. gRPC Gateway xử lý mọi route
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
-			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
-				log.Printf("Err", err)
+			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler,
+				w http.ResponseWriter, r *http.Request, err error) {
+				log.Printf("Err: %v", err)
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
 		)
