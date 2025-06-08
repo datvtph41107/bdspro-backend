@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"gateway/config"
@@ -129,8 +130,7 @@ var HttpCmd = &cobra.Command{
 		// gateway.FetchServices()
 
 		r := gin.Default()
-
-		url := viper.GetString("service.domain")
+		env := os.Getenv("APP_ENV")
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
@@ -142,14 +142,14 @@ var HttpCmd = &cobra.Command{
 		)
 		ctx := context.Background()
 		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-		service.RegisterNotificationService(ctx, mux, url, opts)
-		service.RegisterPaymentService(ctx, mux, url, opts)
-		service.RegisterOrganizationService(ctx, mux, url, opts)
-		service.RegisterBdsproService(ctx, mux, url, opts)
-		service.RegisterCrmService(ctx, mux, url, opts)
-		service.RegisterSocialService(ctx, mux, url, opts)
+		service.RegisterNotificationService(ctx, mux, env, opts)
+		service.RegisterPaymentService(ctx, mux, env, opts)
+		service.RegisterOrganizationService(ctx, mux, env, opts)
+		service.RegisterBdsproService(ctx, mux, env, opts)
+		service.RegisterCrmService(ctx, mux, env, opts)
+		service.RegisterSocialService(ctx, mux, env, opts)
+		r.Any("/v2/*any", gin.WrapH(mux))
 
-		// _ = pb_generic.RegisterGenericServiceHandlerFromEndpoint(ctx, mux, bdspro_endpoint, opts)
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
 			service := c.Param("service")
@@ -177,9 +177,11 @@ var HttpCmd = &cobra.Command{
 			AllowCredentials: true,
 			MaxAge:           12 * time.Hour,
 		}))
-		r.Any("/v1/:service/*path", gateway.ProxyRequest)
-		r.Any("/v2/*any", gin.WrapH(mux))
-		log.Println("Start server at port", port)
+
+		Forwarding := pkg.ForwardingRequest(gateway, env)
+		r.Any("/v1/:service/*path", Forwarding)
+
+		log.Println("Start gateway server at port: ", port)
 		if err := r.Run(":" + port); err != nil {
 			log.Fatalf("Gin server failed: %v", err)
 		}

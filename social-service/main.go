@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	cmd_grpc "social/cmd/grpc"
 	cmd_http "social/cmd/http"
@@ -34,10 +32,10 @@ func init() {
 }
 
 func main() {
-	go func() {
-		log.Println("run go-routine")
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	// go func() {
+	// 	log.Println("run go-routine")
+	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

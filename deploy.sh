@@ -83,6 +83,11 @@ case "$1" in
     path_jar=main
     payload_build=swagger-chat
     ;;
+  "social")
+    service_path=social-service
+    path_jar=main
+    payload_build=social
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1

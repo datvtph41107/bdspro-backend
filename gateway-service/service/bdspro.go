@@ -10,8 +10,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, url string, opts []grpc.DialOption) {
+func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.bdspro")
+	url := "localhost"
+	if env == "release" {
+		url = "bdspro"
+	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_bdspro.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

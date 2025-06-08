@@ -11,8 +11,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-func RegisterPaymentService(ctx context.Context, mux *runtime.ServeMux, url string, opts []grpc.DialOption) {
+func RegisterPaymentService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.payment")
+	url := "localhost"
+	if env == "release" {
+		url = "payment"
+	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_payment.RegisterPaymentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

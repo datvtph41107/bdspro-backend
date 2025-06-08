@@ -10,8 +10,13 @@ import (
 	"google.golang.org/grpc"
 )
 
-func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, url string, opts []grpc.DialOption) {
+func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.notification")
+	url := "localhost"
+	if env == "release" {
+		url = "notification"
+	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
+	fmt.Println("url", url, "endpoint", endpoint)
 	_ = pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

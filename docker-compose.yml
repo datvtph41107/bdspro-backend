@@ -153,6 +153,12 @@ services:
     networks:
       - internal
 
+  social:
+    build: ./social-service
+    container_name: social
+    networks:
+      - internal
+
   # eureka:
   #   build:
   #     context: ./eureka-server

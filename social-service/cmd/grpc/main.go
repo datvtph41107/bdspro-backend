@@ -2,7 +2,6 @@ package cmd_grpc
 
 import (
 	"common"
-	_db "common/db"
 	"fmt"
 	"log"
 	"net"
@@ -23,7 +22,6 @@ var GrpcCmd = &cobra.Command{
 	Short: "gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		config.LoadConfig()
-		_db.NewDB()
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
@@ -43,7 +41,7 @@ var GrpcCmd = &cobra.Command{
 		pb_social.RegisterReportServiceServer(s, app.ReportService)
 		pb_social.RegisterCommentServiceServer(s, app.CommentService)
 
-		log.Printf("Listen: %v", port)
+		log.Printf("GRPC Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)

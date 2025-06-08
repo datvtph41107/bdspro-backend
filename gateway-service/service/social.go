@@ -11,8 +11,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-func RegisterSocialService(ctx context.Context, mux *runtime.ServeMux, url string, opts []grpc.DialOption) {
+func RegisterSocialService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.social")
+	url := "localhost"
+	if env == "release" {
+		url = "social"
+	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_social.RegisterNewsFeedServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_social.RegisterCommentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
