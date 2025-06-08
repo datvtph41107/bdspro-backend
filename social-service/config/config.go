@@ -33,17 +33,20 @@ type ConfigApp struct {
 	NewsFeedService *service.NewsFeedService
 	ReportService   *service.ReportService
 	CommentService  *service.CommentService
+	LikeService     *service.LikeService
 }
 
 func NewConfigApp(
 	newsFeedService *service.NewsFeedService,
 	reportService *service.ReportService,
 	commentService *service.CommentService,
+	likeService *service.LikeService,
 ) *ConfigApp {
 	return &ConfigApp{
 		NewsFeedService: newsFeedService,
 		ReportService:   reportService,
 		CommentService:  commentService,
+		LikeService:     likeService,
 	}
 }
 func LoadConfig() {

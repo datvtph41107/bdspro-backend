@@ -1,14 +1,18 @@
 package domain
 
-import "time"
+import (
+	"social/internal/enums"
+	"time"
+)
 
 type Like struct {
-	NewsFeedID uint64    `json:"newsFeedId"`
-	UserID     uint64    `json:"userId"`
-	Type       uint32    `json:"likeType"`
-	CreatedAt  time.Time `json:"createdAt"`
+	TargetID   uint64           `gorm:"primaryKey" json:"targetId"`
+	TargetType enums.TargetType `gorm:"primaryKey" json:"targetType"`
+	UserID     uint64           `gorm:"primaryKey" json:"userId"`
+	CreatedAt  *time.Time       `json:"createdAt"`
+	DeletedAt  *time.Time       `json:"deletedAt"`
 }
 
 func (Like) TableName() string {
-	return "like"
+	return "tb_like"
 }

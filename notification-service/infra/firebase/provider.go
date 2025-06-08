@@ -1,4 +1,4 @@
-package services
+package firebase
 
 import (
 	_db "common/db"
@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"noti/config"
-	"noti/data"
-	"noti/models"
+	"noti/internal/domain"
+	"noti/internal/dto"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -15,22 +15,22 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-// FirebaseService xử lý gửi thông báo đến Firebase
-type FirebaseService struct {
+// FirebaseProvider xử lý gửi thông báo đến Firebase
+type FirebaseProvider struct {
 	firebaseApp *firebase.App
 }
 
 // NewFirebaseService tạo một instance mới của FirebaseService
-func NewFirebaseService(firebaseConfig *config.FirebaseConfig) *FirebaseService {
+func NewFirebaseService(firebaseConfig *config.FirebaseConfig) *FirebaseProvider {
 	// firebaseApp.Messaging(ctx)
-	return &FirebaseService{
+	return &FirebaseProvider{
 		firebaseApp: firebaseConfig.App,
 	}
 }
 
 // SendToTopic gửi thông báo đến một topic
-func (s *FirebaseService) SendToTopic(c *gin.Context, request *data.SendNotiRequest) (*data.SendNotiResponse, error) {
-	var entity models.HistoryEntity
+func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
+	var entity domain.HistoryEntity
 	copier.Copy(&entity, &request)
 	ctx := context.Background()
 
@@ -52,12 +52,12 @@ func (s *FirebaseService) SendToTopic(c *gin.Context, request *data.SendNotiRequ
 	}
 
 	_db.SaveWithAudit(c, entity)
-	return &data.SendNotiResponse{Response: result}, nil
+	return &dto.SendNotiResponse{Response: result}, nil
 }
 
 // SendToToken gửi thông báo đến một thiết bị dựa vào token
-func (s *FirebaseService) SendToToken(c *gin.Context, request *data.SendNotiRequest) (*data.SendNotiResponse, error) {
-	var entity models.HistoryEntity
+func (s *FirebaseProvider) SendToToken(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
+	var entity domain.HistoryEntity
 	copier.Copy(&entity, &request)
 	ctx := context.Background()
 
@@ -80,11 +80,11 @@ func (s *FirebaseService) SendToToken(c *gin.Context, request *data.SendNotiRequ
 	}
 
 	_db.SaveWithAudit(c, &entity)
-	return &data.SendNotiResponse{Response: result}, nil
+	return &dto.SendNotiResponse{Response: result}, nil
 }
 
 // dtoToNotification chuyển đổi SendNotiRequest thành Firebase Notification
-func (s *FirebaseService) dtoToNotification(request *data.SendNotiRequest) *messaging.Notification {
+func (s *FirebaseProvider) dtoToNotification(request *dto.SendNotiRequest) *messaging.Notification {
 	return &messaging.Notification{
 		Title:    request.Title,
 		Body:     request.Body,

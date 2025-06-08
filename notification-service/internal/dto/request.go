@@ -1,9 +1,33 @@
-package data
+package dto
 
 import (
 	"errors"
 	"noti/enums"
+	"time"
+
+	_dto "common/dto"
 )
+
+type NotiNewRequest struct {
+	TargetID     uint64         `json:"targetId" binding:"required"`
+	OwnerType    int32          `json:"ownerType" binding:"required"`
+	Title        string         `json:"title" binding:"required"`
+	Message      string         `json:"message" binding:"required"`
+	Link         string         `json:"link,omitempty"`
+	Type         enums.TypeEnum `json:"type" binding:"required"`
+	VisibleAt    *time.Time     `json:"visibleAt,omitempty"`
+	SendToDevice bool           `json:"sendToDevice,omitempty"`
+}
+
+// SearchNotiRequest đại diện cho request tìm kiếm thông báo
+type SearchNotiRequest struct {
+	_dto.Page
+	ID      *uint64 `json:"id,omitempty"`
+	UserID  *uint64 `json:"user_id,omitempty"`
+	Message *string `json:"message,omitempty"`
+	Type    *string `json:"type,omitempty"` // 1: request, 2: follow
+	IsRead  *bool   `json:"is_read,omitempty"`
+}
 
 // SendNotiRequest đại diện cho request gửi thông báo
 type SendNotiRequest struct {
@@ -21,15 +45,6 @@ func SendNewNotiRequest(target string, title string, body string, image string) 
 		Body:   body,
 		Image:  image,
 	}
-}
-
-// SearchNotiRequest đại diện cho request tìm kiếm thông báo
-type SearchNotiRequest struct {
-	ID      *uint64 `json:"id,omitempty"`
-	UserID  *uint64 `json:"user_id,omitempty"`
-	Message *string `json:"message,omitempty"`
-	Type    *string `json:"type,omitempty"` // 1: request, 2: follow
-	IsRead  *int    `json:"is_read,omitempty"`
 }
 
 // NewNotiRequest đại diện cho request tạo thông báo
@@ -56,4 +71,14 @@ func (n *NewNotiRequest) Validate() error {
 		return errors.New("type không được để trống")
 	}
 	return nil
+}
+
+type PushTokenRequest struct {
+	Token string `json:"token" binding:"required"`
+	Title string `json:"title" binding:"required"`
+	Body  string `json:"body" binding:"required"`
+}
+
+type PushTopicRequest struct {
+	Topic string `json:"topic" binding:"required"`
 }

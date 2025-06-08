@@ -22,6 +22,7 @@ func RegisterSocialService(ctx context.Context, mux *runtime.ServeMux, env strin
 	_ = pb_social.RegisterCommentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	// _ = pb_social.RegisterReportReasonServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_social.RegisterReportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_social.RegisterLikeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	// _ = pb_social.RegisterLikeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	// _ = pb_social.RegisterShareServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	// _ = pb_social.RegisterViewServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

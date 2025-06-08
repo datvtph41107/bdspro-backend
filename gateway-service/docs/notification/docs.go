@@ -15,163 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/notification": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Trả về danh sách thông báo của người dùng",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Notifications"
-                ],
-                "summary": "Lấy danh sách thông báo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Trang cần lấy (default = 0)",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Số lượng trên mỗi trang (default = 200)",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách thông báo",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.NotificationEntity"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/app/push/token": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API chỉ lưu lịch sử, không lưu thông báo",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Notifications"
-                ],
-                "summary": "Gửi thông báo đến một thiết bị qua token",
-                "parameters": [
-                    {
-                        "description": "Thông tin thông báo",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/data.SendNotiRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "message",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/app/push/topic": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API chỉ lưu lịch sử, không lưu thông báo",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Notifications"
-                ],
-                "summary": "Gửi thông báo đến topic",
-                "parameters": [
-                    {
-                        "description": "Thông tin thông báo",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/data.SendNotiRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "message",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/count": {
+        "/count": {
             "get": {
                 "security": [
                     {
@@ -211,7 +55,61 @@ const docTemplate = `{
                 }
             }
         },
-        "/notification/new": {
+        "/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách thông báo của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Lấy danh sách thông báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang cần lấy (default = 0)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng trên mỗi trang (default = 200)",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách thông báo",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/pb_noti.NotificationDTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/new": {
             "post": {
                 "security": [
                     {
@@ -236,7 +134,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.NotificationEntity"
+                            "$ref": "#/definitions/pb_noti.GatewayNotiNewRequest"
                         }
                     }
                 ],
@@ -262,7 +160,47 @@ const docTemplate = `{
                 }
             }
         },
-        "/notification/read/{id}": {
+        "/read-all": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đánh dấu tất cả thông báo là đã đọc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Đánh dấu tất cả thông báo là đã đọc",
+                "responses": {
+                    "200": {
+                        "description": "message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/read/{id}": {
             "put": {
                 "security": [
                     {
@@ -311,14 +249,20 @@ const docTemplate = `{
                 }
             }
         },
-        "/notification/remove/{id}": {
+        "/remove/{id}": {
             "delete": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Xóa thông báo theo ID",
+                "description": "Xóa thông báo với ID cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Notifications"
                 ],
@@ -326,85 +270,42 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Notification ID",
+                        "description": "ID của thông báo",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    }
-                }
+                "responses": {}
             }
         }
     },
     "definitions": {
-        "data.SendNotiRequest": {
+        "pb_noti.GatewayNotiNewRequest": {
             "type": "object",
             "properties": {
-                "body": {
+                "link": {
                     "type": "string"
                 },
-                "image": {
+                "message": {
                     "type": "string"
                 },
-                "target": {
-                    "description": "Token của thiết bị nhận",
-                    "type": "string"
+                "targetId": {
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"
+                },
+                "type": {
+                    "type": "integer"
                 }
             }
         },
-        "enums.TypeEnum": {
-            "type": "integer",
-            "enum": [
-                1,
-                2,
-                3
-            ],
-            "x-enum-comments": {
-                "Follow": "\"FOLLOW\"",
-                "FriendRequest": "\"FRIEND_REQUEST\"",
-                "FriendResponse": "\"FRIEND_RESPONSE\""
-            },
-            "x-enum-varnames": [
-                "FriendRequest",
-                "FriendResponse",
-                "Follow"
-            ]
-        },
-        "gin.H": {
-            "type": "object",
-            "additionalProperties": {}
-        },
-        "models.NotificationEntity": {
+        "pb_noti.NotificationDTO": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "avatar": {
                     "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
@@ -416,21 +317,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "message": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "timestamp": {
                     "type": "string"
                 },
                 "title": {
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/enums.TypeEnum"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
                     "type": "integer"
                 },
-                "userID": {
+                "userId": {
                     "type": "integer"
                 }
             }
@@ -449,7 +350,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/v2",
+	BasePath:         "/v2/notification",
 	Schemes:          []string{},
 	Title:            "Notification API",
 	Description:      "API phần logic thông báo",

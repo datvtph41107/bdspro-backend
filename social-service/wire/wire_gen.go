@@ -37,11 +37,14 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgreComment := postgre.NewPostgreComment(db)
 	commentUsecase := usecase.NewCommentUsecase(postgreComment, permissionImpl, postgreNewsFeed)
 	commentService := service.NewCommentService(commentUsecase)
-	configApp := config.NewConfigApp(newsFeedService, reportService, commentService)
+	likeRepo := postgre.NewLikeRepo(db)
+	likeUsecase := usecase.NewLikeUsecase(likeRepo, postgreComment, postgreNewsFeed)
+	likeService := service.NewLikeService(likeUsecase)
+	configApp := config.NewConfigApp(newsFeedService, reportService, commentService, likeService)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.PermissionUsecase), new(*impl.PermissionImpl)), wire.Bind(new(repo.CommentRepo), new(*postgre.PostgreComment)), wire.Bind(new(repo.NewsFeedRepo), new(*postgre.PostgreNewsFeed)), wire.Bind(new(repo.ReportRepo), new(*postgre.PostgreReport)), wire.Bind(new(repo.ReportReasonRepo), new(*postgre.PostgreReportReason)), service.NewCommentService, usecase.NewCommentUsecase, config.NewConfigApp, service.NewNewsFeedService, usecase.NewNewsFeedUsecase, impl.NewPermissionImpl, postgre.NewPostgreComment, postgre.NewPostgreNewsFeed, postgre.NewPostgreReport, postgre.NewPostgreReportReason, usecase.NewReportReasonUsecase, service.NewReportService, usecase.NewReportUsecase)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.PermissionUsecase), new(*impl.PermissionImpl)), wire.Bind(new(repo.CommentRepo), new(*postgre.PostgreComment)), wire.Bind(new(repo.LikeRepo), new(*postgre.LikeRepo)), wire.Bind(new(repo.NewsFeedRepo), new(*postgre.PostgreNewsFeed)), wire.Bind(new(repo.ReportRepo), new(*postgre.PostgreReport)), wire.Bind(new(repo.ReportReasonRepo), new(*postgre.PostgreReportReason)), service.NewCommentService, usecase.NewCommentUsecase, config.NewConfigApp, postgre.NewLikeRepo, service.NewLikeService, usecase.NewLikeUsecase, service.NewNewsFeedService, usecase.NewNewsFeedUsecase, impl.NewPermissionImpl, postgre.NewPostgreComment, postgre.NewPostgreNewsFeed, postgre.NewPostgreReport, postgre.NewPostgreReportReason, usecase.NewReportReasonUsecase, service.NewReportService, usecase.NewReportUsecase)

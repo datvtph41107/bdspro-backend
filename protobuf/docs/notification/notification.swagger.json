@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "NotificationService"
+    },
+    {
+      "name": "GatewayNotificationService"
     }
   ],
   "consumes": [
@@ -16,73 +19,31 @@
     "application/json"
   ],
   "paths": {
-    "/v2/app/push/token": {
-      "post": {
-        "operationId": "NotificationService_PushByToken",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_notiPushTokenRequest"
-            }
-          }
-        ],
-        "tags": [
-          "NotificationService"
-        ]
-      }
-    },
-    "/v2/app/push/topic": {
-      "post": {
-        "operationId": "NotificationService_PushByTopic",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_notiPushTopicRequest"
-            }
-          }
-        ],
-        "tags": [
-          "NotificationService"
-        ]
-      }
-    },
-    "/v2/notification": {
+    "/v2/notification/count": {
       "get": {
-        "operationId": "NotificationService_List",
+        "operationId": "GatewayNotificationService_Count",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_notiCountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/list": {
+      "get": {
+        "operationId": "GatewayNotificationService_List",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -117,43 +78,27 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "isRead",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
-          "NotificationService"
-        ]
-      }
-    },
-    "/v2/notification/count": {
-      "get": {
-        "operationId": "NotificationService_Count",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_notiCountResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "NotificationService"
+          "GatewayNotificationService"
         ]
       }
     },
     "/v2/notification/new": {
       "post": {
-        "operationId": "NotificationService_Send",
+        "operationId": "GatewayNotificationService_Create",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiNotiNewResponse"
+              "$ref": "#/definitions/pb_notiNotificationDTO"
             }
           },
           "default": {
@@ -169,23 +114,109 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiNotiNewRequest"
+              "$ref": "#/definitions/pb_notiGatewayNotiNewRequest"
             }
           }
         ],
         "tags": [
-          "NotificationService"
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/push/token": {
+      "post": {
+        "operationId": "GatewayNotificationService_PushByToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_notiPushResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_notiPushTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/push/topic": {
+      "post": {
+        "operationId": "GatewayNotificationService_PushByTopic",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_notiPushResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_notiPushTopicRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/read-all": {
+      "put": {
+        "operationId": "GatewayNotificationService_ReadAll",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_notiStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GatewayNotificationService"
         ]
       }
     },
     "/v2/notification/read/{id}": {
       "put": {
-        "operationId": "NotificationService_Read",
+        "operationId": "GatewayNotificationService_Read",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiEmptyResponse"
+              "$ref": "#/definitions/pb_notiStatusResponse"
             }
           },
           "default": {
@@ -202,29 +233,21 @@
             "required": true,
             "type": "string",
             "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/NotificationServiceReadBody"
-            }
           }
         ],
         "tags": [
-          "NotificationService"
+          "GatewayNotificationService"
         ]
       }
     },
     "/v2/notification/remove/{id}": {
       "delete": {
-        "operationId": "NotificationService_Remove",
+        "operationId": "GatewayNotificationService_Remove",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiEmptyResponse"
+              "$ref": "#/definitions/pb_notiStatusResponse"
             }
           },
           "default": {
@@ -244,15 +267,12 @@
           }
         ],
         "tags": [
-          "NotificationService"
+          "GatewayNotificationService"
         ]
       }
     }
   },
   "definitions": {
-    "NotificationServiceReadBody": {
-      "type": "object"
-    },
     "pb_notiCountResponse": {
       "type": "object",
       "properties": {
@@ -262,8 +282,27 @@
         }
       }
     },
-    "pb_notiEmptyResponse": {
-      "type": "object"
+    "pb_notiGatewayNotiNewRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "link": {
+          "type": "string"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
     },
     "pb_notiListResponse": {
       "type": "object",
@@ -272,8 +311,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_notiNotification"
+            "$ref": "#/definitions/pb_notiNotificationDTO"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -293,9 +336,13 @@
           "type": "integer",
           "format": "int32"
         },
-        "userID": {
+        "targetId": {
           "type": "string",
           "format": "uint64"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
         },
         "visibleAt": {
           "type": "string",
@@ -303,15 +350,7 @@
         }
       }
     },
-    "pb_notiNotiNewResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean"
-        }
-      }
-    },
-    "pb_notiNotification": {
+    "pb_notiNotificationDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -322,7 +361,10 @@
           "type": "string"
         },
         "message": {
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "title": {
           "type": "string"
@@ -331,7 +373,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "userID": {
+        "userId": {
           "type": "string",
           "format": "uint64"
         },
@@ -339,12 +381,10 @@
           "type": "boolean"
         },
         "timestamp": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
-        "visibleAt": {
-          "type": "string",
-          "format": "date-time"
+        "avatar": {
+          "type": "string"
         }
       }
     },
@@ -380,6 +420,17 @@
           "type": "string"
         },
         "body": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_notiStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "boolean"
+        },
+        "message": {
           "type": "string"
         }
       }

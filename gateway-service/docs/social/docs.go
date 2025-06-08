@@ -219,6 +219,202 @@ const docTemplate = `{
                 }
             }
         },
+        "/like/comment/list/{commentId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "CommentId",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.ListLikeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/comment/{commentId}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "CommentId",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.LikeResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "CommentId",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.LikeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/news-feed/list/{newsFeedId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "newsFeedId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.ListLikeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/news-feed/{newsFeedId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "newsFeedId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.LikeResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "newsFeedId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/social.LikeResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/news-feed": {
             "put": {
                 "security": [
@@ -536,9 +732,6 @@ const docTemplate = `{
                 "newsFeedId": {
                     "type": "integer"
                 },
-                "numComment": {
-                    "type": "integer"
-                },
                 "numLike": {
                     "type": "integer"
                 },
@@ -555,6 +748,40 @@ const docTemplate = `{
         },
         "social.Empty": {
             "type": "object"
+        },
+        "social.LikeResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "social.ListLikeResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/social.LikeResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
         },
         "social.ListNewsFeed": {
             "type": "object",

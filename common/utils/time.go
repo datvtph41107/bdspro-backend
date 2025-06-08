@@ -37,3 +37,8 @@ func ParseStringToTime(value string) *time.Time {
 	}
 	return &t
 }
+
+func NowPtr() *time.Time {
+	t := time.Now()
+	return &t
+}

@@ -2,14 +2,18 @@ package main
 
 import (
 	"common"
+	"fmt"
+	"log"
+	"net"
 	"noti/config"
+	"noti/db"
 	_ "noti/docs"
-	"noti/models"
-	"noti/routes"
-	"noti/server"
+	"noti/wire"
+	"os"
 	pb_noti "pb/types/notification"
+	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -18,26 +22,37 @@ var publicRoutes = []string{
 	"/notification/auth/otp",
 }
 
-type ConfigApp struct {
-	Noti       *routes.NotificationRouter
-	ServerHttp *server.ServerHttp
-}
-
-func NewConfigApp(router *routes.NotificationRouter, ServerHttp *server.ServerHttp) *ConfigApp {
-	return &ConfigApp{
-		Noti:       router,
-		ServerHttp: ServerHttp,
-	}
-}
-
 // @title Notification API
 // @version 1.0
 // @description API phần logic thông báo
-// @BasePath /v2
+// @BasePath /v2/notification
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 func main() {
+	common.LoadConfig(config.ConfigFile)
+
+	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
+	os.Setenv("TZ", "Europe/London")
+	time.Local = time.FixedZone("Europe/London", 7*60*60)
+
+	app, _ := wire.InitializeApp()
+	db.AutoMigrate()
+	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+	)
+	pb_noti.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
+
+	log.Printf("GRPC Listen: %v", port)
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 	// r := gin.Default()
 	// os.Setenv("TZ", "Europe/London")
 
@@ -68,27 +83,27 @@ func main() {
 	// 	Prefix:       "/notification",
 	// }
 
-	r := gin.Default()
-	// os.Setenv("TZ", "Europe/London")
+	// r := gin.Default()
+	// // os.Setenv("TZ", "Europe/London")
 
-	parameters := common.SetupParameters{
-		ConfigFile:   config.ConfigFile,
-		Engine:       r,
-		PublicRoutes: publicRoutes,
-		Prefix:       "/notification",
-	}
+	// parameters := common.SetupParameters{
+	// 	ConfigFile:   config.ConfigFile,
+	// 	Engine:       r,
+	// 	PublicRoutes: publicRoutes,
+	// 	Prefix:       "/notification",
+	// }
 
-	// common.SetupRestfulAPI(parameters, func() {
-	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", property.AppProperties)
+	// // common.SetupRestfulAPI(parameters, func() {
+	// // 	config.LoadProperties()
+	// // 	log.Printf("Data: ", property.AppProperties)
 
-	// 	app.Noti.RegisterRoutes(r)
+	// // 	app.Noti.RegisterRoutes(r)
+	// // })
+	// common.SetupGRPCServer(parameters, func(s *grpc.Server) {
+	// 	app, _ := InitializeApp()
+	// 	db.AutoMigrate()
+	// 	pb_noti.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
 	// })
-	common.SetupGRPCServer(parameters, func(s *grpc.Server) {
-		app, _ := InitializeApp()
-		models.AutoMigrate()
-		pb_noti.RegisterNotificationServiceServer(s, app.ServerHttp)
-	})
 
 	// common.SetupRestfulAPI(parameters, func() {
 	// 	config.LoadProperties()

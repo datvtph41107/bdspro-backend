@@ -76,10 +76,6 @@ func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGloba
 	return newsFeeds, int32(total), nil
 }
 
-func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
-	return nil, nil
-}
-
 func (r *PostgreNewsFeed) UpdateLike(ctx context.Context, newFeedID uint64, numLike int) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.NewsFeed{}).
@@ -109,4 +105,29 @@ func (r *PostgreNewsFeed) UserAvaiableReact(ctx context.Context, profileID uint6
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *PostgreNewsFeed) ExistByID(ctx context.Context, id uint64) (bool, error) {
+	var exists bool
+	query := `
+        SELECT EXISTS (
+            SELECT 1 FROM news_feeds
+            WHERE id = $1 AND deleted_at IS NULL
+        )
+    `
+	err := r.db.WithContext(ctx).
+		Raw(query, id).
+		Scan(&exists).
+		Error
+	return exists, err
+}
+
+func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
+	var newsFeed *domain.NewsFeed
+	err := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&newsFeed).
+		Error
+	return newsFeed, err
 }

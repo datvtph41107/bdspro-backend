@@ -1,8 +1,8 @@
-package data
+package dto
 
 import (
 	"noti/enums"
-	"noti/models"
+	"noti/internal/domain"
 	"time"
 )
 
@@ -25,7 +25,7 @@ type SendNotiResponse struct {
 }
 
 // NewSendNotiResponse tạo một `SendNotiResponse` từ `HistoryEntity`
-func NewSendNotiResponse(e models.HistoryEntity) SendNotiResponse {
+func NewSendNotiResponse(e domain.HistoryEntity) SendNotiResponse {
 	return SendNotiResponse{
 		Response: e.Response,
 		Error:    e.Error,

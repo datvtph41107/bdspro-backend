@@ -1,4 +1,4 @@
-package repo
+package postgre
 
 import "gorm.io/gorm"
 

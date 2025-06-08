@@ -18,5 +18,5 @@ func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, env
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	fmt.Println("url", url, "endpoint", endpoint)
-	_ = pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_noti.RegisterGatewayNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

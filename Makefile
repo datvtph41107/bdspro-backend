@@ -17,6 +17,8 @@ buf-crm:
 # 	cd protobuf/schema && buf generate --template ./social/buf.gen.yaml --path social
 buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
+buf-noti:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path notification
 
 payment:
 	cd payment-service && go run main.go http

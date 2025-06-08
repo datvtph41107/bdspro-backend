@@ -32,8 +32,6 @@ definitions:
         type: integer
       newsFeedId:
         type: integer
-      numComment:
-        type: integer
       numLike:
         type: integer
       numReply:
@@ -44,6 +42,28 @@ definitions:
         type: string
     type: object
   social.Empty:
+    type: object
+  social.LikeResponse:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  social.ListLikeResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/social.LikeResponse'
+        type: array
+      total:
+        type: integer
     type: object
   social.ListNewsFeed:
     properties:
@@ -251,6 +271,126 @@ paths:
             $ref: '#/definitions/social.CommentListResponse'
       tags:
       - Comment
+  /like/comment/{commentId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.LikeResponse'
+      tags:
+      - Like
+  /like/comment/list/{commentId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ListLikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /like/news-feed/{newsFeedId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.LikeResponse'
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /like/news-feed/list/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/social.ListLikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
   /news-feed:
     delete:
       consumes:

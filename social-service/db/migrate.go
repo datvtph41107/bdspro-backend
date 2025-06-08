@@ -13,5 +13,6 @@ func MigrateDomain() {
 		&domain.ReportReason{},
 		&domain.Report{},
 		&domain.Comment{},
+		&domain.Like{},
 	)
 }

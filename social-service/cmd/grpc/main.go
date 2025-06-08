@@ -40,6 +40,7 @@ var GrpcCmd = &cobra.Command{
 		pb_social.RegisterNewsFeedServiceServer(s, app.NewsFeedService)
 		pb_social.RegisterReportServiceServer(s, app.ReportService)
 		pb_social.RegisterCommentServiceServer(s, app.CommentService)
+		pb_social.RegisterLikeServiceServer(s, app.LikeService)
 
 		log.Printf("GRPC Listen: %v", port)
 

@@ -39,7 +39,11 @@ func main() {
 	binds := findBinds("./", rootPackage)
 	// log.Println("binds: ", binds)
 
-	writeWireFile(updatedFuncs, binds, rootPackage, prefix, wireFile)
+	moduleName := rootPackage
+	if moduleName == "notification" {
+		moduleName = "noti"
+	}
+	writeWireFile(updatedFuncs, binds, rootPackage, prefix, wireFile, moduleName)
 	fmt.Println("✅ wire.go updated successfully!")
 
 	// cmd := exec.Command("cd .. && wire")
@@ -173,7 +177,7 @@ func mergeFunctions(existing, newFuncs []NewFunc) []NewFunc {
 }
 
 // Ghi danh sách các hàm vào wire.go
-func writeWireFile(inputs []NewFunc, binds []BindEntry, rootPackage, prefix string, wireFile string) {
+func writeWireFile(inputs []NewFunc, binds []BindEntry, rootPackage, prefix string, wireFile string, moduleName string) {
 	funcs := []NewFunc{}
 	for _, f := range inputs {
 		log.Println(f.FullPackage)
@@ -201,7 +205,7 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"%s/config"
-`, rootPackage))
+`, moduleName))
 
 	// Viết danh sách import package với alias mới
 	packageSet := make(map[string]string)
@@ -217,7 +221,7 @@ import (
 
 	var imports []string
 	for pkg, alias := range packageSet {
-		imports = append(imports, fmt.Sprintf("\t%s \"%s\"", alias, pkg))
+		imports = append(imports, fmt.Sprintf("\t%s \"%s\"", alias, replacePrefix(pkg, moduleName)))
 
 	}
 	sort.Strings(imports)
@@ -353,4 +357,12 @@ func findBinds(root string, rootPackage string) []BindEntry {
 	})
 
 	return binds
+}
+
+func replacePrefix(input, newPrefix string) string {
+	idx := strings.Index(input, "/")
+	if idx == -1 {
+		return newPrefix // hoặc input nếu không muốn thay
+	}
+	return newPrefix + input[idx:]
 }

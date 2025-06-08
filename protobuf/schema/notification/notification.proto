@@ -3,16 +3,58 @@ syntax = "proto3";
 package pb_noti;
 option go_package = "types/pb_noti";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
 service NotificationService {
+  rpc Create (NotiNewRequest) returns (NotificationDTO);
   rpc SendBatch (NotiBatchRequest) returns (ListResponse);
-  rpc Send (NotiNewRequest) returns (NotiNewResponse);
-  rpc Count (EmptyRequest) returns (CountResponse);
-  rpc Read (IdRequest) returns (EmptyResponse);
-  rpc Remove (IdRequest) returns (EmptyResponse);
-  rpc List (ListRequest) returns (ListResponse);
   rpc PushByToken (PushTokenRequest) returns (PushResponse);
   rpc PushByTopic (PushTopicRequest) returns (PushResponse);
+}
+service GatewayNotificationService {
+  rpc Create (GatewayNotiNewRequest) returns (NotificationDTO) {
+    option (google.api.http) = {
+      post: "/v2/notification/new"
+      body: "*"
+    };
+  };
+  rpc Count (EmptyRequest) returns (CountResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/count"
+    };
+  };
+  rpc Read (IdRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read/{id}"
+    };
+  };
+  rpc ReadAll (EmptyRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read-all"
+    };
+  };
+  rpc Remove (IdRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      delete: "/v2/notification/remove/{id}"
+    };
+  };
+  rpc List (ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/list"
+    };
+  };
+  rpc PushByToken (PushTokenRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/push/token"
+      body: "*"
+    };
+  };
+  rpc PushByTopic (PushTopicRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/push/topic"
+      body: "*"
+    };
+  };
 }
 
 message NotiBatchRequest {
@@ -37,21 +79,23 @@ message ListRequest {
     int32 page = 1;
     int32 size = 2;
     string sort = 3;
+    bool isRead = 4;
 }
 message ListResponse {
-  repeated Notification data = 1;
+  repeated NotificationDTO data = 1;
+  int32 total = 2;
 }
 
-message Notification {
+message NotificationDTO {
     uint64 id = 1;
     string link = 2;
-    string message = 3;
+    repeated string message = 3;
     string title = 4;
     int32 type = 5;
-    uint64 userID = 6;
+    uint64 userId = 6;
     bool isRead = 7;
-    google.protobuf.Timestamp timestamp = 8;
-    google.protobuf.Timestamp visibleAt = 9;
+    string timestamp = 8;
+    string avatar = 9;
 }
 
 message IdRequest {
@@ -70,10 +114,20 @@ message NotiNewRequest {
     string message = 2;
     string title = 3;
     int32 type = 4;
-    uint64 userID = 5;
-    google.protobuf.Timestamp visibleAt = 6;
+    uint64 targetId = 5;
+    int32 targetType = 6;
+    google.protobuf.Timestamp visibleAt = 7;
 }
 
-message NotiNewResponse {
-  bool success = 1;
+message GatewayNotiNewRequest {
+    string title = 1;
+    string message = 2;
+    int32 type = 3;
+    string link = 4;
+    uint64 targetId = 5;
+}
+
+message StatusResponse {
+    bool status = 1;
+    string message = 2;
 }

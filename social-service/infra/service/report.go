@@ -111,8 +111,8 @@ func (s *ReportService) GetAllReportReason(ctx context.Context, req *emptypb.Emp
 // @Success 200 {object} pb_social.ReportResponse
 // @Router /report/submit [post]
 func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportRequest) (*pb_social.ReportResponse, error) {
-	if req.NewsFeedId == 0 || req.ReasonId == 0 || req.Content == "" {
-		return nil, errors.New("newsFeedId, reasonId and content are required")
+	if req.NewsFeedId == 0 || req.ReasonId == 0 {
+		return nil, errors.New("newsFeedId, reasonId are required")
 	}
 	report := &domain.Report{
 		Content:    req.Content,

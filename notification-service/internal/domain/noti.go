@@ -1,4 +1,4 @@
-package models
+package domain
 
 import (
 	_models "common/models"
@@ -9,7 +9,8 @@ import (
 type NotificationEntity struct {
 	_models.BaseEntity
 	ID        uint64 `gorm:"primaryKey"`
-	UserID    uint64 `gorm:"index"`
+	TargetID  uint64 `gorm:"index"`
+	OwnerType int32  `gorm:"index"`
 	Title     string
 	Message   string
 	Link      string

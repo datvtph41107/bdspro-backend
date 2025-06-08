@@ -17,4 +17,5 @@ type NewsFeedRepo interface {
 	UpdateShare(ctx context.Context, newFeedID uint64, numShare int) error
 	UpdateView(ctx context.Context, newFeedID uint64, numView int) error
 	UserAvaiableReact(ctx context.Context, profileID uint64, id uint64) (bool, error)
+	ExistByID(ctx context.Context, id uint64) (bool, error)
 }
