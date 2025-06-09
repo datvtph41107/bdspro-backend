@@ -153,6 +153,8 @@ definitions:
         type: string
       createdBy:
         type: integer
+      disLike:
+        type: boolean
       friendTagIds:
         items:
           type: integer
@@ -167,6 +169,8 @@ definitions:
         type: string
       isReel:
         type: boolean
+      likeAt:
+        type: string
       link:
         type: string
       mediaFeeds:
@@ -187,7 +191,7 @@ definitions:
         type: integer
       title:
         type: string
-      updated_at:
+      updatedAt:
         type: string
       visibility:
         type: integer
@@ -653,6 +657,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
       summary: Lấy chi tiết news feed
       tags:
       - News Feed
@@ -662,6 +668,9 @@ paths:
       - application/json
       description: Get global news feed
       parameters:
+      - in: query
+        name: isReel
+        type: boolean
       - in: query
         name: page
         type: integer
@@ -678,6 +687,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
       summary: Lấy danh sách news feed
       tags:
       - News Feed
@@ -693,6 +704,9 @@ paths:
         required: true
         type: integer
       - in: query
+        name: isReel
+        type: boolean
+      - in: query
         name: page
         type: integer
       - in: query
@@ -708,6 +722,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
       summary: Lấy danh sách news feed theo userID
       tags:
       - News Feed

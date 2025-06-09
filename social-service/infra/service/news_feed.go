@@ -100,6 +100,7 @@ func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *pb_social.New
 // @Tags News Feed
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
 // @Success 200 {object} pb_social.ListNewsFeed
 // @Router /news-feed/public [get]
@@ -109,7 +110,8 @@ func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *pb_social.
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
-		Text: req.Text,
+		Text:   req.Text,
+		IsReel: req.IsReel,
 	}
 	posts, total, err := s.newsFeedUsecase.GetListPost(ctx, postSearch)
 	if err != nil {
@@ -180,6 +182,7 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *pb_social.Shar
 // @Accept json
 // @Produce json
 // @Param userId path uint64 true "UserId"
+// @Security BearerAuth
 // @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
 // @Success 200 {object} pb_social.ListNewsFeed
 // @Router /news-feed/user/{userId} [get]
@@ -189,7 +192,8 @@ func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *pb_socia
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
-		Text: req.Text,
+		Text:   req.Text,
+		IsReel: req.IsReel,
 	}
 	posts, total, err := s.newsFeedUsecase.GetListPostByUserID(ctx, req.UserId, postSearch)
 	if err != nil {
@@ -204,6 +208,7 @@ func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *pb_socia
 		result.Data = append(result.Data, s.DomainPostToPb(post))
 	}
 
+	s.MappingPostAndUser(ctx, result.Data)
 	return result, nil
 }
 
@@ -212,6 +217,7 @@ func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *pb_socia
 // @Tags News Feed
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param newsFeedId path uint64 true "NewsFeedId"
 // @Success 200 {object} pb_social.NewsFeed
 // @Router /news-feed/detail/{newsFeedId} [get]
@@ -306,6 +312,8 @@ func (s *NewsFeedService) DomainPostToPb(post *domain.NewsFeed) *pb_social.NewsF
 		CreatedBy:    post.CreatedBy,
 		MediaFeeds:   medias,
 		UpdatedAt:    _utils.FormatTimeToString(post.UpdatedAt),
+		LikeAt:       _utils.FormatTimeToString(post.LikeAt),
+		DisLike:      post.DisLike,
 	}
 }
 
@@ -333,6 +341,8 @@ func (s *NewsFeedService) DomainPublicToPb(post *dto.NewsFeedPublic) *pb_social.
 		PostId:       post.PostID,
 		CreatedBy:    post.CreatedBy,
 		UpdatedAt:    _utils.FormatTimeToString(&post.UpdatedAt),
+		LikeAt:       _utils.FormatTimeToString(post.LikeAt),
+		DisLike:      post.DisLike,
 	}
 	return result
 }

@@ -512,6 +512,11 @@ const docTemplate = `{
         },
         "/news-feed/detail/{newsFeedId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get news feed by id",
                 "consumes": [
                     "application/json"
@@ -544,6 +549,11 @@ const docTemplate = `{
         },
         "/news-feed/public": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get global news feed",
                 "consumes": [
                     "application/json"
@@ -556,6 +566,11 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách news feed",
                 "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "isReel",
+                        "in": "query"
+                    },
                     {
                         "type": "integer",
                         "name": "page",
@@ -584,6 +599,11 @@ const docTemplate = `{
         },
         "/news-feed/user/{userId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get news feed by userID",
                 "consumes": [
                     "application/json"
@@ -602,6 +622,11 @@ const docTemplate = `{
                         "name": "userId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isReel",
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -1017,6 +1042,9 @@ const docTemplate = `{
                 "createdBy": {
                     "type": "integer"
                 },
+                "disLike": {
+                    "type": "boolean"
+                },
                 "friendTagIds": {
                     "type": "array",
                     "items": {
@@ -1037,6 +1065,9 @@ const docTemplate = `{
                 },
                 "isReel": {
                     "type": "boolean"
+                },
+                "likeAt": {
+                    "type": "string"
                 },
                 "link": {
                     "type": "string"
@@ -1068,7 +1099,7 @@ const docTemplate = `{
                 "title": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 },
                 "visibility": {

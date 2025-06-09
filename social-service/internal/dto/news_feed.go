@@ -13,7 +13,8 @@ type PostSearch struct {
 
 type NewsFeedGlobalSearch struct {
 	_dto.Page
-	Text string `json:"text" form:"text"`
+	Text   string `json:"text" form:"text"`
+	IsReel *bool  `json:"isReel" form:"isReel"`
 }
 
 type NewsFeedPublic struct {
@@ -37,4 +38,6 @@ type NewsFeedPublic struct {
 	FriendTagIds   json.RawMessage `db:"friend_tag_ids" json:"friend_tag_ids"`
 	Author         *UserProfile    `gorm:"-" db:"-" json:"author"`
 	Post           *BdsproPost     `gorm:"-" db:"-" json:"post"`
+	LikeAt         *time.Time      `gorm:"like_at" db:"like_at" json:"like_at"`
+	DisLike        *bool           `gorm:"dis_like" db:"dis_like" json:"is_like"`
 }

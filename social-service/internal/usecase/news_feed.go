@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"social/internal/domain"
 	"social/internal/dto"
+	"social/internal/enums"
 	iusecase "social/internal/interface"
 	"social/internal/repo"
 )
@@ -105,12 +106,69 @@ func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.N
 	return newsFeed, nil
 }
 
-func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, post *domain.NewsFeed) (*domain.NewsFeed, error) {
-	profileId := ctx.Value("profile").(*uint64)
-	if err := u.bdsproClient.OwnerPost(ctx, post.ID, *profileId); err != nil {
+func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if newsFeed.PostID != nil {
+		if err := u.bdsproClient.OwnerPost(ctx, *newsFeed.PostID, profileId); err != nil {
+			return nil, err
+		}
+	}
+
+	exist, err := u.newsFeedRepo.ExistByIDAndProfileID(ctx, newsFeed.ID, profileId)
+	if err != nil {
 		return nil, err
 	}
-	return u.newsFeedRepo.Update(ctx, post)
+	if !exist {
+		return nil, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "bạn không có quyền cập nhật bài viết này",
+		}
+	}
+
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		if len(newsFeed.FriendTagIds) > 0 {
+			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
+			if err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+			if !isFriends {
+				return &_routes.Except{
+					Code:    http.StatusForbidden,
+					Message: "not friends",
+				}
+			}
+			if err := u.friendTagRepo.UpdateFriendTag(ctx, newsFeed.ID, newsFeed.FriendTagIds); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+		}
+
+		if len(newsFeed.NewsFeedMedias) > 0 {
+			if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+		}
+		_, err := u.newsFeedRepo.Update(ctx, newsFeed)
+		if err != nil {
+			return &_routes.Except{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return newsFeed, nil
 }
 
 func (u *NewsFeedUsecase) DeletePost(ctx context.Context, post *domain.NewsFeed) error {
@@ -147,5 +205,15 @@ func (u *NewsFeedUsecase) ViewPost(ctx context.Context, newFeedID uint64, numVie
 }
 
 func (u *NewsFeedUsecase) GetNewsFeedByID(ctx context.Context, newsFeedID uint64) (*domain.NewsFeed, error) {
-	return u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	newsFeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	if err != nil {
+		return nil, err
+	}
+	like, err := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx, newsFeedID, enums.TargetTypeNewsFeed, profileId)
+	if like != nil && err == nil {
+		newsFeed.LikeAt = like.CreatedAt
+		newsFeed.DisLike = &like.DisLike
+	}
+	return newsFeed, nil
 }

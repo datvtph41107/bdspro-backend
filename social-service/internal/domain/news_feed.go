@@ -4,6 +4,7 @@ import (
 	_models "common/models"
 	"social/internal/dto"
 	"social/internal/enums"
+	"time"
 )
 
 type NewsFeed struct {
@@ -21,7 +22,9 @@ type NewsFeed struct {
 	NumView        int              `json:"num_view"`
 	IsReel         bool             `json:"is_reel"`
 	NewsFeedMedias []NewsFeedMedia  `gorm:"foreignKey:NewsFeedID" json:"news_feed_medias"`
-	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID" json:"friend_tag"`
+	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
 	FriendTagIds   []uint64         `gorm:"-" json:"friend_tag_ids"`
 	Author         *dto.UserProfile `gorm:"-" json:"author"`
+	LikeAt         *time.Time       `gorm:"-" json:"likeAt"`
+	DisLike        *bool            `gorm:"-" json:"disLike"`
 }

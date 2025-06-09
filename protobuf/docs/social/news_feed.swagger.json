@@ -116,6 +116,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "isReel",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -167,6 +173,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "isReel",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -455,6 +467,18 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "likeAt",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "disLike",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -631,6 +655,12 @@
             "type": "object",
             "$ref": "#/definitions/pb_userProfileItem"
           }
+        },
+        "likeAt": {
+          "type": "string"
+        },
+        "disLike": {
+          "type": "boolean"
         }
       }
     },
@@ -842,6 +872,12 @@
             "type": "object",
             "$ref": "#/definitions/pb_userProfileItem"
           }
+        },
+        "likeAt": {
+          "type": "string"
+        },
+        "disLike": {
+          "type": "boolean"
         }
       }
     },

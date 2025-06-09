@@ -19,6 +19,7 @@ type NewsFeedRepo interface {
 	UpdateView(ctx context.Context, newFeedID uint64, numView int) error
 	UserAvaiableReact(ctx context.Context, profileID uint64, id uint64) (bool, error)
 	ExistByID(ctx context.Context, id uint64) (bool, error)
+	ExistByIDAndProfileID(ctx context.Context, id uint64, profileID uint64) (bool, error)
 	GetLastUpdated(ctx context.Context, id uint64) (*time.Time, error)
 	UpdateLikeNumber(ctx context.Context, newFeedID uint64, totalLike int) error
 	UpdateCommentNumber(ctx context.Context, newFeedID uint64, totalComment int) error
