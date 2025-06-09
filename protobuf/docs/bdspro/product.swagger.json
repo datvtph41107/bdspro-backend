@@ -1,0 +1,201 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/product.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "BdsproService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "pb_bdsproAsset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "buyedDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "docStatus": {
+          "type": "string",
+          "format": "uint64",
+          "title": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOrgId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parentAssetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "splitMergeStatus": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "purchaseDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "legalStatus": {
+          "type": "string"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproAssetDetails": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_bdsproAsset"
+        }
+      }
+    },
+    "pb_bdsproAssetHistory": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "pb_bdsproAssetList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproAsset"
+          }
+        }
+      }
+    },
+    "pb_bdsproEmpty": {
+      "type": "object"
+    },
+    "pb_bdsproPingResponse": {
+      "type": "object"
+    },
+    "pb_bdsproProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductResponse"
+          }
+        }
+      }
+    },
+    "pb_bdsproProductResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

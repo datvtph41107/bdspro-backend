@@ -7,6 +7,7 @@ import (
 	"common/case/crud3"
 	_db "common/db"
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 	"time"
@@ -361,4 +362,33 @@ func (r *GormPostRepo) GetPublishByProfileID(ctx context.Context, profileId uint
 		return nil, 0, err
 	}
 	return results, int64(len(results)), nil
+}
+
+func (r *GormPostRepo) OwnerPost(ctx context.Context, profileId uint64, postId uint64) (bool, error) {
+	var dummy int
+	row := r.DB.WithContext(ctx).
+		Raw("SELECT 1 FROM posts WHERE id = ? AND created_by = ? LIMIT 1", postId, profileId).
+		Row()
+
+	err := row.Scan(&dummy)
+	if err != nil {
+		// Không tìm thấy row nào
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *GormPostRepo) GetByIDs(ctx context.Context, ids []uint64) ([]*domain.Post, error) {
+	var posts []*domain.Post
+	err := r.DB.WithContext(ctx).
+		Preload("MediaList", "deleted_at is null").
+		Where("id in (?) and deleted_at is null", ids).
+		Find(&posts).Error
+	if err != nil {
+		return nil, err
+	}
+	return posts, nil
 }

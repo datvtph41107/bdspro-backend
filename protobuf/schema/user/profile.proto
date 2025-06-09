@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package pb_user;
+
+option go_package = "pb/types/user;pb_user";
+
+service ProfileService {
+    rpc GetProfileByIds(GetProfileByIdsRequest) returns (GetProfileByIdsResponse);
+}
+
+message GetProfileByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetProfileByIdsResponse {
+    repeated ProfileItem profiles = 1;
+}
+
+message ProfileItem {
+    uint64 id = 1;
+    string fullName = 2;
+    string avatar = 4;
+}
+
+message Profile {
+    uint64 id = 1;
+    string fullName = 2;
+    string email = 3;
+    string avatar = 4;
+    string cover = 5;
+    string phone = 6;
+    string address = 7;
+    uint32 gender = 8;
+    string birthDate = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}

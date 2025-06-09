@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package social;
 
-option go_package = "pb/types/social";
+option go_package = "pb/types/social;pb_social";
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";

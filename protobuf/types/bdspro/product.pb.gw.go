@@ -2,11 +2,11 @@
 // source: bdspro/product.proto
 
 /*
-Package bdspro is a reverse proxy.
+Package pb_bdspro is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package bdspro
+package pb_bdspro
 
 import (
 	"context"
@@ -35,12 +35,62 @@ var (
 	_ = metadata.Join
 )
 
+func request_BdsproService_Ping_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq Empty
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.Ping(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_BdsproService_Ping_0(ctx context.Context, marshaler runtime.Marshaler, server BdsproServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq Empty
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.Ping(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_BdsproService_ListProductInternal_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ProductInternalRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.ListProductInternal(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_BdsproService_ListProductInternal_0(ctx context.Context, marshaler runtime.Marshaler, server BdsproServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ProductInternalRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.ListProductInternal(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 func request_BdsproService_GetAssets_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq Empty
 		metadata runtime.ServerMetadata
 	)
-	io.Copy(io.Discard, req.Body)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := client.GetAssets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
@@ -50,7 +100,34 @@ func local_request_BdsproService_GetAssets_0(ctx context.Context, marshaler runt
 		protoReq Empty
 		metadata runtime.ServerMetadata
 	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetAssets(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_BdsproService_FilterAssets_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq FilterAssetsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.FilterAssets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_BdsproService_FilterAssets_0(ctx context.Context, marshaler runtime.Marshaler, server BdsproServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq FilterAssetsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.FilterAssets(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -102,22 +179,61 @@ func local_request_BdsproService_CreateAsset_0(ctx context.Context, marshaler ru
 	return msg, metadata, err
 }
 
-func request_BdsproService_UpdateAsset_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_BdsproService_CreateAssetFromProduct_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq UpdateAssetRequest
+		protoReq CreateAssetRequestFromProduct
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	msg, err := client.CreateAssetFromProduct(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_BdsproService_CreateAssetFromProduct_0(ctx context.Context, marshaler runtime.Marshaler, server BdsproServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CreateAssetRequestFromProduct
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	msg, err := server.CreateAssetFromProduct(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_BdsproService_ConvertProductToAsset_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CreateAssetRequestConvertProduct
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.ConvertProductToAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_BdsproService_ConvertProductToAsset_0(ctx context.Context, marshaler runtime.Marshaler, server BdsproServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CreateAssetRequestConvertProduct
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.ConvertProductToAsset(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_BdsproService_UpdateAsset_0(ctx context.Context, marshaler runtime.Marshaler, client BdsproServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq UpdateAssetRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.UpdateAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -127,18 +243,9 @@ func local_request_BdsproService_UpdateAsset_0(ctx context.Context, marshaler ru
 	var (
 		protoReq UpdateAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.UpdateAsset(ctx, &protoReq)
 	return msg, metadata, err
@@ -148,16 +255,9 @@ func request_BdsproService_DeleteAsset_0(ctx context.Context, marshaler runtime.
 	var (
 		protoReq DeleteAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.DeleteAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -167,15 +267,9 @@ func local_request_BdsproService_DeleteAsset_0(ctx context.Context, marshaler ru
 	var (
 		protoReq DeleteAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.DeleteAsset(ctx, &protoReq)
 	return msg, metadata, err
@@ -185,18 +279,9 @@ func request_BdsproService_Archived_0(ctx context.Context, marshaler runtime.Mar
 	var (
 		protoReq ArchivedRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.Archived(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -206,18 +291,9 @@ func local_request_BdsproService_Archived_0(ctx context.Context, marshaler runti
 	var (
 		protoReq ArchivedRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.Archived(ctx, &protoReq)
 	return msg, metadata, err
@@ -227,16 +303,9 @@ func request_BdsproService_GetAssetDetails_0(ctx context.Context, marshaler runt
 	var (
 		protoReq GetAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetAssetDetails(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -246,15 +315,9 @@ func local_request_BdsproService_GetAssetDetails_0(ctx context.Context, marshale
 	var (
 		protoReq GetAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetAssetDetails(ctx, &protoReq)
 	return msg, metadata, err
@@ -264,18 +327,9 @@ func request_BdsproService_ShareAsset_0(ctx context.Context, marshaler runtime.M
 	var (
 		protoReq ShareAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.ShareAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -285,18 +339,9 @@ func local_request_BdsproService_ShareAsset_0(ctx context.Context, marshaler run
 	var (
 		protoReq ShareAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.ShareAsset(ctx, &protoReq)
 	return msg, metadata, err
@@ -306,18 +351,9 @@ func request_BdsproService_SplitAsset_0(ctx context.Context, marshaler runtime.M
 	var (
 		protoReq SplitAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.SplitAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -327,18 +363,9 @@ func local_request_BdsproService_SplitAsset_0(ctx context.Context, marshaler run
 	var (
 		protoReq SplitAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.SplitAsset(ctx, &protoReq)
 	return msg, metadata, err
@@ -348,18 +375,9 @@ func request_BdsproService_MergeAsset_0(ctx context.Context, marshaler runtime.M
 	var (
 		protoReq MergeAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.MergeAsset(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -369,18 +387,9 @@ func local_request_BdsproService_MergeAsset_0(ctx context.Context, marshaler run
 	var (
 		protoReq MergeAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.MergeAsset(ctx, &protoReq)
 	return msg, metadata, err
@@ -390,16 +399,9 @@ func request_BdsproService_GetAssetHistory_0(ctx context.Context, marshaler runt
 	var (
 		protoReq GetAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetAssetHistory(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -409,15 +411,9 @@ func local_request_BdsproService_GetAssetHistory_0(ctx context.Context, marshale
 	var (
 		protoReq GetAssetRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetAssetHistory(ctx, &protoReq)
 	return msg, metadata, err
@@ -429,13 +425,53 @@ func local_request_BdsproService_GetAssetHistory_0(ctx context.Context, marshale
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterBdsproServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server BdsproServiceServer) error {
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_Ping_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssets", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/Ping", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/Ping"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_BdsproService_Ping_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_Ping_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_ListProductInternal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/ListProductInternal", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ListProductInternal"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_BdsproService_ListProductInternal_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_ListProductInternal_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssets", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssets"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -449,13 +485,33 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_GetAssets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_FilterAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/FilterAssets", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/FilterAssets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_BdsproService_FilterAssets_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_FilterAssets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_BdsproService_BulkAction_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/BulkAction", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/bulk-action"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/BulkAction", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/BulkAction"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -475,7 +531,7 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/create"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/CreateAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -489,13 +545,53 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_CreateAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_BdsproService_UpdateAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_CreateAssetFromProduct_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/UpdateAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAssetFromProduct", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/CreateAssetFromProduct"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_BdsproService_CreateAssetFromProduct_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_CreateAssetFromProduct_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_ConvertProductToAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/ConvertProductToAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ConvertProductToAsset"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_BdsproService_ConvertProductToAsset_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_ConvertProductToAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_UpdateAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/UpdateAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/UpdateAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -509,13 +605,13 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_UpdateAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodDelete, pattern_BdsproService_DeleteAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_DeleteAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/DeleteAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/DeleteAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/DeleteAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -529,13 +625,13 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_DeleteAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_BdsproService_Archived_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_Archived_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/Archived", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/archived/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/Archived", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/Archived"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -549,13 +645,13 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_Archived_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssetDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssetDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetDetails", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/details"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetDetails", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssetDetails"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -575,7 +671,7 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/ShareAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/share"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/ShareAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ShareAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -595,7 +691,7 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/SplitAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/split"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/SplitAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/SplitAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -615,7 +711,7 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/MergeAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/merge"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/MergeAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/MergeAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -629,13 +725,13 @@ func RegisterBdsproServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_MergeAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssetHistory_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssetHistory_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetHistory", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/history"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetHistory", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssetHistory"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -689,11 +785,45 @@ func RegisterBdsproServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "BdsproServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client BdsproServiceClient) error {
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_Ping_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssets", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/Ping", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/Ping"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_BdsproService_Ping_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_Ping_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_ListProductInternal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/ListProductInternal", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ListProductInternal"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_BdsproService_ListProductInternal_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_ListProductInternal_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssets", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssets"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -706,11 +836,28 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_GetAssets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_FilterAssets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/FilterAssets", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/FilterAssets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_BdsproService_FilterAssets_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_FilterAssets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_BdsproService_BulkAction_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/BulkAction", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/bulk-action"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/BulkAction", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/BulkAction"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -727,7 +874,7 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/create"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/CreateAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -740,11 +887,45 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_CreateAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_BdsproService_UpdateAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_CreateAssetFromProduct_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/UpdateAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/CreateAssetFromProduct", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/CreateAssetFromProduct"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_BdsproService_CreateAssetFromProduct_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_CreateAssetFromProduct_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_ConvertProductToAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/ConvertProductToAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ConvertProductToAsset"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_BdsproService_ConvertProductToAsset_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_BdsproService_ConvertProductToAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_BdsproService_UpdateAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/UpdateAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/UpdateAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -757,11 +938,11 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_UpdateAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodDelete, pattern_BdsproService_DeleteAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_DeleteAsset_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/DeleteAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/DeleteAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/DeleteAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -774,11 +955,11 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_DeleteAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_BdsproService_Archived_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_Archived_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/Archived", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/archived/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/Archived", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/Archived"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -791,11 +972,11 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_Archived_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssetDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssetDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetDetails", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/details"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetDetails", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssetDetails"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -812,7 +993,7 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/ShareAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/share"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/ShareAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/ShareAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -829,7 +1010,7 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/SplitAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/split"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/SplitAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/SplitAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -846,7 +1027,7 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/MergeAsset", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/merge"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/MergeAsset", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/MergeAsset"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -859,11 +1040,11 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_BdsproService_MergeAsset_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_BdsproService_GetAssetHistory_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_BdsproService_GetAssetHistory_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetHistory", runtime.WithHTTPPathPattern("/v2/bdspro/v2/assets/{id}/history"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.BdsproService/GetAssetHistory", runtime.WithHTTPPathPattern("/pb_bdspro.BdsproService/GetAssetHistory"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -880,29 +1061,39 @@ func RegisterBdsproServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_BdsproService_GetAssets_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2}, []string{"v2", "bdspro", "assets"}, ""))
-	pattern_BdsproService_BulkAction_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 2, 3}, []string{"v2", "bdspro", "assets", "bulk-action"}, ""))
-	pattern_BdsproService_CreateAsset_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 2, 3}, []string{"v2", "bdspro", "assets", "create"}, ""))
-	pattern_BdsproService_UpdateAsset_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "assets", "id"}, ""))
-	pattern_BdsproService_DeleteAsset_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "assets", "id"}, ""))
-	pattern_BdsproService_Archived_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "bdspro", "assets", "archived", "id"}, ""))
-	pattern_BdsproService_GetAssetDetails_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "bdspro", "assets", "id", "details"}, ""))
-	pattern_BdsproService_ShareAsset_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "bdspro", "assets", "id", "share"}, ""))
-	pattern_BdsproService_SplitAsset_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "bdspro", "assets", "id", "split"}, ""))
-	pattern_BdsproService_MergeAsset_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "bdspro", "assets", "id", "merge"}, ""))
-	pattern_BdsproService_GetAssetHistory_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "bdspro", "assets", "id", "history"}, ""))
+	pattern_BdsproService_Ping_0                   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "Ping"}, ""))
+	pattern_BdsproService_ListProductInternal_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "ListProductInternal"}, ""))
+	pattern_BdsproService_GetAssets_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "GetAssets"}, ""))
+	pattern_BdsproService_FilterAssets_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "FilterAssets"}, ""))
+	pattern_BdsproService_BulkAction_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "BulkAction"}, ""))
+	pattern_BdsproService_CreateAsset_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "CreateAsset"}, ""))
+	pattern_BdsproService_CreateAssetFromProduct_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "CreateAssetFromProduct"}, ""))
+	pattern_BdsproService_ConvertProductToAsset_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "ConvertProductToAsset"}, ""))
+	pattern_BdsproService_UpdateAsset_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "UpdateAsset"}, ""))
+	pattern_BdsproService_DeleteAsset_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "DeleteAsset"}, ""))
+	pattern_BdsproService_Archived_0               = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "Archived"}, ""))
+	pattern_BdsproService_GetAssetDetails_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "GetAssetDetails"}, ""))
+	pattern_BdsproService_ShareAsset_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "ShareAsset"}, ""))
+	pattern_BdsproService_SplitAsset_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "SplitAsset"}, ""))
+	pattern_BdsproService_MergeAsset_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "MergeAsset"}, ""))
+	pattern_BdsproService_GetAssetHistory_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.BdsproService", "GetAssetHistory"}, ""))
 )
 
 var (
-	forward_BdsproService_GetAssets_0       = runtime.ForwardResponseMessage
-	forward_BdsproService_BulkAction_0      = runtime.ForwardResponseMessage
-	forward_BdsproService_CreateAsset_0     = runtime.ForwardResponseMessage
-	forward_BdsproService_UpdateAsset_0     = runtime.ForwardResponseMessage
-	forward_BdsproService_DeleteAsset_0     = runtime.ForwardResponseMessage
-	forward_BdsproService_Archived_0        = runtime.ForwardResponseMessage
-	forward_BdsproService_GetAssetDetails_0 = runtime.ForwardResponseMessage
-	forward_BdsproService_ShareAsset_0      = runtime.ForwardResponseMessage
-	forward_BdsproService_SplitAsset_0      = runtime.ForwardResponseMessage
-	forward_BdsproService_MergeAsset_0      = runtime.ForwardResponseMessage
-	forward_BdsproService_GetAssetHistory_0 = runtime.ForwardResponseMessage
+	forward_BdsproService_Ping_0                   = runtime.ForwardResponseMessage
+	forward_BdsproService_ListProductInternal_0    = runtime.ForwardResponseMessage
+	forward_BdsproService_GetAssets_0              = runtime.ForwardResponseMessage
+	forward_BdsproService_FilterAssets_0           = runtime.ForwardResponseMessage
+	forward_BdsproService_BulkAction_0             = runtime.ForwardResponseMessage
+	forward_BdsproService_CreateAsset_0            = runtime.ForwardResponseMessage
+	forward_BdsproService_CreateAssetFromProduct_0 = runtime.ForwardResponseMessage
+	forward_BdsproService_ConvertProductToAsset_0  = runtime.ForwardResponseMessage
+	forward_BdsproService_UpdateAsset_0            = runtime.ForwardResponseMessage
+	forward_BdsproService_DeleteAsset_0            = runtime.ForwardResponseMessage
+	forward_BdsproService_Archived_0               = runtime.ForwardResponseMessage
+	forward_BdsproService_GetAssetDetails_0        = runtime.ForwardResponseMessage
+	forward_BdsproService_ShareAsset_0             = runtime.ForwardResponseMessage
+	forward_BdsproService_SplitAsset_0             = runtime.ForwardResponseMessage
+	forward_BdsproService_MergeAsset_0             = runtime.ForwardResponseMessage
+	forward_BdsproService_GetAssetHistory_0        = runtime.ForwardResponseMessage
 )

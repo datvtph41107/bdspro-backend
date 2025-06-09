@@ -38,7 +38,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.CommentRequest"
+                            "$ref": "#/definitions/pb_social.CommentRequest"
                         }
                     }
                 ],
@@ -46,7 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.CommentResponse"
+                            "$ref": "#/definitions/pb_social.CommentResponse"
                         }
                     }
                 }
@@ -106,7 +106,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.CommentListResponse"
+                            "$ref": "#/definitions/pb_social.CommentListResponse"
                         }
                     }
                 }
@@ -135,7 +135,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.CommentRequest"
+                            "$ref": "#/definitions/pb_social.CommentRequest"
                         }
                     },
                     {
@@ -150,7 +150,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.CommentResponse"
+                            "$ref": "#/definitions/pb_social.CommentResponse"
                         }
                     }
                 }
@@ -213,7 +213,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.CommentResponse"
+                            "$ref": "#/definitions/pb_social.CommentResponse"
                         }
                     }
                 }
@@ -248,7 +248,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ListLikeResponse"
+                            "$ref": "#/definitions/pb_social.ListLikeResponse"
                         }
                     }
                 }
@@ -284,7 +284,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.LikeCommentRequest"
+                            "$ref": "#/definitions/pb_social.LikeCommentRequest"
                         }
                     }
                 ],
@@ -292,7 +292,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.LikeResponse"
+                            "$ref": "#/definitions/pb_social.LikeResponse"
                         }
                     }
                 }
@@ -325,7 +325,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.LikeResponse"
+                            "$ref": "#/definitions/pb_social.LikeResponse"
                         }
                     }
                 }
@@ -360,7 +360,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ListLikeResponse"
+                            "$ref": "#/definitions/pb_social.ListLikeResponse"
                         }
                     }
                 }
@@ -395,7 +395,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.LikeResponse"
+                            "$ref": "#/definitions/pb_social.LikeResponse"
                         }
                     }
                 }
@@ -428,110 +428,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.LikeResponse"
+                            "$ref": "#/definitions/pb_social.LikeResponse"
                         }
                     }
                 }
             }
         },
         "/news-feed": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Update news feed",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "News Feed"
-                ],
-                "summary": "Update news feed",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "content",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "friendTagIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "image",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "link",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "numComment",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "numLike",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "numShare",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "numView",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "postId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "title",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "updated_at",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "visibility",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/social.NewsFeed"
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -556,7 +459,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.NewsFeed"
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 ],
@@ -564,7 +467,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.NewsFeed"
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 }
@@ -593,7 +496,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.NewsFeed"
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 ],
@@ -601,7 +504,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.Empty"
+                            "$ref": "#/definitions/pb_social.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/news-feed/detail/{newsFeedId}": {
+            "get": {
+                "description": "Get news feed by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Lấy chi tiết news feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "newsFeedId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 }
@@ -641,7 +576,100 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ListNewsFeed"
+                            "$ref": "#/definitions/pb_social.ListNewsFeed"
+                        }
+                    }
+                }
+            }
+        },
+        "/news-feed/user/{userId}": {
+            "get": {
+                "description": "Get news feed by userID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Lấy danh sách news feed theo userID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "UserId",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.ListNewsFeed"
+                        }
+                    }
+                }
+            }
+        },
+        "/news-feed/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Update news feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "NewsFeed",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 }
@@ -679,7 +707,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.ShareRequest"
+                            "$ref": "#/definitions/pb_social.ShareRequest"
                         }
                     }
                 ],
@@ -687,7 +715,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ShareResponse"
+                            "$ref": "#/definitions/pb_social.ShareResponse"
                         }
                     }
                 }
@@ -710,7 +738,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ReportReasonResponse"
+                            "$ref": "#/definitions/pb_social.ReportReasonResponse"
                         }
                     }
                 }
@@ -741,7 +769,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/social.ReportRequest"
+                            "$ref": "#/definitions/pb_social.ReportRequest"
                         }
                     }
                 ],
@@ -749,7 +777,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/social.ReportResponse"
+                            "$ref": "#/definitions/pb_social.ReportResponse"
                         }
                     }
                 }
@@ -757,13 +785,108 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "social.CommentListResponse": {
+        "pb_bdspro.Post": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "like": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.PostMedia"
+                    }
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "numView": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "description": "1: user, 2: admin",
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "description": "1: thường, 2: VIP",
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "priceType": {
+                    "description": "1: chính thức, 2: thỏa thuận",
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "1: normal, 2: feed, 3: share",
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.PostMedia": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "orderNumber": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_social.CommentListResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/social.CommentResponse"
+                        "$ref": "#/definitions/pb_social.CommentResponse"
                     }
                 },
                 "total": {
@@ -771,7 +894,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.CommentRequest": {
+        "pb_social.CommentRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -794,7 +917,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.CommentResponse": {
+        "pb_social.CommentResponse": {
             "type": "object",
             "properties": {
                 "content": {
@@ -820,10 +943,10 @@ const docTemplate = `{
                 }
             }
         },
-        "social.Empty": {
+        "pb_social.Empty": {
             "type": "object"
         },
-        "social.LikeCommentRequest": {
+        "pb_social.LikeCommentRequest": {
             "type": "object",
             "properties": {
                 "commentId": {
@@ -834,7 +957,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.LikeResponse": {
+        "pb_social.LikeResponse": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -854,13 +977,13 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ListLikeResponse": {
+        "pb_social.ListLikeResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/social.LikeResponse"
+                        "$ref": "#/definitions/pb_social.LikeResponse"
                     }
                 },
                 "total": {
@@ -868,13 +991,13 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ListNewsFeed": {
+        "pb_social.ListNewsFeed": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/social.NewsFeed"
+                        "$ref": "#/definitions/pb_social.NewsFeed"
                     }
                 },
                 "total": {
@@ -882,16 +1005,28 @@ const docTemplate = `{
                 }
             }
         },
-        "social.NewsFeed": {
+        "pb_social.NewsFeed": {
             "type": "object",
             "properties": {
+                "author": {
+                    "$ref": "#/definitions/pb_user.ProfileItem"
+                },
                 "content": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
                 },
                 "friendTagIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
+                    }
+                },
+                "friendTags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_user.ProfileItem"
                     }
                 },
                 "id": {
@@ -900,13 +1035,16 @@ const docTemplate = `{
                 "image": {
                     "type": "string"
                 },
+                "isReel": {
+                    "type": "boolean"
+                },
                 "link": {
                     "type": "string"
                 },
                 "mediaFeeds": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/social.NewsFeedMedia"
+                        "$ref": "#/definitions/pb_social.NewsFeedMedia"
                     }
                 },
                 "numComment": {
@@ -920,6 +1058,9 @@ const docTemplate = `{
                 },
                 "numView": {
                     "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/pb_bdspro.Post"
                 },
                 "postId": {
                     "type": "integer"
@@ -935,7 +1076,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.NewsFeedMedia": {
+        "pb_social.NewsFeedMedia": {
             "type": "object",
             "properties": {
                 "id": {
@@ -952,7 +1093,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ReportReason": {
+        "pb_social.ReportReason": {
             "type": "object",
             "properties": {
                 "active": {
@@ -966,13 +1107,13 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ReportReasonResponse": {
+        "pb_social.ReportReasonResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/social.ReportReason"
+                        "$ref": "#/definitions/pb_social.ReportReason"
                     }
                 },
                 "total": {
@@ -980,7 +1121,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ReportRequest": {
+        "pb_social.ReportRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -997,7 +1138,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ReportResponse": {
+        "pb_social.ReportResponse": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -1014,7 +1155,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ShareRequest": {
+        "pb_social.ShareRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -1031,7 +1172,7 @@ const docTemplate = `{
                 }
             }
         },
-        "social.ShareResponse": {
+        "pb_social.ShareResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1039,6 +1180,20 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "pb_user.ProfileItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         }

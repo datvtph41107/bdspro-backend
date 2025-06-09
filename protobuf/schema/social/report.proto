@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package pb_social;
 
-option go_package = "types/social";
+option go_package = "pb/types/social;pb_social";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";

@@ -3,9 +3,10 @@ syntax = "proto3";
 package pb_social;
 
 import "google/api/annotations.proto";
-import "validate/validate.proto";
+import "bdspro/post.proto";
+import "user/profile.proto";
 
-option go_package = "types/social";
+option go_package = "pb/types/social;pb_social";
 
 service NewsFeedService {
     rpc CreateNewsFeed(NewsFeed) returns (NewsFeed) {
@@ -18,6 +19,16 @@ service NewsFeedService {
         option (google.api.http) = {
             put: "/v2/social/news-feed/{id}"
             body: "*"
+        };
+    };
+    rpc GetNewsFeedByUserID(NewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/user/{userId}"
+        };
+    };
+    rpc DetailNewsFeed(DetailRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/detail/{newsFeedId}"
         };
     };
     rpc DeleteNewsFeed(NewsFeed) returns (Empty) {
@@ -59,16 +70,22 @@ message NewsFeed {
     int32 numComment = 8;
     int32 numShare = 9;
     int32 numView = 10;
-    string updated_at = 11;
-    uint64 postId = 12;
+    string updatedAt = 11;
+    optional uint64 postId = 12;
     repeated NewsFeedMedia mediaFeeds = 13;
     repeated uint64 friendTagIds = 14;
+    pb_user.ProfileItem author = 15;
+    bool isReel = 16;
+    pb_bdspro.Post post = 17;
+    optional uint64 createdBy = 18;
+    repeated pb_user.ProfileItem friendTags = 19;
 }
 
 message NewsFeedSearch {
     int32 page = 1;
     int32 size = 2;
     string text = 3;
+    uint64 userId = 4;
 }
 
 message ListNewsFeed {
@@ -92,4 +109,9 @@ message ShareRequest {
 message ShareResponse {
     uint64 id = 1;
     bool success = 2;
+}
+
+
+message DetailRequest {
+    uint64 newsFeedId = 1;
 }

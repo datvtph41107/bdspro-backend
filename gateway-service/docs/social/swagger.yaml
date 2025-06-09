@@ -1,15 +1,79 @@
 basePath: /v2/social
 definitions:
-  social.CommentListResponse:
+  pb_bdspro.Post:
+    properties:
+      comment:
+        type: integer
+      content:
+        type: string
+      expiredAt:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      like:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/pb_bdspro.PostMedia'
+        type: array
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      numDate:
+        type: integer
+      numView:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        description: '1: user, 2: admin'
+        type: integer
+      packageVisible:
+        description: '1: thường, 2: VIP'
+        type: integer
+      price:
+        type: number
+      priceType:
+        description: '1: chính thức, 2: thỏa thuận'
+        type: integer
+      productId:
+        type: integer
+      status:
+        type: integer
+      title:
+        type: string
+      transactionType:
+        type: string
+      type:
+        description: '1: normal, 2: feed, 3: share'
+        type: string
+      visibility:
+        type: string
+    type: object
+  pb_bdspro.PostMedia:
+    properties:
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  pb_social.CommentListResponse:
     properties:
       data:
         items:
-          $ref: '#/definitions/social.CommentResponse'
+          $ref: '#/definitions/pb_social.CommentResponse'
         type: array
       total:
         type: integer
     type: object
-  social.CommentRequest:
+  pb_social.CommentRequest:
     properties:
       content:
         type: string
@@ -24,7 +88,7 @@ definitions:
       size:
         type: integer
     type: object
-  social.CommentResponse:
+  pb_social.CommentResponse:
     properties:
       content:
         type: string
@@ -41,16 +105,16 @@ definitions:
       updatedAt:
         type: string
     type: object
-  social.Empty:
+  pb_social.Empty:
     type: object
-  social.LikeCommentRequest:
+  pb_social.LikeCommentRequest:
     properties:
       commentId:
         type: integer
       dislike:
         type: boolean
     type: object
-  social.LikeResponse:
+  pb_social.LikeResponse:
     properties:
       createdAt:
         type: string
@@ -63,41 +127,51 @@ definitions:
       userId:
         type: integer
     type: object
-  social.ListLikeResponse:
+  pb_social.ListLikeResponse:
     properties:
       data:
         items:
-          $ref: '#/definitions/social.LikeResponse'
+          $ref: '#/definitions/pb_social.LikeResponse'
         type: array
       total:
         type: integer
     type: object
-  social.ListNewsFeed:
+  pb_social.ListNewsFeed:
     properties:
       data:
         items:
-          $ref: '#/definitions/social.NewsFeed'
+          $ref: '#/definitions/pb_social.NewsFeed'
         type: array
       total:
         type: integer
     type: object
-  social.NewsFeed:
+  pb_social.NewsFeed:
     properties:
+      author:
+        $ref: '#/definitions/pb_user.ProfileItem'
       content:
         type: string
+      createdBy:
+        type: integer
       friendTagIds:
         items:
           type: integer
+        type: array
+      friendTags:
+        items:
+          $ref: '#/definitions/pb_user.ProfileItem'
         type: array
       id:
         type: integer
       image:
         type: string
+      isReel:
+        type: boolean
       link:
         type: string
       mediaFeeds:
         items:
-          $ref: '#/definitions/social.NewsFeedMedia'
+          $ref: '#/definitions/pb_social.NewsFeedMedia'
         type: array
       numComment:
         type: integer
@@ -107,6 +181,8 @@ definitions:
         type: integer
       numView:
         type: integer
+      post:
+        $ref: '#/definitions/pb_bdspro.Post'
       postId:
         type: integer
       title:
@@ -116,7 +192,7 @@ definitions:
       visibility:
         type: integer
     type: object
-  social.NewsFeedMedia:
+  pb_social.NewsFeedMedia:
     properties:
       id:
         type: integer
@@ -127,7 +203,7 @@ definitions:
       url:
         type: string
     type: object
-  social.ReportReason:
+  pb_social.ReportReason:
     properties:
       active:
         type: boolean
@@ -136,16 +212,16 @@ definitions:
       reasonName:
         type: string
     type: object
-  social.ReportReasonResponse:
+  pb_social.ReportReasonResponse:
     properties:
       data:
         items:
-          $ref: '#/definitions/social.ReportReason'
+          $ref: '#/definitions/pb_social.ReportReason'
         type: array
       total:
         type: integer
     type: object
-  social.ReportRequest:
+  pb_social.ReportRequest:
     properties:
       content:
         type: string
@@ -156,7 +232,7 @@ definitions:
       reasonId:
         type: integer
     type: object
-  social.ReportResponse:
+  pb_social.ReportResponse:
     properties:
       createdAt:
         type: string
@@ -167,7 +243,7 @@ definitions:
       reasonId:
         type: integer
     type: object
-  social.ShareRequest:
+  pb_social.ShareRequest:
     properties:
       content:
         type: string
@@ -178,12 +254,21 @@ definitions:
       targetId:
         type: integer
     type: object
-  social.ShareResponse:
+  pb_social.ShareResponse:
     properties:
       id:
         type: integer
       success:
         type: boolean
+    type: object
+  pb_user.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
     type: object
 info:
   contact: {}
@@ -201,14 +286,14 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/social.CommentRequest'
+          $ref: '#/definitions/pb_social.CommentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.CommentResponse'
+            $ref: '#/definitions/pb_social.CommentResponse'
       security:
       - BearerAuth: []
       tags:
@@ -247,7 +332,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.CommentResponse'
+            $ref: '#/definitions/pb_social.CommentResponse'
       security:
       - BearerAuth: []
       tags:
@@ -261,7 +346,7 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/social.CommentRequest'
+          $ref: '#/definitions/pb_social.CommentRequest'
       - description: ID
         in: path
         name: id
@@ -273,7 +358,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.CommentResponse'
+            $ref: '#/definitions/pb_social.CommentResponse'
       security:
       - BearerAuth: []
       tags:
@@ -312,7 +397,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.CommentListResponse'
+            $ref: '#/definitions/pb_social.CommentListResponse'
       tags:
       - Comment
   /like/comment/{commentId}:
@@ -331,7 +416,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.LikeResponse'
+            $ref: '#/definitions/pb_social.LikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -350,14 +435,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/social.LikeCommentRequest'
+          $ref: '#/definitions/pb_social.LikeCommentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.LikeResponse'
+            $ref: '#/definitions/pb_social.LikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -378,7 +463,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ListLikeResponse'
+            $ref: '#/definitions/pb_social.ListLikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -399,7 +484,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.LikeResponse'
+            $ref: '#/definitions/pb_social.LikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -419,7 +504,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.LikeResponse'
+            $ref: '#/definitions/pb_social.LikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -440,7 +525,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ListLikeResponse'
+            $ref: '#/definitions/pb_social.ListLikeResponse'
       security:
       - BearerAuth: []
       tags:
@@ -456,14 +541,14 @@ paths:
         name: post
         required: true
         schema:
-          $ref: '#/definitions/social.NewsFeed'
+          $ref: '#/definitions/pb_social.NewsFeed'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.Empty'
+            $ref: '#/definitions/pb_social.Empty'
       security:
       - BearerAuth: []
       summary: Xóa news feed
@@ -479,73 +564,43 @@ paths:
         name: post
         required: true
         schema:
-          $ref: '#/definitions/social.NewsFeed'
+          $ref: '#/definitions/pb_social.NewsFeed'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.NewsFeed'
+            $ref: '#/definitions/pb_social.NewsFeed'
       security:
       - BearerAuth: []
       summary: Create a new news feed
       tags:
       - News Feed
+  /news-feed/{id}:
     put:
       consumes:
       - application/json
       description: Update news feed
       parameters:
-      - in: query
-        name: content
-        type: string
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: friendTagIds
-        type: array
-      - in: query
+      - description: NewsFeedId
+        in: path
         name: id
+        required: true
         type: integer
-      - in: query
-        name: image
-        type: string
-      - in: query
-        name: link
-        type: string
-      - in: query
-        name: numComment
-        type: integer
-      - in: query
-        name: numLike
-        type: integer
-      - in: query
-        name: numShare
-        type: integer
-      - in: query
-        name: numView
-        type: integer
-      - in: query
-        name: postId
-        type: integer
-      - in: query
-        name: title
-        type: string
-      - in: query
-        name: updated_at
-        type: string
-      - in: query
-        name: visibility
-        type: integer
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.NewsFeed'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.NewsFeed'
+            $ref: '#/definitions/pb_social.NewsFeed'
       security:
       - BearerAuth: []
       summary: Update news feed
@@ -567,17 +622,38 @@ paths:
         name: shareRequest
         required: true
         schema:
-          $ref: '#/definitions/social.ShareRequest'
+          $ref: '#/definitions/pb_social.ShareRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ShareResponse'
+            $ref: '#/definitions/pb_social.ShareResponse'
       security:
       - BearerAuth: []
       summary: Share news feed
+      tags:
+      - News Feed
+  /news-feed/detail/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by id
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      summary: Lấy chi tiết news feed
       tags:
       - News Feed
   /news-feed/public:
@@ -601,8 +677,38 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ListNewsFeed'
+            $ref: '#/definitions/pb_social.ListNewsFeed'
       summary: Lấy danh sách news feed
+      tags:
+      - News Feed
+  /news-feed/user/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by userID
+      parameters:
+      - description: UserId
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      summary: Lấy danh sách news feed theo userID
       tags:
       - News Feed
   /report/reasons:
@@ -616,7 +722,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ReportReasonResponse'
+            $ref: '#/definitions/pb_social.ReportReasonResponse'
       summary: Danh sách lý do báo cáo
       tags:
       - Report
@@ -631,14 +737,14 @@ paths:
         name: report
         required: true
         schema:
-          $ref: '#/definitions/social.ReportRequest'
+          $ref: '#/definitions/pb_social.ReportRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/social.ReportResponse'
+            $ref: '#/definitions/pb_social.ReportResponse'
       security:
       - BearerAuth: []
       summary: Gửi báo cáo

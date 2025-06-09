@@ -6,6 +6,7 @@ services:
       context: ./user-service
       dockerfile: Dockerfile
     container_name: user
+    command: ["./main", "http"]
     deploy:
       resources:
         limits:
@@ -14,15 +15,42 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
-
     networks:
       - internal
+    
+  user-grpc:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user_grpc
+    command: ["./main", "grpc"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    networks:
+      - internal
+
 
   bdspro:
     build:
       context: ./bdspro-service
       dockerfile: Dockerfile
     container_name: bdspro
+    command: ["./main", "http"]
+    networks:
+      - internal
+  
+  bdspro-grpc:
+    build:
+      context: ./bdspro-service
+      dockerfile: Dockerfile
+    container_name: bdspro_grpc
+    command: ["./main", "grpc"]
     networks:
       - internal
 

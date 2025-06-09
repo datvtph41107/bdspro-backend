@@ -38,7 +38,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgreNewsFeedShare := postgre.NewPostgreNewsFeedShare(db)
 	chatClient := client.NewChatClient()
 	newsFeedShareUsecase := usecase.NewNewsFeedShareUsecase(newsFeedUsecase, postgreNewsFeedShare, postgreNewsFeed, chatClient)
-	newsFeedService := service.NewNewsFeedService(newsFeedUsecase, newsFeedShareUsecase)
+	newsFeedService := service.NewNewsFeedService(newsFeedUsecase, newsFeedShareUsecase, bdsproClient, userClient)
 	postgreReportReason := postgre.NewPostgreReportReason(db)
 	reportReasonUsecase := usecase.NewReportReasonUsecase(postgreReportReason, permissionImpl)
 	postgreReport := postgre.NewPostgreReport(db)

@@ -2,11 +2,11 @@
 // source: social/news_feed.proto
 
 /*
-Package social is a reverse proxy.
+Package pb_social is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package social
+package pb_social
 
 import (
 	"context"
@@ -98,6 +98,94 @@ func local_request_NewsFeedService_UpdateNewsFeed_0(ctx context.Context, marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.UpdateNewsFeed(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+var filter_NewsFeedService_GetNewsFeedByUserID_0 = &utilities.DoubleArray{Encoding: map[string]int{"userId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+func request_NewsFeedService_GetNewsFeedByUserID_0(ctx context.Context, marshaler runtime.Marshaler, client NewsFeedServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq NewsFeedSearch
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["userId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userId")
+	}
+	protoReq.UserId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NewsFeedService_GetNewsFeedByUserID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetNewsFeedByUserID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_NewsFeedService_GetNewsFeedByUserID_0(ctx context.Context, marshaler runtime.Marshaler, server NewsFeedServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq NewsFeedSearch
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["userId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userId")
+	}
+	protoReq.UserId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userId", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_NewsFeedService_GetNewsFeedByUserID_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetNewsFeedByUserID(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_NewsFeedService_DetailNewsFeed_0(ctx context.Context, marshaler runtime.Marshaler, client NewsFeedServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq DetailRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["newsFeedId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "newsFeedId")
+	}
+	protoReq.NewsFeedId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
+	}
+	msg, err := client.DetailNewsFeed(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_NewsFeedService_DetailNewsFeed_0(ctx context.Context, marshaler runtime.Marshaler, server NewsFeedServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq DetailRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["newsFeedId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "newsFeedId")
+	}
+	protoReq.NewsFeedId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "newsFeedId", err)
+	}
+	msg, err := server.DetailNewsFeed(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -273,6 +361,46 @@ func RegisterNewsFeedServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 		forward_NewsFeedService_UpdateNewsFeed_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_NewsFeedService_GetNewsFeedByUserID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_social.NewsFeedService/GetNewsFeedByUserID", runtime.WithHTTPPathPattern("/v2/social/news-feed/user/{userId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_NewsFeedService_GetNewsFeedByUserID_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_NewsFeedService_GetNewsFeedByUserID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_NewsFeedService_DetailNewsFeed_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_social.NewsFeedService/DetailNewsFeed", runtime.WithHTTPPathPattern("/v2/social/news-feed/detail/{newsFeedId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_NewsFeedService_DetailNewsFeed_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_NewsFeedService_DetailNewsFeed_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodDelete, pattern_NewsFeedService_DeleteNewsFeed_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -407,6 +535,40 @@ func RegisterNewsFeedServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 		forward_NewsFeedService_UpdateNewsFeed_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_NewsFeedService_GetNewsFeedByUserID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_social.NewsFeedService/GetNewsFeedByUserID", runtime.WithHTTPPathPattern("/v2/social/news-feed/user/{userId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_NewsFeedService_GetNewsFeedByUserID_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_NewsFeedService_GetNewsFeedByUserID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_NewsFeedService_DetailNewsFeed_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_social.NewsFeedService/DetailNewsFeed", runtime.WithHTTPPathPattern("/v2/social/news-feed/detail/{newsFeedId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_NewsFeedService_DetailNewsFeed_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_NewsFeedService_DetailNewsFeed_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodDelete, pattern_NewsFeedService_DeleteNewsFeed_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -462,17 +624,21 @@ func RegisterNewsFeedServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_NewsFeedService_CreateNewsFeed_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "social", "news-feed"}, ""))
-	pattern_NewsFeedService_UpdateNewsFeed_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "social", "news-feed", "id"}, ""))
-	pattern_NewsFeedService_DeleteNewsFeed_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "social", "news-feed", "id"}, ""))
-	pattern_NewsFeedService_GetGlobalNewsFeed_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "social", "news-feed", "public"}, ""))
-	pattern_NewsFeedService_ShareNewsFeed_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "social", "news-feed", "newsFeedId", "share"}, ""))
+	pattern_NewsFeedService_CreateNewsFeed_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "social", "news-feed"}, ""))
+	pattern_NewsFeedService_UpdateNewsFeed_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "social", "news-feed", "id"}, ""))
+	pattern_NewsFeedService_GetNewsFeedByUserID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "social", "news-feed", "user", "userId"}, ""))
+	pattern_NewsFeedService_DetailNewsFeed_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "social", "news-feed", "detail", "newsFeedId"}, ""))
+	pattern_NewsFeedService_DeleteNewsFeed_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "social", "news-feed", "id"}, ""))
+	pattern_NewsFeedService_GetGlobalNewsFeed_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "social", "news-feed", "public"}, ""))
+	pattern_NewsFeedService_ShareNewsFeed_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "social", "news-feed", "newsFeedId", "share"}, ""))
 )
 
 var (
-	forward_NewsFeedService_CreateNewsFeed_0    = runtime.ForwardResponseMessage
-	forward_NewsFeedService_UpdateNewsFeed_0    = runtime.ForwardResponseMessage
-	forward_NewsFeedService_DeleteNewsFeed_0    = runtime.ForwardResponseMessage
-	forward_NewsFeedService_GetGlobalNewsFeed_0 = runtime.ForwardResponseMessage
-	forward_NewsFeedService_ShareNewsFeed_0     = runtime.ForwardResponseMessage
+	forward_NewsFeedService_CreateNewsFeed_0      = runtime.ForwardResponseMessage
+	forward_NewsFeedService_UpdateNewsFeed_0      = runtime.ForwardResponseMessage
+	forward_NewsFeedService_GetNewsFeedByUserID_0 = runtime.ForwardResponseMessage
+	forward_NewsFeedService_DetailNewsFeed_0      = runtime.ForwardResponseMessage
+	forward_NewsFeedService_DeleteNewsFeed_0      = runtime.ForwardResponseMessage
+	forward_NewsFeedService_GetGlobalNewsFeed_0   = runtime.ForwardResponseMessage
+	forward_NewsFeedService_ShareNewsFeed_0       = runtime.ForwardResponseMessage
 )

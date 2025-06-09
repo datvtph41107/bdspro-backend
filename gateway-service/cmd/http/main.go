@@ -101,6 +101,8 @@ var publicRoutes = []string{
 	"/v2/social/news-feed/public",
 	"/v2/social/report/reasons",
 	"/v2/social/comment/list",
+	"/v2/social/news-feed/user",
+	"/v2/social/news-feed/detail",
 	// "/v1/search/plan/list",
 }
 

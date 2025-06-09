@@ -13,6 +13,7 @@ import (
 type UPostRepo interface {
 	// crud2.IBaseRepo[domain.Post]
 	GetByID(id uint64) (*domain.Post, error)
+	GetByIDs(ctx context.Context, ids []uint64) ([]*domain.Post, error)
 	CreatePost(post *domain.Post) error
 	GetPostByProductID(productID uint64) (*domain.Post, error)
 	UpdatePost(c context.Context, post *domain.Post) error
@@ -28,4 +29,5 @@ type UPostRepo interface {
 	SearchLinkToProduct(ctx context.Context, profileId uint64, dto *dto.PostLinkSearch) ([]domain.PostItem, error)
 	Delete(ctx context.Context, profileId, id uint64) error
 	GetPublishByProfileID(ctx context.Context, profileId uint64, dto dto.PostPublishSearch) ([]domain.Post, int64, error)
+	OwnerPost(ctx context.Context, profileId uint64, postId uint64) (bool, error)
 }

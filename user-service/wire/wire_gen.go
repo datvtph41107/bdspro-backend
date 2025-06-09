@@ -11,6 +11,7 @@ import (
 	"github.com/google/wire"
 	"user/config"
 	"user/data"
+	"user/infra/services"
 	"user/models/auth"
 	"user/models/user"
 	"user/repo"
@@ -57,11 +58,12 @@ func InitializeApp() (*config.ConfigApp, error) {
 	groupRouter := routes.NewGroupRouter(groupService)
 	rateService := user_service.NewRateService(rateRepo)
 	rateRouter := routes.NewRateRouter(rateService)
-	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter)
+	servicesProfileService := services.NewGrpcProfileService(profileRepo)
+	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter, servicesProfileService)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, repo.NewCertificationRepo, user_service.NewCertificationService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, repo.NewRateRepo, routes.NewRateRouter, user_service.NewRateService, auth_service.NewRedisService, auth_service.NewOrganizationClient, data.NewRefreshResponse, data.NewRequestLoginResponse, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, repo.NewCertificationRepo, user_service.NewCertificationService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, services.NewGrpcProfileService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, auth_service.NewOrganizationClient, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, repo.NewRateRepo, routes.NewRateRouter, user_service.NewRateService, auth_service.NewRedisService, data.NewRefreshResponse, data.NewRequestLoginResponse, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)

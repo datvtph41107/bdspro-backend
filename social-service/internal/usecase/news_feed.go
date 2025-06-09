@@ -121,14 +121,31 @@ func (u *NewsFeedUsecase) DeletePost(ctx context.Context, post *domain.NewsFeed)
 	return u.newsFeedRepo.Delete(ctx, post)
 }
 
-func (u *NewsFeedUsecase) GetListPost(ctx context.Context, dto *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
-	// tối đa 10 bản ghi
-	if dto.Size > 10 || dto.Size <= 0 {
-		dto.Size = 10
+func (u *NewsFeedUsecase) GetListPostByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+	newsFeeds, total, err := u.newsFeedRepo.GetPublicByUserID(ctx, userId, req)
+	if err != nil {
+		return nil, 0, err
 	}
-	return u.newsFeedRepo.GetGlobal(ctx, dto)
+
+	return newsFeeds, int32(total), nil
+}
+
+func (u *NewsFeedUsecase) GetListPost(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	if req.Size > 10 || req.Size <= 0 {
+		req.Size = 10
+	}
+
+	newsFeeds, total, err := u.newsFeedRepo.GetGlobal(ctx, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeeds, int32(total), nil
 }
 
 func (u *NewsFeedUsecase) ViewPost(ctx context.Context, newFeedID uint64, numView int) error {
 	return u.newsFeedRepo.UpdateView(ctx, newFeedID, numView)
+}
+
+func (u *NewsFeedUsecase) GetNewsFeedByID(ctx context.Context, newsFeedID uint64) (*domain.NewsFeed, error) {
+	return u.newsFeedRepo.GetByID(ctx, newsFeedID)
 }

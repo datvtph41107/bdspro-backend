@@ -62,10 +62,11 @@ func (r *PostgreNewsFeed) QuerySeach(ctx context.Context, dto *dto.NewsFeedGloba
 	return query, nil
 }
 
-func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
 	var newsFeeds []*domain.NewsFeed
 	var total int64
-	query, err := r.QuerySeach(ctx, post)
+	query, err := r.QuerySeach(ctx, req)
+	query = query.Where("created_by = ?", userId)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -76,9 +77,32 @@ func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, post *dto.NewsFeedGloba
 
 	err = query.
 		Order("created_at DESC").
-		Offset(post.GetOffset()).
-		Limit(post.GetLimit()).
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
 		Find(&newsFeeds).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return newsFeeds, int32(total), nil
+}
+
+func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	query := `SELECT * FROM news_feed_global LIMIT ? OFFSET ?;`
+
+	var newsFeeds []*dto.NewsFeedPublic
+	var total int64
+	// err := r.db.WithContext(ctx).
+	// 	Debug().
+	// 	Raw(query, req.GetLimit(), req.GetOffset()).
+	// 	Count(&total).Error
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+
+	err := r.db.WithContext(ctx).
+		Raw(query, req.GetLimit(), req.GetOffset()).
+		Scan(&newsFeeds).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -143,9 +167,21 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 	var newsFeed *domain.NewsFeed
 	err := r.db.WithContext(ctx).
 		Model(&domain.NewsFeed{}).
+		Preload("NewsFeedMedias").
+		Preload("FriendTag").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&newsFeed).
 		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
+	for i, friendTag := range newsFeed.FriendTag {
+		newsFeed.FriendTagIds[i] = friendTag.UserID
+	}
+
 	return newsFeed, err
 }
 

@@ -2,11 +2,11 @@
 // source: social/like.proto
 
 /*
-Package social is a reverse proxy.
+Package pb_social is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package social
+package pb_social
 
 import (
 	"context"

@@ -1,0 +1,179 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/post.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PostService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "pb_bdsproGetPostByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproPost"
+          }
+        }
+      }
+    },
+    "pb_bdsproOwnerPostResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pb_bdsproPost": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "expiredAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "content": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "numDate": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string",
+          "title": "1: normal, 2: feed, 3: share"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "priceType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: chính thức, 2: thỏa thuận"
+        },
+        "packageVisible": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: thường, 2: VIP"
+        },
+        "like": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "comment": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numView": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: user, 2: admin"
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproPostMedia"
+          }
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproPostMedia": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "orderNumber": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

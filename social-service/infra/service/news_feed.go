@@ -4,28 +4,39 @@ import (
 	_dto "common/dto"
 	_models "common/models"
 	_routes "common/routes"
+	_utils "common/utils"
 	"context"
+	"encoding/json"
 	"net/http"
 	pb_social "pb/types/social"
+	"social/infra/client"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
 	"social/internal/usecase"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type NewsFeedService struct {
 	newsFeedUsecase      *usecase.NewsFeedUsecase
 	newsFeedShareUsecase *usecase.NewsFeedShareUsecase
+	bdsproClient         *client.BdsproClient
+	userClient           *client.UserClient
 	pb_social.UnimplementedNewsFeedServiceServer
 }
 
 func NewNewsFeedService(
 	newsFeedUsecase *usecase.NewsFeedUsecase,
 	newsFeedShareUsecase *usecase.NewsFeedShareUsecase,
+	bdsproClient *client.BdsproClient,
+	userClient *client.UserClient,
 ) *NewsFeedService {
 	return &NewsFeedService{
 		newsFeedUsecase:      newsFeedUsecase,
 		newsFeedShareUsecase: newsFeedShareUsecase,
+		bdsproClient:         bdsproClient,
+		userClient:           userClient,
 	}
 }
 
@@ -53,9 +64,10 @@ func (s *NewsFeedService) CreateNewsFeed(ctx context.Context, req *pb_social.New
 // @Tags News Feed
 // @Accept json
 // @Produce json
-// @Param post query pb_social.NewsFeed true "NewsFeed"
+// @Param id path uint64 true "NewsFeedId"
+// @Param post body pb_social.NewsFeed true "NewsFeed"
 // @Success 200 {object} pb_social.NewsFeed
-// @Router /news-feed [put]
+// @Router /news-feed/{id} [put]
 func (s *NewsFeedService) UpdateNewsFeed(ctx context.Context, req *pb_social.NewsFeed) (*pb_social.NewsFeed, error) {
 	post := s.PbPostToDomain(req)
 	post, err := s.newsFeedUsecase.UpdatePost(ctx, post)
@@ -109,8 +121,24 @@ func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *pb_social.
 		Total: &total,
 	}
 	for _, post := range posts {
-		result.Data = append(result.Data, s.DomainPostToPb(post))
+		result.Data = append(result.Data, s.DomainPublicToPb(post))
 	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.bdsproClient.PbPostToDomain(ctx, result.Data)
+		return nil
+	})
+
+	g.Go(func() error {
+		s.userClient.PbUserToDomain(ctx, result.Data)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
 	return result, nil
 }
 
@@ -146,12 +174,86 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *pb_social.Shar
 	}, nil
 }
 
+// @Summary Lấy danh sách news feed theo userID
+// @Description Get news feed by userID
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Param userId path uint64 true "UserId"
+// @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /news-feed/user/{userId} [get]
+func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *pb_social.NewsFeedSearch) (*pb_social.ListNewsFeed, error) {
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Page: _dto.Page{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		Text: req.Text,
+	}
+	posts, total, err := s.newsFeedUsecase.GetListPostByUserID(ctx, req.UserId, postSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &pb_social.ListNewsFeed{
+		Data:  []*pb_social.NewsFeed{},
+		Total: &total,
+	}
+	for _, post := range posts {
+		result.Data = append(result.Data, s.DomainPostToPb(post))
+	}
+
+	return result, nil
+}
+
+// @Summary Lấy chi tiết news feed
+// @Description Get news feed by id
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Param newsFeedId path uint64 true "NewsFeedId"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /news-feed/detail/{newsFeedId} [get]
+func (s *NewsFeedService) DetailNewsFeed(ctx context.Context, req *pb_social.DetailRequest) (*pb_social.NewsFeed, error) {
+	newsFeed, err := s.newsFeedUsecase.GetNewsFeedByID(ctx, req.NewsFeedId)
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeeds := []*pb_social.NewsFeed{s.DomainPostToPb(newsFeed)}
+	err = s.MappingPostAndUser(ctx, newsFeeds)
+	if err != nil {
+		return nil, err
+	}
+
+	return newsFeeds[0], nil
+}
+
+func (s *NewsFeedService) MappingPostAndUser(ctx context.Context, req []*pb_social.NewsFeed) error {
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.bdsproClient.PbPostToDomain(ctx, req)
+		return nil
+	})
+
+	g.Go(func() error {
+		s.userClient.PbUserToDomain(ctx, req)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // --- mapping ---
 
 func (s *NewsFeedService) PbPostToDomain(pbPost *pb_social.NewsFeed) *domain.NewsFeed {
-	medias := make([]*domain.NewsFeedMedia, len(pbPost.MediaFeeds))
+	medias := make([]domain.NewsFeedMedia, len(pbPost.MediaFeeds))
 	for i, media := range pbPost.MediaFeeds {
-		medias[i] = &domain.NewsFeedMedia{
+		medias[i] = domain.NewsFeedMedia{
 			NewsFeedID:  &pbPost.Id,
 			Url:         media.Url,
 			Type:        media.Type,
@@ -173,20 +275,64 @@ func (s *NewsFeedService) PbPostToDomain(pbPost *pb_social.NewsFeed) *domain.New
 		NumView:        int(pbPost.NumView),
 		NewsFeedMedias: medias,
 		FriendTagIds:   pbPost.FriendTagIds,
+		IsReel:         pbPost.IsReel,
+		PostID:         pbPost.PostId,
 	}
 }
 
 func (s *NewsFeedService) DomainPostToPb(post *domain.NewsFeed) *pb_social.NewsFeed {
-	return &pb_social.NewsFeed{
-		Id:         post.ID,
-		Title:      post.Title,
-		Content:    post.Content,
-		Image:      post.Image,
-		Link:       post.Link,
-		Visibility: int32(post.Visibility),
-		NumLike:    int32(post.NumLike),
-		NumComment: int32(post.NumComment),
-		NumShare:   int32(post.NumShare),
-		NumView:    int32(post.NumView),
+	medias := make([]*pb_social.NewsFeedMedia, 0)
+	for _, media := range post.NewsFeedMedias {
+		medias = append(medias, &pb_social.NewsFeedMedia{
+			Url:         media.Url,
+			Type:        media.Type,
+			OrderNumber: int32(media.OrderNumber),
+		})
 	}
+	return &pb_social.NewsFeed{
+		Id:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		Image:        post.Image,
+		Link:         post.Link,
+		Visibility:   int32(post.Visibility),
+		NumLike:      int32(post.NumLike),
+		NumComment:   int32(post.NumComment),
+		NumShare:     int32(post.NumShare),
+		NumView:      int32(post.NumView),
+		FriendTagIds: post.FriendTagIds,
+		IsReel:       post.IsReel,
+		PostId:       post.PostID,
+		CreatedBy:    post.CreatedBy,
+		MediaFeeds:   medias,
+		UpdatedAt:    _utils.FormatTimeToString(post.UpdatedAt),
+	}
+}
+
+func (s *NewsFeedService) DomainPublicToPb(post *dto.NewsFeedPublic) *pb_social.NewsFeed {
+	friendTagIds := make([]uint64, 0)
+	json.Unmarshal(post.FriendTagIds, &friendTagIds)
+
+	medias := make([]*pb_social.NewsFeedMedia, 0)
+	json.Unmarshal(post.NewsFeedMedias, &medias)
+
+	result := &pb_social.NewsFeed{
+		Id:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		Image:        post.Image,
+		Link:         post.Link,
+		Visibility:   int32(post.Visibility),
+		NumLike:      int32(post.NumLike),
+		NumComment:   int32(post.NumComment),
+		NumShare:     int32(post.NumShare),
+		NumView:      int32(post.NumView),
+		MediaFeeds:   medias,
+		FriendTagIds: friendTagIds,
+		IsReel:       post.IsReel,
+		PostId:       post.PostID,
+		CreatedBy:    post.CreatedBy,
+		UpdatedAt:    _utils.FormatTimeToString(&post.UpdatedAt),
+	}
+	return result
 }

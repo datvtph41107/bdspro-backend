@@ -17,7 +17,7 @@ func NewPostgreNewsFeedMedia(db *gorm.DB) *PostgreNewsFeedMedia {
 	return &PostgreNewsFeedMedia{db: db}
 }
 
-func (r *PostgreNewsFeedMedia) UpdateMedia(ctx context.Context, newsFeedID uint64, medias []*domain.NewsFeedMedia) error {
+func (r *PostgreNewsFeedMedia) UpdateMedia(ctx context.Context, newsFeedID uint64, medias []domain.NewsFeedMedia) error {
 	return r.db.WithContext(ctx).
 		Transaction(func(tx *gorm.DB) error {
 			tx = GetDB(ctx, tx)

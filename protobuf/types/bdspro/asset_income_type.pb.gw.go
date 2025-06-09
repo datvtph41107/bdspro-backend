@@ -2,11 +2,11 @@
 // source: bdspro/asset_income_type.proto
 
 /*
-Package bdspro is a reverse proxy.
+Package pb_bdspro is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package bdspro
+package pb_bdspro
 
 import (
 	"context"
@@ -35,18 +35,12 @@ var (
 	_ = metadata.Join
 )
 
-var filter_AssetIncomeTypeService_Get_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-
 func request_AssetIncomeTypeService_Get_0(ctx context.Context, marshaler runtime.Marshaler, client AssetIncomeTypeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
 	)
-	io.Copy(io.Discard, req.Body)
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Get_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -58,37 +52,19 @@ func local_request_AssetIncomeTypeService_Get_0(ctx context.Context, marshaler r
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
 	)
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Get_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Get(ctx, &protoReq)
 	return msg, metadata, err
 }
 
-var filter_AssetIncomeTypeService_Detail_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 func request_AssetIncomeTypeService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, client AssetIncomeTypeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Detail_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Detail(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -99,20 +75,8 @@ func local_request_AssetIncomeTypeService_Detail_0(ctx context.Context, marshale
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Detail_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Detail(ctx, &protoReq)
@@ -147,18 +111,9 @@ func request_AssetIncomeTypeService_Update_0(ctx context.Context, marshaler runt
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.Update(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -168,44 +123,20 @@ func local_request_AssetIncomeTypeService_Update_0(ctx context.Context, marshale
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.Update(ctx, &protoReq)
 	return msg, metadata, err
 }
 
-var filter_AssetIncomeTypeService_Delete_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 func request_AssetIncomeTypeService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client AssetIncomeTypeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Delete_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -216,20 +147,8 @@ func local_request_AssetIncomeTypeService_Delete_0(ctx context.Context, marshale
 	var (
 		protoReq AssetIncomeTypeDTO
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetIncomeTypeService_Delete_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Delete(ctx, &protoReq)
@@ -242,13 +161,13 @@ func local_request_AssetIncomeTypeService_Delete_0(ctx context.Context, marshale
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAssetIncomeTypeServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterAssetIncomeTypeServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AssetIncomeTypeServiceServer) error {
-	mux.Handle(http.MethodGet, pattern_AssetIncomeTypeService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Get", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Get", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Get"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -262,13 +181,13 @@ func RegisterAssetIncomeTypeServiceHandlerServer(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_AssetIncomeTypeService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Detail", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Detail", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Detail"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -288,7 +207,7 @@ func RegisterAssetIncomeTypeServiceHandlerServer(ctx context.Context, mux *runti
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Create", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Create", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -302,13 +221,13 @@ func RegisterAssetIncomeTypeServiceHandlerServer(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Create_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_AssetIncomeTypeService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Update", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Update", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Update"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -322,13 +241,13 @@ func RegisterAssetIncomeTypeServiceHandlerServer(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Update_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodDelete, pattern_AssetIncomeTypeService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Delete", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Delete", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Delete"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -382,11 +301,11 @@ func RegisterAssetIncomeTypeServiceHandler(ctx context.Context, mux *runtime.Ser
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "AssetIncomeTypeServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AssetIncomeTypeServiceClient) error {
-	mux.Handle(http.MethodGet, pattern_AssetIncomeTypeService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Get", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Get", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Get"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -399,11 +318,11 @@ func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_AssetIncomeTypeService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Detail", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Detail", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Detail"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -420,7 +339,7 @@ func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runti
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Create", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Create", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -433,11 +352,11 @@ func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Create_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_AssetIncomeTypeService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Update", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Update", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Update"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -450,11 +369,11 @@ func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runti
 		}
 		forward_AssetIncomeTypeService_Update_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodDelete, pattern_AssetIncomeTypeService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_AssetIncomeTypeService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Delete", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-income-type/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetIncomeTypeService/Delete", runtime.WithHTTPPathPattern("/pb_bdspro.AssetIncomeTypeService/Delete"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -471,11 +390,11 @@ func RegisterAssetIncomeTypeServiceHandlerClient(ctx context.Context, mux *runti
 }
 
 var (
-	pattern_AssetIncomeTypeService_Get_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2}, []string{"v2", "bdspro", "asset-income-type"}, ""))
-	pattern_AssetIncomeTypeService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-income-type", "id"}, ""))
-	pattern_AssetIncomeTypeService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2}, []string{"v2", "bdspro", "asset-income-type"}, ""))
-	pattern_AssetIncomeTypeService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-income-type", "id"}, ""))
-	pattern_AssetIncomeTypeService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-income-type", "id"}, ""))
+	pattern_AssetIncomeTypeService_Get_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetIncomeTypeService", "Get"}, ""))
+	pattern_AssetIncomeTypeService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetIncomeTypeService", "Detail"}, ""))
+	pattern_AssetIncomeTypeService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetIncomeTypeService", "Create"}, ""))
+	pattern_AssetIncomeTypeService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetIncomeTypeService", "Update"}, ""))
+	pattern_AssetIncomeTypeService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetIncomeTypeService", "Delete"}, ""))
 )
 
 var (

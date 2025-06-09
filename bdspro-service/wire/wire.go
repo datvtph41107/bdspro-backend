@@ -103,6 +103,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_group.NewGroupProductRouter,
 	bdspro_internal_usecases_group.NewGroupProductUsecase,
 	bdspro_infra_router_group.NewGroupRouter,
+	bdspro_infra_services.NewGrpcPostService,
 	bdspro_infra_services.NewIncomeDocumentServer,
 	bdspro_internal_usecases.NewIncomeDocumentUc,
 	bdspro_infra_router_user.NewListRouter,

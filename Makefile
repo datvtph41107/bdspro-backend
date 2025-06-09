@@ -19,15 +19,19 @@ buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
 buf-noti:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path notification
+buf-user:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path user
+buf-bdspro:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path bdspro
 
 payment:
 	cd payment-service && go run main.go http
 gateway:
 	cd gateway-service && go run main.go http
 bdspro:
-	cd gateway-service && go run main.go grpc
+	cd bdspro-service && go run main.go grpc
 user:
-	cd user-service && go run main.go http
+	cd user-service && go run main.go grpc
 admin:
 	cd admin-service && go run main.go grpc
 organization:

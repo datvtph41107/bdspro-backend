@@ -25,6 +25,7 @@ type UserProfileEntity struct {
 	TaxCode           string                `gorm:"size:13" json:"taxCode"`
 	FullName          string                `gorm:"size:255" json:"fullName"`
 	Address           string                `gorm:"size:255" json:"address"`
+	Gender            uint8                 `json:"gender"`
 	Avatar            string                `gorm:"size:255" json:"avatar"`
 	BackgroundImage   string                `gorm:"size:255" json:"backgroundImage"`
 	ReferralCode      string                `gorm:"size:255" copier:"-" json:"referralCode"`

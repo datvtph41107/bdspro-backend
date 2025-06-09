@@ -3,12 +3,13 @@ package cmd_grpc
 import (
 	"bdspro/config"
 	"bdspro/db"
+	"bdspro/wire"
 	"common"
-	_db "common/db"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	pb_bdspro "pb/types/bdspro"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -21,30 +22,13 @@ var GrpcCmd = &cobra.Command{
 	Short: "Run the GRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		config.LoadConfig()
-		_db.NewDB()
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		// app, _ := w.InitializeApp()
-		// _db.DB.AutoMigrate(&domain.Order{})
-		// config.ConfigDB = RootApp.DB
+		app, _ := wire.InitializeApp()
 		db.MigrateDomain()
-
-		// r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
-
-		// log.Printf("MAIN")
-		// r.GET("/payment/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-		// router := r.Group("/payment/payos")
-		// router.POST("/webhook/verify", app.PaymentService.VerifyPaymentWebhookData)
-		// router.POST("/create", app.PaymentService.CreatePaymentLink)
-		// router.POST("/cancel/:orderId", app.PaymentService.CancelPaymentLink)
-		// router.GET("/info/:orderId", app.PaymentService.GetPaymentLinkInformation)
-		// pb_noti.RegisterNotificationServiceServer(s, app.ServerHttp)
-		// group := r.Group("/payment/wallet")
-		// RootApp.AccountRouter.RegisterRouter(group)
-		// RootApp.TransactionRouter.RegisterRouter(group)
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
@@ -54,7 +38,7 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(
 			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 		)
-		// pb_bdspro.RegisterBdsproServiceServer(s, app.GrpcServer)
+		pb_bdspro.RegisterPostServiceServer(s, app.PostService)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server

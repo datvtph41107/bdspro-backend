@@ -36,6 +36,11 @@ case "$1" in
     service_path=user-service
     path_jar=main
     ;;
+  "user-grpc")
+    service_path=user-service
+    path_jar=main
+    payload_build=user-grpc
+    ;;
   "file")
     service_path=file-service
     path_jar=main
@@ -67,6 +72,11 @@ case "$1" in
   "bdspro")
     service_path=bdspro-service
     path_jar=main
+    ;;
+  "bdspro-grpc")
+    service_path=bdspro-service
+    path_jar=main
+    payload_build=bdspro-grpc
     ;;
   "chathttp")
     service_path=go-chat-service

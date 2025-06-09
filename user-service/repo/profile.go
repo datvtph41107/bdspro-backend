@@ -91,3 +91,11 @@ func (r *ProfileRepo) GetByProfileID(profileId uint64) (*user_model.UserProfileE
 	}
 	return &userProfile, nil
 }
+
+func (r *ProfileRepo) GetProfileByIds(ids []uint64) ([]*user_model.UserProfileEntity, error) {
+	var userProfiles []*user_model.UserProfileEntity
+	if err := r.DB.Where("profile_id IN (?) and deleted_at is null", ids).Find(&userProfiles).Error; err != nil {
+		return nil, err
+	}
+	return userProfiles, nil
+}

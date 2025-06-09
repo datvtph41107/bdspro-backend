@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: social/report.proto
 
-package social
+package pb_social
 
 import (
 	context "context"

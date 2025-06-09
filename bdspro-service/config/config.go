@@ -5,6 +5,7 @@ import (
 	org_router "bdspro/infra/router/org"
 	public_router "bdspro/infra/router/public"
 	user_router "bdspro/infra/router/user"
+	service "bdspro/infra/services"
 	"bytes"
 	_ "embed"
 	"log"
@@ -48,8 +49,9 @@ var ConfigFile []byte
 type ConfigApp struct {
 	// GrpcServer        *server.BdsproGrpcServer
 	// GrpcGenericServer *server.GenericGrpcServer
-	UserRouter *user_router.RouterManager
-	OrgRouter  *org_router.RouterManager
+	PostService *service.PostService
+	UserRouter  *user_router.RouterManager
+	OrgRouter   *org_router.RouterManager
 	// AdminRouter *admin_router.RouterManager
 	// UserRouter        *user_router.RouterManager
 	GroupRouter *group_router.GroupManager
@@ -72,6 +74,7 @@ func NewConfigApp(
 	orgRouter *org_router.RouterManager,
 	groupRouter *group_router.GroupManager,
 	enumRouter *public_router.PublicRouter,
+	postService *service.PostService,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
 	// CostDocumentServer *service.CostDocumentServer,
@@ -86,6 +89,7 @@ func NewConfigApp(
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
 		// GrpcGenericServer: GrpcGenericServer,
+		PostService: postService,
 		UserRouter:  userRouter,
 		OrgRouter:   orgRouter,
 		GroupRouter: groupRouter,

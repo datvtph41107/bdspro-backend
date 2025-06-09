@@ -1,70 +1,46 @@
 package main
 
 import (
-	"common"
-	_jwt "common/jwt"
-	"user/config"
+	_ "common/models"
+	"fmt"
+	_ "net/http/pprof"
+	"os"
+	cmd_grpc "user/cmd/grpc"
+	cmd_http "user/cmd/http"
 	_ "user/docs"
-	"user/models"
-	"user/routes"
 
-	"user/wire"
-
-	"github.com/gin-gonic/gin"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var publicRoutes = []string{
-	"/user/swagger",
-	"/user/auth/otp",
-	"/user/rate/list",
-	"/user/profile/info/",
-	"/user/profile/find-by-phone",
-	"/user/oauth/",
-	"/user/auth/qr/init",
-	"/user/auth/qr/status",
-	"/user/auth/logout",
-	"/user/auth/token/refresh",
-}
-
-// @title User API
+// @title BDSPRO API
 // @version 1.0
-// @description API quản lý người dùng
-// @BasePath /v1/user
+// @description API phần logic chính của BĐSPro
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-func main() {
-	r := gin.Default()
-	// os.Setenv("TZ", "Europe/London")
-
-	parameters := common.SetupParameters{
-		ConfigFile:   config.ConfigFile,
-		Engine:       r,
-		PublicRoutes: publicRoutes,
-		Prefix:       "/user",
-	}
-
-	common.SetupRestfulAPI(parameters, func() {
-		config.LoadProperties()
-
-		app, _ := wire.InitializeApp()
-		models.AutoMigrate()
-
-		r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
-
-		routes.AuthRoutes(r, app.Auth)
-		routes.OAuthRoutes(r, app.OAuthRouter)
-		routes.ProfileRoutes(r, app.ProfileRouter)
-		// routes.AuthRoutes(r, app.Auth)
-		routes.BlockRoutes(r, app.BlockRouter)
-		routes.FollowRoutes(r, app.FollowRouter)
-		routes.FriendRoutes(r, app.FriendRouter)
-		routes.GroupRoutes(r, app.GroupRouter)
-		routes.RateRoutes(r, app.RateRouter)
-		// fmt.Sprintf("Data: ", property.AppProperties.ZaloAppID)
-
-		// group.GET("/info", func(c *gin.Context) {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})
-		// })
-	})
+var rootCmd = &cobra.Command{
+	Use:   "myapp",
+	Short: "Một ứng dụng quản lý server gRPC và HTTP",
 }
+
+func init() {
+	// Đăng ký các subcommand vào rootCmd
+	rootCmd.AddCommand(cmd_http.HttpCmd)
+	rootCmd.AddCommand(cmd_grpc.GrpcCmd)
+
+	// Cấu hình cho Cobra để lấy thông tin từ các tệp cấu hình (nếu cần)
+	viper.AutomaticEnv() // Để lấy thông tin từ biến môi trường (nếu cần)
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+// userProductService.UserAssetService = userAssetService
+// 	userProductService.UserPostService = userPostService
+// 	uPostUsecase.UProductUsecase = uProductUsecase
+// 	uAssetUsecase.ProductUc = uProductUsecase

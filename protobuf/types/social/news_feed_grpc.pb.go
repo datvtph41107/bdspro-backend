@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: social/news_feed.proto
 
-package social
+package pb_social
 
 import (
 	context "context"
@@ -19,11 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NewsFeedService_CreateNewsFeed_FullMethodName    = "/pb_social.NewsFeedService/CreateNewsFeed"
-	NewsFeedService_UpdateNewsFeed_FullMethodName    = "/pb_social.NewsFeedService/UpdateNewsFeed"
-	NewsFeedService_DeleteNewsFeed_FullMethodName    = "/pb_social.NewsFeedService/DeleteNewsFeed"
-	NewsFeedService_GetGlobalNewsFeed_FullMethodName = "/pb_social.NewsFeedService/GetGlobalNewsFeed"
-	NewsFeedService_ShareNewsFeed_FullMethodName     = "/pb_social.NewsFeedService/ShareNewsFeed"
+	NewsFeedService_CreateNewsFeed_FullMethodName      = "/pb_social.NewsFeedService/CreateNewsFeed"
+	NewsFeedService_UpdateNewsFeed_FullMethodName      = "/pb_social.NewsFeedService/UpdateNewsFeed"
+	NewsFeedService_GetNewsFeedByUserID_FullMethodName = "/pb_social.NewsFeedService/GetNewsFeedByUserID"
+	NewsFeedService_DetailNewsFeed_FullMethodName      = "/pb_social.NewsFeedService/DetailNewsFeed"
+	NewsFeedService_DeleteNewsFeed_FullMethodName      = "/pb_social.NewsFeedService/DeleteNewsFeed"
+	NewsFeedService_GetGlobalNewsFeed_FullMethodName   = "/pb_social.NewsFeedService/GetGlobalNewsFeed"
+	NewsFeedService_ShareNewsFeed_FullMethodName       = "/pb_social.NewsFeedService/ShareNewsFeed"
 )
 
 // NewsFeedServiceClient is the client API for NewsFeedService service.
@@ -32,6 +34,8 @@ const (
 type NewsFeedServiceClient interface {
 	CreateNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*NewsFeed, error)
 	UpdateNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*NewsFeed, error)
+	GetNewsFeedByUserID(ctx context.Context, in *NewsFeedSearch, opts ...grpc.CallOption) (*ListNewsFeed, error)
+	DetailNewsFeed(ctx context.Context, in *DetailRequest, opts ...grpc.CallOption) (*NewsFeed, error)
 	DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*Empty, error)
 	GetGlobalNewsFeed(ctx context.Context, in *NewsFeedGlobalSearch, opts ...grpc.CallOption) (*ListNewsFeed, error)
 	ShareNewsFeed(ctx context.Context, in *ShareRequest, opts ...grpc.CallOption) (*ShareResponse, error)
@@ -59,6 +63,26 @@ func (c *newsFeedServiceClient) UpdateNewsFeed(ctx context.Context, in *NewsFeed
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NewsFeed)
 	err := c.cc.Invoke(ctx, NewsFeedService_UpdateNewsFeed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *newsFeedServiceClient) GetNewsFeedByUserID(ctx context.Context, in *NewsFeedSearch, opts ...grpc.CallOption) (*ListNewsFeed, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListNewsFeed)
+	err := c.cc.Invoke(ctx, NewsFeedService_GetNewsFeedByUserID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *newsFeedServiceClient) DetailNewsFeed(ctx context.Context, in *DetailRequest, opts ...grpc.CallOption) (*NewsFeed, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NewsFeed)
+	err := c.cc.Invoke(ctx, NewsFeedService_DetailNewsFeed_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +125,8 @@ func (c *newsFeedServiceClient) ShareNewsFeed(ctx context.Context, in *ShareRequ
 type NewsFeedServiceServer interface {
 	CreateNewsFeed(context.Context, *NewsFeed) (*NewsFeed, error)
 	UpdateNewsFeed(context.Context, *NewsFeed) (*NewsFeed, error)
+	GetNewsFeedByUserID(context.Context, *NewsFeedSearch) (*ListNewsFeed, error)
+	DetailNewsFeed(context.Context, *DetailRequest) (*NewsFeed, error)
 	DeleteNewsFeed(context.Context, *NewsFeed) (*Empty, error)
 	GetGlobalNewsFeed(context.Context, *NewsFeedGlobalSearch) (*ListNewsFeed, error)
 	ShareNewsFeed(context.Context, *ShareRequest) (*ShareResponse, error)
@@ -119,6 +145,12 @@ func (UnimplementedNewsFeedServiceServer) CreateNewsFeed(context.Context, *NewsF
 }
 func (UnimplementedNewsFeedServiceServer) UpdateNewsFeed(context.Context, *NewsFeed) (*NewsFeed, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNewsFeed not implemented")
+}
+func (UnimplementedNewsFeedServiceServer) GetNewsFeedByUserID(context.Context, *NewsFeedSearch) (*ListNewsFeed, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNewsFeedByUserID not implemented")
+}
+func (UnimplementedNewsFeedServiceServer) DetailNewsFeed(context.Context, *DetailRequest) (*NewsFeed, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DetailNewsFeed not implemented")
 }
 func (UnimplementedNewsFeedServiceServer) DeleteNewsFeed(context.Context, *NewsFeed) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNewsFeed not implemented")
@@ -182,6 +214,42 @@ func _NewsFeedService_UpdateNewsFeed_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NewsFeedServiceServer).UpdateNewsFeed(ctx, req.(*NewsFeed))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NewsFeedService_GetNewsFeedByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewsFeedSearch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NewsFeedServiceServer).GetNewsFeedByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NewsFeedService_GetNewsFeedByUserID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NewsFeedServiceServer).GetNewsFeedByUserID(ctx, req.(*NewsFeedSearch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NewsFeedService_DetailNewsFeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NewsFeedServiceServer).DetailNewsFeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NewsFeedService_DetailNewsFeed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NewsFeedServiceServer).DetailNewsFeed(ctx, req.(*DetailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -254,6 +322,14 @@ var NewsFeedService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateNewsFeed",
 			Handler:    _NewsFeedService_UpdateNewsFeed_Handler,
+		},
+		{
+			MethodName: "GetNewsFeedByUserID",
+			Handler:    _NewsFeedService_GetNewsFeedByUserID_Handler,
+		},
+		{
+			MethodName: "DetailNewsFeed",
+			Handler:    _NewsFeedService_DetailNewsFeed_Handler,
 		},
 		{
 			MethodName: "DeleteNewsFeed",

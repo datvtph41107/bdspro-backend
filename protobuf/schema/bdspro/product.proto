@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package pb_bdspro;
 import "bdspro/asset.proto";
-option go_package = "types/bdspro";
+option go_package = "pb/types/bdspro;pb_bdspro";
 
 service BdsproService {
   rpc Ping (Empty) returns (PingResponse);

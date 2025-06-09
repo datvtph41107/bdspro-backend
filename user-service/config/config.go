@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"log"
 	"user/config/property"
+	"user/infra/services"
 	"user/routes"
 
 	"github.com/spf13/viper"
@@ -13,14 +14,15 @@ import (
 var ConfigFile []byte
 
 type ConfigApp struct {
-	Auth          *routes.AuthRouter
-	OAuthRouter   *routes.OAuthRouter
-	ProfileRouter *routes.ProfileRouter
-	BlockRouter   *routes.BlockRouter
-	FollowRouter  *routes.FollowRouter
-	FriendRouter  *routes.FriendRouter
-	GroupRouter   *routes.GroupRouter
-	RateRouter    *routes.RateRouter
+	Auth           *routes.AuthRouter
+	OAuthRouter    *routes.OAuthRouter
+	ProfileRouter  *routes.ProfileRouter
+	BlockRouter    *routes.BlockRouter
+	FollowRouter   *routes.FollowRouter
+	FriendRouter   *routes.FriendRouter
+	GroupRouter    *routes.GroupRouter
+	RateRouter     *routes.RateRouter
+	ProfileService *services.ProfileService
 	// GroupRouter   *routes.GroupRouter
 }
 
@@ -32,16 +34,18 @@ func NewConfigApp(authService *routes.AuthRouter,
 	friend *routes.FriendRouter,
 	group *routes.GroupRouter,
 	rate *routes.RateRouter,
+	profileService *services.ProfileService,
 ) *ConfigApp {
 	return &ConfigApp{
-		Auth:          authService,
-		OAuthRouter:   oAuthRouter,
-		ProfileRouter: profile,
-		BlockRouter:   block,
-		FollowRouter:  follow,
-		FriendRouter:  friend,
-		GroupRouter:   group,
-		RateRouter:    rate,
+		Auth:           authService,
+		OAuthRouter:    oAuthRouter,
+		ProfileRouter:  profile,
+		BlockRouter:    block,
+		FollowRouter:   follow,
+		FriendRouter:   friend,
+		GroupRouter:    group,
+		RateRouter:     rate,
+		ProfileService: profileService,
 	}
 }
 

@@ -1,8 +1,7 @@
 syntax = "proto3";
 
 package pb_bdspro;
-option go_package = "types/bdspro";
-import "google/protobuf/timestamp.proto";
+option go_package = "pb/types/bdspro;pb_bdspro";
 
 message AssetLegalDTO {
   uint64 id = 1;
