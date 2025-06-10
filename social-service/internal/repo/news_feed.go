@@ -4,12 +4,14 @@ import (
 	"context"
 	"social/internal/domain"
 	"social/internal/dto"
+	"social/internal/enums"
 	"time"
 )
 
 type NewsFeedRepo interface {
 	Create(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error)
 	Update(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error)
+	UpdateVisibility(ctx context.Context, newsFeedId uint64, visibility enums.Visibility) error
 	Delete(ctx context.Context, newsFeed *domain.NewsFeed) error
 	GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error)
 	GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error)

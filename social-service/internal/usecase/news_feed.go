@@ -106,6 +106,21 @@ func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.N
 	return newsFeed, nil
 }
 
+func (u *NewsFeedUsecase) CheckOwner(ctx context.Context, newsFeed *domain.NewsFeed) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	exist, err := u.newsFeedRepo.ExistByIDAndProfileID(ctx, newsFeed.ID, profileId)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "bài viết không tồn tại hoặc bạn không có quyền cập nhật",
+		}
+	}
+	return nil
+}
+
 func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if newsFeed.PostID != nil {
@@ -114,18 +129,11 @@ func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, newsFeed *domain.NewsF
 		}
 	}
 
-	exist, err := u.newsFeedRepo.ExistByIDAndProfileID(ctx, newsFeed.ID, profileId)
-	if err != nil {
+	if err := u.CheckOwner(ctx, newsFeed); err != nil {
 		return nil, err
 	}
-	if !exist {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "bạn không có quyền cập nhật bài viết này",
-		}
-	}
 
-	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+	err := u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		if len(newsFeed.FriendTagIds) > 0 {
 			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
 			if err != nil {
@@ -214,6 +222,21 @@ func (u *NewsFeedUsecase) GetNewsFeedByID(ctx context.Context, newsFeedID uint64
 	if like != nil && err == nil {
 		newsFeed.LikeAt = like.CreatedAt
 		newsFeed.DisLike = &like.DisLike
+	}
+	return newsFeed, nil
+}
+
+func (u *NewsFeedUsecase) UpdateVisibility(ctx context.Context, newsFeedID uint64, visibility enums.Visibility) (*domain.NewsFeed, error) {
+	newsFeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	if err != nil {
+		return nil, err
+	}
+	if err := u.CheckOwner(ctx, newsFeed); err != nil {
+		return nil, err
+	}
+	err = u.newsFeedRepo.UpdateVisibility(ctx, newsFeedID, visibility)
+	if err != nil {
+		return nil, err
 	}
 	return newsFeed, nil
 }

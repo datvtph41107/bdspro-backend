@@ -214,114 +214,10 @@
           "CommentService"
         ]
       }
-    },
-    "/v2/social/comment/{id}/like": {
-      "post": {
-        "operationId": "CommentService_LikeComment",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/socialCommentResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "content",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "parentId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "newsFeedId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "CommentService"
-        ]
-      }
-    },
-    "/v2/social/comment/{id}/reply": {
-      "post": {
-        "operationId": "CommentService_ReplyComment",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/socialCommentResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CommentServiceReplyCommentBody"
-            }
-          }
-        ],
-        "tags": [
-          "CommentService"
-        ]
-      }
     }
   },
   "definitions": {
-    "CommentServiceReplyCommentBody": {
+    "CommentServiceUpdateCommentBody": {
       "type": "object",
       "properties": {
         "content": {
@@ -345,27 +241,18 @@
         }
       }
     },
-    "CommentServiceUpdateCommentBody": {
+    "pb_userProfileItem": {
       "type": "object",
       "properties": {
-        "content": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
           "type": "string"
         },
-        "parentId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "newsFeedId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "page": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "size": {
-          "type": "string",
-          "format": "uint64"
+        "avatar": {
+          "type": "string"
         }
       }
     },
@@ -466,9 +353,20 @@
           "type": "integer",
           "format": "int64"
         },
+        "numDisLike": {
+          "type": "integer",
+          "format": "int64"
+        },
         "numReply": {
           "type": "integer",
           "format": "int64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "author": {
+          "$ref": "#/definitions/pb_userProfileItem"
         }
       }
     }

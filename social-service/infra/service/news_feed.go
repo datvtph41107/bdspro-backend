@@ -133,7 +133,7 @@ func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *pb_social.
 	})
 
 	g.Go(func() error {
-		s.userClient.PbUserToDomain(ctx, result.Data)
+		s.userClient.PbUserToNewsFeed(ctx, result.Data)
 		return nil
 	})
 
@@ -236,6 +236,29 @@ func (s *NewsFeedService) DetailNewsFeed(ctx context.Context, req *pb_social.Det
 	return newsFeeds[0], nil
 }
 
+// @Summary Update visibility of news feed
+// @Description Update visibility of news feed
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param newsFeedId path uint64 true "NewsFeedId"
+// @Param visibility body pb_social.VisibilityRequest true "VisibilityRequest"
+// @Router /news-feed/{newsFeedId}/visibility [put]
+func (s *NewsFeedService) UpdateVisibility(ctx context.Context, req *pb_social.VisibilityRequest) (*pb_social.NewsFeed, error) {
+	newsFeed, err := s.newsFeedUsecase.UpdateVisibility(ctx, req.NewsFeedId, enums.Visibility(req.Visibility))
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeeds := []*pb_social.NewsFeed{s.DomainPostToPb(newsFeed)}
+	err = s.MappingPostAndUser(ctx, newsFeeds)
+	if err != nil {
+		return nil, err
+	}
+	return newsFeeds[0], nil
+}
+
 func (s *NewsFeedService) MappingPostAndUser(ctx context.Context, req []*pb_social.NewsFeed) error {
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
@@ -244,7 +267,7 @@ func (s *NewsFeedService) MappingPostAndUser(ctx context.Context, req []*pb_soci
 	})
 
 	g.Go(func() error {
-		s.userClient.PbUserToDomain(ctx, req)
+		s.userClient.PbUserToNewsFeed(ctx, req)
 		return nil
 	})
 

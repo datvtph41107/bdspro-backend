@@ -6,6 +6,7 @@ option go_package = "pb/types/social;pb_social";
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
+import "user/profile.proto";
 
 service CommentService {
     rpc CreateComment(CommentRequest) returns (CommentResponse) {
@@ -30,17 +31,6 @@ service CommentService {
             get: "/v2/social/comment/list/{newsFeedId}"
         };
     };
-    rpc LikeComment(CommentRequest) returns (CommentResponse) {
-        option (google.api.http) = {
-            post: "/v2/social/comment/{id}/like"
-        };
-    };
-    rpc ReplyComment(CommentRequest) returns (CommentResponse) {
-        option (google.api.http) = {
-            post: "/v2/social/comment/{id}/reply"
-            body: "*"
-        };
-    };
 }
 
 message CommentRequest {
@@ -59,7 +49,10 @@ message CommentResponse {
     uint64 newsFeedId = 4;
     string updatedAt = 5;
     uint32 numLike = 6;
-    uint32 numReply = 7;
+    uint32 numDisLike = 7;
+    uint32 numReply = 8;
+    optional uint64 createdBy = 9;
+    optional pb_user.ProfileItem author = 10;
 }
 
 message CommentListResponse {

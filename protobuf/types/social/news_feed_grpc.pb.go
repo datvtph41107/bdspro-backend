@@ -26,6 +26,7 @@ const (
 	NewsFeedService_DeleteNewsFeed_FullMethodName      = "/pb_social.NewsFeedService/DeleteNewsFeed"
 	NewsFeedService_GetGlobalNewsFeed_FullMethodName   = "/pb_social.NewsFeedService/GetGlobalNewsFeed"
 	NewsFeedService_ShareNewsFeed_FullMethodName       = "/pb_social.NewsFeedService/ShareNewsFeed"
+	NewsFeedService_UpdateVisibility_FullMethodName    = "/pb_social.NewsFeedService/UpdateVisibility"
 )
 
 // NewsFeedServiceClient is the client API for NewsFeedService service.
@@ -39,6 +40,7 @@ type NewsFeedServiceClient interface {
 	DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*Empty, error)
 	GetGlobalNewsFeed(ctx context.Context, in *NewsFeedGlobalSearch, opts ...grpc.CallOption) (*ListNewsFeed, error)
 	ShareNewsFeed(ctx context.Context, in *ShareRequest, opts ...grpc.CallOption) (*ShareResponse, error)
+	UpdateVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*NewsFeed, error)
 }
 
 type newsFeedServiceClient struct {
@@ -119,6 +121,16 @@ func (c *newsFeedServiceClient) ShareNewsFeed(ctx context.Context, in *ShareRequ
 	return out, nil
 }
 
+func (c *newsFeedServiceClient) UpdateVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*NewsFeed, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NewsFeed)
+	err := c.cc.Invoke(ctx, NewsFeedService_UpdateVisibility_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NewsFeedServiceServer is the server API for NewsFeedService service.
 // All implementations must embed UnimplementedNewsFeedServiceServer
 // for forward compatibility.
@@ -130,6 +142,7 @@ type NewsFeedServiceServer interface {
 	DeleteNewsFeed(context.Context, *NewsFeed) (*Empty, error)
 	GetGlobalNewsFeed(context.Context, *NewsFeedGlobalSearch) (*ListNewsFeed, error)
 	ShareNewsFeed(context.Context, *ShareRequest) (*ShareResponse, error)
+	UpdateVisibility(context.Context, *VisibilityRequest) (*NewsFeed, error)
 	mustEmbedUnimplementedNewsFeedServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedNewsFeedServiceServer) GetGlobalNewsFeed(context.Context, *Ne
 }
 func (UnimplementedNewsFeedServiceServer) ShareNewsFeed(context.Context, *ShareRequest) (*ShareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShareNewsFeed not implemented")
+}
+func (UnimplementedNewsFeedServiceServer) UpdateVisibility(context.Context, *VisibilityRequest) (*NewsFeed, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateVisibility not implemented")
 }
 func (UnimplementedNewsFeedServiceServer) mustEmbedUnimplementedNewsFeedServiceServer() {}
 func (UnimplementedNewsFeedServiceServer) testEmbeddedByValue()                         {}
@@ -308,6 +324,24 @@ func _NewsFeedService_ShareNewsFeed_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NewsFeedService_UpdateVisibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VisibilityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NewsFeedServiceServer).UpdateVisibility(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NewsFeedService_UpdateVisibility_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NewsFeedServiceServer).UpdateVisibility(ctx, req.(*VisibilityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NewsFeedService_ServiceDesc is the grpc.ServiceDesc for NewsFeedService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -342,6 +376,10 @@ var NewsFeedService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ShareNewsFeed",
 			Handler:    _NewsFeedService_ShareNewsFeed_Handler,
+		},
+		{
+			MethodName: "UpdateVisibility",
+			Handler:    _NewsFeedService_UpdateVisibility_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

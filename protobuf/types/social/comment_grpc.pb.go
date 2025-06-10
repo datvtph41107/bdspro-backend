@@ -23,8 +23,6 @@ const (
 	CommentService_UpdateComment_FullMethodName  = "/social.CommentService/UpdateComment"
 	CommentService_DeleteComment_FullMethodName  = "/social.CommentService/DeleteComment"
 	CommentService_GetListComment_FullMethodName = "/social.CommentService/GetListComment"
-	CommentService_LikeComment_FullMethodName    = "/social.CommentService/LikeComment"
-	CommentService_ReplyComment_FullMethodName   = "/social.CommentService/ReplyComment"
 )
 
 // CommentServiceClient is the client API for CommentService service.
@@ -35,8 +33,6 @@ type CommentServiceClient interface {
 	UpdateComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
 	DeleteComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
 	GetListComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentListResponse, error)
-	LikeComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
-	ReplyComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
 }
 
 type commentServiceClient struct {
@@ -87,26 +83,6 @@ func (c *commentServiceClient) GetListComment(ctx context.Context, in *CommentRe
 	return out, nil
 }
 
-func (c *commentServiceClient) LikeComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommentResponse)
-	err := c.cc.Invoke(ctx, CommentService_LikeComment_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *commentServiceClient) ReplyComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommentResponse)
-	err := c.cc.Invoke(ctx, CommentService_ReplyComment_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CommentServiceServer is the server API for CommentService service.
 // All implementations must embed UnimplementedCommentServiceServer
 // for forward compatibility.
@@ -115,8 +91,6 @@ type CommentServiceServer interface {
 	UpdateComment(context.Context, *CommentRequest) (*CommentResponse, error)
 	DeleteComment(context.Context, *CommentRequest) (*CommentResponse, error)
 	GetListComment(context.Context, *CommentRequest) (*CommentListResponse, error)
-	LikeComment(context.Context, *CommentRequest) (*CommentResponse, error)
-	ReplyComment(context.Context, *CommentRequest) (*CommentResponse, error)
 	mustEmbedUnimplementedCommentServiceServer()
 }
 
@@ -138,12 +112,6 @@ func (UnimplementedCommentServiceServer) DeleteComment(context.Context, *Comment
 }
 func (UnimplementedCommentServiceServer) GetListComment(context.Context, *CommentRequest) (*CommentListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetListComment not implemented")
-}
-func (UnimplementedCommentServiceServer) LikeComment(context.Context, *CommentRequest) (*CommentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LikeComment not implemented")
-}
-func (UnimplementedCommentServiceServer) ReplyComment(context.Context, *CommentRequest) (*CommentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReplyComment not implemented")
 }
 func (UnimplementedCommentServiceServer) mustEmbedUnimplementedCommentServiceServer() {}
 func (UnimplementedCommentServiceServer) testEmbeddedByValue()                        {}
@@ -238,42 +206,6 @@ func _CommentService_GetListComment_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CommentService_LikeComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CommentServiceServer).LikeComment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CommentService_LikeComment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommentServiceServer).LikeComment(ctx, req.(*CommentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CommentService_ReplyComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CommentServiceServer).ReplyComment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CommentService_ReplyComment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommentServiceServer).ReplyComment(ctx, req.(*CommentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // CommentService_ServiceDesc is the grpc.ServiceDesc for CommentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -296,14 +228,6 @@ var CommentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetListComment",
 			Handler:    _CommentService_GetListComment_Handler,
-		},
-		{
-			MethodName: "LikeComment",
-			Handler:    _CommentService_LikeComment_Handler,
-		},
-		{
-			MethodName: "ReplyComment",
-			Handler:    _CommentService_ReplyComment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

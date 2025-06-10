@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"social/infra/client"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/usecase"
@@ -15,11 +16,18 @@ import (
 
 type CommentService struct {
 	commentUsecase *usecase.CommentUsecase
+	userClient     *client.UserClient
 	pb_social.UnimplementedCommentServiceServer
 }
 
-func NewCommentService(commentUsecase *usecase.CommentUsecase) *CommentService {
-	return &CommentService{commentUsecase: commentUsecase}
+func NewCommentService(
+	commentUsecase *usecase.CommentUsecase,
+	userClient *client.UserClient,
+) *CommentService {
+	return &CommentService{
+		commentUsecase: commentUsecase,
+		userClient:     userClient,
+	}
 }
 
 // @Tags Comment
@@ -105,26 +113,12 @@ func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.Comm
 	for _, comment := range comments {
 		results = append(results, s.DomainCommentToPb(&comment))
 	}
+
+	s.userClient.PbUserToComment(ctx, results)
 	return &pb_social.CommentListResponse{
 		Data:  results,
 		Total: uint64(total),
 	}, nil
-}
-
-func (s *CommentService) LikeComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
-	return nil, nil
-}
-
-func (s *CommentService) ReplyComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
-	return nil, nil
-}
-
-func (s *CommentService) GetCommentByNewsFeedID(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
-	return nil, nil
-}
-
-func (s *CommentService) GetCommentByParentID(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
-	return nil, nil
 }
 
 // -- mapping --
@@ -148,6 +142,8 @@ func (s *CommentService) DomainCommentToPb(comment *domain.Comment) *pb_social.C
 		NewsFeedId: comment.NewsFeedID,
 		UpdatedAt:  _utils.FormatTimeToString(comment.UpdatedAt),
 		NumLike:    comment.NumLike,
+		NumDisLike: comment.NumDisLike,
 		NumReply:   comment.NumReply,
+		CreatedBy:  comment.CreatedBy,
 	}
 }

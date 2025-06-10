@@ -47,7 +47,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgreComment := postgre.NewPostgreComment(db)
 	numberUpdateUsecase := usecase.NewNumberUpdateUsecase(postgreNewsFeed, likeRepo, postgreComment)
 	commentUsecase := usecase.NewCommentUsecase(postgreComment, permissionImpl, postgreNewsFeed, likeRepo, numberUpdateUsecase)
-	commentService := service.NewCommentService(commentUsecase)
+	commentService := service.NewCommentService(commentUsecase, userClient)
 	likeUsecase := usecase.NewLikeUsecase(likeRepo, postgreComment, postgreNewsFeed, numberUpdateUsecase)
 	likeService := service.NewLikeService(likeUsecase)
 	configApp := config.NewConfigApp(newsFeedService, reportService, commentService, likeService)

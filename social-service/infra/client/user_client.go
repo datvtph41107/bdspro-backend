@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	pb_social "pb/types/social"
@@ -79,10 +80,30 @@ func (c *UserClient) IsFriends(ctx context.Context, profileID uint64, friendIDs 
 	return true, nil
 }
 
-func (c *UserClient) PbUserToDomain(ctx context.Context, newsFeeds []*pb_social.NewsFeed) {
+func (c *UserClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*pb_user.ProfileItem, error) {
 	if c.client == nil {
-		return
+		return nil, errors.New("user client not avaiable")
 	}
+
+	profileIDs := make([]uint64, 0, len(profileIDSet))
+	for id := range profileIDSet {
+		profileIDs = append(profileIDs, id)
+	}
+
+	profiles, err := c.client.GetProfileByIds(ctx, &pb_user.GetProfileByIdsRequest{Ids: profileIDs})
+	if err != nil {
+		return nil, err
+	}
+
+	profileMap := make(map[uint64]*pb_user.ProfileItem, len(profiles.Profiles))
+	for _, profile := range profiles.Profiles {
+		profileMap[profile.Id] = profile
+	}
+
+	return profileMap, nil
+}
+
+func (c *UserClient) PbUserToNewsFeed(ctx context.Context, newsFeeds []*pb_social.NewsFeed) {
 	profileIDSet := make(map[uint64]struct{})
 	for _, nf := range newsFeeds {
 		if nf.CreatedBy != nil {
@@ -95,19 +116,9 @@ func (c *UserClient) PbUserToDomain(ctx context.Context, newsFeeds []*pb_social.
 		}
 	}
 
-	profileIDs := make([]uint64, 0, len(profileIDSet))
-	for id := range profileIDSet {
-		profileIDs = append(profileIDs, id)
-	}
-
-	profiles, err := c.client.GetProfileByIds(ctx, &pb_user.GetProfileByIdsRequest{Ids: profileIDs})
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
 	if err != nil {
 		return
-	}
-
-	profileMap := make(map[uint64]*pb_user.ProfileItem, len(profiles.Profiles))
-	for _, profile := range profiles.Profiles {
-		profileMap[profile.Id] = profile
 	}
 
 	// Gán Author và FriendTags cho từng newsFeed
@@ -128,4 +139,28 @@ func (c *UserClient) PbUserToDomain(ctx context.Context, newsFeeds []*pb_social.
 		}
 	}
 
+}
+
+func (c *UserClient) PbUserToComment(ctx context.Context, comments []*pb_social.CommentResponse) (map[uint64]*pb_user.ProfileItem, error) {
+	profileIDSet := make(map[uint64]struct{})
+	for _, comment := range comments {
+		if comment.CreatedBy != nil {
+			profileIDSet[*comment.CreatedBy] = struct{}{}
+		}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, comment := range comments {
+		if comment.CreatedBy != nil {
+			if profile, ok := profileMap[*comment.CreatedBy]; ok {
+				comment.Author = profile
+			}
+		}
+	}
+
+	return profileMap, nil
 }

@@ -90,11 +90,17 @@ definitions:
     type: object
   pb_social.CommentResponse:
     properties:
+      author:
+        $ref: '#/definitions/pb_user.ProfileItem'
       content:
         type: string
+      createdBy:
+        type: integer
       id:
         type: integer
       newsFeedId:
+        type: integer
+      numDisLike:
         type: integer
       numLike:
         type: integer
@@ -264,6 +270,13 @@ definitions:
         type: integer
       success:
         type: boolean
+    type: object
+  pb_social.VisibilityRequest:
+    properties:
+      newsFeedId:
+        type: integer
+      visibility:
+        type: integer
     type: object
   pb_user.ProfileItem:
     properties:
@@ -637,6 +650,31 @@ paths:
       security:
       - BearerAuth: []
       summary: Share news feed
+      tags:
+      - News Feed
+  /news-feed/{newsFeedId}/visibility:
+    put:
+      consumes:
+      - application/json
+      description: Update visibility of news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - description: VisibilityRequest
+        in: body
+        name: visibility
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.VisibilityRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Update visibility of news feed
       tags:
       - News Feed
   /news-feed/detail/{newsFeedId}:

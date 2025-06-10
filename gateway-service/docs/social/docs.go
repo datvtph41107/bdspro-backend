@@ -746,6 +746,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/news-feed/{newsFeedId}/visibility": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update visibility of news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Update visibility of news feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "newsFeedId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "VisibilityRequest",
+                        "name": "visibility",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.VisibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/report/reasons": {
             "get": {
                 "description": "Danh sách lý do báo cáo",
@@ -945,13 +984,22 @@ const docTemplate = `{
         "pb_social.CommentResponse": {
             "type": "object",
             "properties": {
+                "author": {
+                    "$ref": "#/definitions/pb_user.ProfileItem"
+                },
                 "content": {
                     "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "newsFeedId": {
+                    "type": "integer"
+                },
+                "numDisLike": {
                     "type": "integer"
                 },
                 "numLike": {
@@ -1211,6 +1259,17 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "pb_social.VisibilityRequest": {
+            "type": "object",
+            "properties": {
+                "newsFeedId": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "integer"
                 }
             }
         },

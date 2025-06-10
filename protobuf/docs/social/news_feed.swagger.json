@@ -561,6 +561,45 @@
           "NewsFeedService"
         ]
       }
+    },
+    "/v2/social/news-feed/{newsFeedId}/visibility": {
+      "put": {
+        "operationId": "NewsFeedService_UpdateVisibility",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialNewsFeed"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "newsFeedId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewsFeedServiceUpdateVisibilityBody"
+            }
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -661,6 +700,15 @@
         },
         "disLike": {
           "type": "boolean"
+        }
+      }
+    },
+    "NewsFeedServiceUpdateVisibilityBody": {
+      "type": "object",
+      "properties": {
+        "visibility": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

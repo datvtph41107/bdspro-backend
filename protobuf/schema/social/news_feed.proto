@@ -47,8 +47,18 @@ service NewsFeedService {
             body: "*"
         };
     };
+    rpc UpdateVisibility(VisibilityRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/news-feed/{newsFeedId}/visibility"
+            body: "*"
+        };
+    };
 }
 
+message VisibilityRequest {
+    uint64 newsFeedId = 1;
+    int32 visibility = 2;
+}
 
 message Empty {}
 

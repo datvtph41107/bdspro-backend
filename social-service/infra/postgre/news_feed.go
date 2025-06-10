@@ -8,6 +8,7 @@ import (
 	"log"
 	"social/internal/domain"
 	"social/internal/dto"
+	"social/internal/enums"
 	"time"
 
 	"gorm.io/gorm"
@@ -191,6 +192,13 @@ left join tb_like tl on tl.user_id = %d and tl.target_id  = g.id and tl.target_t
 	}
 
 	return newsFeeds, int32(total), nil
+}
+
+func (r *PostgreNewsFeed) UpdateVisibility(ctx context.Context, newsFeedID uint64, visibility enums.Visibility) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ? and deleted_at is null", newsFeedID).
+		Update("visibility", visibility).Error
 }
 
 func (r *PostgreNewsFeed) UpdateLikeNumber(ctx context.Context, newFeedID uint64, totalLike int) error {

@@ -118,7 +118,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/socialLikeServiceLikeCommentBody"
+              "$ref": "#/definitions/LikeServiceLikeCommentBody"
             }
           }
         ],
@@ -240,6 +240,14 @@
     }
   },
   "definitions": {
+    "LikeServiceLikeCommentBody": {
+      "type": "object",
+      "properties": {
+        "dislike": {
+          "type": "boolean"
+        }
+      }
+    },
     "LikeServiceLikeNewsFeedBody": {
       "type": "object",
       "properties": {
@@ -297,14 +305,6 @@
         },
         "createdAt": {
           "type": "string"
-        }
-      }
-    },
-    "socialLikeServiceLikeCommentBody": {
-      "type": "object",
-      "properties": {
-        "dislike": {
-          "type": "boolean"
         }
       }
     },
