@@ -7,6 +7,7 @@ import (
 	"errors"
 	"social/internal/domain"
 	"social/internal/enums"
+	iusecase "social/internal/interface"
 	"social/internal/repo"
 )
 
@@ -15,18 +16,24 @@ type LikeUsecase struct {
 	commentRepo         repo.CommentRepo
 	newsFeedRepo        repo.NewsFeedRepo
 	numberUpdateUsecase *NumberUpdateUsecase
+	userClient          iusecase.UserClient
+	notiClient          iusecase.NotiClient
 }
 
 func NewLikeUsecase(likeRepo repo.LikeRepo,
 	commentRepo repo.CommentRepo,
 	newsFeedRepo repo.NewsFeedRepo,
 	numberUpdateUsecase *NumberUpdateUsecase,
+	userClient iusecase.UserClient,
+	notiClient iusecase.NotiClient,
 ) *LikeUsecase {
 	return &LikeUsecase{
 		likeRepo:            likeRepo,
 		commentRepo:         commentRepo,
 		newsFeedRepo:        newsFeedRepo,
 		numberUpdateUsecase: numberUpdateUsecase,
+		userClient:          userClient,
+		notiClient:          notiClient,
 	}
 }
 
@@ -38,11 +45,11 @@ func (u *LikeUsecase) LikeComment(ctx context.Context, targetId uint64, dislike 
 			Message: "unauthorized",
 		}
 	}
-	existComment, err := u.commentRepo.ExistByID(ctx, targetId)
+	existComment, err := u.commentRepo.GetByID(ctx, targetId)
 	if err != nil {
 		return nil, err
 	}
-	if !existComment {
+	if existComment == nil {
 		return nil, errors.New("comment not found")
 	}
 
@@ -51,9 +58,9 @@ func (u *LikeUsecase) LikeComment(ctx context.Context, targetId uint64, dislike 
 		return nil, err
 	}
 
-	bg := context.Background()
-	newCtx := context.WithValue(bg, "profileId", profileId)
-	go u.numberUpdateUsecase.UpdateLikeNumberComment(newCtx, targetId, dislike)
+	newCtx := _utils.CloneContext(ctx)
+	go u.numberUpdateUsecase.UpdateLikeNumberComment(newCtx, existComment, dislike)
+
 	return result, nil
 }
 
@@ -69,9 +76,9 @@ func (u *LikeUsecase) UnlikeComment(ctx context.Context, targetId uint64) (*doma
 	if err != nil {
 		return nil, err
 	}
-	bg := context.Background()
-	newCtx := context.WithValue(bg, "profileId", profileId)
-	go u.numberUpdateUsecase.UpdateLikeNumberComment(newCtx, targetId, false)
+	// bg := context.Background()
+	// newCtx := context.WithValue(bg, "profileId", profileId)
+	// go u.numberUpdateUsecase.UpdateLikeNumberComment(newCtx, targetId, false)
 	return result, nil
 }
 
@@ -83,11 +90,11 @@ func (u *LikeUsecase) LikeNewsFeed(ctx context.Context, targetId uint64) (*domai
 			Message: "unauthorized",
 		}
 	}
-	existNewsFeed, err := u.newsFeedRepo.ExistByID(ctx, targetId)
+	existNewsFeed, err := u.newsFeedRepo.GetByID(ctx, targetId)
 	if err != nil {
 		return nil, err
 	}
-	if !existNewsFeed {
+	if existNewsFeed == nil {
 		return nil, errors.New("news feed not found")
 	}
 
@@ -96,9 +103,8 @@ func (u *LikeUsecase) LikeNewsFeed(ctx context.Context, targetId uint64) (*domai
 		return nil, err
 	}
 
-	bg := context.Background()
-	newCtx := context.WithValue(bg, "profileId", profileId)
-	go u.numberUpdateUsecase.UpdateLikeNumberNewsFeed(newCtx, targetId)
+	newCtx := _utils.CloneContext(ctx)
+	go u.numberUpdateUsecase.UpdateLikeNumberNewsFeed(newCtx, existNewsFeed)
 	return result, nil
 }
 
@@ -144,6 +150,7 @@ func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enum
 		DisLike:    dislike,
 		CreatedAt:  _utils.NowPtr(),
 	}
+
 	return u.likeRepo.Create(ctx, like)
 }
 

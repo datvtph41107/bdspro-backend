@@ -16,6 +16,8 @@ type CommentUsecase struct {
 	newsFeedRepo        repo.NewsFeedRepo
 	likeRepo            repo.LikeRepo
 	numberUpdateUsecase *NumberUpdateUsecase
+	userClient          iusecase.UserClient
+	notiClient          iusecase.NotiClient
 }
 
 func NewCommentUsecase(commentRepo repo.CommentRepo,
@@ -23,6 +25,8 @@ func NewCommentUsecase(commentRepo repo.CommentRepo,
 	newsFeedRepo repo.NewsFeedRepo,
 	likeRepo repo.LikeRepo,
 	numberUpdateUsecase *NumberUpdateUsecase,
+	userClient iusecase.UserClient,
+	notiClient iusecase.NotiClient,
 ) *CommentUsecase {
 	return &CommentUsecase{
 		commentRepo:         commentRepo,
@@ -30,22 +34,19 @@ func NewCommentUsecase(commentRepo repo.CommentRepo,
 		newsFeedRepo:        newsFeedRepo,
 		likeRepo:            likeRepo,
 		numberUpdateUsecase: numberUpdateUsecase,
+		userClient:          userClient,
+		notiClient:          notiClient,
 	}
 }
 
 func (u *CommentUsecase) CreateComment(ctx context.Context, comment *domain.Comment) (*domain.Comment, error) {
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	comment.UserID = profileID
+	var err error
 
-	exist, err := u.newsFeedRepo.UserAvaiableReact(ctx, profileID, comment.NewsFeedID)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		return nil, errors.New("bài viết không tồn tại hoặc bị giới hạn bình luận")
-	}
+	var parentComment *domain.Comment
 	if comment.ParentID != nil {
-		parentComment, err := u.commentRepo.GetByID(ctx, *comment.ParentID)
+		parentComment, err = u.commentRepo.GetByID(ctx, *comment.ParentID)
 		if err != nil {
 			return nil, err
 		}
@@ -55,17 +56,24 @@ func (u *CommentUsecase) CreateComment(ctx context.Context, comment *domain.Comm
 		comment.NewsFeedID = parentComment.NewsFeedID
 	}
 
+	exist, err := u.newsFeedRepo.GetPublicIgnorePreloadByID(ctx, comment.NewsFeedID)
+	if err != nil {
+		return nil, err
+	}
+	if exist == nil {
+		return nil, errors.New("bài viết không tồn tại hoặc bị giới hạn bình luận")
+	}
+
 	result, err := u.commentRepo.Create(ctx, comment)
 	if err != nil {
 		return nil, err
 	}
 
-	bg := context.Background()
-	newCtx := context.WithValue(bg, "profileId", profileID)
+	newCtx := _utils.CloneContext(ctx)
 	if result.ParentID != nil {
-		go u.numberUpdateUsecase.UpdateNumberReplyComment(newCtx, *result.ParentID, result.NewsFeedID)
+		go u.numberUpdateUsecase.UpdateNumberReplyComment(newCtx, result, parentComment, exist)
 	} else {
-		go u.numberUpdateUsecase.UpdateNumberComment(newCtx, result.NewsFeedID)
+		go u.numberUpdateUsecase.UpdateNumberComment(newCtx, result, parentComment, exist)
 	}
 
 	return result, nil

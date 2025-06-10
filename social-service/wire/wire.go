@@ -22,11 +22,12 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	wire.Bind(new(social_internal_interface.BdsproClient), new(*social_infra_client.BdsproClient)),
 	wire.Bind(new(social_internal_interface.ChatClient), new(*social_infra_client.ChatClient)),
+	wire.Bind(new(social_internal_interface.NotiClient), new(*social_infra_client.NotificationClient)),
 	wire.Bind(new(social_internal_interface.UserClient), new(*social_infra_client.UserClient)),
 	wire.Bind(new(social_internal_interface.PermissionUsecase), new(*social_infra_impl.PermissionImpl)),
 	wire.Bind(new(social_internal_repo.CommentRepo), new(*social_infra_postgre.PostgreComment)),
 	wire.Bind(new(social_internal_repo.FriendTagRepo), new(*social_infra_postgre.PostgreFriendTag)),
-	wire.Bind(new(social_internal_repo.LikeRepo), new(*social_infra_postgre.LikeRepo)),
+	wire.Bind(new(social_internal_repo.LikeRepo), new(*social_infra_postgre.PostgreLike)),
 	wire.Bind(new(social_internal_repo.NewsFeedRepo), new(*social_infra_postgre.PostgreNewsFeed)),
 	wire.Bind(new(social_internal_repo.NewsFeedMediaRepo), new(*social_infra_postgre.PostgreNewsFeedMedia)),
 	wire.Bind(new(social_internal_repo.NewsFeedShareRepo), new(*social_infra_postgre.PostgreNewsFeedShare)),
@@ -45,6 +46,7 @@ var wireSet = wire.NewSet(
 	social_infra_service.NewNewsFeedService,
 	social_internal_usecase.NewNewsFeedShareUsecase,
 	social_internal_usecase.NewNewsFeedUsecase,
+	social_infra_client.NewNotificationClient,
 	social_internal_usecase.NewNumberUpdateUsecase,
 	social_infra_impl.NewPermissionImpl,
 	social_infra_postgre.NewPostgreComment,
@@ -59,6 +61,7 @@ var wireSet = wire.NewSet(
 	social_infra_service.NewReportService,
 	social_internal_usecase.NewReportUsecase,
 	social_infra_client.NewUserClient,
+	social_internal_usecase.NewUserUsecase,
 )
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)

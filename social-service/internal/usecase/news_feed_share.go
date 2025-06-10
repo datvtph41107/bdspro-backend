@@ -16,6 +16,9 @@ type NewsFeedShareUsecase struct {
 	newsFeedShareRepo repo.NewsFeedShareRepo
 	newsFeedRepo      repo.NewsFeedRepo
 	chatClient        iusecase.ChatClient
+	notiClient        iusecase.NotiClient
+	userClient        iusecase.UserClient
+	userUsecase       *UserUsecase
 }
 
 func NewNewsFeedShareUsecase(
@@ -23,12 +26,18 @@ func NewNewsFeedShareUsecase(
 	newsFeedShareRepo repo.NewsFeedShareRepo,
 	newsFeedRepo repo.NewsFeedRepo,
 	chatClient iusecase.ChatClient,
+	notiClient iusecase.NotiClient,
+	userClient iusecase.UserClient,
+	userUsecase *UserUsecase,
 ) *NewsFeedShareUsecase {
 	return &NewsFeedShareUsecase{
 		newsFeedUsecase:   newsFeedUsecase,
 		newsFeedRepo:      newsFeedRepo,
 		newsFeedShareRepo: newsFeedShareRepo,
 		chatClient:        chatClient,
+		notiClient:        notiClient,
+		userClient:        userClient,
+		userUsecase:       userUsecase,
 	}
 }
 
@@ -76,7 +85,29 @@ func (u *NewsFeedShareUsecase) ShareToNewsFeed(ctx context.Context, newsFeedID u
 	// Tăng số lượng chia sẻ
 	_ = u.newsFeedRepo.IncrementNumberShare(ctx, newsFeedID)
 
+	cloneCtx := _utils.CloneContext(ctx)
+	go u.sendNoti(cloneCtx, newsFeed)
 	return newsFeedShare, nil
+}
+
+func (u *NewsFeedShareUsecase) sendNoti(ctx context.Context, newsFeed *domain.NewsFeed) error {
+	// profileId := _utils.GetProfileIdWithContext(ctx)
+	// user, err := u.userClient.GetUser(ctx, profileId)
+	// if err != nil {
+	// 	return err
+	// }
+	sharedUserIds, _ := u.newsFeedShareRepo.GetNearestUserIds(ctx, newsFeed.ID, enums.TargetTypeNewsFeed)
+	sumUserShared, _ := u.newsFeedShareRepo.SumUserComment(ctx, newsFeed.ID, enums.TargetTypeNewsFeed)
+	fullNames := u.userUsecase.getFullNames(ctx, sharedUserIds, sumUserShared)
+
+	u.notiClient.NotifyToUser(ctx,
+		70,
+		newsFeed.CreatedBy,
+		[]string{fullNames, _utils.ShortenContent(newsFeed.Content, 50)},
+		newsFeed.ID,
+		true,
+	)
+	return nil
 }
 
 func (u *NewsFeedShareUsecase) ShareToChannel(
@@ -129,7 +160,8 @@ func (u *NewsFeedShareUsecase) RequiredBeforeShare(ctx context.Context, newsFeed
 	return newsFeed, nil
 }
 
-func (u *NewsFeedShareUsecase) CreateNewsFeedShare(ctx context.Context,
+func (u *NewsFeedShareUsecase) CreateNewsFeedShare(
+	ctx context.Context,
 	newsFeed *domain.NewsFeed,
 	targetID *uint64,
 	shareType enums.ShareType,

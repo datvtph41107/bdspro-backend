@@ -4,6 +4,7 @@ import (
 	"context"
 	"noti/internal/domain"
 	"noti/internal/dto"
+	"noti/internal/enums"
 )
 
 type NotificationRepo interface {
@@ -15,4 +16,5 @@ type NotificationRepo interface {
 	Delete(ctx context.Context, profileId uint64, id uint64) error
 	ListNotiWithTargetIdAndOwnerType(ctx context.Context, targetId uint64, ownerType int32, hour int) ([]domain.NotificationEntity, error)
 	DeleteIds(ctx context.Context, ids []uint64) error
+	RemoveUnique(ctx context.Context, ownerId, targetId uint64, typeNoti enums.TypeEnum, ownerType enums.OwnerType) (*domain.NotificationEntity, error)
 }

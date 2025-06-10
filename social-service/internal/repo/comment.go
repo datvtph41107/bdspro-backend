@@ -22,4 +22,6 @@ type CommentRepo interface {
 	CountReply(ctx context.Context, commentID uint64) (int, error)
 	CountByNewsFeedID(ctx context.Context, newsFeedID uint64) (int, error)
 	UpdateNumberReply(ctx context.Context, commentID uint64, totalReply int) error
+	GetNearestUserIds(ctx context.Context, newsFeedId uint64, parentId *uint64) ([]uint64, error)
+	SumUserComment(ctx context.Context, newsFeedId uint64, parentId *uint64) (int, error)
 }

@@ -47,6 +47,7 @@ func main() {
 		grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 	)
 	pb_noti.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
+	pb_noti.RegisterNotificationServiceServer(s, app.InternalNotiService)
 
 	log.Printf("GRPC Listen: %v", port)
 

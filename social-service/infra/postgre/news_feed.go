@@ -269,6 +269,18 @@ func (r *PostgreNewsFeed) ExistByIDAndProfileID(ctx context.Context, id uint64, 
 	return exists, err
 }
 
+func (r *PostgreNewsFeed) GetPublicIgnorePreloadByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
+	var newsFeed domain.NewsFeed
+	err := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ? AND visibility = 10 AND deleted_at IS NULL", id).
+		First(&newsFeed).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return &newsFeed, nil
+}
 func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
 	var newsFeed *domain.NewsFeed
 	err := r.db.WithContext(ctx).

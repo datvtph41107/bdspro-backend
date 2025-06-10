@@ -119,6 +119,9 @@ message NotiNewRequest {
     int32 targetType = 6;
     google.protobuf.Timestamp visibleAt = 7;
     bool sendToDevice = 8;
+    repeated string attachData = 9;
+    bool isMerge = 10;
+    uint64 ownerId = 11;
 }
 
 message GatewayNotiNewRequest {
@@ -126,7 +129,7 @@ message GatewayNotiNewRequest {
     string message = 2;
     int32 type = 3;
     string link = 4;
-    uint64 targetId = 5;
+    uint64 ownerId = 5;
 }
 
 message StatusResponse {

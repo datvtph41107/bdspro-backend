@@ -21,13 +21,13 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp() (*config.ConfigApp, error) {
-	internalNotiService := service.NewInternalNotiService()
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
 	}
 	postgreNotification := postgre.NewPostgreNotification(db)
 	notificationUsecase := usecase.NewNotificationService(postgreNotification)
+	internalNotiService := service.NewInternalNotiService(notificationUsecase)
 	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase)
 	configApp := config.NewConfigApp(internalNotiService, gatewayNotiService)
 	return configApp, nil

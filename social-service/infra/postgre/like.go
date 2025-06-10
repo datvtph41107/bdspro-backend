@@ -9,22 +9,22 @@ import (
 )
 
 // @bind: social/internal/repo.LikeRepo
-type LikeRepo struct {
+type PostgreLike struct {
 	db *gorm.DB
 }
 
-func NewLikeRepo(db *gorm.DB) *LikeRepo {
-	return &LikeRepo{db: db}
+func NewLikeRepo(db *gorm.DB) *PostgreLike {
+	return &PostgreLike{db: db}
 }
 
-func (r *LikeRepo) Create(ctx context.Context, like *domain.Like) (*domain.Like, error) {
+func (r *PostgreLike) Create(ctx context.Context, like *domain.Like) (*domain.Like, error) {
 	err := r.db.WithContext(ctx).
 		Create(like).
 		Error
 	return like, err
 }
 
-func (r *LikeRepo) GetByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (*domain.Like, error) {
+func (r *PostgreLike) GetByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (*domain.Like, error) {
 	var like *domain.Like
 	err := r.db.WithContext(ctx).
 		Model(&domain.Like{}).
@@ -34,7 +34,7 @@ func (r *LikeRepo) GetByTargetIdAndTypeAndUserId(ctx context.Context, targetId u
 	return like, err
 }
 
-func (r *LikeRepo) ExistByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (bool, error) {
+func (r *PostgreLike) ExistByTargetIdAndTypeAndUserId(ctx context.Context, targetId uint64, targetType enums.TargetType, userId uint64) (bool, error) {
 	var exists bool
 	query := `
         SELECT EXISTS (
@@ -49,7 +49,7 @@ func (r *LikeRepo) ExistByTargetIdAndTypeAndUserId(ctx context.Context, targetId
 	return exists, err
 }
 
-func (r *LikeRepo) Delete(ctx context.Context, like *domain.Like) error {
+func (r *PostgreLike) Delete(ctx context.Context, like *domain.Like) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.Like{}).
 		Where("target_id = ? AND target_type = ? AND user_id = ?", like.TargetID, like.TargetType, like.UserID).
@@ -57,11 +57,42 @@ func (r *LikeRepo) Delete(ctx context.Context, like *domain.Like) error {
 		Error
 }
 
-func (r *LikeRepo) Count(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (int, error) {
+func (r *PostgreLike) Count(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (int, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&domain.Like{}).
 		Where("target_id = ? AND target_type = ? and dis_like = ?", targetId, targetType, dislike).
 		Count(&count).Error
 	return int(count), err
+}
+
+func (r *PostgreLike) GetNearestUserIds(ctx context.Context, targetId uint64, targetType enums.TargetType) ([]uint64, error) {
+	var ids []uint64
+	err := r.db.WithContext(ctx).Debug().Raw(
+		`
+		select user_id 
+		from (
+			SELECT  c.user_id, MAX(created_at) as latest
+				FROM tb_like c
+				WHERE target_id = ? AND target_type = ? AND deleted_at IS NULL
+				GROUP BY c.user_id
+				ORDER BY latest DESC
+			)
+		Limit 3`, targetId, targetType).Scan(&ids).Error
+
+	return ids, err
+}
+
+func (r *PostgreLike) SumUserComment(ctx context.Context, targetId uint64, targetType enums.TargetType) (int, error) {
+	var count int
+	err := r.db.WithContext(ctx).Raw(
+		`
+		select count(*) from (SELECT  c.user_id, MAX(created_at) as latest
+		FROM tb_like c
+		WHERE target_id = ? AND target_type = ? AND deleted_at IS NULL
+		group by c.user_id
+		)
+	`, targetId, targetType).Scan(&count).Error
+
+	return count, err
 }

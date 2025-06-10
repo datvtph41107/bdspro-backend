@@ -3,8 +3,8 @@ package config
 import "noti/infra/service"
 
 type ConfigApp struct {
-	Noti       *service.InternalNotiService
-	ServerHttp *service.GatewayNotiService
+	InternalNotiService *service.InternalNotiService
+	ServerHttp          *service.GatewayNotiService
 }
 
 func NewConfigApp(
@@ -12,7 +12,7 @@ func NewConfigApp(
 	ServerHttp *service.GatewayNotiService,
 ) *ConfigApp {
 	return &ConfigApp{
-		Noti:       router,
-		ServerHttp: ServerHttp,
+		InternalNotiService: router,
+		ServerHttp:          ServerHttp,
 	}
 }

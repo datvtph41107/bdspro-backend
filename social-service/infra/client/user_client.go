@@ -8,6 +8,7 @@ import (
 	pb_social "pb/types/social"
 	pb_user "pb/types/user"
 	"social/env"
+	"social/internal/dto"
 	"time"
 
 	"google.golang.org/grpc"
@@ -38,8 +39,9 @@ func NewUserClient() *UserClient {
 	userClient := &UserClient{client: nil}
 	go func() {
 		url := "localhost"
+		name := "user_grpc"
 		if env.ENV_RUNTIME == "release" {
-			url = "user_grpc"
+			url = name
 		}
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),
@@ -54,7 +56,7 @@ func NewUserClient() *UserClient {
 		ctx, _ := context.WithCancel(context.Background())
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go monitorConnection(ctx, conn)
+		go monitorConnection(ctx, name, conn)
 
 		client := pb_user.NewProfileServiceClient(conn)
 		userClient.client = client
@@ -63,10 +65,10 @@ func NewUserClient() *UserClient {
 	return userClient
 }
 
-func monitorConnection(ctx context.Context, conn *grpc.ClientConn) {
+func monitorConnection(ctx context.Context, name string, conn *grpc.ClientConn) {
 	for {
 		state := conn.GetState()
-		log.Printf("[gRPC] Connection state: %v", state)
+		log.Printf("[gRPC] Connection state of %s: %v", name, state)
 
 		// Wait until the state changes before continuing the loop
 		if !conn.WaitForStateChange(ctx, state) {
@@ -102,6 +104,47 @@ func (c *UserClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]st
 
 	return profileMap, nil
 }
+
+func (c *UserClient) GetUser(ctx context.Context, profileID uint64) (*dto.UserProfile, error) {
+	profile, err := c.client.GetProfileByIds(ctx, &pb_user.GetProfileByIdsRequest{Ids: []uint64{profileID}})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(profile.Profiles) == 0 {
+		return nil, errors.New("profile not found")
+	}
+
+	return &dto.UserProfile{
+		ID:       profile.Profiles[0].Id,
+		FullName: profile.Profiles[0].FullName,
+		Avatar:   profile.Profiles[0].Avatar,
+	}, nil
+}
+
+func (c *UserClient) GetUsers(ctx context.Context, profileIDs []uint64) ([]*dto.UserProfile, error) {
+	profile, err := c.client.GetProfileByIds(ctx, &pb_user.GetProfileByIdsRequest{Ids: profileIDs})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(profile.Profiles) == 0 {
+		return nil, errors.New("profile not found")
+	}
+
+	results := make([]*dto.UserProfile, len(profile.Profiles))
+	for i, profile := range profile.Profiles {
+		results[i] = &dto.UserProfile{
+			ID:       profile.Id,
+			FullName: profile.FullName,
+			Avatar:   profile.Avatar,
+		}
+	}
+
+	return results, nil
+}
+
+// -- mapping pb to domain --
 
 func (c *UserClient) PbUserToNewsFeed(ctx context.Context, newsFeeds []*pb_social.NewsFeed) {
 	profileIDSet := make(map[uint64]struct{})

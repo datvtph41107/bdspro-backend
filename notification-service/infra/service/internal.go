@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"noti/internal/domain"
 	"noti/internal/dto"
 	"noti/internal/enums"
@@ -10,24 +11,28 @@ import (
 )
 
 type InternalNotiService struct {
-	Usecase usecase.NotificationUsecase
+	Usecase *usecase.NotificationUsecase
 	pb_noti.UnimplementedNotificationServiceServer
 }
 
-func NewInternalNotiService() *InternalNotiService {
-	return &InternalNotiService{}
+func NewInternalNotiService(uc *usecase.NotificationUsecase) *InternalNotiService {
+	return &InternalNotiService{Usecase: uc}
 }
 
 func (s *InternalNotiService) Create(ctx context.Context, req *pb_noti.NotiNewRequest) (*pb_noti.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:        req.Title,
-		Message:      req.Message,
+		Message:      []string{req.Message},
+		AttachData:   req.AttachData,
 		Link:         req.Link,
 		Type:         enums.TypeEnum(req.Type),
 		TargetID:     req.TargetId,
+		OwnerID:      req.OwnerId,
 		OwnerType:    enums.OwnerType(req.TargetType),
 		SendToDevice: req.SendToDevice,
+		IsMerge:      req.IsMerge,
 	}
+	log.Println("dto", dto)
 	notification, err := s.Usecase.Create(ctx, dto)
 	if err != nil {
 		return nil, err
@@ -54,7 +59,7 @@ func (s *InternalNotiService) mapToPB(noti *domain.NotificationEntity) *pb_noti.
 	return &pb_noti.NotificationDTO{
 		Id:      noti.ID,
 		Title:   noti.Title,
-		Message: []string{noti.Message},
+		Message: noti.Message,
 		Link:    noti.Link,
 		Type:    int32(noti.Type),
 	}

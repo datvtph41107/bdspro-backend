@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+	"fmt"
 	"social/internal/domain"
 	"social/internal/dto"
 	"time"
@@ -161,4 +162,44 @@ func (r *PostgreComment) CountByNewsFeedID(ctx context.Context, newsFeedID uint6
 		Where("news_feed_id = ? and deleted_at is null", newsFeedID).
 		Count(&count).Error
 	return int(count), err
+}
+
+func (r *PostgreComment) GetNearestUserIds(ctx context.Context, newsFeedId uint64, parentId *uint64) ([]uint64, error) {
+	var ids []uint64
+	whereCond := ""
+	if parentId != nil {
+		whereCond = fmt.Sprintf("AND parent_id = %d", *parentId)
+	}
+	err := r.db.WithContext(ctx).Debug().Raw(
+		fmt.Sprintf(`
+		select user_id 
+		from (
+			SELECT  c.user_id, MAX(created_at) as latest
+				FROM comment c
+				WHERE news_feed_id = ? AND deleted_at IS NULL %s
+				GROUP BY c.user_id
+				ORDER BY latest DESC
+			)
+		Limit 3`, whereCond),
+		newsFeedId).Scan(&ids).Error
+
+	return ids, err
+}
+
+func (r *PostgreComment) SumUserComment(ctx context.Context, newsFeedId uint64, parentId *uint64) (int, error) {
+	var count int
+	whereCond := ""
+	if parentId != nil {
+		whereCond = fmt.Sprintf("AND parent_id = %d", *parentId)
+	}
+	err := r.db.WithContext(ctx).Raw(
+		fmt.Sprintf(`
+		select count(*) from (SELECT  c.user_id, MAX(created_at) as latest
+		FROM comment c
+		WHERE news_feed_id = ? AND deleted_at IS NULL %s
+		group by c.user_id
+		)
+	`, whereCond), newsFeedId).Scan(&count).Error
+
+	return count, err
 }

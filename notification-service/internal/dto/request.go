@@ -9,14 +9,18 @@ import (
 )
 
 type NotiNewRequest struct {
-	TargetID     uint64          `json:"targetId" binding:"required"`
-	OwnerType    enums.OwnerType `json:"ownerType" binding:"required"`
-	Title        string          `json:"title" binding:"required"`
-	Message      string          `json:"message" binding:"required"`
-	Link         string          `json:"link,omitempty"`
-	Type         enums.TypeEnum  `json:"type" binding:"required"`
-	VisibleAt    *time.Time      `json:"visibleAt,omitempty"`
-	SendToDevice bool            `json:"sendToDevice,omitempty"`
+	TargetID      uint64          `json:"targetId" binding:"required"`
+	OwnerID       uint64          `json:"ownerId" binding:"required"`
+	OwnerType     enums.OwnerType `json:"ownerType" binding:"required"`
+	Title         string          `json:"title" binding:"required"`
+	PrefixMessage string          `json:"prefixMessage,omitempty"`
+	Message       []string        `json:"message" binding:"required"`
+	AttachData    []string        `json:"attachData,omitempty"`
+	Link          string          `json:"link,omitempty"`
+	Type          enums.TypeEnum  `json:"type" binding:"required"`
+	VisibleAt     *time.Time      `json:"visibleAt,omitempty"`
+	SendToDevice  bool            `json:"sendToDevice,omitempty"`
+	IsMerge       bool            `json:"isMerge,omitempty"`
 }
 
 // SearchNotiRequest đại diện cho request tìm kiếm thông báo

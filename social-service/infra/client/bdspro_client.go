@@ -24,8 +24,9 @@ func NewBdsproClient() *BdsproClient {
 	bdsproClient := &BdsproClient{client: nil}
 	go func() {
 		url := "localhost"
+		name := "bdspro_grpc"
 		if env.ENV_RUNTIME == "release" {
-			url = "bdspro_grpc"
+			url = name
 		}
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
@@ -40,7 +41,7 @@ func NewBdsproClient() *BdsproClient {
 		ctx, _ := context.WithCancel(context.Background())
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go monitorConnection(ctx, conn)
+		go monitorConnection(ctx, name, conn)
 
 		client := pb_bdspro.NewPostServiceClient(conn)
 		bdsproClient.client = client

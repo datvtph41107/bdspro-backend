@@ -36,3 +36,7 @@ admin:
 	cd admin-service && go run main.go grpc
 organization:
 	cd organization-service && go run main.go grpc-server
+noti:
+	cd notification-service && go run main.go grpc
+social:
+	cd social-service && go run main.go grpc

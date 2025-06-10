@@ -14,6 +14,7 @@ type NewsFeedRepo interface {
 	UpdateVisibility(ctx context.Context, newsFeedId uint64, visibility enums.Visibility) error
 	Delete(ctx context.Context, newsFeed *domain.NewsFeed) error
 	GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error)
+	GetPublicIgnorePreloadByID(ctx context.Context, id uint64) (*domain.NewsFeed, error)
 	GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error)
 	GetGlobal(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error)
 	UpdateComment(ctx context.Context, newFeedID uint64, numComment int) error

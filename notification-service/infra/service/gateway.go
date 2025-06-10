@@ -38,7 +38,7 @@ func NewGatewayNotiService(usecase *usecase.NotificationUsecase) *GatewayNotiSer
 func (s *GatewayNotiService) Create(ctx context.Context, req *pb_noti.GatewayNotiNewRequest) (*pb_noti.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:   req.Title,
-		Message: req.Message,
+		Message: []string{req.Message},
 		Link:    req.Link,
 		Type:    enums.TypeEnum(req.Type),
 	}
@@ -170,9 +170,9 @@ func (s *GatewayNotiService) PushByTopic(ctx context.Context, req *pb_noti.PushT
 func (s *GatewayNotiService) mapToPB(noti *domain.NotificationEntity) *pb_noti.NotificationDTO {
 	return &pb_noti.NotificationDTO{
 		Id:        noti.ID,
-		UserId:    noti.TargetID,
+		UserId:    noti.OwnerID,
 		Title:     noti.Title,
-		Message:   []string{"", "Người dùng ẩn danh ", noti.Message},
+		Message:   noti.Message,
 		Link:      noti.Link,
 		Type:      int32(noti.Type),
 		Timestamp: _utils.FormatTimeToString(noti.CreatedAt),

@@ -571,3 +571,10 @@ func StructToJSONString(p interface{}) *string {
 	jsonString := string(jsonBytes)
 	return &jsonString
 }
+
+func ShortenContent(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	return s[:limit] + "..."
+}
