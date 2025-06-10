@@ -106,6 +106,18 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "mediaUrl",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "mediaType",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -171,6 +183,18 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "mediaUrl",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "mediaType",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -238,6 +262,12 @@
         "size": {
           "type": "string",
           "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
         }
       }
     },
@@ -325,6 +355,12 @@
         "size": {
           "type": "string",
           "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
         }
       }
     },
@@ -367,6 +403,12 @@
         },
         "author": {
           "$ref": "#/definitions/pb_userProfileItem"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
         }
       }
     }

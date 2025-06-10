@@ -13,6 +13,8 @@ type Comment struct {
 	NumLike    uint32  `json:"num_like"`
 	NumDisLike uint32  `json:"num_dislike"`
 	NumReply   uint32  `json:"num_reply"`
+	MediaUrl   string  `json:"media_url"`
+	MediaType  string  `json:"media_type"`
 }
 
 func (Comment) TableName() string {

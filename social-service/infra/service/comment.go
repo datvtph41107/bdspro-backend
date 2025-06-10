@@ -131,6 +131,8 @@ func (s *CommentService) PbCommentToDomain(pbComment *pb_social.CommentRequest) 
 		Content:    pbComment.Content,
 		ParentID:   pbComment.ParentId,
 		NewsFeedID: pbComment.NewsFeedId,
+		MediaUrl:   pbComment.MediaUrl,
+		MediaType:  pbComment.MediaType,
 	}
 }
 
@@ -145,5 +147,7 @@ func (s *CommentService) DomainCommentToPb(comment *domain.Comment) *pb_social.C
 		NumDisLike: comment.NumDisLike,
 		NumReply:   comment.NumReply,
 		CreatedBy:  comment.CreatedBy,
+		MediaUrl:   comment.MediaUrl,
+		MediaType:  comment.MediaType,
 	}
 }

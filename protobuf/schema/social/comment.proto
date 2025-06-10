@@ -40,6 +40,8 @@ message CommentRequest {
     uint64 newsFeedId = 4;
     uint64 page = 5;
     uint64 size = 6;
+    string mediaUrl = 7;
+    string mediaType = 8;
 }
 
 message CommentResponse {
@@ -53,6 +55,8 @@ message CommentResponse {
     uint32 numReply = 8;
     optional uint64 createdBy = 9;
     optional pb_user.ProfileItem author = 10;
+    string mediaUrl = 11;
+    string mediaType = 12;
 }
 
 message CommentListResponse {
