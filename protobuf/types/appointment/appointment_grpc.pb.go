@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -31,15 +30,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AppointmentServiceClient interface {
-	// Create a new appointment
 	CreateAppointment(ctx context.Context, in *CreateAppointmentRequest, opts ...grpc.CallOption) (*Appointment, error)
-	// Get an appointment by ID
 	GetAppointment(ctx context.Context, in *GetAppointmentRequest, opts ...grpc.CallOption) (*Appointment, error)
-	// Update an existing appointment
 	UpdateAppointment(ctx context.Context, in *UpdateAppointmentRequest, opts ...grpc.CallOption) (*Appointment, error)
-	// Delete an appointment
-	DeleteAppointment(ctx context.Context, in *DeleteAppointmentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// List appointments with optional filters
+	DeleteAppointment(ctx context.Context, in *DeleteAppointmentRequest, opts ...grpc.CallOption) (*DeleteAppointmentResponse, error)
 	ListAppointments(ctx context.Context, in *ListAppointmentsRequest, opts ...grpc.CallOption) (*ListAppointmentsResponse, error)
 }
 
@@ -78,8 +72,8 @@ func (c *appointmentServiceClient) UpdateAppointment(ctx context.Context, in *Up
 	return out, nil
 }
 
-func (c *appointmentServiceClient) DeleteAppointment(ctx context.Context, in *DeleteAppointmentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *appointmentServiceClient) DeleteAppointment(ctx context.Context, in *DeleteAppointmentRequest, opts ...grpc.CallOption) (*DeleteAppointmentResponse, error) {
+	out := new(DeleteAppointmentResponse)
 	err := c.cc.Invoke(ctx, AppointmentService_DeleteAppointment_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -100,15 +94,10 @@ func (c *appointmentServiceClient) ListAppointments(ctx context.Context, in *Lis
 // All implementations must embed UnimplementedAppointmentServiceServer
 // for forward compatibility
 type AppointmentServiceServer interface {
-	// Create a new appointment
 	CreateAppointment(context.Context, *CreateAppointmentRequest) (*Appointment, error)
-	// Get an appointment by ID
 	GetAppointment(context.Context, *GetAppointmentRequest) (*Appointment, error)
-	// Update an existing appointment
 	UpdateAppointment(context.Context, *UpdateAppointmentRequest) (*Appointment, error)
-	// Delete an appointment
-	DeleteAppointment(context.Context, *DeleteAppointmentRequest) (*emptypb.Empty, error)
-	// List appointments with optional filters
+	DeleteAppointment(context.Context, *DeleteAppointmentRequest) (*DeleteAppointmentResponse, error)
 	ListAppointments(context.Context, *ListAppointmentsRequest) (*ListAppointmentsResponse, error)
 	mustEmbedUnimplementedAppointmentServiceServer()
 }
@@ -126,7 +115,7 @@ func (UnimplementedAppointmentServiceServer) GetAppointment(context.Context, *Ge
 func (UnimplementedAppointmentServiceServer) UpdateAppointment(context.Context, *UpdateAppointmentRequest) (*Appointment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAppointment not implemented")
 }
-func (UnimplementedAppointmentServiceServer) DeleteAppointment(context.Context, *DeleteAppointmentRequest) (*emptypb.Empty, error) {
+func (UnimplementedAppointmentServiceServer) DeleteAppointment(context.Context, *DeleteAppointmentRequest) (*DeleteAppointmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAppointment not implemented")
 }
 func (UnimplementedAppointmentServiceServer) ListAppointments(context.Context, *ListAppointmentsRequest) (*ListAppointmentsResponse, error) {

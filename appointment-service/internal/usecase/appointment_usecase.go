@@ -2,49 +2,63 @@ package usecase
 
 import (
 	"context"
-	"time"
 
-	"github.com/tuandq2112/appointment/internal/domain/entity"
-	"github.com/tuandq2112/appointment/internal/domain/repository"
+	"github.com/tuandq2112/appointment-service/internal/domain/entity"
+	"github.com/tuandq2112/appointment-service/internal/domain/repository"
 )
 
-type AppointmentUseCase interface {
-	CreateAppointment(ctx context.Context, appointment *entity.Appointment) error
-	GetAppointment(ctx context.Context, id string) (*entity.Appointment, error)
-	UpdateAppointment(ctx context.Context, appointment *entity.Appointment) error
-	DeleteAppointment(ctx context.Context, id string) error
-	ListAppointments(ctx context.Context, filter map[string]interface{}) ([]*entity.Appointment, error)
-}
+type AppointmentUsecase interface {
+	CreateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
+	GetAppointment(ctx context.Context, id uint32) (*entity.Appointment, error)
+	UpdateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
+	DeleteAppointment(ctx context.Context, id uint32) error
+	ListAppointments(ctx context.Context, filter map[string]any, page, size int) ([]*entity.Appointment, int64, error)
+} 
 
-type appointmentUseCase struct {
+type appointmentUsecase struct {
 	appointmentRepo repository.AppointmentRepository
 }
 
-func NewAppointmentUseCase(appointmentRepo repository.AppointmentRepository) AppointmentUseCase {
-	return &appointmentUseCase{
-		appointmentRepo: appointmentRepo,
+func NewAppointmentUsecase(appointmentRepo repository.AppointmentRepository) AppointmentUsecase {
+	return &appointmentUsecase{appointmentRepo: appointmentRepo}
+}
+
+func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
+	appointment, err := uc.appointmentRepo.Create(ctx, appointment)
+	if err != nil {
+		return nil, err
 	}
+	return appointment, nil
 }
 
-func (uc *appointmentUseCase) CreateAppointment(ctx context.Context, appointment *entity.Appointment) error {
-	appointment.CreatedAt = time.Now()
-	appointment.UpdatedAt = time.Now()
-	return uc.appointmentRepo.Create(ctx, appointment)
+func (uc *appointmentUsecase) GetAppointment(ctx context.Context, id uint32) (*entity.Appointment, error) {
+	appointment, err := uc.appointmentRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return appointment, nil
 }
 
-func (uc *appointmentUseCase) GetAppointment(ctx context.Context, id string) (*entity.Appointment, error) {
-	return uc.appointmentRepo.GetByID(ctx, id)
+func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
+	appointment, err := uc.appointmentRepo.Update(ctx, appointment)
+	if err != nil {
+		return nil, err
+	}
+	return appointment, nil
 }
 
-func (uc *appointmentUseCase) UpdateAppointment(ctx context.Context, appointment *entity.Appointment) error {
-	appointment.UpdatedAt = time.Now()
-	return uc.appointmentRepo.Update(ctx, appointment)
-}
+func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) error {
+	err := uc.appointmentRepo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+	}
 
-func (uc *appointmentUseCase) DeleteAppointment(ctx context.Context, id string) error {
-	return uc.appointmentRepo.Delete(ctx, id)
+func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[string]any, page, size int) ([]*entity.Appointment, int64, error) {
+	appointments, total, err := uc.appointmentRepo.List(ctx, filter, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	return appointments, total, nil
 }
-
-func (uc *appointmentUseCase) ListAppointments(ctx context.Context, filter map[string]interface{}) ([]*entity.Appointment, error) {
-	return uc.appointmentRepo.List(ctx, filter)
-} 

@@ -41,3 +41,7 @@ noti:
 	cd notification-service && go run main.go grpc
 social:
 	cd social-service && go run main.go grpc
+appointment:
+	cd appointment-service && go run main.go grpc-server
+buf-crm:
+	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm

@@ -4,11 +4,9 @@ import (
 	"context"
 	appointmentpb "pb/types/appointment"
 
-	"github.com/tuandq2112/appointment/appconfig"
-	"github.com/tuandq2112/appointment/internal/domain/usecase"
-	"github.com/tuandq2112/appointment/internal/interface/transformer"
-	"github.com/tuandq2112/appointment/internal/interface/validator"
-	"github.com/tuandq2112/appointment/pkg/utils"
+	"github.com/tuandq2112/appointment-service/internal/usecase"
+	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
+	"github.com/tuandq2112/appointment-service/internal/interface/validator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -37,10 +35,7 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	userID := ctx.Value(appconfig.USER_CONTEXT).(string)
 	appointment := h.Transformer.CreateAppointmentRequestToEntity(req)
-	appointment.UserID = userID
-	appointment.CreatedBy = userID
 
 	createdAppointment, err := h.AppointmentUsecase.CreateAppointment(ctx, appointment)
 	if err != nil {
@@ -68,10 +63,7 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	userID := ctx.Value(appconfig.USER_CONTEXT).(string)
 	appointment := h.Transformer.UpdateAppointmentRequestToEntity(req)
-	appointment.UserID = userID
-	appointment.UpdatedBy = userID
 
 	updatedAppointment, err := h.AppointmentUsecase.UpdateAppointment(ctx, appointment)
 	if err != nil {
@@ -91,8 +83,7 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *appoint
 	}
 
 	return &appointmentpb.DeleteAppointmentResponse{
-		Success: true,
-		Message: "Appointment deleted successfully",
+		Id: req.Id,
 	}, nil
 }
 
@@ -101,13 +92,19 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *appointm
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	page := utils.GetPageFromRequest(req.Page)
-	size := utils.GetSizeFromRequest(req.Size)
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
 
-	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, page, size)
+	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, nil, page, size)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToListAppointmentsResponse(appointments, total), nil
+	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
 } 

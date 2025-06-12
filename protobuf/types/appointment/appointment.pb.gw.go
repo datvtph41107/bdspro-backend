@@ -63,9 +63,16 @@ func request_AppointmentService_GetAppointment_0(ctx context.Context, marshaler 
 	var (
 		protoReq GetAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.GetAppointment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -75,9 +82,15 @@ func local_request_AppointmentService_GetAppointment_0(ctx context.Context, mars
 	var (
 		protoReq GetAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.GetAppointment(ctx, &protoReq)
 	return msg, metadata, err
@@ -87,9 +100,18 @@ func request_AppointmentService_UpdateAppointment_0(ctx context.Context, marshal
 	var (
 		protoReq UpdateAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.UpdateAppointment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -99,9 +121,18 @@ func local_request_AppointmentService_UpdateAppointment_0(ctx context.Context, m
 	var (
 		protoReq UpdateAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.UpdateAppointment(ctx, &protoReq)
 	return msg, metadata, err
@@ -111,9 +142,16 @@ func request_AppointmentService_DeleteAppointment_0(ctx context.Context, marshal
 	var (
 		protoReq DeleteAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.DeleteAppointment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -123,20 +161,32 @@ func local_request_AppointmentService_DeleteAppointment_0(ctx context.Context, m
 	var (
 		protoReq DeleteAppointmentRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.DeleteAppointment(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+var filter_AppointmentService_ListAppointments_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_AppointmentService_ListAppointments_0(ctx context.Context, marshaler runtime.Marshaler, client AppointmentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ListAppointmentsRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AppointmentService_ListAppointments_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.ListAppointments(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -148,7 +198,10 @@ func local_request_AppointmentService_ListAppointments_0(ctx context.Context, ma
 		protoReq ListAppointmentsRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AppointmentService_ListAppointments_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.ListAppointments(ctx, &protoReq)
@@ -167,7 +220,7 @@ func RegisterAppointmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/CreateAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/CreateAppointment"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/CreateAppointment", runtime.WithHTTPPathPattern("/v2/appointment"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -181,13 +234,13 @@ func RegisterAppointmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_CreateAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_GetAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AppointmentService_GetAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/GetAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/GetAppointment"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/GetAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -201,13 +254,13 @@ func RegisterAppointmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_GetAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_UpdateAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_AppointmentService_UpdateAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/UpdateAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/UpdateAppointment"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/UpdateAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -221,13 +274,13 @@ func RegisterAppointmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_UpdateAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_DeleteAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_AppointmentService_DeleteAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/DeleteAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/DeleteAppointment"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/DeleteAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -241,13 +294,13 @@ func RegisterAppointmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_DeleteAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_ListAppointments_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AppointmentService_ListAppointments_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/ListAppointments", runtime.WithHTTPPathPattern("/appointment.AppointmentService/ListAppointments"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/appointment.AppointmentService/ListAppointments", runtime.WithHTTPPathPattern("/v2/appointment"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -305,7 +358,7 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/CreateAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/CreateAppointment"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/CreateAppointment", runtime.WithHTTPPathPattern("/v2/appointment"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -318,11 +371,11 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_CreateAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_GetAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AppointmentService_GetAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/GetAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/GetAppointment"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/GetAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -335,11 +388,11 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_GetAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_UpdateAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_AppointmentService_UpdateAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/UpdateAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/UpdateAppointment"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/UpdateAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -352,11 +405,11 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_UpdateAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_DeleteAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_AppointmentService_DeleteAppointment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/DeleteAppointment", runtime.WithHTTPPathPattern("/appointment.AppointmentService/DeleteAppointment"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/DeleteAppointment", runtime.WithHTTPPathPattern("/v2/appointment/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -369,11 +422,11 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		}
 		forward_AppointmentService_DeleteAppointment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AppointmentService_ListAppointments_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AppointmentService_ListAppointments_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/ListAppointments", runtime.WithHTTPPathPattern("/appointment.AppointmentService/ListAppointments"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/appointment.AppointmentService/ListAppointments", runtime.WithHTTPPathPattern("/v2/appointment"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -390,11 +443,11 @@ func RegisterAppointmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 }
 
 var (
-	pattern_AppointmentService_CreateAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appointment.AppointmentService", "CreateAppointment"}, ""))
-	pattern_AppointmentService_GetAppointment_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appointment.AppointmentService", "GetAppointment"}, ""))
-	pattern_AppointmentService_UpdateAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appointment.AppointmentService", "UpdateAppointment"}, ""))
-	pattern_AppointmentService_DeleteAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appointment.AppointmentService", "DeleteAppointment"}, ""))
-	pattern_AppointmentService_ListAppointments_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appointment.AppointmentService", "ListAppointments"}, ""))
+	pattern_AppointmentService_CreateAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "appointment"}, ""))
+	pattern_AppointmentService_GetAppointment_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "appointment", "id"}, ""))
+	pattern_AppointmentService_UpdateAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "appointment", "id"}, ""))
+	pattern_AppointmentService_DeleteAppointment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "appointment", "id"}, ""))
+	pattern_AppointmentService_ListAppointments_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "appointment"}, ""))
 )
 
 var (

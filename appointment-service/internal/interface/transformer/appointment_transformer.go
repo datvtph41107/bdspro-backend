@@ -2,9 +2,9 @@ package transformer
 
 import (
 	appointmentpb "pb/types/appointment"
+	"time"
 
-	"github.com/tuandq2112/appointment/internal/domain/entity"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/tuandq2112/appointment-service/internal/domain/entity"
 )
 
 type AppointmentTransformer interface {
@@ -21,39 +21,54 @@ func NewAppointmentTransformer() AppointmentTransformer {
 }
 
 func (t *appointmentTransformer) CreateAppointmentRequestToEntity(req *appointmentpb.CreateAppointmentRequest) *entity.Appointment {
+	startTime, _ := time.Parse(time.RFC3339, req.StartTime)
+	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
+
 	return &entity.Appointment{
-		Title:       req.Title,
-		Description: req.Description,
-		StartTime:   req.StartTime.AsTime(),
-		EndTime:     req.EndTime.AsTime(),
-		Status:      req.Status,
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Status:           req.Status,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
 	}
 }
 
 func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointmentpb.UpdateAppointmentRequest) *entity.Appointment {
+	startTime, _ := time.Parse(time.RFC3339, req.StartTime)
+	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
 	return &entity.Appointment{
-		ID:          req.Id,
-		Title:       req.Title,
-		Description: req.Description,
-		StartTime:   req.StartTime.AsTime(),
-		EndTime:     req.EndTime.AsTime(),
-		Status:      req.Status,
+		Id:               req.Id,
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Status:           req.Status,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
 	}
 }
 
 func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment) *appointmentpb.Appointment {
 	return &appointmentpb.Appointment{
-		Id:          appointment.ID,
-		UserId:      appointment.UserID,
-		Title:       appointment.Title,
-		Description: appointment.Description,
-		StartTime:   timestamppb.New(appointment.StartTime),
-		EndTime:     timestamppb.New(appointment.EndTime),
-		Status:      appointment.Status,
-		CreatedBy:   appointment.CreatedBy,
-		UpdatedBy:   appointment.UpdatedBy,
-		CreatedAt:   timestamppb.New(appointment.CreatedAt),
-		UpdatedAt:   timestamppb.New(appointment.UpdatedAt),
+		Id:               appointment.Id,
+		Title:            appointment.Title,
+		Description:      appointment.Description,
+		StartTime:        appointment.StartTime.Format(time.RFC3339),
+		EndTime:          appointment.EndTime.Format(time.RFC3339),
+		Status:           appointment.Status,
+		Place:            appointment.Place,
+		ParticipantIds:   appointment.ParticipantIds,
+		DealId:           appointment.DealId,
+		ProductIds:       appointment.ProductIds,
+		ReminderSchedule: appointment.ReminderSchedule,
 	}
 }
 
@@ -66,4 +81,4 @@ func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments [
 		Appointments: appointmentsResponse,
 		Total:        total,
 	}
-} 
+}

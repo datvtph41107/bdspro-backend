@@ -1,24 +1,16 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+
+	"github.com/tuandq2112/appointment-service/cmd"
 )
 
 func main() {
-	// TODO: Initialize configuration
-	// TODO: Initialize database connection
-	// TODO: Initialize repositories
-	// TODO: Initialize usecases
-	// TODO: Initialize handlers
-	// TODO: Initialize server
-
-	// Wait for interrupt signal to gracefully shutdown the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-} 
+	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+}

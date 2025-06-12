@@ -1,37 +1,45 @@
 package database
 
 import (
-	"fmt"
 	"log"
+	"os"
+	"sync"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-type Config struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
+var (
+	dbInstance *gorm.DB
+	once       sync.Once
+)
+
+func NewPostgresDB(dsn string) *gorm.DB {
+	once.Do(func() {
+		cfg := &gorm.Config{
+			Logger: logger.New(
+				log.New(os.Stdout, "\r\n", log.LstdFlags),
+				logger.Config{
+					SlowThreshold:             200 * time.Millisecond,
+					LogLevel:                  logger.Info,
+					IgnoreRecordNotFoundError: true,
+					Colorful:                  true,
+				},
+			),
+		}
+
+		db, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  dsn,
+			PreferSimpleProtocol: true,
+		}), cfg)
+		if err != nil {
+			log.Fatalf("failed to connect to Postgres: %v", err)
+		}
+
+		dbInstance = db
+	})
+
+	return dbInstance
 }
-
-func NewPostgresConnection(config *Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		config.Host,
-		config.Port,
-		config.User,
-		config.Password,
-		config.DBName,
-		config.SSLMode,
-	)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Printf("Failed to connect to database: %v", err)
-		return nil, err
-	}
-
-	return db, nil
-} 

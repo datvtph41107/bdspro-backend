@@ -11,18 +11,19 @@ import (
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
-	"github.com/tuandq2112/appointment/appconfig"
-	"github.com/tuandq2112/appointment/internal/server/grpc/interceptors"
+	"github.com/tuandq2112/appointment-service/appconfig"
+	"github.com/tuandq2112/appointment-service/internal/interface/handler"
+	"github.com/tuandq2112/appointment-service/internal/server/grpc/interceptors"
 	"google.golang.org/grpc"
 )
 
 type GRPCServer struct {
-	appointmentHandler *grpc.AppointmentHandler
+	appointmentHandler *handler.AppointmentHandler
 	logger            *flogging.FabricLogger
 }
 
 func NewGRPCServer(
-	appointmentHandler *grpc.AppointmentHandler,
+	appointmentHandler *handler.AppointmentHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		appointmentHandler: appointmentHandler,
@@ -45,7 +46,7 @@ func (s *GRPCServer) Start() {
 }
 
 func buildGRPCServer(logger *flogging.FabricLogger,
-	appointmentHandler *grpc.AppointmentHandler,
+	appointmentHandler *handler.AppointmentHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),

@@ -15,41 +15,346 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v2/appointment": {
+      "get": {
+        "operationId": "AppointmentService_ListAppointments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentListAppointmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "startTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "post": {
+        "operationId": "AppointmentService_CreateAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/appointmentCreateAppointmentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    },
+    "/v2/appointment/{id}": {
+      "get": {
+        "operationId": "AppointmentService_GetAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "delete": {
+        "operationId": "AppointmentService_DeleteAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentDeleteAppointmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "put": {
+        "operationId": "AppointmentService_UpdateAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AppointmentServiceUpdateAppointmentBody"
+            }
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    }
+  },
   "definitions": {
-    "appointmentAppointment": {
+    "AppointmentServiceUpdateAppointmentBody": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
         "title": {
           "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         },
         "description": {
           "type": "string"
         },
-        "startTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "status": {
+        "reminderSchedule": {
           "type": "string"
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
-      },
-      "title": "Appointment message definition"
+      }
+    },
+    "appointmentAppointment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "reminderSchedule": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentCreateAppointmentRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "reminderSchedule": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentDeleteAppointmentResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "appointmentListAppointmentsResponse": {
       "type": "object",
@@ -62,14 +367,6 @@
           }
         },
         "total": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "size": {
           "type": "integer",
           "format": "int32"
         }
