@@ -14,6 +14,7 @@ type HistoryRepo interface {
 		ownerType enums.EOwnerType,
 		dto dto.HistorySearchDTO,
 	) ([]domain.HistoryEntity, int64, error)
+	ContactHistory(c context.Context, contactId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 	CreateHistory(c context.Context, entity *domain.HistoryEntity) error
 	ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)
 	// ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)

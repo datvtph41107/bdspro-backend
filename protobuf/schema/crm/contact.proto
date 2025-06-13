@@ -64,7 +64,7 @@ message ContactDTO {
   int32 ownerType = 5;
   string createdAt = 6;
   optional uint64 createdBy = 7;
-  uint32 status = 8;
+  uint32 contactStatus = 8;
   string statusName = 9;
   pb_shared.FriendItem friendStatus = 10;
   bool following = 11;
@@ -72,6 +72,10 @@ message ContactDTO {
   pb_shared.ProfileItem profileInfo = 13;
   optional uint64 profileId = 14;
   bool blocked = 15;
+  string email = 16;
+  string zalo = 17;
+  string company = 18;
+  string note = 19;
 }
 
 message ContactListDTO {

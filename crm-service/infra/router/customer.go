@@ -12,16 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CustomerRouter struct {
-	UC *usecase.CustomerUsecase
+type LeadRouter struct {
+	UC *usecase.LeadUsecase
 }
 
-func NewCustomerRouter(UC *usecase.CustomerUsecase) *CustomerRouter {
-	return &CustomerRouter{UC: UC}
+func NewLeadRouter(UC *usecase.LeadUsecase) *LeadRouter {
+	return &LeadRouter{UC: UC}
 }
 
-func (r *CustomerRouter) CustomerRoutes(engine *gin.RouterGroup) {
-	group := engine.Group("/customer")
+func (r *LeadRouter) LeadRoutes(engine *gin.RouterGroup) {
+	group := engine.Group("/lead")
 	group.GET("/list/:ownerId/:ownerType", r.Search)
 	group.POST("", r.Create)
 	group.PUT("/:id", r.Update)
@@ -33,8 +33,8 @@ func (r *CustomerRouter) CustomerRoutes(engine *gin.RouterGroup) {
 }
 
 // Lấy danh sách liên hệ
-func (r *CustomerRouter) Search(c *gin.Context) {
-	dto := dto.CustomerSearchDTO{}
+func (r *LeadRouter) Search(c *gin.Context) {
+	dto := dto.LeadSearchDTO{}
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -54,19 +54,20 @@ func (r *CustomerRouter) Search(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Tạo khách hàng mới
-// @Description Tạo một khách hàng mới với thông tin được cung cấp
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
-// @Failure 400 {string} string "Yêu cầu không hợp lệ"
-// @Failure 409 {string} string "Khách hàng đã tồn tại"
-// @Router /customer [post]
-// Thêm khách hàng
-func (r *CustomerRouter) Create(c *gin.Context) {
-	entity := domain.CustomerEntity{}
+// .
+// // @Summary Tạo khách hàng mới
+// // @Description Tạo một khách hàng mới với thông tin được cung cấp
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param request body domain.LeadEntity true "Thông tin cập nhật"
+// // @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// // @Failure 409 {string} string "Khách hàng đã tồn tại"
+// // @Router /lead [post]
+// // Thêm khách hàng
+func (r *LeadRouter) Create(c *gin.Context) {
+	entity := domain.LeadEntity{}
 	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -75,16 +76,17 @@ func (r *CustomerRouter) Create(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật thông tin khách hàng
-// @Description Cập nhật thông tin khách hàng hiện tại
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param request body domain.CustomerEntity true "Thông tin cập nhật"
-// @Param id path int true "ID của khách hàng"
-// @Security BearerAuth
-// @Router /customer/{id} [put]
-func (r *CustomerRouter) Update(c *gin.Context) {
+// .
+// // @Summary Cập nhật thông tin khách hàng
+// // @Description Cập nhật thông tin khách hàng hiện tại
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param request body domain.LeadEntity true "Thông tin cập nhật"
+// // @Param id path int true "ID của khách hàng"
+// // @Security BearerAuth
+// // @Router /lead/{id} [put]
+func (r *LeadRouter) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -93,7 +95,7 @@ func (r *CustomerRouter) Update(c *gin.Context) {
 		})
 		return
 	}
-	entity := domain.CustomerEntity{}
+	entity := domain.LeadEntity{}
 	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -102,15 +104,16 @@ func (r *CustomerRouter) Update(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Xóa khách hàng
-// @Description Xóa một khách hàng khỏi hệ thống
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param id path int true "ID của khách hàng"
-// @Security BearerAuth
-// @Router /customer/{id} [delete]
-func (r *CustomerRouter) Delete(c *gin.Context) {
+// .
+// // @Summary Xóa khách hàng
+// // @Description Xóa một khách hàng khỏi hệ thống
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "ID của khách hàng"
+// // @Security BearerAuth
+// // @Router /lead/{id} [delete]
+func (r *LeadRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -123,16 +126,17 @@ func (r *CustomerRouter) Delete(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Cập nhật ghi chú khách hàng
-// @Description Cập nhật ghi chú khách hàng hiện tại
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param id path int true "ID của khách hàng"
-// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
-// @Security BearerAuth
-// @Router /customer/{id}/note [put]
-func (r *CustomerRouter) UpdateNote(c *gin.Context) {
+// .
+// // @Summary Cập nhật ghi chú khách hàng
+// // @Description Cập nhật ghi chú khách hàng hiện tại
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "ID của khách hàng"
+// // @Param request body dto.LeadDTO true "Thông tin cập nhật"
+// // @Security BearerAuth
+// // @Router /lead/{id}/note [put]
+func (r *LeadRouter) UpdateNote(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -141,7 +145,7 @@ func (r *CustomerRouter) UpdateNote(c *gin.Context) {
 		})
 		return
 	}
-	dto := dto.CustomerDTO{}
+	dto := dto.LeadDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -150,16 +154,17 @@ func (r *CustomerRouter) UpdateNote(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Gán khách hàng
-// @Description Gán khách hàng hiện tại
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param id path int true "ID của khách hàng"
-// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
-// @Security BearerAuth
-// @Router /customer/{id}/assign [put]
-func (r *CustomerRouter) Assign(c *gin.Context) {
+// .
+// // @Summary Gán khách hàng
+// // @Description Gán khách hàng hiện tại
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "ID của khách hàng"
+// // @Param request body dto.LeadDTO true "Thông tin cập nhật"
+// // @Security BearerAuth
+// // @Router /lead/{id}/assign [put]
+func (r *LeadRouter) Assign(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -168,7 +173,7 @@ func (r *CustomerRouter) Assign(c *gin.Context) {
 		})
 		return
 	}
-	dto := dto.CustomerDTO{}
+	dto := dto.LeadDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -177,16 +182,17 @@ func (r *CustomerRouter) Assign(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Chuyển giai đoạn khách hàng
-// @Description Chuyển giai đoạn khách hàng hiện tại
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param id path int true "ID của khách hàng"
-// @Param request body dto.CustomerDTO true "Thông tin cập nhật"
-// @Security BearerAuth
-// @Router /customer/{id}/stage [put]
-func (r *CustomerRouter) SwitchStage(c *gin.Context) {
+// .
+// // @Summary Chuyển giai đoạn khách hàng
+// // @Description Chuyển giai đoạn khách hàng hiện tại
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "ID của khách hàng"
+// // @Param request body dto.LeadDTO true "Thông tin cập nhật"
+// // @Security BearerAuth
+// // @Router /lead/{id}/stage [put]
+func (r *LeadRouter) SwitchStage(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{
@@ -196,7 +202,7 @@ func (r *CustomerRouter) SwitchStage(c *gin.Context) {
 		return
 	}
 
-	dto := dto.CustomerDTO{}
+	dto := dto.LeadDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -205,15 +211,16 @@ func (r *CustomerRouter) SwitchStage(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Lấy thông tin khách hàng
-// @Description Lấy thông tin khách hàng hiện tại
-// @Tags Khách hàng
-// @Accept json
-// @Produce json
-// @Param id path int true "ID của khách hàng"
-// @Security BearerAuth
-// @Router /customer/{id} [get]
-func (r *CustomerRouter) GetByID(c *gin.Context) {
+// .
+// // @Summary Lấy thông tin khách hàng
+// // @Description Lấy thông tin khách hàng hiện tại
+// // @Tags Khách hàng
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "ID của khách hàng"
+// // @Security BearerAuth
+// // @Router /lead/{id} [get]
+func (r *LeadRouter) GetByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
 		_routes.RouteResult(c, nil, &_routes.Except{

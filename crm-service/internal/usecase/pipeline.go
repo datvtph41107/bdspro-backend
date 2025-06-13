@@ -13,14 +13,14 @@ type PipelineUsecase struct {
 	pipelineRepo      repo.PipelineRepo
 	permissionUsecase PermissionUsecase
 	historyRepo       repo.HistoryRepo
-	customerRepo      repo.CustomerRepo
+	customerRepo      repo.LeadRepo
 }
 
 func NewPipelineUsecase(
 	pipelineRepo repo.PipelineRepo,
 	permissionUsecase PermissionUsecase,
 	historyRepo repo.HistoryRepo,
-	customerRepo repo.CustomerRepo,
+	customerRepo repo.LeadRepo,
 ) *PipelineUsecase {
 	return &PipelineUsecase{
 		pipelineRepo:      pipelineRepo,

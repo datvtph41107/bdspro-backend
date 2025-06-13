@@ -12,30 +12,36 @@ import (
 )
 
 type ContactUsecase struct {
-	repo repo.ContactRepo
+	repo        repo.ContactRepo
+	friendRepo  repo.FriendRepo
+	leadUsecase *LeadUsecase // forward reference
 }
 
-func NewContactUsecase(repo repo.ContactRepo) *ContactUsecase {
+func NewContactUsecase(
+	repo repo.ContactRepo,
+	friendRepo repo.FriendRepo,
+) *ContactUsecase {
 	return &ContactUsecase{
-		repo: repo,
+		repo:       repo,
+		friendRepo: friendRepo,
 	}
 }
 
-func (s *ContactUsecase) CheckPermission(c context.Context, id uint64) error {
-	entity, err := s.repo.GetByID(c, id)
+func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*domain.ContactEntity, error) {
+	entity, err := s.repo.GetByID(c, contactId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if entity.OwnerType == enums.EOwnerTypeMember {
 		profileId := _utils.GetProfileIdWithContext(c)
-		if profileId != id {
-			return &_routes.Except{
+		if profileId != contactId {
+			return nil, &_routes.Except{
 				Code:    403,
 				Message: "Bạn không có quyền truy cập",
 			}
 		}
 	}
-	return nil
+	return entity, nil
 }
 
 func (s *ContactUsecase) Search(c context.Context, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
@@ -56,7 +62,7 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 }
 
 func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	err := s.CheckPermission(c, id)
+	_, err := s.CheckPermission(c, id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +70,7 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 }
 
 func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
-	err := s.CheckPermission(c, id)
+	_, err := s.CheckPermission(c, id)
 	if err != nil {
 		return err
 	}
@@ -84,4 +90,20 @@ func (s *ContactUsecase) Sync(c context.Context, ownerType enums.EOwnerType, con
 		return nil, err
 	}
 	return contacts, nil
+}
+
+func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEntity, error) {
+	entity, err := s.CheckPermission(c, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if entity.ProfileID != 0 {
+		friendStatus, err := s.friendRepo.GetByUserID(c, entity.ProfileID)
+		if err != nil {
+			return nil, err
+		}
+		entity.FriendStatus = friendStatus
+	}
+	return entity, nil
 }

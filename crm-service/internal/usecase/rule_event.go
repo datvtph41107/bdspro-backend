@@ -15,13 +15,13 @@ import (
 
 type RuleEventUsecase struct {
 	ruleRepo     repo.RuleRepo
-	customerRepo repo.CustomerRepo
+	customerRepo repo.LeadRepo
 	historyRepo  repo.HistoryRepo
 	client       iusecase.NotiClient
 }
 
 func NewRuleEventUsecase(ruleRepo repo.RuleRepo,
-	customerRepo repo.CustomerRepo,
+	customerRepo repo.LeadRepo,
 	historyRepo repo.HistoryRepo,
 	client iusecase.NotiClient) *RuleEventUsecase {
 	return &RuleEventUsecase{ruleRepo: ruleRepo,
@@ -156,7 +156,7 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 
 	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
 		TargetId:   customer.CustomerID,
-		TargetType: enums.TargetHistoryCustomer,
+		TargetType: enums.TargetHistoryLead,
 		ActionType: enums.HistoryRuleEvent,
 		OwnerID:    &customer.OwnerID,
 		OwnerType:  customer.OwnerType,
@@ -192,7 +192,7 @@ func (u *RuleEventUsecase) TriggerAssignLead(c context.Context, customer dto.Cus
 		return err
 	}
 
-	_, err = u.customerRepo.Assign(c, customer.CustomerID, &dto.CustomerDTO{
+	_, err = u.customerRepo.Assign(c, customer.CustomerID, &dto.LeadDTO{
 		OwnerID:    &customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 		ChargeId:   &chargeId,

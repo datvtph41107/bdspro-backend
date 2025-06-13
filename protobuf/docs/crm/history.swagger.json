@@ -16,9 +16,68 @@
     "application/json"
   ],
   "paths": {
+    "/v2/crm/history/contact/{contactId}": {
+      "get": {
+        "operationId": "HistoryService_ContactHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbHistoryListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "HistoryService"
+        ]
+      }
+    },
     "/v2/crm/history/list/{ownerId}/{ownerType}": {
       "get": {
-        "operationId": "HistoryService_Search",
+        "operationId": "HistoryService_OwnerHistory",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -150,6 +209,9 @@
         "createdBy": {
           "type": "string",
           "format": "uint64"
+        },
+        "title": {
+          "type": "string"
         }
       }
     },

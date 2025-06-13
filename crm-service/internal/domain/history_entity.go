@@ -10,6 +10,7 @@ type HistoryEntity struct {
 	TargetId   uint64               `json:"targetId"`
 	TargetType enums.ETargetHistory `json:"targetType"`
 	ActionType enums.EHistory       `json:"actionType"`
+	Title      string               `json:"title,omitempty"`
 	Note       string               `json:"note,omitempty"`
 	PreStage   string               `json:"preStage,omitempty"`
 	AfterStage string               `json:"afterStage,omitempty"`

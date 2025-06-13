@@ -13,15 +13,30 @@ import (
 // --map--
 
 func ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
-	return &crmpb.ContactDTO{
-		Id:        contact.ID,
-		FullName:  contact.FullName,
-		Phone:     contact.Phone,
-		OwnerId:   contact.OwnerID,
-		OwnerType: int32(contact.OwnerType),
-		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
-		CreatedBy: contact.CreatedBy,
+	result := &crmpb.ContactDTO{
+		Id:            contact.ID,
+		FullName:      contact.FullName,
+		Phone:         contact.Phone,
+		OwnerId:       contact.OwnerID,
+		OwnerType:     int32(contact.OwnerType),
+		ProfileId:     &contact.ProfileID,
+		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
+		CreatedBy:     contact.CreatedBy,
+		ContactStatus: 20, // todo status
+		Email:         contact.Email,
+		Zalo:          contact.Zalo,
+		Company:       contact.Company,
+		Note:          contact.Note,
 	}
+	if contact.FriendStatus != nil {
+		result.FriendStatus = &pb_shared.FriendItem{
+			Id:         contact.FriendStatus.ID,
+			Status:     uint32(contact.FriendStatus.Status),
+			CreatedBy:  contact.FriendStatus.CreatedBy,
+			ReceiverId: contact.FriendStatus.ReceiverID,
+		}
+	}
+	return result
 }
 
 func PbToContact(pb *crmpb.ContactDTO) *domain.ContactEntity {
@@ -46,16 +61,16 @@ func ListContactToPb(contacts []domain.ContactEntity) []*crmpb.ContactDTO {
 
 func ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
 	result := &crmpb.ContactDTO{
-		Id:        contact.ID,
-		Following: contact.Following,
-		FullName:  contact.FullName,
-		Phone:     contact.Phone,
-		OwnerId:   contact.OwnerID,
-		OwnerType: int32(contact.OwnerType),
-		Avatar:    contact.Avatar,
-		ProfileId: &contact.ProfileID,
-		Status:    uint32(contact.FriendStatus),
-		Blocked:   contact.Blocked,
+		Id:            contact.ID,
+		Following:     contact.Following,
+		FullName:      contact.FullName,
+		Phone:         contact.Phone,
+		OwnerId:       contact.OwnerID,
+		OwnerType:     int32(contact.OwnerType),
+		Avatar:        contact.Avatar,
+		ProfileId:     &contact.ProfileID,
+		ContactStatus: uint32(contact.FriendStatus),
+		Blocked:       contact.Blocked,
 		// todo: map in client
 		// ProfileInfo: &pb_shared.ProfileItem
 	}
@@ -63,7 +78,7 @@ func ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
 		result.FriendStatus = &pb_shared.FriendItem{
 			Id:         contact.FriendID,
 			Status:     uint32(contact.FriendStatus),
-			CreatedBy:  contact.FriendCreatedBy,
+			CreatedBy:  &contact.FriendCreatedBy,
 			ReceiverId: contact.FriendReceiverID,
 		}
 	}

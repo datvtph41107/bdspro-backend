@@ -8,10 +8,10 @@ const (
 	HistoryAssignRole     EHistory = 30
 	HistorySettingAuto    EHistory = 40
 	HistoryReminder       EHistory = 50
-	HistoryCreateCustomer EHistory = 60
-	HistoryUpdateCustomer EHistory = 70
-	HistoryDeleteCustomer EHistory = 80
-	HistoryAssignCustomer EHistory = 90
+	HistoryCreateLead     EHistory = 60
+	HistoryUpdateLead     EHistory = 70
+	HistoryDeleteLead     EHistory = 80
+	HistoryAssignLead     EHistory = 90
 	HistorySwitchStage    EHistory = 100
 	HistoryUpdateNote     EHistory = 110
 	HistoryPipelineCreate EHistory = 120
@@ -32,10 +32,10 @@ var HistoryMap = map[EHistory]string{
 	HistoryAssignRole:     "Phân quyền",
 	HistorySettingAuto:    "Cài đặt tự động",
 	HistoryReminder:       "Nhắc nhở",
-	HistoryCreateCustomer: "Tạo khách hàng",
-	HistoryUpdateCustomer: "Cập nhật khách hàng",
-	HistoryDeleteCustomer: "Xóa khách hàng",
-	HistoryAssignCustomer: "Phân công khách hàng",
+	HistoryCreateLead:     "Tạo khách hàng",
+	HistoryUpdateLead:     "Cập nhật khách hàng",
+	HistoryDeleteLead:     "Xóa khách hàng",
+	HistoryAssignLead:     "Phân công khách hàng",
 	HistorySwitchStage:    "Chuyển giai đoạn",
 	HistoryUpdateNote:     "Cập nhật ghi chú",
 	HistoryPipelineCreate: "Tạo quy trình",

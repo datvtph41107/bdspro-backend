@@ -12,11 +12,11 @@ func AutoMigrate() {
 		// &FollowEntity{},
 		// &BlockEntity{},
 		// &GroupEntity{},
-		// &domain.HistoryEntity{},
+		&domain.HistoryEntity{},
 		// &domain.PipelineEntity{},
 		// &domain.StageEntity{},
 		// &domain.RuleEntity{},
 		// &domain.CustomerEntity{},
-		&domain.ContactEntity{},
+		// &domain.ContactEntity{},
 	)
 }

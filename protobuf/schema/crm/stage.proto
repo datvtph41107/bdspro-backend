@@ -5,22 +5,13 @@ package crmpb;
 option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "crm/common.proto";
 
 message StageSearchRequest {
     uint64 pipelineId = 1;
     uint32 page = 2;
     uint32 size = 3;
     string stageName = 4;
-}
-
-message StageDTO {
-    uint64 id = 1;
-    string stageName = 2;
-    int32 orderNumber = 3;
-    uint64 pipelineId = 4;
-    uint64 ruleId = 5;
-    uint32 step = 6;
-    bool active = 7;
 }
 
 message StageListDTO {

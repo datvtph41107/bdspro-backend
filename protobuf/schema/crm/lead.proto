@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
+import "crm/sharing.proto";
+import "crm/common.proto";
+
+service LeadService {
+  rpc Search (LeadSearchRequest) returns (LeadListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/list"
+    };
+  };
+  rpc Detail (pb_shared.IdRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/detail/{id}"
+    };
+  };
+  rpc GetByContact (pb_shared.IdRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/by-contact/{id}"
+    };
+  };
+  rpc Create (LeadDTO) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead"
+      body: "*"
+    };
+  };
+  rpc Update (LeadDTO) returns (LeadDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/lead/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/lead/{id}"
+    };
+  };
+  rpc Assign (LeadAssignRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead/assign"
+      body: "*"
+    };
+  };
+}
+
+message LeadSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+
+  string phone = 3;
+  string fullName = 4;
+
+  repeated int32 steps = 5;                 // EStep (int32)
+  repeated uint64 stageIds = 6;
+  repeated int32 sources = 7;               // ESourceLead (int32)
+  repeated uint64 chargeIds = 8;
+
+  int32 chargeType = 9; // [deprecated = true]; // EOwnerType (int32), deprecated
+
+  google.protobuf.Timestamp fromDate = 10;
+  google.protobuf.Timestamp toDate = 11;
+
+  repeated uint64 productCareIds = 12;
+
+  uint64 ownerId = 13;
+  int32 ownerType = 14;
+}
+
+message LeadListDTO {
+    repeated LeadDTO data = 1;
+    uint32 totalElements = 2;
+}
+
+message LeadAssignRequest {
+  uint64 leadId = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+  uint64 chargeId = 4;
+  int32 chargeType = 5;
+  string noteAssign = 6;
+}
+
+message LeadNoteRequest {
+  uint64 leadId = 1;
+  string note = 2;
+} 
+
+message LeadStageRequest {
+  uint64 leadId = 1;
+  uint64 stageId = 2;
+}

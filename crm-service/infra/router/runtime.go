@@ -9,7 +9,7 @@ type RuntimeRouter struct {
 	stageRouter    *StageRouter
 	pipelineRouter *PipelineRouter
 	ruleRouter     *RuleRouter
-	customerRouter *CustomerRouter
+	leadRouter     *LeadRouter
 }
 
 func NewRuntimeRouter(
@@ -17,14 +17,14 @@ func NewRuntimeRouter(
 	stageRouter *StageRouter,
 	pipelineRouter *PipelineRouter,
 	ruleRouter *RuleRouter,
-	customerRouter *CustomerRouter,
+	leadRouter *LeadRouter,
 ) *RuntimeRouter {
 	return &RuntimeRouter{
 		historyRouter:  historyRouter,
 		stageRouter:    stageRouter,
 		pipelineRouter: pipelineRouter,
 		ruleRouter:     ruleRouter,
-		customerRouter: customerRouter,
+		leadRouter:     leadRouter,
 	}
 }
 
@@ -42,5 +42,5 @@ func (r *RuntimeRouter) RuntimeRoutes(engine *gin.Engine) {
 	r.stageRouter.StageRoutes(group)
 	r.pipelineRouter.PipelineRoutes(group)
 	r.ruleRouter.RuleRoutes(group)
-	r.customerRouter.CustomerRoutes(group)
+	r.leadRouter.LeadRoutes(group)
 }

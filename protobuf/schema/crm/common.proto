@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "shared/common.proto";
+
+message LeadDTO {
+    optional uint64 contactId = 1;
+    string fullName = 2;
+    string phone = 3;
+    int32 source = 4;                        // ESourceLead (int32)
+    string email = 5;
+    string address = 6;
+    string birthday = 7;
+    string note = 8;
+    string assignNote = 10;
+  
+    optional uint64 pipelineId = 11;
+    optional uint64 stageId = 12;
+    optional uint64 chargeId = 13;
+  
+    int32 chargeType = 15;                 // EOwnerType (int32)
+    optional uint64 ownerId = 16;
+    int32 ownerType = 17;                  // EOwnerType (int32)
+    uint64 id = 18;
+    optional StageDTO stage = 19;
+    optional PipelineDTO pipeline = 20;
+    optional pb_shared.ProfileItem chargeUser = 21;
+  }
+
+  message PipelineDTO {
+    uint64 id = 1;
+    string pipelineName = 2;
+	string color = 3;
+	bool active = 4;
+	uint64 ownerId = 5;
+	uint32 ownerType = 6;
+}
+
+
+message StageDTO {
+    uint64 id = 1;
+    string stageName = 2;
+    int32 orderNumber = 3;
+    uint64 pipelineId = 4;
+    uint64 ruleId = 5;
+    uint32 step = 6;
+    bool active = 7;
+}

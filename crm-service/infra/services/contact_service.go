@@ -47,7 +47,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 	}
 
 	contactsPb := mapper.ListContactItemToPb(contacts)
-	s.UserClient.PbUserToContact(ctx, contactsPb)
+	s.UserClient.PbUserToContacts(ctx, contactsPb)
 
 	return &crmpb.ContactListDTO{
 		Data:          contactsPb,
@@ -55,8 +55,24 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 	}, nil
 }
 
+// @Summary Lấy thông tin liên hệ
+// @Description Lấy thông tin liên hệ
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của liên hệ"
+// @Security BearerAuth
+// @Router /contact/detail/{id} [get]
 func (s *ContactService) Detail(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ContactDTO, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Detail not implemented")
+	contact, err := s.UC.Detail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	contactPb := mapper.ContactToPb(contact)
+	s.UserClient.PbUserToContact(ctx, contactPb)
+
+	return contactPb, nil
 }
 
 // @Summary Tạo liên hệ mới

@@ -19,7 +19,7 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = crmpb.RegisterPipelineServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterContactServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = crmpb.RegisterCustomerServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = crmpb.RegisterLeadServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterStageServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterRuleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

@@ -1,8 +1,8 @@
 package config
 
 import (
-	grpc_service "crm/infra/grpc"
 	"crm/infra/router"
+	services "crm/infra/services"
 	"crm/internal/usecase"
 	_ "embed"
 )
@@ -31,34 +31,34 @@ type ConfigApp struct {
 	RuntimeRouter        *router.RuntimeRouter
 	RuleUsecase          *usecase.RuleUsecase
 	RuleEventUsecase     *usecase.RuleEventUsecase
-	PipelineService      *grpc_service.PipelineService
-	ContactService       *grpc_service.ContactService
-	CustomerService      *grpc_service.CustomerService
-	StageService         *grpc_service.StageService
-	HistoryService       *grpc_service.HistoryService
-	RuleService          *grpc_service.RuleService
-	FollowService        *grpc_service.FollowService
-	BlockService         *grpc_service.BlockService
-	FriendGroupService   *grpc_service.FriendGroupService
-	FriendService        *grpc_service.FriendService
-	SharingAccessService *grpc_service.SharingAccessService
+	PipelineService      *services.PipelineService
+	ContactService       *services.ContactService
+	LeadService          *services.LeadService
+	StageService         *services.StageService
+	HistoryService       *services.HistoryService
+	RuleService          *services.RuleService
+	FollowService        *services.FollowService
+	BlockService         *services.BlockService
+	FriendGroupService   *services.FriendGroupService
+	FriendService        *services.FriendService
+	SharingAccessService *services.SharingAccessService
 }
 
 func NewConfigApp(
 	runtimeRouter *router.RuntimeRouter,
 	ruleUsecase *usecase.RuleUsecase,
 	ruleEventUsecase *usecase.RuleEventUsecase,
-	pipelineService *grpc_service.PipelineService,
-	contactService *grpc_service.ContactService,
-	customerService *grpc_service.CustomerService,
-	stageService *grpc_service.StageService,
-	historyService *grpc_service.HistoryService,
-	ruleService *grpc_service.RuleService,
-	followService *grpc_service.FollowService,
-	blockService *grpc_service.BlockService,
-	friendGroupService *grpc_service.FriendGroupService,
-	friendService *grpc_service.FriendService,
-	sharingAccessService *grpc_service.SharingAccessService,
+	pipelineService *services.PipelineService,
+	contactService *services.ContactService,
+	customerService *services.LeadService,
+	stageService *services.StageService,
+	historyService *services.HistoryService,
+	ruleService *services.RuleService,
+	followService *services.FollowService,
+	blockService *services.BlockService,
+	friendGroupService *services.FriendGroupService,
+	friendService *services.FriendService,
+	sharingAccessService *services.SharingAccessService,
 ) *ConfigApp {
 	return &ConfigApp{
 		RuntimeRouter:        runtimeRouter,
@@ -66,7 +66,7 @@ func NewConfigApp(
 		RuleEventUsecase:     ruleEventUsecase,
 		PipelineService:      pipelineService,
 		ContactService:       contactService,
-		CustomerService:      customerService,
+		LeadService:          customerService,
 		StageService:         stageService,
 		HistoryService:       historyService,
 		RuleService:          ruleService,

@@ -14,7 +14,7 @@ type StageUsecase struct {
 	permissionUsecase PermissionUsecase
 	pipelineRepo      repo.PipelineRepo
 	historyRepo       repo.HistoryRepo
-	customerRepo      repo.CustomerRepo
+	customerRepo      repo.LeadRepo
 }
 
 func NewStageUsecase(
@@ -22,7 +22,7 @@ func NewStageUsecase(
 	permissionUsecase PermissionUsecase,
 	pipelineRepo repo.PipelineRepo,
 	historyRepo repo.HistoryRepo,
-	customerRepo repo.CustomerRepo,
+	customerRepo repo.LeadRepo,
 ) *StageUsecase {
 	return &StageUsecase{
 		stageRepo:         stageRepo,

@@ -6,6 +6,29 @@ option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
+
+service HistoryService {
+  rpc OwnerHistory (HistorySearchRequest) returns (HistoryListDTO) {
+      option (google.api.http) = {
+          get: "/v2/crm/history/list/{ownerId}/{ownerType}"
+      };
+  };
+
+  rpc ContactHistory (HistoryContactRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/crm/history/contact/{contactId}"
+    };
+  };
+}
+
+message HistoryContactRequest {
+  uint64 contactId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  google.protobuf.Timestamp fromDate = 4;
+  google.protobuf.Timestamp toDate = 5;
+}
+
 message HistorySearchRequest {
   uint32 page = 1;
   uint32 size = 2;
@@ -35,17 +58,10 @@ message HistoryDTO {
   int32 ownerType = 8;
   string createdAt = 9;
   optional uint64 createdBy = 10;
+  string title = 11;
 }
 
 message HistoryListDTO {
     repeated HistoryDTO data = 1;
     uint32 totalElements = 2;
-}
-
-service HistoryService {
-    rpc Search (HistorySearchRequest) returns (HistoryListDTO) {
-        option (google.api.http) = {
-            get: "/v2/crm/history/list/{ownerId}/{ownerType}"
-        };
-    };
 }

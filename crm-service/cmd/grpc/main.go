@@ -45,7 +45,7 @@ var GrpcCmd = &cobra.Command{
 		)
 		crmpb.RegisterPipelineServiceServer(s, app.PipelineService)
 		crmpb.RegisterContactServiceServer(s, app.ContactService)
-		crmpb.RegisterCustomerServiceServer(s, app.CustomerService)
+		crmpb.RegisterLeadServiceServer(s, app.LeadService)
 		crmpb.RegisterStageServiceServer(s, app.StageService)
 		crmpb.RegisterHistoryServiceServer(s, app.HistoryService)
 		crmpb.RegisterRuleServiceServer(s, app.RuleService)

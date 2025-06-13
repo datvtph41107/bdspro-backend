@@ -20,7 +20,7 @@ message SubmitResponse {
 message FriendItem {
 	uint64 id = 1;
 	uint64 receiverId = 2;
-	uint64 createdBy = 3;
+	optional uint64 createdBy = 3;
 	uint32 status = 4;
 }
 

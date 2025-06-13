@@ -11,20 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.CustomerRepo
-type PostgreCustomer struct {
+// @bind: crm/internal/repo.LeadRepo
+type LeadPostgre struct {
 	db *gorm.DB
 }
 
-func NewPostgreCustomer(db *gorm.DB) *PostgreCustomer {
-	return &PostgreCustomer{db: db}
+func NewPostgreCustomer(db *gorm.DB) *LeadPostgre {
+	return &LeadPostgre{db: db}
 }
 
-func (r *PostgreCustomer) Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.CustomerSearchDTO) ([]domain.CustomerEntity, int64, error) {
+func (r *LeadPostgre) Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error) {
 	total := int64(0)
-	customers := []domain.CustomerEntity{}
+	customers := []domain.LeadEntity{}
 	query := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("deleted_at is null and owner_id = ? and owner_type = ?", ownerId, ownerType)
 
 	if dto.FullName != "" {
@@ -71,21 +71,21 @@ func (r *PostgreCustomer) Search(c context.Context, ownerId uint64, ownerType en
 	return customers, total, nil
 }
 
-func (r *PostgreCustomer) Create(c context.Context, entity *domain.CustomerEntity) (*domain.CustomerEntity, error) {
-	err := r.db.WithContext(c).Create(entity).Error
+func (r *LeadPostgre) Create(ctx context.Context, entity *domain.LeadEntity) (*domain.LeadEntity, error) {
+	err := r.db.WithContext(ctx).Create(entity).Error
 	return entity, err
 }
 
-func (r *PostgreCustomer) Update(ctx context.Context, id uint64, customer *domain.CustomerEntity) (*domain.CustomerEntity, error) {
+func (r *LeadPostgre) Update(ctx context.Context, id uint64, customer *domain.LeadEntity) (*domain.LeadEntity, error) {
 	err := r.db.WithContext(ctx).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
 		Updates(customer).
 		Error
 	return customer, err
 }
 
-func (r *PostgreCustomer) Delete(ctx context.Context, id uint64) error {
+func (r *LeadPostgre) Delete(ctx context.Context, id uint64) error {
 	return r.db.
 		WithContext(ctx).
 		Where("id = ?", id).
@@ -93,32 +93,32 @@ func (r *PostgreCustomer) Delete(ctx context.Context, id uint64) error {
 		Error
 }
 
-func (r *PostgreCustomer) GetByID(ctx context.Context, id uint64) (*domain.CustomerEntity, error) {
-	var customer domain.CustomerEntity
+func (r *LeadPostgre) GetByID(ctx context.Context, id uint64) (*domain.LeadEntity, error) {
+	var customer domain.LeadEntity
 	err := r.db.WithContext(ctx).
 		Where("id = ? and deleted_at is null", id).
 		First(&customer).Error
 	return &customer, err
 }
 
-func (r *PostgreCustomer) Existed(c context.Context, entity *domain.CustomerEntity) (bool, error) {
+func (r *LeadPostgre) Existed(c context.Context, entity *domain.LeadEntity) (bool, error) {
 	return false, nil
 }
 
-func (r *PostgreCustomer) UpdateNote(c context.Context, id uint64, note string) (*domain.CustomerEntity, error) {
-	customer := domain.CustomerEntity{}
+func (r *LeadPostgre) UpdateNote(c context.Context, id uint64, note string) (*domain.LeadEntity, error) {
+	customer := domain.LeadEntity{}
 	err := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("note", note).
 		Error
 	return &customer, err
 }
 
-func (r *PostgreCustomer) Assign(c context.Context, id uint64, dto *dto.CustomerDTO) (*domain.CustomerEntity, error) {
-	customer := domain.CustomerEntity{}
+func (r *LeadPostgre) Assign(c context.Context, id uint64, dto *dto.LeadDTO) (*domain.LeadEntity, error) {
+	customer := domain.LeadEntity{}
 	err := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("charge_id", dto.ChargeId).
 		Update("assign_note", dto.AssignNote).
@@ -126,35 +126,35 @@ func (r *PostgreCustomer) Assign(c context.Context, id uint64, dto *dto.Customer
 	return &customer, err
 }
 
-func (r *PostgreCustomer) SwitchStage(c context.Context, id uint64, stageID *uint64) (*domain.CustomerEntity, error) {
-	customer := domain.CustomerEntity{}
+func (r *LeadPostgre) SwitchStage(c context.Context, id uint64, stageID *uint64) (*domain.LeadEntity, error) {
+	customer := domain.LeadEntity{}
 	err := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("stage_id", stageID).
 		Error
 	return &customer, err
 }
 
-func (r *PostgreCustomer) ExistedWithStageID(c context.Context, stageID uint64) (bool, error) {
+func (r *LeadPostgre) ExistedWithStageID(c context.Context, stageID uint64) (bool, error) {
 	var count int64
 	err := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("stage_id = ? and deleted_at is null", stageID).
 		Count(&count).Error
 	return count > 0, err
 }
 
-func (r *PostgreCustomer) ExistedWithPipelineID(c context.Context, pipelineID uint64) (bool, error) {
+func (r *LeadPostgre) ExistedWithPipelineID(c context.Context, pipelineID uint64) (bool, error) {
 	var count int64
 	err := r.db.WithContext(c).
-		Model(&domain.CustomerEntity{}).
+		Model(&domain.LeadEntity{}).
 		Where("pipeline_id = ? and deleted_at is null", pipelineID).
 		Count(&count).Error
 	return count > 0, err
 }
 
-func (r *PostgreCustomer) GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRuleDTO, error) {
+func (r *LeadPostgre) GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRuleDTO, error) {
 	var customers []dto.CustomerWithRuleDTO
 
 	query := `
@@ -191,3 +191,20 @@ func (r *PostgreCustomer) GetOwnerWithRule(c context.Context) ([]dto.CustomerWit
 		Scan(&customers).Error
 	return customers, err
 }
+
+func (r *LeadPostgre) GetByContactID(ctx context.Context, contactID uint64) (*domain.LeadEntity, error) {
+	var customer domain.LeadEntity
+	err := r.db.WithContext(ctx).
+		Where("contact_id = ? and deleted_at is null", contactID).
+		First(&customer).Error
+	return &customer, err
+}
+
+// func (r *LeadPostgre) DetailByID(ctx context.Context, contactID uint64) (*domain.LeadEntity, error) {
+// 	var customer domain.LeadEntity
+// 	err := r.db.WithContext(ctx).
+// 		Preload("Stage").
+// 		Where("contact_id = ? and deleted_at is null", contactID).
+// 		First(&customer).Error
+// 	return &customer, err
+// }

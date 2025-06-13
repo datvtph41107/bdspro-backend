@@ -22,13 +22,26 @@ definitions:
       ownerType:
         type: integer
     type: object
-  crmpb.CustomerAssignRequest:
+  crmpb.FriendGroup:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  crmpb.LeadAssignRequest:
     properties:
       chargeId:
         type: integer
       chargeType:
         type: integer
-      customerId:
+      leadId:
         type: integer
       noteAssign:
         type: string
@@ -37,7 +50,7 @@ definitions:
       ownerType:
         type: integer
     type: object
-  crmpb.CustomerDTO:
+  crmpb.LeadDTO:
     properties:
       address:
         type: string
@@ -50,6 +63,8 @@ definitions:
       chargeType:
         description: EOwnerType (int32)
         type: integer
+      chargeUser:
+        $ref: '#/definitions/pb_shared.ProfileItem'
       contactId:
         type: integer
       email:
@@ -67,40 +82,31 @@ definitions:
         type: integer
       phone:
         type: string
+      pipeline:
+        $ref: '#/definitions/crmpb.PipelineDTO'
       pipelineId:
         type: integer
       source:
-        description: ESourceCustomer (int32)
+        description: ESourceLead (int32)
         type: integer
+      stage:
+        $ref: '#/definitions/crmpb.StageDTO'
       stageId:
         type: integer
     type: object
-  crmpb.CustomerNoteRequest:
+  crmpb.LeadNoteRequest:
     properties:
-      customerId:
+      leadId:
         type: integer
       note:
         type: string
     type: object
-  crmpb.CustomerStageRequest:
+  crmpb.LeadStageRequest:
     properties:
-      customerId:
+      leadId:
         type: integer
       stageId:
         type: integer
-    type: object
-  crmpb.FriendGroup:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
     type: object
   crmpb.ListFriendGroupsResponse:
     properties:
@@ -110,6 +116,21 @@ definitions:
         type: array
       total:
         type: integer
+    type: object
+  crmpb.PipelineDTO:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: string
+      id:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      pipelineName:
+        type: string
     type: object
   crmpb.RuleDTO:
     properties:
@@ -134,53 +155,22 @@ definitions:
       triggerValue:
         type: string
     type: object
-  domain.CustomerEntity:
+  crmpb.StageDTO:
     properties:
-      address:
-        type: string
-      assignNote:
-        type: string
-      birthday:
-        type: string
-      chargeId:
-        type: integer
-      chargeType:
-        $ref: '#/definitions/enums.EOwnerType'
-      contactId:
-        type: integer
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      customerSource:
-        $ref: '#/definitions/enums.ESourceCustomer'
-      email:
-        type: string
-      fullName:
-        type: string
+      active:
+        type: boolean
       id:
         type: integer
-      note:
-        type: string
-      ownerId:
+      orderNumber:
         type: integer
-      ownerType:
-        $ref: '#/definitions/enums.EOwnerType'
-      phone:
-        type: string
       pipelineId:
         type: integer
-      stageId:
+      ruleId:
         type: integer
-      updatedAt:
+      stageName:
         type: string
-      updatedBy:
+      step:
         type: integer
-    required:
-    - fullName
-    - ownerId
-    - ownerType
     type: object
   domain.PipelineEntity:
     properties:
@@ -278,39 +268,6 @@ definitions:
     - pipelineId
     - stageName
     type: object
-  dto.CustomerDTO:
-    properties:
-      address:
-        type: string
-      assignNote:
-        type: string
-      birthday:
-        type: string
-      chargeId:
-        type: integer
-      chargeType:
-        $ref: '#/definitions/enums.EOwnerType'
-      contactId:
-        type: integer
-      email:
-        type: string
-      fullName:
-        type: string
-      note:
-        type: string
-      ownerId:
-        type: integer
-      ownerType:
-        $ref: '#/definitions/enums.EOwnerType'
-      phone:
-        type: string
-      pipelineId:
-        type: integer
-      source:
-        $ref: '#/definitions/enums.ESourceCustomer'
-      stageId:
-        type: integer
-    type: object
   enums.ECondition:
     enum:
     - 10
@@ -355,10 +312,10 @@ definitions:
     - HistoryAssignRole
     - HistorySettingAuto
     - HistoryReminder
-    - HistoryCreateCustomer
-    - HistoryUpdateCustomer
-    - HistoryDeleteCustomer
-    - HistoryAssignCustomer
+    - HistoryCreateLead
+    - HistoryUpdateLead
+    - HistoryDeleteLead
+    - HistoryAssignLead
     - HistorySwitchStage
     - HistoryUpdateNote
     - HistoryPipelineCreate
@@ -393,22 +350,6 @@ definitions:
     - RuleThenLabel
     - RuleThenAssignLead
     - RuleThenSwitchStage
-  enums.ESourceCustomer:
-    enum:
-    - 10
-    - 20
-    - 30
-    - 40
-    - 50
-    - 60
-    type: integer
-    x-enum-varnames:
-    - SourceCustomerPost
-    - SourceCustomerAdvise
-    - SourceCustomerContact
-    - SourceCustomerZalo
-    - SourceCustomerFacebook
-    - SourceCustomerOther
   enums.EStep:
     enum:
     - 10
@@ -432,11 +373,20 @@ definitions:
     - 50
     type: integer
     x-enum-varnames:
-    - TargetHistoryCustomer
+    - TargetHistoryLead
     - TargetHistoryContact
     - TargetHistoryPipeline
     - TargetHistoryStage
     - TargetHistoryRule
+  pb_shared.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+    type: object
   timestamppb.Timestamp:
     properties:
       nanos:
@@ -604,6 +554,25 @@ paths:
       summary: Cập nhật thông tin liên hệ
       tags:
       - Liên hệ
+  /contact/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin liên hệ
+      tags:
+      - Liên hệ
   /contact/list/{ownerType}:
     get:
       consumes:
@@ -643,323 +612,6 @@ paths:
       summary: Đồng bộ danh bạ
       tags:
       - Liên hệ
-  /customer:
-    post:
-      consumes:
-      - application/json
-      description: Tạo một khách hàng mới với thông tin được cung cấp
-      parameters:
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/domain.CustomerEntity'
-      produces:
-      - application/json
-      responses:
-        "400":
-          description: Yêu cầu không hợp lệ
-          schema:
-            type: string
-        "409":
-          description: Khách hàng đã tồn tại
-          schema:
-            type: string
-      security:
-      - BearerAuth: []
-      summary: Tạo khách hàng mới
-      tags:
-      - Khách hàng
-  /customer/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa một khách hàng khỏi hệ thống
-      parameters:
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xóa khách hàng
-      tags:
-      - Khách hàng
-    get:
-      consumes:
-      - application/json
-      description: Lấy thông tin khách hàng hiện tại
-      parameters:
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy thông tin khách hàng
-      tags:
-      - Khách hàng
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật thông tin khách hàng hiện tại
-      parameters:
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/domain.CustomerEntity'
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Cập nhật thông tin khách hàng
-      tags:
-      - Khách hàng
-  /customer/{id}/assign:
-    put:
-      consumes:
-      - application/json
-      description: Gán khách hàng hiện tại
-      parameters:
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CustomerDTO'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Gán khách hàng
-      tags:
-      - Khách hàng
-  /customer/{id}/note:
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật ghi chú khách hàng hiện tại
-      parameters:
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CustomerDTO'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Cập nhật ghi chú khách hàng
-      tags:
-      - Khách hàng
-  /customer/{id}/stage:
-    put:
-      consumes:
-      - application/json
-      description: Chuyển giai đoạn khách hàng hiện tại
-      parameters:
-      - description: ID của khách hàng
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CustomerDTO'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Chuyển giai đoạn khách hàng
-      tags:
-      - Khách hàng
-  /customer/assign:
-    post:
-      consumes:
-      - application/json
-      description: Gán khách hàng
-      parameters:
-      - description: Gán khách hàng
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/crmpb.CustomerAssignRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Gán khách hàng
-      tags:
-      - Khách hàng
-  /customer/detail/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Chi tiết khách hàng
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Khách hàng
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/crmpb.CustomerDTO'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Chi tiết khách hàng
-      tags:
-      - Khách hàng
-  /customer/list:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách
-      parameters:
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: chargeIds
-        type: array
-      - description: '[deprecated = true]; // EOwnerType (int32), deprecated'
-        in: query
-        name: chargeType
-        type: integer
-      - in: query
-        name: fullName
-        type: string
-      - in: query
-        name: ownerId
-        type: integer
-      - in: query
-        name: ownerType
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: phone
-        type: string
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: productCareIds
-        type: array
-      - in: query
-        name: size
-        type: integer
-      - collectionFormat: csv
-        description: ESourceCustomer (int32)
-        in: query
-        items:
-          type: integer
-        name: sources
-        type: array
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: stageIds
-        type: array
-      - collectionFormat: csv
-        description: EStep (int32)
-        in: query
-        items:
-          type: integer
-        name: steps
-        type: array
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách khách hàng
-      tags:
-      - Khách hàng
-  /customer/note:
-    post:
-      consumes:
-      - application/json
-      description: Ghi chú khách hàng
-      parameters:
-      - description: Ghi chú khách hàng
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/crmpb.CustomerNoteRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Ghi chú khách hàng
-      tags:
-      - Khách hàng
-  /customer/stage:
-    post:
-      consumes:
-      - application/json
-      description: Chuyển trạng thái khách hàng
-      parameters:
-      - description: Chuyển trạng thái khách hàng
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/crmpb.CustomerStageRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Chuyển trạng thái khách hàng
-      tags:
-      - Khách hàng
   /follow/{id}:
     delete:
       consumes:
@@ -1201,10 +853,10 @@ paths:
         - HistoryAssignRole
         - HistorySettingAuto
         - HistoryReminder
-        - HistoryCreateCustomer
-        - HistoryUpdateCustomer
-        - HistoryDeleteCustomer
-        - HistoryAssignCustomer
+        - HistoryCreateLead
+        - HistoryUpdateLead
+        - HistoryDeleteLead
+        - HistoryAssignLead
         - HistorySwitchStage
         - HistoryUpdateNote
         - HistoryPipelineCreate
@@ -1242,7 +894,7 @@ paths:
         name: targetType
         type: integer
         x-enum-varnames:
-        - TargetHistoryCustomer
+        - TargetHistoryLead
         - TargetHistoryContact
         - TargetHistoryPipeline
         - TargetHistoryStage
@@ -1261,6 +913,317 @@ paths:
       summary: Lấy danh sách lịch sử
       tags:
       - Lịch sử
+  /history/contact/{contactId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      - in: query
+        name: contactId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của liên hệ
+      tags:
+      - Lịch sử
+  /history/list/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Loại người dùng
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của người dùng
+      tags:
+      - Lịch sử
+  /lead:
+    post:
+      consumes:
+      - application/json
+      description: Tạo khách hàng
+      parameters:
+      - description: Khách hàng
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo khách hàng
+      tags:
+      - Khách hàng
+  /lead/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa khách hàng
+      tags:
+      - Khách hàng
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật khách hàng
+      tags:
+      - Khách hàng
+  /lead/assign:
+    post:
+      consumes:
+      - application/json
+      description: Gán khách hàng
+      parameters:
+      - description: Gán khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadAssignRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán khách hàng
+      tags:
+      - Khách hàng
+  /lead/by-contact/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy khách hàng theo liên hệ
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy khách hàng theo liên hệ
+      tags:
+      - Khách hàng
+  /lead/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Chi tiết khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chi tiết khách hàng
+      tags:
+      - Khách hàng
+  /lead/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: chargeIds
+        type: array
+      - description: '[deprecated = true]; // EOwnerType (int32), deprecated'
+        in: query
+        name: chargeType
+        type: integer
+      - in: query
+        name: fullName
+        type: string
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: phone
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: productCareIds
+        type: array
+      - in: query
+        name: size
+        type: integer
+      - collectionFormat: csv
+        description: ESourceLead (int32)
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: stageIds
+        type: array
+      - collectionFormat: csv
+        description: EStep (int32)
+        in: query
+        items:
+          type: integer
+        name: steps
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách khách hàng
+      tags:
+      - Khách hàng
+  /lead/note:
+    post:
+      consumes:
+      - application/json
+      description: Ghi chú khách hàng
+      parameters:
+      - description: Ghi chú khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadNoteRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Ghi chú khách hàng
+      tags:
+      - Khách hàng
+  /lead/stage:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển trạng thái khách hàng
+      parameters:
+      - description: Chuyển trạng thái khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadStageRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển trạng thái khách hàng
+      tags:
+      - Khách hàng
   /pipeline:
     post:
       consumes:
@@ -1391,12 +1354,12 @@ paths:
       - application/json
       description: Tạo quy tắc
       parameters:
-      - description: Rule entity
+      - description: Quy tắc
         in: body
         name: entity
         required: true
         schema:
-          $ref: '#/definitions/domain.RuleEntity'
+          $ref: '#/definitions/crmpb.RuleDTO'
       produces:
       - application/json
       responses: {}
@@ -1434,12 +1397,12 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Rule entity
+      - description: Quy tắc
         in: body
         name: entity
         required: true
         schema:
-          $ref: '#/definitions/domain.RuleEntity'
+          $ref: '#/definitions/crmpb.RuleDTO'
       produces:
       - application/json
       responses: {}

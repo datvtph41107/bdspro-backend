@@ -3,7 +3,7 @@ package enums
 type ETargetHistory int8
 
 const (
-	TargetHistoryCustomer ETargetHistory = 10
+	TargetHistoryLead     ETargetHistory = 10
 	TargetHistoryContact  ETargetHistory = 20
 	TargetHistoryPipeline ETargetHistory = 30
 	TargetHistoryStage    ETargetHistory = 40
@@ -11,7 +11,7 @@ const (
 )
 
 var TargetHistoryMap = map[ETargetHistory]string{
-	TargetHistoryCustomer: "Khách hàng",
+	TargetHistoryLead:     "Khách hàng tiềm năng",
 	TargetHistoryContact:  "Liên hệ",
 	TargetHistoryPipeline: "Quy trình",
 	TargetHistoryStage:    "Giai đoạn",

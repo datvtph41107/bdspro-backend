@@ -80,6 +80,37 @@
         ]
       }
     },
+    "/v2/crm/customer/by-contact/{id}": {
+      "get": {
+        "operationId": "CustomerService_GetByContact",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbCustomerDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
     "/v2/crm/customer/detail/{id}": {
       "get": {
         "operationId": "CustomerService_Detail",
@@ -104,107 +135,6 @@
             "required": true,
             "type": "string",
             "format": "uint64"
-          },
-          {
-            "name": "contactId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "fullName",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "phone",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "source",
-            "description": "ESourceCustomer (int32)",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "email",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "address",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "birthday",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "note",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "assignNote",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "pipelineId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "stageId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "chargeId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "chargeType",
-            "description": "EOwnerType (int32)",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "ownerId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "ownerType",
-            "description": "EOwnerType (int32)",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
           }
         ],
         "tags": [

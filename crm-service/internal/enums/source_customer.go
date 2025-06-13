@@ -1,17 +1,17 @@
 package enums
 
-type ESourceCustomer int
+type ESourceLead int
 
 const (
-	SourceCustomerPost     ESourceCustomer = 10
-	SourceCustomerAdvise   ESourceCustomer = 20
-	SourceCustomerContact  ESourceCustomer = 30
-	SourceCustomerZalo     ESourceCustomer = 40
-	SourceCustomerFacebook ESourceCustomer = 50
-	SourceCustomerOther    ESourceCustomer = 60
+	SourceCustomerPost     ESourceLead = 10
+	SourceCustomerAdvise   ESourceLead = 20
+	SourceCustomerContact  ESourceLead = 30
+	SourceCustomerZalo     ESourceLead = 40
+	SourceCustomerFacebook ESourceLead = 50
+	SourceCustomerOther    ESourceLead = 60
 )
 
-var SourceCustomerMap = map[ESourceCustomer]string{
+var SourceCustomerMap = map[ESourceLead]string{
 	SourceCustomerPost:     "Bài viết",
 	SourceCustomerAdvise:   "Tư vấn",
 	SourceCustomerContact:  "Danh bạ",

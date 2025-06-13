@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HistoryService_Search_FullMethodName = "/crmpb.HistoryService/Search"
+	HistoryService_OwnerHistory_FullMethodName   = "/crmpb.HistoryService/OwnerHistory"
+	HistoryService_ContactHistory_FullMethodName = "/crmpb.HistoryService/ContactHistory"
 )
 
 // HistoryServiceClient is the client API for HistoryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HistoryServiceClient interface {
-	Search(ctx context.Context, in *HistorySearchRequest, opts ...grpc.CallOption) (*HistoryListDTO, error)
+	OwnerHistory(ctx context.Context, in *HistorySearchRequest, opts ...grpc.CallOption) (*HistoryListDTO, error)
+	ContactHistory(ctx context.Context, in *HistoryContactRequest, opts ...grpc.CallOption) (*HistoryListDTO, error)
 }
 
 type historyServiceClient struct {
@@ -37,10 +39,20 @@ func NewHistoryServiceClient(cc grpc.ClientConnInterface) HistoryServiceClient {
 	return &historyServiceClient{cc}
 }
 
-func (c *historyServiceClient) Search(ctx context.Context, in *HistorySearchRequest, opts ...grpc.CallOption) (*HistoryListDTO, error) {
+func (c *historyServiceClient) OwnerHistory(ctx context.Context, in *HistorySearchRequest, opts ...grpc.CallOption) (*HistoryListDTO, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HistoryListDTO)
-	err := c.cc.Invoke(ctx, HistoryService_Search_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, HistoryService_OwnerHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *historyServiceClient) ContactHistory(ctx context.Context, in *HistoryContactRequest, opts ...grpc.CallOption) (*HistoryListDTO, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistoryListDTO)
+	err := c.cc.Invoke(ctx, HistoryService_ContactHistory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +63,8 @@ func (c *historyServiceClient) Search(ctx context.Context, in *HistorySearchRequ
 // All implementations must embed UnimplementedHistoryServiceServer
 // for forward compatibility.
 type HistoryServiceServer interface {
-	Search(context.Context, *HistorySearchRequest) (*HistoryListDTO, error)
+	OwnerHistory(context.Context, *HistorySearchRequest) (*HistoryListDTO, error)
+	ContactHistory(context.Context, *HistoryContactRequest) (*HistoryListDTO, error)
 	mustEmbedUnimplementedHistoryServiceServer()
 }
 
@@ -62,8 +75,11 @@ type HistoryServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedHistoryServiceServer struct{}
 
-func (UnimplementedHistoryServiceServer) Search(context.Context, *HistorySearchRequest) (*HistoryListDTO, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+func (UnimplementedHistoryServiceServer) OwnerHistory(context.Context, *HistorySearchRequest) (*HistoryListDTO, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OwnerHistory not implemented")
+}
+func (UnimplementedHistoryServiceServer) ContactHistory(context.Context, *HistoryContactRequest) (*HistoryListDTO, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ContactHistory not implemented")
 }
 func (UnimplementedHistoryServiceServer) mustEmbedUnimplementedHistoryServiceServer() {}
 func (UnimplementedHistoryServiceServer) testEmbeddedByValue()                        {}
@@ -86,20 +102,38 @@ func RegisterHistoryServiceServer(s grpc.ServiceRegistrar, srv HistoryServiceSer
 	s.RegisterService(&HistoryService_ServiceDesc, srv)
 }
 
-func _HistoryService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _HistoryService_OwnerHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HistorySearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HistoryServiceServer).Search(ctx, in)
+		return srv.(HistoryServiceServer).OwnerHistory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HistoryService_Search_FullMethodName,
+		FullMethod: HistoryService_OwnerHistory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HistoryServiceServer).Search(ctx, req.(*HistorySearchRequest))
+		return srv.(HistoryServiceServer).OwnerHistory(ctx, req.(*HistorySearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HistoryService_ContactHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistoryContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HistoryServiceServer).ContactHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HistoryService_ContactHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HistoryServiceServer).ContactHistory(ctx, req.(*HistoryContactRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -112,8 +146,12 @@ var HistoryService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*HistoryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Search",
-			Handler:    _HistoryService_Search_Handler,
+			MethodName: "OwnerHistory",
+			Handler:    _HistoryService_OwnerHistory_Handler,
+		},
+		{
+			MethodName: "ContactHistory",
+			Handler:    _HistoryService_ContactHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

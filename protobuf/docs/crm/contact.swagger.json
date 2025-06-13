@@ -260,7 +260,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "status": {
+        "contactStatus": {
           "type": "integer",
           "format": "int64"
         },
@@ -285,6 +285,18 @@
         },
         "blocked": {
           "type": "boolean"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },

@@ -4,6 +4,7 @@ package crmpb;
 
 option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
+import "crm/common.proto";
 
 message PipelineSearchRequest {
     uint32 page = 1;
@@ -15,15 +16,6 @@ message PipelineSearchRequest {
 
     uint64 ownerId = 6;
     uint32 ownerType = 7;
-}
-
-message PipelineDTO {
-    uint64 id = 1;
-    string pipelineName = 2;
-	string color = 3;
-	bool active = 4;
-	uint64 ownerId = 5;
-	uint32 ownerType = 6;
 }
 
 message PipelineListDTO {

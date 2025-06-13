@@ -12,14 +12,14 @@ type RuleUsecase struct {
 	ruleRepo          repo.RuleRepo
 	permissionUsecase PermissionUsecase
 	historyRepo       repo.HistoryRepo
-	customerRepo      repo.CustomerRepo
+	customerRepo      repo.LeadRepo
 }
 
 func NewRuleUsecase(
 	ruleRepo repo.RuleRepo,
 	permissionUsecase PermissionUsecase,
 	historyRepo repo.HistoryRepo,
-	customerRepo repo.CustomerRepo,
+	customerRepo repo.LeadRepo,
 ) *RuleUsecase {
 	return &RuleUsecase{
 		ruleRepo:          ruleRepo,
