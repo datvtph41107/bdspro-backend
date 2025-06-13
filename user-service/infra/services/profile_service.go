@@ -52,9 +52,10 @@ func (s *GrpcProfileService) GetProfileByIds(ctx context.Context, req *sharepb.G
 
 		for _, profile := range profiles {
 			pb := &sharepb.ProfileItem{
-				Id:       profile.ProfileID,
-				FullName: profile.FullName,
-				Avatar:   profile.Avatar,
+				Id:           profile.ProfileID,
+				FullName:     profile.FullName,
+				Avatar:       profile.Avatar,
+				TickVerified: profile.TickVerified,
 			}
 			// Cache lại
 			s.cache.Set(fmt.Sprintf("%d", profile.ProfileID), pb, cache.DefaultExpiration)

@@ -612,6 +612,9 @@
         },
         "avatar": {
           "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
         }
       }
     },

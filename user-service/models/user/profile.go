@@ -27,6 +27,7 @@ type UserProfileEntity struct {
 	Address           string                `gorm:"size:255" json:"address"`
 	Gender            uint8                 `json:"gender"`
 	Avatar            string                `gorm:"size:255" json:"avatar"`
+	TickVerified      bool                  `gorm:"column:tick_verified;default:false" json:"tickVerified"`
 	BackgroundImage   string                `gorm:"size:255" json:"backgroundImage"`
 	ReferralCode      string                `gorm:"size:255" copier:"-" json:"referralCode"`
 	ReferralBy        string                `gorm:"size:255" copier:"-" json:"referralBy"`
