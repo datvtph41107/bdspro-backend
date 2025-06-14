@@ -10,21 +10,21 @@ import (
 	emailsender "github.com/tuandq2112/appointment-service/pkg/email_sender"
 )
 
-type appointmentReminderJob struct {
+type AppointmentReminderJob struct {
 	appointmentReminderUsecase usecase.AppointmentReminderUsecase
 	emailSender                *emailsender.EmailSender
 	logger                     *flogging.FabricLogger
 }
 
-func NewAppointmentReminderJob(appointmentReminderUsecase usecase.AppointmentReminderUsecase, emailSender *emailsender.EmailSender) *appointmentReminderJob {
-	return &appointmentReminderJob{
+func NewAppointmentReminderJob(appointmentReminderUsecase usecase.AppointmentReminderUsecase, emailSender *emailsender.EmailSender) *AppointmentReminderJob {
+	return &AppointmentReminderJob{
 		appointmentReminderUsecase: appointmentReminderUsecase,
 		emailSender:                emailSender,
 		logger:                     flogging.MustGetLogger("appointment-reminder-job"),
 	}
 }
 
-func (j *appointmentReminderJob) Run() {
+func (j *AppointmentReminderJob) Run() {
 	reminders, err := j.appointmentReminderUsecase.GetReminders(context.Background(), 10)
 	if err != nil {
 		log.Println("Error getting reminders:", err)

@@ -13,7 +13,7 @@ type AppointmentParticipantModel struct {
 
 	Role     entity.AppointmentParticipantRole   `gorm:"type:varchar(255);not null"`
 	Status   entity.AppointmentParticipantStatus `gorm:"type:varchar(255);not null"`
-	JoinedAt time.Time                           `gorm:"type:datetime;not null"`
+	JoinedAt time.Time                           
 }
 
 func (m *AppointmentParticipantModel) TableName() string {

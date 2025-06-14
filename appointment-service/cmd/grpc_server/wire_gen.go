@@ -12,8 +12,10 @@ import (
 	"github.com/tuandq2112/appointment-service/internal/interface/handler"
 	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
 	"github.com/tuandq2112/appointment-service/internal/interface/validator"
+	"github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 	"github.com/tuandq2112/appointment-service/internal/server/grpc"
 	"github.com/tuandq2112/appointment-service/internal/usecase"
+	"github.com/tuandq2112/appointment-service/pkg/email_sender"
 )
 
 // Injectors from wire.go:
@@ -24,18 +26,26 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	appointmentTransformer := transformer.NewAppointmentTransformer()
 	appointmentValidator := validator.NewAppointmentValidator()
 	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator)
-	grpcServer := grpc.NewGRPCServer(appointmentHandler)
+	appointmentReminderRepository := repository.NewAppointmentReminderRepository()
+	appointmentReminderUsecase := usecase.NewAppointmentReminderUsecase(appointmentReminderRepository)
+	emailSender := emailsender.NewEmailSender()
+	appointmentReminderJob := appointmentreminder.NewAppointmentReminderJob(appointmentReminderUsecase, emailSender)
+	grpcServer := grpc.NewGRPCServer(appointmentHandler, appointmentReminderJob)
 	return grpcServer
 }
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewAppointmentRepository)
+var repositorySet = wire.NewSet(repository.NewAppointmentRepository, repository.NewAppointmentReminderRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewAppointmentUsecase)
+var usecaseSet = wire.NewSet(usecase.NewAppointmentUsecase, usecase.NewAppointmentReminderUsecase)
 
 var transformerSet = wire.NewSet(transformer.NewAppointmentTransformer)
 
 var validatorSet = wire.NewSet(validator.NewAppointmentValidator)
 
 var handlerSet = wire.NewSet(handler.NewAppointmentHandler)
+
+var emailSenderSet = wire.NewSet(emailsender.NewEmailSender)
+
+var jobSet = wire.NewSet(appointmentreminder.NewAppointmentReminderJob)

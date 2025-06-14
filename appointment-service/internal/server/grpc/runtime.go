@@ -15,19 +15,23 @@ import (
 	"github.com/tuandq2112/appointment-service/internal/interface/handler"
 	"github.com/tuandq2112/appointment-service/internal/server/grpc/interceptors"
 	"google.golang.org/grpc"
+	"github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 )
 
 type GRPCServer struct {
 	appointmentHandler *handler.AppointmentHandler
 	logger            *flogging.FabricLogger
+	appointmentReminderJob *appointmentreminder.AppointmentReminderJob
 }
 
 func NewGRPCServer(
 	appointmentHandler *handler.AppointmentHandler,
+	appointmentReminderJob *appointmentreminder.AppointmentReminderJob,
 ) *GRPCServer {
 	return &GRPCServer{
 		appointmentHandler: appointmentHandler,
 		logger:            flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		appointmentReminderJob: appointmentReminderJob,
 	}
 }
 
@@ -40,6 +44,7 @@ func (s *GRPCServer) Start() {
 	signalStart, signalStop := buildSignalHandler(s.logger)
 	g.Add(signalStart, signalStop)
 
+	go s.appointmentReminderJob.Run()
 	if err := g.Run(); err != nil {
 		s.logger.Errorf("Server exited: %v", err)
 	}
