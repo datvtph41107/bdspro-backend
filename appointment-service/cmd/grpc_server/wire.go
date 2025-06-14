@@ -18,23 +18,28 @@ import (
 var repositorySet = wire.NewSet(
 	repository.NewAppointmentRepository,
 	repository.NewAppointmentReminderRepository,
+	repository.NewTransactionRepository,
 )
 
 var usecaseSet = wire.NewSet(
 	usecase.NewAppointmentUsecase,
 	usecase.NewAppointmentReminderUsecase,
+	usecase.NewTransactionUsecase,
 )
 
 var transformerSet = wire.NewSet(
 	transformer.NewAppointmentTransformer,
+	transformer.NewTransactionTransformer,
 )
 
 var validatorSet = wire.NewSet(
 	validator.NewAppointmentValidator,
+	validator.NewTransactionValidator,
 )
 
 var handlerSet = wire.NewSet(
 	handler.NewAppointmentHandler,
+	handler.NewTransactionHandler,
 )
 
 var emailSenderSet = wire.NewSet(

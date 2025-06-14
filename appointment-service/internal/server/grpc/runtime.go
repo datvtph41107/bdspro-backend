@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	pb "pb/types/appointment"
+	pbTransaction "pb/types/transaction"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
@@ -22,23 +23,26 @@ type GRPCServer struct {
 	appointmentHandler *handler.AppointmentHandler
 	logger            *flogging.FabricLogger
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob
+	transactionHandler *handler.TransactionHandler
 }
 
 func NewGRPCServer(
 	appointmentHandler *handler.AppointmentHandler,
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob,
+	transactionHandler *handler.TransactionHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		appointmentHandler: appointmentHandler,
 		logger:            flogging.MustGetLogger(appconfig.SERVICE_NAME),
 		appointmentReminderJob: appointmentReminderJob,
+		transactionHandler: transactionHandler,
 	}
 }
 
 func (s *GRPCServer) Start() {
 	g := &run.Group{}
 
-	start, stop := buildGRPCServer(s.logger, s.appointmentHandler)
+	start, stop := buildGRPCServer(s.logger, s.appointmentHandler, s.transactionHandler)
 	g.Add(start, stop)
 
 	signalStart, signalStop := buildSignalHandler(s.logger)
@@ -52,6 +56,7 @@ func (s *GRPCServer) Start() {
 
 func buildGRPCServer(logger *flogging.FabricLogger,
 	appointmentHandler *handler.AppointmentHandler,
+	transactionHandler *handler.TransactionHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -65,6 +70,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		func(s *grpc.Server) {
 			logger.Info("Registering AppointmentServiceServer")
 			pb.RegisterAppointmentServiceServer(s, appointmentHandler)
+			pbTransaction.RegisterTransactionServiceServer(s, transactionHandler)
 		},
 		unaryInts,
 		streamInts,
