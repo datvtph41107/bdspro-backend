@@ -271,21 +271,6 @@
         }
       }
     },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -311,6 +296,27 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     },
@@ -402,7 +408,7 @@
           "format": "uint64"
         },
         "author": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "mediaUrl": {
           "type": "string"

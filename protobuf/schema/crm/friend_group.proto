@@ -20,12 +20,12 @@ service FriendGroupService {
             body: "*"
         };
     };
-    rpc Delete(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc Delete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             delete: "/v2/crm/friend-group"
         };
     };
-    rpc List(pb_shared.IdRequest) returns (ListFriendGroupsResponse) {
+    rpc List(sharepb.IdRequest) returns (ListFriendGroupsResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend-group/list"
         };

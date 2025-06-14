@@ -20,8 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProfileService_GetProfileByIds_FullMethodName = "/pb_user.ProfileService/GetProfileByIds"
-	ProfileService_GetProfileInfo_FullMethodName  = "/pb_user.ProfileService/GetProfileInfo"
+	ProfileService_GetProfileByIds_FullMethodName    = "/pb_user.ProfileService/GetProfileByIds"
+	ProfileService_GetProfileByPhones_FullMethodName = "/pb_user.ProfileService/GetProfileByPhones"
+	ProfileService_GetProfileInfo_FullMethodName     = "/pb_user.ProfileService/GetProfileInfo"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -29,6 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProfileServiceClient interface {
 	GetProfileByIds(ctx context.Context, in *shared.GetProfileByIdsRequest, opts ...grpc.CallOption) (*shared.GetProfileByIdsResponse, error)
+	GetProfileByPhones(ctx context.Context, in *GetProfileByPhonesRequest, opts ...grpc.CallOption) (*shared.GetProfileByIdsResponse, error)
 	GetProfileInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProfilePublicInfo, error)
 }
 
@@ -50,6 +52,16 @@ func (c *profileServiceClient) GetProfileByIds(ctx context.Context, in *shared.G
 	return out, nil
 }
 
+func (c *profileServiceClient) GetProfileByPhones(ctx context.Context, in *GetProfileByPhonesRequest, opts ...grpc.CallOption) (*shared.GetProfileByIdsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(shared.GetProfileByIdsResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileByPhones_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) GetProfileInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProfilePublicInfo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProfilePublicInfo)
@@ -65,6 +77,7 @@ func (c *profileServiceClient) GetProfileInfo(ctx context.Context, in *IdRequest
 // for forward compatibility.
 type ProfileServiceServer interface {
 	GetProfileByIds(context.Context, *shared.GetProfileByIdsRequest) (*shared.GetProfileByIdsResponse, error)
+	GetProfileByPhones(context.Context, *GetProfileByPhonesRequest) (*shared.GetProfileByIdsResponse, error)
 	GetProfileInfo(context.Context, *IdRequest) (*ProfilePublicInfo, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
@@ -78,6 +91,9 @@ type UnimplementedProfileServiceServer struct{}
 
 func (UnimplementedProfileServiceServer) GetProfileByIds(context.Context, *shared.GetProfileByIdsRequest) (*shared.GetProfileByIdsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileByIds not implemented")
+}
+func (UnimplementedProfileServiceServer) GetProfileByPhones(context.Context, *GetProfileByPhonesRequest) (*shared.GetProfileByIdsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileByPhones not implemented")
 }
 func (UnimplementedProfileServiceServer) GetProfileInfo(context.Context, *IdRequest) (*ProfilePublicInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileInfo not implemented")
@@ -121,6 +137,24 @@ func _ProfileService_GetProfileByIds_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetProfileByPhones_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileByPhonesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetProfileByPhones(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetProfileByPhones_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetProfileByPhones(ctx, req.(*GetProfileByPhonesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_GetProfileInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(IdRequest)
 	if err := dec(in); err != nil {
@@ -149,6 +183,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProfileByIds",
 			Handler:    _ProfileService_GetProfileByIds_Handler,
+		},
+		{
+			MethodName: "GetProfileByPhones",
+			Handler:    _ProfileService_GetProfileByPhones_Handler,
 		},
 		{
 			MethodName: "GetProfileInfo",

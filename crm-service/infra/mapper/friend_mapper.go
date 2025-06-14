@@ -6,14 +6,14 @@ import (
 	"crm/internal/domain"
 
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
-func FriendItemToPb(friend *domain.FriendItem) *pb_shared.FriendItem {
+func FriendItemToPb(friend *domain.FriendItem) *sharepb.FriendItem {
 	if friend == nil || friend.ID == 0 {
 		return nil
 	}
-	return &pb_shared.FriendItem{
+	return &sharepb.FriendItem{
 		Id:         friend.ID,
 		ReceiverId: friend.ReceiverID,
 		Status:     uint32(friend.Status),

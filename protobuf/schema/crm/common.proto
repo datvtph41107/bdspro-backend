@@ -26,7 +26,7 @@ message LeadDTO {
     uint64 id = 18;
     optional StageDTO stage = 19;
     optional PipelineDTO pipeline = 20;
-    optional pb_shared.ProfileItem chargeUser = 21;
+    optional sharepb.ProfileItem chargeUser = 21;
   }
 
   message PipelineDTO {

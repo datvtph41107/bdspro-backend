@@ -106,7 +106,7 @@ var filter_FriendGroupService_Delete_0 = &utilities.DoubleArray{Encoding: map[st
 
 func request_FriendGroupService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client FriendGroupServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -122,7 +122,7 @@ func request_FriendGroupService_Delete_0(ctx context.Context, marshaler runtime.
 
 func local_request_FriendGroupService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server FriendGroupServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {
@@ -139,7 +139,7 @@ var filter_FriendGroupService_List_0 = &utilities.DoubleArray{Encoding: map[stri
 
 func request_FriendGroupService_List_0(ctx context.Context, marshaler runtime.Marshaler, client FriendGroupServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -155,7 +155,7 @@ func request_FriendGroupService_List_0(ctx context.Context, marshaler runtime.Ma
 
 func local_request_FriendGroupService_List_0(ctx context.Context, marshaler runtime.Marshaler, server FriendGroupServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {

@@ -64,7 +64,7 @@ definitions:
         description: EOwnerType (int32)
         type: integer
       chargeUser:
-        $ref: '#/definitions/pb_shared.ProfileItem'
+        $ref: '#/definitions/sharepb.ProfileItem'
       contactId:
         type: integer
       email:
@@ -139,7 +139,7 @@ definitions:
       following:
         type: boolean
       friendStatus:
-        $ref: '#/definitions/pb_shared.FriendItem'
+        $ref: '#/definitions/sharepb.FriendItem'
       numFollower:
         type: integer
       numFollowing:
@@ -465,7 +465,7 @@ definitions:
     - FriendStatusPending
     - FriendStatusAccepted
     - FriendStatusReject
-  pb_shared.FriendItem:
+  sharepb.FriendItem:
     properties:
       createdBy:
         type: integer
@@ -476,7 +476,7 @@ definitions:
       status:
         type: integer
     type: object
-  pb_shared.ProfileItem:
+  sharepb.ProfileItem:
     properties:
       avatar:
         type: string

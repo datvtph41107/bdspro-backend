@@ -27,7 +27,7 @@ func (r *RateRepo) List(c *gin.Context, targetID uint64, targetType uint8, dto d
 
 	query := r.DB.WithContext(c).
 		Model(&user_model.RateItem{}).
-		Select("id, score, comment, parent_id, created_by").
+		Select("id, score, comment, parent_id, created_by, anonymous").
 		Preload("CreatedUser").
 		Where("target_id = ? AND target_type = ? AND deleted_at IS NULL", targetID, targetType)
 

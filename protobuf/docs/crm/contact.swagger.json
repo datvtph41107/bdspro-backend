@@ -246,7 +246,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -345,7 +345,7 @@
           "type": "string"
         },
         "friendStatus": {
-          "$ref": "#/definitions/pb_sharedFriendItem"
+          "$ref": "#/definitions/sharepbFriendItem"
         },
         "following": {
           "type": "boolean"
@@ -354,7 +354,7 @@
           "type": "string"
         },
         "profileInfo": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "profileId": {
           "type": "string",
@@ -467,7 +467,7 @@
       "type": "object",
       "properties": {
         "friendStatus": {
-          "$ref": "#/definitions/pb_sharedFriendItem"
+          "$ref": "#/definitions/sharepbFriendItem"
         },
         "following": {
           "type": "boolean"
@@ -486,60 +486,6 @@
         "numFriend": {
           "type": "string",
           "format": "int64"
-        }
-      }
-    },
-    "pb_sharedFriendItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "receiverId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "createdBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "tickVerified": {
-          "type": "boolean"
-        },
-        "phone": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_sharedSubmitResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "message": {
-          "type": "string"
         }
       }
     },
@@ -568,6 +514,60 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }

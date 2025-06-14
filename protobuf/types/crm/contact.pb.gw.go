@@ -89,7 +89,7 @@ func local_request_ContactService_Search_0(ctx context.Context, marshaler runtim
 
 func request_ContactService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, client ContactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -108,7 +108,7 @@ func request_ContactService_Detail_0(ctx context.Context, marshaler runtime.Mars
 
 func local_request_ContactService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, server ContactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -192,7 +192,7 @@ func local_request_ContactService_Update_0(ctx context.Context, marshaler runtim
 
 func request_ContactService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client ContactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -211,7 +211,7 @@ func request_ContactService_Delete_0(ctx context.Context, marshaler runtime.Mars
 
 func local_request_ContactService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server ContactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -253,7 +253,7 @@ func local_request_ContactService_Sync_0(ctx context.Context, marshaler runtime.
 
 func request_ContactService_RelationShip_0(ctx context.Context, marshaler runtime.Marshaler, client ContactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -272,7 +272,7 @@ func request_ContactService_RelationShip_0(ctx context.Context, marshaler runtim
 
 func local_request_ContactService_RelationShip_0(ctx context.Context, marshaler runtime.Marshaler, server ContactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

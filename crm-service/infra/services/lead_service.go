@@ -10,7 +10,7 @@ import (
 	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -78,7 +78,7 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 // @Security BearerAuth
 // @Param body body crmpb.LeadDTO true "Khách hàng"
 // @Router /lead/detail/{id} [get]
-func (s *LeadService) Detail(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.LeadDTO, error) {
+func (s *LeadService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.GetByID(ctx, req.Id)
 	return mapper.LeadToPb(result), err
 }
@@ -91,7 +91,7 @@ func (s *LeadService) Detail(ctx context.Context, req *pb_shared.IdRequest) (*cr
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /lead/by-contact/{id} [get]
-func (s *LeadService) GetByContact(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.LeadDTO, error) {
+func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.GetByContact(ctx, req.Id)
 	if result == nil {
 		return nil, status.Errorf(codes.NotFound, "Lead not found")
@@ -154,9 +154,9 @@ func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadDTO) (*crmpb.Le
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /lead/{id} [delete]
-func (s *LeadService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *LeadService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.Delete(ctx, req.Id)
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete lead success",
 	}, err

@@ -113,7 +113,7 @@ func local_request_FriendService_FriendRequest_0(ctx context.Context, marshaler 
 
 func request_FriendService_FriendAccept_0(ctx context.Context, marshaler runtime.Marshaler, client FriendServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -134,7 +134,7 @@ func request_FriendService_FriendAccept_0(ctx context.Context, marshaler runtime
 
 func local_request_FriendService_FriendAccept_0(ctx context.Context, marshaler runtime.Marshaler, server FriendServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -155,7 +155,7 @@ func local_request_FriendService_FriendAccept_0(ctx context.Context, marshaler r
 
 func request_FriendService_FriendReject_0(ctx context.Context, marshaler runtime.Marshaler, client FriendServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -176,7 +176,7 @@ func request_FriendService_FriendReject_0(ctx context.Context, marshaler runtime
 
 func local_request_FriendService_FriendReject_0(ctx context.Context, marshaler runtime.Marshaler, server FriendServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -321,7 +321,7 @@ func local_request_FriendService_FriendReceived_0(ctx context.Context, marshaler
 
 func request_FriendService_FriendInfo_0(ctx context.Context, marshaler runtime.Marshaler, client FriendServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.Empty
+		protoReq sharepb.Empty
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -331,7 +331,7 @@ func request_FriendService_FriendInfo_0(ctx context.Context, marshaler runtime.M
 
 func local_request_FriendService_FriendInfo_0(ctx context.Context, marshaler runtime.Marshaler, server FriendServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.Empty
+		protoReq sharepb.Empty
 		metadata runtime.ServerMetadata
 	)
 	msg, err := server.FriendInfo(ctx, &protoReq)

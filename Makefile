@@ -9,7 +9,8 @@ run:
 	cd $(word 2, $(MAKECMDGOALS))-service && go run main.go $(word 3, $(MAKECMDGOALS))
 gateway:
 	cd gateway-service && go run main.go http
-
+crm:
+	cd crm-service && go run main.go grpc
 
 
 init:

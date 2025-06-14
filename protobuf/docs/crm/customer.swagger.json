@@ -292,7 +292,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -525,7 +525,7 @@
         }
       }
     },
-    "pb_sharedSubmitResponse": {
+    "sharepbSubmitResponse": {
       "type": "object",
       "properties": {
         "id": {

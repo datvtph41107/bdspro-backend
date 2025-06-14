@@ -8,17 +8,17 @@ import "shared/common.proto";
 import "google/api/annotations.proto";
 
 service BlockService {
-    rpc ListBlockedUsers(pb_shared.IdRequest) returns (ListBlockResponse) {
+    rpc ListBlockedUsers(sharepb.IdRequest) returns (ListBlockResponse) {
         option (google.api.http) = {
             get: "/v2/crm/block/list"
         };
     };
-    rpc BlockUser(BlockUserRequest) returns (pb_shared.SubmitResponse) {
+    rpc BlockUser(BlockUserRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             post: "/v2/crm/block/{profileId}"
         };
     };
-    rpc UnblockUser(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc UnblockUser(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             delete: "/v2/crm/block"
         };

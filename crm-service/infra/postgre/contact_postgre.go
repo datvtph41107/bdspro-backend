@@ -152,7 +152,7 @@ func (r *PostgreContact) Bulk(
 				{Name: "owner_id"},
 				{Name: "owner_type"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"full_name"}), // thêm "updated_at" nếu cần
+			DoUpdates: clause.AssignmentColumns([]string{"full_name", "profile_id"}), // thêm "updated_at" nếu cần
 		},
 	).Create(&entities)
 

@@ -29,7 +29,17 @@ func (s *RateService) Create(c *gin.Context, rate *user_model.Rate) (*user_model
 }
 
 func (s *RateService) List(c *gin.Context, targetID uint64, targetType uint8, dto data.RateSearch) ([]user_model.RateItem, error) {
-	return s.RateRepo.List(c, targetID, targetType, dto)
+	rates, err := s.RateRepo.List(c, targetID, targetType, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, rate := range rates {
+		if rate.Anonymous {
+			rates[i].CreatedUser = nil
+		}
+	}
+	return rates, nil
 }
 
 func (s *RateService) Update(c *gin.Context, id uint64, rate *user_model.Rate) (*user_model.Rate, error) {

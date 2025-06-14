@@ -9,7 +9,7 @@ import (
 	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
 type RuleService struct {
@@ -124,7 +124,7 @@ func (s *RuleService) Update(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /rule/{id} [delete]
-func (s *RuleService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *RuleService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -135,7 +135,7 @@ func (s *RuleService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete rule success",
 	}, err

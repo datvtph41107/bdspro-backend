@@ -7,7 +7,7 @@ import (
 	"crm/internal/enums"
 
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
 // --map--
@@ -30,7 +30,7 @@ func ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
 		Note:          contact.Note,
 	}
 	if contact.FriendStatus != nil {
-		result.FriendStatus = &pb_shared.FriendItem{
+		result.FriendStatus = &sharepb.FriendItem{
 			Id:         contact.FriendStatus.ID,
 			Status:     uint32(contact.FriendStatus.Status),
 			CreatedBy:  contact.FriendStatus.CreatedBy,
@@ -73,10 +73,10 @@ func ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
 		ContactStatus: uint32(contact.FriendStatus),
 		Blocked:       contact.Blocked,
 		// todo: map in client
-		// ProfileInfo: &pb_shared.ProfileItem
+		// ProfileInfo: &sharepb.ProfileItem
 	}
 	if contact.FriendID != 0 {
-		result.FriendStatus = &pb_shared.FriendItem{
+		result.FriendStatus = &sharepb.FriendItem{
 			Id:         contact.FriendID,
 			Status:     uint32(contact.FriendStatus),
 			CreatedBy:  &contact.FriendCreatedBy,

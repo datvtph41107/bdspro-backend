@@ -40,7 +40,7 @@ var filter_BlockService_ListBlockedUsers_0 = &utilities.DoubleArray{Encoding: ma
 
 func request_BlockService_ListBlockedUsers_0(ctx context.Context, marshaler runtime.Marshaler, client BlockServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -56,7 +56,7 @@ func request_BlockService_ListBlockedUsers_0(ctx context.Context, marshaler runt
 
 func local_request_BlockService_ListBlockedUsers_0(ctx context.Context, marshaler runtime.Marshaler, server BlockServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {
@@ -110,7 +110,7 @@ var filter_BlockService_UnblockUser_0 = &utilities.DoubleArray{Encoding: map[str
 
 func request_BlockService_UnblockUser_0(ctx context.Context, marshaler runtime.Marshaler, client BlockServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -126,7 +126,7 @@ func request_BlockService_UnblockUser_0(ctx context.Context, marshaler runtime.M
 
 func local_request_BlockService_UnblockUser_0(ctx context.Context, marshaler runtime.Marshaler, server BlockServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {

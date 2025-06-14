@@ -202,7 +202,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -357,18 +357,6 @@
         }
       }
     },
-    "pb_sharedSubmitResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -394,6 +382,18 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }

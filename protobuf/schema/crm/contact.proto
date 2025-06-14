@@ -12,7 +12,7 @@ service ContactService {
       get: "/v2/crm/contact/list/{ownerType}"
     };
   };
-  rpc Detail (pb_shared.IdRequest) returns (ContactDTO) {
+  rpc Detail (sharepb.IdRequest) returns (ContactDTO) {
     option (google.api.http) = {
       get: "/v2/crm/contact/detail/{id}"
     };
@@ -29,7 +29,7 @@ service ContactService {
       body: "*"
     };
   };
-  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       delete: "/v2/crm/contact/{id}"
     };
@@ -40,7 +40,7 @@ service ContactService {
       body: "*"
     };
   };
-  rpc RelationShip (pb_shared.IdRequest) returns (RelationShipResponse) {
+  rpc RelationShip (sharepb.IdRequest) returns (RelationShipResponse) {
     option (google.api.http) = {
       get: "/v2/crm/contact/relation-ship/{id}"
     };
@@ -77,10 +77,10 @@ message ContactDTO {
   optional uint64 createdBy = 7;
   uint32 contactStatus = 8;
   string statusName = 9;
-  pb_shared.FriendItem friendStatus = 10;
+  sharepb.FriendItem friendStatus = 10;
   bool following = 11;
   string avatar = 12;
-  pb_shared.ProfileItem profileInfo = 13;
+  sharepb.ProfileItem profileInfo = 13;
   optional uint64 profileId = 14;
   bool blocked = 15;
   string email = 16;
@@ -106,7 +106,7 @@ message ContactSyncResponse {
 }
 
 message RelationShipResponse {
-  optional pb_shared.FriendItem friendStatus = 1;
+  optional sharepb.FriendItem friendStatus = 1;
   bool following = 2;
   bool blocked = 3;
   int64 numFollower = 4;

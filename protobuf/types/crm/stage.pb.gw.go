@@ -206,7 +206,7 @@ func local_request_StageService_Update_0(ctx context.Context, marshaler runtime.
 
 func request_StageService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client StageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -225,7 +225,7 @@ func request_StageService_Delete_0(ctx context.Context, marshaler runtime.Marsha
 
 func local_request_StageService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server StageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

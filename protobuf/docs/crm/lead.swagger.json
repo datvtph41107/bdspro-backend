@@ -292,7 +292,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -453,7 +453,7 @@
           "$ref": "#/definitions/crmpbPipelineDTO"
         },
         "chargeUser": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -539,7 +539,7 @@
           "$ref": "#/definitions/crmpbPipelineDTO"
         },
         "chargeUser": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -605,39 +605,6 @@
         }
       }
     },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "tickVerified": {
-          "type": "boolean"
-        },
-        "phone": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_sharedSubmitResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -663,6 +630,39 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }

@@ -188,7 +188,7 @@ func local_request_RuleService_Update_0(ctx context.Context, marshaler runtime.M
 
 func request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client RuleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -207,7 +207,7 @@ func request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshal
 
 func local_request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server RuleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

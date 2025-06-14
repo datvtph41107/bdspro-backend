@@ -49,54 +49,6 @@
     }
   },
   "definitions": {
-    "pb_sharedFriendItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "receiverId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "createdBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_sharedGetProfileByIdsResponse": {
-      "type": "object",
-      "properties": {
-        "profiles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_sharedProfileItem"
-          }
-        }
-      }
-    },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        }
-      }
-    },
     "pb_userCertificationItem": {
       "type": "object",
       "properties": {
@@ -238,7 +190,7 @@
           "$ref": "#/definitions/pb_userRateStats"
         },
         "friendStatus": {
-          "$ref": "#/definitions/pb_sharedFriendItem"
+          "$ref": "#/definitions/sharepbFriendItem"
         },
         "following": {
           "type": "boolean"
@@ -303,6 +255,60 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbGetProfileByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     }

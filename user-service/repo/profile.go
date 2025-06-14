@@ -100,3 +100,11 @@ func (r *ProfileRepo) GetProfileByIds(ids []uint64) ([]*user_model.UserProfileEn
 	}
 	return userProfiles, nil
 }
+
+func (r *ProfileRepo) GetProfileByPhones(phones []string) ([]*user_model.UserProfileEntity, error) {
+	var userProfiles []*user_model.UserProfileEntity
+	if err := r.DB.Where("phone IN (?) and deleted_at is null", phones).Find(&userProfiles).Error; err != nil {
+		return nil, err
+	}
+	return userProfiles, nil
+}

@@ -15,12 +15,12 @@ service LeadService {
       get: "/v2/crm/lead/list"
     };
   };
-  rpc Detail (pb_shared.IdRequest) returns (LeadDTO) {
+  rpc Detail (sharepb.IdRequest) returns (LeadDTO) {
     option (google.api.http) = {
       get: "/v2/crm/lead/detail/{id}"
     };
   };
-  rpc GetByContact (pb_shared.IdRequest) returns (LeadDTO) {
+  rpc GetByContact (sharepb.IdRequest) returns (LeadDTO) {
     option (google.api.http) = {
       get: "/v2/crm/lead/by-contact/{id}"
     };
@@ -37,7 +37,7 @@ service LeadService {
       body: "*"
     };
   };
-  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       delete: "/v2/crm/lead/{id}"
     };

@@ -7,6 +7,7 @@ import (
 	"crm/internal/domain"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
+	pb_user "pb/types/user"
 
 	"pb/clients"
 )
@@ -18,6 +19,27 @@ type UserClient struct {
 
 func NewUserClient() *UserClient {
 	return &UserClient{UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME)}
+}
+
+func (c *UserClient) GetProfileByPhones(ctx context.Context, phones []string) (map[string]*domain.Profile, error) {
+	request := &pb_user.GetProfileByPhonesRequest{
+		Phones: phones,
+	}
+	response, err := c.Client.GetProfileByPhones(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	profileMap := make(map[string]*domain.Profile)
+	for _, profile := range response.Profiles {
+		profileMap[profile.Phone] = &domain.Profile{
+			ProfileId:    profile.Id,
+			FullName:     profile.FullName,
+			Avatar:       profile.Avatar,
+			TickVerified: profile.TickVerified,
+		}
+	}
+	return profileMap, nil
 }
 
 func (c *UserClient) GetProfileById(ctx context.Context, profileId uint64) (*domain.Profile, error) {

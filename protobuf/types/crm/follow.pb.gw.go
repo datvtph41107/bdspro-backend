@@ -40,7 +40,7 @@ var filter_FollowService_ListFollowers_0 = &utilities.DoubleArray{Encoding: map[
 
 func request_FollowService_ListFollowers_0(ctx context.Context, marshaler runtime.Marshaler, client FollowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -56,7 +56,7 @@ func request_FollowService_ListFollowers_0(ctx context.Context, marshaler runtim
 
 func local_request_FollowService_ListFollowers_0(ctx context.Context, marshaler runtime.Marshaler, server FollowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var filter_FollowService_ListFollowing_0 = &utilities.DoubleArray{Encoding: map[
 
 func request_FollowService_ListFollowing_0(ctx context.Context, marshaler runtime.Marshaler, client FollowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
@@ -89,7 +89,7 @@ func request_FollowService_ListFollowing_0(ctx context.Context, marshaler runtim
 
 func local_request_FollowService_ListFollowing_0(ctx context.Context, marshaler runtime.Marshaler, server FollowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := req.ParseForm(); err != nil {
@@ -104,7 +104,7 @@ func local_request_FollowService_ListFollowing_0(ctx context.Context, marshaler 
 
 func request_FollowService_AddFollow_0(ctx context.Context, marshaler runtime.Marshaler, client FollowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -125,7 +125,7 @@ func request_FollowService_AddFollow_0(ctx context.Context, marshaler runtime.Ma
 
 func local_request_FollowService_AddFollow_0(ctx context.Context, marshaler runtime.Marshaler, server FollowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -146,7 +146,7 @@ func local_request_FollowService_AddFollow_0(ctx context.Context, marshaler runt
 
 func request_FollowService_RemoveFollow_0(ctx context.Context, marshaler runtime.Marshaler, client FollowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -165,7 +165,7 @@ func request_FollowService_RemoveFollow_0(ctx context.Context, marshaler runtime
 
 func local_request_FollowService_RemoveFollow_0(ctx context.Context, marshaler runtime.Marshaler, server FollowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

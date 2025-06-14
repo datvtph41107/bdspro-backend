@@ -8,23 +8,23 @@ import "shared/common.proto";
 import "google/api/annotations.proto";
 
 service FollowService {
-    rpc ListFollowers(pb_shared.IdRequest) returns (ListFollowersResponse) {
+    rpc ListFollowers(sharepb.IdRequest) returns (ListFollowersResponse) {
         option (google.api.http) = {
             get: "/v2/crm/follow/followers"
         };
     };
-    rpc ListFollowing(pb_shared.IdRequest) returns (ListFollowingResponse) {
+    rpc ListFollowing(sharepb.IdRequest) returns (ListFollowingResponse) {
         option (google.api.http) = {
             get: "/v2/crm/follow/following"
         };
     };
-    rpc AddFollow(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc AddFollow(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             post: "/v2/crm/follow/{id}"
             body: "*"
         };
     };
-    rpc RemoveFollow(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc RemoveFollow(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             delete: "/v2/crm/follow/{id}"
         };
@@ -37,6 +37,6 @@ message ListFollowersResponse {
 }
 
 message ListFollowingResponse {
-    repeated pb_shared.ProfileItem data = 1;
+    repeated sharepb.ProfileItem data = 1;
     int32 total = 2;
 }

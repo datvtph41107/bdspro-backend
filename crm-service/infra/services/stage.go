@@ -8,7 +8,7 @@ import (
 	"crm/internal/dto"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
 type StageService struct {
@@ -111,7 +111,7 @@ func (s *StageService) Update(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /stage/{id} [delete]
-func (s *StageService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *StageService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -123,7 +123,7 @@ func (s *StageService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*p
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete stage success",
 	}, nil

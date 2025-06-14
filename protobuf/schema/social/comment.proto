@@ -54,7 +54,7 @@ message CommentResponse {
     uint32 numDisLike = 7;
     uint32 numReply = 8;
     optional uint64 createdBy = 9;
-    optional pb_shared.ProfileItem author = 10;
+    optional sharepb.ProfileItem author = 10;
     string mediaUrl = 11;
     string mediaType = 12;
 }

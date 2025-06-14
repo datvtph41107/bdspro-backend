@@ -6,7 +6,7 @@ import (
 	"crm/infra/mapper"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
 type FollowService struct {
@@ -31,7 +31,7 @@ func NewFollowService(uc *usecase.FollowUsecase, userClient *client.UserClient) 
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /follow/followers [get]
-func (s *FollowService) ListFollowers(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ListFollowersResponse, error) {
+func (s *FollowService) ListFollowers(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ListFollowersResponse, error) {
 	followers, err := s.UC.FollowerUser(ctx)
 	if err != nil {
 		return nil, err
@@ -51,13 +51,13 @@ func (s *FollowService) ListFollowers(ctx context.Context, req *pb_shared.IdRequ
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /follow/following [get]
-func (s *FollowService) ListFollowing(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ListFollowingResponse, error) {
+func (s *FollowService) ListFollowing(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ListFollowingResponse, error) {
 	following, err := s.UC.FollowingUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	profiles, _ := s.userClient.Client.GetProfileByIds(ctx, &pb_shared.GetProfileByIdsRequest{Ids: following})
+	profiles, _ := s.userClient.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: following})
 
 	return &crmpb.ListFollowingResponse{
 		Data: profiles.Profiles,
@@ -75,13 +75,13 @@ func (s *FollowService) ListFollowing(ctx context.Context, req *pb_shared.IdRequ
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
 // @Router /follow/{profileId} [post]
-func (s *FollowService) AddFollow(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *FollowService) AddFollow(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	follow, err := s.UC.FollowUser(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Message: "success",
 		Id:      follow.ID,
 	}, nil
@@ -98,13 +98,13 @@ func (s *FollowService) AddFollow(ctx context.Context, req *pb_shared.IdRequest)
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
 // @Router /follow/{profileId} [delete]
-func (s *FollowService) RemoveFollow(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *FollowService) RemoveFollow(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.UnfollowUser(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Message: "success",
 		Id:      req.Id,
 	}, nil

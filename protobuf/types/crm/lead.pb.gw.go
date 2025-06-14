@@ -71,7 +71,7 @@ func local_request_LeadService_Search_0(ctx context.Context, marshaler runtime.M
 
 func request_LeadService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, client LeadServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -90,7 +90,7 @@ func request_LeadService_Detail_0(ctx context.Context, marshaler runtime.Marshal
 
 func local_request_LeadService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, server LeadServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -108,7 +108,7 @@ func local_request_LeadService_Detail_0(ctx context.Context, marshaler runtime.M
 
 func request_LeadService_GetByContact_0(ctx context.Context, marshaler runtime.Marshaler, client LeadServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -127,7 +127,7 @@ func request_LeadService_GetByContact_0(ctx context.Context, marshaler runtime.M
 
 func local_request_LeadService_GetByContact_0(ctx context.Context, marshaler runtime.Marshaler, server LeadServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -211,7 +211,7 @@ func local_request_LeadService_Update_0(ctx context.Context, marshaler runtime.M
 
 func request_LeadService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client LeadServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -230,7 +230,7 @@ func request_LeadService_Delete_0(ctx context.Context, marshaler runtime.Marshal
 
 func local_request_LeadService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server LeadServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq sharepb.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

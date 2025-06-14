@@ -5,7 +5,7 @@ import (
 	"crm/infra/mapper"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -67,12 +67,12 @@ func (s *FriendGroupService) Update(ctx context.Context, req *crmpb.FriendGroup)
 // @Param request body crmpb.FriendGroup true "Thông tin nhóm"
 // @Success 200 {object} crmpb.FriendGroup "Nhóm đã được xóa"
 // @Router /friend-group/{id} [delete]
-func (s *FriendGroupService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *FriendGroupService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.DeleteGroup(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Message: "success",
 		Id:      req.Id,
 	}, nil
@@ -87,7 +87,7 @@ func (s *FriendGroupService) Delete(ctx context.Context, req *pb_shared.IdReques
 // @Param request body crmpb.FriendGroup true "Thông tin nhóm"
 // @Success 200 {object} crmpb.ListFriendGroupsResponse "Danh sách nhóm"
 // @Router /friend-group/list [get]
-func (s *FriendGroupService) List(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ListFriendGroupsResponse, error) {
+func (s *FriendGroupService) List(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ListFriendGroupsResponse, error) {
 	groups, err := s.UC.ListGroups(ctx)
 	if err != nil {
 		return nil, err

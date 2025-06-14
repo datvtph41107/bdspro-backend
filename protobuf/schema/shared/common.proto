@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package pb_shared;
-option go_package = "pb/types/shared;pb_shared";
+package sharepb;
+option go_package = "pb/types/shared;sharepb";
 
 message ArchivedRequest {
   uint64 id = 1;

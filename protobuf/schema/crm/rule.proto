@@ -29,7 +29,7 @@ service RuleService {
       body: "*"
     };
   };
-  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       delete: "/v2/crm/rule/{id}"
     };

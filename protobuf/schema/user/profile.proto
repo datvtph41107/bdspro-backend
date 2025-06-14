@@ -7,7 +7,8 @@ import "shared/common.proto";
 option go_package = "pb/types/user;pb_user";
 
 service ProfileService {
-    rpc GetProfileByIds(pb_shared.GetProfileByIdsRequest) returns (pb_shared.GetProfileByIdsResponse);
+    rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
+    rpc GetProfileByPhones(GetProfileByPhonesRequest) returns (sharepb.GetProfileByIdsResponse);
     rpc GetProfileInfo(IdRequest) returns (ProfilePublicInfo) {
         option (google.api.http) = {
             get: "/v2/user/profile/info/{id}"
@@ -66,7 +67,7 @@ message ProfilePublicInfo {
     repeated CertificationItem certifications = 29;
     repeated ProfessionItem professions = 30;
     RateStats rateStats = 31;
-    pb_shared.FriendItem friendStatus = 32;
+    sharepb.FriendItem friendStatus = 32;
     bool following = 33;
 }
 
@@ -95,4 +96,8 @@ message RateStats {
 
 message IdRequest {
     uint64 id = 1;
+}
+
+message GetProfileByPhonesRequest {
+    repeated string phones = 1;
 }

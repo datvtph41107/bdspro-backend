@@ -2513,7 +2513,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "chargeUser": {
-                    "$ref": "#/definitions/pb_shared.ProfileItem"
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "contactId": {
                     "type": "integer"
@@ -2627,7 +2627,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "friendStatus": {
-                    "$ref": "#/definitions/pb_shared.FriendItem"
+                    "$ref": "#/definitions/sharepb.FriendItem"
                 },
                 "numFollower": {
                     "type": "integer"
@@ -3068,7 +3068,7 @@ const docTemplate = `{
                 "FriendStatusReject"
             ]
         },
-        "pb_shared.FriendItem": {
+        "sharepb.FriendItem": {
             "type": "object",
             "properties": {
                 "createdBy": {
@@ -3085,7 +3085,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_shared.ProfileItem": {
+        "sharepb.ProfileItem": {
             "type": "object",
             "properties": {
                 "avatar": {

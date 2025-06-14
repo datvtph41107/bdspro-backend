@@ -69,6 +69,28 @@ func (s *GrpcProfileService) GetProfileByIds(ctx context.Context, req *sharepb.G
 	}, nil
 }
 
+func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *pb_user.GetProfileByPhonesRequest) (*sharepb.GetProfileByIdsResponse, error) {
+	profiles, err := s.ProfileRepo.GetProfileByPhones(req.Phones)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profiles: %v", err)
+	}
+
+	var profilesPb []*sharepb.ProfileItem
+	for _, profile := range profiles {
+		profilesPb = append(profilesPb, &sharepb.ProfileItem{
+			Id:           profile.ProfileID,
+			FullName:     profile.FullName,
+			Avatar:       profile.Avatar,
+			TickVerified: profile.TickVerified,
+			Phone:        profile.Phone,
+		})
+	}
+
+	return &sharepb.GetProfileByIdsResponse{
+		Profiles: profilesPb,
+	}, nil
+}
+
 // @Summary Lấy thông tin công khai của người dùng
 // @Description Lấy thông tin công khai của người dùng
 // @Tags Profile

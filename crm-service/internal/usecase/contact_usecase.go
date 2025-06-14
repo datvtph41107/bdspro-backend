@@ -7,6 +7,7 @@ import (
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 	"strings"
 )
@@ -16,17 +17,20 @@ type ContactUsecase struct {
 	friendRepo  repo.FriendRepo
 	followRepo  repo.FollowRepo
 	leadUsecase *LeadUsecase // forward reference
+	userClient  iusecase.UserClient
 }
 
 func NewContactUsecase(
 	repo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
 	followRepo repo.FollowRepo,
+	userClient iusecase.UserClient,
 ) *ContactUsecase {
 	return &ContactUsecase{
 		repo:       repo,
 		friendRepo: friendRepo,
 		followRepo: followRepo,
+		userClient: userClient,
 	}
 }
 
@@ -81,6 +85,20 @@ func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
 }
 
 func (s *ContactUsecase) Sync(c context.Context, ownerType enums.EOwnerType, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
+	phones := make([]string, len(contacts))
+	for i := 0; i < len(contacts); i++ {
+		phones[i] = contacts[i].Phone
+	}
+	profiles, _ := s.userClient.GetProfileByPhones(c, phones)
+	if len(profiles) > 0 {
+		for i := 0; i < len(contacts); i++ {
+			existedProfile, ok := profiles[contacts[i].Phone]
+			if ok {
+				contacts[i].ProfileID = existedProfile.ProfileId
+			}
+		}
+	}
+
 	profileId := _utils.GetProfileIdWithContext(c)
 	for i := 0; i < len(contacts); i++ {
 		contacts[i].OwnerID = profileId

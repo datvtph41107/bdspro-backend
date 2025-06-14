@@ -85,7 +85,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -114,7 +114,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_sharedSubmitResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -174,45 +174,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedProfileItem"
+            "$ref": "#/definitions/sharepbProfileItem"
           }
         },
         "total": {
           "type": "integer",
           "format": "int32"
-        }
-      }
-    },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "tickVerified": {
-          "type": "boolean"
-        },
-        "phone": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_sharedSubmitResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "message": {
-          "type": "string"
         }
       }
     },
@@ -241,6 +208,39 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }

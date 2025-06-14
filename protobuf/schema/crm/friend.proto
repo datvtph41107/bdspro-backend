@@ -19,19 +19,19 @@ service FriendService {
             body: "*"
         };
     };
-    rpc FriendAccept(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc FriendAccept(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             put: "/v2/crm/friend/accept/{id}"
             body: "*"
         };
     };
-    rpc FriendReject(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc FriendReject(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             put: "/v2/crm/friend/reject/{id}"
             body: "*"
         };
     };
-    rpc FriendUpdateGroup(GroupUpdateRequest) returns (pb_shared.SubmitResponse) {
+    rpc FriendUpdateGroup(GroupUpdateRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             put: "/v2/crm/friend/group/{requestId}/{groupId}"
             body: "*"
@@ -47,7 +47,7 @@ service FriendService {
             get: "/v2/crm/friend/request/received"
         };
     };
-    rpc FriendInfo(pb_shared.Empty) returns (FriendInfoResponse) {
+    rpc FriendInfo(sharepb.Empty) returns (FriendInfoResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/info"
         };
@@ -62,8 +62,8 @@ message Friend {
     int32 status = 5;
     optional uint64 groupId = 6;
     optional uint64 groupReceiverId = 7;
-    optional pb_shared.ProfileItem createdUser = 8;
-    optional pb_shared.ProfileItem receiverUser = 9;
+    optional sharepb.ProfileItem createdUser = 8;
+    optional sharepb.ProfileItem receiverUser = 9;
     string createdAt = 10;
 }
 
@@ -99,6 +99,6 @@ message FriendInfoResponse {
 }
 
 message FriendProfileListResponse {
-    repeated pb_shared.ProfileItem data = 1;
+    repeated sharepb.ProfileItem data = 1;
     int32 total = 2;
 }

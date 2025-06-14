@@ -4,7 +4,7 @@ import (
 	"context"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 )
 
 type BlockService struct {
@@ -27,7 +27,7 @@ func NewBlockService(uc *usecase.BlockUsecase) *BlockService {
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /block/list [get]
-func (r *BlockService) ListBlockedUsers(c context.Context, req *pb_shared.IdRequest) (*crmpb.ListBlockResponse, error) {
+func (r *BlockService) ListBlockedUsers(c context.Context, req *sharepb.IdRequest) (*crmpb.ListBlockResponse, error) {
 	result, err := r.UC.ListBlockedUsers(c)
 	return &crmpb.ListBlockResponse{
 		Data: result,
@@ -44,12 +44,12 @@ func (r *BlockService) ListBlockedUsers(c context.Context, req *pb_shared.IdRequ
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /block/{profileId} [post]
-func (r *BlockService) BlockUser(c context.Context, req *crmpb.BlockUserRequest) (*pb_shared.SubmitResponse, error) {
+func (r *BlockService) BlockUser(c context.Context, req *crmpb.BlockUserRequest) (*sharepb.SubmitResponse, error) {
 	result, err := r.UC.BlockUser(c, req.ProfileId)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Message: "success",
 		Id:      result.BlockedId,
 	}, err
@@ -65,12 +65,12 @@ func (r *BlockService) BlockUser(c context.Context, req *crmpb.BlockUserRequest)
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /block/{profileId} [delete]
-func (r *BlockService) UnblockUser(c context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (r *BlockService) UnblockUser(c context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	result, err := r.UC.UnblockUser(c, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Message: "success",
 		Id:      result,
 	}, err

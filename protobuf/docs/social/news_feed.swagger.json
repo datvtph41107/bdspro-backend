@@ -314,6 +314,18 @@
             "type": "string"
           },
           {
+            "name": "author.tickVerified",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "author.phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "isReel",
             "in": "query",
             "required": false,
@@ -694,7 +706,7 @@
           }
         },
         "author": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "isReel": {
           "type": "boolean"
@@ -710,7 +722,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedProfileItem"
+            "$ref": "#/definitions/sharepbProfileItem"
           }
         },
         "likeAt": {
@@ -852,21 +864,6 @@
         }
       }
     },
-    "pb_sharedProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        }
-      }
-    },
     "pb_socialEmpty": {
       "type": "object"
     },
@@ -947,7 +944,7 @@
           }
         },
         "author": {
-          "$ref": "#/definitions/pb_sharedProfileItem"
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "isReel": {
           "type": "boolean"
@@ -963,7 +960,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedProfileItem"
+            "$ref": "#/definitions/sharepbProfileItem"
           }
         },
         "likeAt": {
@@ -1030,6 +1027,27 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     }

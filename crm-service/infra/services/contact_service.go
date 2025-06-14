@@ -9,7 +9,7 @@ import (
 	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
-	pb_shared "pb/types/shared"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -72,7 +72,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 // @Param id path int true "ID của liên hệ"
 // @Security BearerAuth
 // @Router /contact/detail/{id} [get]
-func (s *ContactService) Detail(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ContactDTO, error) {
+func (s *ContactService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ContactDTO, error) {
 	contact, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -135,12 +135,12 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) 
 // @Param id path int true "ID của liên hệ"
 // @Security BearerAuth
 // @Router /contact/{id} [delete]
-func (s *ContactService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+func (s *ContactService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_shared.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete contact success",
 	}, nil
@@ -175,7 +175,7 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 // @Security BearerAuth
 // @Response 200 {object} crmpb.RelationShipResponse
 // @Router /contact/relation-ship/{id} [get]
-func (s *ContactService) RelationShip(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.RelationShipResponse, error) {
+func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdRequest) (*crmpb.RelationShipResponse, error) {
 	result := s.UC.RelationShip(ctx, req.Id)
 	return &crmpb.RelationShipResponse{
 		FriendStatus: mapper.FriendItemToPb(result.FriendStatus),
