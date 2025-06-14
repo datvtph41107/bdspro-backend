@@ -10,5 +10,5 @@ import (
 func NewAppointmentRepository() repository.AppointmentRepository {
 	db := database.NewPostgresDB(appconfig.DB_DNS)
 	db.AutoMigrate(&postgres.AppointmentModel{})
-	return postgres.NewAppointmentRepository(db)
+	return postgres.NewAppointmentPostgresRepository(db)
 }

@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type appointmentRepository struct {
+type appointmentPostgresRepository struct {
 	db *gorm.DB
 }
 
@@ -102,22 +102,41 @@ func EntityToAppointmentModel(a *entity.Appointment) *AppointmentModel {
 	}
 }
 
-func NewAppointmentRepository(db *gorm.DB) repository.AppointmentRepository {
-	return &appointmentRepository{
+func NewAppointmentPostgresRepository(db *gorm.DB) repository.AppointmentRepository {
+	return &appointmentPostgresRepository{
 		db: db,
 	}
 }
 
-func (r *appointmentRepository) Create(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
-	var model AppointmentModel
-	err := r.db.WithContext(ctx).Create(EntityToAppointmentModel(appointment)).Error
+func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
+	tx := r.db.WithContext(ctx).Begin()
+	model := EntityToAppointmentModel(appointment)
+	err := tx.Create(model).Error
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return AppointmentModelToEntity(&model), nil
+	participantModels := make([]*AppointmentParticipantModel, 0)
+	for _, participant := range appointment.ParticipantIds {
+		participantModels = append(participantModels, &AppointmentParticipantModel{
+			AppointmentId: appointment.Id,
+			UserId:        participant,
+		})
+	}
+	err = tx.Create(participantModels).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	return AppointmentModelToEntity(model), nil
 }
 
-func (r *appointmentRepository) GetByID(ctx context.Context, id uint32) (*entity.Appointment, error) {
+func (r *appointmentPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.Appointment, error) {
 	var appointment AppointmentModel
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&appointment).Error
 	if err != nil {
@@ -126,16 +145,40 @@ func (r *appointmentRepository) GetByID(ctx context.Context, id uint32) (*entity
 	return AppointmentModelToEntity(&appointment), nil
 }
 
-func (r *appointmentRepository) Update(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
-	var model AppointmentModel
-	err := r.db.WithContext(ctx).Save(EntityToAppointmentModel(appointment)).Error
+func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
+	model := EntityToAppointmentModel(appointment)
+	tx := r.db.WithContext(ctx).Begin()
+	err := tx.Save(model).Error
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return AppointmentModelToEntity(&model), nil
+	participantModels := make([]*AppointmentParticipantModel, 0)
+	for _, participant := range appointment.ParticipantIds {
+		participantModels = append(participantModels, &AppointmentParticipantModel{
+			AppointmentId: appointment.Id,
+			UserId:        participant,
+		})
+	}
+	if err := tx.Where("appointment_id = ?", appointment.Id).
+		Delete(&AppointmentParticipantModel{}).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Save(participantModels).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	return AppointmentModelToEntity(model), nil
 }
 
-func (r *appointmentRepository) Delete(ctx context.Context, id uint32) error {
+func (r *appointmentPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	err := r.db.WithContext(ctx).Where("id = ?", id).Delete(&AppointmentModel{}).Error
 	if err != nil {
 		return err
@@ -143,7 +186,7 @@ func (r *appointmentRepository) Delete(ctx context.Context, id uint32) error {
 	return nil
 }
 
-	func (r *appointmentRepository) List(ctx context.Context, filter map[string]any, page, size int) ([]*entity.Appointment, int64, error) {
+func (r *appointmentPostgresRepository) List(ctx context.Context, filter map[string]any, page, size int) ([]*entity.Appointment, int64, error) {
 	var appointments []*AppointmentModel
 	query := r.db.WithContext(ctx).Model(&AppointmentModel{})
 
