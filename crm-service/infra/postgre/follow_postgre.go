@@ -49,13 +49,18 @@ func (repo *FollowPostgre) FollowerUser(c context.Context, currentId uint64, pag
 	err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&friends).Error
 	return friends, err
 }
-func (repo *FollowPostgre) FollowingUser(c context.Context, currentId uint64, page int, pageSize int) ([]domain.Profile, error) {
-	var friends []domain.Profile
+func (repo *FollowPostgre) FollowingUser(c context.Context, currentId uint64, page int, pageSize int) ([]uint64, error) {
+	var friends []uint64
 
-	query := repo.DB.Model(&domain.Profile{}).
-		Joins("LEFT JOIN follow ON (follow.following_id = profile_transfer.profile_id) "+
-			"						AND profile_transfer.profile_id <> ? ", currentId).
-		Where("follow.deleted_at is null and follow.created_by = ?", currentId)
+	query := repo.DB.Model(&domain.FollowEntity{}).
+		Select("following_id").
+		Where("created_by = ? AND deleted_at IS NULL", currentId).
+		Pluck("following_id", &friends)
+	// query := repo.DB.Model(&domain.Profile{}).
+	// 	Select("profile_transfer.profile_id").
+	// 	Joins("LEFT JOIN follow ON (follow.following_id = profile_transfer.profile_id) "+
+	// 		"						AND profile_transfer.profile_id <> ? ", currentId).
+	// 	Where("follow.deleted_at is null and follow.created_by = ?", currentId)
 
 	// if dto.Text != nil && *dto.Text != "" {
 	// 	query = query.Where("full_name LIKE ? OR username LIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")
@@ -81,7 +86,7 @@ func (repo *FollowPostgre) FollowUser(c context.Context, profileId, followingID 
 	// Kiểm tra nếu đã follow trước đó
 	err := repo.DB.Raw(`SELECT EXISTS (
 							SELECT 1 FROM follow
-							WHERE created_by = ? AND following_id = ? AND unfollowed_at IS NULL)`,
+							WHERE created_by = ? AND following_id = ? AND deleted_at IS NULL)`,
 		profileId, followingID).Scan(&exists).Error
 
 	if err != nil || exists {

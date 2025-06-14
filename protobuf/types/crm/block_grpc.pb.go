@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BlockServiceClient interface {
 	ListBlockedUsers(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*ListBlockResponse, error)
-	BlockUser(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
+	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	UnblockUser(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 }
 
@@ -52,7 +52,7 @@ func (c *blockServiceClient) ListBlockedUsers(ctx context.Context, in *shared.Id
 	return out, nil
 }
 
-func (c *blockServiceClient) BlockUser(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
+func (c *blockServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(shared.SubmitResponse)
 	err := c.cc.Invoke(ctx, BlockService_BlockUser_FullMethodName, in, out, cOpts...)
@@ -77,7 +77,7 @@ func (c *blockServiceClient) UnblockUser(ctx context.Context, in *shared.IdReque
 // for forward compatibility.
 type BlockServiceServer interface {
 	ListBlockedUsers(context.Context, *shared.IdRequest) (*ListBlockResponse, error)
-	BlockUser(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
+	BlockUser(context.Context, *BlockUserRequest) (*shared.SubmitResponse, error)
 	UnblockUser(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	mustEmbedUnimplementedBlockServiceServer()
 }
@@ -92,7 +92,7 @@ type UnimplementedBlockServiceServer struct{}
 func (UnimplementedBlockServiceServer) ListBlockedUsers(context.Context, *shared.IdRequest) (*ListBlockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBlockedUsers not implemented")
 }
-func (UnimplementedBlockServiceServer) BlockUser(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
+func (UnimplementedBlockServiceServer) BlockUser(context.Context, *BlockUserRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BlockUser not implemented")
 }
 func (UnimplementedBlockServiceServer) UnblockUser(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
@@ -138,7 +138,7 @@ func _BlockService_ListBlockedUsers_Handler(srv interface{}, ctx context.Context
 }
 
 func _BlockService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(shared.IdRequest)
+	in := new(BlockUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func _BlockService_BlockUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: BlockService_BlockUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BlockServiceServer).BlockUser(ctx, req.(*shared.IdRequest))
+		return srv.(BlockServiceServer).BlockUser(ctx, req.(*BlockUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

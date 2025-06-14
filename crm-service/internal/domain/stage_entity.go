@@ -13,6 +13,7 @@ type StageEntity struct {
 	RuleID      *uint64     `json:"ruleId"`
 	Step        enums.EStep `json:"step"`
 	Active      bool        `json:"active"`
+	Color       uint32      `gorm:"default:10" json:"color"`
 }
 
 func (StageEntity) TableName() string {

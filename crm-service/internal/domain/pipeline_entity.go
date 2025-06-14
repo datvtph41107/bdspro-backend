@@ -9,7 +9,7 @@ type PipelineEntity struct {
 	_models.BaseEntity
 	ID           uint64           `gorm:"primaryKey" json:"id"`
 	PipelineName string           `json:"pipelineName" binding:"required"`
-	Color        string           `gorm:"type:varchar(15)" json:"color"`
+	Color        uint32           `gorm:"default:10" json:"color"`
 	Active       bool             `json:"active"`
 	OwnerID      uint64           `json:"ownerId" binding:"required"`
 	OwnerType    enums.EOwnerType `json:"ownerType" binding:"required"`

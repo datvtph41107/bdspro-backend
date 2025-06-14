@@ -229,10 +229,72 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Loại sở hữu (10: user, 20: nhóm, 30: organization)",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tên liên hệ",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại sở hữu (10: user, 20: nhóm, 30: organization) để 30 nhé",
                         "name": "ownerType",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Trạng thái bạn bè, 10: Đã gửi lời mời, 20: Bạn bè, 30: Chưa kết bạn",
+                        "name": "friendStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Đang theo dõi",
+                        "name": "following",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Nhóm quyền: 10: quản trị,20: Nhân viên, 30: khách hàng",
+                        "name": "roles",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Gán CRM",
+                        "name": "leaded",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Kết nối",
+                        "name": "connected",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Đã cài app",
+                        "name": "appInstalled",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -405,7 +467,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/follow/{id}": {
+        "/follow/{profileId}": {
             "post": {
                 "security": [
                     {
@@ -635,6 +697,395 @@ const docTemplate = `{
                 }
             }
         },
+        "/friend/group/{requestId}/{groupId}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gán nhóm cho bạn bè",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Gán nhóm bạn bè",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được chấp nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Thông tin số người theo dõi, đang theo dõi và số bạn bè",
+                "responses": {
+                    "200": {
+                        "description": "Số lượng theo dõi và bạn bè",
+                        "schema": {
+                            "$ref": "#/definitions/data.FollowInfoRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả bạn bè của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách bạn bè",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách bạn bè",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/received": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách các lời mời kết bạn mà người dùng đã nhận",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách các lời mời kết bạn đã nhận",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách lời mời đã nhận",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/sent": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách các lời mời kết bạn mà người dùng đã gửi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách các lời mời kết bạn đã gửi",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách lời mời đã gửi",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{receiverId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi lời mời kết bạn đến người dùng khác",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Gửi lời mời kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người nhận lời mời",
+                        "name": "receiverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được gửi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{requestId}/accept": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đồng ý lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Đồng ý kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã được chấp nhận",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/request/{requestId}/reject": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Hủy kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã bị từ chối",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/histories/{id}/{ownerType}": {
             "get": {
                 "security": [
@@ -679,13 +1130,6 @@ const docTemplate = `{
                             20,
                             30,
                             40,
-                            50,
-                            60,
-                            70,
-                            80,
-                            90,
-                            100,
-                            110,
                             120,
                             130,
                             140,
@@ -695,7 +1139,18 @@ const docTemplate = `{
                             180,
                             190,
                             200,
-                            210
+                            210,
+                            6010,
+                            6020,
+                            6030,
+                            6040,
+                            6050,
+                            6060,
+                            6070,
+                            6080,
+                            6090,
+                            6100,
+                            6110
                         ],
                         "type": "integer",
                         "x-enum-varnames": [
@@ -703,13 +1158,6 @@ const docTemplate = `{
                             "HistoryDelete",
                             "HistoryAssignRole",
                             "HistorySettingAuto",
-                            "HistoryReminder",
-                            "HistoryCreateLead",
-                            "HistoryUpdateLead",
-                            "HistoryDeleteLead",
-                            "HistoryAssignLead",
-                            "HistorySwitchStage",
-                            "HistoryUpdateNote",
                             "HistoryPipelineCreate",
                             "HistoryPipelineUpdate",
                             "HistoryPipelineDelete",
@@ -719,7 +1167,18 @@ const docTemplate = `{
                             "HistoryRuleCreate",
                             "HistoryRuleUpdate",
                             "HistoryRuleDelete",
-                            "HistoryRuleEvent"
+                            "HistoryRuleEvent",
+                            "HistoryContactCreate",
+                            "HistoryContactUpdate",
+                            "HistoryContactDelete",
+                            "HistoryContactAssign",
+                            "HistoryReminder",
+                            "HistorySwitchStage",
+                            "HistoryUpdateNote",
+                            "HistoryContactInstall",
+                            "HistoryContactFriend",
+                            "HistoryContactStage",
+                            "HistoryContactMessage"
                         ],
                         "name": "actionType",
                         "in": "query"
@@ -1419,7 +1878,7 @@ const docTemplate = `{
                     {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "integer"
                         },
                         "collectionFormat": "csv",
                         "name": "color",
@@ -2040,7 +2499,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "color": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
@@ -2097,6 +2556,9 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
+                "color": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -2117,6 +2579,53 @@ const docTemplate = `{
                 }
             }
         },
+        "data.FollowInfoRes": {
+            "type": "object",
+            "properties": {
+                "numFollower": {
+                    "type": "integer"
+                },
+                "numFollowing": {
+                    "type": "integer"
+                },
+                "numFriend": {
+                    "type": "integer"
+                }
+            }
+        },
+        "data.FriendDTO": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "groupReceiverId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isSender": {
+                    "description": "Group           *FriendGroupDTO ` + "`" + `json:\"group,omitempty\"` + "`" + `\nUserInfo        *AccountDTO     ` + "`" + `json:\"userInfo,omitempty\"` + "`" + `",
+                    "type": "boolean"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "respondedAt": {
+                    "type": "string"
+                },
+                "senderId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.FriendStatus"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.PipelineEntity": {
             "type": "object",
             "required": [
@@ -2129,7 +2638,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "color": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "createdAt": {
                     "type": "string"
@@ -2224,6 +2733,9 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
+                "color": {
+                    "type": "integer"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -2281,13 +2793,6 @@ const docTemplate = `{
                 20,
                 30,
                 40,
-                50,
-                60,
-                70,
-                80,
-                90,
-                100,
-                110,
                 120,
                 130,
                 140,
@@ -2297,20 +2802,24 @@ const docTemplate = `{
                 180,
                 190,
                 200,
-                210
+                210,
+                6010,
+                6020,
+                6030,
+                6040,
+                6050,
+                6060,
+                6070,
+                6080,
+                6090,
+                6100,
+                6110
             ],
             "x-enum-varnames": [
                 "HistoryCreateStep",
                 "HistoryDelete",
                 "HistoryAssignRole",
                 "HistorySettingAuto",
-                "HistoryReminder",
-                "HistoryCreateLead",
-                "HistoryUpdateLead",
-                "HistoryDeleteLead",
-                "HistoryAssignLead",
-                "HistorySwitchStage",
-                "HistoryUpdateNote",
                 "HistoryPipelineCreate",
                 "HistoryPipelineUpdate",
                 "HistoryPipelineDelete",
@@ -2320,7 +2829,18 @@ const docTemplate = `{
                 "HistoryRuleCreate",
                 "HistoryRuleUpdate",
                 "HistoryRuleDelete",
-                "HistoryRuleEvent"
+                "HistoryRuleEvent",
+                "HistoryContactCreate",
+                "HistoryContactUpdate",
+                "HistoryContactDelete",
+                "HistoryContactAssign",
+                "HistoryReminder",
+                "HistorySwitchStage",
+                "HistoryUpdateNote",
+                "HistoryContactInstall",
+                "HistoryContactFriend",
+                "HistoryContactStage",
+                "HistoryContactMessage"
             ]
         },
         "enums.EOwnerType": {
@@ -2385,6 +2905,24 @@ const docTemplate = `{
                 "TargetHistoryRule"
             ]
         },
+        "enums.FriendStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "FriendStatusAccepted": "\"ACCEPT\"",
+                "FriendStatusPending": "\"PENDING\"",
+                "FriendStatusReject": "\"REJECT\""
+            },
+            "x-enum-varnames": [
+                "FriendStatusPending",
+                "FriendStatusAccepted",
+                "FriendStatusReject"
+            ]
+        },
         "pb_shared.ProfileItem": {
             "type": "object",
             "properties": {
@@ -2396,6 +2934,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
                 }
             }
         },

@@ -10,14 +10,12 @@ import "google/api/annotations.proto";
 service BlockService {
     rpc ListBlockedUsers(pb_shared.IdRequest) returns (ListBlockResponse) {
         option (google.api.http) = {
-            post: "/v2/crm/block/list"
-            body: "*"
+            get: "/v2/crm/block/list"
         };
     };
-    rpc BlockUser(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    rpc BlockUser(BlockUserRequest) returns (pb_shared.SubmitResponse) {
         option (google.api.http) = {
-            post: "/v2/crm/block"
-            body: "*"
+            post: "/v2/crm/block/{profileId}"
         };
     };
     rpc UnblockUser(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
@@ -31,4 +29,8 @@ service BlockService {
 message ListBlockResponse {
     repeated uint64 data = 1;
     int32 total = 2;
+}
+
+message BlockUserRequest {
+    uint64 profileId = 1;
 }

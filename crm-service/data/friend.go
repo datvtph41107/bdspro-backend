@@ -1,6 +1,7 @@
 package data
 
 import (
+	_dto "common/dto"
 	"crm/internal/enums"
 	"time"
 )
@@ -17,4 +18,9 @@ type FriendDTO struct {
 	// UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
 	IsSender *bool   `json:"isSender,omitempty"`
 	Text     *string `json:"text,omitempty"`
+}
+
+type FriendRequest struct {
+	_dto.Pagable
+	Text string `json:"text,omitempty"`
 }

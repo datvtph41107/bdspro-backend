@@ -47,6 +47,7 @@ func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
 	return userClient
 }
 
+// CHÚ Ý: ignore trường số điện thoại không trả về. tùy từng chỗ mới trả về. chỗ này vẫn lấy SĐT
 func (c *UserGrpcClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*sharepb.ProfileItem, error) {
 	if c.Client == nil {
 		return nil, errors.New("user client not avaiable")

@@ -34,14 +34,14 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FriendServiceClient interface {
-	FriendList(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendListResponse, error)
+	FriendList(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendProfileListResponse, error)
 	FriendRequest(ctx context.Context, in *FriendRequestDTO, opts ...grpc.CallOption) (*FriendRequestResponse, error)
 	FriendAccept(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendReject(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendUpdateGroup(ctx context.Context, in *GroupUpdateRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendSent(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendListResponse, error)
 	FriendReceived(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendListResponse, error)
-	FriendInfo(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*FriendInfoResponse, error)
+	FriendInfo(ctx context.Context, in *shared.Empty, opts ...grpc.CallOption) (*FriendInfoResponse, error)
 }
 
 type friendServiceClient struct {
@@ -52,9 +52,9 @@ func NewFriendServiceClient(cc grpc.ClientConnInterface) FriendServiceClient {
 	return &friendServiceClient{cc}
 }
 
-func (c *friendServiceClient) FriendList(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendListResponse, error) {
+func (c *friendServiceClient) FriendList(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendProfileListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FriendListResponse)
+	out := new(FriendProfileListResponse)
 	err := c.cc.Invoke(ctx, FriendService_FriendList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (c *friendServiceClient) FriendReceived(ctx context.Context, in *FriendList
 	return out, nil
 }
 
-func (c *friendServiceClient) FriendInfo(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*FriendInfoResponse, error) {
+func (c *friendServiceClient) FriendInfo(ctx context.Context, in *shared.Empty, opts ...grpc.CallOption) (*FriendInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FriendInfoResponse)
 	err := c.cc.Invoke(ctx, FriendService_FriendInfo_FullMethodName, in, out, cOpts...)
@@ -136,14 +136,14 @@ func (c *friendServiceClient) FriendInfo(ctx context.Context, in *shared.IdReque
 // All implementations must embed UnimplementedFriendServiceServer
 // for forward compatibility.
 type FriendServiceServer interface {
-	FriendList(context.Context, *FriendListRequest) (*FriendListResponse, error)
+	FriendList(context.Context, *FriendListRequest) (*FriendProfileListResponse, error)
 	FriendRequest(context.Context, *FriendRequestDTO) (*FriendRequestResponse, error)
 	FriendAccept(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	FriendReject(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	FriendUpdateGroup(context.Context, *GroupUpdateRequest) (*shared.SubmitResponse, error)
 	FriendSent(context.Context, *FriendListRequest) (*FriendListResponse, error)
 	FriendReceived(context.Context, *FriendListRequest) (*FriendListResponse, error)
-	FriendInfo(context.Context, *shared.IdRequest) (*FriendInfoResponse, error)
+	FriendInfo(context.Context, *shared.Empty) (*FriendInfoResponse, error)
 	mustEmbedUnimplementedFriendServiceServer()
 }
 
@@ -154,7 +154,7 @@ type FriendServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedFriendServiceServer struct{}
 
-func (UnimplementedFriendServiceServer) FriendList(context.Context, *FriendListRequest) (*FriendListResponse, error) {
+func (UnimplementedFriendServiceServer) FriendList(context.Context, *FriendListRequest) (*FriendProfileListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendList not implemented")
 }
 func (UnimplementedFriendServiceServer) FriendRequest(context.Context, *FriendRequestDTO) (*FriendRequestResponse, error) {
@@ -175,7 +175,7 @@ func (UnimplementedFriendServiceServer) FriendSent(context.Context, *FriendListR
 func (UnimplementedFriendServiceServer) FriendReceived(context.Context, *FriendListRequest) (*FriendListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendReceived not implemented")
 }
-func (UnimplementedFriendServiceServer) FriendInfo(context.Context, *shared.IdRequest) (*FriendInfoResponse, error) {
+func (UnimplementedFriendServiceServer) FriendInfo(context.Context, *shared.Empty) (*FriendInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendInfo not implemented")
 }
 func (UnimplementedFriendServiceServer) mustEmbedUnimplementedFriendServiceServer() {}
@@ -326,7 +326,7 @@ func _FriendService_FriendReceived_Handler(srv interface{}, ctx context.Context,
 }
 
 func _FriendService_FriendInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(shared.IdRequest)
+	in := new(shared.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func _FriendService_FriendInfo_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: FriendService_FriendInfo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FriendServiceServer).FriendInfo(ctx, req.(*shared.IdRequest))
+		return srv.(FriendServiceServer).FriendInfo(ctx, req.(*shared.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

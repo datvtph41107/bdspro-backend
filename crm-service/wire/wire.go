@@ -22,6 +22,7 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	wire.Bind(new(crm_internal_interface.NotiClient), new(*crm_infra_client.NotiClient)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
+	wire.Bind(new(crm_internal_interface.UserClient), new(*crm_infra_client.UserClient)),
 	wire.Bind(new(crm_internal_repo.BlockRepo), new(*crm_infra_postgre.BlockRepo)),
 	wire.Bind(new(crm_internal_repo.ContactRepo), new(*crm_infra_postgre.PostgreContact)),
 	wire.Bind(new(crm_internal_repo.FollowRepo), new(*crm_infra_postgre.FollowPostgre)),

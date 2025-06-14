@@ -4,7 +4,7 @@ import (
 	"common"
 	"user/config"
 	"user/db"
-	"user/routes"
+	"user/infra/routes"
 	"user/wire"
 
 	"github.com/gin-gonic/gin"

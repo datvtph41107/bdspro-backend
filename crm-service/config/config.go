@@ -5,6 +5,9 @@ import (
 	services "crm/infra/services"
 	"crm/internal/usecase"
 	_ "embed"
+
+	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/spf13/viper"
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
@@ -42,6 +45,7 @@ type ConfigApp struct {
 	FriendGroupService   *services.FriendGroupService
 	FriendService        *services.FriendService
 	SharingAccessService *services.SharingAccessService
+	Logger               *flogging.FabricLogger
 }
 
 func NewConfigApp(
@@ -75,6 +79,7 @@ func NewConfigApp(
 		FriendGroupService:   friendGroupService,
 		FriendService:        friendService,
 		SharingAccessService: sharingAccessService,
+		Logger:               flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }
 

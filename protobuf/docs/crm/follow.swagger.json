@@ -173,13 +173,34 @@
         "data": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "uint64"
+            "type": "object",
+            "$ref": "#/definitions/pb_sharedProfileItem"
           }
         },
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_sharedProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     },

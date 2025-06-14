@@ -131,7 +131,7 @@ func (s *PipelineService) DomainToPb(domain *domain.PipelineEntity) *crmpb.Pipel
 	return &crmpb.PipelineDTO{
 		Id:           domain.ID,
 		PipelineName: domain.PipelineName,
-		Color:        domain.Color,
+		Color:        uint32(domain.Color),
 		Active:       domain.Active,
 		OwnerId:      domain.OwnerID,
 		OwnerType:    uint32(domain.OwnerType),

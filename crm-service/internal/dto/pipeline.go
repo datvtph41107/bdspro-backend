@@ -9,14 +9,14 @@ type PipelineSearchDTO struct {
 	_dto.Pagable
 	PipelineName string        `form:"pipelineName"`
 	Steps        []enums.EStep `form:"steps"`
-	Colors       []string      `form:"color"`
+	Colors       []uint32      `form:"color"`
 	Active       bool          `form:"active"`
 }
 
 type PipelineDTO struct {
 	ID           uint64           `json:"id"`
 	PipelineName string           `json:"pipelineName"`
-	Color        string           `json:"color"`
+	Color        uint32           `json:"color"`
 	Active       bool             `json:"active"`
 	OwnerID      uint64           `json:"ownerId"`
 	OwnerType    enums.EOwnerType `json:"ownerType"`

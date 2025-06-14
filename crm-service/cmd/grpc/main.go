@@ -3,6 +3,7 @@ package cmd_grpc
 import (
 	"common"
 	_db "common/db"
+	_middleware "common/middleware"
 	"context"
 	"crm/config"
 	"crm/infra/db"
@@ -40,9 +41,11 @@ var GrpcCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
-		s := grpc.NewServer(
-			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+		interceptors := grpc.ChainUnaryInterceptor(
+			common.ProfileIDInterceptor,
+			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
+		s := grpc.NewServer(interceptors)
 		crmpb.RegisterPipelineServiceServer(s, app.PipelineService)
 		crmpb.RegisterContactServiceServer(s, app.ContactService)
 		crmpb.RegisterLeadServiceServer(s, app.LeadService)
@@ -60,7 +63,7 @@ var GrpcCmd = &cobra.Command{
 		startScheduler(app)
 
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			log.Fatalf("gRPC server error: %v", err)
 		}
 	},
 }

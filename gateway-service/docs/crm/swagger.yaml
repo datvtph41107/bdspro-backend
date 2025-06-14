@@ -122,7 +122,7 @@ definitions:
       active:
         type: boolean
       color:
-        type: string
+        type: integer
       id:
         type: integer
       ownerId:
@@ -159,6 +159,8 @@ definitions:
     properties:
       active:
         type: boolean
+      color:
+        type: integer
       id:
         type: integer
       orderNumber:
@@ -172,12 +174,45 @@ definitions:
       step:
         type: integer
     type: object
+  data.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  data.FriendDTO:
+    properties:
+      groupId:
+        type: integer
+      groupReceiverId:
+        type: integer
+      id:
+        type: integer
+      isSender:
+        description: |-
+          Group           *FriendGroupDTO `json:"group,omitempty"`
+          UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
+        type: boolean
+      receiverId:
+        type: integer
+      respondedAt:
+        type: string
+      senderId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.FriendStatus'
+      text:
+        type: string
+    type: object
   domain.PipelineEntity:
     properties:
       active:
         type: boolean
       color:
-        type: string
+        type: integer
       createdAt:
         type: string
       createdBy:
@@ -242,6 +277,8 @@ definitions:
     properties:
       active:
         type: boolean
+      color:
+        type: integer
       createdAt:
         type: string
       createdBy:
@@ -288,13 +325,6 @@ definitions:
     - 20
     - 30
     - 40
-    - 50
-    - 60
-    - 70
-    - 80
-    - 90
-    - 100
-    - 110
     - 120
     - 130
     - 140
@@ -305,19 +335,23 @@ definitions:
     - 190
     - 200
     - 210
+    - 6010
+    - 6020
+    - 6030
+    - 6040
+    - 6050
+    - 6060
+    - 6070
+    - 6080
+    - 6090
+    - 6100
+    - 6110
     type: integer
     x-enum-varnames:
     - HistoryCreateStep
     - HistoryDelete
     - HistoryAssignRole
     - HistorySettingAuto
-    - HistoryReminder
-    - HistoryCreateLead
-    - HistoryUpdateLead
-    - HistoryDeleteLead
-    - HistoryAssignLead
-    - HistorySwitchStage
-    - HistoryUpdateNote
     - HistoryPipelineCreate
     - HistoryPipelineUpdate
     - HistoryPipelineDelete
@@ -328,6 +362,17 @@ definitions:
     - HistoryRuleUpdate
     - HistoryRuleDelete
     - HistoryRuleEvent
+    - HistoryContactCreate
+    - HistoryContactUpdate
+    - HistoryContactDelete
+    - HistoryContactAssign
+    - HistoryReminder
+    - HistorySwitchStage
+    - HistoryUpdateNote
+    - HistoryContactInstall
+    - HistoryContactFriend
+    - HistoryContactStage
+    - HistoryContactMessage
   enums.EOwnerType:
     enum:
     - 10
@@ -378,6 +423,20 @@ definitions:
     - TargetHistoryPipeline
     - TargetHistoryStage
     - TargetHistoryRule
+  enums.FriendStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      FriendStatusAccepted: '"ACCEPT"'
+      FriendStatusPending: '"PENDING"'
+      FriendStatusReject: '"REJECT"'
+    x-enum-varnames:
+    - FriendStatusPending
+    - FriendStatusAccepted
+    - FriendStatusReject
   pb_shared.ProfileItem:
     properties:
       avatar:
@@ -386,6 +445,10 @@ definitions:
         type: string
       id:
         type: integer
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
     type: object
   timestamppb.Timestamp:
     properties:
@@ -579,11 +642,54 @@ paths:
       - application/json
       description: Lấy danh sách
       parameters:
-      - description: 'Loại sở hữu (10: user, 20: nhóm, 30: organization)'
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Tên liên hệ
+        in: query
+        name: text
+        type: string
+      - description: 'Loại sở hữu (10: user, 20: nhóm, 30: organization) để 30 nhé'
         in: path
         name: ownerType
         required: true
         type: integer
+      - collectionFormat: csv
+        description: 'Trạng thái bạn bè, 10: Đã gửi lời mời, 20: Bạn bè, 30: Chưa
+          kết bạn'
+        in: query
+        items:
+          type: integer
+        name: friendStatus
+        type: array
+      - description: Đang theo dõi
+        in: query
+        name: following
+        type: boolean
+      - collectionFormat: csv
+        description: 'Nhóm quyền: 10: quản trị,20: Nhân viên, 30: khách hàng'
+        in: query
+        items:
+          type: integer
+        name: roles
+        type: array
+      - description: Gán CRM
+        in: query
+        name: leaded
+        type: boolean
+      - description: Kết nối
+        in: query
+        name: connected
+        type: boolean
+      - description: Đã cài app
+        in: query
+        name: appInstalled
+        type: boolean
       produces:
       - application/json
       responses: {}
@@ -612,7 +718,7 @@ paths:
       summary: Đồng bộ danh bạ
       tags:
       - Liên hệ
-  /follow/{id}:
+  /follow/{profileId}:
     delete:
       consumes:
       - application/json
@@ -802,6 +908,251 @@ paths:
       summary: Lấy danh sách nhóm
       tags:
       - Nhóm bạn bè
+  /friend/group/{requestId}/{groupId}:
+    put:
+      consumes:
+      - application/json
+      description: Gán nhóm cho bạn bè
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/data.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      tags:
+      - Bạn bè
+  /friend/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè
+      tags:
+      - Bạn bè
+  /friend/request/{receiverId}:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời kết bạn đến người dùng khác
+      parameters:
+      - description: ID của người nhận lời mời
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được gửi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người nhận
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/accept:
+    put:
+      consumes:
+      - application/json
+      description: Đồng ý lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Đồng ý kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/reject:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/received:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã nhận
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã nhận
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã nhận
+      tags:
+      - Bạn bè
+  /friend/request/sent:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã gửi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã gửi
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
   /histories/{id}/{ownerType}:
     get:
       consumes:
@@ -827,13 +1178,6 @@ paths:
         - 20
         - 30
         - 40
-        - 50
-        - 60
-        - 70
-        - 80
-        - 90
-        - 100
-        - 110
         - 120
         - 130
         - 140
@@ -844,6 +1188,17 @@ paths:
         - 190
         - 200
         - 210
+        - 6010
+        - 6020
+        - 6030
+        - 6040
+        - 6050
+        - 6060
+        - 6070
+        - 6080
+        - 6090
+        - 6100
+        - 6110
         in: query
         name: actionType
         type: integer
@@ -852,13 +1207,6 @@ paths:
         - HistoryDelete
         - HistoryAssignRole
         - HistorySettingAuto
-        - HistoryReminder
-        - HistoryCreateLead
-        - HistoryUpdateLead
-        - HistoryDeleteLead
-        - HistoryAssignLead
-        - HistorySwitchStage
-        - HistoryUpdateNote
         - HistoryPipelineCreate
         - HistoryPipelineUpdate
         - HistoryPipelineDelete
@@ -869,6 +1217,17 @@ paths:
         - HistoryRuleUpdate
         - HistoryRuleDelete
         - HistoryRuleEvent
+        - HistoryContactCreate
+        - HistoryContactUpdate
+        - HistoryContactDelete
+        - HistoryContactAssign
+        - HistoryReminder
+        - HistorySwitchStage
+        - HistoryUpdateNote
+        - HistoryContactInstall
+        - HistoryContactFriend
+        - HistoryContactStage
+        - HistoryContactMessage
       - in: query
         name: fromDate
         type: string
@@ -1313,7 +1672,7 @@ paths:
       - collectionFormat: csv
         in: query
         items:
-          type: string
+          type: integer
         name: color
         type: array
       - in: query

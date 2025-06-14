@@ -36,12 +36,18 @@ var (
 	_ = metadata.Join
 )
 
+var filter_BlockService_ListBlockedUsers_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+
 func request_BlockService_ListBlockedUsers_0(ctx context.Context, marshaler runtime.Marshaler, client BlockServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_BlockService_ListBlockedUsers_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.ListBlockedUsers(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -53,7 +59,10 @@ func local_request_BlockService_ListBlockedUsers_0(ctx context.Context, marshale
 		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_BlockService_ListBlockedUsers_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.ListBlockedUsers(ctx, &protoReq)
@@ -62,11 +71,18 @@ func local_request_BlockService_ListBlockedUsers_0(ctx context.Context, marshale
 
 func request_BlockService_BlockUser_0(ctx context.Context, marshaler runtime.Marshaler, client BlockServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq BlockUserRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["profileId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "profileId")
+	}
+	protoReq.ProfileId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "profileId", err)
 	}
 	msg, err := client.BlockUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -74,11 +90,17 @@ func request_BlockService_BlockUser_0(ctx context.Context, marshaler runtime.Mar
 
 func local_request_BlockService_BlockUser_0(ctx context.Context, marshaler runtime.Marshaler, server BlockServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq pb_shared.IdRequest
+		protoReq BlockUserRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok := pathParams["profileId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "profileId")
+	}
+	protoReq.ProfileId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "profileId", err)
 	}
 	msg, err := server.BlockUser(ctx, &protoReq)
 	return msg, metadata, err
@@ -123,7 +145,7 @@ func local_request_BlockService_UnblockUser_0(ctx context.Context, marshaler run
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterBlockServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterBlockServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server BlockServiceServer) error {
-	mux.Handle(http.MethodPost, pattern_BlockService_ListBlockedUsers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_BlockService_ListBlockedUsers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -149,7 +171,7 @@ func RegisterBlockServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.BlockService/BlockUser", runtime.WithHTTPPathPattern("/v2/crm/block"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.BlockService/BlockUser", runtime.WithHTTPPathPattern("/v2/crm/block/{profileId}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -223,7 +245,7 @@ func RegisterBlockServiceHandler(ctx context.Context, mux *runtime.ServeMux, con
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "BlockServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterBlockServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client BlockServiceClient) error {
-	mux.Handle(http.MethodPost, pattern_BlockService_ListBlockedUsers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_BlockService_ListBlockedUsers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -244,7 +266,7 @@ func RegisterBlockServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.BlockService/BlockUser", runtime.WithHTTPPathPattern("/v2/crm/block"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.BlockService/BlockUser", runtime.WithHTTPPathPattern("/v2/crm/block/{profileId}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -279,7 +301,7 @@ func RegisterBlockServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 
 var (
 	pattern_BlockService_ListBlockedUsers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "block", "list"}, ""))
-	pattern_BlockService_BlockUser_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "block"}, ""))
+	pattern_BlockService_BlockUser_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "block", "profileId"}, ""))
 	pattern_BlockService_UnblockUser_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "block"}, ""))
 )
 

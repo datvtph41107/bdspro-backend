@@ -44,8 +44,11 @@ func (r *BlockService) ListBlockedUsers(c context.Context, req *pb_shared.IdRequ
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /block/{profileId} [post]
-func (r *BlockService) BlockUser(c context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
-	result, err := r.UC.BlockUser(c, req.Id)
+func (r *BlockService) BlockUser(c context.Context, req *crmpb.BlockUserRequest) (*pb_shared.SubmitResponse, error) {
+	result, err := r.UC.BlockUser(c, req.ProfileId)
+	if err != nil {
+		return nil, err
+	}
 	return &pb_shared.SubmitResponse{
 		Message: "success",
 		Id:      result.BlockedId,
@@ -64,6 +67,9 @@ func (r *BlockService) BlockUser(c context.Context, req *pb_shared.IdRequest) (*
 // @Router /block/{profileId} [delete]
 func (r *BlockService) UnblockUser(c context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
 	result, err := r.UC.UnblockUser(c, req.Id)
+	if err != nil {
+		return nil, err
+	}
 	return &pb_shared.SubmitResponse{
 		Message: "success",
 		Id:      result,

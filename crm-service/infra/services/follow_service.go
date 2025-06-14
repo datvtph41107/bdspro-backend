@@ -2,6 +2,7 @@ package grpc_service
 
 import (
 	"context"
+	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
@@ -9,13 +10,15 @@ import (
 )
 
 type FollowService struct {
-	UC *usecase.FollowUsecase
 	crmpb.UnimplementedFollowServiceServer
+	UC         *usecase.FollowUsecase
+	userClient *client.UserClient
 }
 
-func NewFollowService(uc *usecase.FollowUsecase) *FollowService {
+func NewFollowService(uc *usecase.FollowUsecase, userClient *client.UserClient) *FollowService {
 	return &FollowService{
-		UC: uc,
+		UC:         uc,
+		userClient: userClient,
 	}
 }
 
@@ -54,8 +57,10 @@ func (s *FollowService) ListFollowing(ctx context.Context, req *pb_shared.IdRequ
 		return nil, err
 	}
 
+	profiles, _ := s.userClient.Client.GetProfileByIds(ctx, &pb_shared.GetProfileByIdsRequest{Ids: following})
+
 	return &crmpb.ListFollowingResponse{
-		Data: mapper.ListFollowersToPb(following),
+		Data: profiles.Profiles,
 	}, nil
 }
 
@@ -69,7 +74,7 @@ func (s *FollowService) ListFollowing(ctx context.Context, req *pb_shared.IdRequ
 // @Success 200 {string} string "Đã thêm người vào danh sách theo dõi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
-// @Router /follow/{id} [post]
+// @Router /follow/{profileId} [post]
 func (s *FollowService) AddFollow(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
 	follow, err := s.UC.FollowUser(ctx, req.Id)
 	if err != nil {
@@ -92,15 +97,15 @@ func (s *FollowService) AddFollow(ctx context.Context, req *pb_shared.IdRequest)
 // @Success 200 {string} string "Đã xóa người khỏi danh sách theo dõi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
-// @Router /follow/{id} [delete]
+// @Router /follow/{profileId} [delete]
 func (s *FollowService) RemoveFollow(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
-	follow, err := s.UC.UnfollowUser(ctx, req.Id)
+	err := s.UC.UnfollowUser(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb_shared.SubmitResponse{
 		Message: "success",
-		Id:      follow.ID,
+		Id:      req.Id,
 	}, nil
 }

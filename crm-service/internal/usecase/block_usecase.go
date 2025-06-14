@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 )
 
@@ -13,18 +14,21 @@ type BlockUsecase struct {
 	contactRepo repo.ContactRepo
 	friendRepo  repo.FriendRepo
 	followRepo  repo.FollowRepo
+	userClient  iusecase.UserClient
 }
 
 func NewBlockUsecase(repo repo.BlockRepo,
 	contactRepo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
 	followRepo repo.FollowRepo,
+	userClient iusecase.UserClient,
 ) *BlockUsecase {
 	return &BlockUsecase{
 		blockRepo:   repo,
 		contactRepo: contactRepo,
 		friendRepo:  friendRepo,
 		followRepo:  followRepo,
+		userClient:  userClient,
 	}
 }
 
@@ -83,6 +87,12 @@ func (s *BlockUsecase) UnblockUser(c context.Context, blockId uint64) (uint64, e
 // Bỏ chặn một người dùng
 func (s *BlockUsecase) BeforeRequest(c context.Context, targetId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(c)
+	if targetId == profileId {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Bạn không thể theo dõi/kết bạn với chính mình",
+		}
+	}
 
 	blocked := s.blockRepo.IsBlocked(c, targetId, profileId)
 	if blocked {
@@ -93,12 +103,24 @@ func (s *BlockUsecase) BeforeRequest(c context.Context, targetId uint64) error {
 	}
 
 	blocking := s.blockRepo.IsBlocked(c, profileId, targetId)
-
 	if blocking {
 		return &_routes.Except{
 			Code:    505,
 			Message: "Vui lòng bỏ chặn",
 		}
 	}
+
+	profile, err := s.userClient.GetProfileById(c, targetId)
+	if err != nil {
+		return err
+	}
+
+	if profile == nil {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Người dùng không tồn tại",
+		}
+	}
+
 	return nil
 }

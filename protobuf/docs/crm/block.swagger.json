@@ -45,7 +45,40 @@
         "tags": [
           "BlockService"
         ]
-      },
+      }
+    },
+    "/v2/crm/block/list": {
+      "get": {
+        "operationId": "BlockService_ListBlockedUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbListBlockResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "BlockService"
+        ]
+      }
+    },
+    "/v2/crm/block/{profileId}": {
       "post": {
         "operationId": "BlockService_BlockUser",
         "responses": {
@@ -64,44 +97,11 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "profileId",
+            "in": "path",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_sharedIdRequest"
-            }
-          }
-        ],
-        "tags": [
-          "BlockService"
-        ]
-      }
-    },
-    "/v2/crm/block/list": {
-      "post": {
-        "operationId": "BlockService_ListBlockedUsers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/crmpbListBlockResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_sharedIdRequest"
-            }
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -124,15 +124,6 @@
         "total": {
           "type": "integer",
           "format": "int32"
-        }
-      }
-    },
-    "pb_sharedIdRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },

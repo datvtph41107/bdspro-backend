@@ -8,7 +8,7 @@ import "shared/common.proto";
 import "google/api/annotations.proto";
 
 service FriendService {
-    rpc FriendList(FriendListRequest) returns (FriendListResponse) {
+    rpc FriendList(FriendListRequest) returns (FriendProfileListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/list"
         };
@@ -39,15 +39,15 @@ service FriendService {
     };
     rpc FriendSent(FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
-            get: "/v2/crm/friend/sent"
+            get: "/v2/crm/friend/request/sent"
         };
     };
     rpc FriendReceived(FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
-            get: "/v2/crm/friend/received"
+            get: "/v2/crm/friend/request/received"
         };
     };
-    rpc FriendInfo(pb_shared.IdRequest) returns (FriendInfoResponse) {
+    rpc FriendInfo(pb_shared.Empty) returns (FriendInfoResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/info"
         };
@@ -56,8 +56,15 @@ service FriendService {
 
 message Friend {
     uint64 id = 1;
-    uint64 profile_id = 2;
-    uint64 friend_id = 3;
+    uint64 createdBy = 2;
+    uint64 receiverId = 3;
+    string respondedAt = 4;
+    int32 status = 5;
+    optional uint64 groupId = 6;
+    optional uint64 groupReceiverId = 7;
+    optional pb_shared.ProfileItem createdUser = 8;
+    optional pb_shared.ProfileItem receiverUser = 9;
+    string createdAt = 10;
 }
 
 message FriendRequestDTO {
@@ -89,4 +96,9 @@ message FriendInfoResponse {
     int64 numFollower = 1;
     int64 numFollowing = 2;
     int64 numFriend = 3;
+}
+
+message FriendProfileListResponse {
+    repeated pb_shared.ProfileItem data = 1;
+    int32 total = 2;
 }

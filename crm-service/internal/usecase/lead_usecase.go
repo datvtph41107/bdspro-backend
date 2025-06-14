@@ -75,7 +75,7 @@ func (u *LeadUsecase) Create(ctx context.Context, lead *domain.LeadEntity) (*dom
 		Note:       "Tạo khách hàng " + existed.FullName,
 		TargetId:   lead.ID,
 		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryCreateLead,
+		ActionType: enums.HistoryContactCreate,
 		OwnerID:    lead.OwnerID,
 		OwnerType:  lead.OwnerType,
 		// AfterStage: ,
@@ -100,7 +100,7 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, customer *domain.Le
 		// Note:       "Cập nhật khách hàng " + customer.FullName,
 		TargetId:   customer.ID,
 		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryUpdateLead,
+		ActionType: enums.HistoryContactUpdate,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -128,7 +128,7 @@ func (u *LeadUsecase) Delete(ctx context.Context, id uint64) error {
 		// Note:       "Xóa khách hàng " + customer.FullName,
 		TargetId:   customer.ID,
 		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryDeleteLead,
+		ActionType: enums.HistoryContactDelete,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -184,7 +184,7 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 		// Note:       "Phân công khách hàng " + customer.FullName + " cho " + dto.FullName,
 		TargetId:   customer.ID,
 		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryAssignLead,
+		ActionType: enums.HistoryContactAssign,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})

@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"log"
 	"user/config/property"
+	"user/infra/routes"
 	"user/infra/services"
-	"user/routes"
 
 	"github.com/spf13/viper"
 )

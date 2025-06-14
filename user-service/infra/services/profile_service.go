@@ -56,6 +56,7 @@ func (s *GrpcProfileService) GetProfileByIds(ctx context.Context, req *sharepb.G
 				FullName:     profile.FullName,
 				Avatar:       profile.Avatar,
 				TickVerified: profile.TickVerified,
+				Phone:        profile.Phone,
 			}
 			// Cache lại
 			s.cache.Set(fmt.Sprintf("%d", profile.ProfileID), pb, cache.DefaultExpiration)

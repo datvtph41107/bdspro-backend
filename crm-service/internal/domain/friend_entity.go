@@ -22,3 +22,14 @@ type FriendEntity struct {
 func (FriendEntity) TableName() string {
 	return "friend"
 }
+
+type FriendItem struct {
+	ID         uint64             `gorm:"column:id;not null" json:"id"`
+	ReceiverID uint64             `gorm:"column:receiver_id;not null" json:"receiverId"`
+	CreatedBy  uint64             `gorm:"column:created_by;not null" json:"createdBy"`
+	Status     enums.FriendStatus `gorm:"default:10" json:"status"` // 1: Pending, 2: Accepted, 3: Declined
+}
+
+func (FriendItem) TableName() string {
+	return "friend"
+}

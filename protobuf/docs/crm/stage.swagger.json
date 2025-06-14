@@ -112,6 +112,13 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "color",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -268,6 +275,10 @@
         },
         "active": {
           "type": "boolean"
+        },
+        "color": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -311,6 +322,10 @@
         },
         "active": {
           "type": "boolean"
+        },
+        "color": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

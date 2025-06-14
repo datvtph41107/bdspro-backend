@@ -83,7 +83,8 @@
             "name": "color",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "active",
@@ -169,7 +170,8 @@
             "required": false,
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             },
             "collectionFormat": "multi"
           },
@@ -220,7 +222,8 @@
             "name": "color",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "active",
@@ -298,7 +301,8 @@
           "type": "string"
         },
         "color": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "active": {
           "type": "boolean"
@@ -336,7 +340,8 @@
           "type": "string"
         },
         "color": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "active": {
           "type": "boolean"

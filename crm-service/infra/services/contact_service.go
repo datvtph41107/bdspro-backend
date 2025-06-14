@@ -31,7 +31,16 @@ func NewContactService(uc *usecase.ContactUsecase, userClient *client.UserClient
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param ownerType path int true "Loại sở hữu (10: user, 20: nhóm, 30: organization)"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Param text query string false "Tên liên hệ"
+// @Param ownerType path int true "Loại sở hữu (10: user, 20: nhóm, 30: organization) để 30 nhé"
+// @Param friendStatus query []int false "Trạng thái bạn bè, 10: Đã gửi lời mời, 20: Bạn bè, 30: Chưa kết bạn"
+// @Param following query bool false "Đang theo dõi"
+// @Param roles query []int false "Nhóm quyền: 10: quản trị,20: Nhân viên, 30: khách hàng"
+// @Param leaded query bool false "Gán CRM"
+// @Param connected query bool false "Kết nối"
+// @Param appInstalled query bool false "Đã cài app"
 // @Router /contact/list/{ownerType} [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
 

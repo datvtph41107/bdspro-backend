@@ -3,13 +3,13 @@ package enums
 type FriendStatus int
 
 const (
-	Pending  FriendStatus = 10 //"PENDING"
-	Accepted FriendStatus = 20 //"ACCEPT"
-	Reject   FriendStatus = 30 //"REJECT"
+	FriendStatusPending  FriendStatus = 10 //"PENDING"
+	FriendStatusAccepted FriendStatus = 20 //"ACCEPT"
+	FriendStatusReject   FriendStatus = 30 //"REJECT"
 )
 
 var FriendStatusMap = map[FriendStatus]string{
-	Pending:  "Gửi lời mời",
-	Accepted: "Đã chấp nhận",
-	Reject:   "Từ chối",
+	FriendStatusPending:  "Gửi lời mời",
+	FriendStatusAccepted: "Đã chấp nhận",
+	FriendStatusReject:   "Từ chối",
 }

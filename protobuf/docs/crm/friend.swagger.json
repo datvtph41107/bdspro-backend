@@ -118,15 +118,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
         "tags": [
           "FriendService"
         ]
@@ -139,51 +130,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbFriendListResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "text",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "FriendService"
-        ]
-      }
-    },
-    "/v2/crm/friend/received": {
-      "get": {
-        "operationId": "FriendService_FriendReceived",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/crmpbFriendListResponse"
+              "$ref": "#/definitions/crmpbFriendProfileListResponse"
             }
           },
           "default": {
@@ -259,14 +206,14 @@
         ]
       }
     },
-    "/v2/crm/friend/request/{receiverId}": {
-      "post": {
-        "operationId": "FriendService_FriendRequest",
+    "/v2/crm/friend/request/received": {
+      "get": {
+        "operationId": "FriendService_FriendReceived",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbFriendRequestResponse"
+              "$ref": "#/definitions/crmpbFriendListResponse"
             }
           },
           "default": {
@@ -278,19 +225,24 @@
         },
         "parameters": [
           {
-            "name": "receiverId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           },
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/FriendServiceFriendRequestBody"
-            }
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -298,7 +250,7 @@
         ]
       }
     },
-    "/v2/crm/friend/sent": {
+    "/v2/crm/friend/request/sent": {
       "get": {
         "operationId": "FriendService_FriendSent",
         "responses": {
@@ -341,6 +293,45 @@
           "FriendService"
         ]
       }
+    },
+    "/v2/crm/friend/request/{receiverId}": {
+      "post": {
+        "operationId": "FriendService_FriendRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbFriendRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "receiverId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FriendServiceFriendRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "FriendService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -363,13 +354,37 @@
           "type": "string",
           "format": "uint64"
         },
-        "profileId": {
+        "createdBy": {
           "type": "string",
           "format": "uint64"
         },
-        "friendId": {
+        "receiverId": {
           "type": "string",
           "format": "uint64"
+        },
+        "respondedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "groupReceiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdUser": {
+          "$ref": "#/definitions/pb_sharedProfileItem"
+        },
+        "receiverUser": {
+          "$ref": "#/definitions/pb_sharedProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
         }
       }
     },
@@ -406,6 +421,22 @@
         }
       }
     },
+    "crmpbFriendProfileListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_sharedProfileItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "crmpbFriendRequestResponse": {
       "type": "object",
       "properties": {
@@ -415,6 +446,27 @@
         "status": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_sharedProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     },

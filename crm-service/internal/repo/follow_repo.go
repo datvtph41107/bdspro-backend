@@ -7,7 +7,7 @@ import (
 
 type FollowRepo interface {
 	FollowerUser(c context.Context, profileId uint64, page int, pageSize int) ([]domain.Profile, error)
-	FollowingUser(c context.Context, profileId uint64, page int, pageSize int) ([]domain.Profile, error)
+	FollowingUser(c context.Context, profileId uint64, page int, pageSize int) ([]uint64, error)
 	FollowUser(c context.Context, profileId uint64, followId uint64) (*domain.FollowEntity, error)
 	UnfollowUser(c context.Context, profileId uint64, followId uint64) error
 	BlockFollow(c context.Context, profileId uint64, targetId uint64) error

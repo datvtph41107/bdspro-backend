@@ -21,14 +21,14 @@ func NewFriendRepo(DB *gorm.DB) *FriendPostgre {
 	}
 }
 
-func (repo *FriendPostgre) UpdateStatusById(c context.Context, status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
+func (repo *FriendPostgre) UpdateStatusById(ctx context.Context, status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
 	return repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":       status,
 		"responded_at": respondedAt,
 	}).Error
 }
 
-func (repo *FriendPostgre) UpdateGroupById(c context.Context, isGroup bool, groupId uint64, id uint64) error {
+func (repo *FriendPostgre) UpdateGroupById(ctx context.Context, isGroup bool, groupId uint64, id uint64) error {
 	tx := repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id)
 	if isGroup {
 		return tx.Updates(map[string]interface{}{"group_id": groupId}).Error
@@ -36,27 +36,27 @@ func (repo *FriendPostgre) UpdateGroupById(c context.Context, isGroup bool, grou
 	return tx.Updates(map[string]interface{}{"group_receiver_id": groupId}).Error
 }
 
-func (repo *FriendPostgre) UpdateGroupId(id *uint64, groupId uint64) error {
+func (repo *FriendPostgre) UpdateGroupId(ctx context.Context, id *uint64, groupId uint64) error {
 	return repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id).Update("group_id", groupId).Error
 }
 
-func (repo *FriendPostgre) UpdateGroupReceiverId(id uint, groupReceiverId uint) error {
+func (repo *FriendPostgre) UpdateGroupReceiverId(ctx context.Context, id uint, groupReceiverId uint) error {
 	return repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id).Update("group_receiver_id", groupReceiverId).Error
 }
 
-func (repo *FriendPostgre) FindBySenderIdAndReceiverId(sender uint64, receiver uint64) (*domain.FriendEntity, error) {
+func (repo *FriendPostgre) FindBySenderIdAndReceiverId(ctx context.Context, sender uint64, receiver uint64) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
 	err := repo.DB.Where("created_by = ? AND receiver_id = ?", sender, receiver).First(&request).Error
 	return &request, err
 }
 
-func (repo *FriendPostgre) GetById(id uint) (*domain.FriendEntity, error) {
+func (repo *FriendPostgre) GetByID(ctx context.Context, id uint64) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
 	err := repo.DB.Where("id = ?", id).First(&request).Error
 	return &request, err
 }
 
-func (repo *FriendPostgre) Search(dto data.FriendDTO, createdBy *uint64, page int, pageSize int) ([]domain.FriendEntity, error) {
+func (repo *FriendPostgre) Search(ctx context.Context, dto data.FriendDTO, createdBy *uint64, page int, pageSize int) ([]domain.FriendEntity, error) {
 	var requests []domain.FriendEntity
 	query := repo.DB.Model(&domain.FriendEntity{})
 
@@ -74,7 +74,7 @@ func (repo *FriendPostgre) Search(dto data.FriendDTO, createdBy *uint64, page in
 	return requests, err
 }
 
-func (repo *FriendPostgre) SearchFriend(currentId uint64, dto data.FriendDTO, page int, pageSize int) ([]domain.FriendEntity, error) {
+func (repo *FriendPostgre) SearchFriend(ctx context.Context, currentId uint64, dto data.FriendRequest) ([]domain.FriendEntity, int64, error) {
 	var friends []domain.FriendEntity
 
 	query := repo.DB.
@@ -85,30 +85,36 @@ func (repo *FriendPostgre) SearchFriend(currentId uint64, dto data.FriendDTO, pa
 			"						AND profile_transfer.profile_id <> ? ", currentId).
 		Where("friend.status = 20 and friend.deleted_at is null")
 
-	if dto.Text != nil && *dto.Text != "" {
-		query = query.Where("full_name LIKE ? OR username LIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")
+	if dto.Text != "" {
+		query = query.Where("lower(full_name) LIKE ? OR phone LIKE ?", "%"+dto.Text+"%", "%"+dto.Text+"%")
 	}
 
-	err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&friends).Error
-	return friends, err
+	var total int64
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = query.Offset(dto.GetOffset()).Limit(dto.GetLimit()).Find(&friends).Error
+	return friends, total, err
 }
 
-func (repo *FriendPostgre) ExistsByCreatedByAndReceiverId(createdBy uint64, receiverId uint64) (bool, error) {
+func (repo *FriendPostgre) ExistsByCreatedByAndReceiverId(ctx context.Context, createdBy uint64, receiverId uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&domain.FriendEntity{}).
-		Where("created_by = ? AND receiver_id = ? AND status <> ?", createdBy, receiverId, enums.Reject).
+		Where("created_by = ? AND receiver_id = ? AND status <> ?", createdBy, receiverId, enums.FriendStatusReject).
 		Count(&count).Error
 	return count > 0, err
 }
 
-func (repo *FriendPostgre) FindFriendRequest(user1 uint, user2 uint) (*domain.FriendEntity, error) {
+func (repo *FriendPostgre) FindFriendRequest(ctx context.Context, user1 uint, user2 uint) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
 	err := repo.DB.Where("deleted_at is null AND ((created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?))", user1, user2, user2, user1).
 		First(&request).Error
 	return &request, err
 }
 
-func (repo *FriendPostgre) GetSumFriend(userId uint) (int64, error) {
+func (repo *FriendPostgre) GetSumFriend(ctx context.Context, userId uint) (int64, error) {
 	var count int64
 	err := repo.DB.Model(&domain.FriendEntity{}).
 		Where("(created_by = ? OR receiver_id = ?) AND status = 2", userId, userId).
@@ -116,20 +122,20 @@ func (repo *FriendPostgre) GetSumFriend(userId uint) (int64, error) {
 	return count, err
 }
 
-func (repo *FriendPostgre) FindByID(id uint64) (*domain.FriendEntity, error) {
+func (repo *FriendPostgre) FindByID(ctx context.Context, id uint64) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
 	err := repo.DB.First(&request, id).Error
 	return &request, err
 }
 
-func (repo *FriendPostgre) DeleteByID(id uint64) error {
+func (repo *FriendPostgre) DeleteByID(ctx context.Context, id uint64) error {
 	return repo.DB.Model(&domain.FriendEntity{}).
 		Where("id = ?", id).
 		Update("deleted_at", time.Now()).
 		Error
 }
 
-func (repo *FriendPostgre) BlockFriend(c context.Context, profileId uint64, targetId uint64) error {
+func (repo *FriendPostgre) BlockFriend(ctx context.Context, profileId uint64, targetId uint64) error {
 	return repo.DB.Model(&domain.FriendEntity{}).
 		Where("(created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)",
 			profileId, targetId,
@@ -139,7 +145,7 @@ func (repo *FriendPostgre) BlockFriend(c context.Context, profileId uint64, targ
 		Error
 }
 
-func (repo *FriendPostgre) ExistsFriendship(id uint64, receiverID uint64) (bool, error) {
+func (repo *FriendPostgre) ExistsFriendship(ctx context.Context, id uint64, receiverID uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&domain.FriendEntity{}).
 		Where("id = ? AND receiver_id = ?", id, receiverID).
@@ -147,8 +153,25 @@ func (repo *FriendPostgre) ExistsFriendship(id uint64, receiverID uint64) (bool,
 	return count > 0, err
 }
 
-func (repo *FriendPostgre) GetByUserID(c context.Context, userId uint64) (*domain.FriendEntity, error) {
+func (repo *FriendPostgre) GetByUserID(ctx context.Context, userId uint64) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
 	err := repo.DB.Where("created_by = ? OR receiver_id = ?", userId, userId).First(&request).Error
 	return &request, err
+}
+
+func (repo *FriendPostgre) GetRelationShip(ctx context.Context, currentId uint64, targetId uint64) (*domain.FriendItem, error) {
+	var status *domain.FriendItem
+
+	err := repo.DB.
+		Model(&domain.FriendItem{}).
+		Select("id, status, created_by, receiver_id").
+		Where("((created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)) AND deleted_at IS NULL",
+			currentId, targetId, targetId, currentId).
+		Find(&status).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }

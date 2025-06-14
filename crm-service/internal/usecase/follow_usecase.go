@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 )
 
@@ -13,18 +14,21 @@ type FollowUsecase struct {
 	contactRepo  repo.ContactRepo
 	blockRepo    repo.BlockRepo
 	blockService *BlockUsecase
+	userClient   iusecase.UserClient
 }
 
 func NewFollowUsecase(followRepo repo.FollowRepo,
 	contactRepo repo.ContactRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
+	client iusecase.UserClient,
 ) *FollowUsecase {
 	return &FollowUsecase{
 		followRepo:   followRepo,
 		contactRepo:  contactRepo,
 		blockRepo:    blockRepo,
 		blockService: blockService,
+		userClient:   client,
 	}
 }
 
@@ -33,7 +37,7 @@ func (s *FollowUsecase) FollowerUser(c context.Context) ([]domain.Profile, error
 	return s.followRepo.FollowerUser(c, profileId, 0, 10)
 }
 
-func (s *FollowUsecase) FollowingUser(c context.Context) ([]domain.Profile, error) {
+func (s *FollowUsecase) FollowingUser(c context.Context) ([]uint64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	return s.followRepo.FollowingUser(c, profileId, 0, 10)
 }
@@ -56,24 +60,22 @@ func (s *FollowUsecase) Existed(c context.Context, followId uint64) error {
 	return nil
 }
 
-func (s *FollowUsecase) GetFollowId(c context.Context, followId uint64) (uint64, uint64, error) {
-	err := s.contactRepo.Existed(c, followId)
+func (s *FollowUsecase) ValidateFollowId(c context.Context, followId uint64) (uint64, uint64, error) {
+	err := s.blockService.BeforeRequest(c, followId)
 	if err != nil {
 		return 0, 0, err
 	}
+	// err := s.contactRepo.Existed(c, followId)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// profileId := _utils.GetProfileIdWithContext(c)
 	profileId := _utils.GetProfileIdWithContext(c)
-
 	return profileId, followId, err
 }
 
 func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.FollowEntity, error) {
-
-	profileId, followId, err := s.GetFollowId(c, followId)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.blockService.BeforeRequest(c, followId)
+	profileId, followId, err := s.ValidateFollowId(c, followId)
 	if err != nil {
 		return nil, err
 	}
@@ -82,17 +84,12 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 	return e, err
 }
 
-func (s *FollowUsecase) UnfollowUser(c context.Context, followId uint64) (*domain.FollowEntity, error) {
-	profileId, followId, err := s.GetFollowId(c, followId)
+func (s *FollowUsecase) UnfollowUser(c context.Context, followId uint64) error {
+	profileId, followId, err := s.ValidateFollowId(c, followId)
 	if err != nil {
-		return nil, err
-	}
-
-	err = s.blockService.BeforeRequest(c, followId)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = s.followRepo.UnfollowUser(c, profileId, followId)
-	return nil, err
+	return err
 }

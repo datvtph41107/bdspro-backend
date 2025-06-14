@@ -123,6 +123,52 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "friendStatus",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "following",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "leaded",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "connected",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "appInstalled",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -422,6 +468,9 @@
         },
         "tickVerified": {
           "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     },

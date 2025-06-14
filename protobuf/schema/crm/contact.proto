@@ -47,6 +47,12 @@ message ContactSearchRequest {
   uint32 size = 2;
   string text = 3;
   int32 ownerType = 4;
+  repeated int32 friendStatus = 5;
+  optional bool following = 6;
+  repeated int32 roles = 7;
+  optional bool leaded = 8;
+  optional bool connected = 9;
+  optional bool appInstalled = 10;
 }
 
 message ContactSaveDTO {

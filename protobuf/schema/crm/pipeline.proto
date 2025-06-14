@@ -11,7 +11,7 @@ message PipelineSearchRequest {
     uint32 size = 2;
 
     string pipelineName = 3;
-    repeated string colors = 4;
+    repeated uint32 colors = 4;
     bool active = 5;
 
     uint64 ownerId = 6;

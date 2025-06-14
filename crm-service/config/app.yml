@@ -1,6 +1,7 @@
 server:
   port: 8006
   tcp_port: 8206
+  name: crm-service
 
 eureka:
   url: localhost

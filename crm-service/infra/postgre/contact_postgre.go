@@ -8,6 +8,7 @@ import (
 	"crm/internal/enums"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // @bind: crm/internal/repo.ContactRepo
@@ -117,10 +118,33 @@ func (r *PostgreContact) Existed(c context.Context, followId uint64) error {
 	return nil
 }
 
-func (r *PostgreContact) Bulk(c context.Context, entities []domain.ContactEntity) ([]domain.ContactEntity, error) {
-	result := r.DB.Create(&entities)
+// Bulk inserts all contacts.
+// If a phone number already exists, we update the contact's name (and updated_at)
+// instead of inserting a duplicate.
+func (r *PostgreContact) Bulk(
+	ctx context.Context,
+	entities []domain.ContactEntity,
+) ([]domain.ContactEntity, error) {
+
+	if len(entities) == 0 {
+		return entities, nil
+	}
+
+	// INSERT ... ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()
+	result := r.DB.WithContext(ctx).Clauses(
+		clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "phone"},
+				{Name: "owner_id"},
+				{Name: "owner_type"},
+			},
+			DoUpdates: clause.AssignmentColumns([]string{"full_name"}), // thêm "updated_at" nếu cần
+		},
+	).Create(&entities)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return entities, nil
 }

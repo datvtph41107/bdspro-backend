@@ -37,6 +37,6 @@ message ListFollowersResponse {
 }
 
 message ListFollowingResponse {
-    repeated uint64 data = 1;
+    repeated pb_shared.ProfileItem data = 1;
     int32 total = 2;
 }
