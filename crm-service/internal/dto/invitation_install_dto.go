@@ -4,7 +4,6 @@ import (
 	_dto "common/dto"
 )
 
-type ContactSearchDTO struct {
+type ListInvitationRequest struct {
 	_dto.Pagable
-	Text string `form:"text"`
 }

@@ -6,6 +6,7 @@ import (
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -27,11 +28,11 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 	result := r.DB.
 		// Model(&domain.ContactEntity{}).
 		Debug().
-		Table("db_contact").
-		Joins("LEFT JOIN block bl ON (bl.profile_id = ? AND bl.blocked_id = db_contact.profile_id)", profileId).
-		Joins("LEFT JOIN friend fr ON (fr.created_by = db_contact.profile_id OR fr.receiver_id = db_contact.profile_id) and fr.deleted_at is null").
-		Joins("LEFT JOIN follow fl ON fl.following_id = db_contact.profile_id and fl.created_by = ? and fl.deleted_at is null", profileId).
-		Select(`db_contact.*, 
+		Table("tb_contact").
+		Joins("LEFT JOIN block bl ON (bl.profile_id = ? AND bl.blocked_id = tb_contact.profile_id)", profileId).
+		Joins("LEFT JOIN friend fr ON (fr.created_by = tb_contact.profile_id OR fr.receiver_id = tb_contact.profile_id) and fr.deleted_at is null").
+		Joins("LEFT JOIN follow fl ON fl.following_id = tb_contact.profile_id and fl.created_by = ? and fl.deleted_at is null", profileId).
+		Select(`tb_contact.*, 
 		fl.id IS NOT NULL AS following, 
 		fr.id AS friend_id,
 		fr.status AS friend_status,
@@ -39,7 +40,7 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 		fr.receiver_id AS friend_receiver_id,
 		bl.profile_id IS NOT NULL AS blocked
 		`).
-		Where("db_contact.deleted_at IS NULL AND db_contact.owner_id = ? and db_contact.owner_type = ?", profileId, ownerType).
+		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_type = ?", profileId, ownerType).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Scan(&contacts)
@@ -60,7 +61,17 @@ func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity)
 }
 
 func (r *PostgreContact) Update(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	result := r.DB.Save(entity)
+	result := r.DB.WithContext(c).
+		Model(&domain.ContactEntity{}).
+		Where("id = ?", entity.ID).
+		Update("full_name", entity.FullName).
+		Update("phone", entity.Phone).
+		Update("avatar", entity.Avatar).
+		Update("email", entity.Email).
+		Update("zalo", entity.Zalo).
+		Update("company", entity.Company).
+		Update("note", entity.Note).
+		Update("visibility", entity.Visibility)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -68,7 +79,10 @@ func (r *PostgreContact) Update(c context.Context, entity *domain.ContactEntity)
 }
 
 func (r *PostgreContact) Delete(c context.Context, id uint64) error {
-	result := r.DB.Delete(&domain.ContactEntity{}, id)
+	result := r.DB.WithContext(c).
+		Model(&domain.ContactEntity{}).
+		Where("id = ?", id).
+		Update("deleted_at", time.Now())
 	if result.Error != nil {
 		return result.Error
 	}
@@ -147,4 +161,16 @@ func (r *PostgreContact) Bulk(
 	}
 
 	return entities, nil
+}
+
+func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, currentUserId uint64, ownerType enums.EOwnerType) (*domain.ContactEntity, error) {
+	var contact domain.ContactEntity
+	result := r.DB.Model(&domain.ContactEntity{}).
+		Where("profile_id = ? and deleted_at is null and owner_id = ? and owner_type = ?",
+			profileId, currentUserId, ownerType).
+		First(&contact)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &contact, nil
 }

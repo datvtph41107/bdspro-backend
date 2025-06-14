@@ -6,7 +6,20 @@ import (
 	"crm/internal/domain"
 
 	crmpb "pb/types/crm"
+	pb_shared "pb/types/shared"
 )
+
+func FriendItemToPb(friend *domain.FriendItem) *pb_shared.FriendItem {
+	if friend == nil || friend.ID == 0 {
+		return nil
+	}
+	return &pb_shared.FriendItem{
+		Id:         friend.ID,
+		ReceiverId: friend.ReceiverID,
+		Status:     uint32(friend.Status),
+		CreatedBy:  &friend.CreatedBy,
+	}
+}
 
 func FriendToPb(friend *domain.FriendEntity) *crmpb.Friend {
 	return &crmpb.Friend{

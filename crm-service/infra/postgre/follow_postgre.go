@@ -145,7 +145,7 @@ func (repo *FollowPostgre) GetFollowInfoCount(c context.Context, userID uint64) 
 	}
 
 	err = repo.DB.Model(&domain.FriendEntity{}).
-		Where("(created_by = ? or receiver_id = ?) and status = 2", userID, userID).
+		Where("(created_by = ? or receiver_id = ?) and status = 20", userID, userID).
 		Count(&friendCount).
 		Error
 	if err != nil {
@@ -153,4 +153,19 @@ func (repo *FollowPostgre) GetFollowInfoCount(c context.Context, userID uint64) 
 	}
 
 	return followerCount, followingCount, friendCount, nil
+}
+
+func (repo *FollowPostgre) GetFollowing(ctx context.Context, profileId uint64, targetId uint64) (bool, error) {
+	var exists bool
+
+	err := repo.DB.
+		Raw(`
+			SELECT EXISTS (
+				SELECT 1 FROM follow
+				WHERE created_by = ? AND following_id = ? AND deleted_at IS NULL
+			)
+		`, profileId, targetId).
+		Scan(&exists).Error
+
+	return exists, err
 }

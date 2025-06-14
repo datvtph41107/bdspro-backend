@@ -40,6 +40,11 @@ service ContactService {
       body: "*"
     };
   };
+  rpc RelationShip (pb_shared.IdRequest) returns (RelationShipResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/relation-ship/{id}"
+    };
+  };
 }
 
 message ContactSearchRequest {
@@ -98,4 +103,13 @@ message ContactSyncRequest {
 message ContactSyncResponse {
   repeated ContactDTO data = 1;
   uint32 totalElements = 2;
+}
+
+message RelationShipResponse {
+  optional pb_shared.FriendItem friendStatus = 1;
+  bool following = 2;
+  bool blocked = 3;
+  int64 numFollower = 4;
+  int64 numFollowing = 5;
+  int64 numFriend = 6;
 }

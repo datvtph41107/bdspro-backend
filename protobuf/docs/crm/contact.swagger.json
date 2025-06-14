@@ -176,6 +176,37 @@
         ]
       }
     },
+    "/v2/crm/contact/relation-ship/{id}": {
+      "get": {
+        "operationId": "ContactService_RelationShip",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbRelationShipResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/sync": {
       "post": {
         "operationId": "ContactService_Sync",
@@ -428,6 +459,32 @@
         },
         "totalElements": {
           "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "crmpbRelationShipResponse": {
+      "type": "object",
+      "properties": {
+        "friendStatus": {
+          "$ref": "#/definitions/pb_sharedFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "blocked": {
+          "type": "boolean"
+        },
+        "numFollower": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numFollowing": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numFriend": {
+          "type": "string",
           "format": "int64"
         }
       }

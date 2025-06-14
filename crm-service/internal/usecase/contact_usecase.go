@@ -14,16 +14,19 @@ import (
 type ContactUsecase struct {
 	repo        repo.ContactRepo
 	friendRepo  repo.FriendRepo
+	followRepo  repo.FollowRepo
 	leadUsecase *LeadUsecase // forward reference
 }
 
 func NewContactUsecase(
 	repo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
+	followRepo repo.FollowRepo,
 ) *ContactUsecase {
 	return &ContactUsecase{
 		repo:       repo,
 		friendRepo: friendRepo,
+		followRepo: followRepo,
 	}
 }
 
@@ -106,4 +109,24 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 		entity.FriendStatus = friendStatus
 	}
 	return entity, nil
+}
+
+func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *dto.RelationShipDTO {
+	currentUserId := _utils.GetProfileIdWithContext(c)
+	var relationShip *domain.FriendItem
+	var following bool
+	if currentUserId != 0 {
+		relationShip, _ = s.friendRepo.GetRelationShip(c, currentUserId, profileId)
+		following, _ = s.followRepo.GetFollowing(c, currentUserId, profileId)
+	}
+
+	numFollower, numFollowing, friendNumber, _ := s.followRepo.GetFollowInfoCount(c, profileId)
+
+	return &dto.RelationShipDTO{
+		FriendStatus: relationShip,
+		Following:    following,
+		NumFollower:  numFollower,
+		NumFollowing: numFollowing,
+		NumFriend:    friendNumber,
+	}
 }

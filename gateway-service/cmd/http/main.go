@@ -110,6 +110,7 @@ var publicRoutes = []string{
 	"/v2/bdspro/v2/list/project",
 	"/v2/bdspro/v2/list/amenity",
 	"/v2/user/profile/info/",
+	"/v2/crm/contact/relation-ship/",
 	// "/v1/search/plan/list",
 }
 

@@ -300,6 +300,43 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/contact/relation-ship/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy trạng thái quan hệ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Liên hệ"
+                ],
+                "summary": "Lấy trạng thái quan hệ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của liên hệ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.RelationShipResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/contact/sync": {
             "post": {
                 "security": [
@@ -1358,6 +1395,71 @@ const docTemplate = `{
                         "type": "integer",
                         "name": "userId",
                         "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/invitation/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Danh sách lời mời",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời"
+                ],
+                "summary": "Danh sách lời mời",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/invitation/send": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi lời mời",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời"
+                ],
+                "summary": "Gửi lời mời",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.SendInvitationRequest"
+                        }
                     }
                 ],
                 "responses": {}
@@ -2515,6 +2617,29 @@ const docTemplate = `{
                 }
             }
         },
+        "crmpb.RelationShipResponse": {
+            "type": "object",
+            "properties": {
+                "blocked": {
+                    "type": "boolean"
+                },
+                "following": {
+                    "type": "boolean"
+                },
+                "friendStatus": {
+                    "$ref": "#/definitions/pb_shared.FriendItem"
+                },
+                "numFollower": {
+                    "type": "integer"
+                },
+                "numFollowing": {
+                    "type": "integer"
+                },
+                "numFriend": {
+                    "type": "integer"
+                }
+            }
+        },
         "crmpb.RuleDTO": {
             "type": "object",
             "properties": {
@@ -2546,6 +2671,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "triggerValue": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.SendInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "channel": {
+                    "type": "string"
+                },
+                "contactIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "link": {
                     "type": "string"
                 }
             }
@@ -2922,6 +3067,23 @@ const docTemplate = `{
                 "FriendStatusAccepted",
                 "FriendStatusReject"
             ]
+        },
+        "pb_shared.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
         },
         "pb_shared.ProfileItem": {
             "type": "object",

@@ -16,6 +16,7 @@ func ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
 	result := &crmpb.ContactDTO{
 		Id:            contact.ID,
 		FullName:      contact.FullName,
+		Avatar:        contact.Avatar,
 		Phone:         contact.Phone,
 		OwnerId:       contact.OwnerID,
 		OwnerType:     int32(contact.OwnerType),

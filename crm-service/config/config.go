@@ -31,21 +31,22 @@ type UserProperties struct {
 var AppProperties UserProperties
 
 type ConfigApp struct {
-	RuntimeRouter        *router.RuntimeRouter
-	RuleUsecase          *usecase.RuleUsecase
-	RuleEventUsecase     *usecase.RuleEventUsecase
-	PipelineService      *services.PipelineService
-	ContactService       *services.ContactService
-	LeadService          *services.LeadService
-	StageService         *services.StageService
-	HistoryService       *services.HistoryService
-	RuleService          *services.RuleService
-	FollowService        *services.FollowService
-	BlockService         *services.BlockService
-	FriendGroupService   *services.FriendGroupService
-	FriendService        *services.FriendService
-	SharingAccessService *services.SharingAccessService
-	Logger               *flogging.FabricLogger
+	RuntimeRouter            *router.RuntimeRouter
+	RuleUsecase              *usecase.RuleUsecase
+	RuleEventUsecase         *usecase.RuleEventUsecase
+	PipelineService          *services.PipelineService
+	ContactService           *services.ContactService
+	LeadService              *services.LeadService
+	StageService             *services.StageService
+	HistoryService           *services.HistoryService
+	RuleService              *services.RuleService
+	FollowService            *services.FollowService
+	BlockService             *services.BlockService
+	FriendGroupService       *services.FriendGroupService
+	FriendService            *services.FriendService
+	SharingAccessService     *services.SharingAccessService
+	InvitationInstallService *services.InvitationInstallService
+	Logger                   *flogging.FabricLogger
 }
 
 func NewConfigApp(
@@ -63,23 +64,25 @@ func NewConfigApp(
 	friendGroupService *services.FriendGroupService,
 	friendService *services.FriendService,
 	sharingAccessService *services.SharingAccessService,
+	invitationInstallService *services.InvitationInstallService,
 ) *ConfigApp {
 	return &ConfigApp{
-		RuntimeRouter:        runtimeRouter,
-		RuleUsecase:          ruleUsecase,
-		RuleEventUsecase:     ruleEventUsecase,
-		PipelineService:      pipelineService,
-		ContactService:       contactService,
-		LeadService:          customerService,
-		StageService:         stageService,
-		HistoryService:       historyService,
-		RuleService:          ruleService,
-		FollowService:        followService,
-		BlockService:         blockService,
-		FriendGroupService:   friendGroupService,
-		FriendService:        friendService,
-		SharingAccessService: sharingAccessService,
-		Logger:               flogging.MustGetLogger(viper.GetString("server.name")),
+		RuntimeRouter:            runtimeRouter,
+		RuleUsecase:              ruleUsecase,
+		RuleEventUsecase:         ruleEventUsecase,
+		PipelineService:          pipelineService,
+		ContactService:           contactService,
+		LeadService:              customerService,
+		StageService:             stageService,
+		HistoryService:           historyService,
+		RuleService:              ruleService,
+		FollowService:            followService,
+		BlockService:             blockService,
+		FriendGroupService:       friendGroupService,
+		FriendService:            friendService,
+		SharingAccessService:     sharingAccessService,
+		InvitationInstallService: invitationInstallService,
+		Logger:                   flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }
 

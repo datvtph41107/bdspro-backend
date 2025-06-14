@@ -20,12 +20,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContactService_Search_FullMethodName = "/crmpb.ContactService/Search"
-	ContactService_Detail_FullMethodName = "/crmpb.ContactService/Detail"
-	ContactService_Create_FullMethodName = "/crmpb.ContactService/Create"
-	ContactService_Update_FullMethodName = "/crmpb.ContactService/Update"
-	ContactService_Delete_FullMethodName = "/crmpb.ContactService/Delete"
-	ContactService_Sync_FullMethodName   = "/crmpb.ContactService/Sync"
+	ContactService_Search_FullMethodName       = "/crmpb.ContactService/Search"
+	ContactService_Detail_FullMethodName       = "/crmpb.ContactService/Detail"
+	ContactService_Create_FullMethodName       = "/crmpb.ContactService/Create"
+	ContactService_Update_FullMethodName       = "/crmpb.ContactService/Update"
+	ContactService_Delete_FullMethodName       = "/crmpb.ContactService/Delete"
+	ContactService_Sync_FullMethodName         = "/crmpb.ContactService/Sync"
+	ContactService_RelationShip_FullMethodName = "/crmpb.ContactService/RelationShip"
 )
 
 // ContactServiceClient is the client API for ContactService service.
@@ -38,6 +39,7 @@ type ContactServiceClient interface {
 	Update(ctx context.Context, in *ContactSaveDTO, opts ...grpc.CallOption) (*ContactDTO, error)
 	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	Sync(ctx context.Context, in *ContactSyncRequest, opts ...grpc.CallOption) (*ContactSyncResponse, error)
+	RelationShip(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*RelationShipResponse, error)
 }
 
 type contactServiceClient struct {
@@ -108,6 +110,16 @@ func (c *contactServiceClient) Sync(ctx context.Context, in *ContactSyncRequest,
 	return out, nil
 }
 
+func (c *contactServiceClient) RelationShip(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*RelationShipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RelationShipResponse)
+	err := c.cc.Invoke(ctx, ContactService_RelationShip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContactServiceServer is the server API for ContactService service.
 // All implementations must embed UnimplementedContactServiceServer
 // for forward compatibility.
@@ -118,6 +130,7 @@ type ContactServiceServer interface {
 	Update(context.Context, *ContactSaveDTO) (*ContactDTO, error)
 	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	Sync(context.Context, *ContactSyncRequest) (*ContactSyncResponse, error)
+	RelationShip(context.Context, *shared.IdRequest) (*RelationShipResponse, error)
 	mustEmbedUnimplementedContactServiceServer()
 }
 
@@ -145,6 +158,9 @@ func (UnimplementedContactServiceServer) Delete(context.Context, *shared.IdReque
 }
 func (UnimplementedContactServiceServer) Sync(context.Context, *ContactSyncRequest) (*ContactSyncResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
+}
+func (UnimplementedContactServiceServer) RelationShip(context.Context, *shared.IdRequest) (*RelationShipResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RelationShip not implemented")
 }
 func (UnimplementedContactServiceServer) mustEmbedUnimplementedContactServiceServer() {}
 func (UnimplementedContactServiceServer) testEmbeddedByValue()                        {}
@@ -275,6 +291,24 @@ func _ContactService_Sync_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContactService_RelationShip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(shared.IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).RelationShip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_RelationShip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).RelationShip(ctx, req.(*shared.IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContactService_ServiceDesc is the grpc.ServiceDesc for ContactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -305,6 +339,10 @@ var ContactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Sync",
 			Handler:    _ContactService_Sync_Handler,
+		},
+		{
+			MethodName: "RelationShip",
+			Handler:    _ContactService_RelationShip_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

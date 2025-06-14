@@ -132,6 +132,21 @@ definitions:
       pipelineName:
         type: string
     type: object
+  crmpb.RelationShipResponse:
+    properties:
+      blocked:
+        type: boolean
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/pb_shared.FriendItem'
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
   crmpb.RuleDTO:
     properties:
       active:
@@ -153,6 +168,19 @@ definitions:
       trigger:
         type: integer
       triggerValue:
+        type: string
+    type: object
+  crmpb.SendInvitationRequest:
+    properties:
+      channel:
+        type: string
+      contactIds:
+        items:
+          type: integer
+        type: array
+      content:
+        type: string
+      link:
         type: string
     type: object
   crmpb.StageDTO:
@@ -437,6 +465,17 @@ definitions:
     - FriendStatusPending
     - FriendStatusAccepted
     - FriendStatusReject
+  pb_shared.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
   pb_shared.ProfileItem:
     properties:
       avatar:
@@ -696,6 +735,29 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy danh sách liên hệ
+      tags:
+      - Liên hệ
+  /contact/relation-ship/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy trạng thái quan hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/crmpb.RelationShipResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy trạng thái quan hệ
       tags:
       - Liên hệ
   /contact/sync:
@@ -1348,6 +1410,46 @@ paths:
       summary: Lấy lịch sử của người dùng
       tags:
       - Lịch sử
+  /invitation/list:
+    get:
+      consumes:
+      - application/json
+      description: Danh sách lời mời
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Danh sách lời mời
+      tags:
+      - Lời mời
+  /invitation/send:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.SendInvitationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời
+      tags:
+      - Lời mời
   /lead:
     post:
       consumes:

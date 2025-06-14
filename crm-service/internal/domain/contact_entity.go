@@ -24,7 +24,7 @@ type ContactEntity struct {
 }
 
 func (ContactEntity) TableName() string {
-	return "db_contact"
+	return "tb_contact"
 }
 
 type ContactItem struct {

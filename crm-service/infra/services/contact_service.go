@@ -165,3 +165,23 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 		TotalElements: uint32(len(result)),
 	}, nil
 }
+
+// @Summary Lấy trạng thái quan hệ
+// @Description Lấy trạng thái quan hệ
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của liên hệ"
+// @Security BearerAuth
+// @Response 200 {object} crmpb.RelationShipResponse
+// @Router /contact/relation-ship/{id} [get]
+func (s *ContactService) RelationShip(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.RelationShipResponse, error) {
+	result := s.UC.RelationShip(ctx, req.Id)
+	return &crmpb.RelationShipResponse{
+		FriendStatus: mapper.FriendItemToPb(result.FriendStatus),
+		Following:    result.Following,
+		NumFollower:  result.NumFollower,
+		NumFollowing: result.NumFollowing,
+		NumFriend:    result.NumFriend,
+	}, nil
+}

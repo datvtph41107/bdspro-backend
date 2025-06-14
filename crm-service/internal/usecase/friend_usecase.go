@@ -8,6 +8,7 @@ import (
 	"crm/data"
 	"crm/internal/domain"
 	"crm/internal/enums"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 	"errors"
 )
@@ -18,6 +19,8 @@ type FriendUsecase struct {
 	blockRepo    repo.BlockRepo
 	followRepo   repo.FollowRepo
 	blockService *BlockUsecase
+	historyRepo  repo.HistoryRepo
+	userClient   iusecase.UserClient
 }
 
 func NewFriendUsecase(repo repo.FriendRepo,
@@ -25,6 +28,8 @@ func NewFriendUsecase(repo repo.FriendRepo,
 	followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
+	historyRepo repo.HistoryRepo,
+	userClient iusecase.UserClient,
 ) *FriendUsecase {
 	return &FriendUsecase{
 		repo:         repo,
@@ -32,6 +37,8 @@ func NewFriendUsecase(repo repo.FriendRepo,
 		blockRepo:    blockRepo,
 		blockService: blockService,
 		followRepo:   followRepo,
+		historyRepo:  historyRepo,
+		userClient:   userClient,
 	}
 }
 
@@ -80,6 +87,32 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 		ReceiverID: receiverId,
 	}
 	_db.SaveWithContext(c, &e)
+
+	newCtx := _utils.CloneContext(c)
+	go func() {
+		profileId := _utils.GetProfileIdWithContext(newCtx)
+		currentUser, _ := s.userClient.GetProfileById(newCtx, profileId)
+		fullName := ""
+		if currentUser != nil {
+			fullName = currentUser.FullName
+		}
+
+		contact, err := s.contact.GetByProfileID(newCtx, receiverId, profileId, enums.EOwnerTypeMember)
+		if err != nil {
+			return
+		}
+
+		s.historyRepo.CreateHistory(newCtx, &domain.HistoryEntity{
+			Title:      fullName + " đã gửi lời mời kết bạn",
+			Note:       fullName + " đã gửi lời mời kết bạn tới " + contact.FullName,
+			TargetId:   contact.ID,
+			TargetType: enums.TargetHistoryContact,
+			ActionType: enums.HistoryContactFriend,
+			OwnerID:    &profileId,
+			OwnerType:  enums.EOwnerTypeMember,
+		})
+	}()
+
 	return e, nil
 }
 
