@@ -87,9 +87,8 @@ func (c *postServiceClient) GetPostByIDs(ctx context.Context, in *GetPostByIDsRe
 }
 
 func (c *postServiceClient) CreatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Post)
-	err := c.cc.Invoke(ctx, PostService_CreatePost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_CreatePost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +96,8 @@ func (c *postServiceClient) CreatePost(ctx context.Context, in *PostSaveRequest,
 }
 
 func (c *postServiceClient) NewExpiredPost(ctx context.Context, in *PostExpiredRequest, opts ...grpc.CallOption) (*Post, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Post)
-	err := c.cc.Invoke(ctx, PostService_NewExpiredPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_NewExpiredPost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +105,8 @@ func (c *postServiceClient) NewExpiredPost(ctx context.Context, in *PostExpiredR
 }
 
 func (c *postServiceClient) GetDetail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PostDetailResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostDetailResponse)
-	err := c.cc.Invoke(ctx, PostService_GetDetail_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_GetDetail_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +114,8 @@ func (c *postServiceClient) GetDetail(ctx context.Context, in *IdRequest, opts .
 }
 
 func (c *postServiceClient) UpdatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Post)
-	err := c.cc.Invoke(ctx, PostService_UpdatePost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_UpdatePost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -127,9 +123,8 @@ func (c *postServiceClient) UpdatePost(ctx context.Context, in *PostSaveRequest,
 }
 
 func (c *postServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Response)
-	err := c.cc.Invoke(ctx, PostService_Delete_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +132,8 @@ func (c *postServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...g
 }
 
 func (c *postServiceClient) UpdateHidden(ctx context.Context, in *UpdateHiddenRequest, opts ...grpc.CallOption) (*Response, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Response)
-	err := c.cc.Invoke(ctx, PostService_UpdateHidden_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_UpdateHidden_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +141,8 @@ func (c *postServiceClient) UpdateHidden(ctx context.Context, in *UpdateHiddenRe
 }
 
 func (c *postServiceClient) GetPersonalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostListResponse)
-	err := c.cc.Invoke(ctx, PostService_GetPersonalPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_GetPersonalPost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,9 +150,8 @@ func (c *postServiceClient) GetPersonalPost(ctx context.Context, in *PostSearchR
 }
 
 func (c *postServiceClient) GetGlobalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostListResponse)
-	err := c.cc.Invoke(ctx, PostService_GetGlobalPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_GetGlobalPost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +159,8 @@ func (c *postServiceClient) GetGlobalPost(ctx context.Context, in *PostSearchReq
 }
 
 func (c *postServiceClient) GetPublish(ctx context.Context, in *PostPublishSearch, opts ...grpc.CallOption) (*PostListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostListResponse)
-	err := c.cc.Invoke(ctx, PostService_GetPublish_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_GetPublish_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}

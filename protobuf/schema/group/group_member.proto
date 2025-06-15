@@ -3,6 +3,7 @@ syntax = "proto3";
 package pb_group;
 
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 option go_package = "types/pb_group";
 
@@ -91,4 +92,5 @@ message GroupMember {
     uint32 groupId = 2;
     uint32 userId = 3;
     string role = 4;
+    sharepb.ProfileItem profile = 5;
 }

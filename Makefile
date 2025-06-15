@@ -33,6 +33,20 @@ buf-shared:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path shared
 buf-org:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path organization
+buf-organization:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path organization
+buf-appointment:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path appointment
+buf-transaction:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path transaction
+buf-group:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path group
+buf-payment:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
+
+buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-group buf-payment buf-group buf-payment
+	echo "done"	
+	
 
 gen:
 	cd protobuf/schema && buf generate --template ./notification/buf.gen.yaml --path notification
@@ -65,3 +79,5 @@ buf-crm:
 user-http:
 	cd user-service && go run main.go http
 
+chat:
+	cd go-chat-service && go run main.go grpc-serve

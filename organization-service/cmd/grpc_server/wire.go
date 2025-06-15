@@ -12,6 +12,7 @@ import (
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
 	"github.com/tuandq2112/organization-service/internal/server/grpc"
 	"github.com/tuandq2112/organization-service/internal/usecase"
+	
 )
 
 var repositorySet = wire.NewSet(
@@ -34,6 +35,7 @@ var repositorySet = wire.NewSet(
 
 var clientSet = wire.NewSet(
 	client.NewChatClient,
+	client.NewUserClient,
 )
 
 var usecaseSet = wire.NewSet(

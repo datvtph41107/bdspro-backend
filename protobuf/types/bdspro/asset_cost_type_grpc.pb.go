@@ -47,16 +47,25 @@ func NewAssetCostTypeServiceClient(cc grpc.ClientConnInterface) AssetCostTypeSer
 	return &assetCostTypeServiceClient{cc}
 }
 
-func (c *assetCostTypeServiceClient) Get(ctx context.Context, in *AssetCostTypeDTO, opts ...grpc.CallOption) (*AssetCostTypeListDTO, error) {
+func (c *assetCostTypeServiceClient) Search(ctx context.Context, in *CostTypeRequest, opts ...grpc.CallOption) (*AssetCostTypeListDTO, error) {
 	out := new(AssetCostTypeListDTO)
-	err := c.cc.Invoke(ctx, AssetCostTypeService_Get_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AssetCostTypeService_Search_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *assetCostTypeServiceClient) Detail(ctx context.Context, in *AssetCostTypeDTO, opts ...grpc.CallOption) (*AssetCostTypeDTO, error) {
+func (c *assetCostTypeServiceClient) SearchGroup(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*GroupType, error) {
+	out := new(GroupType)
+	err := c.cc.Invoke(ctx, AssetCostTypeService_SearchGroup_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *assetCostTypeServiceClient) Detail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostTypeDTO, error) {
 	out := new(AssetCostTypeDTO)
 	err := c.cc.Invoke(ctx, AssetCostTypeService_Detail_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -83,8 +92,8 @@ func (c *assetCostTypeServiceClient) Update(ctx context.Context, in *AssetCostTy
 	return out, nil
 }
 
-func (c *assetCostTypeServiceClient) Delete(ctx context.Context, in *AssetCostTypeDTO, opts ...grpc.CallOption) (*AssetCostTypeDTO, error) {
-	out := new(AssetCostTypeDTO)
+func (c *assetCostTypeServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
 	err := c.cc.Invoke(ctx, AssetCostTypeService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err

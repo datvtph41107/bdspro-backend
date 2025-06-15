@@ -4,6 +4,7 @@ package pb_organization;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
+import "shared/common.proto";
 
 option go_package = "types/pb_organization";
 
@@ -96,6 +97,7 @@ message OrganizationMember {
     uint32 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
     string status = 4 [json_name = "status"];
+    sharepb.ProfileItem profile = 5 [json_name = "profile"];
 }
 
 message GetOrganizationMembersResponse {

@@ -2,6 +2,8 @@ GRPC:
   PORT: 50052
   CHAT_SERVICE_HOST: localhost
   CHAT_SERVICE_PORT: 50053
+  USER_SERVICE_HOST: localhost
+  USER_SERVICE_PORT: 8201
 
 Database:
   PRIMARY_DB_TYPE: postgres
@@ -9,3 +11,5 @@ Database:
 
 Queue:
   WORKER_QUEUE_SIZE: 1000
+
+ENV_RUNTIME: localhost

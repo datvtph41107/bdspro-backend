@@ -8,7 +8,10 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
+	"github.com/tuandq2112/organization-service/internal/interface/dto"
 	"github.com/tuandq2112/organization-service/pkg/utils"
+	sharepb "pb/types/shared"
 )
 
 type GroupMemberUsecase interface {
@@ -16,7 +19,7 @@ type GroupMemberUsecase interface {
 	UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error)
 	DeleteGroupMember(ctx context.Context, id uint32) error
 	GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error)
-	GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error)
+	GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*dto.GroupMemberWithProfile, error)
 }
 
 type groupMemberUsecase struct {
@@ -25,6 +28,7 @@ type groupMemberUsecase struct {
 	logWorker             *LogWorker
 	groupAuthUsecase      GroupAuthUsecase
 	groupChatUsecase      GroupChatUsecase
+	userGrpcClient        client.UserClient
 }
 
 func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
@@ -32,6 +36,7 @@ func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepositor
 	logWorker *LogWorker,
 	groupAuthUsecase GroupAuthUsecase,
 	groupChatUsecase GroupChatUsecase,
+	userGrpcClient client.UserClient,
 ) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,
@@ -142,12 +147,37 @@ func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) 
 	return u.groupMemberRepository.GetByID(ctx, id)
 }
 
-func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
+func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*dto.GroupMemberWithProfile, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, groupID, currentUserId)
 	if err != nil {
 		return nil, err
 	}
 
-	return u.groupMemberRepository.GetByGroupID(ctx, groupID)
+	members, err := u.groupMemberRepository.GetByGroupID(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	profileIds := make([]uint64, len(members))
+	for i, member := range members {
+		profileIds[i] = uint64(member.UserId)
+	}
+
+	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: profileIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	membersWithProfiles := make([]*dto.GroupMemberWithProfile, len(members))
+	for i, member := range members {
+		membersWithProfiles[i] = &dto.GroupMemberWithProfile{
+			GroupMember: member,
+			Profile:     profiles.Profiles[i],
+		}
+	}
+
+	return membersWithProfiles, nil
 }

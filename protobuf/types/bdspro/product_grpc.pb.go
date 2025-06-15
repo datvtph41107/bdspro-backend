@@ -81,179 +81,248 @@ func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
 	return &productServiceClient{cc}
 }
 
-func (c *bdsproServiceClient) Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, BdsproService_Ping_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ArchiveProduct(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ArchiveProduct_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) ListProductInternal(ctx context.Context, in *ProductInternalRequest, opts ...grpc.CallOption) (*ProductInternalResponse, error) {
-	out := new(ProductInternalResponse)
-	err := c.cc.Invoke(ctx, BdsproService_ListProductInternal_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ChildDevideProduct(ctx context.Context, in *DevideChildRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ChildDevideProduct_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) GetAssets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AssetList, error) {
-	out := new(AssetList)
-	err := c.cc.Invoke(ctx, BdsproService_GetAssets_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ChildHistories(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
+	out := new(HistoryResponse)
+	err := c.cc.Invoke(ctx, ProductService_ChildHistories_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) FilterAssets(ctx context.Context, in *FilterAssetsRequest, opts ...grpc.CallOption) (*AssetList, error) {
-	out := new(AssetList)
-	err := c.cc.Invoke(ctx, BdsproService_FilterAssets_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ChildMergeProduct(ctx context.Context, in *MergeChildRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ChildMergeProduct_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) BulkAction(ctx context.Context, in *BulkActionRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, BdsproService_BulkAction_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ChildMergeAll(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ChildMergeAll_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
-	out := new(Asset)
-	err := c.cc.Invoke(ctx, BdsproService_CreateAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ChildSplit(ctx context.Context, in *SaveChildRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ChildSplit_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) CreateAssetFromProduct(ctx context.Context, in *CreateAssetRequestFromProduct, opts ...grpc.CallOption) (*Asset, error) {
-	out := new(Asset)
-	err := c.cc.Invoke(ctx, BdsproService_CreateAssetFromProduct_FullMethodName, in, out, opts...)
+func (c *productServiceClient) Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_Deposite_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) ConvertProductToAsset(ctx context.Context, in *CreateAssetRequestConvertProduct, opts ...grpc.CallOption) (*Asset, error) {
-	out := new(Asset)
-	err := c.cc.Invoke(ctx, BdsproService_ConvertProductToAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) DeleteDeposite(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_DeleteDeposite_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) UpdateAsset(ctx context.Context, in *UpdateAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
-	out := new(Asset)
-	err := c.cc.Invoke(ctx, BdsproService_UpdateAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ExportProduct(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ExportProduct_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) DeleteAsset(ctx context.Context, in *DeleteAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, BdsproService_DeleteAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ProductMe(ctx context.Context, in *ProductSearch, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, ProductService_ProductMe_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) Archived(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, BdsproService_Archived_FullMethodName, in, out, opts...)
+func (c *productServiceClient) ProductNew(ctx context.Context, in *ProductSaveRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_ProductNew_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) GetAssetDetails(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetDetails, error) {
-	out := new(AssetDetails)
-	err := c.cc.Invoke(ctx, BdsproService_GetAssetDetails_FullMethodName, in, out, opts...)
+func (c *productServiceClient) RentStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_RentStatus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) ShareAsset(ctx context.Context, in *ShareAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, BdsproService_ShareAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) RentVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_RentVisibility_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) SplitAsset(ctx context.Context, in *SplitAssetRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, BdsproService_SplitAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) SaleStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_SaleStatus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) MergeAsset(ctx context.Context, in *MergeAssetRequest, opts ...grpc.CallOption) (*Asset, error) {
-	out := new(Asset)
-	err := c.cc.Invoke(ctx, BdsproService_MergeAsset_FullMethodName, in, out, opts...)
+func (c *productServiceClient) SaleVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_SaleVisibility_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bdsproServiceClient) GetAssetHistory(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetHistory, error) {
-	out := new(AssetHistory)
-	err := c.cc.Invoke(ctx, BdsproService_GetAssetHistory_FullMethodName, in, out, opts...)
+func (c *productServiceClient) Suggest(ctx context.Context, in *SuggestRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
+	out := new(ProductResponse)
+	err := c.cc.Invoke(ctx, ProductService_Suggest_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// BdsproServiceServer is the server API for BdsproService service.
-// All implementations must embed UnimplementedBdsproServiceServer
+func (c *productServiceClient) GetDetail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
+	out := new(ProductResponse)
+	err := c.cc.Invoke(ctx, ProductService_GetDetail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) GetHistories(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
+	out := new(HistoryResponse)
+	err := c.cc.Invoke(ctx, ProductService_GetHistories_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) GetMembers(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, ProductService_GetMembers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) GetPosts(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PostResponse, error) {
+	out := new(PostResponse)
+	err := c.cc.Invoke(ctx, ProductService_GetPosts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) UpdateProduct(ctx context.Context, in *ProductSaveRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_UpdateProduct_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) DeleteProduct(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, ProductService_DeleteProduct_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) AreaInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AreaInfoResponse, error) {
+	out := new(AreaInfoResponse)
+	err := c.cc.Invoke(ctx, ProductService_AreaInfo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ProductServiceServer is the server API for ProductService service.
+// All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility
-type BdsproServiceServer interface {
-	Ping(context.Context, *Empty) (*PingResponse, error)
-	ListProductInternal(context.Context, *ProductInternalRequest) (*ProductInternalResponse, error)
-	// assets
-	GetAssets(context.Context, *Empty) (*AssetList, error)
-	FilterAssets(context.Context, *FilterAssetsRequest) (*AssetList, error)
-	BulkAction(context.Context, *BulkActionRequest) (*Empty, error)
-	CreateAsset(context.Context, *CreateAssetRequest) (*Asset, error)
-	CreateAssetFromProduct(context.Context, *CreateAssetRequestFromProduct) (*Asset, error)
-	ConvertProductToAsset(context.Context, *CreateAssetRequestConvertProduct) (*Asset, error)
-	UpdateAsset(context.Context, *UpdateAssetRequest) (*Asset, error)
-	DeleteAsset(context.Context, *DeleteAssetRequest) (*Empty, error)
-	Archived(context.Context, *ArchivedRequest) (*Empty, error)
-	GetAssetDetails(context.Context, *GetAssetRequest) (*AssetDetails, error)
-	ShareAsset(context.Context, *ShareAssetRequest) (*Empty, error)
-	SplitAsset(context.Context, *SplitAssetRequest) (*Empty, error)
-	MergeAsset(context.Context, *MergeAssetRequest) (*Asset, error)
-	GetAssetHistory(context.Context, *GetAssetRequest) (*AssetHistory, error)
-	mustEmbedUnimplementedBdsproServiceServer()
+type ProductServiceServer interface {
+	ArchiveProduct(context.Context, *ArchivedRequest) (*Response, error)
+	ChildDevideProduct(context.Context, *DevideChildRequest) (*Response, error)
+	ChildHistories(context.Context, *IdRequest) (*HistoryResponse, error)
+	ChildMergeProduct(context.Context, *MergeChildRequest) (*Response, error)
+	ChildMergeAll(context.Context, *IdRequest) (*Response, error)
+	ChildSplit(context.Context, *SaveChildRequest) (*Response, error)
+	Deposite(context.Context, *DepositRequest) (*Response, error)
+	DeleteDeposite(context.Context, *IdRequest) (*Response, error)
+	ExportProduct(context.Context, *IdRequest) (*Response, error)
+	ProductMe(context.Context, *ProductSearch) (*SearchResponse, error)
+	ProductNew(context.Context, *ProductSaveRequest) (*Response, error)
+	RentStatus(context.Context, *StatusRequest) (*Response, error)
+	RentVisibility(context.Context, *VisibilityRequest) (*Response, error)
+	SaleStatus(context.Context, *StatusRequest) (*Response, error)
+	SaleVisibility(context.Context, *VisibilityRequest) (*Response, error)
+	Suggest(context.Context, *SuggestRequest) (*ProductResponse, error)
+	GetDetail(context.Context, *IdRequest) (*ProductResponse, error)
+	GetHistories(context.Context, *IdRequest) (*HistoryResponse, error)
+	GetMembers(context.Context, *IdRequest) (*MemberResponse, error)
+	GetPosts(context.Context, *IdRequest) (*PostResponse, error)
+	UpdateProduct(context.Context, *ProductSaveRequest) (*Response, error)
+	DeleteProduct(context.Context, *IdRequest) (*Response, error)
+	AreaInfo(context.Context, *IdRequest) (*AreaInfoResponse, error)
+	mustEmbedUnimplementedProductServiceServer()
 }
 
-// UnimplementedBdsproServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedBdsproServiceServer struct {
+// UnimplementedProductServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProductServiceServer struct {
 }
 
-func (UnimplementedProductServiceServer) ArchiveProduct(context.Context, *shared.ArchivedRequest) (*Response, error) {
+func (UnimplementedProductServiceServer) ArchiveProduct(context.Context, *ArchivedRequest) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ArchiveProduct not implemented")
 }
 func (UnimplementedProductServiceServer) ChildDevideProduct(context.Context, *DevideChildRequest) (*Response, error) {
@@ -301,7 +370,28 @@ func (UnimplementedProductServiceServer) SaleVisibility(context.Context, *Visibi
 func (UnimplementedProductServiceServer) Suggest(context.Context, *SuggestRequest) (*ProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Suggest not implemented")
 }
-func (UnimplementedBdsproServiceServer) mustEmbedUnimplementedBdsproServiceServer() {}
+func (UnimplementedProductServiceServer) GetDetail(context.Context, *IdRequest) (*ProductResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDetail not implemented")
+}
+func (UnimplementedProductServiceServer) GetHistories(context.Context, *IdRequest) (*HistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHistories not implemented")
+}
+func (UnimplementedProductServiceServer) GetMembers(context.Context, *IdRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
+}
+func (UnimplementedProductServiceServer) GetPosts(context.Context, *IdRequest) (*PostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
+}
+func (UnimplementedProductServiceServer) UpdateProduct(context.Context, *ProductSaveRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProduct not implemented")
+}
+func (UnimplementedProductServiceServer) DeleteProduct(context.Context, *IdRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProduct not implemented")
+}
+func (UnimplementedProductServiceServer) AreaInfo(context.Context, *IdRequest) (*AreaInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AreaInfo not implemented")
+}
+func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
 
 // UnsafeProductServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to ProductServiceServer will
@@ -310,8 +400,8 @@ type UnsafeProductServiceServer interface {
 	mustEmbedUnimplementedProductServiceServer()
 }
 
-func RegisterBdsproServiceServer(s grpc.ServiceRegistrar, srv BdsproServiceServer) {
-	s.RegisterService(&BdsproService_ServiceDesc, srv)
+func RegisterProductServiceServer(s grpc.ServiceRegistrar, srv ProductServiceServer) {
+	s.RegisterService(&ProductService_ServiceDesc, srv)
 }
 
 func _ProductService_ArchiveProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {

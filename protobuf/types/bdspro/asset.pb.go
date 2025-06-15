@@ -22,268 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ArchivedRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id       uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Archived bool   `protobuf:"varint,2,opt,name=archived,proto3" json:"archived,omitempty"`
-}
-
-func (x *ArchivedRequest) Reset() {
-	*x = ArchivedRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ArchivedRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ArchivedRequest) ProtoMessage() {}
-
-func (x *ArchivedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ArchivedRequest.ProtoReflect.Descriptor instead.
-func (*ArchivedRequest) Descriptor() ([]byte, []int) {
-	return file_bdspro_asset_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *ArchivedRequest) GetId() uint64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *ArchivedRequest) GetArchived() bool {
-	if x != nil {
-		return x.Archived
-	}
-	return false
-}
-
-type Asset struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id               uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	WardId           uint64                 `protobuf:"varint,3,opt,name=wardId,proto3" json:"wardId,omitempty"`
-	DistrictId       uint64                 `protobuf:"varint,4,opt,name=districtId,proto3" json:"districtId,omitempty"`
-	ProvinceId       uint64                 `protobuf:"varint,5,opt,name=provinceId,proto3" json:"provinceId,omitempty"`
-	Price            float64                `protobuf:"fixed64,6,opt,name=price,proto3" json:"price,omitempty"`
-	BuyedDate        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=buyedDate,proto3" json:"buyedDate,omitempty"`
-	DocStatus        uint64                 `protobuf:"varint,8,opt,name=docStatus,proto3" json:"docStatus,omitempty"` // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
-	ProductId        *uint64                `protobuf:"varint,9,opt,name=productId,proto3,oneof" json:"productId,omitempty"`
-	OwnerUserId      *uint64                `protobuf:"varint,10,opt,name=ownerUserId,proto3,oneof" json:"ownerUserId,omitempty"`
-	OwnerOrgId       *uint64                `protobuf:"varint,11,opt,name=ownerOrgId,proto3,oneof" json:"ownerOrgId,omitempty"`
-	ParentAssetId    *uint64                `protobuf:"varint,12,opt,name=parentAssetId,proto3,oneof" json:"parentAssetId,omitempty"`
-	SplitMergeStatus string                 `protobuf:"bytes,13,opt,name=splitMergeStatus,proto3" json:"splitMergeStatus,omitempty"`
-	PurchasePrice    float64                `protobuf:"fixed64,14,opt,name=purchasePrice,proto3" json:"purchasePrice,omitempty"`
-	PurchaseDate     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=purchaseDate,proto3" json:"purchaseDate,omitempty"`
-	LegalStatus      string                 `protobuf:"bytes,16,opt,name=legalStatus,proto3" json:"legalStatus,omitempty"`
-	Archived         bool                   `protobuf:"varint,17,opt,name=archived,proto3" json:"archived,omitempty"`
-	RentStatus       uint32                 `protobuf:"varint,18,opt,name=rentStatus,proto3" json:"rentStatus,omitempty"`
-	Area             float64                `protobuf:"fixed64,19,opt,name=area,proto3" json:"area,omitempty"`
-	Address          string                 `protobuf:"bytes,20,opt,name=address,proto3" json:"address,omitempty"`
-	Description      string                 `protobuf:"bytes,21,opt,name=description,proto3" json:"description,omitempty"`
-}
-
-func (x *Asset) Reset() {
-	*x = Asset{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Asset) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Asset) ProtoMessage() {}
-
-func (x *Asset) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Asset.ProtoReflect.Descriptor instead.
-func (*Asset) Descriptor() ([]byte, []int) {
-	return file_bdspro_asset_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Asset) GetId() uint64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *Asset) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *Asset) GetWardId() uint64 {
-	if x != nil {
-		return x.WardId
-	}
-	return 0
-}
-
-func (x *Asset) GetDistrictId() uint64 {
-	if x != nil {
-		return x.DistrictId
-	}
-	return 0
-}
-
-func (x *Asset) GetProvinceId() uint64 {
-	if x != nil {
-		return x.ProvinceId
-	}
-	return 0
-}
-
-func (x *Asset) GetPrice() float64 {
-	if x != nil {
-		return x.Price
-	}
-	return 0
-}
-
-func (x *Asset) GetBuyedDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.BuyedDate
-	}
-	return nil
-}
-
-func (x *Asset) GetDocStatus() uint64 {
-	if x != nil {
-		return x.DocStatus
-	}
-	return 0
-}
-
-func (x *Asset) GetProductId() uint64 {
-	if x != nil && x.ProductId != nil {
-		return *x.ProductId
-	}
-	return 0
-}
-
-func (x *Asset) GetOwnerUserId() uint64 {
-	if x != nil && x.OwnerUserId != nil {
-		return *x.OwnerUserId
-	}
-	return 0
-}
-
-func (x *Asset) GetOwnerOrgId() uint64 {
-	if x != nil && x.OwnerOrgId != nil {
-		return *x.OwnerOrgId
-	}
-	return 0
-}
-
-func (x *Asset) GetParentAssetId() uint64 {
-	if x != nil && x.ParentAssetId != nil {
-		return *x.ParentAssetId
-	}
-	return 0
-}
-
-func (x *Asset) GetSplitMergeStatus() string {
-	if x != nil {
-		return x.SplitMergeStatus
-	}
-	return ""
-}
-
-func (x *Asset) GetPurchasePrice() float64 {
-	if x != nil {
-		return x.PurchasePrice
-	}
-	return 0
-}
-
-func (x *Asset) GetPurchaseDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.PurchaseDate
-	}
-	return nil
-}
-
-func (x *Asset) GetLegalStatus() string {
-	if x != nil {
-		return x.LegalStatus
-	}
-	return ""
-}
-
-func (x *Asset) GetArchived() bool {
-	if x != nil {
-		return x.Archived
-	}
-	return false
-}
-
-func (x *Asset) GetRentStatus() uint32 {
-	if x != nil {
-		return x.RentStatus
-	}
-	return 0
-}
-
-func (x *Asset) GetArea() float64 {
-	if x != nil {
-		return x.Area
-	}
-	return 0
-}
-
-func (x *Asset) GetAddress() string {
-	if x != nil {
-		return x.Address
-	}
-	return ""
-}
-
-func (x *Asset) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
 type AssetList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -295,7 +33,7 @@ type AssetList struct {
 func (x *AssetList) Reset() {
 	*x = AssetList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[2]
+		mi := &file_bdspro_asset_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -308,7 +46,7 @@ func (x *AssetList) String() string {
 func (*AssetList) ProtoMessage() {}
 
 func (x *AssetList) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[2]
+	mi := &file_bdspro_asset_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -342,7 +80,7 @@ type GetAssetRequest struct {
 func (x *GetAssetRequest) Reset() {
 	*x = GetAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[3]
+		mi := &file_bdspro_asset_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -355,7 +93,7 @@ func (x *GetAssetRequest) String() string {
 func (*GetAssetRequest) ProtoMessage() {}
 
 func (x *GetAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[3]
+	mi := &file_bdspro_asset_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +127,7 @@ type DeleteAssetRequest struct {
 func (x *DeleteAssetRequest) Reset() {
 	*x = DeleteAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[4]
+		mi := &file_bdspro_asset_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -402,7 +140,7 @@ func (x *DeleteAssetRequest) String() string {
 func (*DeleteAssetRequest) ProtoMessage() {}
 
 func (x *DeleteAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[4]
+	mi := &file_bdspro_asset_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -456,7 +194,7 @@ type CreateAssetRequest struct {
 func (x *CreateAssetRequest) Reset() {
 	*x = CreateAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[5]
+		mi := &file_bdspro_asset_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -469,7 +207,7 @@ func (x *CreateAssetRequest) String() string {
 func (*CreateAssetRequest) ProtoMessage() {}
 
 func (x *CreateAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[5]
+	mi := &file_bdspro_asset_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -663,7 +401,7 @@ type UpdateAssetRequest struct {
 func (x *UpdateAssetRequest) Reset() {
 	*x = UpdateAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[6]
+		mi := &file_bdspro_asset_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -676,7 +414,7 @@ func (x *UpdateAssetRequest) String() string {
 func (*UpdateAssetRequest) ProtoMessage() {}
 
 func (x *UpdateAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[6]
+	mi := &file_bdspro_asset_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -851,7 +589,7 @@ type BulkActionRequest struct {
 func (x *BulkActionRequest) Reset() {
 	*x = BulkActionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[7]
+		mi := &file_bdspro_asset_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -864,7 +602,7 @@ func (x *BulkActionRequest) String() string {
 func (*BulkActionRequest) ProtoMessage() {}
 
 func (x *BulkActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[7]
+	mi := &file_bdspro_asset_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -907,7 +645,7 @@ type FilterAssetsRequest struct {
 func (x *FilterAssetsRequest) Reset() {
 	*x = FilterAssetsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[8]
+		mi := &file_bdspro_asset_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -920,7 +658,7 @@ func (x *FilterAssetsRequest) String() string {
 func (*FilterAssetsRequest) ProtoMessage() {}
 
 func (x *FilterAssetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[8]
+	mi := &file_bdspro_asset_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +706,7 @@ type AssetDetails struct {
 func (x *AssetDetails) Reset() {
 	*x = AssetDetails{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[9]
+		mi := &file_bdspro_asset_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -981,7 +719,7 @@ func (x *AssetDetails) String() string {
 func (*AssetDetails) ProtoMessage() {}
 
 func (x *AssetDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[9]
+	mi := &file_bdspro_asset_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1016,7 +754,7 @@ type ShareAssetRequest struct {
 func (x *ShareAssetRequest) Reset() {
 	*x = ShareAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[10]
+		mi := &file_bdspro_asset_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1029,7 +767,7 @@ func (x *ShareAssetRequest) String() string {
 func (*ShareAssetRequest) ProtoMessage() {}
 
 func (x *ShareAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[10]
+	mi := &file_bdspro_asset_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1065,13 +803,13 @@ type SplitAssetRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id    uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Parts []*Asset `protobuf:"bytes,2,rep,name=parts,proto3" json:"parts,omitempty"`
+	Datas []*Asset `protobuf:"bytes,2,rep,name=datas,proto3" json:"datas,omitempty"`
 }
 
 func (x *SplitAssetRequest) Reset() {
 	*x = SplitAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[11]
+		mi := &file_bdspro_asset_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1084,7 +822,7 @@ func (x *SplitAssetRequest) String() string {
 func (*SplitAssetRequest) ProtoMessage() {}
 
 func (x *SplitAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[11]
+	mi := &file_bdspro_asset_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1127,7 +865,7 @@ type MergeAssetRequest struct {
 func (x *MergeAssetRequest) Reset() {
 	*x = MergeAssetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[12]
+		mi := &file_bdspro_asset_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1140,7 +878,7 @@ func (x *MergeAssetRequest) String() string {
 func (*MergeAssetRequest) ProtoMessage() {}
 
 func (x *MergeAssetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[12]
+	mi := &file_bdspro_asset_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1189,7 +927,7 @@ type AssetHistory struct {
 func (x *AssetHistory) Reset() {
 	*x = AssetHistory{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[13]
+		mi := &file_bdspro_asset_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1202,7 +940,7 @@ func (x *AssetHistory) String() string {
 func (*AssetHistory) ProtoMessage() {}
 
 func (x *AssetHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[13]
+	mi := &file_bdspro_asset_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +987,7 @@ type CreateAssetRequestNew struct {
 func (x *CreateAssetRequestNew) Reset() {
 	*x = CreateAssetRequestNew{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[14]
+		mi := &file_bdspro_asset_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1262,7 +1000,7 @@ func (x *CreateAssetRequestNew) String() string {
 func (*CreateAssetRequestNew) ProtoMessage() {}
 
 func (x *CreateAssetRequestNew) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[14]
+	mi := &file_bdspro_asset_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1336,7 +1074,7 @@ type CreateAssetRequestFromProduct struct {
 func (x *CreateAssetRequestFromProduct) Reset() {
 	*x = CreateAssetRequestFromProduct{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[15]
+		mi := &file_bdspro_asset_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1349,7 +1087,7 @@ func (x *CreateAssetRequestFromProduct) String() string {
 func (*CreateAssetRequestFromProduct) ProtoMessage() {}
 
 func (x *CreateAssetRequestFromProduct) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[15]
+	mi := &file_bdspro_asset_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,7 +1156,7 @@ type CreateAssetRequestConvertProduct struct {
 func (x *CreateAssetRequestConvertProduct) Reset() {
 	*x = CreateAssetRequestConvertProduct{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bdspro_asset_proto_msgTypes[16]
+		mi := &file_bdspro_asset_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1431,7 +1169,7 @@ func (x *CreateAssetRequestConvertProduct) String() string {
 func (*CreateAssetRequestConvertProduct) ProtoMessage() {}
 
 func (x *CreateAssetRequestConvertProduct) ProtoReflect() protoreflect.Message {
-	mi := &file_bdspro_asset_proto_msgTypes[16]
+	mi := &file_bdspro_asset_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1497,19 +1235,22 @@ func (x *CreateAssetRequestConvertProduct) GetPurchasePrice() float64 {
 }
 
 type AssetSearchRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Keyword       string                 `protobuf:"bytes,1,opt,name=keyword,proto3" json:"keyword,omitempty"`
-	Type          uint32                 `protobuf:"varint,2,opt,name=type,proto3" json:"type,omitempty"`
-	Archived      bool                   `protobuf:"varint,3,opt,name=archived,proto3" json:"archived,omitempty"`
-	unknownFields protoimpl.UnknownFields
+	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Keyword  string `protobuf:"bytes,1,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	Type     uint32 `protobuf:"varint,2,opt,name=type,proto3" json:"type,omitempty"`
+	Archived bool   `protobuf:"varint,3,opt,name=archived,proto3" json:"archived,omitempty"`
 }
 
 func (x *AssetSearchRequest) Reset() {
 	*x = AssetSearchRequest{}
-	mi := &file_bdspro_asset_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
+	if protoimpl.UnsafeEnabled {
+		mi := &file_bdspro_asset_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
 }
 
 func (x *AssetSearchRequest) String() string {
@@ -1520,7 +1261,7 @@ func (*AssetSearchRequest) ProtoMessage() {}
 
 func (x *AssetSearchRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_bdspro_asset_proto_msgTypes[15]
-	if x != nil {
+	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1557,18 +1298,21 @@ func (x *AssetSearchRequest) GetArchived() bool {
 }
 
 type AssetSearchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []*Asset               `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
-	Total         uint64                 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
-	unknownFields protoimpl.UnknownFields
+	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Data  []*Asset `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	Total uint64   `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 }
 
 func (x *AssetSearchResponse) Reset() {
 	*x = AssetSearchResponse{}
-	mi := &file_bdspro_asset_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
+	if protoimpl.UnsafeEnabled {
+		mi := &file_bdspro_asset_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
 }
 
 func (x *AssetSearchResponse) String() string {
@@ -1579,7 +1323,7 @@ func (*AssetSearchResponse) ProtoMessage() {}
 
 func (x *AssetSearchResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_bdspro_asset_proto_msgTypes[16]
-	if x != nil {
+	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1808,47 +1552,100 @@ var file_bdspro_asset_proto_rawDesc = []byte{
 	0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52,
 	0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65,
 	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65,
-	0x64, 0x22, 0x34, 0x0a, 0x0c, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c,
-	0x73, 0x12, 0x24, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x10, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65,
-	0x74, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x3e, 0x0a, 0x11, 0x53, 0x68, 0x61, 0x72, 0x65,
-	0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x19, 0x0a, 0x08,
-	0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07,
-	0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x73, 0x22, 0x4b, 0x0a, 0x11, 0x53, 0x70, 0x6c, 0x69, 0x74,
-	0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x26, 0x0a, 0x05,
-	0x70, 0x61, 0x72, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x70, 0x62,
-	0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x05, 0x70,
-	0x61, 0x72, 0x74, 0x73, 0x22, 0x50, 0x0a, 0x11, 0x4d, 0x65, 0x72, 0x67, 0x65, 0x41, 0x73, 0x73,
-	0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x69, 0x64, 0x73,
-	0x18, 0x01, 0x20, 0x03, 0x28, 0x04, 0x52, 0x03, 0x69, 0x64, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x6e,
-	0x65, 0x77, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6e,
-	0x65, 0x77, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x22, 0x43, 0x0a, 0x0c, 0x41, 0x73, 0x73, 0x65, 0x74, 0x48,
-	0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x73, 0x73, 0x65, 0x74, 0x5f,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x61, 0x73, 0x73, 0x65, 0x74, 0x49,
-	0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03,
-	0x28, 0x09, 0x52, 0x07, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x22, 0xe3, 0x01, 0x0a, 0x15,
-	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x43, 0x6f, 0x6e, 0x76, 0x65, 0x72, 0x74, 0x50, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74,
-	0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x49, 0x64, 0x12,
-	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x12, 0x0a,
-	0x04, 0x61, 0x72, 0x65, 0x61, 0x18, 0x04, 0x20, 0x01, 0x28, 0x01, 0x52, 0x04, 0x61, 0x72, 0x65,
-	0x61, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x3f, 0x0a, 0x0d, 0x70, 0x75, 0x72, 0x63, 0x68, 0x61, 0x73, 0x65, 0x5f,
-	0x64, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d,
-	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0c, 0x70, 0x75, 0x72, 0x63, 0x68, 0x61, 0x73, 0x65,
-	0x44, 0x61, 0x74, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x75, 0x72, 0x63, 0x68, 0x61, 0x73, 0x65,
-	0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x01, 0x52, 0x0d, 0x70, 0x75,
-	0x72, 0x63, 0x68, 0x61, 0x73, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x42, 0x1b, 0x5a, 0x19, 0x70,
-	0x62, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x3b, 0x70,
-	0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x22, 0x51, 0x0a, 0x13, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x24, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x12, 0x14,
+	0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x74,
+	0x6f, 0x74, 0x61, 0x6c, 0x32, 0xdc, 0x0a, 0x0a, 0x0c, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x75, 0x0a, 0x0e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x49,
+	0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12, 0x1d, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73,
+	0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x24, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1e, 0x12, 0x1c,
+	0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73,
+	0x73, 0x65, 0x74, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12, 0x76, 0x0a, 0x0b,
+	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x53, 0x68, 0x61, 0x72, 0x65, 0x12, 0x1d, 0x2e, 0x70, 0x62,
+	0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x62, 0x5f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x28, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x22, 0x12, 0x20, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76,
+	0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x2d, 0x73,
+	0x68, 0x61, 0x72, 0x65, 0x12, 0x6f, 0x0a, 0x0b, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x53, 0x70,
+	0x6c, 0x69, 0x74, 0x12, 0x1d, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e,
+	0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41,
+	0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x21, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1b, 0x12, 0x19, 0x2f, 0x76, 0x32, 0x2f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f,
+	0x73, 0x70, 0x6c, 0x69, 0x74, 0x12, 0x61, 0x0a, 0x08, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65,
+	0x64, 0x12, 0x1a, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x72,
+	0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e,
+	0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x24, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1e, 0x1a, 0x1c, 0x2f, 0x76, 0x32, 0x2f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f,
+	0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x12, 0x61, 0x0a, 0x0b, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x12, 0x1d, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73,
+	0x70, 0x72, 0x6f, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x1e, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x18, 0x3a, 0x01, 0x2a, 0x22, 0x13, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x12, 0x66, 0x0a, 0x0b, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x12, 0x1d, 0x2e, 0x70, 0x62, 0x5f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x73, 0x73,
+	0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x70, 0x62, 0x5f, 0x62,
+	0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1d, 0x3a, 0x01, 0x2a, 0x1a, 0x18, 0x2f, 0x76, 0x32, 0x2f, 0x62,
+	0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x7b,
+	0x69, 0x64, 0x7d, 0x12, 0x5a, 0x0a, 0x0b, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x73, 0x73,
+	0x65, 0x74, 0x12, 0x14, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x49,
+	0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64,
+	0x73, 0x70, 0x72, 0x6f, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x20, 0x82,
+	0xd3, 0xe4, 0x93, 0x02, 0x1a, 0x2a, 0x18, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72,
+	0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x12,
+	0x62, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x12, 0x1a, 0x2e, 0x70,
+	0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x73, 0x73, 0x65,
+	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64,
+	0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x22, 0x27, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x21, 0x12, 0x1f, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76,
+	0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x2f, 0x7b,
+	0x69, 0x64, 0x7d, 0x12, 0x5d, 0x0a, 0x05, 0x4d, 0x65, 0x72, 0x67, 0x65, 0x12, 0x1c, 0x2e, 0x70,
+	0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x4d, 0x65, 0x72, 0x67, 0x65, 0x41, 0x73,
+	0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x70, 0x62, 0x5f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x22, 0x24, 0x82, 0xd3,
+	0xe4, 0x93, 0x02, 0x1e, 0x3a, 0x01, 0x2a, 0x22, 0x19, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73,
+	0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x6d, 0x65, 0x72,
+	0x67, 0x65, 0x12, 0x5d, 0x0a, 0x05, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x12, 0x1c, 0x2e, 0x70, 0x62,
+	0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x41, 0x73, 0x73,
+	0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x70, 0x62, 0x5f, 0x62,
+	0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x22, 0x24, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x1e, 0x3a, 0x01, 0x2a, 0x22, 0x19, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x73, 0x70, 0x6c, 0x69,
+	0x74, 0x12, 0x65, 0x0a, 0x07, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x14, 0x2e, 0x70,
+	0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x48,
+	0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x28,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x22, 0x12, 0x20, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70,
+	0x72, 0x6f, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x68, 0x69, 0x73, 0x74,
+	0x6f, 0x72, 0x79, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x12, 0x6b, 0x0a, 0x0c, 0x48, 0x69, 0x73, 0x74,
+	0x6f, 0x72, 0x79, 0x4f, 0x77, 0x6e, 0x65, 0x72, 0x12, 0x14, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64,
+	0x73, 0x70, 0x72, 0x6f, 0x2e, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a,
+	0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x48, 0x69, 0x73, 0x74, 0x6f,
+	0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x29, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x23, 0x12, 0x21, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76,
+	0x32, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x68, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x2f,
+	0x6f, 0x77, 0x6e, 0x65, 0x72, 0x12, 0x6c, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x50, 0x75, 0x62, 0x6c,
+	0x69, 0x73, 0x68, 0x12, 0x14, 0x2e, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e,
+	0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x62, 0x5f, 0x62,
+	0x64, 0x73, 0x70, 0x72, 0x6f, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63,
+	0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x28, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x22, 0x12, 0x20, 0x2f, 0x76, 0x32, 0x2f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x2f, 0x76, 0x32,
+	0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x2f, 0x7b,
+	0x69, 0x64, 0x7d, 0x42, 0x1b, 0x5a, 0x19, 0x70, 0x62, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f,
+	0x62, 0x64, 0x73, 0x70, 0x72, 0x6f, 0x3b, 0x70, 0x62, 0x5f, 0x62, 0x64, 0x73, 0x70, 0x72, 0x6f,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1865,24 +1662,29 @@ func file_bdspro_asset_proto_rawDescGZIP() []byte {
 
 var file_bdspro_asset_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_bdspro_asset_proto_goTypes = []interface{}{
-	(*ArchivedRequest)(nil),                  // 0: pb_bdspro.ArchivedRequest
-	(*Asset)(nil),                            // 1: pb_bdspro.Asset
-	(*AssetList)(nil),                        // 2: pb_bdspro.AssetList
-	(*GetAssetRequest)(nil),                  // 3: pb_bdspro.GetAssetRequest
-	(*DeleteAssetRequest)(nil),               // 4: pb_bdspro.DeleteAssetRequest
-	(*CreateAssetRequest)(nil),               // 5: pb_bdspro.CreateAssetRequest
-	(*UpdateAssetRequest)(nil),               // 6: pb_bdspro.UpdateAssetRequest
-	(*BulkActionRequest)(nil),                // 7: pb_bdspro.BulkActionRequest
-	(*FilterAssetsRequest)(nil),              // 8: pb_bdspro.FilterAssetsRequest
-	(*AssetDetails)(nil),                     // 9: pb_bdspro.AssetDetails
-	(*ShareAssetRequest)(nil),                // 10: pb_bdspro.ShareAssetRequest
-	(*SplitAssetRequest)(nil),                // 11: pb_bdspro.SplitAssetRequest
-	(*MergeAssetRequest)(nil),                // 12: pb_bdspro.MergeAssetRequest
-	(*AssetHistory)(nil),                     // 13: pb_bdspro.AssetHistory
-	(*CreateAssetRequestNew)(nil),            // 14: pb_bdspro.CreateAssetRequestNew
-	(*CreateAssetRequestFromProduct)(nil),    // 15: pb_bdspro.CreateAssetRequestFromProduct
-	(*CreateAssetRequestConvertProduct)(nil), // 16: pb_bdspro.CreateAssetRequestConvertProduct
-	(*timestamppb.Timestamp)(nil),            // 17: google.protobuf.Timestamp
+	(*AssetList)(nil),                        // 0: pb_bdspro.AssetList
+	(*GetAssetRequest)(nil),                  // 1: pb_bdspro.GetAssetRequest
+	(*DeleteAssetRequest)(nil),               // 2: pb_bdspro.DeleteAssetRequest
+	(*CreateAssetRequest)(nil),               // 3: pb_bdspro.CreateAssetRequest
+	(*UpdateAssetRequest)(nil),               // 4: pb_bdspro.UpdateAssetRequest
+	(*BulkActionRequest)(nil),                // 5: pb_bdspro.BulkActionRequest
+	(*FilterAssetsRequest)(nil),              // 6: pb_bdspro.FilterAssetsRequest
+	(*AssetDetails)(nil),                     // 7: pb_bdspro.AssetDetails
+	(*ShareAssetRequest)(nil),                // 8: pb_bdspro.ShareAssetRequest
+	(*SplitAssetRequest)(nil),                // 9: pb_bdspro.SplitAssetRequest
+	(*MergeAssetRequest)(nil),                // 10: pb_bdspro.MergeAssetRequest
+	(*AssetHistory)(nil),                     // 11: pb_bdspro.AssetHistory
+	(*CreateAssetRequestNew)(nil),            // 12: pb_bdspro.CreateAssetRequestNew
+	(*CreateAssetRequestFromProduct)(nil),    // 13: pb_bdspro.CreateAssetRequestFromProduct
+	(*CreateAssetRequestConvertProduct)(nil), // 14: pb_bdspro.CreateAssetRequestConvertProduct
+	(*AssetSearchRequest)(nil),               // 15: pb_bdspro.AssetSearchRequest
+	(*AssetSearchResponse)(nil),              // 16: pb_bdspro.AssetSearchResponse
+	(*Asset)(nil),                            // 17: pb_bdspro.Asset
+	(*timestamppb.Timestamp)(nil),            // 18: google.protobuf.Timestamp
+	(*ArchivedRequest)(nil),                  // 19: pb_bdspro.ArchivedRequest
+	(*IdRequest)(nil),                        // 20: pb_bdspro.IdRequest
+	(*Response)(nil),                         // 21: pb_bdspro.Response
+	(*HistoryResponse)(nil),                  // 22: pb_bdspro.HistoryResponse
 }
 var file_bdspro_asset_proto_depIdxs = []int32{
 	17, // 0: pb_bdspro.AssetList.data:type_name -> pb_bdspro.Asset
@@ -1934,32 +1736,9 @@ func file_bdspro_asset_proto_init() {
 	if File_bdspro_asset_proto != nil {
 		return
 	}
+	file_bdspro_share_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_bdspro_asset_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchivedRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_bdspro_asset_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Asset); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_bdspro_asset_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AssetList); i {
 			case 0:
 				return &v.state
@@ -1971,7 +1750,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetAssetRequest); i {
 			case 0:
 				return &v.state
@@ -1983,7 +1762,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteAssetRequest); i {
 			case 0:
 				return &v.state
@@ -1995,7 +1774,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateAssetRequest); i {
 			case 0:
 				return &v.state
@@ -2007,7 +1786,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateAssetRequest); i {
 			case 0:
 				return &v.state
@@ -2019,7 +1798,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BulkActionRequest); i {
 			case 0:
 				return &v.state
@@ -2031,7 +1810,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FilterAssetsRequest); i {
 			case 0:
 				return &v.state
@@ -2043,7 +1822,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AssetDetails); i {
 			case 0:
 				return &v.state
@@ -2055,7 +1834,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ShareAssetRequest); i {
 			case 0:
 				return &v.state
@@ -2067,7 +1846,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SplitAssetRequest); i {
 			case 0:
 				return &v.state
@@ -2079,7 +1858,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MergeAssetRequest); i {
 			case 0:
 				return &v.state
@@ -2091,7 +1870,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AssetHistory); i {
 			case 0:
 				return &v.state
@@ -2103,7 +1882,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateAssetRequestNew); i {
 			case 0:
 				return &v.state
@@ -2115,7 +1894,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateAssetRequestFromProduct); i {
 			case 0:
 				return &v.state
@@ -2127,7 +1906,7 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
-		file_bdspro_asset_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_bdspro_asset_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateAssetRequestConvertProduct); i {
 			case 0:
 				return &v.state
@@ -2139,10 +1918,33 @@ func file_bdspro_asset_proto_init() {
 				return nil
 			}
 		}
+		file_bdspro_asset_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssetSearchRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_bdspro_asset_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssetSearchResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
-	file_bdspro_asset_proto_msgTypes[1].OneofWrappers = []interface{}{}
-	file_bdspro_asset_proto_msgTypes[5].OneofWrappers = []interface{}{}
-	file_bdspro_asset_proto_msgTypes[6].OneofWrappers = []interface{}{}
+	file_bdspro_asset_proto_msgTypes[3].OneofWrappers = []interface{}{}
+	file_bdspro_asset_proto_msgTypes[4].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

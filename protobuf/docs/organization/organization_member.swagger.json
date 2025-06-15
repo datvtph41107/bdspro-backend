@@ -262,6 +262,9 @@
         },
         "status": {
           "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -324,6 +327,27 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     }

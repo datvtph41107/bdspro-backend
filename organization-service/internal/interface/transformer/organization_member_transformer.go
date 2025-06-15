@@ -4,16 +4,17 @@ import (
 	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"github.com/tuandq2112/organization-service/internal/interface/dto"
 )
 
 type OrganizationMemberTransformer interface {
-	CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) (*entity.OrganizationMember)
+	CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToCreateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.CreateOrganizationMemberResponse
 	UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToDeleteOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.DeleteOrganizationMemberResponse
-	EntityToGetOrganizationMembersResponse(organizationMembers []*entity.OrganizationMember, total uint32) *organizationpb.GetOrganizationMembersResponse
+	EntityToGetOrganizationMembersResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse
 }
 
 type organizationMemberTransformer struct{}
@@ -22,13 +23,14 @@ func NewOrganizationMemberTransformer() OrganizationMemberTransformer {
 	return &organizationMemberTransformer{}
 }
 
-func (o *organizationMemberTransformer) CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) (*entity.OrganizationMember,) {
+func (o *organizationMemberTransformer) CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) *entity.OrganizationMember {
 	return &entity.OrganizationMember{
 		OrganizationID: request.OrganizationId,
-		UserID: request.UserId,
-		RoleId: request.Role,
+		UserID:         request.UserId,
+		RoleId:         request.Role,
 	}
 }
+
 func (o *organizationMemberTransformer) EntityToCreateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.CreateOrganizationMemberResponse {
 	return &organizationpb.CreateOrganizationMemberResponse{
 		Id: organizationMember.ID,
@@ -37,12 +39,12 @@ func (o *organizationMemberTransformer) EntityToCreateOrganizationMemberResponse
 
 func (o *organizationMemberTransformer) UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember {
 	return &entity.OrganizationMember{
-		ID: request.Id,
+		ID:     request.Id,
 		RoleId: request.Role,
 	}
 }
 
-func (o *organizationMemberTransformer) EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse {			
+func (o *organizationMemberTransformer) EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse {
 	return &organizationpb.UpdateOrganizationMemberResponse{
 		Id: organizationMember.ID,
 	}
@@ -60,18 +62,34 @@ func (o *organizationMemberTransformer) EntityToDeleteOrganizationMemberResponse
 	}
 }
 
-func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*entity.OrganizationMember, total uint32) *organizationpb.GetOrganizationMembersResponse {
+func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse {
 	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
 	for i, member := range members {
+		profile := member.Profile
+		profile.Phone = ""
 		membersResponse[i] = &organizationpb.OrganizationMember{
-			Id:     member.ID,
-			UserId: member.UserID,
-			Role:   member.RoleId,
-			Status: string(member.Status),
+			Id:      member.OrganizationMember.ID,
+			UserId:  member.OrganizationMember.UserID,
+			Role:    member.OrganizationMember.RoleId,
+			Status:  getStatusString(member.OrganizationMember.Status),
+			Profile: profile,
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{
 		OrganizationMembers: membersResponse,
-		Total:              total,
+		Total:               total,
+	}
+}
+
+func getStatusString(status entity.OrganizationMemberStatus) string {
+	switch status {
+	case entity.OrganizationMemberStatusActive:
+		return "active"
+	case entity.OrganizationMemberStatusInactive:
+		return "inactive"
+	case entity.OrganizationMemberStatusPending:
+		return "pending"
+	default:
+		return "unknown"
 	}
 }

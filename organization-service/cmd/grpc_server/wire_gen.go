@@ -32,7 +32,8 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	organizationTransformer := transformer.NewOrganizationTransformer()
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
-	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationAuthUsecase, organizationLogWorker)
+	userClient := client.NewUserClient()
+	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationAuthUsecase, organizationLogWorker, userClient)
 	organizationMemberTransformer := transformer.NewOrganizationMemberTransformer()
 	organizationMemberValidator := validator.NewOrganizationMemberValidator()
 	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator)
@@ -86,7 +87,7 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	groupSettingTransformer := transformer.NewGroupSettingTransformer()
 	groupSettingValidator := validator.NewGroupSettingValidator()
 	groupSettingHandler := handler.NewGroupSettingHandler(groupSettingUsecase, groupSettingTransformer, groupSettingValidator)
-	groupMemberUsecase := usecase.NewGroupMemberUsecase(groupMemberRepository, groupRepository, logWorker, groupAuthUsecase, groupChatUsecase)
+	groupMemberUsecase := usecase.NewGroupMemberUsecase(groupMemberRepository, groupRepository, logWorker, groupAuthUsecase, groupChatUsecase, userClient)
 	groupMemberValidator := validator.NewGroupMemberValidator()
 	groupMemberTransformer := transformer.NewGroupMemberTransformer()
 	groupMemberHandler := handler.NewGroupMemberHandler(groupMemberUsecase, groupMemberValidator, groupMemberTransformer)
@@ -101,7 +102,7 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 
 var repositorySet = wire.NewSet(repository.NewOrganizationRepository, repository.NewOrganizationMemberRepository, repository.NewOrganizationRoleRepository, repository.NewOrganizationPermissionRepository, repository.NewOrganizationBranchRepository, repository.NewOrganizationBranchMemberRepository, repository.NewGroupRepository, repository.NewGroupDealRepository, repository.NewGroupLogActivityRepository, repository.NewGroupNotificationRepository, repository.NewGroupSettingRepository, repository.NewGroupMemberRepository, repository.NewGroupDocumentRepository, repository.NewOrganizationLogActivityRepository, repository.NewGroupChatRepository)
 
-var clientSet = wire.NewSet(client.NewChatClient)
+var clientSet = wire.NewSet(client.NewChatClient, client.NewUserClient)
 
 var usecaseSet = wire.NewSet(usecase.NewGroupChatUsecase, usecase.NewGroupAuthUsecase, usecase.NewOrganizationLogActivityUsecase, usecase.NewOrganizationLogWorker, usecase.NewOrganizationAuthUsecase, usecase.NewOrganizationUsecase, usecase.NewOrganizationMemberUsecase, usecase.NewOrganizationRoleUsecase, usecase.NewOrganizationPermissionUsecase, usecase.NewOrganizationBranchUsecase, usecase.NewGroupLogActivityUsecase, usecase.NewLogWorker, usecase.NewGroupUsecase, usecase.NewGroupDealUsecase, usecase.NewGroupNotificationUsecase, usecase.NewGroupSettingUsecase, usecase.NewGroupMemberUsecase, usecase.NewGroupDocumentUsecase)
 

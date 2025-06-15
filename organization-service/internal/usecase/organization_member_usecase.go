@@ -3,11 +3,14 @@ package usecase
 import (
 	"context"
 	"errors"
+	sharepb "pb/types/shared"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
+	"github.com/tuandq2112/organization-service/internal/interface/dto"
 	"github.com/tuandq2112/organization-service/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,7 +22,7 @@ type OrganizationMemberUsecase interface {
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
-	GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationMember, uint32, error)
+	GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 }
 
 type organizationMemberUsecase struct {
@@ -29,6 +32,7 @@ type organizationMemberUsecase struct {
 	organizationAuthUsecase      OrganizationAuthUsecase
 	planLimit                    map[string]uint32
 	logWorker                    *OrganizationLogWorker
+	userGrpcClient               client.UserClient
 }
 
 func NewOrganizationMemberUsecase(
@@ -37,6 +41,7 @@ func NewOrganizationMemberUsecase(
 	organizationRoleRepository repository.OrganizationRoleRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
+	userGrpcClient client.UserClient,
 ) OrganizationMemberUsecase {
 	return &organizationMemberUsecase{
 		organizationMemberRepository: organizationMemberRepository,
@@ -44,6 +49,7 @@ func NewOrganizationMemberUsecase(
 		organizationRoleRepository:   organizationRoleRepository,
 		organizationAuthUsecase:      organizationAuthUsecase,
 		logWorker:                    logWorker,
+		userGrpcClient:               userGrpcClient,
 	}
 }
 
@@ -185,7 +191,7 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 }
 
 // GetOrganizationMembers retrieves all members of an organization with pagination
-func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationMember, uint32, error) {
+func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
@@ -195,5 +201,29 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	return u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	profileIds := make([]uint64, len(members))
+	for i, member := range members {
+		profileIds[i] = uint64(member.UserID)
+	}
+
+	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: profileIds,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
+	for i, member := range members {
+		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
+			OrganizationMember: member,
+			Profile:            profiles.Profiles[i],
+		}
+	}
+	return membersWithProfiles, total, nil
 }

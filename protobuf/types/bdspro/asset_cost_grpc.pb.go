@@ -45,16 +45,16 @@ func NewAssetCostServiceClient(cc grpc.ClientConnInterface) AssetCostServiceClie
 	return &assetCostServiceClient{cc}
 }
 
-func (c *assetCostServiceClient) Get(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostListDTO, error) {
+func (c *assetCostServiceClient) Search(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostListDTO, error) {
 	out := new(AssetCostListDTO)
-	err := c.cc.Invoke(ctx, AssetCostService_Get_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AssetCostService_Search_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *assetCostServiceClient) Detail(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error) {
+func (c *assetCostServiceClient) Detail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostDTO, error) {
 	out := new(AssetCostDTO)
 	err := c.cc.Invoke(ctx, AssetCostService_Detail_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -81,8 +81,8 @@ func (c *assetCostServiceClient) Update(ctx context.Context, in *AssetCostDTO, o
 	return out, nil
 }
 
-func (c *assetCostServiceClient) Delete(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error) {
-	out := new(AssetCostDTO)
+func (c *assetCostServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
 	err := c.cc.Invoke(ctx, AssetCostService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err

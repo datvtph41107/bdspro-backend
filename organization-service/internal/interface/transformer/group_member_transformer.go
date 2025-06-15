@@ -4,6 +4,7 @@ import (
 	grouppb "pb/types/group"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"github.com/tuandq2112/organization-service/internal/interface/dto"
 )
 
 type GroupMemberTransformer interface {
@@ -12,7 +13,7 @@ type GroupMemberTransformer interface {
 	EntityToCreateGroupMemberResponse(member *entity.GroupMember) *grouppb.CreateGroupMemberResponse
 	EntityToUpdateGroupMemberResponse(member *entity.GroupMember) *grouppb.UpdateGroupMemberResponse
 	EntityToGetGroupMemberResponse(member *entity.GroupMember) *grouppb.GetGroupMemberResponse
-	EntityToGetGroupMembersResponse(members []*entity.GroupMember) *grouppb.GetGroupMembersResponse
+	EntityToGetGroupMembersResponse(members []*dto.GroupMemberWithProfile) *grouppb.GetGroupMembersResponse
 }
 
 type groupMemberTransformer struct{}
@@ -59,17 +60,20 @@ func (t *groupMemberTransformer) EntityToGetGroupMemberResponse(member *entity.G
 	}
 }
 
-func (t *groupMemberTransformer) EntityToGetGroupMembersResponse(members []*entity.GroupMember) *grouppb.GetGroupMembersResponse {
+func (t *groupMemberTransformer) EntityToGetGroupMembersResponse(members []*dto.GroupMemberWithProfile) *grouppb.GetGroupMembersResponse {
 	response := &grouppb.GetGroupMembersResponse{
 		Members: make([]*grouppb.GroupMember, 0, len(members)),
 	}
 
 	for _, member := range members {
+		profile := member.Profile
+		profile.Phone = ""
 		response.Members = append(response.Members, &grouppb.GroupMember{
-			Id:      member.Id,
-			GroupId: member.GroupId,
-			UserId:  member.UserId,
-			Role:    string(member.Role),
+			Id:      member.GroupMember.Id,
+			GroupId: member.GroupMember.GroupId,
+			UserId:  member.GroupMember.UserId,
+			Role:    string(member.GroupMember.Role),
+			Profile: profile,
 		})
 	}
 
