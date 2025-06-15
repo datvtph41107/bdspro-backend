@@ -4,13 +4,14 @@
 // - protoc             (unknown)
 // source: crm/contact.proto
 
-package crm
+package crmpb
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -24,6 +25,7 @@ const (
 	ContactService_Create_FullMethodName = "/crmpb.ContactService/Create"
 	ContactService_Update_FullMethodName = "/crmpb.ContactService/Update"
 	ContactService_Delete_FullMethodName = "/crmpb.ContactService/Delete"
+	ContactService_Sync_FullMethodName   = "/crmpb.ContactService/Sync"
 )
 
 // ContactServiceClient is the client API for ContactService service.
@@ -31,10 +33,11 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ContactServiceClient interface {
 	Search(ctx context.Context, in *ContactSearchRequest, opts ...grpc.CallOption) (*ContactListDTO, error)
-	Detail(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error)
-	Create(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error)
-	Update(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error)
-	Delete(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error)
+	Detail(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*ContactDTO, error)
+	Create(ctx context.Context, in *ContactSaveDTO, opts ...grpc.CallOption) (*ContactDTO, error)
+	Update(ctx context.Context, in *ContactSaveDTO, opts ...grpc.CallOption) (*ContactDTO, error)
+	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
+	Sync(ctx context.Context, in *ContactSyncRequest, opts ...grpc.CallOption) (*ContactSyncResponse, error)
 }
 
 type contactServiceClient struct {
@@ -55,7 +58,7 @@ func (c *contactServiceClient) Search(ctx context.Context, in *ContactSearchRequ
 	return out, nil
 }
 
-func (c *contactServiceClient) Detail(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
+func (c *contactServiceClient) Detail(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*ContactDTO, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ContactDTO)
 	err := c.cc.Invoke(ctx, ContactService_Detail_FullMethodName, in, out, cOpts...)
@@ -65,7 +68,7 @@ func (c *contactServiceClient) Detail(ctx context.Context, in *ContactDTO, opts 
 	return out, nil
 }
 
-func (c *contactServiceClient) Create(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
+func (c *contactServiceClient) Create(ctx context.Context, in *ContactSaveDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ContactDTO)
 	err := c.cc.Invoke(ctx, ContactService_Create_FullMethodName, in, out, cOpts...)
@@ -75,7 +78,7 @@ func (c *contactServiceClient) Create(ctx context.Context, in *ContactDTO, opts 
 	return out, nil
 }
 
-func (c *contactServiceClient) Update(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
+func (c *contactServiceClient) Update(ctx context.Context, in *ContactSaveDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ContactDTO)
 	err := c.cc.Invoke(ctx, ContactService_Update_FullMethodName, in, out, cOpts...)
@@ -85,10 +88,20 @@ func (c *contactServiceClient) Update(ctx context.Context, in *ContactDTO, opts 
 	return out, nil
 }
 
-func (c *contactServiceClient) Delete(ctx context.Context, in *ContactDTO, opts ...grpc.CallOption) (*ContactDTO, error) {
+func (c *contactServiceClient) Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ContactDTO)
+	out := new(shared.SubmitResponse)
 	err := c.cc.Invoke(ctx, ContactService_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactServiceClient) Sync(ctx context.Context, in *ContactSyncRequest, opts ...grpc.CallOption) (*ContactSyncResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ContactSyncResponse)
+	err := c.cc.Invoke(ctx, ContactService_Sync_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +113,11 @@ func (c *contactServiceClient) Delete(ctx context.Context, in *ContactDTO, opts 
 // for forward compatibility.
 type ContactServiceServer interface {
 	Search(context.Context, *ContactSearchRequest) (*ContactListDTO, error)
-	Detail(context.Context, *ContactDTO) (*ContactDTO, error)
-	Create(context.Context, *ContactDTO) (*ContactDTO, error)
-	Update(context.Context, *ContactDTO) (*ContactDTO, error)
-	Delete(context.Context, *ContactDTO) (*ContactDTO, error)
+	Detail(context.Context, *shared.IdRequest) (*ContactDTO, error)
+	Create(context.Context, *ContactSaveDTO) (*ContactDTO, error)
+	Update(context.Context, *ContactSaveDTO) (*ContactDTO, error)
+	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
+	Sync(context.Context, *ContactSyncRequest) (*ContactSyncResponse, error)
 	mustEmbedUnimplementedContactServiceServer()
 }
 
@@ -117,17 +131,20 @@ type UnimplementedContactServiceServer struct{}
 func (UnimplementedContactServiceServer) Search(context.Context, *ContactSearchRequest) (*ContactListDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
-func (UnimplementedContactServiceServer) Detail(context.Context, *ContactDTO) (*ContactDTO, error) {
+func (UnimplementedContactServiceServer) Detail(context.Context, *shared.IdRequest) (*ContactDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Detail not implemented")
 }
-func (UnimplementedContactServiceServer) Create(context.Context, *ContactDTO) (*ContactDTO, error) {
+func (UnimplementedContactServiceServer) Create(context.Context, *ContactSaveDTO) (*ContactDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedContactServiceServer) Update(context.Context, *ContactDTO) (*ContactDTO, error) {
+func (UnimplementedContactServiceServer) Update(context.Context, *ContactSaveDTO) (*ContactDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedContactServiceServer) Delete(context.Context, *ContactDTO) (*ContactDTO, error) {
+func (UnimplementedContactServiceServer) Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedContactServiceServer) Sync(context.Context, *ContactSyncRequest) (*ContactSyncResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
 }
 func (UnimplementedContactServiceServer) mustEmbedUnimplementedContactServiceServer() {}
 func (UnimplementedContactServiceServer) testEmbeddedByValue()                        {}
@@ -169,7 +186,7 @@ func _ContactService_Search_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _ContactService_Detail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContactDTO)
+	in := new(shared.IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -181,13 +198,13 @@ func _ContactService_Detail_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: ContactService_Detail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContactServiceServer).Detail(ctx, req.(*ContactDTO))
+		return srv.(ContactServiceServer).Detail(ctx, req.(*shared.IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ContactService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContactDTO)
+	in := new(ContactSaveDTO)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -199,13 +216,13 @@ func _ContactService_Create_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: ContactService_Create_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContactServiceServer).Create(ctx, req.(*ContactDTO))
+		return srv.(ContactServiceServer).Create(ctx, req.(*ContactSaveDTO))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ContactService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContactDTO)
+	in := new(ContactSaveDTO)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -217,13 +234,13 @@ func _ContactService_Update_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: ContactService_Update_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContactServiceServer).Update(ctx, req.(*ContactDTO))
+		return srv.(ContactServiceServer).Update(ctx, req.(*ContactSaveDTO))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ContactService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContactDTO)
+	in := new(shared.IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -235,7 +252,25 @@ func _ContactService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: ContactService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContactServiceServer).Delete(ctx, req.(*ContactDTO))
+		return srv.(ContactServiceServer).Delete(ctx, req.(*shared.IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactService_Sync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContactSyncRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).Sync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_Sync_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).Sync(ctx, req.(*ContactSyncRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -266,6 +301,10 @@ var ContactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _ContactService_Delete_Handler,
+		},
+		{
+			MethodName: "Sync",
+			Handler:    _ContactService_Sync_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

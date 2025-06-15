@@ -97,6 +97,7 @@ message NotificationDTO {
     bool isRead = 7;
     string timestamp = 8;
     string avatar = 9;
+    optional uint64 targetId = 10;
 }
 
 message IdRequest {

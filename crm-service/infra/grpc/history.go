@@ -23,7 +23,7 @@ func NewHistoryService(uc *usecase.HistoryUsecase) *HistoryService {
 
 func (s *HistoryService) Search(ctx context.Context, req *crmpb.HistorySearchRequest) (*crmpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.Search(ctx, req.OwnerId, enums.EOwnerType(req.OwnerType), dto.HistorySearchDTO{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

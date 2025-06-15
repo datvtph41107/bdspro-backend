@@ -2,20 +2,58 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
 
 service ContactService {
-  rpc Search (ContactSearchRequest) returns (ContactListDTO);
-  rpc Detail (ContactDTO) returns (ContactDTO);
-  rpc Create (ContactDTO) returns (ContactDTO);
-  rpc Update (ContactDTO) returns (ContactDTO);
-  rpc Delete (ContactDTO) returns (ContactDTO);
+  rpc Search (ContactSearchRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/list/{ownerType}"
+    };
+  };
+  rpc Detail (pb_shared.IdRequest) returns (ContactDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/detail/{id}"
+    };
+  };
+  rpc Create (ContactSaveDTO) returns (ContactDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/contact"
+      body: "*"
+    };
+  };
+  rpc Update (ContactSaveDTO) returns (ContactDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/contact/{id}"
+    };
+  };
+  rpc Sync (ContactSyncRequest) returns (ContactSyncResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/contact/sync"
+      body: "*"
+    };
+  };
 }
 
 message ContactSearchRequest {
   uint64 page = 1;
   uint32 size = 2;
   string text = 3;
+  int32 ownerType = 4;
+}
+
+message ContactSaveDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  int32 ownerType = 4;
 }
 
 message ContactDTO {
@@ -26,9 +64,28 @@ message ContactDTO {
   int32 ownerType = 5;
   string createdAt = 6;
   optional uint64 createdBy = 7;
+  uint32 status = 8;
+  string statusName = 9;
+  pb_shared.FriendItem friendStatus = 10;
+  bool following = 11;
+  string avatar = 12;
+  pb_shared.ProfileItem profileInfo = 13;
+  optional uint64 profileId = 14;
+  bool blocked = 15;
 }
 
 message ContactListDTO {
     repeated ContactDTO data = 1;
     uint32 totalElements = 2;
+}
+
+message ContactSyncRequest {
+  repeated ContactSaveDTO contacts = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+}
+
+message ContactSyncResponse {
+  repeated ContactDTO data = 1;
+  uint32 totalElements = 2;
 }

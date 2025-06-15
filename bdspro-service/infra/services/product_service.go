@@ -6,7 +6,6 @@ import (
 	shared_usecase "bdspro/internal/usecases/shared"
 	"context"
 	pb_bdspro "pb/types/bdspro"
-	pb_shared "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
@@ -30,9 +29,9 @@ func NewProductService(uc *shared_usecase.ProductUsecase) *ProductService {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_shared.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
+// @Param body body pb_bdspro.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/archived [put]
-func (s *ProductService) ArchiveProduct(c context.Context, req *pb_shared.ArchivedRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ArchiveProduct(c context.Context, req *pb_bdspro.ArchivedRequest) (*pb_bdspro.Response, error) {
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id is required")
 	}
@@ -446,7 +445,7 @@ func (s *ProductService) GetHistories(ctx context.Context, req *pb_bdspro.IdRequ
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/members [get]
 func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.MemberResponse, error) {
-	query := dto.ProductAccessSearch{}
+	query := dto.SharingAccessSearch{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
 	}

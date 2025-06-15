@@ -45,7 +45,7 @@ func GroupRoutes(r *gin.Engine, router *GroupRouter) {
 // @Security BearerAuth
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy nhóm"
-// @Router /groups [get]
+// @Router /v1/user/groups [get]
 // Lấy danh sách nhóm
 func (r *GroupRouter) ListGroups(c *gin.Context) {
 	result, err := r.service.ListGroups(c)
@@ -61,7 +61,7 @@ func (r *GroupRouter) ListGroups(c *gin.Context) {
 // @Param request body user_model.GroupEntity true "Thông tin cập nhật"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 409 {string} string "Nhóm đã tồn tại"
-// @Router /groups [post]
+// @Router /v1/user/groups [post]
 // Thêm nhóm
 func (r *GroupRouter) CreateGroup(c *gin.Context) {
 	result, err := r.service.CreateGroup(c)
@@ -78,7 +78,7 @@ func (r *GroupRouter) CreateGroup(c *gin.Context) {
 // @Security BearerAuth
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy nhóm"
-// @Router /groups/{id} [put]
+// @Router /v1/user/groups/{id} [put]
 // Cập nhật nhóm
 func (r *GroupRouter) UpdateGroup(c *gin.Context) {
 	result, err := r.service.UpdateGroup(c)
@@ -96,7 +96,7 @@ func (r *GroupRouter) UpdateGroup(c *gin.Context) {
 // @Success 200 {string} string "Nhóm đã bị xóa"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy nhóm"
-// @Router /groups/{id} [delete]
+// @Router /v1/user/groups/{id} [delete]
 // Xóa nhóm
 func (r *GroupRouter) DeleteGroup(c *gin.Context) {
 	err := r.service.DeleteGroup(c)

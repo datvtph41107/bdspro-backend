@@ -3,7 +3,7 @@ package org_router
 import (
 	"bdspro/internal/dto"
 	user_dto "bdspro/internal/dto/user"
-	org_usecase "bdspro/internal/usecases/org"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -12,10 +12,10 @@ import (
 )
 
 type OrgAssetRouter struct {
-	UC *org_usecase.OrgAssetUsecase
+	UC *shared_usecase.AssetUsecase
 }
 
-func NewOrgAssetRouter(uc *org_usecase.OrgAssetUsecase) *OrgAssetRouter {
+func NewOrgAssetRouter(uc *shared_usecase.AssetUsecase) *OrgAssetRouter {
 	return &OrgAssetRouter{UC: uc}
 }
 

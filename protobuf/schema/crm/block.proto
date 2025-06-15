@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service BlockService {
+    rpc ListBlockedUsers(pb_shared.IdRequest) returns (ListBlockResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/block/list"
+            body: "*"
+        };
+    };
+    rpc BlockUser(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/block"
+            body: "*"
+        };
+    };
+    rpc UnblockUser(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/block"
+        };
+    };
+}
+
+
+message ListBlockResponse {
+    repeated uint64 data = 1;
+    int32 total = 2;
+}

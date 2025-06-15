@@ -2,14 +2,14 @@ package grpc_service
 
 import (
 	_dto "common/dto"
-	_models "common/models"
-	_utils "common/utils"
 	"context"
-	"crm/internal/domain"
+	"crm/infra/client"
+	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
+	pb_shared "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,11 +17,12 @@ import (
 
 type ContactService struct {
 	crmpb.UnimplementedContactServiceServer
-	UC *usecase.ContactUsecase
+	UC         *usecase.ContactUsecase
+	UserClient *client.UserClient
 }
 
-func NewContactService(uc *usecase.ContactUsecase) *ContactService {
-	return &ContactService{UC: uc}
+func NewContactService(uc *usecase.ContactUsecase, userClient *client.UserClient) *ContactService {
+	return &ContactService{UC: uc, UserClient: userClient}
 }
 
 // @Summary Lấy danh sách liên hệ
@@ -30,10 +31,12 @@ func NewContactService(uc *usecase.ContactUsecase) *ContactService {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Router /contact [get]
+// @Param ownerType path int true "Loại sở hữu (10: user, 20: nhóm, 30: organization)"
+// @Router /contact/list/{ownerType} [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
-	contacts, total, err := s.UC.Search(ctx, dto.ContactSearchDTO{
-		Page: _dto.Pagable{
+
+	contacts, total, err := s.UC.Search(ctx, enums.EOwnerType(req.OwnerType), dto.ContactSearchDTO{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
@@ -43,10 +46,8 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 		return nil, err
 	}
 
-	contactsPb := make([]*crmpb.ContactDTO, len(contacts))
-	for i, contact := range contacts {
-		contactsPb[i] = s.DomainToPb(&contact)
-	}
+	contactsPb := mapper.ListContactItemToPb(contacts)
+	s.UserClient.PbUserToContact(ctx, contactsPb)
 
 	return &crmpb.ContactListDTO{
 		Data:          contactsPb,
@@ -54,7 +55,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 	}, nil
 }
 
-func (s *ContactService) Detail(ctx context.Context, req *crmpb.ContactDTO) (*crmpb.ContactDTO, error) {
+func (s *ContactService) Detail(ctx context.Context, req *pb_shared.IdRequest) (*crmpb.ContactDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Detail not implemented")
 }
 
@@ -64,20 +65,20 @@ func (s *ContactService) Detail(ctx context.Context, req *crmpb.ContactDTO) (*cr
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body domain.ContactEntity true "Thông tin cập nhật"
+// @Param request body crmpb.ContactSaveDTO true "Thông tin cập nhật"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 409 {string} string "Liên hệ đã tồn tại"
 // @Router /contact [post]
-func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactDTO) (*crmpb.ContactDTO, error) {
-	domain := s.PbToDomain(req)
-	if domain.FullName == "" {
+func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactSaveDTO) (*crmpb.ContactDTO, error) {
+	domain := mapper.PbToContactSave(req)
+	if domain.FullName == "" || domain.Phone == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "FullName and Phone are required")
 	}
 	result, err := s.UC.Create(ctx, domain)
 	if err != nil {
 		return nil, err
 	}
-	return s.DomainToPb(result), nil
+	return mapper.ContactToPb(result), nil
 }
 
 // @Summary Cập nhật thông tin liên hệ
@@ -85,12 +86,12 @@ func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactDTO) (*cr
 // @Tags Liên hệ
 // @Accept json
 // @Produce json
-// @Param request body domain.GroupEntity true "Thông tin cập nhật"
+// @Param request body crmpb.ContactSaveDTO true "Thông tin cập nhật"
 // @Param id path int true "ID của lời mời kết bạn"
 // @Security BearerAuth
 // @Router /contact/{id} [put]
-func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactDTO) (*crmpb.ContactDTO, error) {
-	domain := s.PbToDomain(req)
+func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) (*crmpb.ContactDTO, error) {
+	domain := mapper.PbToContactSave(req)
 	if domain.FullName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "FullName and Phone are required")
 	}
@@ -98,7 +99,7 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactDTO) (*cr
 	if err != nil {
 		return nil, err
 	}
-	return s.DomainToPb(result), nil
+	return mapper.ContactToPb(result), nil
 }
 
 // @Summary Xóa liên hệ
@@ -109,36 +110,33 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactDTO) (*cr
 // @Param id path int true "ID của liên hệ"
 // @Security BearerAuth
 // @Router /contact/{id} [delete]
-func (s *ContactService) Delete(ctx context.Context, req *crmpb.ContactDTO) (*crmpb.ContactDTO, error) {
+func (s *ContactService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return s.DomainToPb(nil), nil
+	return &pb_shared.SubmitResponse{
+		Id:      req.Id,
+		Message: "Delete contact success",
+	}, nil
 }
 
-// --map--
-
-func (s *ContactService) DomainToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
-	return &crmpb.ContactDTO{
-		Id:        contact.ID,
-		FullName:  contact.FullName,
-		Phone:     contact.Phone,
-		OwnerId:   contact.OwnerID,
-		OwnerType: int32(contact.OwnerType),
-		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
-		CreatedBy: contact.CreatedBy,
+// @Summary Đồng bộ danh bạ
+// @Description Đồng bộ danh bạ
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param body body crmpb.ContactSyncRequest true "Danh bạ"
+// @Security BearerAuth
+// @Router /contact/sync [post]
+func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest) (*crmpb.ContactSyncResponse, error) {
+	domains := mapper.ListContactToDomain(req.Contacts)
+	result, err := s.UC.Sync(ctx, enums.EOwnerType(req.OwnerType), domains)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func (s *ContactService) PbToDomain(pb *crmpb.ContactDTO) *domain.ContactEntity {
-	return &domain.ContactEntity{
-		BaseEntity: _models.BaseEntity{
-			ID: pb.Id,
-		},
-		FullName:  pb.FullName,
-		Phone:     pb.Phone,
-		OwnerID:   pb.OwnerId,
-		OwnerType: enums.EOwnerType(pb.OwnerType),
-	}
+	return &crmpb.ContactSyncResponse{
+		Data:          mapper.ListContactToPb(result),
+		TotalElements: uint32(len(result)),
+	}, nil
 }

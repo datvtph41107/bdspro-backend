@@ -2,14 +2,14 @@ package grpc_service
 
 import (
 	_dto "common/dto"
-	_models "common/models"
 	_routes "common/routes"
 	"context"
-	"crm/internal/domain"
+	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
+	pb_shared "pb/types/shared"
 )
 
 type RuleService struct {
@@ -23,9 +23,17 @@ func NewRuleService(uc *usecase.RuleUsecase) *RuleService {
 	}
 }
 
+// @Summary Tìm kiếm quy tắc
+// @Description Tìm kiếm quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param query query crmpb.RuleSearchRequest false "Giá trị điều kiện"
+// @Security BearerAuth
+// @Router /rule/search [get]
 func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) (*crmpb.RuleListDTO, error) {
 	dto := dto.RuleSearchDTO{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
@@ -39,7 +47,7 @@ func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) 
 
 	rulesPb := make([]*crmpb.RuleDTO, len(rules))
 	for i, rule := range rules {
-		rulesPb[i] = s.EntityToPb(&rule)
+		rulesPb[i] = mapper.RuleDomainToPb(&rule)
 	}
 
 	return &crmpb.RuleListDTO{
@@ -47,13 +55,30 @@ func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) 
 		TotalElements: uint32(total),
 	}, nil
 }
+
+// @Summary Chi tiết quy tắc
+// @Description Chi tiết quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /rule/detail/{id} [get]
 func (s *RuleService) Detail(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.RuleDTO, error) {
-	// result, err := s.UC.GetByID(ctx, req.Id)
-	// return s.EntityToPb(result), err
-	return nil, nil
+	result, err := s.UC.GetByID(ctx, req.Id)
+	return mapper.RuleDomainToPb(result), err
 }
+
+// @Summary Tạo quy tắc
+// @Description Tạo quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param entity body crmpb.RuleDTO true "Quy tắc"
+// @Security BearerAuth
+// @Router /rule [post]
 func (s *RuleService) Create(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.RuleDTO, error) {
-	entity := s.PbToEntity(req)
+	entity := mapper.RulePbToDomain(req)
 	if entity.OwnerID == 0 ||
 		entity.OwnerType == 0 ||
 		entity.RuleName == "" ||
@@ -67,10 +92,20 @@ func (s *RuleService) Create(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 		}
 	}
 	result, err := s.UC.Create(ctx, entity)
-	return s.EntityToPb(result), err
+	return mapper.RuleDomainToPb(result), err
 }
+
+// @Summary Cập nhật quy tắc
+// @Description Cập nhật quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Param entity body crmpb.RuleDTO true "Quy tắc"
+// @Security BearerAuth
+// @Router /rule/{id} [put]
 func (s *RuleService) Update(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.RuleDTO, error) {
-	entity := s.PbToEntity(req)
+	entity := mapper.RulePbToDomain(req)
 	if entity.ID == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -78,42 +113,30 @@ func (s *RuleService) Update(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 		}
 	}
 	result, err := s.UC.Update(ctx, entity.ID, entity)
-	return s.EntityToPb(result), err
+	return mapper.RuleDomainToPb(result), err
 }
-func (s *RuleService) Delete(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.RuleDTO, error) {
+
+// @Summary Xóa quy tắc
+// @Description Xóa quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /rule/{id} [delete]
+func (s *RuleService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
+	if req.Id == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "id is required",
+		}
+	}
 	err := s.UC.Delete(ctx, req.Id)
-	return nil, err
-}
-
-// ------------------------------------------------------------
-func (s *RuleService) PbToEntity(req *crmpb.RuleDTO) *domain.RuleEntity {
-	return &domain.RuleEntity{
-		BaseEntity: _models.BaseEntity{
-			ID: req.Id,
-		},
-		OwnerID:        req.OwnerId,
-		OwnerType:      enums.EOwnerType(req.OwnerType),
-		Active:         req.Active,
-		RuleName:       req.RuleName,
-		Note:           req.Note,
-		Condition:      enums.ECondition(req.Condition),
-		ConditionValue: req.ConditionValue,
-		Trigger:        enums.ERule(req.Trigger),
-		TriggerValue:   req.TriggerValue,
+	if err != nil {
+		return nil, err
 	}
-}
-
-func (s *RuleService) EntityToPb(entity *domain.RuleEntity) *crmpb.RuleDTO {
-	return &crmpb.RuleDTO{
-		Id:             entity.ID,
-		OwnerId:        entity.OwnerID,
-		OwnerType:      int32(entity.OwnerType),
-		Active:         entity.Active,
-		RuleName:       entity.RuleName,
-		Note:           entity.Note,
-		Condition:      int32(entity.Condition),
-		ConditionValue: entity.ConditionValue,
-		Trigger:        int32(entity.Trigger),
-		TriggerValue:   entity.TriggerValue,
-	}
+	return &pb_shared.SubmitResponse{
+		Id:      req.Id,
+		Message: "Delete rule success",
+	}, err
 }

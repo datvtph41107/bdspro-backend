@@ -4,13 +4,14 @@
 // - protoc             (unknown)
 // source: crm/stage.proto
 
-package crm
+package crmpb
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -34,7 +35,7 @@ type StageServiceClient interface {
 	Detail(ctx context.Context, in *StageDTO, opts ...grpc.CallOption) (*StageDTO, error)
 	Create(ctx context.Context, in *StageDTO, opts ...grpc.CallOption) (*StageDTO, error)
 	Update(ctx context.Context, in *StageDTO, opts ...grpc.CallOption) (*StageDTO, error)
-	Delete(ctx context.Context, in *StageDTO, opts ...grpc.CallOption) (*StageDTO, error)
+	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 }
 
 type stageServiceClient struct {
@@ -85,9 +86,9 @@ func (c *stageServiceClient) Update(ctx context.Context, in *StageDTO, opts ...g
 	return out, nil
 }
 
-func (c *stageServiceClient) Delete(ctx context.Context, in *StageDTO, opts ...grpc.CallOption) (*StageDTO, error) {
+func (c *stageServiceClient) Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StageDTO)
+	out := new(shared.SubmitResponse)
 	err := c.cc.Invoke(ctx, StageService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -103,7 +104,7 @@ type StageServiceServer interface {
 	Detail(context.Context, *StageDTO) (*StageDTO, error)
 	Create(context.Context, *StageDTO) (*StageDTO, error)
 	Update(context.Context, *StageDTO) (*StageDTO, error)
-	Delete(context.Context, *StageDTO) (*StageDTO, error)
+	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	mustEmbedUnimplementedStageServiceServer()
 }
 
@@ -126,7 +127,7 @@ func (UnimplementedStageServiceServer) Create(context.Context, *StageDTO) (*Stag
 func (UnimplementedStageServiceServer) Update(context.Context, *StageDTO) (*StageDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedStageServiceServer) Delete(context.Context, *StageDTO) (*StageDTO, error) {
+func (UnimplementedStageServiceServer) Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedStageServiceServer) mustEmbedUnimplementedStageServiceServer() {}
@@ -223,7 +224,7 @@ func _StageService_Update_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _StageService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StageDTO)
+	in := new(shared.IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func _StageService_Delete_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: StageService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StageServiceServer).Delete(ctx, req.(*StageDTO))
+		return srv.(StageServiceServer).Delete(ctx, req.(*shared.IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

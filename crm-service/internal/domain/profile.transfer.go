@@ -4,6 +4,7 @@ type Profile struct {
 	ProfileId uint64
 	Phone     string
 	FullName  string
+	Avatar    string
 }
 
 func (Profile) TableName() string {

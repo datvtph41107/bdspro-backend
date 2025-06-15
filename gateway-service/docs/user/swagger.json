@@ -1,14 +1,13 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API quản lý người dùng",
-        "title": "User API",
+        "description": "API phần logic chính của BĐSPro",
+        "title": "BDSPRO API",
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/v1/user",
     "paths": {
-        "/auth/delete": {
+        "/v1/user/auth/delete": {
             "delete": {
                 "security": [
                     {
@@ -36,7 +35,7 @@
                 }
             }
         },
-        "/auth/logout": {
+        "/v1/user/auth/logout": {
             "delete": {
                 "description": "Đăng xuất, xóa refresh token",
                 "tags": [
@@ -46,7 +45,7 @@
                 "responses": {}
             }
         },
-        "/auth/otp/request": {
+        "/v1/user/auth/otp/request": {
             "post": {
                 "description": "Gửi lại OTP hoặc submit lúc nhập SĐT",
                 "consumes": [
@@ -73,7 +72,7 @@
                 "responses": {}
             }
         },
-        "/auth/otp/resend": {
+        "/v1/user/auth/otp/resend": {
             "post": {
                 "description": "Gửi lại OTP mới",
                 "consumes": [
@@ -100,7 +99,7 @@
                 "responses": {}
             }
         },
-        "/auth/otp/verify": {
+        "/v1/user/auth/otp/verify": {
             "post": {
                 "description": "Xác minh OTP đã nhận",
                 "consumes": [
@@ -127,7 +126,7 @@
                 "responses": {}
             }
         },
-        "/auth/qr/confirm": {
+        "/v1/user/auth/qr/confirm": {
             "post": {
                 "security": [
                     {
@@ -159,7 +158,7 @@
                 "responses": {}
             }
         },
-        "/auth/qr/init": {
+        "/v1/user/auth/qr/init": {
             "post": {
                 "description": "API này tạo một phiên QR để người dùng có thể đăng nhập qua app",
                 "consumes": [
@@ -193,7 +192,7 @@
                 }
             }
         },
-        "/auth/qr/status": {
+        "/v1/user/auth/qr/status": {
             "post": {
                 "description": "API này kiểm tra xem QR đã được xác nhận hay chưa",
                 "consumes": [
@@ -220,7 +219,7 @@
                 "responses": {}
             }
         },
-        "/auth/restore": {
+        "/v1/user/auth/restore": {
             "put": {
                 "security": [
                     {
@@ -252,7 +251,39 @@
                 "responses": {}
             }
         },
-        "/auth/token/refresh": {
+        "/v1/user/auth/switch/organization": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép người dùng chuyển đổi tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Chuyển đổi tổ chức",
+                "parameters": [
+                    {
+                        "description": "Thông tin chuyển đổi tổ chức",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/data.SwitchOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/auth/token/refresh": {
             "post": {
                 "description": "Làm mới access token bằng refresh token trong cookie",
                 "consumes": [
@@ -268,7 +299,7 @@
                 "responses": {}
             }
         },
-        "/block/list": {
+        "/v1/user/block/list": {
             "get": {
                 "security": [
                     {
@@ -302,7 +333,7 @@
                 }
             }
         },
-        "/block/{profileId}": {
+        "/v1/user/block/{profileId}": {
             "post": {
                 "security": [
                     {
@@ -386,7 +417,7 @@
                 }
             }
         },
-        "/follow/followers": {
+        "/v1/user/follow/followers": {
             "get": {
                 "security": [
                     {
@@ -420,7 +451,7 @@
                 }
             }
         },
-        "/follow/following": {
+        "/v1/user/follow/following": {
             "get": {
                 "security": [
                     {
@@ -454,7 +485,7 @@
                 }
             }
         },
-        "/follow/{profileId}": {
+        "/v1/user/follow/{profileId}": {
             "post": {
                 "security": [
                     {
@@ -550,7 +581,7 @@
                 }
             }
         },
-        "/friend/group/{requestId}/{groupId}": {
+        "/v1/user/friend/group/{requestId}/{groupId}": {
             "put": {
                 "security": [
                     {
@@ -606,7 +637,7 @@
                 }
             }
         },
-        "/friend/info": {
+        "/v1/user/friend/info": {
             "get": {
                 "security": [
                     {
@@ -646,7 +677,7 @@
                 }
             }
         },
-        "/friend/list": {
+        "/v1/user/friend/list": {
             "get": {
                 "security": [
                     {
@@ -689,7 +720,7 @@
                 }
             }
         },
-        "/friend/request/received": {
+        "/v1/user/friend/request/received": {
             "get": {
                 "security": [
                     {
@@ -732,7 +763,7 @@
                 }
             }
         },
-        "/friend/request/sent": {
+        "/v1/user/friend/request/sent": {
             "get": {
                 "security": [
                     {
@@ -775,7 +806,7 @@
                 }
             }
         },
-        "/friend/request/{receiverId}": {
+        "/v1/user/friend/request/{receiverId}": {
             "post": {
                 "security": [
                     {
@@ -824,7 +855,7 @@
                 }
             }
         },
-        "/friend/request/{requestId}/accept": {
+        "/v1/user/friend/request/{requestId}/accept": {
             "put": {
                 "security": [
                     {
@@ -873,7 +904,7 @@
                 }
             }
         },
-        "/friend/request/{requestId}/reject": {
+        "/v1/user/friend/request/{requestId}/reject": {
             "delete": {
                 "security": [
                     {
@@ -922,7 +953,7 @@
                 }
             }
         },
-        "/groups": {
+        "/v1/user/groups": {
             "get": {
                 "security": [
                     {
@@ -999,7 +1030,7 @@
                 }
             }
         },
-        "/groups/{id}": {
+        "/v1/user/groups/{id}": {
             "put": {
                 "security": [
                     {
@@ -1105,7 +1136,7 @@
                 }
             }
         },
-        "/oauth/{provider}/callback": {
+        "/v1/user/oauth/{provider}/callback": {
             "get": {
                 "description": "Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.",
                 "consumes": [
@@ -1158,7 +1189,7 @@
                 }
             }
         },
-        "/oauth/{provider}/login": {
+        "/v1/user/oauth/{provider}/login": {
             "get": {
                 "description": "Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).",
                 "consumes": [
@@ -1194,7 +1225,7 @@
                 }
             }
         },
-        "/profile/chat/find": {
+        "/v1/user/profile/chat/find": {
             "get": {
                 "security": [
                     {
@@ -1249,7 +1280,7 @@
                 }
             }
         },
-        "/profile/find-by-phone": {
+        "/v1/user/profile/find-by-phone": {
             "get": {
                 "security": [
                     {
@@ -1295,7 +1326,7 @@
                 }
             }
         },
-        "/profile/find/ids": {
+        "/v1/user/profile/find/ids": {
             "get": {
                 "security": [
                     {
@@ -1350,7 +1381,7 @@
                 }
             }
         },
-        "/profile/info/{profileId}": {
+        "/v1/user/profile/info/{profileId}": {
             "get": {
                 "security": [
                     {
@@ -1387,7 +1418,7 @@
                 }
             }
         },
-        "/profile/me": {
+        "/v1/user/profile/me": {
             "get": {
                 "security": [
                     {
@@ -1433,7 +1464,7 @@
                 }
             }
         },
-        "/profile/set-info": {
+        "/v1/user/profile/set-info": {
             "put": {
                 "security": [
                     {
@@ -1472,7 +1503,7 @@
                 }
             }
         },
-        "/rate": {
+        "/v1/user/rate": {
             "post": {
                 "security": [
                     {
@@ -1504,7 +1535,7 @@
                 "responses": {}
             }
         },
-        "/rate/list/{targetId}/{targetType}": {
+        "/v1/user/rate/list/{targetId}/{targetType}": {
             "get": {
                 "description": "Lấy danh sách đánh giá theo targetId và targetType",
                 "consumes": [
@@ -1560,7 +1591,7 @@
                 "responses": {}
             }
         },
-        "/rate/{id}": {
+        "/v1/user/rate/{id}": {
             "put": {
                 "security": [
                     {
@@ -1625,6 +1656,43 @@
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/v2/user/profile/info/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin công khai của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy thông tin công khai của người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Profile",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin công khai của người dùng",
+                        "schema": {
+                            "$ref": "#/definitions/pb_user.ProfilePublicInfo"
+                        }
+                    }
+                }
             }
         }
     },
@@ -1793,6 +1861,9 @@
                 "facebook": {
                     "type": "string"
                 },
+                "following": {
+                    "type": "boolean"
+                },
                 "frontIdentify": {
                     "type": "string"
                 },
@@ -1836,7 +1907,7 @@
                     "type": "string"
                 },
                 "relationShip": {
-                    "$ref": "#/definitions/data.RelationShip"
+                    "$ref": "#/definitions/user_model.FriendItem"
                 },
                 "roleRealEstate": {
                     "$ref": "#/definitions/enums.ERoleRealEstate"
@@ -1861,17 +1932,6 @@
                 },
                 "youtube": {
                     "type": "string"
-                }
-            }
-        },
-        "data.RelationShip": {
-            "type": "object",
-            "properties": {
-                "friendStatus": {
-                    "$ref": "#/definitions/user_model.FriendItem"
-                },
-                "isFollowing": {
-                    "type": "boolean"
                 }
             }
         },
@@ -1930,6 +1990,17 @@
                 },
                 "sessionKey": {
                     "type": "string"
+                }
+            }
+        },
+        "data.SwitchOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "organizationId"
+            ],
+            "properties": {
+                "organizationId": {
+                    "type": "integer"
                 }
             }
         },
@@ -2189,6 +2260,187 @@
                 "VerifyRejected"
             ]
         },
+        "pb_user.CertificationItem": {
+            "type": "object",
+            "properties": {
+                "fileUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_user.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_user.ProfessionItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_user.ProfilePublicInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "backIdentify": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "certifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_user.CertificationItem"
+                    }
+                },
+                "departmentId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "facebook": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "boolean"
+                },
+                "frontIdentify": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "instagram": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "linkedin": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "professions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_user.ProfessionItem"
+                    }
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "rateStats": {
+                    "$ref": "#/definitions/pb_user.RateStats"
+                },
+                "referralBy": {
+                    "type": "string"
+                },
+                "referralCode": {
+                    "type": "string"
+                },
+                "relationShip": {
+                    "$ref": "#/definitions/pb_user.FriendItem"
+                },
+                "roleRealEstate": {
+                    "type": "integer"
+                },
+                "slogan": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "statusOnline": {
+                    "type": "integer"
+                },
+                "taxCode": {
+                    "type": "string"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "youtube": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_user.RateStats": {
+            "type": "object",
+            "properties": {
+                "averageScore": {
+                    "type": "number"
+                },
+                "star1Count": {
+                    "type": "integer"
+                },
+                "star2Count": {
+                    "type": "integer"
+                },
+                "star3Count": {
+                    "type": "integer"
+                },
+                "star4Count": {
+                    "type": "integer"
+                },
+                "star5Count": {
+                    "type": "integer"
+                },
+                "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
         "user_model.CertificationItem": {
             "type": "object",
             "properties": {
@@ -2216,6 +2468,9 @@
         "user_model.FriendItem": {
             "type": "object",
             "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },

@@ -3,6 +3,7 @@ package user_router
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 	"bdspro/internal/usecases"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -44,7 +45,7 @@ func (r *AssetShareRouter) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.uc.Search(c, &dto)
+	result, total, err := r.uc.Search(c, enums.EOwnerTypeMember, &dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

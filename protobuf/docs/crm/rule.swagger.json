@@ -1,0 +1,401 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "crm/rule.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "RuleService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/crm/rule": {
+      "post": {
+        "operationId": "RuleService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleDTO"
+            }
+          }
+        ],
+        "tags": [
+          "RuleService"
+        ]
+      }
+    },
+    "/v2/crm/rule/detail/{id}": {
+      "get": {
+        "operationId": "RuleService_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "ruleName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "condition",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "conditionValue",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "trigger",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "triggerValue",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RuleService"
+        ]
+      }
+    },
+    "/v2/crm/rule/list": {
+      "get": {
+        "operationId": "RuleService_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "RuleService"
+        ]
+      }
+    },
+    "/v2/crm/rule/{id}": {
+      "delete": {
+        "operationId": "RuleService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_sharedSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "RuleService"
+        ]
+      },
+      "put": {
+        "operationId": "RuleService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbRuleServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "RuleService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "crmpbRuleDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "ruleName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "conditionValue": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "triggerValue": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbRuleListDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbRuleDTO"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "crmpbRuleServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "ruleName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "conditionValue": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "triggerValue": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_sharedSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

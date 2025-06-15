@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service FriendService {
+    rpc FriendList(FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/list"
+        };
+    };
+    rpc FriendRequest(FriendRequestDTO) returns (FriendRequestResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/friend/request/{receiverId}"
+            body: "*"
+        };
+    };
+    rpc FriendAccept(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend/accept/{id}"
+            body: "*"
+        };
+    };
+    rpc FriendReject(pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend/reject/{id}"
+            body: "*"
+        };
+    };
+    rpc FriendUpdateGroup(GroupUpdateRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend/group/{requestId}/{groupId}"
+            body: "*"
+        };
+    };
+    rpc FriendSent(FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/sent"
+        };
+    };
+    rpc FriendReceived(FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/received"
+        };
+    };
+    rpc FriendInfo(pb_shared.IdRequest) returns (FriendInfoResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/info"
+        };
+    };
+}
+
+message Friend {
+    uint64 id = 1;
+    uint64 profile_id = 2;
+    uint64 friend_id = 3;
+}
+
+message FriendRequestDTO {
+    uint64 receiverId = 1;
+}
+
+message FriendRequestResponse {
+    Friend data = 1;
+    int32 status = 2;
+}
+
+message FriendListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+}
+
+message FriendListResponse {
+    repeated Friend data = 1;
+    int32 total = 2;
+}
+
+message GroupUpdateRequest {
+    uint64 requestId = 1;
+    uint64 groupId = 2;
+}
+
+message FriendInfoResponse {
+    int64 numFollower = 1;
+    int64 numFollowing = 2;
+    int64 numFriend = 3;
+}

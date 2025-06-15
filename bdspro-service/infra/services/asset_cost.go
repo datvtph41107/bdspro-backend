@@ -1,57 +1,115 @@
 package service
 
-// type AssetCostServer struct {
-// 	pb_bdspro.UnimplementedAssetCostServiceServer
-// 	UC usecases.AssetCostUsecase
-// }
+import (
+	"bdspro/infra/mapper"
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
+	"bdspro/internal/enums"
+	shared_usecase "bdspro/internal/usecases/shared"
+	_routes "common/routes"
+	"context"
+	pb_bdspro "pb/types/bdspro"
 
-// func NewAssetCostServer(AssetCostUc usecases.AssetCostUsecase) *AssetCostServer {
-// 	return &AssetCostServer{
-// 		UC: AssetCostUc,
-// 	}
-// }
+	"github.com/jinzhu/copier"
+)
 
-// func (s AssetCostServer) Get(c context.Context, dto *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostListDTO, error) {
-// 	result, err := s.UC.GetData(c, dto.Id)
+type AssetCostService struct {
+	pb_bdspro.UnimplementedAssetCostServiceServer
+	UC *shared_usecase.AssetCostUsecase
+}
 
-// 	pbdatas := []*pb_bdspro.AssetCostDTO{}
-// 	for _, r := range result {
-// 		pbdata := &pb_bdspro.AssetCostDTO{}
-// 		copier.Copy(&pbdata, &r)
-// 		pbdatas = append(pbdatas, pbdata)
-// 	}
+func NewAssetCostService(AssetCostUc *shared_usecase.AssetCostUsecase) *AssetCostService {
+	return &AssetCostService{
+		UC: AssetCostUc,
+	}
+}
 
-// 	return &pb_bdspro.AssetCostListDTO{
-// 		Data: pbdatas,
-// 	}, err
-// }
-// func (s AssetCostServer) Detail(c context.Context, dto *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-// 	r, err := s.UC.GetByID(c, dto.Id)
+// @Summary Lấy danh sách chi phí
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param id path uint64 true "ID"
+// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost/{id}/{ownerType} [get]
+func (s AssetCostService) Search(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostListDTO, error) {
+	searchDTO := &dto.AssetCostSearchDTO{}
+	result, total, err := s.UC.Find(c, enums.EOwnerType(req.OwnerType), searchDTO)
 
-// 	pbdata := &pb_bdspro.AssetCostDTO{}
-// 	copier.Copy(&pbdata, &r)
+	pbdatas := mapper.AssetCostToPbList(result)
 
-// 	return pbdata, err
-// }
-// func (s AssetCostServer) Create(c context.Context, dto *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-// 	d := &domain.AssetCost{}
-// 	copier.Copy(&d, &dto)
+	return &pb_bdspro.AssetCostListDTO{
+		Data:          pbdatas,
+		TotalElements: uint32(total),
+	}, err
+}
 
-// 	r, err := s.UC.Create(c, d)
+// @Summary Lấy chi tiết chi phí
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param id path uint64 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost/detail/{id} [get]
+func (s AssetCostService) Detail(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostDTO, error) {
+	r, err := s.UC.GetByID(c, req.Id)
 
-// 	copier.Copy(&dto, &r)
-// 	return dto, err
-// }
-// func (s AssetCostServer) Update(c context.Context, dto *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-// 	d := &domain.AssetCost{}
-// 	copier.Copy(&d, &dto)
+	pbdata := &pb_bdspro.AssetCostDTO{}
+	copier.Copy(&pbdata, &r)
 
-// 	r, err := s.UC.Update(c, dto.Id, d)
+	return pbdata, err
+}
 
-// 	copier.Copy(&dto, &r)
-// 	return dto, err
-// }
-// func (s AssetCostServer) Delete(c context.Context, dto *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-// 	err := s.UC.Delete(c, dto.Id)
-// 	return dto, err
-// }
+// @Summary Tạo chi phí
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param body body pb_bdspro.AssetCostDTO true "Body"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost [post]
+func (s AssetCostService) Create(c context.Context, req *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
+	dto := &domain.AssetCost{}
+
+	if dto.OwnerType == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "ownerType is required",
+		}
+	}
+	copier.Copy(&dto, &req)
+
+	err := s.UC.Create(c, dto)
+
+	pbdata := &pb_bdspro.AssetCostDTO{}
+	copier.Copy(&pbdata, &dto)
+	return pbdata, err
+}
+
+// @Summary Cập nhật chi phí
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param id path uint64 true "ID"
+// @Param body body pb_bdspro.AssetCostDTO true "Body"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost/{id} [put]
+func (s AssetCostService) Update(c context.Context, req *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
+	dto := &domain.AssetCost{}
+	copier.Copy(&dto, &req)
+
+	err := s.UC.Update(c, req.Id, dto)
+
+	pbdata := &pb_bdspro.AssetCostDTO{}
+	copier.Copy(&pbdata, &dto)
+	return pbdata, err
+}
+
+// @Summary Xóa chi phí
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param id path uint64 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost/{id} [delete]
+func (s AssetCostService) Delete(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+	err := s.UC.Delete(c, req.Id)
+	return &pb_bdspro.Response{
+		Message: "success",
+		Id:      req.Id,
+	}, err
+}

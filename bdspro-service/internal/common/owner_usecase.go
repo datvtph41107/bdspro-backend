@@ -1,12 +1,13 @@
 package common
 
 import (
+	"bdspro/internal/enums"
 	_utils "common/utils"
 	"context"
 )
 
 type IOwnerUsecase[T any, D DTO] interface {
-	Search(c context.Context, dto D) ([]T, int64, error)
+	Search(c context.Context, ownerType enums.EOwnerType, dto D) ([]T, int64, error)
 	GetByID(c context.Context, id uint64) (*T, error)
 	Detail(c context.Context, id uint64) (*T, error)
 	Create(c context.Context, entity *T) error
@@ -20,9 +21,9 @@ type OwnerUsecase[T any, D DTO] struct {
 	UC        IOwnerUsecase[T, D]
 }
 
-func (uc *OwnerUsecase[T, D]) Search(c context.Context, dto D) ([]T, int64, error) {
+func (uc *OwnerUsecase[T, D]) Search(c context.Context, ownerType enums.EOwnerType, dto D) ([]T, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
-	return uc.OwnerRepo.Search(c, profileId, dto)
+	return uc.OwnerRepo.Search(c, profileId, ownerType, dto)
 }
 
 func (uc *OwnerUsecase[T, D]) GetByID(c context.Context, id uint64) (*T, error) {

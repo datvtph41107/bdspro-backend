@@ -58,7 +58,7 @@ func (s *ReportService) DeleteReportReason(ctx context.Context, req *pb_social.R
 
 func (s *ReportService) GetReportReason(ctx context.Context, req *pb_social.ReportReasonRequest) (*pb_social.ReportReasonResponse, error) {
 	dto := &dto.ReportReasonRequest{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

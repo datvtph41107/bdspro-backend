@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,13 +21,15 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	ProfileService_GetProfileByIds_FullMethodName = "/pb_user.ProfileService/GetProfileByIds"
+	ProfileService_GetProfileInfo_FullMethodName  = "/pb_user.ProfileService/GetProfileInfo"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProfileServiceClient interface {
-	GetProfileByIds(ctx context.Context, in *GetProfileByIdsRequest, opts ...grpc.CallOption) (*GetProfileByIdsResponse, error)
+	GetProfileByIds(ctx context.Context, in *shared.GetProfileByIdsRequest, opts ...grpc.CallOption) (*shared.GetProfileByIdsResponse, error)
+	GetProfileInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProfilePublicInfo, error)
 }
 
 type profileServiceClient struct {
@@ -37,10 +40,20 @@ func NewProfileServiceClient(cc grpc.ClientConnInterface) ProfileServiceClient {
 	return &profileServiceClient{cc}
 }
 
-func (c *profileServiceClient) GetProfileByIds(ctx context.Context, in *GetProfileByIdsRequest, opts ...grpc.CallOption) (*GetProfileByIdsResponse, error) {
+func (c *profileServiceClient) GetProfileByIds(ctx context.Context, in *shared.GetProfileByIdsRequest, opts ...grpc.CallOption) (*shared.GetProfileByIdsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProfileByIdsResponse)
+	out := new(shared.GetProfileByIdsResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileByIds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetProfileInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProfilePublicInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProfilePublicInfo)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +64,8 @@ func (c *profileServiceClient) GetProfileByIds(ctx context.Context, in *GetProfi
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
 type ProfileServiceServer interface {
-	GetProfileByIds(context.Context, *GetProfileByIdsRequest) (*GetProfileByIdsResponse, error)
+	GetProfileByIds(context.Context, *shared.GetProfileByIdsRequest) (*shared.GetProfileByIdsResponse, error)
+	GetProfileInfo(context.Context, *IdRequest) (*ProfilePublicInfo, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -62,8 +76,11 @@ type ProfileServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedProfileServiceServer struct{}
 
-func (UnimplementedProfileServiceServer) GetProfileByIds(context.Context, *GetProfileByIdsRequest) (*GetProfileByIdsResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileByIds(context.Context, *shared.GetProfileByIdsRequest) (*shared.GetProfileByIdsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileByIds not implemented")
+}
+func (UnimplementedProfileServiceServer) GetProfileInfo(context.Context, *IdRequest) (*ProfilePublicInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileInfo not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -87,7 +104,7 @@ func RegisterProfileServiceServer(s grpc.ServiceRegistrar, srv ProfileServiceSer
 }
 
 func _ProfileService_GetProfileByIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetProfileByIdsRequest)
+	in := new(shared.GetProfileByIdsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +116,25 @@ func _ProfileService_GetProfileByIds_Handler(srv interface{}, ctx context.Contex
 		FullMethod: ProfileService_GetProfileByIds_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetProfileByIds(ctx, req.(*GetProfileByIdsRequest))
+		return srv.(ProfileServiceServer).GetProfileByIds(ctx, req.(*shared.GetProfileByIdsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetProfileInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetProfileInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetProfileInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetProfileInfo(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -114,6 +149,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProfileByIds",
 			Handler:    _ProfileService_GetProfileByIds_Handler,
+		},
+		{
+			MethodName: "GetProfileInfo",
+			Handler:    _ProfileService_GetProfileInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -3,7 +3,8 @@ package org_router
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	org_usecase "bdspro/internal/usecases/org"
+	"bdspro/internal/enums"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -12,10 +13,10 @@ import (
 )
 
 type OrgCostTypeRouter struct {
-	UC *org_usecase.OrgCostTypeUc
+	UC *shared_usecase.AssetCostTypeUsecase
 }
 
-func NewOrgCostTypeRouter(uc *org_usecase.OrgCostTypeUc) *OrgCostTypeRouter {
+func NewOrgCostTypeRouter(uc *shared_usecase.AssetCostTypeUsecase) *OrgCostTypeRouter {
 	return &OrgCostTypeRouter{
 		UC: uc,
 	}
@@ -50,7 +51,7 @@ func (r *OrgCostTypeRouter) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.UC.Search(c, &dto)
+	result, total, err := r.UC.Search(c, enums.EOwnerTypeOrgnization, &dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

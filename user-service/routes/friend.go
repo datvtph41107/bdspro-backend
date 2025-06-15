@@ -41,7 +41,7 @@ func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 // @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
-// @Router /friend/list [get]
+// @Router /v1/user/friend/list [get]
 func (r *FriendRouter) FriendList(c *gin.Context) {
 	result, err := r.service.FriendList(c)
 
@@ -58,7 +58,7 @@ func (r *FriendRouter) FriendList(c *gin.Context) {
 // @Success 200 {string} string "Lời mời đã được gửi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người nhận"
-// @Router /friend/request/{receiverId} [post]
+// @Router /v1/user/friend/request/{receiverId} [post]
 func (r *FriendRouter) FriendRequest(c *gin.Context) {
 	// var dto data.FriendDTO
 	// if err := c.ShouldBindJSON(&dto); err != nil {
@@ -81,7 +81,7 @@ func (r *FriendRouter) FriendRequest(c *gin.Context) {
 // @Success 200 {string} string "Lời mời đã được chấp nhận"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
-// @Router /friend/request/{requestId}/accept [put]
+// @Router /v1/user/friend/request/{requestId}/accept [put]
 func (r *FriendRouter) FriendAccept(c *gin.Context) {
 	result, err := r.service.ChangeStatus(c, enums.EFriendStatusAccepted)
 	_routes.RouteResult(c, result, err)
@@ -98,7 +98,7 @@ func (r *FriendRouter) FriendAccept(c *gin.Context) {
 // @Success 200 {string} string "Lời mời đã được chấp nhận"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
-// @Router /friend/group/{requestId}/{groupId} [put]
+// @Router /v1/user/friend/group/{requestId}/{groupId} [put]
 func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
 	result, err := r.service.ChangeGroup(c)
 	_routes.RouteResult(c, result, err)
@@ -114,7 +114,7 @@ func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
 // @Success 200 {string} string "Lời mời đã bị từ chối"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
-// @Router /friend/request/{requestId}/reject [delete]
+// @Router /v1/user/friend/request/{requestId}/reject [delete]
 func (r *FriendRouter) FriendReject(c *gin.Context) {
 	result, err := r.service.ChangeStatus(c, enums.EFriendStatusReject)
 
@@ -130,7 +130,7 @@ func (r *FriendRouter) FriendReject(c *gin.Context) {
 // @Success 200 {array} data.FriendDTO "Danh sách lời mời đã gửi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
-// @Router /friend/request/sent [get]
+// @Router /v1/user/friend/request/sent [get]
 func (r *FriendRouter) FriendSent(c *gin.Context) {
 	result, err := r.service.RequestSent(c)
 
@@ -146,7 +146,7 @@ func (r *FriendRouter) FriendSent(c *gin.Context) {
 // @Success 200 {array} data.FriendDTO "Danh sách lời mời đã nhận"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
-// @Router /friend/request/received [get]
+// @Router /v1/user/friend/request/received [get]
 func (r *FriendRouter) FriendReceived(c *gin.Context) {
 	result, err := r.service.RequestReceived(c)
 
@@ -162,7 +162,7 @@ func (r *FriendRouter) FriendReceived(c *gin.Context) {
 // @Success 200 {object} data.FollowInfoRes "Số lượng theo dõi và bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
-// @Router /friend/info [get]
+// @Router /v1/user/friend/info [get]
 func (r *FriendRouter) FriendInfo(c *gin.Context) {
 	result, err := r.service.FriendInfo(c)
 

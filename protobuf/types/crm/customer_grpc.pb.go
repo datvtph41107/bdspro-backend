@@ -4,13 +4,14 @@
 // - protoc             (unknown)
 // source: crm/customer.proto
 
-package crm
+package crmpb
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -25,8 +26,6 @@ const (
 	CustomerService_Update_FullMethodName = "/crmpb.CustomerService/Update"
 	CustomerService_Delete_FullMethodName = "/crmpb.CustomerService/Delete"
 	CustomerService_Assign_FullMethodName = "/crmpb.CustomerService/Assign"
-	CustomerService_Note_FullMethodName   = "/crmpb.CustomerService/Note"
-	CustomerService_Stage_FullMethodName  = "/crmpb.CustomerService/Stage"
 )
 
 // CustomerServiceClient is the client API for CustomerService service.
@@ -37,10 +36,8 @@ type CustomerServiceClient interface {
 	Detail(ctx context.Context, in *CustomerDTO, opts ...grpc.CallOption) (*CustomerDTO, error)
 	Create(ctx context.Context, in *CustomerDTO, opts ...grpc.CallOption) (*CustomerDTO, error)
 	Update(ctx context.Context, in *CustomerDTO, opts ...grpc.CallOption) (*CustomerDTO, error)
-	Delete(ctx context.Context, in *CustomerDTO, opts ...grpc.CallOption) (*CustomerDTO, error)
+	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	Assign(ctx context.Context, in *CustomerAssignRequest, opts ...grpc.CallOption) (*CustomerDTO, error)
-	Note(ctx context.Context, in *CustomerNoteRequest, opts ...grpc.CallOption) (*CustomerDTO, error)
-	Stage(ctx context.Context, in *CustomerStageRequest, opts ...grpc.CallOption) (*CustomerDTO, error)
 }
 
 type customerServiceClient struct {
@@ -91,9 +88,9 @@ func (c *customerServiceClient) Update(ctx context.Context, in *CustomerDTO, opt
 	return out, nil
 }
 
-func (c *customerServiceClient) Delete(ctx context.Context, in *CustomerDTO, opts ...grpc.CallOption) (*CustomerDTO, error) {
+func (c *customerServiceClient) Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CustomerDTO)
+	out := new(shared.SubmitResponse)
 	err := c.cc.Invoke(ctx, CustomerService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -111,26 +108,6 @@ func (c *customerServiceClient) Assign(ctx context.Context, in *CustomerAssignRe
 	return out, nil
 }
 
-func (c *customerServiceClient) Note(ctx context.Context, in *CustomerNoteRequest, opts ...grpc.CallOption) (*CustomerDTO, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CustomerDTO)
-	err := c.cc.Invoke(ctx, CustomerService_Note_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *customerServiceClient) Stage(ctx context.Context, in *CustomerStageRequest, opts ...grpc.CallOption) (*CustomerDTO, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CustomerDTO)
-	err := c.cc.Invoke(ctx, CustomerService_Stage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CustomerServiceServer is the server API for CustomerService service.
 // All implementations must embed UnimplementedCustomerServiceServer
 // for forward compatibility.
@@ -139,10 +116,8 @@ type CustomerServiceServer interface {
 	Detail(context.Context, *CustomerDTO) (*CustomerDTO, error)
 	Create(context.Context, *CustomerDTO) (*CustomerDTO, error)
 	Update(context.Context, *CustomerDTO) (*CustomerDTO, error)
-	Delete(context.Context, *CustomerDTO) (*CustomerDTO, error)
+	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	Assign(context.Context, *CustomerAssignRequest) (*CustomerDTO, error)
-	Note(context.Context, *CustomerNoteRequest) (*CustomerDTO, error)
-	Stage(context.Context, *CustomerStageRequest) (*CustomerDTO, error)
 	mustEmbedUnimplementedCustomerServiceServer()
 }
 
@@ -165,17 +140,11 @@ func (UnimplementedCustomerServiceServer) Create(context.Context, *CustomerDTO) 
 func (UnimplementedCustomerServiceServer) Update(context.Context, *CustomerDTO) (*CustomerDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedCustomerServiceServer) Delete(context.Context, *CustomerDTO) (*CustomerDTO, error) {
+func (UnimplementedCustomerServiceServer) Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedCustomerServiceServer) Assign(context.Context, *CustomerAssignRequest) (*CustomerDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Assign not implemented")
-}
-func (UnimplementedCustomerServiceServer) Note(context.Context, *CustomerNoteRequest) (*CustomerDTO, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Note not implemented")
-}
-func (UnimplementedCustomerServiceServer) Stage(context.Context, *CustomerStageRequest) (*CustomerDTO, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Stage not implemented")
 }
 func (UnimplementedCustomerServiceServer) mustEmbedUnimplementedCustomerServiceServer() {}
 func (UnimplementedCustomerServiceServer) testEmbeddedByValue()                         {}
@@ -271,7 +240,7 @@ func _CustomerService_Update_Handler(srv interface{}, ctx context.Context, dec f
 }
 
 func _CustomerService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CustomerDTO)
+	in := new(shared.IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -283,7 +252,7 @@ func _CustomerService_Delete_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: CustomerService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CustomerServiceServer).Delete(ctx, req.(*CustomerDTO))
+		return srv.(CustomerServiceServer).Delete(ctx, req.(*shared.IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -302,42 +271,6 @@ func _CustomerService_Assign_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CustomerServiceServer).Assign(ctx, req.(*CustomerAssignRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CustomerService_Note_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CustomerNoteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CustomerServiceServer).Note(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CustomerService_Note_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CustomerServiceServer).Note(ctx, req.(*CustomerNoteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CustomerService_Stage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CustomerStageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CustomerServiceServer).Stage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CustomerService_Stage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CustomerServiceServer).Stage(ctx, req.(*CustomerStageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -372,14 +305,6 @@ var CustomerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Assign",
 			Handler:    _CustomerService_Assign_Handler,
-		},
-		{
-			MethodName: "Note",
-			Handler:    _CustomerService_Note_Handler,
-		},
-		{
-			MethodName: "Stage",
-			Handler:    _CustomerService_Stage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

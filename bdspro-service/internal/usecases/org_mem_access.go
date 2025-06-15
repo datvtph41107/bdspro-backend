@@ -1,12 +1,12 @@
 package usecases
 
 // type OrgMemAccessUsecase struct {
-// 	repo        repo.ProductAccessRepo
+// 	repo        repo.SharingAccessRepo
 // 	UProductUC  *UProductUsecase
 // 	NotiService *providers.TransmitProvider
 // }
 
-// func NewOrgMemAccessUsecase(repo repo.ProductAccessRepo,
+// func NewOrgMemAccessUsecase(repo repo.SharingAccessRepo,
 // 	UProductUC *UProductUsecase,
 // 	NotiService *providers.TransmitProvider,
 // ) *OrgMemAccessUsecase {

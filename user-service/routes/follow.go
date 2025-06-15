@@ -35,7 +35,7 @@ func FollowRoutes(r *gin.Engine, router *FollowRouter) {
 // @Security BearerAuth
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
-// @Router /follow/followers [get]
+// @Router /v1/user/follow/followers [get]
 func (r *FollowRouter) FollowerList(c *gin.Context) {
 	result, err := r.service.FollowerUser(c)
 	_routes.RouteResult(c, result, err)
@@ -49,7 +49,7 @@ func (r *FollowRouter) FollowerList(c *gin.Context) {
 // @Security BearerAuth
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
-// @Router /follow/following [get]
+// @Router /v1/user/follow/following [get]
 func (r *FollowRouter) FollowingList(c *gin.Context) {
 	result, err := r.service.FollowingUser(c)
 	_routes.RouteResult(c, result, err)
@@ -65,7 +65,7 @@ func (r *FollowRouter) FollowingList(c *gin.Context) {
 // @Success 200 {string} string "Đã thêm người vào danh sách theo dõi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
-// @Router /follow/{profileId} [post]
+// @Router /v1/user/follow/{profileId} [post]
 func (r *FollowRouter) Add(c *gin.Context) {
 	result, err := r.service.FollowUser(c)
 
@@ -82,7 +82,7 @@ func (r *FollowRouter) Add(c *gin.Context) {
 // @Success 200 {string} string "Đã xóa người khỏi danh sách theo dõi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
-// @Router /follow/{profileId} [delete]
+// @Router /v1/user/follow/{profileId} [delete]
 func (r *FollowRouter) Remove(c *gin.Context) {
 	result, err := r.service.UnfollowUser(c)
 

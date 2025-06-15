@@ -49,6 +49,11 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterStageServiceServer(s, app.StageService)
 		crmpb.RegisterHistoryServiceServer(s, app.HistoryService)
 		crmpb.RegisterRuleServiceServer(s, app.RuleService)
+		crmpb.RegisterFollowServiceServer(s, app.FollowService)
+		crmpb.RegisterBlockServiceServer(s, app.BlockService)
+		crmpb.RegisterFriendGroupServiceServer(s, app.FriendGroupService)
+		crmpb.RegisterFriendServiceServer(s, app.FriendService)
+		crmpb.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
 
 		log.Printf("Listen: %v", port)
 

@@ -28,15 +28,20 @@ type UserProperties struct {
 var AppProperties UserProperties
 
 type ConfigApp struct {
-	RuntimeRouter    *router.RuntimeRouter
-	RuleUsecase      *usecase.RuleUsecase
-	RuleEventUsecase *usecase.RuleEventUsecase
-	PipelineService  *grpc_service.PipelineService
-	ContactService   *grpc_service.ContactService
-	CustomerService  *grpc_service.CustomerService
-	StageService     *grpc_service.StageService
-	HistoryService   *grpc_service.HistoryService
-	RuleService      *grpc_service.RuleService
+	RuntimeRouter        *router.RuntimeRouter
+	RuleUsecase          *usecase.RuleUsecase
+	RuleEventUsecase     *usecase.RuleEventUsecase
+	PipelineService      *grpc_service.PipelineService
+	ContactService       *grpc_service.ContactService
+	CustomerService      *grpc_service.CustomerService
+	StageService         *grpc_service.StageService
+	HistoryService       *grpc_service.HistoryService
+	RuleService          *grpc_service.RuleService
+	FollowService        *grpc_service.FollowService
+	BlockService         *grpc_service.BlockService
+	FriendGroupService   *grpc_service.FriendGroupService
+	FriendService        *grpc_service.FriendService
+	SharingAccessService *grpc_service.SharingAccessService
 }
 
 func NewConfigApp(
@@ -49,17 +54,27 @@ func NewConfigApp(
 	stageService *grpc_service.StageService,
 	historyService *grpc_service.HistoryService,
 	ruleService *grpc_service.RuleService,
+	followService *grpc_service.FollowService,
+	blockService *grpc_service.BlockService,
+	friendGroupService *grpc_service.FriendGroupService,
+	friendService *grpc_service.FriendService,
+	sharingAccessService *grpc_service.SharingAccessService,
 ) *ConfigApp {
 	return &ConfigApp{
-		RuntimeRouter:    runtimeRouter,
-		RuleUsecase:      ruleUsecase,
-		RuleEventUsecase: ruleEventUsecase,
-		PipelineService:  pipelineService,
-		ContactService:   contactService,
-		CustomerService:  customerService,
-		StageService:     stageService,
-		HistoryService:   historyService,
-		RuleService:      ruleService,
+		RuntimeRouter:        runtimeRouter,
+		RuleUsecase:          ruleUsecase,
+		RuleEventUsecase:     ruleEventUsecase,
+		PipelineService:      pipelineService,
+		ContactService:       contactService,
+		CustomerService:      customerService,
+		StageService:         stageService,
+		HistoryService:       historyService,
+		RuleService:          ruleService,
+		FollowService:        followService,
+		BlockService:         blockService,
+		FriendGroupService:   friendGroupService,
+		FriendService:        friendService,
+		SharingAccessService: sharingAccessService,
 	}
 }
 

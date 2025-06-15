@@ -22,7 +22,7 @@ type ConfigApp struct {
 	FriendRouter   *routes.FriendRouter
 	GroupRouter    *routes.GroupRouter
 	RateRouter     *routes.RateRouter
-	ProfileService *services.ProfileService
+	ProfileService *services.GrpcProfileService
 	// GroupRouter   *routes.GroupRouter
 }
 
@@ -34,7 +34,7 @@ func NewConfigApp(authService *routes.AuthRouter,
 	friend *routes.FriendRouter,
 	group *routes.GroupRouter,
 	rate *routes.RateRouter,
-	profileService *services.ProfileService,
+	profileService *services.GrpcProfileService,
 ) *ConfigApp {
 	return &ConfigApp{
 		Auth:           authService,

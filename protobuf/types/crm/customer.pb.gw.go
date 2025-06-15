@@ -2,17 +2,18 @@
 // source: crm/customer.proto
 
 /*
-Package crm is a reverse proxy.
+Package crmpb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package crm
+package crmpb
 
 import (
 	"context"
 	"errors"
 	"io"
 	"net/http"
+	"pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
@@ -35,31 +36,14 @@ var (
 	_ = metadata.Join
 )
 
-var filter_CustomerService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{"ownerId": 0, "ownerType": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+var filter_CustomerService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CustomerService_Search_0(ctx context.Context, marshaler runtime.Marshaler, client CustomerServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq CustomerSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -74,24 +58,7 @@ func local_request_CustomerService_Search_0(ctx context.Context, marshaler runti
 	var (
 		protoReq CustomerSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -219,11 +186,9 @@ func local_request_CustomerService_Update_0(ctx context.Context, marshaler runti
 	return msg, metadata, err
 }
 
-var filter_CustomerService_Delete_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 func request_CustomerService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client CustomerServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq CustomerDTO
+		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -236,19 +201,13 @@ func request_CustomerService_Delete_0(ctx context.Context, marshaler runtime.Mar
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CustomerService_Delete_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
 func local_request_CustomerService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server CustomerServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq CustomerDTO
+		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -260,12 +219,6 @@ func local_request_CustomerService_Delete_0(ctx context.Context, marshaler runti
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CustomerService_Delete_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	msg, err := server.Delete(ctx, &protoReq)
 	return msg, metadata, err
 }
@@ -274,18 +227,9 @@ func request_CustomerService_Assign_0(ctx context.Context, marshaler runtime.Mar
 	var (
 		protoReq CustomerAssignRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
 	}
 	msg, err := client.Assign(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -295,104 +239,11 @@ func local_request_CustomerService_Assign_0(ctx context.Context, marshaler runti
 	var (
 		protoReq CustomerAssignRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
 	}
 	msg, err := server.Assign(ctx, &protoReq)
-	return msg, metadata, err
-}
-
-func request_CustomerService_Note_0(ctx context.Context, marshaler runtime.Marshaler, client CustomerServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq CustomerNoteRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
-	}
-	msg, err := client.Note(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_CustomerService_Note_0(ctx context.Context, marshaler runtime.Marshaler, server CustomerServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq CustomerNoteRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
-	}
-	msg, err := server.Note(ctx, &protoReq)
-	return msg, metadata, err
-}
-
-func request_CustomerService_Stage_0(ctx context.Context, marshaler runtime.Marshaler, client CustomerServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq CustomerStageRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
-	}
-	msg, err := client.Stage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_CustomerService_Stage_0(ctx context.Context, marshaler runtime.Marshaler, server CustomerServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq CustomerStageRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["customerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customerId")
-	}
-	protoReq.CustomerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customerId", err)
-	}
-	msg, err := server.Stage(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -408,7 +259,7 @@ func RegisterCustomerServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Search", runtime.WithHTTPPathPattern("/v2/crm/customer/list/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Search", runtime.WithHTTPPathPattern("/v2/crm/customer/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -428,7 +279,7 @@ func RegisterCustomerServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Detail", runtime.WithHTTPPathPattern("/v2/crm/customer/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Detail", runtime.WithHTTPPathPattern("/v2/crm/customer/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -502,13 +353,13 @@ func RegisterCustomerServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 		forward_CustomerService_Delete_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Assign_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CustomerService_Assign_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Assign", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/assign"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Assign", runtime.WithHTTPPathPattern("/v2/crm/customer/assign"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -521,46 +372,6 @@ func RegisterCustomerServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 		forward_CustomerService_Assign_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Note_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Note", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/note"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_CustomerService_Note_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_CustomerService_Note_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Stage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.CustomerService/Stage", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/stage"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_CustomerService_Stage_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_CustomerService_Stage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -606,7 +417,7 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Search", runtime.WithHTTPPathPattern("/v2/crm/customer/list/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Search", runtime.WithHTTPPathPattern("/v2/crm/customer/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -623,7 +434,7 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Detail", runtime.WithHTTPPathPattern("/v2/crm/customer/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Detail", runtime.WithHTTPPathPattern("/v2/crm/customer/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -687,11 +498,11 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 		forward_CustomerService_Delete_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Assign_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CustomerService_Assign_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Assign", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/assign"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Assign", runtime.WithHTTPPathPattern("/v2/crm/customer/assign"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -704,52 +515,16 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 		forward_CustomerService_Assign_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Note_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Note", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/note"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_CustomerService_Note_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_CustomerService_Note_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPut, pattern_CustomerService_Stage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.CustomerService/Stage", runtime.WithHTTPPathPattern("/v2/crm/customer/{customerId}/stage"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_CustomerService_Stage_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_CustomerService_Stage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
 	return nil
 }
 
 var (
-	pattern_CustomerService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "crm", "customer", "list", "ownerId", "ownerType"}, ""))
-	pattern_CustomerService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "customer", "id"}, ""))
+	pattern_CustomerService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "customer", "list"}, ""))
+	pattern_CustomerService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "customer", "detail", "id"}, ""))
 	pattern_CustomerService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "customer"}, ""))
 	pattern_CustomerService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "customer", "id"}, ""))
 	pattern_CustomerService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "customer", "id"}, ""))
-	pattern_CustomerService_Assign_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "crm", "customer", "customerId", "assign"}, ""))
-	pattern_CustomerService_Note_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "crm", "customer", "customerId", "note"}, ""))
-	pattern_CustomerService_Stage_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "crm", "customer", "customerId", "stage"}, ""))
+	pattern_CustomerService_Assign_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "customer", "assign"}, ""))
 )
 
 var (
@@ -759,6 +534,4 @@ var (
 	forward_CustomerService_Update_0 = runtime.ForwardResponseMessage
 	forward_CustomerService_Delete_0 = runtime.ForwardResponseMessage
 	forward_CustomerService_Assign_0 = runtime.ForwardResponseMessage
-	forward_CustomerService_Note_0   = runtime.ForwardResponseMessage
-	forward_CustomerService_Stage_0  = runtime.ForwardResponseMessage
 )

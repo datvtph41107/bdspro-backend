@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bdspro/internal/common"
+	"bdspro/internal/enums"
 	"context"
 	"time"
 
@@ -13,15 +14,15 @@ type PostgreCrud[T any, D common.DTO] struct {
 	Repo common.IOwnerRepo[T, D]
 }
 
-func (r *PostgreCrud[T, D]) QuerySearch(c context.Context, profileId uint64, dto D) (*gorm.DB, error) {
+func (r *PostgreCrud[T, D]) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) (*gorm.DB, error) {
 	return r.DB.Model(new(T)).Where("deleted_at IS NULL"), nil
 }
 
-func (r *PostgreCrud[T, D]) Search(c context.Context, profileId uint64, dto D) ([]T, int64, error) {
+func (r *PostgreCrud[T, D]) Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) ([]T, int64, error) {
 	var entities []T
 	var total int64
 
-	query, err := r.Repo.QuerySearch(c, profileId, dto)
+	query, err := r.Repo.QuerySearch(c, profileId, ownerType, dto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -32,7 +33,7 @@ func (r *PostgreCrud[T, D]) Search(c context.Context, profileId uint64, dto D) (
 		Scan(&entities).Error; err != nil {
 		return nil, 0, nil
 	}
-	query, _ = r.Repo.QuerySearch(c, profileId, dto)
+	query, _ = r.Repo.QuerySearch(c, profileId, ownerType, dto)
 	err = query.Count(&total).Error
 	return entities, total, err
 }

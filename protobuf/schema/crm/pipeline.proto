@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
 
 message PipelineSearchRequest {
     uint32 page = 1;
@@ -31,9 +32,31 @@ message PipelineListDTO {
 }
 
 service PipelineService {
-    rpc Search (PipelineSearchRequest) returns (PipelineListDTO);
-    rpc Detail (PipelineDTO) returns (PipelineDTO);
-    rpc Create (PipelineDTO) returns (PipelineDTO);
-    rpc Update (PipelineDTO) returns (PipelineDTO);
-    rpc Delete (PipelineDTO) returns (PipelineDTO);
+    rpc Search (PipelineSearchRequest) returns (PipelineListDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/list/{ownerId}/{ownerType}"
+        };
+    };
+    rpc Detail (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/detail/{id}"
+        };
+    };
+    rpc Create (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            post: "/v2/crm/pipeline"
+            body: "*"
+        };
+    };
+    rpc Update (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            put: "/v2/crm/pipeline/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            delete: "/v2/crm/pipeline/{id}"
+        };
+    };
 }

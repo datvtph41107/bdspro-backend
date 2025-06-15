@@ -3,36 +3,41 @@ package services
 import (
 	"context"
 	"fmt"
+	sharepb "pb/types/shared"
 	pb_user "pb/types/user"
 	"time"
 	"user/repo"
+	user_service "user/services/user"
 
+	"github.com/jinzhu/copier"
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type ProfileService struct {
+type GrpcProfileService struct {
 	pb_user.UnimplementedProfileServiceServer
 	ProfileRepo *repo.ProfileRepo
+	Profile     *user_service.ProfileService
 	cache       *cache.Cache
 }
 
-func NewGrpcProfileService(profileRepo *repo.ProfileRepo) *ProfileService {
-	return &ProfileService{
+func NewGrpcProfileService(profileRepo *repo.ProfileRepo, profileService *user_service.ProfileService) *GrpcProfileService {
+	return &GrpcProfileService{
 		ProfileRepo: profileRepo,
+		Profile:     profileService,
 		cache:       cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
-func (s *ProfileService) GetProfileByIds(ctx context.Context, req *pb_user.GetProfileByIdsRequest) (*pb_user.GetProfileByIdsResponse, error) {
-	var profilesPb []*pb_user.ProfileItem
+func (s *GrpcProfileService) GetProfileByIds(ctx context.Context, req *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {
+	var profilesPb []*sharepb.ProfileItem
 	var missingIDs []uint64
 
 	// 1. Check cache trước
 	for _, id := range req.Ids {
 		if cached, found := s.cache.Get(fmt.Sprintf("%d", id)); found {
-			profilesPb = append(profilesPb, cached.(*pb_user.ProfileItem))
+			profilesPb = append(profilesPb, cached.(*sharepb.ProfileItem))
 		} else {
 			missingIDs = append(missingIDs, id)
 		}
@@ -46,7 +51,7 @@ func (s *ProfileService) GetProfileByIds(ctx context.Context, req *pb_user.GetPr
 		}
 
 		for _, profile := range profiles {
-			pb := &pb_user.ProfileItem{
+			pb := &sharepb.ProfileItem{
 				Id:       profile.ProfileID,
 				FullName: profile.FullName,
 				Avatar:   profile.Avatar,
@@ -57,7 +62,27 @@ func (s *ProfileService) GetProfileByIds(ctx context.Context, req *pb_user.GetPr
 		}
 	}
 
-	return &pb_user.GetProfileByIdsResponse{
+	return &sharepb.GetProfileByIdsResponse{
 		Profiles: profilesPb,
 	}, nil
+}
+
+// @Summary Lấy thông tin công khai của người dùng
+// @Description Lấy thông tin công khai của người dùng
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của Profile"
+// @Success 200 {object} pb_user.ProfilePublicInfo "Thông tin công khai của người dùng"
+// @Router /v2/user/profile/info/{id} [get]
+func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *pb_user.IdRequest) (*pb_user.ProfilePublicInfo, error) {
+	result, err := s.Profile.PublicUserInfo(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
+	}
+
+	dto := &pb_user.ProfilePublicInfo{}
+	copier.Copy(dto, result)
+	return dto, nil
 }

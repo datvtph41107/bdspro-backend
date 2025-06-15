@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bdspro/internal/common"
+	"bdspro/internal/enums"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -42,7 +43,7 @@ func (r *CrudOwnerRouter[T, D]) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.UC.Search(c, dto)
+	result, total, err := r.UC.Search(c, enums.EOwnerTypeMember, dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

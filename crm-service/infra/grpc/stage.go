@@ -2,14 +2,13 @@ package grpc_service
 
 import (
 	_dto "common/dto"
-	_models "common/models"
 	_routes "common/routes"
 	"context"
-	"crm/internal/domain"
+	"crm/infra/mapper"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
+	pb_shared "pb/types/shared"
 )
 
 type StageService struct {
@@ -34,7 +33,7 @@ func NewStageService(uc *usecase.StageUsecase) *StageService {
 // @Router /stage/{pipelineId} [get]
 func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest) (*crmpb.StageListDTO, error) {
 	stages, total, err := s.UC.Search(ctx, req.PipelineId, dto.StageSearchDTO{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
@@ -46,7 +45,7 @@ func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest
 
 	result := make([]*crmpb.StageDTO, len(stages))
 	for i, stage := range stages {
-		result[i] = s.DomainToPb(&stage)
+		result[i] = mapper.StageDomainToPb(&stage)
 	}
 	return &crmpb.StageListDTO{
 		Data:          result,
@@ -67,7 +66,7 @@ func (s *StageService) Detail(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 // @Security BearerAuth
 // @Router /stage [post]
 func (s *StageService) Create(ctx context.Context, req *crmpb.StageDTO) (*crmpb.StageDTO, error) {
-	domain := s.PbToDomain(req)
+	domain := mapper.StagePbToDomain(req)
 
 	if req.PipelineId == 0 || req.StageName == "" {
 		return nil, &_routes.Except{
@@ -81,7 +80,7 @@ func (s *StageService) Create(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 		return nil, err
 	}
 
-	return s.DomainToPb(result), nil
+	return mapper.StageDomainToPb(result), nil
 }
 
 // @Summary Cập nhật giai đoạn
@@ -94,14 +93,14 @@ func (s *StageService) Create(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 // @Security BearerAuth
 // @Router /stage/{id} [put]
 func (s *StageService) Update(ctx context.Context, req *crmpb.StageDTO) (*crmpb.StageDTO, error) {
-	domain := s.PbToDomain(req)
+	domain := mapper.StagePbToDomain(req)
 
 	result, err := s.UC.Update(ctx, req.Id, domain)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.DomainToPb(result), nil
+	return mapper.StageDomainToPb(result), nil
 }
 
 // @Summary Xóa giai đoạn
@@ -112,7 +111,7 @@ func (s *StageService) Update(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /stage/{id} [delete]
-func (s *StageService) Delete(ctx context.Context, req *crmpb.StageDTO) (*crmpb.StageDTO, error) {
+func (s *StageService) Delete(ctx context.Context, req *pb_shared.IdRequest) (*pb_shared.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -121,33 +120,11 @@ func (s *StageService) Delete(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 	}
 
 	err := s.UC.Delete(ctx, req.Id)
-	return nil, err
-}
-
-// --map--
-
-func (s *StageService) PbToDomain(pb *crmpb.StageDTO) *domain.StageEntity {
-	return &domain.StageEntity{
-		BaseEntity: _models.BaseEntity{
-			ID: pb.Id,
-		},
-		StageName:   pb.StageName,
-		PipelineID:  pb.PipelineId,
-		OrderNumber: int(pb.OrderNumber),
-		RuleID:      &pb.RuleId,
-		Step:        enums.EStep(pb.Step),
-		Active:      pb.Active,
+	if err != nil {
+		return nil, err
 	}
-}
-
-func (s *StageService) DomainToPb(domain *domain.StageEntity) *crmpb.StageDTO {
-	return &crmpb.StageDTO{
-		Id:          domain.ID,
-		StageName:   domain.StageName,
-		OrderNumber: int32(domain.OrderNumber),
-		PipelineId:  domain.PipelineID,
-		RuleId:      *domain.RuleID,
-		Step:        uint32(domain.Step),
-		Active:      domain.Active,
-	}
+	return &pb_shared.SubmitResponse{
+		Id:      req.Id,
+		Message: "Delete stage success",
+	}, nil
 }

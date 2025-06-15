@@ -17,11 +17,18 @@ type RuleEventUsecase struct {
 	ruleRepo     repo.RuleRepo
 	customerRepo repo.CustomerRepo
 	historyRepo  repo.HistoryRepo
-	client       iusecase.ServiceClient
+	client       iusecase.NotiClient
 }
 
-func NewRuleEventUsecase(ruleRepo repo.RuleRepo, customerRepo repo.CustomerRepo, historyRepo repo.HistoryRepo) *RuleEventUsecase {
-	return &RuleEventUsecase{ruleRepo: ruleRepo, customerRepo: customerRepo, historyRepo: historyRepo}
+func NewRuleEventUsecase(ruleRepo repo.RuleRepo,
+	customerRepo repo.CustomerRepo,
+	historyRepo repo.HistoryRepo,
+	client iusecase.NotiClient) *RuleEventUsecase {
+	return &RuleEventUsecase{ruleRepo: ruleRepo,
+		customerRepo: customerRepo,
+		historyRepo:  historyRepo,
+		client:       client,
+	}
 }
 
 func (u *RuleEventUsecase) TriggerJobAutoEvent(c context.Context) error {

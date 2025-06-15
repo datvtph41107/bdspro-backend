@@ -18,7 +18,7 @@ type PostMediaEntity struct {
 	MediaURL  string `gorm:"type:VARCHAR(500);not null" json:"mediaUrl"`
 	MediaType string `gorm:"type:VARCHAR(20);not null" json:"mediaType"`
 	IsMain    bool   `gorm:"default:false" json:"isMain"`
-	Order     int    `gorm:"default:0" json:"sort_order,omitempty"`
+	SortOrder int    `gorm:"default:0" json:"sort_order,omitempty"`
 }
 
 func (PostMediaEntity) TableName() string {

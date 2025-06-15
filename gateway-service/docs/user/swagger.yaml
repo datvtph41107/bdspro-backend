@@ -1,4 +1,3 @@
-basePath: /v1/user
 definitions:
   data.CertificationBatchSave:
     properties:
@@ -111,6 +110,8 @@ definitions:
         type: string
       facebook:
         type: string
+      following:
+        type: boolean
       frontIdentify:
         type: string
       fullname:
@@ -140,7 +141,7 @@ definitions:
       referralCode:
         type: string
       relationShip:
-        $ref: '#/definitions/data.RelationShip'
+        $ref: '#/definitions/user_model.FriendItem'
       roleRealEstate:
         $ref: '#/definitions/enums.ERoleRealEstate'
       slogan:
@@ -157,13 +158,6 @@ definitions:
         type: string
       youtube:
         type: string
-    type: object
-  data.RelationShip:
-    properties:
-      friendStatus:
-        $ref: '#/definitions/user_model.FriendItem'
-      isFollowing:
-        type: boolean
     type: object
   data.RestorePhoneRequest:
     properties:
@@ -203,6 +197,13 @@ definitions:
         type: integer
       sessionKey:
         type: string
+    type: object
+  data.SwitchOrganizationRequest:
+    properties:
+      organizationId:
+        type: integer
+    required:
+    - organizationId
     type: object
   data.UserInfoRequest:
     properties:
@@ -388,6 +389,125 @@ definitions:
     - VerifyPending
     - VerifyVerified
     - VerifyRejected
+  pb_user.CertificationItem:
+    properties:
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  pb_user.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  pb_user.ProfessionItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  pb_user.ProfilePublicInfo:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      certifications:
+        items:
+          $ref: '#/definitions/pb_user.CertificationItem'
+        type: array
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      following:
+        type: boolean
+      frontIdentify:
+        type: string
+      fullName:
+        type: string
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
+      position:
+        type: string
+      professions:
+        items:
+          $ref: '#/definitions/pb_user.ProfessionItem'
+        type: array
+      profileId:
+        type: integer
+      rateStats:
+        $ref: '#/definitions/pb_user.RateStats'
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      relationShip:
+        $ref: '#/definitions/pb_user.FriendItem'
+      roleRealEstate:
+        type: integer
+      slogan:
+        type: string
+      startDate:
+        type: string
+      statusOnline:
+        type: integer
+      taxCode:
+        type: string
+      twitter:
+        type: string
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  pb_user.RateStats:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
   user_model.CertificationItem:
     properties:
       fileUrl:
@@ -405,6 +525,8 @@ definitions:
     type: object
   user_model.FriendItem:
     properties:
+      createdBy:
+        type: integer
       id:
         type: integer
       receiverId:
@@ -507,11 +629,11 @@ definitions:
     type: object
 info:
   contact: {}
-  description: API quản lý người dùng
-  title: User API
+  description: API phần logic chính của BĐSPro
+  title: BDSPRO API
   version: "1.0"
 paths:
-  /auth/delete:
+  /v1/user/auth/delete:
     delete:
       consumes:
       - application/json
@@ -528,14 +650,14 @@ paths:
       summary: Xóa tài khoản
       tags:
       - Auth
-  /auth/logout:
+  /v1/user/auth/logout:
     delete:
       description: Đăng xuất, xóa refresh token
       responses: {}
       summary: Logout
       tags:
       - Auth
-  /auth/otp/request:
+  /v1/user/auth/otp/request:
     post:
       consumes:
       - application/json
@@ -553,7 +675,7 @@ paths:
       summary: Gửi OTP
       tags:
       - Auth
-  /auth/otp/resend:
+  /v1/user/auth/otp/resend:
     post:
       consumes:
       - application/json
@@ -571,7 +693,7 @@ paths:
       summary: Resend OTP
       tags:
       - Auth
-  /auth/otp/verify:
+  /v1/user/auth/otp/verify:
     post:
       consumes:
       - application/json
@@ -589,7 +711,7 @@ paths:
       summary: Xác minh OTP
       tags:
       - Auth
-  /auth/qr/confirm:
+  /v1/user/auth/qr/confirm:
     post:
       consumes:
       - application/json
@@ -610,7 +732,7 @@ paths:
       summary: Xác nhận QR Login
       tags:
       - Auth
-  /auth/qr/init:
+  /v1/user/auth/qr/init:
     post:
       consumes:
       - application/json
@@ -632,7 +754,7 @@ paths:
       summary: Tạo QR Login
       tags:
       - Auth
-  /auth/qr/status:
+  /v1/user/auth/qr/status:
     post:
       consumes:
       - application/json
@@ -650,7 +772,7 @@ paths:
       summary: Kiểm tra trạng thái QR
       tags:
       - Auth
-  /auth/restore:
+  /v1/user/auth/restore:
     put:
       consumes:
       - application/json
@@ -670,7 +792,27 @@ paths:
       summary: Khôi phục tài khoản
       tags:
       - Auth
-  /auth/token/refresh:
+  /v1/user/auth/switch/organization:
+    post:
+      consumes:
+      - application/json
+      description: API này cho phép người dùng chuyển đổi tổ chức
+      parameters:
+      - description: Thông tin chuyển đổi tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SwitchOrganizationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển đổi tổ chức
+      tags:
+      - Auth
+  /v1/user/auth/token/refresh:
     post:
       consumes:
       - application/json
@@ -681,7 +823,7 @@ paths:
       summary: Refresh token
       tags:
       - Auth
-  /block/{profileId}:
+  /v1/user/block/{profileId}:
     delete:
       consumes:
       - application/json
@@ -734,7 +876,7 @@ paths:
       summary: Chặn một người dùng
       tags:
       - Chặn
-  /block/list:
+  /v1/user/block/list:
     get:
       consumes:
       - application/json
@@ -755,7 +897,7 @@ paths:
       summary: Lấy danh sách người dùng bị chặn
       tags:
       - Chặn
-  /follow/{profileId}:
+  /v1/user/follow/{profileId}:
     delete:
       consumes:
       - application/json
@@ -816,7 +958,7 @@ paths:
       summary: Thêm người vào danh sách theo dõi
       tags:
       - Theo dõi
-  /follow/followers:
+  /v1/user/follow/followers:
     get:
       consumes:
       - application/json
@@ -837,7 +979,7 @@ paths:
       summary: Lấy danh sách người theo dõi của người dùng
       tags:
       - Theo dõi
-  /follow/following:
+  /v1/user/follow/following:
     get:
       consumes:
       - application/json
@@ -858,7 +1000,7 @@ paths:
       summary: Lấy danh sách người mà người dùng đang theo dõi
       tags:
       - Theo dõi
-  /friend/group/{requestId}/{groupId}:
+  /v1/user/friend/group/{requestId}/{groupId}:
     put:
       consumes:
       - application/json
@@ -894,7 +1036,7 @@ paths:
       summary: Gán nhóm bạn bè
       tags:
       - Bạn bè
-  /friend/info:
+  /v1/user/friend/info:
     get:
       consumes:
       - application/json
@@ -919,7 +1061,7 @@ paths:
       summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
       tags:
       - Bạn bè
-  /friend/list:
+  /v1/user/friend/list:
     get:
       consumes:
       - application/json
@@ -946,7 +1088,7 @@ paths:
       summary: Lấy danh sách bạn bè
       tags:
       - Bạn bè
-  /friend/request/{receiverId}:
+  /v1/user/friend/request/{receiverId}:
     post:
       consumes:
       - application/json
@@ -977,7 +1119,7 @@ paths:
       summary: Gửi lời mời kết bạn
       tags:
       - Bạn bè
-  /friend/request/{requestId}/accept:
+  /v1/user/friend/request/{requestId}/accept:
     put:
       consumes:
       - application/json
@@ -1008,7 +1150,7 @@ paths:
       summary: Đồng ý kết bạn
       tags:
       - Bạn bè
-  /friend/request/{requestId}/reject:
+  /v1/user/friend/request/{requestId}/reject:
     delete:
       consumes:
       - application/json
@@ -1039,7 +1181,7 @@ paths:
       summary: Hủy kết bạn
       tags:
       - Bạn bè
-  /friend/request/received:
+  /v1/user/friend/request/received:
     get:
       consumes:
       - application/json
@@ -1066,7 +1208,7 @@ paths:
       summary: Lấy danh sách các lời mời kết bạn đã nhận
       tags:
       - Bạn bè
-  /friend/request/sent:
+  /v1/user/friend/request/sent:
     get:
       consumes:
       - application/json
@@ -1093,7 +1235,7 @@ paths:
       summary: Lấy danh sách các lời mời kết bạn đã gửi
       tags:
       - Bạn bè
-  /groups:
+  /v1/user/groups:
     get:
       consumes:
       - application/json
@@ -1141,7 +1283,7 @@ paths:
       summary: Tạo nhóm mới
       tags:
       - Nhóm
-  /groups/{id}:
+  /v1/user/groups/{id}:
     delete:
       consumes:
       - application/json
@@ -1209,7 +1351,7 @@ paths:
       summary: Cập nhật thông tin nhóm
       tags:
       - Nhóm
-  /oauth/{provider}/callback:
+  /v1/user/oauth/{provider}/callback:
     get:
       consumes:
       - application/json
@@ -1246,7 +1388,7 @@ paths:
       summary: OAuth Callback
       tags:
       - Auth
-  /oauth/{provider}/login:
+  /v1/user/oauth/{provider}/login:
     get:
       consumes:
       - application/json
@@ -1271,7 +1413,7 @@ paths:
       summary: OAuth Login
       tags:
       - Auth
-  /profile/chat/find:
+  /v1/user/profile/chat/find:
     get:
       consumes:
       - application/json
@@ -1306,7 +1448,7 @@ paths:
       summary: Lấy thông tin cá nhân của user
       tags:
       - Profile
-  /profile/find-by-phone:
+  /v1/user/profile/find-by-phone:
     get:
       consumes:
       - application/json
@@ -1335,7 +1477,7 @@ paths:
       summary: Lấy thông tin cá nhân của user
       tags:
       - Profile
-  /profile/find/ids:
+  /v1/user/profile/find/ids:
     get:
       consumes:
       - application/json
@@ -1370,7 +1512,7 @@ paths:
       summary: Lấy thông tin cá nhân của user
       tags:
       - Profile
-  /profile/info/{profileId}:
+  /v1/user/profile/info/{profileId}:
     get:
       consumes:
       - application/json
@@ -1393,7 +1535,7 @@ paths:
       summary: Xem thông tin public của người dùng
       tags:
       - Profile
-  /profile/me:
+  /v1/user/profile/me:
     get:
       consumes:
       - application/json
@@ -1422,7 +1564,7 @@ paths:
       summary: Lấy thông tin cá nhân của user
       tags:
       - Profile
-  /profile/set-info:
+  /v1/user/profile/set-info:
     put:
       consumes:
       - application/json
@@ -1446,7 +1588,7 @@ paths:
       summary: Cập nhật thông tin hồ sơ
       tags:
       - Profile
-  /rate:
+  /v1/user/rate:
     post:
       consumes:
       - application/json
@@ -1466,7 +1608,7 @@ paths:
       summary: Tạo đánh giá
       tags:
       - Rate
-  /rate/{id}:
+  /v1/user/rate/{id}:
     delete:
       consumes:
       - application/json
@@ -1509,7 +1651,7 @@ paths:
       summary: Cập nhật đánh giá
       tags:
       - Rate
-  /rate/list/{targetId}/{targetType}:
+  /v1/user/rate/list/{targetId}/{targetType}:
     get:
       consumes:
       - application/json
@@ -1548,6 +1690,29 @@ paths:
       summary: Lấy danh sách đánh giá
       tags:
       - Rate
+  /v2/user/profile/info/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/pb_user.ProfilePublicInfo'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng
+      tags:
+      - Profile
 securityDefinitions:
   BearerAuth:
     in: header

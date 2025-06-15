@@ -141,7 +141,7 @@ func (route *UserProductRouter) Posts(c *gin.Context) {
 // // @Param id path int true "Product ID"
 // // @Router /v1/bdspro/v2/user/product/{id}/members [get]
 func (route *UserProductRouter) Members(c *gin.Context) {
-	var dto dto.ProductAccessSearch
+	var dto dto.SharingAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

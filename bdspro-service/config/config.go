@@ -56,9 +56,13 @@ type ConfigApp struct {
 	OrgRouter      *org_router.RouterManager
 	// AdminRouter *admin_router.RouterManager
 	// UserRouter        *user_router.RouterManager
-	GroupRouter         *group_router.GroupManager
-	EnumRoute           *public_router.PublicRouter
-	BdsproPublicService *service.BdsproPublicService
+	GroupRouter              *group_router.GroupManager
+	EnumRoute                *public_router.PublicRouter
+	BdsproPublicService      *service.BdsproPublicService
+	AssetExploitationService *service.AssetExploitationService
+	AssetCostService         *service.AssetCostService
+	AssetCostTypeService     *service.AssetCostTypeService
+	SharingAccessService     *service.SharingAccessService
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
 	// IncomeDocumentServer    *service.IncomeDocumentServer
@@ -80,6 +84,10 @@ func NewConfigApp(
 	productService *service.ProductService,
 	bdsproPublicService *service.BdsproPublicService,
 	assetService *service.AssetService,
+	assetExploitationServer *service.AssetExploitationService,
+	assetCostService *service.AssetCostService,
+	assetCostTypeService *service.AssetCostTypeService,
+	sharingAccessService *service.SharingAccessService,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
 	// CostDocumentServer *service.CostDocumentServer,
@@ -94,14 +102,18 @@ func NewConfigApp(
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
 		// GrpcGenericServer: GrpcGenericServer,
-		PostService:         postService,
-		ProductService:      productService,
-		UserRouter:          userRouter,
-		OrgRouter:           orgRouter,
-		GroupRouter:         groupRouter,
-		EnumRoute:           enumRouter,
-		BdsproPublicService: bdsproPublicService,
-		AssetService:        assetService,
+		PostService:              postService,
+		ProductService:           productService,
+		UserRouter:               userRouter,
+		OrgRouter:                orgRouter,
+		GroupRouter:              groupRouter,
+		EnumRoute:                enumRouter,
+		BdsproPublicService:      bdsproPublicService,
+		AssetService:             assetService,
+		AssetExploitationService: assetExploitationServer,
+		AssetCostService:         assetCostService,
+		AssetCostTypeService:     assetCostTypeService,
+		SharingAccessService:     sharingAccessService,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

@@ -3,7 +3,7 @@ package user_router
 import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	user_usecase "bdspro/internal/usecases/user"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -13,10 +13,10 @@ import (
 
 type UserProductAccessRouter struct {
 	// crud2.BaseRouter[domain.ProductAccess, *usecases.ProductAccessUsecase]
-	UC *user_usecase.UserProductAccessUC
+	UC *shared_usecase.SharingAccessUsecase
 }
 
-func NewUProductAccessRouter(UC *user_usecase.UserProductAccessUC) *UserProductAccessRouter {
+func NewUProductAccessRouter(UC *shared_usecase.SharingAccessUsecase) *UserProductAccessRouter {
 	return &UserProductAccessRouter{
 		// BaseRouter: crud2.BaseRouter[domain.ProductAccess, *ProductAccessService]{
 		// 	Service: service,
@@ -56,14 +56,14 @@ func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 		return
 	}
 
-	body := dto.ProductAccessBulkRequest{}
+	body := dto.SharingAccessBulk{}
 
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.UC.BulkSave(c, id, body)
+	result, err := r.UC.BulkSave(c, id, enums.EOwnerTypeMember, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -86,13 +86,13 @@ func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
 		return
 	}
 
-	body := []dto.ProductAccessRequest{}
+	body := []dto.SharingAccessRequest{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	result, err := r.UC.CreateBatch(c, id, body)
+	result, err := r.UC.CreateBatch(c, id, enums.EOwnerTypeMember, body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -179,13 +179,13 @@ func (r *UserProductAccessRouter) Delete(c *gin.Context) {
 // // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
 // // @Router /v1/bdspro/v2/user/product/access [get]
 func (r *UserProductAccessRouter) Search(c *gin.Context) {
-	var dto dto.ProductAccessSearch
+	var dto dto.SharingAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	results, err := r.UC.Search(c, dto)
+	results, err := r.UC.SearchForProduct(c, enums.EOwnerTypeMember, dto)
 	_routes.RouteResult(c, results, err)
 }
 

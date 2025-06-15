@@ -22,12 +22,23 @@ message ArchivedRequest {
     bool archived = 2;
 }
 
+message MediaItem {
+    uint64 id = 1;
+    string mediaUrl = 2;
+    string mediaType = 3;
+    bool isMain = 4;
+    int32 order = 5;
+    int32 targetType = 6;
+    uint64 targetId = 7;
+}
+
 message IdRequest {
     uint64 id = 1;
     uint32 page = 2;
     uint32 size = 3;
     string sort = 4;
     string text = 5;
+    uint32 ownerType = 6;
 }
 
 
@@ -44,6 +55,7 @@ message History {
     repeated uint64 childIds = 5;
     uint64 createdUserId = 6;
     pb_user.ProfileItem createdUser = 7;
+    repeated ProductInfo childs = 8;
     // ProductInfo parent = 4;
     // ProductInfo product = 6;
     // repeated double areas = 10;
@@ -138,7 +150,7 @@ message ProductResponse {
     string address = 45;
     string googleMapLink = 46;
     repeated AttributeProduct attributes = 47;
-    repeated pb_shared.MediaItem mediaList = 48;
+    repeated MediaItem mediaList = 48;
     HouseInfo houseInfo = 49;
     bool archived = 50;
     optional double priceSuggest = 51;
@@ -166,7 +178,12 @@ message Asset {
     double area = 19;
     string address = 20;
     string description = 21;
-    repeated LegalItem legalItems = 22;
+    repeated LegalItem mediaList = 22;
+    string propertyTypeName = 23;
+    string provinceName = 24;
+    string districtName = 25;
+    string wardName = 26;
+	
 }
 
 message LegalItem {
@@ -177,4 +194,13 @@ message LegalItem {
 	string issuedDate = 5;
 	string expiryDate = 6;
 	string description = 7;
+}
+
+message ProductInfo {
+	uint64 id = 1;
+	string name = 2;
+	string code = 3;
+	uint64 categoryId = 4;
+	double area = 5;
+	uint64 lastPriceId = 6;
 }

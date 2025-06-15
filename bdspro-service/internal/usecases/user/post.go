@@ -7,7 +7,6 @@ import (
 	delivery_dto "bdspro/internal/dto/delivery"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
-	user_repo "bdspro/internal/repo/user"
 	iusecase "bdspro/internal/usecases/interface"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_db "common/db"
@@ -29,9 +28,9 @@ func NewUserPostUsecase(repo repo.UPostRepo,
 	// planService *providers.MemberPlanProvider,
 	// UserProductService *UserProductUC,
 	transmit *providers.TransmitProvider,
-	productRepo user_repo.UProductRepo,
+	productRepo repo.ProductRepo,
 	postMediaRepo repo.PostMediaRepo,
-	assetRepo user_repo.UAssetRepo,
+	assetRepo repo.AssetRepo,
 	planUsecase iusecase.IPlanUC,
 	clientUsecase iusecase.IClientUC,
 	// serviceManager *manager.ServiceManager,

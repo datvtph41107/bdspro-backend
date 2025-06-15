@@ -98,6 +98,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -494,6 +501,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -710,12 +724,24 @@
         "description": {
           "type": "string"
         },
-        "legalItems": {
+        "mediaList": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/pb_bdsproLegalItem"
           }
+        },
+        "propertyTypeName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },
@@ -848,6 +874,36 @@
         },
         "description": {
           "type": "string"
+        }
+      }
+    },
+    "pb_bdsproMediaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1009,13 +1065,16 @@
           "type": "string",
           "format": "uint64"
         },
-        "url": {
+        "mediaUrl": {
           "type": "string"
         },
-        "type": {
+        "mediaType": {
           "type": "string"
         },
-        "orderNumber": {
+        "isMain": {
+          "type": "boolean"
+        },
+        "sortOrder": {
           "type": "integer",
           "format": "int32"
         }
@@ -1333,7 +1392,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         },
         "houseInfo": {
@@ -1417,36 +1476,6 @@
         },
         "hidden": {
           "type": "boolean"
-        }
-      }
-    },
-    "pb_sharedMediaItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "mediaUrl": {
-          "type": "string"
-        },
-        "mediaType": {
-          "type": "string"
-        },
-        "isMain": {
-          "type": "boolean"
-        },
-        "order": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetId": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },

@@ -1,31 +1,138 @@
 basePath: /v2/crm
 definitions:
-  domain.ContactEntity:
+  crmpb.ContactSaveDTO:
     properties:
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
       fullName:
         type: string
       id:
         type: integer
+      ownerType:
+        type: integer
+      phone:
+        type: string
+    type: object
+  crmpb.ContactSyncRequest:
+    properties:
+      contacts:
+        items:
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
+        type: array
       ownerId:
         type: integer
       ownerType:
-        $ref: '#/definitions/enums.EOwnerType'
-      phone:
-        description: OwnerID   uint64  `gorm:"column:owner_id" json:"ownerId"` =>
-          createdBy
-        type: string
-      updatedAt:
-        type: string
-      updatedBy:
         type: integer
-    required:
-    - fullName
-    - ownerType
+    type: object
+  crmpb.CustomerAssignRequest:
+    properties:
+      chargeId:
+        type: integer
+      chargeType:
+        type: integer
+      customerId:
+        type: integer
+      noteAssign:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+    type: object
+  crmpb.CustomerDTO:
+    properties:
+      address:
+        type: string
+      assignNote:
+        type: string
+      birthday:
+        type: string
+      chargeId:
+        type: integer
+      chargeType:
+        description: EOwnerType (int32)
+        type: integer
+      contactId:
+        type: integer
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        description: EOwnerType (int32)
+        type: integer
+      phone:
+        type: string
+      pipelineId:
+        type: integer
+      source:
+        description: ESourceCustomer (int32)
+        type: integer
+      stageId:
+        type: integer
+    type: object
+  crmpb.CustomerNoteRequest:
+    properties:
+      customerId:
+        type: integer
+      note:
+        type: string
+    type: object
+  crmpb.CustomerStageRequest:
+    properties:
+      customerId:
+        type: integer
+      stageId:
+        type: integer
+    type: object
+  crmpb.FriendGroup:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  crmpb.ListFriendGroupsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/crmpb.FriendGroup'
+        type: array
+      total:
+        type: integer
+    type: object
+  crmpb.RuleDTO:
+    properties:
+      active:
+        type: boolean
+      condition:
+        type: integer
+      conditionValue:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      ruleName:
+        type: string
+      trigger:
+        type: integer
+      triggerValue:
+        type: string
     type: object
   domain.CustomerEntity:
     properties:
@@ -74,26 +181,6 @@ definitions:
     - fullName
     - ownerId
     - ownerType
-    type: object
-  domain.GroupEntity:
-    properties:
-      backgroundColor:
-        type: string
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      id:
-        type: integer
-      name:
-        type: string
-      textColor:
-        type: string
-      updatedAt:
-        type: string
-      updatedBy:
-        type: integer
     type: object
   domain.PipelineEntity:
     properties:
@@ -350,25 +437,103 @@ definitions:
     - TargetHistoryPipeline
     - TargetHistoryStage
     - TargetHistoryRule
+  timestamppb.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
 info:
   contact: {}
   description: API phần logic chính của CRM. Đã chuyển sang grpc
   title: CRM API
   version: "1.0"
 paths:
-  /contact:
+  /block/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Bỏ chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần bỏ chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Bỏ chặn một người dùng
+      tags:
+      - Chặn
+    post:
+      consumes:
+      - application/json
+      description: Chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Chặn một người dùng
+      tags:
+      - Chặn
+  /block/list:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách
+      description: Lấy danh sách ID của những người mà người dùng hiện tại đã chặn
       produces:
       - application/json
-      responses: {}
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
       security:
       - BearerAuth: []
-      summary: Lấy danh sách liên hệ
+      summary: Lấy danh sách người dùng bị chặn
       tags:
-      - Liên hệ
+      - Chặn
+  /contact:
     post:
       consumes:
       - application/json
@@ -379,7 +544,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ContactEntity'
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
       produces:
       - application/json
       responses:
@@ -425,7 +590,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.GroupEntity'
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
       - description: ID của lời mời kết bạn
         in: path
         name: id
@@ -437,6 +602,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật thông tin liên hệ
+      tags:
+      - Liên hệ
+  /contact/list/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - description: 'Loại sở hữu (10: user, 20: nhóm, 30: organization)'
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách liên hệ
+      tags:
+      - Liên hệ
+  /contact/sync:
+    post:
+      consumes:
+      - application/json
+      description: Đồng bộ danh bạ
+      parameters:
+      - description: Danh bạ
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.ContactSyncRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đồng bộ danh bạ
       tags:
       - Liên hệ
   /customer:
@@ -603,63 +807,76 @@ paths:
       summary: Chuyển giai đoạn khách hàng
       tags:
       - Khách hàng
-  /customer/list/{ownerId}/{ownerType}:
+  /customer/assign:
+    post:
+      consumes:
+      - application/json
+      description: Gán khách hàng
+      parameters:
+      - description: Gán khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.CustomerAssignRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán khách hàng
+      tags:
+      - Khách hàng
+  /customer/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Chi tiết khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.CustomerDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chi tiết khách hàng
+      tags:
+      - Khách hàng
+  /customer/list:
     get:
       consumes:
       - application/json
       description: Lấy danh sách
       parameters:
-      - description: ID của chủ sở hữu
-        in: path
-        name: ownerId
-        required: true
-        type: integer
-      - description: Loại chủ sở hữu
-        enum:
-        - 10
-        - 20
-        - 30
-        in: path
-        name: ownerType
-        required: true
-        type: integer
       - collectionFormat: csv
         in: query
         items:
           type: integer
         name: chargeIds
         type: array
-      - description: deprecated
-        enum:
-        - 10
-        - 20
-        - 30
+      - description: '[deprecated = true]; // EOwnerType (int32), deprecated'
         in: query
         name: chargeType
         type: integer
-        x-enum-varnames:
-        - EOwnerTypeMember
-        - EOwnerTypeGroup
-        - EOwnerTypeOrgnization
-      - collectionFormat: csv
-        in: query
-        items:
-          enum:
-          - 10
-          - 20
-          - 30
-          - 40
-          - 50
-          - 60
-          type: integer
-        name: customerSources
-        type: array
-      - in: query
-        name: fromDate
-        type: string
       - in: query
         name: fullName
         type: string
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
       - in: query
         name: page
         type: integer
@@ -667,7 +884,6 @@ paths:
         name: phone
         type: string
       - collectionFormat: csv
-        description: 'todo: add product care'
         in: query
         items:
           type: integer
@@ -676,9 +892,13 @@ paths:
       - in: query
         name: size
         type: integer
-      - in: query
-        name: sort
-        type: string
+      - collectionFormat: csv
+        description: ESourceCustomer (int32)
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
       - collectionFormat: csv
         in: query
         items:
@@ -686,20 +906,12 @@ paths:
         name: stageIds
         type: array
       - collectionFormat: csv
+        description: EStep (int32)
         in: query
         items:
-          enum:
-          - 10
-          - 20
-          - 30
-          - 40
-          - 50
           type: integer
         name: steps
         type: array
-      - in: query
-        name: toDate
-        type: string
       produces:
       - application/json
       responses: {}
@@ -708,6 +920,236 @@ paths:
       summary: Lấy danh sách khách hàng
       tags:
       - Khách hàng
+  /customer/note:
+    post:
+      consumes:
+      - application/json
+      description: Ghi chú khách hàng
+      parameters:
+      - description: Ghi chú khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.CustomerNoteRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Ghi chú khách hàng
+      tags:
+      - Khách hàng
+  /customer/stage:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển trạng thái khách hàng
+      parameters:
+      - description: Chuyển trạng thái khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.CustomerStageRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển trạng thái khách hàng
+      tags:
+      - Khách hàng
+  /follow/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một người khỏi danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã xóa người khỏi danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa người khỏi danh sách theo dõi
+      tags:
+      - Theo dõi
+    post:
+      consumes:
+      - application/json
+      description: Thêm một người vào danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã thêm người vào danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thêm người vào danh sách theo dõi
+      tags:
+      - Theo dõi
+  /follow/followers:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người theo dõi người dùng cụ thể
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người theo dõi của người dùng
+      tags:
+      - Theo dõi
+  /follow/following:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người mà người dùng đang theo dõi
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người mà người dùng đang theo dõi
+      tags:
+      - Theo dõi
+  /friend-group:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được tạo
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Tạo nhóm
+      tags:
+      - Nhóm bạn bè
+  /friend-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được xóa
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Xóa nhóm
+      tags:
+      - Nhóm bạn bè
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được cập nhật
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Cập nhật nhóm
+      tags:
+      - Nhóm bạn bè
+  /friend-group/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách nhóm
+          schema:
+            $ref: '#/definitions/crmpb.ListFriendGroupsResponse'
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm bạn bè
   /histories/{id}/{ownerType}:
     get:
       consumes:
@@ -1038,6 +1480,54 @@ paths:
       - in: query
         name: sort
         type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy tắc
+      tags:
+      - Quy tắc
+  /rule/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Chi tiết quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chi tiết quy tắc
+      tags:
+      - Quy tắc
+  /rule/search:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy tắc
+      parameters:
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses: {}

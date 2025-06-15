@@ -2,7 +2,7 @@ package org_router
 
 import (
 	"bdspro/internal/dto"
-	org_usecase "bdspro/internal/usecases/org"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"fmt"
@@ -17,10 +17,10 @@ import (
 )
 
 type OrgProductRouter struct {
-	OrgProductUsecase *org_usecase.OrgProductUC
+	OrgProductUsecase *shared_usecase.ProductUsecase
 }
 
-func NewOrgProductRouter(uc *org_usecase.OrgProductUC) *OrgProductRouter {
+func NewOrgProductRouter(uc *shared_usecase.ProductUsecase) *OrgProductRouter {
 	return &OrgProductRouter{OrgProductUsecase: uc}
 }
 
@@ -135,7 +135,7 @@ func (route *OrgProductRouter) Posts(c *gin.Context) {
 // @Param members body dto.ProductAccessSearch true "Thông tin thành viên"
 // @Router /v1/bdspro/v2/org/product/{id}/members [get]
 func (route *OrgProductRouter) Members(c *gin.Context) {
-	var dto dto.ProductAccessSearch
+	var dto dto.SharingAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

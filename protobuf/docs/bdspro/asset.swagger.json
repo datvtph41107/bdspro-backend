@@ -166,6 +166,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -223,6 +230,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -355,6 +369,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -528,6 +549,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -736,12 +764,24 @@
         "description": {
           "type": "string"
         },
-        "legalItems": {
+        "mediaList": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/pb_bdsproLegalItem"
           }
+        },
+        "propertyTypeName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },
@@ -876,7 +916,14 @@
           "format": "uint64"
         },
         "createdUser": {
-          "$ref": "#/definitions/pb_userProfileItem",
+          "$ref": "#/definitions/pb_userProfileItem"
+        },
+        "childs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductInfo"
+          },
           "title": "ProductInfo parent = 4;\n ProductInfo product = 6;\n repeated double areas = 10;\n repeated ProductInfo childs = 11;"
         }
       }
@@ -939,6 +986,33 @@
           "type": "string"
         },
         "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "pb_bdsproProductInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "lastPriceId": {
           "type": "string",
           "format": "uint64"
         }

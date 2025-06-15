@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"user/enums"
 	user_model "user/models/user"
 
@@ -25,7 +26,7 @@ func (r *CertificationRepo) CreateBatchCertification(c *gin.Context, certificati
 	return r.DB.WithContext(c).Create(&certifications).Error
 }
 
-func (r *CertificationRepo) ListItemByProfileID(c *gin.Context, profileID uint64) ([]user_model.CertificationItem, error) {
+func (r *CertificationRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.CertificationItem, error) {
 	var certifications []user_model.CertificationItem
 
 	err := r.DB.WithContext(c).
@@ -46,6 +47,8 @@ func (r *CertificationRepo) UpdateCertification(c *gin.Context, certification *u
 			"issue_date": certification.IssueDate,
 			"file_url":   certification.FileURL,
 			"type":       certification.Type,
+			"file_type":  certification.FileType,
+			"file_name":  certification.FileName,
 		}).
 		Error
 }
@@ -70,7 +73,7 @@ func (r *CertificationRepo) BatchSave(
 
 		// Nếu có danh sách cần thêm
 		if len(*certifications) > 0 {
-			if err := tx.Create(certifications).Error; err != nil {
+			if err := tx.Save(certifications).Error; err != nil {
 				return err // rollback
 			}
 		}

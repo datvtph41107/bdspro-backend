@@ -42,6 +42,10 @@ var GrpcCmd = &cobra.Command{
 		pb_bdspro.RegisterProductServiceServer(s, app.ProductService)
 		pb_bdspro.RegisterBdsproPublicServiceServer(s, app.BdsproPublicService)
 		pb_bdspro.RegisterAssetServiceServer(s, app.AssetService)
+		pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationService)
+		pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostService)
+		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeService)
+		pb_bdspro.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server

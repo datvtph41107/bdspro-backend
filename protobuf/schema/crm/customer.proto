@@ -2,18 +2,45 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
 
 service CustomerService {
-  rpc Search (CustomerSearchRequest) returns (CustomerListDTO);
-  rpc Detail (CustomerDTO) returns (CustomerDTO);
-  rpc Create (CustomerDTO) returns (CustomerDTO);
-  rpc Update (CustomerDTO) returns (CustomerDTO);
-  rpc Delete (CustomerDTO) returns (CustomerDTO);
-  rpc Assign (CustomerAssignRequest) returns (CustomerDTO);
-  rpc Note (CustomerNoteRequest) returns (CustomerDTO);
-  rpc Stage (CustomerStageRequest) returns (CustomerDTO);
+  rpc Search (CustomerSearchRequest) returns (CustomerListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/customer/list"
+    };
+  };
+  rpc Detail (CustomerDTO) returns (CustomerDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/customer/detail/{id}"
+    };
+  };
+  rpc Create (CustomerDTO) returns (CustomerDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/customer"
+      body: "*"
+    };
+  };
+  rpc Update (CustomerDTO) returns (CustomerDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/customer/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/customer/{id}"
+    };
+  };
+  rpc Assign (CustomerAssignRequest) returns (CustomerDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/customer/assign"
+      body: "*"
+    };
+  };
 }
 
 message CustomerSearchRequest {

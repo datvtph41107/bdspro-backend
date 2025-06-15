@@ -54,7 +54,7 @@ func AuthRoutes(r *gin.Engine, router *AuthRouter) {
 // @Accept  json
 // @Produce  json
 // @Param body body data.OtpRequest true "OTP Request"
-// @Router /auth/otp/request [post]
+// @Router /v1/user/auth/otp/request [post]
 func (router *AuthRouter) RequestOTP(c *gin.Context) {
 	var dto data.OtpRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -72,7 +72,7 @@ func (router *AuthRouter) RequestOTP(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param body body data.OtpVerifyRequest true "OTP Verify Request"
-// @Router /auth/otp/verify [post]
+// @Router /v1/user/auth/otp/verify [post]
 func (router *AuthRouter) VerifyOTP(c *gin.Context) {
 	var dto data.OtpVerifyRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -91,7 +91,7 @@ func (router *AuthRouter) VerifyOTP(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param body body data.OtpRequest true "OTP Request"
-// @Router /auth/otp/resend [post]
+// @Router /v1/user/auth/otp/resend [post]
 func (router *AuthRouter) ResendOTP(c *gin.Context) {
 	var dto data.OtpRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -107,7 +107,7 @@ func (router *AuthRouter) ResendOTP(c *gin.Context) {
 // @Description Làm mới access token bằng refresh token trong cookie
 // @Accept  json
 // @Produce  json
-// @Router /auth/token/refresh [post]
+// @Router /v1/user/auth/token/refresh [post]
 func (router *AuthRouter) RefreshToken(c *gin.Context) {
 	refreshToken, _ := c.Cookie("rt")
 	result, err := router.Service.RefreshToken(refreshToken)
@@ -117,7 +117,7 @@ func (router *AuthRouter) RefreshToken(c *gin.Context) {
 // @Tags Auth
 // @Summary Logout
 // @Description Đăng xuất, xóa refresh token
-// @Router /auth/logout [delete]
+// @Router /v1/user/auth/logout [delete]
 func (router *AuthRouter) Logout(c *gin.Context) {
 	// cookieService.DeleteRefreshToken(c.Writer)
 	// c.JSON(http.StatusOK, response)
@@ -132,7 +132,7 @@ func (router *AuthRouter) Logout(c *gin.Context) {
 // @Security BearerAuth
 // @Param body body data.RestorePhoneRequest true "Restore Phone Request"
 // @Tags Auth
-// @Router /auth/restore [put]
+// @Router /v1/user/auth/restore [put]
 func (router *AuthRouter) Restore(c *gin.Context) {
 	var dto data.RestorePhoneRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -151,7 +151,7 @@ func (router *AuthRouter) Restore(c *gin.Context) {
 // @Produce json
 // @Param request body data.SessionQRRequest true "Thông tin tạo QR"
 // @Success 200 {object} data.SessionQRResponse
-// @Router /auth/qr/init [post]
+// @Router /v1/user/auth/qr/init [post]
 func (router *AuthRouter) QRInit(c *gin.Context) {
 	var dto data.SessionQRRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -175,7 +175,7 @@ func (router *AuthRouter) QRInit(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param request body data.SessionQRConfirm true "Thông tin xác nhận QR"
-// @Router /auth/qr/confirm [post]
+// @Router /v1/user/auth/qr/confirm [post]
 func (router *AuthRouter) QRConfirm(c *gin.Context) {
 	var dto data.SessionQRConfirm
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -194,7 +194,7 @@ func (router *AuthRouter) QRConfirm(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body data.SessionQRRequest true "Thông tin kiểm tra QR"
-// @Router /auth/qr/status [post]
+// @Router /v1/user/auth/qr/status [post]
 func (router *AuthRouter) QRStatus(c *gin.Context) {
 	var dto data.SessionQRRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -217,7 +217,7 @@ func (router *AuthRouter) QRStatus(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
-// @Router /auth/delete [delete]
+// @Router /v1/user/auth/delete [delete]
 func (p *AuthRouter) Delete(c *gin.Context) {
 	result, err := p.Service.Delete(c)
 
@@ -231,7 +231,7 @@ func (p *AuthRouter) Delete(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param request body data.SwitchOrganizationRequest true "Thông tin chuyển đổi tổ chức"
-// @Router /auth/switch/organization [post]
+// @Router /v1/user/auth/switch/organization [post]
 func (router *AuthRouter) SwitchOrganization(c *gin.Context) {
 	var dto data.SwitchOrganizationRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {

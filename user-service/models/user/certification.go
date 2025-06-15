@@ -14,6 +14,8 @@ type CertificationEntity struct {
 	Issuer         string             `gorm:"type:varchar(255)" json:"issuer"`                // Cơ quan cấp
 	IssueDate      time.Time          `gorm:"type:date" json:"issueDate"`                     // Ngày cấp
 	FileURL        string             `gorm:"type:text" json:"fileUrl"`                       // Link tài liệu
+	FileType       string             `gorm:"type:varchar(255)" json:"fileType"`              // Loại file
+	FileName       string             `gorm:"type:varchar(255)" json:"fileName"`              // Tên file
 	VerifiedStatus enums.VerifyStatus `gorm:"type:smallint;default:10" json:"verifiedStatus"` // Trạng thái xác minh
 }
 

@@ -3,7 +3,7 @@ package user_router
 import (
 	"bdspro/internal/dto"
 	user_dto "bdspro/internal/dto/user"
-	user_usecase "bdspro/internal/usecases/user"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -12,10 +12,10 @@ import (
 )
 
 type UserAssetRouter struct {
-	UC *user_usecase.UserAssetUsecase
+	UC *shared_usecase.AssetUsecase
 }
 
-func NewUserAssetRouter(uc *user_usecase.UserAssetUsecase) *UserAssetRouter {
+func NewUserAssetRouter(uc *shared_usecase.AssetUsecase) *UserAssetRouter {
 	return &UserAssetRouter{UC: uc}
 }
 

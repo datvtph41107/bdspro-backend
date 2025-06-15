@@ -3,16 +3,16 @@ package providers
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	user_repo "bdspro/internal/repo/user"
+	"bdspro/internal/repo"
 	_utils "common/utils"
 	"context"
 )
 
 type UProductProvider struct {
-	ProductRepo user_repo.UProductRepo
+	ProductRepo repo.ProductRepo
 }
 
-func NewUProductProvider(productRepo user_repo.UProductRepo) *UProductProvider {
+func NewUProductProvider(productRepo repo.ProductRepo) *UProductProvider {
 	return &UProductProvider{
 		ProductRepo: productRepo,
 	}

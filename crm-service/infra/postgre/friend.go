@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	"context"
 	"crm/data"
 	"crm/internal/domain"
 	"crm/internal/enums"
@@ -9,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// @bind: crm/internal/repo.FriendRepo
 type FriendRepo struct {
 	DB *gorm.DB
 }
@@ -19,14 +21,14 @@ func NewFriendRepo(DB *gorm.DB) *FriendRepo {
 	}
 }
 
-func (repo *FriendRepo) UpdateStatusById(status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
+func (repo *FriendRepo) UpdateStatusById(c context.Context, status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
 	return repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":       status,
 		"responded_at": respondedAt,
 	}).Error
 }
 
-func (repo *FriendRepo) UpdateGroupById(isGroup bool, groupId uint64, id uint64) error {
+func (repo *FriendRepo) UpdateGroupById(c context.Context, isGroup bool, groupId uint64, id uint64) error {
 	tx := repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id)
 	if isGroup {
 		return tx.Updates(map[string]interface{}{"group_id": groupId}).Error
@@ -81,7 +83,7 @@ func (repo *FriendRepo) SearchFriend(currentId uint64, dto data.FriendDTO, page 
 		Preload("GroupReceiver").
 		Joins("LEFT JOIN profile_transfer ON (friend.created_by = profile_transfer.profile_id OR friend.receiver_id = profile_transfer.profile_id) "+
 			"						AND profile_transfer.profile_id <> ? ", currentId).
-		Where("friend.status = 2 and friend.deleted_at is null")
+		Where("friend.status = 20 and friend.deleted_at is null")
 
 	if dto.Text != nil && *dto.Text != "" {
 		query = query.Where("full_name LIKE ? OR username LIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")
@@ -127,7 +129,7 @@ func (repo *FriendRepo) DeleteByID(id uint64) error {
 		Error
 }
 
-func (repo *FriendRepo) BlockFriend(profileId uint64, targetId uint64) error {
+func (repo *FriendRepo) BlockFriend(c context.Context, profileId uint64, targetId uint64) error {
 	return repo.DB.Model(&domain.FriendEntity{}).
 		Where("(created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)",
 			profileId, targetId,

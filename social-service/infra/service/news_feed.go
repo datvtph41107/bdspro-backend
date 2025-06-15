@@ -106,7 +106,7 @@ func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *pb_social.New
 // @Router /news-feed/public [get]
 func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *pb_social.NewsFeedGlobalSearch) (*pb_social.ListNewsFeed, error) {
 	postSearch := &dto.NewsFeedGlobalSearch{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
@@ -188,7 +188,7 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *pb_social.Shar
 // @Router /news-feed/user/{userId} [get]
 func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *pb_social.NewsFeedSearch) (*pb_social.ListNewsFeed, error) {
 	postSearch := &dto.NewsFeedGlobalSearch{
-		Page: _dto.Pagable{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

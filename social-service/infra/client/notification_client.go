@@ -1,6 +1,7 @@
 package client
 
 import (
+	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -28,7 +29,7 @@ func NewNotificationClient() *NotificationClient {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8004", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(UnaryClientInterceptor),
+			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial: %v", err)
@@ -37,7 +38,7 @@ func NewNotificationClient() *NotificationClient {
 		ctx, _ := context.WithCancel(context.Background())
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go monitorConnection(ctx, name, conn)
+		go _middleware.MonitorConnection(ctx, name, conn)
 
 		client := pb_notification.NewNotificationServiceClient(conn)
 		notiClient.client = client

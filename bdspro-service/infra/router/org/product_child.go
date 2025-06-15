@@ -2,7 +2,7 @@ package org_router
 
 import (
 	"bdspro/internal/dto"
-	org_usecase "bdspro/internal/usecases/org"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -11,10 +11,10 @@ import (
 )
 
 type OrgProductChildRouter struct {
-	productService *org_usecase.OrgProductChildUsecase
+	productService *shared_usecase.ProductUsecase
 }
 
-func NewOrgProductChildRouter(product *org_usecase.OrgProductChildUsecase) *OrgProductChildRouter {
+func NewOrgProductChildRouter(product *shared_usecase.ProductUsecase) *OrgProductChildRouter {
 	return &OrgProductChildRouter{
 		productService: product,
 	}
@@ -59,7 +59,7 @@ func (route *OrgProductChildRouter) CreateChild(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.productService.Create(c, &_body)
+	result, err := route.productService.CreateChild(c, &_body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -164,6 +164,10 @@ func (route *OrgProductChildRouter) History(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := route.productService.History(c, id, &_body)
-	_routes.RouteResult(c, result, err)
+	result, total, err := route.productService.ChildHistory(c, id, &_body)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }

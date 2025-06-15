@@ -408,7 +408,7 @@ func MakeGormRepo(domainName string) {
 	structName := domainName // fmt.Sprintf("%s", pkgName)
 	log.Print("packageName: ", structName)
 
-	content := `package postgre_repo
+	content := `package postgre
 
 import (
 	"$1$/v2/internal/domain"

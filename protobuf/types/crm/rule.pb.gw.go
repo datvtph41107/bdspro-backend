@@ -2,17 +2,18 @@
 // source: crm/rule.proto
 
 /*
-Package crm is a reverse proxy.
+Package crmpb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package crm
+package crmpb
 
 import (
 	"context"
 	"errors"
 	"io"
 	"net/http"
+	"pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
@@ -35,31 +36,14 @@ var (
 	_ = metadata.Join
 )
 
-var filter_RuleService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{"ownerId": 0, "ownerType": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+var filter_RuleService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_RuleService_Search_0(ctx context.Context, marshaler runtime.Marshaler, client RuleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq RuleSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -74,24 +58,7 @@ func local_request_RuleService_Search_0(ctx context.Context, marshaler runtime.M
 	var (
 		protoReq RuleSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Int32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -219,11 +186,9 @@ func local_request_RuleService_Update_0(ctx context.Context, marshaler runtime.M
 	return msg, metadata, err
 }
 
-var filter_RuleService_Delete_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 func request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client RuleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq RuleDTO
+		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -236,19 +201,13 @@ func request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshal
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RuleService_Delete_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
 func local_request_RuleService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server RuleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq RuleDTO
+		protoReq pb_shared.IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -259,12 +218,6 @@ func local_request_RuleService_Delete_0(ctx context.Context, marshaler runtime.M
 	protoReq.Id, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RuleService_Delete_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Delete(ctx, &protoReq)
 	return msg, metadata, err
@@ -282,7 +235,7 @@ func RegisterRuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.RuleService/Search", runtime.WithHTTPPathPattern("/v2/crm/rule/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.RuleService/Search", runtime.WithHTTPPathPattern("/v2/crm/rule/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -302,7 +255,7 @@ func RegisterRuleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.RuleService/Detail", runtime.WithHTTPPathPattern("/v2/crm/rule/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.RuleService/Detail", runtime.WithHTTPPathPattern("/v2/crm/rule/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -420,7 +373,7 @@ func RegisterRuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.RuleService/Search", runtime.WithHTTPPathPattern("/v2/crm/rule/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.RuleService/Search", runtime.WithHTTPPathPattern("/v2/crm/rule/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -437,7 +390,7 @@ func RegisterRuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.RuleService/Detail", runtime.WithHTTPPathPattern("/v2/crm/rule/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.RuleService/Detail", runtime.WithHTTPPathPattern("/v2/crm/rule/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -505,8 +458,8 @@ func RegisterRuleServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_RuleService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "rule", "ownerId", "ownerType"}, ""))
-	pattern_RuleService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "rule", "id"}, ""))
+	pattern_RuleService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "rule", "list"}, ""))
+	pattern_RuleService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "rule", "detail", "id"}, ""))
 	pattern_RuleService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "rule"}, ""))
 	pattern_RuleService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "rule", "id"}, ""))
 	pattern_RuleService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "rule", "id"}, ""))

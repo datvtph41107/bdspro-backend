@@ -4826,34 +4826,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/post/share": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tin đăng"
-                ],
-                "summary": "Chia sẻ bài đăng",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.PostExpiredRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/user/post/{id}": {
             "get": {
                 "security": [
@@ -5021,6 +4993,454 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/user_dto.AssetArchivedDTO"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Tạo chi phí",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetCostDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost-type": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Tạo loại chi phí",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetCostTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost-type/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy chi tiết loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost-type/{id}": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Cập nhật loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetCostTypeDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Xóa loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost-type/{id}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy danh sách loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30
+                        ],
+                        "type": "integer",
+                        "description": "Owner Type",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy chi tiết chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Cập nhật chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetCostDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Xóa chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost/{id}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy danh sách chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30
+                        ],
+                        "type": "integer",
+                        "description": "Owner Type",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/exploitation": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Tạo khai thác",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetExploitationDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/exploitation/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy chi tiết khai thác",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/exploitation/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Cập nhật khai thác",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetExploitationDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Xóa khai thác",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/exploitation/{id}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy danh sách khai thác",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30
+                        ],
+                        "type": "integer",
+                        "description": "Owner Type",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -5682,7 +6102,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_shared.ArchivedRequest"
+                            "$ref": "#/definitions/pb_bdspro.ArchivedRequest"
                         }
                     }
                 ],
@@ -7060,7 +7480,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "assetId": {
-                    "description": "_models.BaseEntity",
                     "type": "integer"
                 },
                 "contractName": {
@@ -7068,6 +7487,13 @@ const docTemplate = `{
                 },
                 "contractValue": {
                     "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
                 },
                 "customer": {
                     "description": "tên kh",
@@ -7085,8 +7511,14 @@ const docTemplate = `{
                 "fileContract": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "incomeAmount": {
                     "type": "number"
+                },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
                 },
                 "startDate": {
                     "type": "string"
@@ -7098,6 +7530,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/domain.AssetCostType"
                 },
                 "typeId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
                     "type": "integer"
                 }
             }
@@ -8938,6 +9376,69 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_bdspro.ArchivedRequest": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.AssetCostDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "costTypeId": {
+                    "type": "integer"
+                },
+                "costTypeName": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.AssetCostTypeDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isCustom": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
         "pb_bdspro.AssetCreateWithProduct": {
             "type": "object",
             "properties": {
@@ -8961,6 +9462,53 @@ const docTemplate = `{
                 },
                 "rentStatus": {
                     "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.AssetExploitationDTO": {
+            "type": "object",
+            "properties": {
+                "assetID": {
+                    "type": "integer"
+                },
+                "contractName": {
+                    "type": "string"
+                },
+                "contractValue": {
+                    "type": "number"
+                },
+                "customer": {
+                    "type": "string"
+                },
+                "cyclePay": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "fileContract": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incomeAmount": {
+                    "type": "number"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "typeId": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
                 }
             }
         },
@@ -9071,6 +9619,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "ownerType": {
+                    "type": "integer"
+                },
                 "page": {
                     "type": "integer"
                 },
@@ -9111,6 +9662,32 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_bdspro.MediaItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
         "pb_bdspro.PostSaveWithProduct": {
             "type": "object",
             "properties": {
@@ -9126,7 +9703,7 @@ const docTemplate = `{
                 "metadatas": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_shared.MediaItem"
+                        "$ref": "#/definitions/pb_bdspro.MediaItem"
                     }
                 },
                 "numDate": {
@@ -9249,7 +9826,7 @@ const docTemplate = `{
                 "mediaItems": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_shared.MediaItem"
+                        "$ref": "#/definitions/pb_bdspro.MediaItem"
                     }
                 },
                 "name": {
@@ -9367,43 +9944,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_shared.ArchivedRequest": {
-            "type": "object",
-            "properties": {
-                "archived": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_shared.MediaItem": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "isMain": {
-                    "type": "boolean"
-                },
-                "mediaType": {
-                    "type": "string"
-                },
-                "mediaUrl": {
-                    "type": "string"
-                },
-                "order": {
-                    "type": "integer"
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
                     "type": "integer"
                 }
             }

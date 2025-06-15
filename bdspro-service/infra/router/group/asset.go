@@ -1,21 +1,16 @@
 package group_router
 
 import (
-	"bdspro/internal/dto"
-	org_dto "bdspro/internal/dto/org"
-	group_usecase "bdspro/internal/usecases/group"
-	_routes "common/routes"
-	_utils "common/utils"
-	"strconv"
+	shared_usecase "bdspro/internal/usecases/shared"
 
 	"github.com/gin-gonic/gin"
 )
 
 type GroupAssetRouter struct {
-	GroupAssetUsecase *group_usecase.GroupAssetUsecase
+	GroupAssetUsecase *shared_usecase.AssetUsecase
 }
 
-func NewGroupAssetRouter(groupAssetUsecase *group_usecase.GroupAssetUsecase) *GroupAssetRouter {
+func NewGroupAssetRouter(groupAssetUsecase *shared_usecase.AssetUsecase) *GroupAssetRouter {
 	return &GroupAssetRouter{
 		GroupAssetUsecase: groupAssetUsecase,
 	}
@@ -44,24 +39,24 @@ func (r *GroupAssetRouter) RegisterRoutes(group *gin.RouterGroup) {
 // @Failure 500 {object} map[string]string "Lỗi server"
 // @Router /v1/bdspro/v2/group/product/{groupId} [get]
 func (r *GroupAssetRouter) GetAsset(c *gin.Context) {
-	groupId, err := strconv.ParseUint(c.Param("groupId"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+	// groupId, err := strconv.ParseUint(c.Param("groupId"), 10, 64)
+	// if err != nil {
+	// 	_routes.RouteResult(c, nil, err)
+	// 	return
+	// }
 
-	dto := dto.ProductSearchRequest{}
-	if err := _utils.ParseQuery2(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+	// dto := dto.ProductSearchRequest{}
+	// if err := _utils.ParseQuery2(c, &dto); err != nil {
+	// 	_routes.RouteResult(c, nil, err)
+	// 	return
+	// }
 
-	products, total, err := r.GroupAssetUsecase.GetAsset(c, groupId, dto)
-	_routes.RouteResult(c, _routes.ResponseDTO{
-		Code:          0,
-		Data:          products,
-		TotalElements: &total,
-	}, err)
+	// products, total, err := r.GroupAssetUsecase.SearchAssetMe(c, dto)
+	// _routes.RouteResult(c, _routes.ResponseDTO{
+	// 	Code:          0,
+	// 	Data:          products,
+	// 	TotalElements: &total,
+	// }, err)
 }
 
 // @Summary Chia sẻ sản phẩm
@@ -76,12 +71,12 @@ func (r *GroupAssetRouter) GetAsset(c *gin.Context) {
 // @Failure 500 {object} map[string]string "Lỗi server"
 // @Router /v1/bdspro/v2/group/asset/share [post]
 func (r *GroupAssetRouter) ShareAsset(c *gin.Context) {
-	dto := org_dto.ProductShareRequest{}
-	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+	// dto := org_dto.ProductShareRequest{}
+	// if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
+	// 	_routes.RouteResult(c, nil, err)
+	// 	return
+	// }
 
-	productAccess, err := r.GroupAssetUsecase.ShareProduct(c, dto)
-	_routes.RouteResult(c, productAccess, err)
+	// productAccess, err := r.GroupAssetUsecase.ShareProduct(c, dto)
+	// _routes.RouteResult(c, productAccess, err)
 }

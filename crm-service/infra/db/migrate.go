@@ -16,7 +16,7 @@ func AutoMigrate() {
 		// &domain.PipelineEntity{},
 		// &domain.StageEntity{},
 		// &domain.RuleEntity{},
-		&domain.CustomerEntity{},
-		// &domain.ContactEntity{},
+		// &domain.CustomerEntity{},
+		&domain.ContactEntity{},
 	)
 }

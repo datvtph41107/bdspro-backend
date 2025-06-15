@@ -4,16 +4,17 @@ package enums
 type TypeEnum int8
 
 const (
-	FriendRequest    TypeEnum = 10 //"FRIEND_REQUEST"
-	FriendResponse   TypeEnum = 20 //"FRIEND_RESPONSE"
-	Follow           TypeEnum = 30 //"FOLLOW"
-	CommentNewsFeed  TypeEnum = 40 //"COMMENT_NEWS_FEED"
-	CommentChildren  TypeEnum = 41 //"COMMENT_REPLY"
-	LikeNewsFeed     TypeEnum = 50 //"LIKE_NEWS_FEED"
-	LikeComment      TypeEnum = 60 //"LIKE_COMMENT"
-	ShareNewsFeed    TypeEnum = 70 //"SHARE_NEWS_FEED"
-	JoinGroup        TypeEnum = 80
-	JoinOrganization TypeEnum = 90
+	FriendRequest    TypeEnum = 10  //"FRIEND_REQUEST"
+	FriendResponse   TypeEnum = 20  //"FRIEND_RESPONSE"
+	Follow           TypeEnum = 30  //"FOLLOW"
+	CommentNewsFeed  TypeEnum = 40  //"COMMENT_NEWS_FEED"
+	CommentChildren  TypeEnum = 41  //"COMMENT_REPLY"
+	LikeNewsFeed     TypeEnum = 50  //"LIKE_NEWS_FEED"
+	LikeComment      TypeEnum = 60  //"LIKE_COMMENT"
+	ShareNewsFeed    TypeEnum = 70  //"SHARE_NEWS_FEED"
+	JoinGroup        TypeEnum = 80  //"JOIN_GROUP"
+	JoinOrganization TypeEnum = 90  //"JOIN_ORGANIZATION"
+	ShareProduct     TypeEnum = 100 //"SHARE_PRODUCT"
 )
 
 var TypeEnumMap = map[TypeEnum]string{

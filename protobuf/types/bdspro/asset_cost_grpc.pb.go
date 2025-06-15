@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AssetCostService_Get_FullMethodName    = "/pb_bdspro.AssetCostService/Get"
+	AssetCostService_Search_FullMethodName = "/pb_bdspro.AssetCostService/Search"
 	AssetCostService_Detail_FullMethodName = "/pb_bdspro.AssetCostService/Detail"
 	AssetCostService_Create_FullMethodName = "/pb_bdspro.AssetCostService/Create"
 	AssetCostService_Update_FullMethodName = "/pb_bdspro.AssetCostService/Update"
@@ -30,11 +30,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssetCostServiceClient interface {
-	Get(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostListDTO, error)
-	Detail(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error)
+	Search(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostListDTO, error)
+	Detail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostDTO, error)
 	Create(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error)
 	Update(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error)
-	Delete(ctx context.Context, in *AssetCostDTO, opts ...grpc.CallOption) (*AssetCostDTO, error)
+	Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
 }
 
 type assetCostServiceClient struct {
@@ -94,11 +94,11 @@ func (c *assetCostServiceClient) Delete(ctx context.Context, in *AssetCostDTO, o
 // All implementations must embed UnimplementedAssetCostServiceServer
 // for forward compatibility
 type AssetCostServiceServer interface {
-	Get(context.Context, *AssetCostDTO) (*AssetCostListDTO, error)
-	Detail(context.Context, *AssetCostDTO) (*AssetCostDTO, error)
+	Search(context.Context, *IdRequest) (*AssetCostListDTO, error)
+	Detail(context.Context, *IdRequest) (*AssetCostDTO, error)
 	Create(context.Context, *AssetCostDTO) (*AssetCostDTO, error)
 	Update(context.Context, *AssetCostDTO) (*AssetCostDTO, error)
-	Delete(context.Context, *AssetCostDTO) (*AssetCostDTO, error)
+	Delete(context.Context, *IdRequest) (*Response, error)
 	mustEmbedUnimplementedAssetCostServiceServer()
 }
 
@@ -106,10 +106,10 @@ type AssetCostServiceServer interface {
 type UnimplementedAssetCostServiceServer struct {
 }
 
-func (UnimplementedAssetCostServiceServer) Get(context.Context, *AssetCostDTO) (*AssetCostListDTO, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedAssetCostServiceServer) Search(context.Context, *IdRequest) (*AssetCostListDTO, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
-func (UnimplementedAssetCostServiceServer) Detail(context.Context, *AssetCostDTO) (*AssetCostDTO, error) {
+func (UnimplementedAssetCostServiceServer) Detail(context.Context, *IdRequest) (*AssetCostDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Detail not implemented")
 }
 func (UnimplementedAssetCostServiceServer) Create(context.Context, *AssetCostDTO) (*AssetCostDTO, error) {
@@ -118,7 +118,7 @@ func (UnimplementedAssetCostServiceServer) Create(context.Context, *AssetCostDTO
 func (UnimplementedAssetCostServiceServer) Update(context.Context, *AssetCostDTO) (*AssetCostDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedAssetCostServiceServer) Delete(context.Context, *AssetCostDTO) (*AssetCostDTO, error) {
+func (UnimplementedAssetCostServiceServer) Delete(context.Context, *IdRequest) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedAssetCostServiceServer) mustEmbedUnimplementedAssetCostServiceServer() {}
@@ -134,26 +134,26 @@ func RegisterAssetCostServiceServer(s grpc.ServiceRegistrar, srv AssetCostServic
 	s.RegisterService(&AssetCostService_ServiceDesc, srv)
 }
 
-func _AssetCostService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssetCostDTO)
+func _AssetCostService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AssetCostServiceServer).Get(ctx, in)
+		return srv.(AssetCostServiceServer).Search(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AssetCostService_Get_FullMethodName,
+		FullMethod: AssetCostService_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AssetCostServiceServer).Get(ctx, req.(*AssetCostDTO))
+		return srv.(AssetCostServiceServer).Search(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AssetCostService_Detail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssetCostDTO)
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func _AssetCostService_Detail_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: AssetCostService_Detail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AssetCostServiceServer).Detail(ctx, req.(*AssetCostDTO))
+		return srv.(AssetCostServiceServer).Detail(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -207,7 +207,7 @@ func _AssetCostService_Update_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _AssetCostService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssetCostDTO)
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func _AssetCostService_Delete_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: AssetCostService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AssetCostServiceServer).Delete(ctx, req.(*AssetCostDTO))
+		return srv.(AssetCostServiceServer).Delete(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -232,8 +232,8 @@ var AssetCostService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AssetCostServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _AssetCostService_Get_Handler,
+			MethodName: "Search",
+			Handler:    _AssetCostService_Search_Handler,
 		},
 		{
 			MethodName: "Detail",

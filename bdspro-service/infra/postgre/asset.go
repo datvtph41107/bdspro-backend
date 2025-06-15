@@ -7,6 +7,7 @@ import (
 	"bdspro/internal/enums"
 	"common/case/crud3"
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: bdspro/internal/repo/user.UAssetRepo
+// @bind: bdspro/internal/repo.AssetRepo
 type PostgreAsset struct {
 	crud3.BaseRepo[domain.Asset]
 }
@@ -102,9 +103,9 @@ func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto user_dto.AssetSearchDTO) 
 
 func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, dto user_dto.AssetSearchDTO) *gorm.DB {
 	query := r.DB.
-		Model(&domain.AssetList{}).
-		Table("assets"). // <- quan trọng để Preload hiểu model gốc
-		Preload("LegalItems", "deleted_at IS NULL").
+		// Debug().
+		Table("assets").
+		// Preload("LegalItems", "deleted_at IS NULL").
 		Select(`assets.*,
 		province.name as province_name, 
 		district.name as district_name, 
@@ -122,7 +123,7 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, dto user_dto.AssetSearch
 		Joins("left join region province on province.id = assets.province_id").
 		Joins("left join region district on district.id = assets.district_id").
 		Joins("left join region ward on ward.id = assets.ward_id").
-		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id").
+		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null").
 		Where("assets.deleted_at is null and assets.owner_user_id = ?", ownerID).
 		Group("assets.id, assets.created_by, province.id, district.id, ward.id, property_type.id")
 
@@ -133,13 +134,6 @@ func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, dto user
 	var assets []domain.AssetList
 	var total int64
 
-	// type rawResult struct {
-	// 	domain.AssetList
-	// 	LegalList json.RawMessage `gorm:"column:legal_list" json:"legalList"`
-	// }
-
-	// var raws []rawResult
-
 	query := r.SearchOwnerQuery(ownerID, dto)
 
 	if err := query.
@@ -148,6 +142,16 @@ func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, dto user
 		Limit(dto.GetLimit()).
 		Scan(&assets).Error; err != nil {
 		return nil, 0, err
+	}
+	for i, r := range assets {
+		list := &[]domain.LegalItem{}
+		if r.LegalList != nil {
+			if err := json.Unmarshal(r.LegalList, list); err != nil {
+				return nil, 0, err
+			}
+		}
+
+		assets[i].LegalItems = list
 	}
 
 	query = r.SearchOwnerQuery(ownerID, dto)

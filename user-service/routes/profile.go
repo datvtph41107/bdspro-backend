@@ -2,8 +2,10 @@ package routes
 
 import (
 	_dto "common/dto"
+	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
+	"strconv"
 	"user/data"
 	user_service "user/services/user"
 
@@ -20,12 +22,12 @@ func NewProfileRouter(profileService *user_service.ProfileService) *ProfileRoute
 	}
 }
 
-// var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
+var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
 
 func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 	profileGroup := r.Group("/user/profile")
 	{
-		// profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+		profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		profileGroup.GET("/find-by-phone", router.FindByPhone)
 		profileGroup.GET("/chat/find", router.FindOnChat)
 		profileGroup.GET("/find/ids", router.FindByIds)
@@ -55,7 +57,7 @@ func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 // @Success 200 {object} data.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /profile/find-by-phone [get]
+// @Router /v1/user/profile/find-by-phone [get]
 func (p *ProfileRouter) FindByPhone(c *gin.Context) {
 	result, err := p.Profile.ProfileGetByPhone(c)
 
@@ -72,16 +74,20 @@ func (p *ProfileRouter) FindByPhone(c *gin.Context) {
 // @Success 200 {object} data.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /profile/find-by-phone [get]
+// @Router /v1/user/profile/find-by-phone [get]
 func (p *ProfileRouter) FindWithFriend(c *gin.Context) {
 	var dto data.ProfileSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := p.Profile.SearchUserByFriend(c, dto)
+	result, total, err := p.Profile.SearchUserByFriend(c, dto)
 
-	_routes.RouteResult(c, result, err)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 func (p *ProfileRouter) FindWithGroup(c *gin.Context) {
@@ -197,7 +203,7 @@ func (p *ProfileRouter) FindWithOrg(c *gin.Context) {
 // @Success 200 {object} data.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /profile/chat/find [get]
+// @Router /v1/user/profile/chat/find [get]
 func (p *ProfileRouter) FindOnChat(c *gin.Context) {
 	result, err := p.Profile.ProfileChatFind(c)
 
@@ -215,7 +221,7 @@ func (p *ProfileRouter) FindOnChat(c *gin.Context) {
 // @Success 200 {object} data.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /profile/find/ids [get]
+// @Router /v1/user/profile/find/ids [get]
 func (p *ProfileRouter) FindByIds(c *gin.Context) {
 	result, err := p.Profile.ProfileFindByIds(c)
 
@@ -238,7 +244,7 @@ func (p *ProfileRouter) Find(c *gin.Context) {
 // @Success 200 {object} data.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /profile/me [get]
+// @Router /v1/user/profile/me [get]
 func (p *ProfileRouter) ProfileMe(c *gin.Context) {
 	result, err := p.Profile.GetInfoMe(c)
 
@@ -254,7 +260,7 @@ func (p *ProfileRouter) ProfileMe(c *gin.Context) {
 // @Security BearerAuth
 // @Param request body data.UserInfoRequest true "Thông tin cập nhật"
 // @Success 200 {object} data.UserInfoResponse "Cập nhật thành công"
-// @Router /profile/set-info [put]
+// @Router /v1/user/profile/set-info [put]
 func (p *ProfileRouter) SetInfo(c *gin.Context) {
 	var dto data.UserInfoRequest
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
@@ -274,8 +280,9 @@ func (p *ProfileRouter) SetInfo(c *gin.Context) {
 // @Security BearerAuth
 // @Param profileId path string true "ID của Profile"
 // @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
-// @Router /profile/info/{profileId} [get]
+// @Router /v1/user/profile/info/{profileId} [get]
 func (p *ProfileRouter) PublicInfo(c *gin.Context) {
-	result, err := p.Profile.PublicUserInfo(c)
+	profileId, _ := strconv.ParseUint(c.Param("profileId"), 10, 64)
+	result, err := p.Profile.PublicUserInfo(c, profileId)
 	_routes.RouteResult(c, result, err)
 }

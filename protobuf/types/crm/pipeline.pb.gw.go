@@ -2,11 +2,11 @@
 // source: crm/pipeline.proto
 
 /*
-Package crm is a reverse proxy.
+Package crmpb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package crm
+package crmpb
 
 import (
 	"context"
@@ -282,7 +282,7 @@ func RegisterPipelineServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list/{ownerId}/{ownerType}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -302,7 +302,7 @@ func RegisterPipelineServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Detail", runtime.WithHTTPPathPattern("/v2/crm/pipeline/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Detail", runtime.WithHTTPPathPattern("/v2/crm/pipeline/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -420,7 +420,7 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list/{ownerId}/{ownerType}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -437,7 +437,7 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Detail", runtime.WithHTTPPathPattern("/v2/crm/pipeline/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Detail", runtime.WithHTTPPathPattern("/v2/crm/pipeline/detail/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -505,8 +505,8 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_PipelineService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "pipeline", "ownerId", "ownerType"}, ""))
-	pattern_PipelineService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
+	pattern_PipelineService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "crm", "pipeline", "list", "ownerId", "ownerType"}, ""))
+	pattern_PipelineService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "pipeline", "detail", "id"}, ""))
 	pattern_PipelineService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "pipeline"}, ""))
 	pattern_PipelineService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
 	pattern_PipelineService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))

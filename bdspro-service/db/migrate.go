@@ -20,6 +20,7 @@ func MigrateDomain() {
 		// &domain.Product{},
 		// &domain.AssetCostType{},
 		// &domain.AssetCost{},
-		&domain.Post{},
+		// &domain.Post{},
+		&domain.SharingAccess{},
 	)
 }

@@ -37,7 +37,7 @@ func RateRoutes(r *gin.Engine, router *RateRouter) {
 // @Produce json
 // @Param rate body user_model.Rate true "Thông tin đánh giá"
 // @Security BearerAuth
-// @Router /rate [post]
+// @Router /v1/user/rate [post]
 func (r *RateRouter) Create(c *gin.Context) {
 	var dto user_model.Rate
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
@@ -60,7 +60,7 @@ func (r *RateRouter) Create(c *gin.Context) {
 // @Param size query int false "Số lượng trên mỗi trang"
 // @Param score query int false "Điểm đánh giá, 1: 1 sao, 2: 2 sao, 3: 3 sao, 4: 4 sao, 5: 5 sao"
 // @Param parentId query string false "ID của đánh giá cha"
-// @Router /rate/list/{targetId}/{targetType} [get]
+// @Router /v1/user/rate/list/{targetId}/{targetType} [get]
 func (r *RateRouter) List(c *gin.Context) {
 	targetID, _ := strconv.ParseUint(c.Param("targetId"), 10, 64)
 	targetType, _ := strconv.ParseUint(c.Param("targetType"), 10, 8)
@@ -83,7 +83,7 @@ func (r *RateRouter) List(c *gin.Context) {
 // @Param id path string true "ID của đánh giá"
 // @Param rate body user_model.Rate true "Thông tin đánh giá"
 // @Security BearerAuth
-// @Router /rate/{id} [put]
+// @Router /v1/user/rate/{id} [put]
 func (r *RateRouter) Update(c *gin.Context) {
 	var dto user_model.Rate
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
@@ -102,7 +102,7 @@ func (r *RateRouter) Update(c *gin.Context) {
 // @Produce json
 // @Param id path string true "ID của đánh giá"
 // @Security BearerAuth
-// @Router /rate/{id} [delete]
+// @Router /v1/user/rate/{id} [delete]
 func (r *RateRouter) Delete(c *gin.Context) {
 
 }

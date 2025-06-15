@@ -33,7 +33,7 @@ func BlockRoutes(r *gin.Engine, router *BlockRouter) {
 // @Security BearerAuth
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
-// @Router /block/list [get]
+// @Router /v1/user/block/list [get]
 func (r *BlockRouter) ListBlockedUsers(c *gin.Context) {
 	result, err := r.service.ListBlockedUsers(c)
 	_routes.RouteResult(c, result, err)
@@ -48,7 +48,7 @@ func (r *BlockRouter) ListBlockedUsers(c *gin.Context) {
 // @Param profileId path int true "ID người dùng cần chặn"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
-// @Router /block/{profileId} [post]
+// @Router /v1/user/block/{profileId} [post]
 func (r *BlockRouter) BlockUser(c *gin.Context) {
 	result, err := r.service.BlockUser(c)
 	_routes.RouteResult(c, result, err)
@@ -63,7 +63,7 @@ func (r *BlockRouter) BlockUser(c *gin.Context) {
 // @Param profileId path int true "ID người dùng cần bỏ chặn"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy người dùng"
-// @Router /block/{profileId} [delete]
+// @Router /v1/user/block/{profileId} [delete]
 func (r *BlockRouter) UnblockUser(c *gin.Context) {
 	result, err := r.service.UnblockUser(c)
 	_routes.RouteResult(c, result, err)

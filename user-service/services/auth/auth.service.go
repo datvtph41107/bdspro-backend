@@ -170,7 +170,7 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp data.OtpVerifyRequest) (*dat
 	_db.SaveWithAudit(c, newSession)
 
 	infoEntity, err := s.ProfileRepo.GetByProfileID(e.UserID)
-	if err != nil {
+	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
 		infoEntity = user_model.MakeUserProfileEntity(e.ID, s.PreePlanID, e.Name, e.Email, e.Phone, e.Avatar)
 		_db.SaveWithAudit(c, infoEntity)
 

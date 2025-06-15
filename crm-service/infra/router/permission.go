@@ -2,17 +2,17 @@ package router
 
 import (
 	_routes "common/routes"
-	"crm/infra/impl"
+	"crm/infra/client"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PermissionRouter struct {
-	UC *impl.PermissionUsecase
+	UC *client.PermissionUsecase
 }
 
-func NewPermissionRouter(UC *impl.PermissionUsecase) *PermissionRouter {
+func NewPermissionRouter(UC *client.PermissionUsecase) *PermissionRouter {
 	return &PermissionRouter{
 		UC: UC,
 	}

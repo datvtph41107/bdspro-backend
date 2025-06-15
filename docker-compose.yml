@@ -124,6 +124,7 @@ services:
       context: ./crm-service
       dockerfile: Dockerfile
     container_name: crm
+    command: ["./main", "grpc"]
     networks:
       - internal
   

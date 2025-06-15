@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	user_model "user/models/user"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func NewProfessionRepo(db *gorm.DB) *ProfessionRepo {
 	}
 }
 
-func (r *ProfessionRepo) ListItemByProfileID(c *gin.Context, profileID uint64) ([]user_model.ProfessionItem, error) {
+func (r *ProfessionRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.ProfessionItem, error) {
 	var professions []user_model.ProfessionItem
 
 	err := r.DB.WithContext(c).
@@ -49,7 +50,7 @@ func (r *ProfessionRepo) BatchSave(
 
 	// Thêm hoặc cập nhật bản ghi nếu có
 	if len(*professions) > 0 {
-		if err := tx.Create(professions).Error; err != nil {
+		if err := tx.Save(professions).Error; err != nil {
 			tx.Rollback()
 			return err
 		}

@@ -39,8 +39,9 @@ var filter_AssetCostService_Get_0 = &utilities.DoubleArray{Encoding: map[string]
 
 func request_AssetCostService_Get_0(ctx context.Context, marshaler runtime.Marshaler, client AssetCostServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
@@ -49,14 +50,18 @@ func request_AssetCostService_Get_0(ctx context.Context, marshaler runtime.Marsh
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetCostService_Get_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetCostService_Search_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.Search(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
-func local_request_AssetCostService_Get_0(ctx context.Context, marshaler runtime.Marshaler, server AssetCostServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_AssetCostService_Search_0(ctx context.Context, marshaler runtime.Marshaler, server AssetCostServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -64,7 +69,10 @@ func local_request_AssetCostService_Get_0(ctx context.Context, marshaler runtime
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetCostService_Get_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := server.Get(ctx, &protoReq)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetCostService_Search_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.Search(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -72,7 +80,7 @@ var filter_AssetCostService_Detail_0 = &utilities.DoubleArray{Encoding: map[stri
 
 func request_AssetCostService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, client AssetCostServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -97,7 +105,7 @@ func request_AssetCostService_Detail_0(ctx context.Context, marshaler runtime.Ma
 
 func local_request_AssetCostService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, server AssetCostServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -189,7 +197,7 @@ var filter_AssetCostService_Delete_0 = &utilities.DoubleArray{Encoding: map[stri
 
 func request_AssetCostService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client AssetCostServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -214,7 +222,7 @@ func request_AssetCostService_Delete_0(ctx context.Context, marshaler runtime.Ma
 
 func local_request_AssetCostService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server AssetCostServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq AssetCostDTO
+		protoReq IdRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -253,14 +261,14 @@ func RegisterAssetCostServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_AssetCostService_Get_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_AssetCostService_Search_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_AssetCostService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AssetCostService_Search_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_AssetCostService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -391,13 +399,13 @@ func RegisterAssetCostServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_AssetCostService_Get_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AssetCostService_Search_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_AssetCostService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AssetCostService_Search_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_AssetCostService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -479,7 +487,7 @@ var (
 )
 
 var (
-	forward_AssetCostService_Get_0    = runtime.ForwardResponseMessage
+	forward_AssetCostService_Search_0 = runtime.ForwardResponseMessage
 	forward_AssetCostService_Detail_0 = runtime.ForwardResponseMessage
 	forward_AssetCostService_Create_0 = runtime.ForwardResponseMessage
 	forward_AssetCostService_Update_0 = runtime.ForwardResponseMessage

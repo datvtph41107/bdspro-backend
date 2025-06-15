@@ -13,7 +13,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"

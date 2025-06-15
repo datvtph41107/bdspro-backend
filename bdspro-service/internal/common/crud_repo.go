@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bdspro/internal/enums"
 	"context"
 
 	"gorm.io/gorm"
@@ -12,12 +13,12 @@ type DTO interface {
 }
 
 type IBaseRepo[T any, D DTO] interface {
-	Search(c context.Context, profileId uint64, dto D) ([]T, int64, error)
+	Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) ([]T, int64, error)
 	GetByID(c context.Context, id uint64) (*T, error)
 	Detail(c context.Context, id uint64) (*T, error)
 	Create(c context.Context, entity *T) error
 	Update(c context.Context, id uint64, entity *T) error
 	Delete(c context.Context, id uint64) error
 	GetAll(c context.Context, dto D) ([]T, error)
-	QuerySearch(c context.Context, profileId uint64, dto D) (*gorm.DB, error)
+	QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) (*gorm.DB, error)
 }

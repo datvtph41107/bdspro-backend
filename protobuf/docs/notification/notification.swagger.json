@@ -401,6 +401,10 @@
         },
         "avatar": {
           "type": "string"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

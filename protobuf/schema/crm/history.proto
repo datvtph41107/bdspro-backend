@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 message HistorySearchRequest {
@@ -42,5 +43,9 @@ message HistoryListDTO {
 }
 
 service HistoryService {
-    rpc Search (HistorySearchRequest) returns (HistoryListDTO);
+    rpc Search (HistorySearchRequest) returns (HistoryListDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/history/list/{ownerId}/{ownerType}"
+        };
+    };
 }

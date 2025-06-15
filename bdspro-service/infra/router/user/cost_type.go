@@ -3,7 +3,8 @@ package user_router
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	user_usecase "bdspro/internal/usecases/user"
+	"bdspro/internal/enums"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -13,10 +14,10 @@ import (
 
 type UserCostTypeRouter struct {
 	// Router shared.ICrudOwnerRouter[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]
-	UC *user_usecase.UserCostTypeUc
+	UC *shared_usecase.AssetCostTypeUsecase
 }
 
-func NewUserCostTypeRouter(uc *user_usecase.UserCostTypeUc) *UserCostTypeRouter {
+func NewUserCostTypeRouter(uc *shared_usecase.AssetCostTypeUsecase) *UserCostTypeRouter {
 	return &UserCostTypeRouter{
 		UC: uc,
 		// Router: &shared.CrudOwnerRouter[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]{
@@ -54,7 +55,7 @@ func (r *UserCostTypeRouter) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.UC.Search(c, &dto)
+	result, total, err := r.UC.Search(c, enums.EOwnerTypeMember, &dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

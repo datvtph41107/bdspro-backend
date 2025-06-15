@@ -58,8 +58,8 @@ func InitializeApp() (*config.ConfigApp, error) {
 	groupRouter := routes.NewGroupRouter(groupService)
 	rateService := user_service.NewRateService(rateRepo)
 	rateRouter := routes.NewRateRouter(rateService)
-	servicesProfileService := services.NewGrpcProfileService(profileRepo)
-	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter, servicesProfileService)
+	grpcProfileService := services.NewGrpcProfileService(profileRepo, profileService)
+	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter, grpcProfileService)
 	return configApp, nil
 }
 

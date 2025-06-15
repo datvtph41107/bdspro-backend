@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
 
 message StageSearchRequest {
     uint64 pipelineId = 1;
@@ -27,9 +29,31 @@ message StageListDTO {
 }
 
 service StageService {
-    rpc Search (StageSearchRequest) returns (StageListDTO);
-    rpc Detail (StageDTO) returns (StageDTO);
-    rpc Create (StageDTO) returns (StageDTO);
-    rpc Update (StageDTO) returns (StageDTO);
-    rpc Delete (StageDTO) returns (StageDTO);
+    rpc Search (StageSearchRequest) returns (StageListDTO){
+        option (google.api.http) = {
+            get: "/v2/crm/stage/list/{pipelineId}"
+        };
+    };
+    rpc Detail (StageDTO) returns (StageDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/stage/detail/{id}"
+        };
+    };
+    rpc Create (StageDTO) returns (StageDTO) {
+        option (google.api.http) = {
+            post: "/v2/crm/stage"
+            body: "*"
+        };
+    };
+    rpc Update (StageDTO) returns (StageDTO) {
+        option (google.api.http) = {
+            put: "/v2/crm/stage/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/stage/{id}"
+        };
+    };
 }

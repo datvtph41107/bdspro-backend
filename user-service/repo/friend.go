@@ -79,9 +79,9 @@ func (repo *FriendRepo) SearchFriend(currentId uint64, dto data.FriendDTO, page 
 		Model(&user_model.FriendEntity{}).
 		Preload("GroupUser").
 		Preload("GroupReceiver").
-		Joins("LEFT JOIN profile_transfer ON (friend.created_by = profile_transfer.profile_id OR friend.receiver_id = profile_transfer.profile_id) "+
-			"						AND profile_transfer.profile_id <> ? ", currentId).
-		Where("friend.status = 2 and friend.deleted_at is null")
+		Joins(`LEFT JOIN profile_transfer ON (friend.created_by = profile_transfer.profile_id OR friend.receiver_id = profile_transfer.profile_id)
+				AND profile_transfer.profile_id <> ? `, currentId).
+		Where("friend.status = 20 and friend.deleted_at is null")
 
 	if dto.Text != nil && *dto.Text != "" {
 		query = query.Where("full_name LIKE ? OR username LIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")

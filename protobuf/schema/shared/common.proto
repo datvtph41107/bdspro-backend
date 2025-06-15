@@ -8,14 +8,32 @@ message ArchivedRequest {
   bool archived = 2;
 }
 
-message MediaItem {
-    uint64 id = 1;
-    string mediaUrl = 2;
-    string mediaType = 3;
-    bool isMain = 4;
-    int32 order = 5;
-    int32 targetType = 6;
-    uint64 targetId = 7;
-  }
-  
-  
+message IdRequest {
+  uint64 id = 1;
+}
+
+message SubmitResponse {
+  uint64 id = 1;
+  string message = 2;
+}
+
+message FriendItem {
+	uint64 id = 1;
+	uint64 receiverId = 2;
+	uint64 createdBy = 3;
+	uint32 status = 4;
+}
+
+message ProfileItem {
+	uint64 id = 1;
+	string fullName = 2;
+	string avatar = 3;
+}
+
+message GetProfileByIdsRequest {
+  repeated uint64 ids = 1;
+}
+
+message GetProfileByIdsResponse {
+  repeated ProfileItem profiles = 1;
+}

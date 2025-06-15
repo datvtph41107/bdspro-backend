@@ -550,23 +550,30 @@ func (x *PostMedia) GetId() uint64 {
 	return 0
 }
 
-func (x *PostMedia) GetUrl() string {
+func (x *PostMedia) GetMediaUrl() string {
 	if x != nil {
-		return x.Url
+		return x.MediaUrl
 	}
 	return ""
 }
 
-func (x *PostMedia) GetType() string {
+func (x *PostMedia) GetMediaType() string {
 	if x != nil {
-		return x.Type
+		return x.MediaType
 	}
 	return ""
 }
 
-func (x *PostMedia) GetOrderNumber() int32 {
+func (x *PostMedia) GetIsMain() bool {
 	if x != nil {
-		return x.OrderNumber
+		return x.IsMain
+	}
+	return false
+}
+
+func (x *PostMedia) GetSortOrder() int32 {
+	if x != nil {
+		return x.SortOrder
 	}
 	return 0
 }

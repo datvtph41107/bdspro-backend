@@ -391,7 +391,7 @@
             "type": "string"
           },
           {
-            "name": "post.price",
+            "name": "post.postPrice",
             "in": "query",
             "required": false,
             "type": "number",
@@ -457,6 +457,24 @@
           },
           {
             "name": "post.mediaType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "post.provinceName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "post.districtName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "post.wardName",
             "in": "query",
             "required": false,
             "type": "string"
@@ -676,7 +694,7 @@
           }
         },
         "author": {
-          "$ref": "#/definitions/pb_userProfileItem"
+          "$ref": "#/definitions/pb_sharedProfileItem"
         },
         "isReel": {
           "type": "boolean"
@@ -692,7 +710,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_userProfileItem"
+            "$ref": "#/definitions/pb_sharedProfileItem"
           }
         },
         "likeAt": {
@@ -753,7 +771,7 @@
           "type": "string",
           "title": "1: normal, 2: feed, 3: share"
         },
-        "price": {
+        "postPrice": {
           "type": "number",
           "format": "double"
         },
@@ -800,6 +818,15 @@
         },
         "mediaType": {
           "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },
@@ -810,15 +837,33 @@
           "type": "string",
           "format": "uint64"
         },
-        "url": {
+        "mediaUrl": {
           "type": "string"
         },
-        "type": {
+        "mediaType": {
           "type": "string"
         },
-        "orderNumber": {
+        "isMain": {
+          "type": "boolean"
+        },
+        "sortOrder": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_sharedProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
         }
       }
     },
@@ -902,7 +947,7 @@
           }
         },
         "author": {
-          "$ref": "#/definitions/pb_userProfileItem"
+          "$ref": "#/definitions/pb_sharedProfileItem"
         },
         "isReel": {
           "type": "boolean"
@@ -918,7 +963,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_userProfileItem"
+            "$ref": "#/definitions/pb_sharedProfileItem"
           }
         },
         "likeAt": {
@@ -957,21 +1002,6 @@
         },
         "success": {
           "type": "boolean"
-        }
-      }
-    },
-    "pb_userProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
         }
       }
     },

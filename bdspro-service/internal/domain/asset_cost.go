@@ -24,13 +24,13 @@ func (AssetCost) TableName() string {
 
 type AssetCostQuery struct {
 	_models.BaseEntity
-	AssetID      uint64     `json:"assetId"`
-	Type         uint       `json:"type"`
-	CostTypeID   uint64     `json:"costTypeId"`
-	CostTypeName string     `gorm:"column:type_name" json:"costTypeName"`
-	Amount       float64    `json:"amount"`
-	Date         *time.Time `json:"date"`
-	Description  string     `json:"description"`
+	AssetID      uint64          `json:"assetId"`
+	Type         enums.ECostType `json:"type"`
+	CostTypeID   uint64          `json:"costTypeId"`
+	CostTypeName string          `gorm:"column:type_name" json:"costTypeName"`
+	Amount       float64         `json:"amount"`
+	Date         *time.Time      `json:"date"`
+	Description  string          `json:"description"`
 }
 
 func (AssetCostQuery) TableName() string {

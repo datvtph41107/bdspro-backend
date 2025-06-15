@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package pb_bdspro;
+
+import "bdspro/share.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+service SharingAccessService {
+    rpc BulkSave(SharingAccessBulkRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/v2/sharing-access/bulk"
+            body: "*"
+        };
+    };
+    rpc SearchProduct(SharingAccessRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/sharing-access/search"
+        };
+    };
+}
+
+message SharingAccess {
+    uint64 id = 1;
+    uint64 domainId = 2;
+    uint32 domain = 3;
+    uint64 fromId = 4;
+    uint32 fromType = 5;
+    uint64 toId = 6;
+    uint32 toType = 7;
+    string fields = 8;
+    double commission = 9;
+    string permissions = 10;
+    string toName = 11;
+    string avatar = 12;
+}
+
+message BatchRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    repeated SharingAccess shares = 4;
+}
+
+message SharingAccessRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    uint32 toType = 4;
+}
+
+message SharingAccessResponse {
+    repeated SharingAccess data = 1;
+    uint32 total = 2;
+}
+
+message SharingAccessBulkRequest {
+    repeated SharingAccess datas = 1;
+    repeated SharingAccess deletes = 2;
+    uint64 domainId = 3;
+    double commission = 4;
+    uint32 fromType = 5;
+}

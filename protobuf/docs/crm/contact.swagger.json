@@ -1,0 +1,454 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "crm/contact.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ContactService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/crm/contact": {
+      "post": {
+        "operationId": "ContactService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbContactSaveDTO"
+            }
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/detail/{id}": {
+      "get": {
+        "operationId": "ContactService_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/list/{ownerType}": {
+      "get": {
+        "operationId": "ContactService_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerType",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/sync": {
+      "post": {
+        "operationId": "ContactService_Sync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactSyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbContactSyncRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/{id}": {
+      "delete": {
+        "operationId": "ContactService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_sharedSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      },
+      "put": {
+        "operationId": "ContactService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbContactServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "crmpbContactDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/pb_sharedFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "profileInfo": {
+          "$ref": "#/definitions/pb_sharedProfileItem"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "blocked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "crmpbContactListDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbContactDTO"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "crmpbContactSaveDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "crmpbContactServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "crmpbContactSyncRequest": {
+      "type": "object",
+      "properties": {
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbContactSaveDTO"
+          }
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "crmpbContactSyncResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbContactDTO"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_sharedFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_sharedProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_sharedSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

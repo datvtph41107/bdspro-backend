@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/usecase"
 	"strconv"
 
@@ -41,7 +42,7 @@ func (r *ContactRouter) Search(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, total, err := r.service.Search(c, dto)
+	result, total, err := r.service.Search(c, enums.EOwnerTypeMember, dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

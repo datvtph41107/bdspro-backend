@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: crm/history.proto
 
-package crm
+package crmpb
 
 import (
 	context "context"

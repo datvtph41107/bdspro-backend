@@ -4,7 +4,7 @@ package pb_social;
 
 import "google/api/annotations.proto";
 import "bdspro/post.proto";
-import "user/profile.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/social;pb_social";
 
@@ -84,11 +84,11 @@ message NewsFeed {
     optional uint64 postId = 12;
     repeated NewsFeedMedia mediaFeeds = 13;
     repeated uint64 friendTagIds = 14;
-    pb_user.ProfileItem author = 15;
+    pb_shared.ProfileItem author = 15;
     bool isReel = 16;
     pb_bdspro.Post post = 17;
     optional uint64 createdBy = 18;
-    repeated pb_user.ProfileItem friendTags = 19;
+    repeated pb_shared.ProfileItem friendTags = 19;
     string likeAt = 20;
     optional bool disLike = 21;
 }

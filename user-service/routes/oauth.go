@@ -44,7 +44,7 @@ func OAuthRoutes(r *gin.Engine, router *OAuthRouter) {
 // @Param provider path string true "Tên của provider (google, facebook, zalo, ...)"
 // @Success 302 "Chuyển hướng đến trang đăng nhập của provider"
 // @Failure 400 {object} map[string]interface{} "Lỗi khi provider không hợp lệ"
-// @Router /oauth/{provider}/login [get]
+// @Router /v1/user/oauth/{provider}/login [get]
 func (route *OAuthRouter) RedirectToLogin(c *gin.Context) {
 	provider := c.Param("provider")
 	var url string
@@ -74,7 +74,7 @@ func (route *OAuthRouter) RedirectToLogin(c *gin.Context) {
 // @Param state query string false "Chuỗi state để bảo vệ chống tấn công CSRF"
 // @Success 200 {object} map[string]interface{} "Thông tin người dùng từ provider"
 // @Failure 400 {object} map[string]interface{} "Lỗi khi xử lý callback"
-// @Router /oauth/{provider}/callback [get]
+// @Router /v1/user/oauth/{provider}/callback [get]
 func (route *OAuthRouter) OauthCallback(c *gin.Context) {
 	provider := c.Param("provider")
 	code := c.Query("code")

@@ -15,7 +15,269 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v2/bdspro/v2/asset/cost": {
+      "post": {
+        "operationId": "AssetCostService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+            }
+          }
+        ],
+        "tags": [
+          "AssetCostService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/asset/cost/detail/{id}": {
+      "get": {
+        "operationId": "AssetCostService_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AssetCostService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/asset/cost/{id}": {
+      "delete": {
+        "operationId": "AssetCostService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AssetCostService"
+        ]
+      },
+      "put": {
+        "operationId": "AssetCostService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "AssetCostService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/asset/cost/{id}/{ownerType}": {
+      "get": {
+        "operationId": "AssetCostService_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetCostListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AssetCostService"
+        ]
+      }
+    }
+  },
   "definitions": {
     "pb_bdsproAssetCostDTO": {
       "type": "object",
@@ -33,10 +295,27 @@
           "format": "double"
         },
         "date": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "description": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "costTypeName": {
           "type": "string"
         }
       }
@@ -54,6 +333,55 @@
         "totalElements": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproAssetCostServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "costTypeName": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },

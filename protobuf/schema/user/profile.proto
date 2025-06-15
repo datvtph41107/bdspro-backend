@@ -1,19 +1,18 @@
 syntax = "proto3";
 
 package pb_user;
+import "google/api/annotations.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/user;pb_user";
 
 service ProfileService {
-    rpc GetProfileByIds(GetProfileByIdsRequest) returns (GetProfileByIdsResponse);
-}
-
-message GetProfileByIdsRequest {
-    repeated uint64 ids = 1;
-}
-
-message GetProfileByIdsResponse {
-    repeated ProfileItem profiles = 1;
+    rpc GetProfileByIds(pb_shared.GetProfileByIdsRequest) returns (pb_shared.GetProfileByIdsResponse);
+    rpc GetProfileInfo(IdRequest) returns (ProfilePublicInfo) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/info/{id}"
+        };
+    }
 }
 
 message ProfileItem {
@@ -34,4 +33,66 @@ message Profile {
     string birthDate = 9;
     string createdAt = 10;
     string updatedAt = 11;
+}
+
+message ProfilePublicInfo {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string avatar = 3;
+    string phone = 5;
+    string phone2 = 6;
+    string email = 7;
+    string taxCode = 8;
+    string address = 9;
+    string backgroundImage = 10;
+    string referralCode = 11;
+    string referralBy = 12;
+    uint32 roleRealEstate = 13;
+    string position = 14;
+    uint64 departmentId = 15;
+    string birth = 16;
+    string startDate = 17;
+    string frontIdentify = 18;
+    string backIdentify = 19;
+    string slogan = 20;
+    string website = 21;
+    string facebook = 22;
+    string instagram = 23;
+    string twitter = 24;
+    string linkedin = 25;
+    string youtube = 26;
+    string introduction = 27;
+    uint32 statusOnline = 28;
+    repeated CertificationItem certifications = 29;
+    repeated ProfessionItem professions = 30;
+    RateStats rateStats = 31;
+    pb_shared.FriendItem friendStatus = 32;
+    bool following = 33;
+}
+
+message CertificationItem {
+	uint64 id = 1;
+	string title = 2;
+	string fileUrl = 3;
+	uint32 verifiedStatus = 4;
+}
+
+message ProfessionItem {
+	uint64 id = 1;
+	string name = 2;
+	uint32 verifiedStatus = 3;
+}
+
+message RateStats {
+	uint64 totalReviews = 1;
+	float averageScore = 2;
+	uint64 star1Count = 3;
+	uint64 star2Count = 4;
+	uint64 star3Count = 5;
+	uint64 star4Count = 6;
+	uint64 star5Count = 7;
+}
+
+message IdRequest {
+    uint64 id = 1;
 }

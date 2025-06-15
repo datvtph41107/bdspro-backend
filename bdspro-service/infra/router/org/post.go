@@ -2,7 +2,7 @@ package org_router
 
 import (
 	"bdspro/internal/dto"
-	org_usecase "bdspro/internal/usecases/org"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -11,10 +11,10 @@ import (
 )
 
 type OrgPostRouter struct {
-	UC *org_usecase.OrgPostUC
+	UC *shared_usecase.PostUsecase
 }
 
-func NewOrgPostRoute(uc *org_usecase.OrgPostUC) *OrgPostRouter {
+func NewOrgPostRoute(uc *shared_usecase.PostUsecase) *OrgPostRouter {
 	return &OrgPostRouter{
 		UC: uc,
 	}

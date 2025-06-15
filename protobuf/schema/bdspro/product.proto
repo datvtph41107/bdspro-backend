@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 package pb_bdspro;
-import "shared/common.proto";
 import "bdspro/asset.proto";
 import "bdspro/share.proto";
 import "google/api/annotations.proto";
@@ -10,7 +9,7 @@ import "bdspro/post.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 service ProductService {
-  rpc ArchiveProduct (pb_shared.ArchivedRequest) returns (Response) {
+  rpc ArchiveProduct (ArchivedRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/product/archived"
       body: "*"
@@ -191,7 +190,7 @@ message SaveChildRequest {
   optional uint64 wardId = 13;
   int32 transactionType = 14;
   ProductPrice priceData = 15;
-  repeated pb_shared.MediaItem mediaItems = 16;
+  repeated MediaItem mediaItems = 16;
   HouseInfo houseInfo = 17;
   ProductPrivate productPrivate = 18;
   string googleMapLink = 19;
@@ -218,7 +217,7 @@ message PostSaveWithProduct {
   int32 expiredAt = 8;
   int32 numDate = 9;
   bool hidden = 10;
-  repeated pb_shared.MediaItem metadatas = 11;
+  repeated MediaItem metadatas = 11;
 }
 
 message AssetCreateWithProduct {
@@ -230,16 +229,6 @@ message AssetCreateWithProduct {
   repeated LegalItem legalItems = 6;
 }
 
-
-
-message ProductInfo {
-	uint64 id = 1;
-	string name = 2;
-	string code = 3;
-	uint64 categoryId = 4;
-	double area = 5;
-	uint64 lastPriceId = 6;
-}
 
 message ProductSearch {
   uint32 page = 1;
@@ -329,7 +318,7 @@ message ProductSaveRequest {
 	optional uint64 wardId = 13;
 	int32 transactionType = 14;
 	ProductPrice priceData = 15;
-	repeated pb_shared.MediaItem mediaItems = 16;
+	repeated MediaItem mediaItems = 16;
 	HouseInfo houseInfo = 17;
 	ProductPrivate productPrivate = 18;
 	string googleMapLink = 19;

@@ -4,13 +4,14 @@
 // - protoc             (unknown)
 // source: crm/rule.proto
 
-package crm
+package crmpb
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -34,7 +35,7 @@ type RuleServiceClient interface {
 	Detail(ctx context.Context, in *RuleDTO, opts ...grpc.CallOption) (*RuleDTO, error)
 	Create(ctx context.Context, in *RuleDTO, opts ...grpc.CallOption) (*RuleDTO, error)
 	Update(ctx context.Context, in *RuleDTO, opts ...grpc.CallOption) (*RuleDTO, error)
-	Delete(ctx context.Context, in *RuleDTO, opts ...grpc.CallOption) (*RuleDTO, error)
+	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 }
 
 type ruleServiceClient struct {
@@ -85,9 +86,9 @@ func (c *ruleServiceClient) Update(ctx context.Context, in *RuleDTO, opts ...grp
 	return out, nil
 }
 
-func (c *ruleServiceClient) Delete(ctx context.Context, in *RuleDTO, opts ...grpc.CallOption) (*RuleDTO, error) {
+func (c *ruleServiceClient) Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RuleDTO)
+	out := new(shared.SubmitResponse)
 	err := c.cc.Invoke(ctx, RuleService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -103,7 +104,7 @@ type RuleServiceServer interface {
 	Detail(context.Context, *RuleDTO) (*RuleDTO, error)
 	Create(context.Context, *RuleDTO) (*RuleDTO, error)
 	Update(context.Context, *RuleDTO) (*RuleDTO, error)
-	Delete(context.Context, *RuleDTO) (*RuleDTO, error)
+	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	mustEmbedUnimplementedRuleServiceServer()
 }
 
@@ -126,7 +127,7 @@ func (UnimplementedRuleServiceServer) Create(context.Context, *RuleDTO) (*RuleDT
 func (UnimplementedRuleServiceServer) Update(context.Context, *RuleDTO) (*RuleDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedRuleServiceServer) Delete(context.Context, *RuleDTO) (*RuleDTO, error) {
+func (UnimplementedRuleServiceServer) Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedRuleServiceServer) mustEmbedUnimplementedRuleServiceServer() {}
@@ -223,7 +224,7 @@ func _RuleService_Update_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _RuleService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RuleDTO)
+	in := new(shared.IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func _RuleService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: RuleService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RuleServiceServer).Delete(ctx, req.(*RuleDTO))
+		return srv.(RuleServiceServer).Delete(ctx, req.(*shared.IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

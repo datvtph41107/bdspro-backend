@@ -1,0 +1,230 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/sharing_access.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "SharingAccessService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/bdspro/v2/sharing-access/bulk": {
+      "post": {
+        "operationId": "SharingAccessService_BulkSave",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessBulkRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SharingAccessService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/sharing-access/search": {
+      "get": {
+        "operationId": "SharingAccessService_SearchProduct",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domainId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "fromType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "toType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SharingAccessService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pb_bdsproSharingAccess": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "domainId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "domain": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fields": {
+          "type": "string"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
+        },
+        "permissions": {
+          "type": "string"
+        },
+        "toName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproSharingAccessBulkRequest": {
+      "type": "object",
+      "properties": {
+        "datas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproSharingAccess"
+          }
+        },
+        "deletes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproSharingAccess"
+          }
+        },
+        "domainId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproSharingAccessResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproSharingAccess"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

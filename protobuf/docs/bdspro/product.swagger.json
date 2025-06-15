@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_sharedArchivedRequest"
+              "$ref": "#/definitions/pb_bdsproArchivedRequest"
             }
           }
         ],
@@ -98,6 +98,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -187,6 +194,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -891,6 +905,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -948,6 +969,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1005,6 +1033,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1062,6 +1097,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1119,6 +1161,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1144,6 +1193,10 @@
         },
         "text": {
           "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1163,6 +1216,10 @@
         },
         "text": {
           "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1182,6 +1239,10 @@
         },
         "text": {
           "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1250,7 +1311,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         },
         "houseInfo": {
@@ -1327,6 +1388,18 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "pb_bdsproArchivedRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "archived": {
+          "type": "boolean"
         }
       }
     },
@@ -1491,7 +1564,14 @@
           "format": "uint64"
         },
         "createdUser": {
-          "$ref": "#/definitions/pb_userProfileItem",
+          "$ref": "#/definitions/pb_userProfileItem"
+        },
+        "childs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductInfo"
+          },
           "title": "ProductInfo parent = 4;\n ProductInfo product = 6;\n repeated double areas = 10;\n repeated ProductInfo childs = 11;"
         }
       }
@@ -1576,6 +1656,36 @@
         },
         "description": {
           "type": "string"
+        }
+      }
+    },
+    "pb_bdsproMediaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1741,7 +1851,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         }
       }
@@ -1777,6 +1887,33 @@
         },
         "avatar": {
           "type": "string"
+        }
+      }
+    },
+    "pb_bdsproProductInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -2036,7 +2173,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         },
         "houseInfo": {
@@ -2116,7 +2253,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         },
         "houseInfo": {
@@ -2289,7 +2426,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_sharedMediaItem"
+            "$ref": "#/definitions/pb_bdsproMediaItem"
           }
         },
         "houseInfo": {
@@ -2376,48 +2513,6 @@
         "visibility": {
           "type": "integer",
           "format": "int32"
-        }
-      }
-    },
-    "pb_sharedArchivedRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "archived": {
-          "type": "boolean"
-        }
-      }
-    },
-    "pb_sharedMediaItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "mediaUrl": {
-          "type": "string"
-        },
-        "mediaType": {
-          "type": "string"
-        },
-        "isMain": {
-          "type": "boolean"
-        },
-        "order": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetId": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },

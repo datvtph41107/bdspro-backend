@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"time"
 	"user/data"
 	user_model "user/models/user"
@@ -27,7 +28,7 @@ func (r *RateRepo) List(c *gin.Context, targetID uint64, targetType uint8, dto d
 	query := r.DB.WithContext(c).
 		Model(&user_model.RateItem{}).
 		Select("id, score, comment, parent_id, created_by").
-		// Preload("CreatedUser").
+		Preload("CreatedUser").
 		Where("target_id = ? AND target_type = ? AND deleted_at IS NULL", targetID, targetType)
 
 	// Lọc theo điểm nếu có truyền vào
@@ -69,7 +70,7 @@ func (r *RateRepo) Delete(c *gin.Context, profileID, id uint64) error {
 		Update("deleted_at", time.Now()).Error
 }
 
-func (r *RateRepo) CountInfo(c *gin.Context, targetID uint64, targetType uint8) (user_model.RateStats, error) {
+func (r *RateRepo) CountInfo(c context.Context, targetID uint64, targetType uint8) (user_model.RateStats, error) {
 	var stats user_model.RateStats
 
 	err := r.DB.WithContext(c).

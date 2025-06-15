@@ -13,7 +13,7 @@ init:
 	cd appointment-service && go mod tidy
 
 buf-crm:
-	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
 buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
 buf-noti:
@@ -45,3 +45,11 @@ appointment:
 	cd appointment-service && go run main.go grpc-server
 buf-crm:
 	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
+
+user-http:
+	cd user-service && go run main.go http
+
+swag:
+	./script.sh swag $(word 2, $(MAKECMDGOALS))
+wire:
+	./script.sh wire $(word 2, $(MAKECMDGOALS))

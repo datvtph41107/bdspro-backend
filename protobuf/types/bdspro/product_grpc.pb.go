@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -49,7 +48,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
-	ArchiveProduct(ctx context.Context, in *shared.ArchivedRequest, opts ...grpc.CallOption) (*Response, error)
+	ArchiveProduct(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Response, error)
 	ChildDevideProduct(ctx context.Context, in *DevideChildRequest, opts ...grpc.CallOption) (*Response, error)
 	ChildHistories(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	ChildMergeProduct(ctx context.Context, in *MergeChildRequest, opts ...grpc.CallOption) (*Response, error)
@@ -316,7 +315,7 @@ func RegisterBdsproServiceServer(s grpc.ServiceRegistrar, srv BdsproServiceServe
 }
 
 func _ProductService_ArchiveProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(shared.ArchivedRequest)
+	in := new(ArchivedRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -328,7 +327,7 @@ func _ProductService_ArchiveProduct_Handler(srv interface{}, ctx context.Context
 		FullMethod: ProductService_ArchiveProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProductServiceServer).ArchiveProduct(ctx, req.(*shared.ArchivedRequest))
+		return srv.(ProductServiceServer).ArchiveProduct(ctx, req.(*ArchivedRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

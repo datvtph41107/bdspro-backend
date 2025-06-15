@@ -15,14 +15,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contact": {
+        "/block/list": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách",
+                "description": "Lấy danh sách ID của những người mà người dùng hiện tại đã chặn",
                 "consumes": [
                     "application/json"
                 ],
@@ -30,11 +30,110 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Liên hệ"
+                    "Chặn"
                 ],
-                "summary": "Lấy danh sách liên hệ",
-                "responses": {}
+                "summary": "Lấy danh sách người dùng bị chặn",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/block/{profileId}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chặn một người dùng với profileId cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chặn"
+                ],
+                "summary": "Chặn một người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng cần chặn",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Bỏ chặn một người dùng với profileId cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chặn"
+                ],
+                "summary": "Bỏ chặn một người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng cần bỏ chặn",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact": {
             "post": {
                 "security": [
                     {
@@ -59,7 +158,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ContactEntity"
+                            "$ref": "#/definitions/crmpb.ContactSaveDTO"
                         }
                     }
                 ],
@@ -77,6 +176,68 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/contact/list/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Liên hệ"
+                ],
+                "summary": "Lấy danh sách liên hệ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Loại sở hữu (10: user, 20: nhóm, 30: organization)",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/contact/sync": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đồng bộ danh bạ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Liên hệ"
+                ],
+                "summary": "Đồng bộ danh bạ",
+                "parameters": [
+                    {
+                        "description": "Danh bạ",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.ContactSyncRequest"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/contact/{id}": {
@@ -104,7 +265,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.GroupEntity"
+                            "$ref": "#/definitions/crmpb.ContactSaveDTO"
                         }
                     },
                     {
@@ -191,7 +352,78 @@ const docTemplate = `{
                 }
             }
         },
-        "/customer/list/{ownerId}/{ownerType}": {
+        "/customer/assign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gán khách hàng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Gán khách hàng",
+                "parameters": [
+                    {
+                        "description": "Gán khách hàng",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.CustomerAssignRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chi tiết khách hàng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Chi tiết khách hàng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Khách hàng",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.CustomerDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/list": {
             "get": {
                 "security": [
                     {
@@ -211,25 +443,6 @@ const docTemplate = `{
                 "summary": "Lấy danh sách khách hàng",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID của chủ sở hữu",
-                        "name": "ownerId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30
-                        ],
-                        "type": "integer",
-                        "description": "Loại chủ sở hữu",
-                        "name": "ownerType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "type": "array",
                         "items": {
                             "type": "integer"
@@ -239,46 +452,24 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "enum": [
-                            10,
-                            20,
-                            30
-                        ],
                         "type": "integer",
-                        "x-enum-varnames": [
-                            "EOwnerTypeMember",
-                            "EOwnerTypeGroup",
-                            "EOwnerTypeOrgnization"
-                        ],
-                        "description": "deprecated",
+                        "description": "[deprecated = true]; // EOwnerType (int32), deprecated",
                         "name": "chargeType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "enum": [
-                                10,
-                                20,
-                                30,
-                                40,
-                                50,
-                                60
-                            ],
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "customerSources",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "fromDate",
                         "in": "query"
                     },
                     {
                         "type": "string",
                         "name": "fullName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
                         "in": "query"
                     },
                     {
@@ -297,7 +488,6 @@ const docTemplate = `{
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
-                        "description": "todo: add product care",
                         "name": "productCareIds",
                         "in": "query"
                     },
@@ -307,8 +497,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "name": "sort",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "ESourceCustomer (int32)",
+                        "name": "sources",
                         "in": "query"
                     },
                     {
@@ -323,23 +518,76 @@ const docTemplate = `{
                     {
                         "type": "array",
                         "items": {
-                            "enum": [
-                                10,
-                                20,
-                                30,
-                                40,
-                                50
-                            ],
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
+                        "description": "EStep (int32)",
                         "name": "steps",
                         "in": "query"
-                    },
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/note": {
+            "post": {
+                "security": [
                     {
-                        "type": "string",
-                        "name": "toDate",
-                        "in": "query"
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ghi chú khách hàng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Ghi chú khách hàng",
+                "parameters": [
+                    {
+                        "description": "Ghi chú khách hàng",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.CustomerNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/customer/stage": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chuyển trạng thái khách hàng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Chuyển trạng thái khách hàng",
+                "parameters": [
+                    {
+                        "description": "Chuyển trạng thái khách hàng",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.CustomerStageRequest"
+                        }
                     }
                 ],
                 "responses": {}
@@ -555,6 +803,304 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/follow/followers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách những người theo dõi người dùng cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Lấy danh sách người theo dõi của người dùng",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/following": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách những người mà người dùng đang theo dõi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Lấy danh sách người mà người dùng đang theo dõi",
+                "responses": {
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm một người vào danh sách theo dõi của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Thêm người vào danh sách theo dõi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã thêm người vào danh sách theo dõi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng hoặc người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa một người khỏi danh sách theo dõi của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Theo dõi"
+                ],
+                "summary": "Xóa người khỏi danh sách theo dõi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa người khỏi danh sách theo dõi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng hoặc người dùng",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend-group": {
+            "post": {
+                "description": "Tạo nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm bạn bè"
+                ],
+                "summary": "Tạo nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhóm đã được tạo",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend-group/list": {
+            "get": {
+                "description": "Lấy danh sách nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm bạn bè"
+                ],
+                "summary": "Lấy danh sách nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách nhóm",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.ListFriendGroupsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend-group/{id}": {
+            "put": {
+                "description": "Cập nhật nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm bạn bè"
+                ],
+                "summary": "Cập nhật nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhóm đã được cập nhật",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Xóa nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm bạn bè"
+                ],
+                "summary": "Xóa nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhóm đã được xóa",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.FriendGroup"
+                        }
+                    }
+                }
             }
         },
         "/histories/{id}/{ownerType}": {
@@ -927,6 +1473,84 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/rule/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chi tiết quy tắc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy tắc"
+                ],
+                "summary": "Chi tiết quy tắc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/rule/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm quy tắc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy tắc"
+                ],
+                "summary": "Tìm kiếm quy tắc",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/rule/{id}": {
             "put": {
                 "security": [
@@ -1207,19 +1831,87 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.ContactEntity": {
+        "crmpb.ContactSaveDTO": {
             "type": "object",
-            "required": [
-                "fullName",
-                "ownerType"
-            ],
             "properties": {
-                "createdAt": {
+                "fullName": {
                     "type": "string"
                 },
-                "createdBy": {
-                    "description": "gorm.Model",
+                "id": {
                     "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.ContactSyncRequest": {
+            "type": "object",
+            "properties": {
+                "contacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.ContactSaveDTO"
+                    }
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.CustomerAssignRequest": {
+            "type": "object",
+            "properties": {
+                "chargeId": {
+                    "type": "integer"
+                },
+                "chargeType": {
+                    "type": "integer"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "noteAssign": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.CustomerDTO": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "assignNote": {
+                    "type": "string"
+                },
+                "birthday": {
+                    "type": "string"
+                },
+                "chargeId": {
+                    "type": "integer"
+                },
+                "chargeType": {
+                    "description": "EOwnerType (int32)",
+                    "type": "integer"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
                 },
                 "fullName": {
                     "type": "string"
@@ -1227,21 +1919,119 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "note": {
+                    "type": "string"
+                },
                 "ownerId": {
                     "type": "integer"
                 },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "description": "EOwnerType (int32)",
+                    "type": "integer"
                 },
                 "phone": {
-                    "description": "OwnerID   uint64  ` + "`" + `gorm:\"column:owner_id\" json:\"ownerId\"` + "`" + ` =\u003e createdBy",
                     "type": "string"
                 },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
+                "pipelineId": {
                     "type": "integer"
+                },
+                "source": {
+                    "description": "ESourceCustomer (int32)",
+                    "type": "integer"
+                },
+                "stageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.CustomerNoteRequest": {
+            "type": "object",
+            "properties": {
+                "customerId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.CustomerStageRequest": {
+            "type": "object",
+            "properties": {
+                "customerId": {
+                    "type": "integer"
+                },
+                "stageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.FriendGroup": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.ListFriendGroupsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.FriendGroup"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.RuleDTO": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "condition": {
+                    "type": "integer"
+                },
+                "conditionValue": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "ruleName": {
+                    "type": "string"
+                },
+                "trigger": {
+                    "type": "integer"
+                },
+                "triggerValue": {
+                    "type": "string"
                 }
             }
         },
@@ -1307,36 +2097,6 @@ const docTemplate = `{
                 },
                 "stageId": {
                     "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.GroupEntity": {
-            "type": "object",
-            "properties": {
-                "backgroundColor": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "textColor": {
-                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -1682,6 +2442,19 @@ const docTemplate = `{
                 "TargetHistoryStage",
                 "TargetHistoryRule"
             ]
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
+                }
+            }
         }
     },
     "securityDefinitions": {

@@ -109,6 +109,7 @@ var publicRoutes = []string{
 	"/v2/bdspro/v2/list/region",
 	"/v2/bdspro/v2/list/project",
 	"/v2/bdspro/v2/list/amenity",
+	"/v2/user/profile/info/",
 	// "/v1/search/plan/list",
 }
 
@@ -177,8 +178,8 @@ var HttpCmd = &cobra.Command{
 		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
 
+		service.RegisterUserService(ctx, mux, env, opts)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
-
 
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {

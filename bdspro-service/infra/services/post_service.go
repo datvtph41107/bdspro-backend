@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	shared_usecase "bdspro/internal/usecases/shared"
@@ -36,10 +37,11 @@ func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByI
 	mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
 	for i, media := range post.MediaList {
 		mediaList[i] = &pb_bdspro.PostMedia{
-			Id:          media.ID,
-			Url:         media.MediaURL,
-			Type:        media.MediaType,
-			OrderNumber: int32(media.Order),
+			Id:        media.ID,
+			MediaUrl:  media.MediaURL,
+			MediaType: media.MediaType,
+			IsMain:    media.IsMain,
+			SortOrder: int32(media.SortOrder),
 		}
 	}
 	return &pb_bdspro.Post{
@@ -62,36 +64,7 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostBy
 	if err != nil {
 		return nil, err
 	}
-	postList := make([]*pb_bdspro.Post, len(posts))
-	for i, post := range posts {
-		mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
-		for i, media := range post.MediaList {
-			mediaList[i] = &pb_bdspro.PostMedia{
-				Id:          media.ID,
-				Url:         media.MediaURL,
-				Type:        media.MediaType,
-				OrderNumber: int32(media.Order),
-			}
-		}
-		postList[i] = &pb_bdspro.Post{
-			Id:             post.ID,
-			Title:          post.Title,
-			PostPrice:      post.Price,
-			PriceType:      uint32(post.PriceType),
-			PackageVisible: uint32(post.PackageVisible),
-			Like:           post.Like,
-			Comment:        post.Comment,
-			NumView:        post.NumView,
-			OwnerId:        post.OwnerID,
-			OwnerType:      uint32(post.OwnerType),
-			MediaList:      mediaList,
-			Status:         uint32(post.Status),
-		}
-		// if len(post.MediaList) > 0 {
-		// 	postList[i].MediaUrl = post.MediaList[0].MediaURL
-		// 	postList[i].MediaType = post.MediaList[0].MediaType
-		// }
-	}
+	postList := mapper.PostToPbList(posts)
 	return &pb_bdspro.GetPostByIDsResponse{Posts: postList}, nil
 }
 

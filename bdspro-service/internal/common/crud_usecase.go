@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bdspro/internal/enums"
 	_utils "common/utils"
 	"context"
 )
@@ -9,9 +10,9 @@ type CrudUsecase[T any, D DTO] struct {
 	Repo IBaseRepo[T, D]
 }
 
-func (uc *CrudUsecase[T, D]) Search(c context.Context, dto D) ([]T, int64, error) {
+func (uc *CrudUsecase[T, D]) Search(c context.Context, ownerType enums.EOwnerType, dto D) ([]T, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
-	return uc.Repo.Search(c, profileId, dto)
+	return uc.Repo.Search(c, profileId, ownerType, dto)
 }
 
 func (uc *CrudUsecase[T, D]) GetByID(c context.Context, id uint64) (*T, error) {

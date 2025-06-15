@@ -271,7 +271,7 @@
         }
       }
     },
-    "pb_userProfileItem": {
+    "pb_sharedProfileItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -402,7 +402,7 @@
           "format": "uint64"
         },
         "author": {
-          "$ref": "#/definitions/pb_userProfileItem"
+          "$ref": "#/definitions/pb_sharedProfileItem"
         },
         "mediaUrl": {
           "type": "string"

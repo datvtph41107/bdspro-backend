@@ -18,7 +18,7 @@ type UserProfileSearch struct {
 // UserProfileEntity chứa thông tin hồ sơ người dùng
 type UserProfileEntity struct {
 	_model.BaseEntity
-	ProfileID         uint64                `gorm:"primaryKey;column:profile_id" copier:"-" json:"profileId"`
+	ProfileID         uint64                `gorm:"primaryKey;autoIncrement;column:profile_id" copier:"-" json:"profileId"`
 	Phone             string                `gorm:"size:20" json:"phone"`
 	Phone2            string                `gorm:"size:20" json:"phone2"`
 	Email             string                `gorm:"size:50" json:"email"`

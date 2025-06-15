@@ -2,14 +2,38 @@ syntax = "proto3";
 
 package crmpb;
 
-option go_package = "types/crm";
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
 
 service RuleService {
-  rpc Search (RuleSearchRequest) returns (RuleListDTO);
-  rpc Detail (RuleDTO) returns (RuleDTO);
-  rpc Create (RuleDTO) returns (RuleDTO);
-  rpc Update (RuleDTO) returns (RuleDTO);
-  rpc Delete (RuleDTO) returns (RuleDTO);
+  rpc Search (RuleSearchRequest) returns (RuleListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/rule/list"
+    };
+  };
+  rpc Detail (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/rule/detail/{id}"
+    };
+  };
+  rpc Create (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/rule"
+      body: "*"
+    };
+  };
+  rpc Update (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/rule/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (pb_shared.IdRequest) returns (pb_shared.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/rule/{id}"
+    };
+  };
 }
 
 message RuleSearchRequest {

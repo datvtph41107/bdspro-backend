@@ -2,10 +2,10 @@ package user_service
 
 import (
 	_jwt "common/jwt"
-	_routes "common/routes"
+	_models "common/models"
 	_utils "common/utils"
+	"context"
 	"errors"
-	"strconv"
 	"user/data"
 	"user/enums"
 	user_model "user/models/user"
@@ -81,6 +81,9 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info data.UserInfoReques
 			Issuer:         info.Professions[i].Issuer,
 			IssueDate:      info.Professions[i].IssueDate,
 			VerifiedStatus: enums.VerifyPending,
+			BaseEntity: _models.BaseEntity{
+				ID: info.Professions[i].ID,
+			},
 		})
 	}
 	err = s.ProfessionRepo.BatchSave(c, &professions, info.ProfessionRemoveIds)
@@ -97,7 +100,11 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info data.UserInfoReques
 			Issuer:         info.Certifications[i].Issuer,
 			IssueDate:      info.Certifications[i].IssueDate,
 			FileURL:        info.Certifications[i].FileURL,
+			FileType:       info.Certifications[i].FileType,
 			VerifiedStatus: enums.VerifyPending, // Cập nhật trạng thái mặc định
+			BaseEntity: _models.BaseEntity{
+				ID: info.Certifications[i].ID,
+			},
 		})
 	}
 	err = s.CertificationRepo.BatchSave(c, &certificates, info.CertificationRemoveIds)
@@ -108,9 +115,9 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info data.UserInfoReques
 	return infoEntity, nil
 }
 
-func (s *ProfileService) PublicUserInfo(c *gin.Context) (*data.PublicUserInfo, error) {
+func (s *ProfileService) PublicUserInfo(c context.Context, profileId uint64) (*data.PublicUserInfo, error) {
 	// var infoEntity models.UserProfileEntity
-	profileId, _ := strconv.ParseUint(c.Param("profileId"), 10, 32)
+	// profileId := _utils.GetProfileIdWithContext(c)
 
 	// Lấy thông tin user từ DB
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
@@ -127,9 +134,9 @@ func (s *ProfileService) PublicUserInfo(c *gin.Context) (*data.PublicUserInfo, e
 	}
 	if infoEntity.ProfileVisibility == 10 {
 		professions, _ := s.ProfessionRepo.ListItemByProfileID(c, profileId)
-		result.Profession = professions
+		result.Professions = professions
 		certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
-		result.Certification = certifications
+		result.Certifications = certifications
 	}
 
 	stats, err := s.RateRepo.CountInfo(c, profileId, 10)
@@ -138,10 +145,10 @@ func (s *ProfileService) PublicUserInfo(c *gin.Context) (*data.PublicUserInfo, e
 	}
 	result.RateStats = stats
 
-	currentUserId := _jwt.GetProfileId(c)
+	currentUserId := _utils.GetProfileIdWithContext(c)
 	var relationShip *user_model.FriendItem
-	if currentUserId != 0 {
-		relationShip, _ = s.FriendRepo.GetRelationShip(currentUserId, profileId)
+	if profileId != 0 {
+		relationShip, _ = s.FriendRepo.GetRelationShip(profileId, currentUserId)
 	}
 	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
 	result.FriendStatus = relationShip
@@ -167,7 +174,7 @@ func (s *ProfileService) ProfileGetByPhone(c *gin.Context) (*data.PublicUserInfo
 	return info, nil
 }
 
-func (s *ProfileService) SearchUserByFriend(c *gin.Context, dto data.ProfileSearch) (_routes.ResponseDTO, error) {
+func (s *ProfileService) SearchUserByFriend(c *gin.Context, dto data.ProfileSearch) (*[]user_model.UserProfileSearch, int64, error) {
 	profileId := _jwt.GetProfileId(c)
 	// Lấy thông tin user từ DB
 	results, total, _ := s.ProfileRepo.FriendSearchProfile(c, profileId, dto)
@@ -179,11 +186,7 @@ func (s *ProfileService) SearchUserByFriend(c *gin.Context, dto data.ProfileSear
 	// 	}, nil
 	// }
 
-	return _routes.ResponseDTO{
-		Code:          400,
-		Data:          results,
-		TotalElements: &total,
-	}, nil
+	return results, total, nil
 }
 
 func (s *ProfileService) ProfileChatFind(c *gin.Context) (*[]data.PublicUserInfo, error) {

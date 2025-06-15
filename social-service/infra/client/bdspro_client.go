@@ -1,6 +1,7 @@
 package client
 
 import (
+	_middleware "common/middleware"
 	_routes "common/routes"
 	"context"
 	"fmt"
@@ -32,7 +33,7 @@ func NewBdsproClient() *BdsproClient {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(UnaryClientInterceptor),
+			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial: %v", err)
@@ -41,7 +42,7 @@ func NewBdsproClient() *BdsproClient {
 		ctx, _ := context.WithCancel(context.Background())
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go monitorConnection(ctx, name, conn)
+		go _middleware.MonitorConnection(ctx, name, conn)
 
 		client := pb_bdspro.NewPostServiceClient(conn)
 		bdsproClient.client = client
@@ -78,9 +79,9 @@ func (c *BdsproClient) GetPostByID(ctx context.Context, postID uint64) (*dto.Bds
 	for _, media := range resposne.MediaList {
 		mediaList = append(mediaList, &dto.PostMedia{
 			Id:          media.Id,
-			Url:         media.Url,
-			Type:        media.Type,
-			OrderNumber: media.OrderNumber,
+			Url:         media.MediaUrl,
+			Type:        media.MediaType,
+			OrderNumber: media.SortOrder,
 		})
 	}
 	post := &dto.BdsproPost{
@@ -95,7 +96,7 @@ func (c *BdsproClient) GetPostByID(ctx context.Context, postID uint64) (*dto.Bds
 		Title:           resposne.Title,
 		NumDate:         resposne.NumDate,
 		Type:            resposne.Type,
-		Price:           resposne.Price,
+		Price:           resposne.PostPrice,
 		PriceType:       resposne.PriceType,
 		PackageVisible:  resposne.PackageVisible,
 		Like:            resposne.Like,
@@ -123,9 +124,9 @@ func (c *BdsproClient) GetPostByIDs(ctx context.Context, postIDs []uint64) ([]*d
 		for _, media := range post.MediaList {
 			mediaList = append(mediaList, &dto.PostMedia{
 				Id:          media.Id,
-				Url:         media.Url,
-				Type:        media.Type,
-				OrderNumber: media.OrderNumber,
+				Url:         media.MediaUrl,
+				Type:        media.MediaType,
+				OrderNumber: media.SortOrder,
 			})
 		}
 		posts = append(posts, &dto.BdsproPost{
@@ -140,7 +141,7 @@ func (c *BdsproClient) GetPostByIDs(ctx context.Context, postIDs []uint64) ([]*d
 			Title:           post.Title,
 			NumDate:         post.NumDate,
 			Type:            post.Type,
-			Price:           post.Price,
+			Price:           post.PostPrice,
 			PriceType:       post.PriceType,
 			PackageVisible:  post.PackageVisible,
 			Like:            post.Like,

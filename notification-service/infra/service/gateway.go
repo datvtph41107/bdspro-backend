@@ -177,5 +177,6 @@ func (s *GatewayNotiService) mapToPB(noti *domain.NotificationEntity) *pb_noti.N
 		Type:      int32(noti.Type),
 		Timestamp: _utils.FormatTimeToString(noti.CreatedAt),
 		IsRead:    noti.IsRead,
+		TargetId:  &noti.TargetID,
 	}
 }

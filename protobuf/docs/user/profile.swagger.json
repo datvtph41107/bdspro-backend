@@ -15,21 +15,74 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v2/user/profile/info/{id}": {
+      "get": {
+        "operationId": "ProfileService_GetProfileInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_userProfilePublicInfo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    }
+  },
   "definitions": {
-    "pb_userGetProfileByIdsResponse": {
+    "pb_sharedFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_sharedGetProfileByIdsResponse": {
       "type": "object",
       "properties": {
         "profiles": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_userProfileItem"
+            "$ref": "#/definitions/pb_sharedProfileItem"
           }
         }
       }
     },
-    "pb_userProfileItem": {
+    "pb_sharedProfileItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -41,6 +94,187 @@
         },
         "avatar": {
           "type": "string"
+        }
+      }
+    },
+    "pb_userCertificationItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "verifiedStatus": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_userProfessionItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "verifiedStatus": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_userProfilePublicInfo": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "phone2": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "taxCode": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "referralCode": {
+          "type": "string"
+        },
+        "referralBy": {
+          "type": "string"
+        },
+        "roleRealEstate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "position": {
+          "type": "string"
+        },
+        "departmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "frontIdentify": {
+          "type": "string"
+        },
+        "backIdentify": {
+          "type": "string"
+        },
+        "slogan": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "facebook": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_userCertificationItem"
+          }
+        },
+        "professions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_userProfessionItem"
+          }
+        },
+        "rateStats": {
+          "$ref": "#/definitions/pb_userRateStats"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/pb_sharedFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pb_userRateStats": {
+      "type": "object",
+      "properties": {
+        "totalReviews": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "star1Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star2Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star3Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star4Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star5Count": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

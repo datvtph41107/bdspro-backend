@@ -6,7 +6,6 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
-	user_repo "bdspro/internal/repo/user"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_utils "common/utils"
@@ -19,11 +18,11 @@ type UserProductUC struct {
 }
 
 func NewUserProductUsecase(
-	productRepo user_repo.UProductRepo,
+	productRepo repo.ProductRepo,
 	ProductHistoryRepo repo.ProductHistoryRepo,
-	assetRepo user_repo.UAssetRepo,
+	assetRepo repo.AssetRepo,
 	mediaRepo repo.ProductMediaRepo,
-	productAccessRepo repo.ProductAccessRepo,
+	productAccessRepo repo.SharingAccessRepo,
 	houseInfoRepo repo.HouseInfoRepo,
 	priceRepo repo.ProductPriceRepo,
 	productPrivate repo.ProductPrivateRepo,
