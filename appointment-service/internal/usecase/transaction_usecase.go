@@ -5,8 +5,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/tuandq2112/appointment-service/appconfig"
 	"github.com/tuandq2112/appointment-service/internal/domain/entity/transaction"
 	"github.com/tuandq2112/appointment-service/internal/domain/repository"
+	utils "github.com/tuandq2112/appointment-service/pkg"
 )
 
 var (
@@ -15,9 +17,9 @@ var (
 )
 
 type TransactionUsecase interface {
-	CreateTransaction(ctx context.Context, tx *transaction.Transaction) error
+	CreateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
 	GetTransaction(ctx context.Context, id uint32) (*transaction.Transaction, error)
-	UpdateTransaction(ctx context.Context, tx *transaction.Transaction) error
+	UpdateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uint32) error
 	ListTransactions(ctx context.Context, filters *repository.TransactionFilters) ([]*transaction.Transaction, int64, error)
 	ApproveTransaction(ctx context.Context, id uint32, approvedBy uint32) error
@@ -35,15 +37,19 @@ func NewTransactionUsecase(transactionRepo repository.TransactionRepository) Tra
 	}
 }
 
-func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *transaction.Transaction) error {
+func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	// Set default values
 	tx.TransactionStatus = transaction.TransactionStatusDraft
 	tx.ApprovalStatus = transaction.ApprovalStatusPending
 	tx.IsDeleted = false
 	tx.CreatedAt = time.Now()
 	tx.UpdatedAt = time.Now()
-
-	return uc.transactionRepo.Create(ctx, tx)
+	tx.OwnerId = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	entity, err := uc.transactionRepo.Create(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
 }
 
 func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint32) (*transaction.Transaction, error) {
@@ -57,14 +63,14 @@ func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint32) (*t
 	return tx, nil
 }
 
-func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transaction.Transaction) error {
+func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	// Get existing transaction
 	existingTx, err := uc.transactionRepo.GetByID(ctx, tx.Id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if existingTx == nil {
-		return ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	// Update only allowed fields
@@ -79,11 +85,11 @@ func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transac
 	existingTx.TransactionDate = tx.TransactionDate
 	existingTx.UpdatedAt = time.Now()
 
-	err = uc.transactionRepo.Update(ctx, existingTx)
+	entity, err := uc.transactionRepo.Update(ctx, existingTx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return entity, nil
 }
 
 func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint32) error {
@@ -149,4 +155,4 @@ func (uc *transactionUsecase) RejectTransaction(ctx context.Context, id uint32) 
 
 func (uc *transactionUsecase) GetTransactionTypes(ctx context.Context) ([]string, error) {
 	return uc.transactionRepo.GetTransactionTypes(ctx)
-} 
+}

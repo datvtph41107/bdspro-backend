@@ -11,6 +11,7 @@ service:
     organization: 50052
     crm: 8206
     social: 8209
+    appointment: 50054
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer

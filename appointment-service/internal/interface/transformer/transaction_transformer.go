@@ -62,9 +62,8 @@ func (t *transactionTransformer) EntityToTransactionResponse(tx *transaction.Tra
 	if tx == nil {
 		return nil
 	}
-
 	var approvalDate *string
-	if !tx.ApprovalDate.IsZero() {
+	if tx.ApprovalDate != nil && !tx.ApprovalDate.IsZero() {
 		date := tx.ApprovalDate.Format(time.RFC3339)
 		approvalDate = &date
 	}

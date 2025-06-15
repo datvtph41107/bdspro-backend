@@ -34,16 +34,7 @@ func (v *transactionValidator) ValidateCreateTransactionRequest(req *pbTransacti
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
 
-	if req.OwnerId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "ownerId",
-					Description: "owner ID is required",
-				},
-			},
-		})
-	}
+	
 
 	if req.Amount == 0 {
 		details = append(details, &errdetails.BadRequest{

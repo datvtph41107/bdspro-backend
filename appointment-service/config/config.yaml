@@ -1,15 +1,14 @@
-HTTP:
-  PORT: 8080
+GRPC:
+  PORT: 50054
+
 Database:
   PRIMARY_DB_TYPE: postgres
   DB_DNS: host=localhost user=postgres password=postgres dbname=appointment port=5432 sslmode=disable
-WhitelistMethods:
-  GET_PATH:
-    - /api/v1/appointments
-    - /api/v1/appointments/:id
-  POST_PATH:
-    - /api/v1/appointments
-  PUT_PATH:
-    - /api/v1/appointments/:id
-  DELETE_PATH:
-    - /api/v1/appointments/:id 
+
+Email:
+  HOST: smtp.gmail.com
+  PORT: 587
+  USERNAME: tuandq2112@gmail.com
+  PASSWORD: tuandq2112
+  FROM: tuandq2112@gmail.com
+  NAME: Tuấn Đặng

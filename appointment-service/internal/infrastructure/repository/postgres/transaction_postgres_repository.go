@@ -97,14 +97,16 @@ func NewTransactionPostgresRepository(db *gorm.DB) repository.TransactionReposit
 	}
 }
 
-func (r *transactionPostgresRepository) Create(ctx context.Context, tx *transaction.Transaction) error {
+func (r *transactionPostgresRepository) Create(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	model := EntityToTransactionModel(tx)
 	err := r.db.WithContext(ctx).Create(model).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	tx.Id = model.Id
-	return nil
+	entity := TransactionModelToEntity(model)
+	return entity, nil
 }
 
 func (r *transactionPostgresRepository) GetByID(ctx context.Context, id uint32) (*transaction.Transaction, error) {
@@ -118,16 +120,17 @@ func (r *transactionPostgresRepository) GetByID(ctx context.Context, id uint32) 
 	return TransactionModelToEntity(&model), nil
 }
 
-func (r *transactionPostgresRepository) Update(ctx context.Context, tx *transaction.Transaction) error {
+func (r *transactionPostgresRepository) Update(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	model := EntityToTransactionModel(tx)
 	result := r.db.WithContext(ctx).Model(&TransactionModel{}).Where("id = ?", tx.Id).Updates(model)
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil
+		return nil, nil
 	}
-	return nil
+	entity := TransactionModelToEntity(model)
+	return entity, nil
 }
 
 func (r *transactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
@@ -189,7 +192,7 @@ func (r *transactionPostgresRepository) Approve(ctx context.Context, id uint32, 
 		Updates(map[string]interface{}{
 			"approval_status": transaction.ApprovalStatusApproved,
 			"approved_by":     approvedBy,
-			"approved_at":     time.Now(),
+			"approval_date":   time.Now(),
 			"updated_at":      time.Now(),
 		})
 	if result.Error != nil {
