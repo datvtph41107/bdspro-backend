@@ -11,7 +11,8 @@ type CommentRepo interface {
 	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	Update(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	Delete(ctx context.Context, comment *domain.Comment) error
-	GetList(ctx context.Context, dto *dto.CommentRequest) ([]domain.Comment, int64, error)
+	GetList(ctx context.Context, dto *dto.CommentRequest) ([]domain.CommentQuery, int64, error)
+	SearchPublic(ctx context.Context, dto *dto.CommentRequest) ([]domain.CommentQuery, int64, error)
 	GetByNewsFeedID(ctx context.Context, newsFeedID uint64) ([]*domain.Comment, error)
 	GetByParentID(ctx context.Context, parentID uint64) ([]*domain.Comment, error)
 	GetByNewsFeedIDAndUserID(ctx context.Context, newsFeedID uint64, userID uint64) ([]*domain.Comment, error)

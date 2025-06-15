@@ -85,7 +85,6 @@ func (s *NewsFeedService) UpdateNewsFeed(ctx context.Context, req *socialpb.News
 // @Accept json
 // @Produce json
 // @Param post body pb_social.NewsFeed true "NewsFeed"
-// @Success 200 {object} pb_social.Empty
 // @Router /news-feed [delete]
 func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*sharepb.Empty, error) {
 	post := s.PbPostToDomain(req)

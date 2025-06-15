@@ -139,6 +139,9 @@ fi
 if [ "$1" = "chathttp" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
+if [ "$1" = "chatws" ]; then
+  scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
 
 if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}

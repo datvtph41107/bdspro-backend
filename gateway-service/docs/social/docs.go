@@ -54,6 +54,11 @@ const docTemplate = `{
         },
         "/comment/list/{newsFeedId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -79,6 +84,16 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaUrl",
                         "in": "query"
                     },
                     {
@@ -179,6 +194,16 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaUrl",
                         "in": "query"
                     },
                     {
@@ -500,14 +525,7 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pb_social.Empty"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/news-feed/detail/{newsFeedId}": {
@@ -858,6 +876,9 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "districtName": {
+                    "type": "string"
+                },
                 "expiredAt": {
                     "type": "string"
                 },
@@ -899,7 +920,7 @@ const docTemplate = `{
                     "description": "1: thường, 2: VIP",
                     "type": "integer"
                 },
-                "price": {
+                "postPrice": {
                     "type": "number"
                 },
                 "priceType": {
@@ -908,6 +929,9 @@ const docTemplate = `{
                 },
                 "productId": {
                     "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
@@ -924,6 +948,9 @@ const docTemplate = `{
                 },
                 "visibility": {
                     "type": "string"
+                },
+                "wardName": {
+                    "type": "string"
                 }
             }
         },
@@ -933,14 +960,17 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "orderNumber": {
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "sortOrder": {
                     "type": "integer"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
                 }
             }
         },
@@ -967,6 +997,12 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
                 "newsFeedId": {
                     "type": "integer"
                 },
@@ -985,7 +1021,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/pb_user.ProfileItem"
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "content": {
                     "type": "string"
@@ -993,8 +1029,20 @@ const docTemplate = `{
                 "createdBy": {
                     "type": "integer"
                 },
+                "dislike": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "likedAt": {
+                    "type": "string"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
                 },
                 "newsFeedId": {
                     "type": "integer"
@@ -1015,9 +1063,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "pb_social.Empty": {
-            "type": "object"
         },
         "pb_social.LikeCommentRequest": {
             "type": "object",
@@ -1082,7 +1127,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/pb_user.ProfileItem"
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "content": {
                     "type": "string"
@@ -1102,7 +1147,7 @@ const docTemplate = `{
                 "friendTags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_user.ProfileItem"
+                        "$ref": "#/definitions/sharepb.ProfileItem"
                     }
                 },
                 "id": {
@@ -1273,7 +1318,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_user.ProfileItem": {
+        "sharepb.ProfileItem": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -1284,6 +1329,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
                 }
             }
         }

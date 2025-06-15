@@ -73,11 +73,12 @@ social:
 	cd social-service && go run main.go grpc
 appointment:
 	cd appointment-service && go run main.go grpc-server
-buf-crm:
-	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
 
 user-http:
 	cd user-service && go run main.go http
 
 chat:
 	cd go-chat-service && go run main.go grpc-serve
+
+swag-merge:
+	cd code/script && go run add_swagger_security.go

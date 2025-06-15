@@ -108,8 +108,8 @@ func (u *CommentUsecase) DeleteComment(ctx context.Context, comment *domain.Comm
 	return u.commentRepo.Delete(ctx, comment)
 }
 
-func (u *CommentUsecase) GetComment(ctx context.Context, dto *dto.CommentRequest) ([]domain.Comment, int64, error) {
-	comments, total, err := u.commentRepo.GetList(ctx, dto)
+func (u *CommentUsecase) GetComment(ctx context.Context, dto *dto.CommentRequest) ([]domain.CommentQuery, int64, error) {
+	comments, total, err := u.commentRepo.SearchPublic(ctx, dto)
 	if err != nil {
 		return nil, 0, err
 	}

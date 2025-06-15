@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"social/internal/domain"
@@ -51,11 +52,42 @@ func (r *PostgreComment) Delete(ctx context.Context, comment *domain.Comment) er
 	return nil
 }
 
-func (r *PostgreComment) GetList(ctx context.Context, dto *dto.CommentRequest) ([]domain.Comment, int64, error) {
-	var comments []domain.Comment
+func (r *PostgreComment) SearchPublic(ctx context.Context, dto *dto.CommentRequest) ([]domain.CommentQuery, int64, error) {
+	var comments []domain.CommentQuery
+	var total int64
+
+	_query := r.db.WithContext(ctx).
+		Table("comment")
+	err := _query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := `SELECT * FROM comment where deleted_at is null and news_feed_id = ? LIMIT ? OFFSET ?;`
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId != 0 {
+		query = fmt.Sprintf(`select c.*, tl.created_at as like_at,tl.dis_like from public.comment c
+left join tb_like tl on tl.user_id = %d and tl.target_id  = c.id and tl.target_type = 10
+where c.deleted_at is null and c.news_feed_id = ?
+order by c.created_at asc
+LIMIT ? OFFSET ?;`, profileId)
+	}
+
+	err = r.db.WithContext(ctx).
+		Debug().
+		Raw(query, dto.NewsFeedID, dto.GetLimit(), dto.GetOffset()).
+		Scan(&comments).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return comments, total, nil
+}
+
+func (r *PostgreComment) GetList(ctx context.Context, dto *dto.CommentRequest) ([]domain.CommentQuery, int64, error) {
+	var comments []domain.CommentQuery
 	var total int64
 	query := r.db.WithContext(ctx).
-		Model(&domain.Comment{}).
+		Model(&domain.CommentQuery{}).
 		Where("deleted_at IS NULL and news_feed_id = ?", dto.NewsFeedID)
 	if dto.ParentID != nil {
 		query = query.Where("parent_id = ?", dto.ParentID)

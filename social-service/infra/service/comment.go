@@ -94,6 +94,7 @@ func (s *CommentService) DeleteComment(ctx context.Context, req *pb_social.Comme
 // @Produce json
 // @Param newsFeedId path int true "NewsFeedId"
 // @Param comment query pb_social.CommentRequest true "CommentRequest"
+// @Security BearerAuth
 // @Success 200 {object} pb_social.CommentListResponse
 // @Router /comment/list/{newsFeedId} [get]
 func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentListResponse, error) {
@@ -111,7 +112,7 @@ func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.Comm
 	}
 	results := make([]*pb_social.CommentResponse, 0)
 	for _, comment := range comments {
-		results = append(results, s.DomainCommentToPb(&comment))
+		results = append(results, s.DomainCommentQueryToPb(&comment))
 	}
 
 	s.userClient.PbUserToComment(ctx, results)
@@ -149,5 +150,23 @@ func (s *CommentService) DomainCommentToPb(comment *domain.Comment) *pb_social.C
 		CreatedBy:  comment.CreatedBy,
 		MediaUrl:   comment.MediaUrl,
 		MediaType:  comment.MediaType,
+	}
+}
+
+func (s *CommentService) DomainCommentQueryToPb(comment *domain.CommentQuery) *pb_social.CommentResponse {
+	return &pb_social.CommentResponse{
+		Id:         comment.ID,
+		Content:    comment.Content,
+		ParentId:   comment.ParentID,
+		NewsFeedId: comment.NewsFeedID,
+		UpdatedAt:  _utils.FormatTimeToString(comment.UpdatedAt),
+		NumLike:    comment.NumLike,
+		NumDisLike: comment.NumDisLike,
+		NumReply:   comment.NumReply,
+		CreatedBy:  comment.CreatedBy,
+		MediaUrl:   comment.MediaUrl,
+		MediaType:  comment.MediaType,
+		LikedAt:    _utils.FormatTimeToString(comment.LikeAt),
+		Dislike:    comment.DisLike,
 	}
 }

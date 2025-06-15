@@ -47,6 +47,11 @@
         },
         "/comment/list/{newsFeedId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -72,6 +77,16 @@
                     {
                         "type": "integer",
                         "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaUrl",
                         "in": "query"
                     },
                     {
@@ -172,6 +187,16 @@
                     {
                         "type": "integer",
                         "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "mediaUrl",
                         "in": "query"
                     },
                     {
@@ -493,14 +518,7 @@
                         }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pb_social.Empty"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/news-feed/detail/{newsFeedId}": {
@@ -851,6 +869,9 @@
                 "content": {
                     "type": "string"
                 },
+                "districtName": {
+                    "type": "string"
+                },
                 "expiredAt": {
                     "type": "string"
                 },
@@ -892,7 +913,7 @@
                     "description": "1: thường, 2: VIP",
                     "type": "integer"
                 },
-                "price": {
+                "postPrice": {
                     "type": "number"
                 },
                 "priceType": {
@@ -901,6 +922,9 @@
                 },
                 "productId": {
                     "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
@@ -917,6 +941,9 @@
                 },
                 "visibility": {
                     "type": "string"
+                },
+                "wardName": {
+                    "type": "string"
                 }
             }
         },
@@ -926,14 +953,17 @@
                 "id": {
                     "type": "integer"
                 },
-                "orderNumber": {
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "sortOrder": {
                     "type": "integer"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
                 }
             }
         },
@@ -960,6 +990,12 @@
                 "id": {
                     "type": "integer"
                 },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
                 "newsFeedId": {
                     "type": "integer"
                 },
@@ -978,7 +1014,7 @@
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/pb_user.ProfileItem"
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "content": {
                     "type": "string"
@@ -986,8 +1022,20 @@
                 "createdBy": {
                     "type": "integer"
                 },
+                "dislike": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "likedAt": {
+                    "type": "string"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
                 },
                 "newsFeedId": {
                     "type": "integer"
@@ -1008,9 +1056,6 @@
                     "type": "string"
                 }
             }
-        },
-        "pb_social.Empty": {
-            "type": "object"
         },
         "pb_social.LikeCommentRequest": {
             "type": "object",
@@ -1075,7 +1120,7 @@
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/pb_user.ProfileItem"
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "content": {
                     "type": "string"
@@ -1095,7 +1140,7 @@
                 "friendTags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_user.ProfileItem"
+                        "$ref": "#/definitions/sharepb.ProfileItem"
                     }
                 },
                 "id": {
@@ -1266,7 +1311,7 @@
                 }
             }
         },
-        "pb_user.ProfileItem": {
+        "sharepb.ProfileItem": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -1277,6 +1322,12 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
                 }
             }
         }

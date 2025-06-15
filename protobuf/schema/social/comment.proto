@@ -57,6 +57,8 @@ message CommentResponse {
     optional sharepb.ProfileItem author = 10;
     string mediaUrl = 11;
     string mediaType = 12;
+    string likedAt = 13;
+    optional bool dislike = 14;
 }
 
 message CommentListResponse {
