@@ -28,7 +28,7 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 		req.OwnerId,
 		enums.EOwnerType(req.OwnerType),
 		dto.PipelineSearchDTO{
-			Page: _dto.Page{
+			Page: _dto.Pagable{
 				Page: int(req.Page),
 				Size: int(req.Size),
 			},

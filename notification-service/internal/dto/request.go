@@ -25,7 +25,7 @@ type NotiNewRequest struct {
 
 // SearchNotiRequest đại diện cho request tìm kiếm thông báo
 type SearchNotiRequest struct {
-	_dto.Page
+	_dto.Pagable
 	ID      *uint64 `json:"id,omitempty"`
 	UserID  *uint64 `json:"user_id,omitempty"`
 	Message *string `json:"message,omitempty"`

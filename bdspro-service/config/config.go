@@ -49,14 +49,15 @@ var ConfigFile []byte
 type ConfigApp struct {
 	// GrpcServer        *server.BdsproGrpcServer
 	// GrpcGenericServer *server.GenericGrpcServer
-	PostService *service.PostService
-	UserRouter  *user_router.RouterManager
-	OrgRouter   *org_router.RouterManager
+	PostService    *service.PostService
+	ProductService *service.ProductService
+	UserRouter     *user_router.RouterManager
+	OrgRouter      *org_router.RouterManager
 	// AdminRouter *admin_router.RouterManager
 	// UserRouter        *user_router.RouterManager
-	GroupRouter *group_router.GroupManager
-	EnumRoute   *public_router.PublicRouter
-
+	GroupRouter         *group_router.GroupManager
+	EnumRoute           *public_router.PublicRouter
+	BdsproPublicService *service.BdsproPublicService
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
 	// IncomeDocumentServer    *service.IncomeDocumentServer
@@ -75,6 +76,8 @@ func NewConfigApp(
 	groupRouter *group_router.GroupManager,
 	enumRouter *public_router.PublicRouter,
 	postService *service.PostService,
+	productService *service.ProductService,
+	bdsproPublicService *service.BdsproPublicService,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
 	// CostDocumentServer *service.CostDocumentServer,
@@ -89,11 +92,13 @@ func NewConfigApp(
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
 		// GrpcGenericServer: GrpcGenericServer,
-		PostService: postService,
-		UserRouter:  userRouter,
-		OrgRouter:   orgRouter,
-		GroupRouter: groupRouter,
-		EnumRoute:   enumRouter,
+		PostService:         postService,
+		ProductService:      productService,
+		UserRouter:          userRouter,
+		OrgRouter:           orgRouter,
+		GroupRouter:         groupRouter,
+		EnumRoute:           enumRouter,
+		BdsproPublicService: bdsproPublicService,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

@@ -85,7 +85,7 @@ func (p *ProfileRouter) FindWithFriend(c *gin.Context) {
 }
 
 func (p *ProfileRouter) FindWithGroup(c *gin.Context) {
-	var dto _dto.Page
+	var dto _dto.Pagable
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, _routes.ResponseDTO{
 			Code:    0,
@@ -136,7 +136,7 @@ func (p *ProfileRouter) FindWithGroup(c *gin.Context) {
 }
 
 func (p *ProfileRouter) FindWithOrg(c *gin.Context) {
-	var dto _dto.Page
+	var dto _dto.Pagable
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, _routes.ResponseDTO{
 			Code:    0,

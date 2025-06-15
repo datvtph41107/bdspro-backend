@@ -1,0 +1,693 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/public.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "BdsproPublicService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/bdspro/v2/list/amenity": {
+      "get": {
+        "operationId": "BdsproPublicService_GetAmenity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/list/doc-type": {
+      "get": {
+        "operationId": "BdsproPublicService_GetDocType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/list/project": {
+      "get": {
+        "operationId": "BdsproPublicService_GetProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/list/property-type": {
+      "get": {
+        "operationId": "BdsproPublicService_GetPropertyType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/list/region": {
+      "get": {
+        "operationId": "BdsproPublicService_GetRegion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/market": {
+      "get": {
+        "operationId": "BdsproPublicService_GetProductMarket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProductMarketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "districtId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "wardId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "transactionType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "transactionPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "salePrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPaymentCycle",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pb_bdsproItemResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproListItemResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproItemResponse"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproProductMarket": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saleVisibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "rentVisibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ownerOrgId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "docTypeId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "positionUrl": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "googleMapLink": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "apartmentId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "transactionPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "numBedroom": {
+          "type": "string",
+          "format": "int64",
+          "title": "House Info"
+        },
+        "numBathroom": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numFloor": {
+          "type": "string",
+          "format": "int64"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "numFront": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numCarPark": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numToilet": {
+          "type": "string",
+          "format": "int64"
+        },
+        "amenityIds": {
+          "type": "string",
+          "title": "Amenities and Media"
+        },
+        "mediaUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mediaTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mainImage": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string",
+          "title": "Region Names"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "docTypeName": {
+          "type": "string",
+          "title": "DocType and PropertyType Name"
+        },
+        "propertyTypeName": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string",
+          "title": "Latest Product Price Info"
+        },
+        "priceOwner": {
+          "type": "string",
+          "format": "int64"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommission": {
+          "type": "string",
+          "format": "int64"
+        },
+        "saleCommissionType": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommissionType": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rentPaymentCycle": {
+          "type": "string",
+          "format": "int64"
+        },
+        "importPrice": {
+          "type": "string",
+          "format": "int64"
+        },
+        "operatingCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "internalNote": {
+          "type": "string",
+          "format": "int64"
+        },
+        "targetProfit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "privateDocs": {
+          "type": "number",
+          "format": "double"
+        },
+        "deposite": {
+          "type": "number",
+          "format": "double",
+          "title": "string deletedAt = 25;"
+        }
+      }
+    },
+    "pb_bdsproProductMarketResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductMarket"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

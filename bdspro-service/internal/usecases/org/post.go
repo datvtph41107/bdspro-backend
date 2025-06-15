@@ -21,7 +21,7 @@ func NewOrgPostUsecase(repo repo.UPostRepo,
 	// serviceManager *manager.ServiceManager,
 ) *OrgPostUC {
 	uc := &OrgPostUC{
-		PostUsecase: shared_usecase.MakePostUsecase(
+		PostUsecase: shared_usecase.NewPostUsecase(
 			repo,
 			productRepo,
 			postMediaRepo,

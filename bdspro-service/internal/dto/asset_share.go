@@ -3,7 +3,7 @@ package dto
 import _dto "common/dto"
 
 type AssetShareSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 }
 
 type ArchivedDTO struct {

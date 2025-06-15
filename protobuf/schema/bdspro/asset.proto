@@ -3,10 +3,79 @@ syntax = "proto3";
 package pb_bdspro;
 option go_package = "pb/types/bdspro;pb_bdspro";
 import "google/protobuf/timestamp.proto";
+import "bdspro/share.proto";
+import "google/api/annotations.proto";
 
-message ArchivedRequest {
-  uint64 id = 1;
-  bool archived = 2;
+service AssetService {
+  rpc SearchInternal(SearchInternalRequest) returns (SearchInternalResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/internal"
+    };
+  };
+  rpc SearchShare(SearchShareRequest) returns (SearchShareResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/share"
+    };
+  };
+  rpc SearchSplit(SearchSplitRequest) returns (SearchSplitResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/split"
+    };
+  };
+  rpc Archived(ArchivedRequest) returns (ArchivedResponse) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/asset/archived"
+    };
+  };
+  rpc CreateAsset(CreateAssetRequest) returns (Asset){
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/asset"
+      body: "*"
+    };
+  };
+  rpc UpdateAsset(UpdateAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/asset/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteAsset(DeleteAssetRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/asset/{id}"
+    };
+  };
+  rpc GetDetail(GetAssetRequest) returns (Asset){
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/{id}"
+    };
+  };
+  rpc Merge(MergeAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/asset/merge"
+      body: "*"
+    };
+  };
+  rpc Split(SplitAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/asset/split"
+      body: "*"
+    };
+  };
+  rpc History(HistoryRequest) returns (HistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/history"
+    };
+  };
+  rpc HistoryOwner(HistoryOwnerRequest) returns (HistoryOwnerResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/history/owner"
+    };
+  };
+  rpc GetPublish(GetPublishRequest) returns (GetPublishResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/publish/{id}" // profileId
+    };
+  };
 }
 
 message Asset {

@@ -3,7 +3,7 @@ package dto
 import _dto "common/dto"
 
 type ProductHistorySearch struct {
-	_dto.Page
+	_dto.Pagable
 }
 
 type InfoAreaResponse struct {

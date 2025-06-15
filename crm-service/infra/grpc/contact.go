@@ -33,7 +33,7 @@ func NewContactService(uc *usecase.ContactUsecase) *ContactService {
 // @Router /contact [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
 	contacts, total, err := s.UC.Search(ctx, dto.ContactSearchDTO{
-		Page: _dto.Page{
+		Page: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

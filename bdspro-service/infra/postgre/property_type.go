@@ -16,6 +16,7 @@ type PostgrePropertyType struct {
 
 func NewPostgrePropertyType(db *gorm.DB) *PostgrePropertyType {
 	repo := &PostgrePropertyType{
+		DB: db,
 		// PostgreCrud: shared.PostgreCrud[domain.PropertyType, *dto.PropertyTypeSearchDTO]{
 		// 	DB: db,
 		// },

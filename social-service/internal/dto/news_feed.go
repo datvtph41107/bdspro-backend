@@ -7,12 +7,12 @@ import (
 )
 
 type PostSearch struct {
-	_dto.Page
+	_dto.Pagable
 	Text string `json:"text" form:"text"`
 }
 
 type NewsFeedGlobalSearch struct {
-	_dto.Page
+	_dto.Pagable
 	Text   string `json:"text" form:"text"`
 	IsReel *bool  `json:"isReel" form:"isReel"`
 }

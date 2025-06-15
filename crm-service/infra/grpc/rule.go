@@ -25,7 +25,7 @@ func NewRuleService(uc *usecase.RuleUsecase) *RuleService {
 
 func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) (*crmpb.RuleListDTO, error) {
 	dto := dto.RuleSearchDTO{
-		Page: _dto.Page{
+		Page: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

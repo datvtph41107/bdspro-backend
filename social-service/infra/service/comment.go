@@ -98,7 +98,7 @@ func (s *CommentService) DeleteComment(ctx context.Context, req *pb_social.Comme
 // @Router /comment/list/{newsFeedId} [get]
 func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentListResponse, error) {
 	dto := &dto.CommentRequest{
-		Page: _dto.Page{
+		Page: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

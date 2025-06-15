@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+message ArchivedRequest {
+    uint64 id = 1;
+    bool archived = 2;
+}

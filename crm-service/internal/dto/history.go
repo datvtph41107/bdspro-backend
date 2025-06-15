@@ -7,7 +7,7 @@ import (
 )
 
 type HistorySearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	UserID     uint64                `form:"userId"`
 	FromDate   *time.Time            `form:"fromDate"`
 	ToDate     *time.Time            `form:"toDate"`

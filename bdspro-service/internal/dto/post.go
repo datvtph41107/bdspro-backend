@@ -8,7 +8,7 @@ import (
 )
 
 type PostLinkSearch struct {
-	_dto.Page
+	_dto.Pagable
 	ProductID *uint64 `json:"productId"`
 }
 
@@ -111,5 +111,5 @@ type SearchRequest struct {
 }
 
 type PostPublishSearch struct {
-	_dto.Page
+	_dto.Pagable
 }

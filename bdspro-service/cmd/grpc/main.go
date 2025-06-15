@@ -39,6 +39,8 @@ var GrpcCmd = &cobra.Command{
 			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 		)
 		pb_bdspro.RegisterPostServiceServer(s, app.PostService)
+		pb_bdspro.RegisterProductServiceServer(s, app.ProductService)
+		pb_bdspro.RegisterBdsproPublicServiceServer(s, app.BdsproPublicService)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server

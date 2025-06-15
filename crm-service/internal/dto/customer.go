@@ -7,7 +7,7 @@ import (
 )
 
 type CustomerSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	Phone          string                  `form:"phone"`
 	FullName       string                  `form:"fullName"`
 	Steps          []enums.EStep           `form:"steps" parser:"uint64s"`

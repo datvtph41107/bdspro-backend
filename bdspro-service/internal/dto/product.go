@@ -16,11 +16,11 @@ type NewProductRequest struct {
 }
 
 type TextSearchRequest struct {
-	_dto.Page
+	_dto.Pagable
 	Text string `form:"text"`
 }
 type ProductSearchRequest struct {
-	_dto.Page
+	_dto.Pagable
 	Name             string     `form:"name"`
 	Code             string     `form:"code"`
 	Area             float64    `form:"area"`
@@ -44,17 +44,18 @@ type ProductSearchRequest struct {
 	Timestamp        *time.Time `form:"timestamp"`
 	ParentID         *uint64    `form:"parentId"`
 	Text             string     `form:"text"`
+	Archived         *bool      `form:"archived"`
 	// IsParent         *bool      `form:"isParent"`
 }
 
 type TotalSearchParser struct {
-	_dto.Page
+	_dto.Pagable
 	Bedroom         *uint     `json:"numBedroom"`
 	Bathroom        *uint     `json:"numBathroom"`
 	Toilet          *uint     `json:"toilet"`
 	Kitchen         *uint     `json:"kitchen"`
 	Park            *uint     `json:"park"`
-	Price           *uint64   `json:"price"`
+	PriceSuggest    *float64  `json:"price"`
 	Area            *uint     `json:"area"`
 	Frontage        *uint     `json:"frontage"`
 	Floor           *uint     `json:"floor"`
@@ -77,8 +78,8 @@ type TotalSearchParser struct {
 	DocTypes      []domain.DocTypeItem      `json:"docTypes"`
 	PropertyTypes []domain.PropertyTypeItem `json:"propertyTypes"`
 	Amenities     []domain.AmenityItem      `json:"amenities"`
-	SalePrice     *uint64                   `json:"salePrice"`
-	RentPrice     *uint64                   `json:"rentPrice"`
+	SalePrice     *float64                  `json:"salePrice"`
+	RentPrice     *float64                  `json:"rentPrice"`
 	// ProvinceIds     []uint64
 	// DistrictIds     []uint64
 	// WardIds         []uint64

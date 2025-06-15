@@ -22,7 +22,7 @@ type AssetCreateWithProduct struct {
 }
 
 type AssetSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	ProvinceID      *uint64  `form:"provinceId"`
 	DistrictID      *uint64  `form:"districtId"`
 	WardID          *uint64  `form:"wardId"`

@@ -274,7 +274,7 @@ func (route *OrgProductRouter) SuggestFields(c *gin.Context) {
 		return
 	}
 
-	result, err := route.OrgProductUsecase.SuggestFields(c, &body)
+	result, err := route.OrgProductUsecase.SuggestFields(c, body.Content)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -584,7 +584,7 @@ func (route *OrgProductRouter) ExportExcel(c *gin.Context) {
 			product.RentStatus,
 			product.RentVisibility,
 			product.OwnerUserID,
-			product.OwnerOrgID,
+			nil,
 			product.PositionUrl,
 			product.Address,
 			product.GoogleMapLink,

@@ -5,6 +5,6 @@ import (
 )
 
 type StageSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	StageName string `form:"stageName"`
 }

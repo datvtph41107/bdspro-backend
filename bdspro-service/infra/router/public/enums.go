@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func EnumMapToList[T ~uint | ~int](enumMap map[T]string) []map[string]interface{} {
+func EnumMapToList[T ~uint32 | ~uint | ~int](enumMap map[T]string) []map[string]interface{} {
 	keys := make([]T, 0, len(enumMap))
 	for k := range enumMap {
 		keys = append(keys, k)

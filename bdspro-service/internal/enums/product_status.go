@@ -1,6 +1,6 @@
 package enums
 
-type EProductStatus uint
+type EProductStatus uint32
 
 const (
 	EProductNotSold EProductStatus = 10

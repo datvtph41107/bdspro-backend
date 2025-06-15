@@ -1,6 +1,6 @@
 package enums
 
-type EVisibility uint
+type EVisibility uint32
 
 const (
 	EVisiblePublic   EVisibility = 10

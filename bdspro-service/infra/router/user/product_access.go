@@ -39,15 +39,16 @@ func (r *UserProductAccessRouter) RegisterRoutes(router *gin.RouterGroup, path s
 	}
 }
 
-// @Summary Tạo chia sẻ mới sản phẩm cho người dùng
-// @Description Thêm một sản phẩm mới vào hệ thống
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param productId path int true "Thông tin sản phẩm"
-// @Success 201 {object} domain.ProductAccess
-// @Router /v1/bdspro/v2/user/product/access/{productId}/bulk [post]
+// .
+// // @Summary Tạo chia sẻ mới sản phẩm cho người dùng
+// // @Description Thêm một sản phẩm mới vào hệ thống
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param productId path int true "Thông tin sản phẩm"
+// // @Success 201 {object} domain.ProductAccess
+// // @Router /v1/bdspro/v2/user/product/access/{productId}/bulk [post]
 func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -66,17 +67,18 @@ func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Tạo chia sẻ mới sản phẩm cho người dùng
-// @Description Thêm một sản phẩm mới vào hệ thống
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param productId path int true "Thông tin sản phẩm"
-// @Success 201 {object} domain.ProductAccess
-// @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
-// @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// @Router /v1/bdspro/v2/user/product/access/{productId}/batch [post]
+// .
+// // @Summary Tạo chia sẻ mới sản phẩm cho người dùng
+// // @Description Thêm một sản phẩm mới vào hệ thống
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param productId path int true "Thông tin sản phẩm"
+// // @Success 201 {object} domain.ProductAccess
+// // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
+// // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
+// // @Router /v1/bdspro/v2/user/product/access/{productId}/batch [post]
 func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
@@ -94,15 +96,16 @@ func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật hoa hồng
-// @Description Cập nhật hoa hồng của sản phẩm
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.ProductAccessUpdate true "Thông tin hoa hồng"
-// @Success 200 {object} domain.ProductAccess
-// @Router /v1/bdspro/v2/user/product/access/commission [put]
+// .
+// // @Summary Cập nhật hoa hồng
+// // @Description Cập nhật hoa hồng của sản phẩm
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.ProductAccessUpdate true "Thông tin hoa hồng"
+// // @Success 200 {object} domain.ProductAccess
+// // @Router /v1/bdspro/v2/user/product/access/commission [put]
 func (r *UserProductAccessRouter) UpdateCommission(c *gin.Context) {
 
 	body := dto.ProductAccessUpdate{}
@@ -129,17 +132,18 @@ func (r *UserProductAccessRouter) UpdateCommission(c *gin.Context) {
 // // @Router /v1/bdspro/v2/user/product-access/{id} [put]
 // func (r *UserProductAccessRoute) Update(c *gin.Context) {}
 
-// @Summary Xóa sản phẩm
-// @Description Xóa sản phẩm theo ID (soft delete)
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "ID của sản phẩm"
-// @Success 200 {object} map[string]bool "Trạng thái xóa"
-// @Failure 400 {object} map[string]string "ID không hợp lệ"
-// @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// @Router /v1/bdspro/v2/user/product/access/{id} [delete]
+// .
+// // @Summary Xóa sản phẩm
+// // @Description Xóa sản phẩm theo ID (soft delete)
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "ID của sản phẩm"
+// // @Success 200 {object} map[string]bool "Trạng thái xóa"
+// // @Failure 400 {object} map[string]string "ID không hợp lệ"
+// // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
+// // @Router /v1/bdspro/v2/user/product/access/{id} [delete]
 func (r *UserProductAccessRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -164,15 +168,16 @@ func (r *UserProductAccessRouter) Delete(c *gin.Context) {
 // // @Router /v1/bdspro/v2/user/product-access/{id} [get]
 // func (r *UserProductAccessRoute) GetByID(c *gin.Context) {}
 
-// @Summary Lấy danh sách sản phẩm
-// @Description Trả về danh sách tất cả các sản phẩm
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} domain.ProductAccess
-// @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /v1/bdspro/v2/user/product/access [get]
+// .
+// // @Summary Lấy danh sách sản phẩm
+// // @Description Trả về danh sách tất cả các sản phẩm
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Success 200 {array} domain.ProductAccess
+// // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
+// // @Router /v1/bdspro/v2/user/product/access [get]
 func (r *UserProductAccessRouter) Search(c *gin.Context) {
 	var dto dto.ProductAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -184,15 +189,16 @@ func (r *UserProductAccessRouter) Search(c *gin.Context) {
 	_routes.RouteResult(c, results, err)
 }
 
-// @Summary Lấy danh sách sản phẩm
-// @Description Trả về danh sách tất cả các sản phẩm
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} domain.ProductAccess
-// @Failure 500 {object} map[string]string "Không thể lấy danh sách"
-// @Router /v1/bdspro/v2/user/product/access/private-fields [get]
+// .
+// // @Summary Lấy danh sách sản phẩm
+// // @Description Trả về danh sách tất cả các sản phẩm
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Success 200 {array} domain.ProductAccess
+// // @Failure 500 {object} map[string]string "Không thể lấy danh sách"
+// // @Router /v1/bdspro/v2/user/product/access/private-fields [get]
 func (r *UserProductAccessRouter) GetFields(c *gin.Context) {
 	// fields := []struct {
 	// 	Value string `json:"value"`

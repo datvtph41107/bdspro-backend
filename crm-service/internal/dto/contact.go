@@ -5,6 +5,6 @@ import (
 )
 
 type ContactSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	Text string `form:"text"`
 }

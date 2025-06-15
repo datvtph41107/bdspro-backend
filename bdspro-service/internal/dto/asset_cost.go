@@ -3,7 +3,7 @@ package dto
 import _dto "common/dto"
 
 type AssetCostSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	// Page    int     `form:"page"`
 	// Size    int     `form:"size"`
 	AssetID *uint64   `form:"assetId"`

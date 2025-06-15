@@ -45,7 +45,7 @@ func (s *CustomerService) Search(ctx context.Context, req *crmpb.CustomerSearchR
 		sources[i] = enums.ESourceCustomer(source)
 	}
 	dto := dto.CustomerSearchDTO{
-		Page: _dto.Page{
+		Page: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

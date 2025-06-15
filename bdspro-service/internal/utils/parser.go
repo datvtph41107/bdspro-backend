@@ -57,7 +57,7 @@ var Rules = []_utils.Rule{
 		},
 	},
 	{
-		Field: "price",
+		Field: "priceSuggest",
 		// Pattern: regexp.MustCompile(`(?i)(\d{1,3}(?:[\.,]?\d{3})+|\d+(?:[\.,]\d+)?|[\p{L}\s]+)\s*tỷ`),
 		Pattern: regexp.MustCompile(`(?i)(\d+(?:[\.,]\d+)?)\s*tỷ`),
 

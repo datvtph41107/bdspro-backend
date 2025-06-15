@@ -269,6 +269,10 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 		query = query.Where("LOWER(products.name) LIKE ?", "%"+strings.ToLower(dto.Text)+"%")
 	}
 
+	if dto.Archived != nil {
+		query = query.Where("products.archived = ?", *dto.Archived)
+	}
+
 	return query
 }
 
@@ -471,10 +475,10 @@ func (r *GormUserProductRepo) SmartSearchProduct(
 	if dto.Floor != nil {
 		query = query.Where("house_info.num_floor IN (?)", dto.Floor)
 	}
-	if dto.Price != nil {
+	if dto.PriceSuggest != nil {
 		query = query.Where("? < product_price.sale_price and product_price.sale_price < ?",
-			*dto.Price-300_000_000,
-			*dto.Price+300_000_000)
+			*dto.PriceSuggest-300_000_000,
+			*dto.PriceSuggest+300_000_000)
 	}
 	if dto.Area != nil {
 		query = query.Where("? < products.area and products.area < ?",
@@ -535,12 +539,6 @@ func (r *GormUserProductRepo) DetectProductData(profileId uint64, input string) 
 	return nil, 0, nil
 }
 
-func (r *GormUserProductRepo) UpdateArchived(ctx context.Context, productId uint64, archived bool) error {
-	return r.DB.WithContext(ctx).Model(domain.Product{}).
-		Where("id = ? and deleted_at is null", productId).
-		Update("archived", archived).Error
-}
-
 func (r *GormUserProductRepo) NewDeposite(ctx context.Context, dto *domain.Deposite) error {
 	return r.DB.WithContext(ctx).Create(&dto).Error
 }
@@ -569,50 +567,50 @@ func (r *GormUserProductRepo) CancelDeposite(ctx context.Context, id uint64) err
 		Update("deposite_id", nil).Error
 }
 
-func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	var results []domain.Product
+// func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+// 	var results []domain.Product
 
-	query := r.DB.
-		Debug().
-		Model(domain.Product{}).
-		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
-		// Joins(`LEFT JOIN product_access pa
-		// 			ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, ownerID).
-		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
-					FROM products WHERE deleted_at is null GROUP BY parent_id) 
-					AS child ON products.id = child.parent_id`).
+// 	query := r.DB.
+// 		Debug().
+// 		Model(domain.Product{}).
+// 		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+// 		// Joins(`LEFT JOIN product_access pa
+// 		// 			ON (pa.product_id = products.id and pa.target_id = ? and pa.target_type = 10)`, ownerID).
+// 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area
+// 					FROM products WHERE deleted_at is null GROUP BY parent_id)
+// 					AS child ON products.id = child.parent_id`).
 
-		// Where("pa.user_id = ?", profileId).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		// Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.owner_type = ? and products.deleted_at is NULL", ownerID, ownerType)
+// 		// Where("pa.user_id = ?", profileId).
+// 		Preload("Price", func(db *gorm.DB) *gorm.DB {
+// 			return db.Order("product_price.created_at asc")
+// 		}).
+// 		Preload("Province", "deleted_at IS NULL").
+// 		Preload("District", "deleted_at IS NULL").
+// 		Preload("Ward", "deleted_at IS NULL").
+// 		// Preload("Amenities", "deleted_at IS NULL").
+// 		Preload("DocType", "deleted_at IS NULL").
+// 		Preload("PropertyType", "deleted_at IS NULL").
+// 		Preload("MediaList", "deleted_at IS NULL").
+// 		Where("products.owner_user_id = ? and products.owner_type = ? and products.deleted_at is NULL", ownerID, ownerType)
 
-	query = r.QueryDomain(query, dto)
+// 	query = r.QueryDomain(query, dto)
 
-	err := query.
-		Order("created_at desc").
-		Limit(dto.GetLimit()).
-		Offset(dto.GetOffset()).
-		Find(&results).Error
+// 	err := query.
+// 		Order("created_at desc").
+// 		Limit(dto.GetLimit()).
+// 		Offset(dto.GetOffset()).
+// 		Find(&results).Error
 
-	// err := query.Find(&results).Error
-	if err != nil {
-		return nil, 0, err
-	}
+// 	// err := query.Find(&results).Error
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
 
-	var total int64
-	query.Count(&total)
+// 	var total int64
+// 	query.Count(&total)
 
-	return results, total, nil
-}
+// 	return results, total, nil
+// }
 
 func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
 	return nil, nil
@@ -623,29 +621,45 @@ func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerType enums.EOwne
 }
 
 func (r *GormUserProductRepo) Archived(ctx context.Context, productId *uint64, archived bool) error {
-	return r.DB.WithContext(ctx).Model(domain.Product{}).
+	return r.DB.WithContext(ctx).Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", productId).
 		Update("archived", archived).Error
 }
 
 func (r *GormUserProductRepo) SetRentStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
-	return nil
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("rent_status", status).Error
 }
 
 func (r *GormUserProductRepo) SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
-	return nil
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("sale_status", status).Error
 }
 
 func (r *GormUserProductRepo) SetRentVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error {
-	return nil
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("rent_visibility", vis).Error
 }
 
 func (r *GormUserProductRepo) SetSaleVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error {
-	return nil
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("sale_visibility", vis).Error
 }
 
-func (r *GormUserProductRepo) GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error) {
-	return nil, nil
+func (r *GormUserProductRepo) GetProductByID(ctx context.Context, productID *uint64) (*domain.Product, error) {
+	var product domain.Product
+	if err := r.DB.WithContext(ctx).Where("id = ? and deleted_at is null", productID).First(&product).Error; err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {

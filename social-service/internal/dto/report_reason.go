@@ -5,6 +5,6 @@ import (
 )
 
 type ReportReasonRequest struct {
-	_dto.Page
+	_dto.Pagable
 	ReasonName string `json:"reasonName"`
 }

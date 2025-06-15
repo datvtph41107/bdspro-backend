@@ -48,7 +48,7 @@ func (r *PostgreProject) GetAll() ([]domain.Project, error) {
 func (r *PostgreProject) SearchItem(c context.Context, dto *dto.ProjectSearchDTO) ([]domain.ProjectItem, int64, error) {
 	var entities []domain.ProjectItem
 	err := r.DB.Where("deleted_at IS NULL").
-		Preload("Developer").
+		// Preload("Developer").
 		Where("LOWER(name) LIKE '%' || LOWER(?) || '%'", dto.Text).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).

@@ -549,6 +549,202 @@ func (x *PostMedia) GetOrderNumber() int32 {
 	return 0
 }
 
+type PostItem struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProductId       uint64                 `protobuf:"varint,2,opt,name=productId,proto3" json:"productId,omitempty"`
+	ExpiredAt       string                 `protobuf:"bytes,3,opt,name=expiredAt,proto3" json:"expiredAt,omitempty"`
+	Status          uint32                 `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`
+	Visibility      string                 `protobuf:"bytes,5,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	Hidden          bool                   `protobuf:"varint,6,opt,name=hidden,proto3" json:"hidden,omitempty"`
+	Content         string                 `protobuf:"bytes,7,opt,name=content,proto3" json:"content,omitempty"`
+	TransactionType string                 `protobuf:"bytes,8,opt,name=transactionType,proto3" json:"transactionType,omitempty"`
+	Title           string                 `protobuf:"bytes,9,opt,name=title,proto3" json:"title,omitempty"`
+	Type            string                 `protobuf:"bytes,10,opt,name=type,proto3" json:"type,omitempty"` // 1: normal, 2: feed, 3: share
+	Price           float64                `protobuf:"fixed64,11,opt,name=price,proto3" json:"price,omitempty"`
+	PriceType       uint32                 `protobuf:"varint,12,opt,name=priceType,proto3" json:"priceType,omitempty"`           // 1: chính thức, 2: thỏa thuận
+	PackageVisible  uint32                 `protobuf:"varint,13,opt,name=packageVisible,proto3" json:"packageVisible,omitempty"` // 1: thường, 2: VIP
+	Like            uint64                 `protobuf:"varint,14,opt,name=like,proto3" json:"like,omitempty"`
+	Comment         uint64                 `protobuf:"varint,15,opt,name=comment,proto3" json:"comment,omitempty"`
+	NumView         uint64                 `protobuf:"varint,16,opt,name=numView,proto3" json:"numView,omitempty"`
+	Address         uint64                 `protobuf:"varint,17,opt,name=address,proto3" json:"address,omitempty"`
+	ProvinceName    string                 `protobuf:"bytes,18,opt,name=provinceName,proto3" json:"provinceName,omitempty"`
+	DistrictName    string                 `protobuf:"bytes,19,opt,name=districtName,proto3" json:"districtName,omitempty"`
+	WardName        string                 `protobuf:"bytes,20,opt,name=wardName,proto3" json:"wardName,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *PostItem) Reset() {
+	*x = PostItem{}
+	mi := &file_bdspro_post_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostItem) ProtoMessage() {}
+
+func (x *PostItem) ProtoReflect() protoreflect.Message {
+	mi := &file_bdspro_post_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostItem.ProtoReflect.Descriptor instead.
+func (*PostItem) Descriptor() ([]byte, []int) {
+	return file_bdspro_post_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PostItem) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PostItem) GetProductId() uint64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *PostItem) GetExpiredAt() string {
+	if x != nil {
+		return x.ExpiredAt
+	}
+	return ""
+}
+
+func (x *PostItem) GetStatus() uint32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *PostItem) GetVisibility() string {
+	if x != nil {
+		return x.Visibility
+	}
+	return ""
+}
+
+func (x *PostItem) GetHidden() bool {
+	if x != nil {
+		return x.Hidden
+	}
+	return false
+}
+
+func (x *PostItem) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *PostItem) GetTransactionType() string {
+	if x != nil {
+		return x.TransactionType
+	}
+	return ""
+}
+
+func (x *PostItem) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PostItem) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PostItem) GetPrice() float64 {
+	if x != nil {
+		return x.Price
+	}
+	return 0
+}
+
+func (x *PostItem) GetPriceType() uint32 {
+	if x != nil {
+		return x.PriceType
+	}
+	return 0
+}
+
+func (x *PostItem) GetPackageVisible() uint32 {
+	if x != nil {
+		return x.PackageVisible
+	}
+	return 0
+}
+
+func (x *PostItem) GetLike() uint64 {
+	if x != nil {
+		return x.Like
+	}
+	return 0
+}
+
+func (x *PostItem) GetComment() uint64 {
+	if x != nil {
+		return x.Comment
+	}
+	return 0
+}
+
+func (x *PostItem) GetNumView() uint64 {
+	if x != nil {
+		return x.NumView
+	}
+	return 0
+}
+
+func (x *PostItem) GetAddress() uint64 {
+	if x != nil {
+		return x.Address
+	}
+	return 0
+}
+
+func (x *PostItem) GetProvinceName() string {
+	if x != nil {
+		return x.ProvinceName
+	}
+	return ""
+}
+
+func (x *PostItem) GetDistrictName() string {
+	if x != nil {
+		return x.DistrictName
+	}
+	return ""
+}
+
+func (x *PostItem) GetWardName() string {
+	if x != nil {
+		return x.WardName
+	}
+	return ""
+}
+
 var File_bdspro_post_proto protoreflect.FileDescriptor
 
 var file_bdspro_post_proto_rawDesc = []byte{
@@ -656,6 +852,7 @@ var file_bdspro_post_proto_goTypes = []interface{}{
 	(*GetPostByIDsResponse)(nil), // 4: pb_bdspro.GetPostByIDsResponse
 	(*Post)(nil),                 // 5: pb_bdspro.Post
 	(*PostMedia)(nil),            // 6: pb_bdspro.PostMedia
+	(*PostItem)(nil),             // 7: pb_bdspro.PostItem
 }
 var file_bdspro_post_proto_depIdxs = []int32{
 	5, // 0: pb_bdspro.GetPostByIDsResponse.posts:type_name -> pb_bdspro.Post
@@ -770,7 +967,7 @@ func file_bdspro_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_bdspro_post_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -14,8 +14,6 @@ init:
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
-# buf-social:
-# 	cd protobuf/schema && buf generate --template ./social/buf.gen.yaml --path social
 buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
 buf-noti:
@@ -24,6 +22,8 @@ buf-user:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path user
 buf-bdspro:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path bdspro
+buf-shared:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path shared
 
 payment:
 	cd payment-service && go run main.go http

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package pb_shared;
+option go_package = "pb/types/shared;pb_shared";
+
+message ArchivedRequest {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message MediaItem {
+    uint64 id = 1;
+    string mediaUrl = 2;
+    string mediaType = 3;
+    bool isMain = 4;
+    int32 order = 5;
+    int32 targetType = 6;
+    uint64 targetId = 7;
+  }
+  
+  

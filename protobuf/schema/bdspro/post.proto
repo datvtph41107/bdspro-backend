@@ -62,3 +62,25 @@ message PostMedia {
   string type = 3;
   int32 orderNumber = 4;
 }
+message PostItem {
+  uint64 id = 1;
+  uint64 productId = 2;
+  string expiredAt = 3;
+  uint32 status = 4;
+  string visibility = 5;
+  bool hidden = 6;
+  string content = 7;
+  string transactionType = 8;
+  string title = 9;
+  string type = 10; // 1: normal, 2: feed, 3: share
+  double price = 11;
+  uint32 priceType = 12; // 1: chính thức, 2: thỏa thuận
+  uint32 packageVisible = 13; // 1: thường, 2: VIP
+  uint64 like = 14;
+  uint64 comment = 15;
+  uint64 numView = 16;
+  uint64 address = 17;
+  string provinceName = 18;
+  string districtName = 19;
+  string wardName = 20;
+}

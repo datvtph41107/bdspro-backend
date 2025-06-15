@@ -47,13 +47,13 @@ type UProductRepo interface {
 	SearchProductMarket(profileId uint64, dto dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error)
 
 	// Tìm kiếm thông minh sản phẩm
-	SmartSearchProduct(profileId uint64, dto dto.TotalSearchParser) ([]domain.Product, int64, error)
+	// SmartSearchProduct(profileId uint64, dto dto.TotalSearchParser) ([]domain.Product, int64, error)
 
 	// Phát hiện dữ liệu sản phẩm
 	DetectProductData(profileId uint64, input string) ([]domain.Product, int64, error)
 
 	// Cập nhật trạng thái lưu trữ sản phẩm
-	UpdateArchived(ctx context.Context, productId uint64, archived bool) error
+	// UpdateArchived(ctx context.Context, productId uint64, archived bool) error
 
 	// Tạo mới thông tin đặt cọc
 	NewDeposite(ctx context.Context, dto *domain.Deposite) error
@@ -62,7 +62,7 @@ type UProductRepo interface {
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
 	CancelDeposite(ctx context.Context, id uint64) error
 
-	SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	// SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	SearchExport(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, error)
 	SmartSearch(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
 	Archived(ctx context.Context, productId *uint64, archived bool) error

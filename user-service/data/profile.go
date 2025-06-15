@@ -5,7 +5,7 @@ import (
 )
 
 type ProfileSearch struct {
-	_dto.Page
+	_dto.Pagable
 	// Page int64  `form:"page"`
 	// Size int64  `form:"size"`
 	Text string `form:"text"`

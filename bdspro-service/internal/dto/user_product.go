@@ -18,13 +18,13 @@ import (
 
 type HouseInfoUpdate struct {
 	// house info
-	NumBedroom  *int    `json:"numBedroom,omitempty"`  // Số phòng ngủ (optional)
-	NumBathroom *int    `json:"numBathroom,omitempty"` // Số WC (optional)
-	NumFloor    *int    `json:"numFloor,omitempty"`    // Số tầng (optional)
-	NumFront    *int    `json:"numFront,omitempty"`    // Số mặt tiền
-	NumCarPark  *int    `json:"numCarPark,omitempty"`  // Số chỗ để ôtô
-	Furniture   *string `json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
-	Orientation *string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
+	NumBedroom  int    `json:"numBedroom,omitempty"`  // Số phòng ngủ (optional)
+	NumBathroom int    `json:"numBathroom,omitempty"` // Số WC (optional)
+	NumFloor    int    `json:"numFloor,omitempty"`    // Số tầng (optional)
+	NumFront    int    `json:"numFront,omitempty"`    // Số mặt tiền
+	NumCarPark  int    `json:"numCarPark,omitempty"`  // Số chỗ để ôtô
+	Furniture   string `json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
+	Orientation string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
 }
 
 type ProductSaveRequest struct {
@@ -42,18 +42,19 @@ type ProductSaveRequest struct {
 	DistrictID      *uint64                          `json:"districtId"`
 	WardID          *uint64                          `json:"wardId"`
 	TransactionType int                              `json:"transactionType"`
-	PriceDTO        *domain.ProductPrice             `json:"price" binding:"required"`
-	MediaItemDTOs   []MediaItem                      `json:"mediaItems"`
-	HouseInfoDTO    *HouseInfoUpdate                 `json:"houseInfo"`
-	PrivateDataDTO  *domain.ProductPrivate           `json:"productPrivate"`
+	PriceData       *domain.ProductPrice             `json:"priceData" binding:"required"`
+	MediaItems      []MediaItem                      `json:"mediaItems"`
+	HouseInfo       *HouseInfoUpdate                 `json:"houseInfo"`
+	PrivateData     *domain.ProductPrivate           `json:"productPrivate"`
 	GoogleMapLink   string                           `json:"googleMapLink"`
 	SourceType      uint                             `json:"sourceType"`
-	SaleStatus      *enums.EProductStatus            `json:"saleStatus"`
-	RentStatus      *enums.EProductStatus            `json:"rentStatus"`
+	SaleStatus      enums.EProductStatus             `json:"saleStatus"`
+	RentStatus      enums.EProductStatus             `json:"rentStatus"`
 	PostCreate      *PostSaveWithProduct             `json:"post"`
 	AssetCreate     *user_dto.AssetCreateWithProduct `json:"asset"`
-	SaleVisibility  *enums.EVisibility               `json:"saleVisibility"`
-	RentVisibility  *enums.EVisibility               `json:"rentVisibility"`
+	SaleVisibility  enums.EVisibility                `json:"saleVisibility"`
+	RentVisibility  enums.EVisibility                `json:"rentVisibility"`
+	OwnerType       enums.EOwnerType                 `json:"ownerType"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê

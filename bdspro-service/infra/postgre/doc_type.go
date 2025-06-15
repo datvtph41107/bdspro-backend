@@ -20,6 +20,18 @@ func NewPostgreDocType(db *gorm.DB) *PostgreDocType {
 	}
 }
 
+func (r *PostgreDocType) GetAllItem(c context.Context) ([]domain.DocTypeItem, error) {
+	var items []domain.DocTypeItem
+
+	query := r.DB.
+		Model(&domain.DocType{}).
+		Where("deleted_at IS NULL")
+
+	err := query.Find(&items).Error
+
+	return items, err
+}
+
 func (r *PostgreDocType) SearchItem(c context.Context, dto *dto.DocTypeSearchDTO) ([]domain.DocTypeItem, int64, error) {
 	// var items []domain.DocTypeItem
 	// var total int64

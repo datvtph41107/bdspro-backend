@@ -34,7 +34,7 @@ func NewStageService(uc *usecase.StageUsecase) *StageService {
 // @Router /stage/{pipelineId} [get]
 func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest) (*crmpb.StageListDTO, error) {
 	stages, total, err := s.UC.Search(ctx, req.PipelineId, dto.StageSearchDTO{
-		Page: _dto.Page{
+		Page: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

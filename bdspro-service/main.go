@@ -13,21 +13,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-// type ConfigApp struct {
-// 	UserRoute   *user.UserRoute
-// 	AdminRouter *admin.AdminRoute
-// 	ServerHttp  *server.ServerHttp
-// }
-
-// var publicRoutes = []string{"/public"}
-
 // @title BDSPRO API
 // @version 1.0
 // @description API phần logic chính của BĐSPro
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-
 var rootCmd = &cobra.Command{
 	Use:   "myapp",
 	Short: "Một ứng dụng quản lý server gRPC và HTTP",
@@ -51,37 +42,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	// engine := gin.Default()
-	// os.Setenv("TZ", "Europe/London")
-	// if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-	// 	v.RegisterValidation("notemptyarray", NotEmptyArray)
-	// }
-
-	// // common.LoadConfig(config.ConfigFile)
-
-	// parameters := common.SetupParameters{
-	// 	ConfigFile:   config.ConfigFile,
-	// 	Engine:       engine,
-	// 	PublicRoutes: publicRoutes,
-	// 	Prefix:       "/bdspro",
-	// }
-
-	// app, _ := InitializeApp()
-	// common.SetupRestfulAPI(parameters, func() {
-	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", property.AppProperties)
-
-	// 	domain.AutoMigrate()
-
-	// 	app.adminRouter.RegisterAdminRouter(engine)
-	// 	app.userRoute.RegisterUserRouter(engine)
-	// })
-
-	// common.SetupGRPCServer(parameters, func(s *grpc.Server) {
-	// 	config.LoadProperties()
-	// 	log.Printf("Data: ", property.AppProperties)
-	// 	pb_bdspro.RegisterBdsproServiceServer(s, app.ServerHttp)
-	// })
 }
 
 // userProductService.UserAssetService = userAssetService

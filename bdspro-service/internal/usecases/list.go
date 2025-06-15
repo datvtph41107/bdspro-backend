@@ -38,9 +38,9 @@ func (s *ListUsecase) ListRegion(c context.Context, dto *dto.RegionRequest) ([]d
 	return s.regionRepo.Search(c, dto)
 }
 
-func (s *ListUsecase) ListDocType(c context.Context, dto *dto.DocTypeSearchDTO) ([]domain.DocTypeItem, int64, error) {
-	data, total, err := s.docTypeRepo.SearchItem(c, dto)
-	return data, total, err
+func (s *ListUsecase) ListDocType(c context.Context, dto *dto.DocTypeSearchDTO) ([]domain.DocTypeItem, error) {
+	data, err := s.docTypeRepo.GetAllItem(c)
+	return data, err
 }
 
 func (s *ListUsecase) ListProject(c context.Context, dto *dto.ProjectSearchDTO) ([]domain.ProjectItem, int64, error) {

@@ -3,7 +3,7 @@ package data
 import _dto "common/dto"
 
 type RateSearch struct {
-	_dto.Page
+	_dto.Pagable
 	Score    *int    `form:"score"`
 	ParentID *uint64 `form:"parentId"`
 }

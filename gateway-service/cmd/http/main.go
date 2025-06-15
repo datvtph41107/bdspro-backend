@@ -103,6 +103,7 @@ var publicRoutes = []string{
 	"/v2/social/comment/list",
 	"/v2/social/news-feed/user",
 	"/v2/social/news-feed/detail",
+	"/v2/bdspro/v2/product/market",
 	// "/v1/search/plan/list",
 }
 

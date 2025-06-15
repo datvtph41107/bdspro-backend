@@ -4937,14 +4937,9 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/access": {
+        "/v2/bdspro/v2/list/amenity": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Trả về danh sách tất cả các sản phẩm",
+                "description": "Lấy danh sách tiện ích",
                 "consumes": [
                     "application/json"
                 ],
@@ -4952,39 +4947,169 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User: Sản phẩm"
+                    "Sản phẩm"
                 ],
-                "summary": "Lấy danh sách sản phẩm",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.ProductAccess"
-                            }
-                        }
+                "summary": "Lấy danh sách tiện ích",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
                     },
-                    "500": {
-                        "description": "Không thể lấy danh sách",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
                     }
-                }
+                ],
+                "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/access/commission": {
+        "/v2/bdspro/v2/list/doc-type": {
+            "get": {
+                "description": "Lấy danh sách loại pháp lý",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách loại pháp lý",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/list/project": {
+            "get": {
+                "description": "Lấy danh sách dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/list/property-type": {
+            "get": {
+                "description": "Lấy danh sách loại tài sản",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách loại tài sản",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/list/region": {
+            "get": {
+                "description": "Lấy danh sách khu vực",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách khu vực",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/archived": {
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Cập nhật hoa hồng của sản phẩm",
+                "description": "API này cho phép lưu trữ sản phẩm",
                 "consumes": [
                     "application/json"
                 ],
@@ -4994,258 +5119,52 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Cập nhật hoa hồng",
+                "summary": "Lưu trữ sản phẩm",
                 "parameters": [
-                    {
-                        "description": "Thông tin hoa hồng",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductAccessUpdate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.ProductAccess"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/access/private-fields": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Trả về danh sách tất cả các sản phẩm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách sản phẩm",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.ProductAccess"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Không thể lấy danh sách",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/access/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa sản phẩm theo ID (soft delete)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Xóa sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của sản phẩm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Trạng thái xóa",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "boolean"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "ID không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Không thể xóa dữ liệu",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/access/{productId}/batch": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Thêm một sản phẩm mới vào hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Tạo chia sẻ mới sản phẩm cho người dùng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Thông tin sản phẩm",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/domain.ProductAccess"
-                        }
-                    },
-                    "400": {
-                        "description": "Dữ liệu không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Không thể tạo dữ liệu",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/access/{productId}/bulk": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Thêm một sản phẩm mới vào hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Tạo chia sẻ mới sản phẩm cho người dùng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Thông tin sản phẩm",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/domain.ProductAccess"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/archived": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Cập nhật sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "description": "Thông tin sản phẩm cần cập nhật",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ArchivedRequest"
+                            "$ref": "#/definitions/pb_shared.ArchivedRequest"
                         }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/child/devide": {
+        "/v2/bdspro/v2/product/area-info/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns information about the area of a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy thông tin về diện tích sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/child/devide": {
             "post": {
                 "security": [
                     {
@@ -5262,7 +5181,7 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Gộp toàn bộ sản phẩm con",
+                "summary": "Chia sản phẩm con",
                 "parameters": [
                     {
                         "description": "Thông tin sản phẩm con",
@@ -5270,14 +5189,14 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DevideChildRequest"
+                            "$ref": "#/definitions/pb_bdspro.SaveChildRequest"
                         }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/child/history-child/:id": {
+        "/v2/bdspro/v2/product/child/history/{id}": {
             "get": {
                 "security": [
                     {
@@ -5294,8 +5213,15 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Gộp toàn bộ sản phẩm con",
+                "summary": "Lấy lịch sử sản phẩm con",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "name": "page",
@@ -5315,7 +5241,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/child/merge": {
+        "/v2/bdspro/v2/product/child/merge": {
             "post": {
                 "security": [
                     {
@@ -5335,12 +5261,6 @@ const docTemplate = `{
                 "summary": "Gộp sản phẩm con",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path"
-                    },
-                    {
                         "description": "Thông tin sản phẩm con",
                         "name": "body",
                         "in": "body",
@@ -5353,7 +5273,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/child/merge-all/{productId}": {
+        "/v2/bdspro/v2/product/child/merge-all/{id}": {
             "post": {
                 "security": [
                     {
@@ -5375,7 +5295,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Product ID",
-                        "name": "productId",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -5383,7 +5303,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/child/split": {
+        "/v2/bdspro/v2/product/child/split": {
             "post": {
                 "security": [
                     {
@@ -5400,19 +5320,22 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Tạo sản phẩm con",
+                "summary": "Chia sản phẩm con",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path"
+                        "description": "Thông tin sản phẩm con",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.SaveChildRequest"
+                        }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/deposite": {
+        "/v2/bdspro/v2/product/deposite": {
             "post": {
                 "security": [
                     {
@@ -5444,7 +5367,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/deposite/{depositeId}": {
+        "/v2/bdspro/v2/product/deposite/{depositeId}": {
             "delete": {
                 "security": [
                     {
@@ -5474,7 +5397,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/export": {
+        "/v2/bdspro/v2/product/export": {
             "post": {
                 "security": [
                     {
@@ -5522,9 +5445,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/bdspro/v2/user/product/market": {
+        "/v2/bdspro/v2/product/market": {
             "get": {
-                "description": "Returns a list of products based on search filters",
+                "description": "Lấy danh sách sản phẩm thị trường",
                 "consumes": [
                     "application/json"
                 ],
@@ -5532,72 +5455,110 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User: Sản phẩm"
+                    "Sản phẩm"
                 ],
-                "summary": "Lấy danh sách sản phẩm trang chủ",
+                "summary": "Lấy danh sách sản phẩm thị trường",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Product name",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product code",
-                        "name": "code",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Product area",
-                        "name": "area",
+                        "type": "integer",
+                        "name": "districtId",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Product price",
-                        "name": "price",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product description",
-                        "name": "description",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Additional notes",
-                        "name": "note",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Size results",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Page",
                         "name": "page",
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rentCommission",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rentPaymentCycle",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rentPrice",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rentVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "saleCommission",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "salePrice",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "saleStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "saleVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
-                        "default": "\"price_asc\"",
-                        "description": "Sort order",
                         "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "sourceType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "transactionPrice",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardId",
                         "in": "query"
                     }
                 ],
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/me": {
+        "/v2/bdspro/v2/product/me": {
             "get": {
                 "security": [
                     {
@@ -5683,7 +5644,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/new": {
+        "/v2/bdspro/v2/product/new": {
             "post": {
                 "security": [
                     {
@@ -5722,7 +5683,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/bdspro/v2/user/product/rent-status": {
+        "/v2/bdspro/v2/product/rent-status": {
             "put": {
                 "security": [
                     {
@@ -5739,7 +5700,7 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Xóa sản phẩm",
+                "summary": "Cập nhật trạng thái thuê sản phẩm",
                 "parameters": [
                     {
                         "description": "Thông tin sản phẩm cần cập nhật",
@@ -5754,7 +5715,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/rent-visibility": {
+        "/v2/bdspro/v2/product/rent-visibility": {
             "put": {
                 "security": [
                     {
@@ -5771,7 +5732,7 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Trạng thái sản phẩm",
+                "summary": "Cập nhật trạng thái thuê sản phẩm",
                 "parameters": [
                     {
                         "description": "Thông tin sản phẩm cần cập nhật",
@@ -5786,7 +5747,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/sale-status": {
+        "/v2/bdspro/v2/product/sale-status": {
             "put": {
                 "security": [
                     {
@@ -5803,7 +5764,7 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Xóa sản phẩm",
+                "summary": "Cập nhật trạng thái bán sản phẩm",
                 "parameters": [
                     {
                         "description": "Thông tin sản phẩm cần cập nhật",
@@ -5818,7 +5779,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/sale-visibility": {
+        "/v2/bdspro/v2/product/sale-visibility": {
             "put": {
                 "security": [
                     {
@@ -5835,7 +5796,7 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Trạng thái sản phẩm",
+                "summary": "Cập nhật trạng thái bán sản phẩm",
                 "parameters": [
                     {
                         "description": "Thông tin sản phẩm cần cập nhật",
@@ -5850,8 +5811,8 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/suggest": {
-            "get": {
+        "/v2/bdspro/v2/product/suggest": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -5930,187 +5891,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/product/total": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of products based on search filters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Tìm kiếm tổng hợp",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Text",
-                        "name": "text",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Sizet results",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"price_asc\"",
-                        "description": "Sort order",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/product/{id}": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API để tạo một sản phẩm mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Tạo sản phẩm mới",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm",
-                        "name": "product",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductSaveRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Sản phẩm được tạo thành công",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/user/product/{id}/history": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of history of a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách lịch sử của sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/product/{id}/members": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of members of a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách thành viên của sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/product/{id}/posts": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of posts related to a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách bài viết liên quan",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/product/{productId}": {
+        "/v2/bdspro/v2/product/{id}": {
             "put": {
                 "security": [
                     {
@@ -6132,7 +5913,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Product ID",
-                        "name": "productId",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
@@ -6170,6 +5951,133 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Product ID",
                         "name": "productId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/{id}/detail": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API để lấy chi tiết sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy chi tiết sản phẩm",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID của sản phẩm",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết sản phẩm",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.IdRequest"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/v2/product/{id}/histories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of history of a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy danh sách lịch sử của sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of members of a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy danh sách thành viên của sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/{id}/posts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of posts related to a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy danh sách bài viết liên quan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -7127,6 +7035,14 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "createdUser": {
+                    "description": "OwnerOrgID      *uint64              ` + "`" + `gorm:\"type:int8\" json:\"ownerOrgId,omitempty\"` + "`" + `                   // Tổ chức sở hữu (nếu cty mua)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.ProfileInfo"
+                        }
+                    ]
+                },
                 "customerId": {
                     "type": "integer"
                 },
@@ -7182,10 +7098,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "organizationId": {
-                    "type": "integer"
-                },
-                "ownerOrgId": {
-                    "description": "Tổ chức sở hữu (nếu cty mua)",
                     "type": "integer"
                 },
                 "ownerType": {
@@ -7270,6 +7182,9 @@ const docTemplate = `{
                 },
                 "updatedBy": {
                     "type": "integer"
+                },
+                "updatedUser": {
+                    "$ref": "#/definitions/domain.ProfileInfo"
                 },
                 "visibility": {
                     "description": "phạm vi",
@@ -7453,7 +7368,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "priceOwner": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "productId": {
                     "type": "integer"
@@ -7495,7 +7410,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "importPrice": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "internalNote": {
                     "type": "string"
@@ -7510,7 +7425,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "targetProfit": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -8083,29 +7998,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ProductAccessUpdate": {
-            "type": "object",
-            "required": [
-                "commission",
-                "productId",
-                "targetId",
-                "targetType"
-            ],
-            "properties": {
-                "commission": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
-                    "type": "integer"
-                }
-            }
-        },
         "dto.ProductHistorySearch": {
             "type": "object",
             "properties": {
@@ -8125,7 +8017,7 @@ const docTemplate = `{
             "required": [
                 "area",
                 "name",
-                "price"
+                "priceData"
             ],
             "properties": {
                 "amenityIds": {
@@ -8170,13 +8062,16 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
                 "parentId": {
                     "type": "integer"
                 },
                 "post": {
                     "$ref": "#/definitions/dto.PostSaveWithProduct"
                 },
-                "price": {
+                "priceData": {
                     "$ref": "#/definitions/domain.ProductPrice"
                 },
                 "productPrivate": {
@@ -8220,7 +8115,7 @@ const docTemplate = `{
                 "area",
                 "name",
                 "parentId",
-                "price"
+                "priceData"
             ],
             "properties": {
                 "amenityIds": {
@@ -8265,13 +8160,16 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
                 "parentId": {
                     "type": "integer"
                 },
                 "post": {
                     "$ref": "#/definitions/dto.PostSaveWithProduct"
                 },
-                "price": {
+                "priceData": {
                     "$ref": "#/definitions/domain.ProductPrice"
                 },
                 "productPrivate": {
@@ -8481,6 +8379,338 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.AssetCreateWithProduct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "integer"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.HouseInfo": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "numFront": {
+                    "type": "integer"
+                },
+                "numToilet": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.IdRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.LegalItem": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.PostSaveWithProduct": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "type": "integer"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "metadatas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_shared.MediaItem"
+                    }
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.ProductPrice": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "deposite": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "priceOwner": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "rentCommission": {
+                    "type": "number"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "type": "integer"
+                },
+                "salePrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.ProductPrivate": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "importPrice": {
+                    "type": "number"
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "operatingCost": {
+                    "type": "number"
+                },
+                "privateDocs": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.SaveChildRequest": {
+            "type": "object",
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/pb_bdspro.AssetCreateWithProduct"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/pb_bdspro.HouseInfo"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_shared.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/pb_bdspro.PostSaveWithProduct"
+                },
+                "priceData": {
+                    "$ref": "#/definitions/pb_bdspro.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/pb_bdspro.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "rentVisibility": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "saleVisibility": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_shared.ArchivedRequest": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_shared.MediaItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
                     "type": "integer"
                 }
             }

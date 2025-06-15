@@ -1,6 +1,7 @@
 package shared_usecase
 
 import (
+	"bdspro/infra/providers"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -27,6 +28,7 @@ type IProductUsecase interface {
 type ProductUsecase struct {
 	This               IProductUsecase
 	ProductRepo        user_repo.UProductRepo
+	ProductChildRepo   repo.UProductChildRepo
 	AssetRepo          user_repo.UAssetRepo
 	MediaRepo          repo.ProductMediaRepo
 	ProductAccessRepo  repo.ProductAccessRepo
@@ -41,8 +43,51 @@ type ProductUsecase struct {
 	MemberPlan         usecases.PlanUsecase
 	PostUsecase        *PostUsecase
 	// UAssetUsecase      *UAssetUsecase
-	DepositeRepo repo.DepositeRepo
-	OwnerType    enums.EOwnerType
+	DepositeRepo       repo.DepositeRepo
+	OwnerType          enums.EOwnerType
+	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
+}
+
+func NewProductUsecase(
+	productRepo user_repo.UProductRepo,
+	ProductHistoryRepo repo.ProductHistoryRepo,
+	assetRepo user_repo.UAssetRepo,
+	mediaRepo repo.ProductMediaRepo,
+	productAccessRepo repo.ProductAccessRepo,
+	houseInfoRepo repo.HouseInfoRepo,
+	priceRepo repo.ProductPriceRepo,
+	productPrivate repo.ProductPrivateRepo,
+	region repo.RegionRepo,
+	docTypeRepo repo.DocTypeRepo,
+	propertyType repo.PropertyTypeRepo,
+	amenity repo.AmenityRepo,
+	memberPlan usecases.PlanUsecase,
+	PostUsecase *PostUsecase,
+	// UAssetUsecase *UAssetUsecase,
+	depositeRepo repo.DepositeRepo,
+	productChildRepo repo.UProductChildRepo,
+) *ProductUsecase {
+	return &ProductUsecase{
+		ProductRepo:        productRepo,
+		AssetRepo:          assetRepo,
+		ProductAccessRepo:  productAccessRepo,
+		MediaRepo:          mediaRepo,
+		HouseInfoRepo:      houseInfoRepo,
+		PriceRepo:          priceRepo,
+		ProductPrivate:     productPrivate,
+		Region:             region,
+		DocTypeRepo:        docTypeRepo,
+		PropertyType:       propertyType,
+		Amenity:            amenity,
+		MemberPlan:         memberPlan,
+		ProductHistoryRepo: ProductHistoryRepo,
+		PostUsecase:        PostUsecase,
+		// UAssetUsecase:      UAssetUsecase,
+		DepositeRepo:       depositeRepo,
+		ProductChildRepo:   productChildRepo,
+		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
+		// OwnerType:    ownerType,
+	}
 }
 
 func MakeProductUsecase(
@@ -86,14 +131,24 @@ func MakeProductUsecase(
 }
 
 func (s *ProductUsecase) CheckPermission(c context.Context, productId *uint64, permission enums.EPermission) error {
-	hasPermission, err := s.This.HasPermission(c, productId, permission)
-	if !hasPermission {
-		return &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền tạo sản phẩm",
-		}
-	}
-	return err
+	// hasPermission, err := s.This.HasPermission(c, productId, permission)
+	// if !hasPermission {
+	// 	return &_routes.Except{
+	// 		Code:    401,
+	// 		Message: "Bạn không có quyền tạo sản phẩm",
+	// 	}
+	// }
+	// return err
+	return nil
+}
+
+func (s *ProductUsecase) GetOwnerID(c context.Context, ownerType enums.EOwnerType) uint64 {
+	// if ownerType == enums.EOwnerTypeOrganization {
+	// 	return s.This.GetOwnerID(c)
+	// }
+
+	ownerId := _utils.GetProfileIdWithContext(c)
+	return ownerId
 }
 
 func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
@@ -104,7 +159,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	}
 
 	// ownerId là id của tổ chức, hoặc của cá nhân
-	ownerId, err := s.This.GetOwnerID(c)
+	ownerId := s.GetOwnerID(c, product.OwnerType)
 	if err != nil {
 		return nil, err
 	}
@@ -112,32 +167,36 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	entity := &domain.Product{}
 	houseInfoEntity := &domain.HouseInfo{}
 	copier.Copy(&entity, &product)
-	copier.Copy(&houseInfoEntity, &product.HouseInfoDTO)
+	copier.Copy(&houseInfoEntity, &product.HouseInfo)
 
-	if err := s.UpdatePrice(c, 0, product.PriceDTO); err != nil {
+	if err := s.UpdatePrice(c, 0, product.PriceData); err != nil {
 		return nil, err
 	}
+	if product.PriceData != nil {
+		entity.LastPriceID = &product.PriceData.ID
+	}
 
-	entity.LastPriceID = &product.PriceDTO.ID
-	entity.OwnerUserID = ownerId
-	entity.OwnerType = s.This.GetOwnerType(c)
+	entity.OwnerUserID = &ownerId
+	entity.OwnerType = product.OwnerType
 	_db.SaveWithContext(c, entity)
 	// err := s.productRepo.UpdateProduct(c, entity.ID, entity)
 	// err := s.UpdateReference(c, entity, product)
 
-	if err := s.PriceRepo.UpdateProductID(c, &entity.ID, &product.PriceDTO.ID); err != nil {
-		return nil, err
+	if product.PriceData != nil {
+		if err := s.PriceRepo.UpdateProductID(c, &entity.ID, &product.PriceData.ID); err != nil {
+			return nil, err
+		}
 	}
 	if err := s.UpdateAmenity(entity.ID, product.AmenityIds); err != nil {
 		return nil, err
 	}
-	if err := s.UpdateMediaItems(entity.ID, product.MediaItemDTOs); err != nil {
+	if err := s.UpdateMediaItems(entity.ID, product.MediaItems); err != nil {
 		return nil, err
 	}
 	if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
 		return nil, err
 	}
-	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateDataDTO); err != nil {
+	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateData); err != nil {
 		return nil, err
 	}
 
@@ -148,9 +207,9 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		postInfo.Content = entity.Description
 		postInfo.TransactionType = entity.TransactionType
 		if entity.TransactionType == 10 {
-			postInfo.Price = *product.PriceDTO.SalePrice
+			postInfo.Price = *product.PriceData.SalePrice
 		} else {
-			postInfo.Price = *product.PriceDTO.RentPrice
+			postInfo.Price = *product.PriceData.RentPrice
 		}
 
 		dto := dto.PostSaveRequest{}
@@ -221,26 +280,28 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 
 	// err = s.productRepo.UpdateProduct(c, id, product)
 	// s.UpdateReference(c, product, dto)
-	product.PriceDTO.ProductID = &id
-	if err := s.UpdatePrice(c, *entity.LastPriceID, product.PriceDTO); err != nil {
+	if product.PriceData != nil {
+		product.PriceData.ProductID = &id
+	}
+	if err := s.UpdatePrice(c, *entity.LastPriceID, product.PriceData); err != nil {
 		return nil, err
 	}
 	if err := s.UpdateAmenity(entity.ID, product.AmenityIds); err != nil {
 		return nil, err
 	}
-	if err := s.UpdateMediaItems(entity.ID, product.MediaItemDTOs); err != nil {
+	if err := s.UpdateMediaItems(entity.ID, product.MediaItems); err != nil {
 		return nil, err
 	}
 
 	houseInfoEntity := &domain.HouseInfo{}
-	copier.Copy(&houseInfoEntity, &product.HouseInfoDTO)
+	copier.Copy(&houseInfoEntity, &product.HouseInfo)
 	if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
 		return nil, err
 	}
-	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateDataDTO); err != nil {
+	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateData); err != nil {
 		return nil, err
 	}
-	entity.LastPriceID = &product.PriceDTO.ID
+	entity.LastPriceID = &product.PriceData.ID
 	err = _db.SaveWithContext(c, &entity)
 
 	return entity, err
@@ -273,11 +334,11 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 
 func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	// profileId := _jwt.GetProfileId(c)
-	ownerID, err := s.This.GetOwnerID(c)
-	if err != nil {
-		return nil, 0, err
-	}
-	return s.ProductRepo.SearchProductByOwner(ownerID, s.This.GetOwnerType(c), dto)
+	ownerID := s.GetOwnerID(c, enums.EOwnerTypeMember)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+	return s.ProductRepo.SearchProductWithOwner(&ownerID, *dto)
 }
 
 func (s *ProductUsecase) SearchExport(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
@@ -345,7 +406,7 @@ func (s *ProductUsecase) SmartSearch(c context.Context, text string, dto *dto.Te
 	searchs.RegionIds = regionIds
 	searchs.DocTypeIds = docTypeIds
 	searchs.PropertyTypeIds = propertyTypeIds
-	searchs.Page = _dto.Page{
+	searchs.Pagable = _dto.Pagable{
 		Page: dto.GetPage(),
 		Size: dto.GetSize(),
 	}
@@ -399,7 +460,7 @@ func (s *ProductUsecase) UpdatePrivateData(c context.Context, productID uint64, 
 // 	return ""
 // }
 
-func (s *ProductUsecase) SuggestFields(c context.Context, body *dto.ProductSaveDetect) (any, error) {
+func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.TotalSearchParser, error) {
 	// searchs, err := utils.InferSearchText(body.Content)
 	// if err != nil {
 	// 	return nil, err
@@ -409,11 +470,9 @@ func (s *ProductUsecase) SuggestFields(c context.Context, body *dto.ProductSaveD
 	// }
 	var searchs dto.TotalSearchParser
 	var err error
-	if searchs, err = utils.InferSearchText(body.Content); err != nil {
+	if searchs, err = utils.InferSearchText(text); err != nil {
 		return nil, err
 	}
-
-	text := body.Content
 
 	// searchs, _ := utils.InferSearchText(text)
 
@@ -457,17 +516,17 @@ func (s *ProductUsecase) SuggestFields(c context.Context, body *dto.ProductSaveD
 	searchs.Ward = ward
 	searchs.District = district
 	searchs.Province = province
-	if searchs.Price != nil {
-		if *searchs.Price > 100_000_000 {
+	if searchs.PriceSuggest != nil {
+		if *searchs.PriceSuggest > 100_000_000 {
 			searchs.TransactionType = 1
-			searchs.SalePrice = searchs.Price
+			searchs.SalePrice = searchs.PriceSuggest
 		} else {
 			searchs.TransactionType = 2
-			searchs.RentPrice = searchs.Price
+			searchs.RentPrice = searchs.PriceSuggest
 		}
 	}
 
-	return searchs, nil
+	return &searchs, nil
 }
 
 func (s *ProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Product, error) {
@@ -655,4 +714,214 @@ func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.P
 
 func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.ProductRepo.SearchByProductAccess(c, targetID, targetType, dto)
+}
+
+func (s *ProductUsecase) RequiredBeforeSave(c context.Context, parentID uint64) (*domain.Product, error) {
+	parent, err := s.ProductRepo.GetByID(parentID)
+	if err != nil {
+		return nil, err
+	}
+
+	// if parent.AssetId == nil {
+	// 	return nil, &_routes.Except{
+	// 		Code:    400,
+	// 		Message: "Sản phẩm không đủ điều kiến để tạo sản phẩm con",
+	// 	}
+	// }
+
+	profileId := _utils.GetProfileIdWithContext(c)
+
+	if *parent.OwnerUserID != profileId {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Sản phẩm không thuộc quyền sở hữu của bạn",
+		}
+	}
+
+	return parent, nil
+}
+
+func (s *ProductUsecase) InfoArea(c context.Context, id *uint64) (*dto.InfoAreaResponse, error) {
+	_, err := s.RequiredBeforeSave(c, *id)
+	if err != nil {
+		return nil, err
+	}
+
+	profileId := _utils.GetProfileIdWithContext(c)
+	result, err := s.ProductChildRepo.InfoArea(c, &profileId, id)
+	return result, err
+}
+
+func (s *ProductUsecase) CreateChild(c context.Context, body *dto.SaveProductChildRequest) (*dto.CreateResponse, error) {
+	parent, err := s.RequiredBeforeSave(c, *body.ParentID)
+	if err != nil {
+		return nil, err
+	}
+	totalAreaDevide := s.ProductChildRepo.TotalAreaDevide(body.ParentID)
+	if totalAreaDevide+body.Area > parent.Area {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Diện tích không hợp lệ",
+		}
+	}
+
+	body.ProductSaveRequest.ParentID = body.ParentID
+	body.ProductSaveRequest.OwnerType = parent.OwnerType
+	result, err := s.CreateProduct(c, &body.ProductSaveRequest)
+	s.ProductChildRepo.CreateHistory(c, enums.EProductHistory_NewChild,
+		body.ParentID,
+		*body.ParentID,
+		[]uint64{result.Product.ID},
+		[]float64{result.Product.Area},
+	)
+	return result, err
+}
+
+func (s *ProductUsecase) MergeProductChild(c context.Context, body *dto.MergeProductChildRequest) (*domain.Product, error) {
+	_, err := s.RequiredBeforeSave(c, *body.ParentID)
+	if err != nil {
+		return nil, err
+	}
+
+	validate := s.ProductChildRepo.ValidatorMerge(*body.ParentID, *body.ChildIDs)
+	if !validate {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Tồn tại sản phẩm con không đạt điều kiện để gộp",
+		}
+	}
+
+	s.ProductChildRepo.CreateHistory(c,
+		enums.EProductHistory_Merge,
+		nil,
+		*body.ParentID,
+		*body.ChildIDs,
+		[]float64{},
+	)
+	// body.ProductSaveRequest.ParentID = body.ParentID
+	return nil, s.ProductChildRepo.MergeChilds(*body.ChildIDs)
+}
+
+func (s *ProductUsecase) MergeAllProductChild(c context.Context, parentID *uint64) (*domain.Product, error) {
+	_, err := s.RequiredBeforeSave(c, *parentID)
+	if err != nil {
+		return nil, err
+	}
+
+	validate := s.ProductChildRepo.ValidListChild(*parentID)
+	if !validate {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Tồn tại sản phẩm con không đạt điều kiện để gộp",
+		}
+	}
+
+	ids := s.ProductChildRepo.AllChildId(*parentID)
+	err = s.ProductChildRepo.MergeAll(*parentID)
+	if err != nil {
+		return nil, err
+	}
+	// body.ProductSaveRequest.ParentID = body.ParentID
+
+	s.ProductChildRepo.CreateHistory(c,
+		enums.EProductHistory_MergeAll,
+		nil,
+		*parentID, ids,
+		[]float64{},
+	)
+	return nil, nil
+}
+
+func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.DevideChildRequest) (*[]domain.Product, error) {
+	child, err := s.RequiredBeforeSave(c, *devideData.ParentID)
+	if err != nil {
+		return nil, err
+	}
+
+	if child.ParentId == nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Chia sản phẩm con chỉ áp dụng đối với sản phẩm con",
+		}
+	}
+
+	totalDevide := 0.0
+	if devideData.Childs != nil {
+		for i := 0; i < len(devideData.Childs); i++ {
+			totalDevide += devideData.Childs[i].Area
+			devideData.Childs[i].ParentID = child.ParentId
+		}
+	}
+
+	if child.Area <= totalDevide || totalDevide < 1 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Diện tích không hợp lệ",
+		}
+	}
+	validate := s.ProductChildRepo.ValidListChild(*devideData.ParentID)
+	if !validate {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Sản phẩm con không đạt điều kiện để chia",
+		}
+	}
+
+	// devideu_product_dto.ProductSaveRequest.ParentID = child.ParentId
+	s.ProductRepo.UpdateArea(c, child.ID, child.Area-totalDevide)
+	var results []domain.Product
+	for i := 0; i < len(devideData.Childs); i++ {
+		result, err := s.CreateProduct(c, &devideData.Childs[i])
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, *result.Product)
+	}
+
+	var ids []uint64
+	var areas []float64
+
+	for _, r := range results {
+		ids = append(ids, r.ID)
+		areas = append(areas, r.Area)
+	}
+	s.ProductChildRepo.CreateHistory(c, enums.EProductHistory_Devide,
+		&child.ID,
+		*child.ParentId,
+		ids,
+		areas,
+	)
+	return &results, nil
+}
+
+func (s *ProductUsecase) ChildHistory(c context.Context, id uint64, dto *dto.ProductHistorySearch) (*[]domain.ProductHistory, int64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	result, total, err := s.ProductChildRepo.History(c, profileId, id, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return result, total, nil
+}
+
+func (s *ProductUsecase) QueryProductMarket(c context.Context, dto *dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	var results []domain.ProductMarket
+	profileId := _utils.GetProfileIdWithContext(c)
+	results, total, err := s.ProductRepo.SearchProductMarket(profileId, *dto)
+	return results, total, err
+}
+func (s *ProductUsecase) SearchProductMarket(c context.Context, dto *dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
+	// var results []u_product_dto.ProductMarket
+	// var total int64
+	// var err error
+	results, total, err := s.CacheProductMarket.GetDataWithCache(c, dto, s.QueryProductMarket)
+	// if len(productCache) > 0 {
+	// 	results = productCache
+	// 	total = totalMarlket
+	// } else {
+	// 	results, total, err = s.ProductRepo.SearchProductMarket(profileId, *dto, _utils.GetPage(c))
+	// 	totalMarlket = total
+	// 	productCache = results
+	// }
+
+	return results, total, err
 }

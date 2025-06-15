@@ -10,10 +10,10 @@ import (
 type ProductPrivate struct {
 	_models.BaseEntity
 	ProductId     uint64   `json:"productId,omitempty"`
-	ImportPrice   uint64   `json:"importPrice,omitempty"`
+	ImportPrice   *float64 `json:"importPrice,omitempty"`
 	OperatingCost *float64 `gorm:"type:DECIMAL(15,0)" json:"operatingCost,omitempty"`
 	InternalNote  string   `json:"internalNote,omitempty"`
-	TargetProfit  uint     `json:"targetProfit,omitempty"`
+	TargetProfit  *float64 `json:"targetProfit,omitempty"`
 	PrivateDocs   string   `gorm:"type:text" json:"privateDocs,omitempty"`
 }
 

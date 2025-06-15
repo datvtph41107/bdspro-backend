@@ -34,7 +34,7 @@ type PostUsecase struct {
 	PlanUsecase    usecases.PlanUsecase
 }
 
-func MakePostUsecase(repo repo.UPostRepo,
+func NewPostUsecase(repo repo.UPostRepo,
 	// planService *providers.MemberPlanProvider,
 	productRepo user_repo.UProductRepo,
 	postMediaRepo repo.PostMediaRepo,

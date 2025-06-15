@@ -5,7 +5,7 @@ import (
 )
 
 type ProductAccessSearch struct {
-	_dto.Page
+	_dto.Pagable
 	ProductID uint64 `form:"productId"`
 	// TargetType enums.ETargetType `form:"targetType"`
 }

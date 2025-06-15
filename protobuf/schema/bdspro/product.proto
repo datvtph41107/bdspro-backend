@@ -2,27 +2,154 @@ syntax = "proto3";
 
 package pb_bdspro;
 import "bdspro/asset.proto";
+import "shared/common.proto";
+import "bdspro/doc_type.proto";
+import "bdspro/deposite.proto";
+import "bdspro/property_type.proto";
+import "bdspro/amenity.proto";
+import "bdspro/apartment.proto";
+import "bdspro/apartment_attribute.proto";
+import "bdspro/project_build.proto";
+import "bdspro/project.proto";
+import "bdspro/region.proto";
+import "bdspro/attribute_product.proto";
+import "bdspro/developer.proto";
+import "google/api/annotations.proto";
+import "user/profile.proto";
+import "bdspro/post.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
-service BdsproService {
-  rpc Ping (Empty) returns (PingResponse);
-  rpc ListProductInternal (ProductInternalRequest) returns (ProductInternalResponse);
-
-  // assets
-  rpc GetAssets (pb_bdspro.Empty) returns (AssetList);
-  rpc FilterAssets (FilterAssetsRequest) returns (AssetList);
-  rpc BulkAction (BulkActionRequest) returns (pb_bdspro.Empty);
-  rpc CreateAsset (CreateAssetRequest) returns (Asset);
-  rpc CreateAssetFromProduct (CreateAssetRequestFromProduct) returns (Asset);
-  rpc ConvertProductToAsset (CreateAssetRequestConvertProduct) returns (Asset);
-  rpc UpdateAsset (UpdateAssetRequest) returns (Asset);
-  rpc DeleteAsset (DeleteAssetRequest) returns (pb_bdspro.Empty);
-  rpc Archived (ArchivedRequest) returns (pb_bdspro.Empty);
-  rpc GetAssetDetails (GetAssetRequest) returns (AssetDetails);
-  rpc ShareAsset (ShareAssetRequest) returns (pb_bdspro.Empty);
-  rpc SplitAsset (SplitAssetRequest) returns (pb_bdspro.Empty);
-  rpc MergeAsset (MergeAssetRequest) returns (Asset);
-  rpc GetAssetHistory (GetAssetRequest) returns (AssetHistory);
+service ProductService {
+  rpc ArchiveProduct (pb_shared.ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/archived"
+      body: "*"
+    };
+  };
+  rpc ChildDevideProduct (DevideChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/devide"
+      body: "*"
+    };
+  };
+  rpc ChildHistories (IdRequest) returns (HistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/child/history/{id}"
+    };
+  };
+  rpc ChildMergeProduct (MergeChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/merge"
+      body: "*"
+    };
+  };
+  rpc ChildMergeAll (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/merge-all/{id}"
+      body: "*"
+    };
+  };
+  rpc ChildSplit (SaveChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/split"
+      body: "*"
+    };
+  };
+  rpc Deposite (DepositRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/deposite"
+      body: "*"
+    };
+  };
+  rpc DeleteDeposite (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/deposite/{id}"
+      body: "*"
+    };
+  };
+  rpc ExportProduct (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/export/{id}"
+      body: "*"
+    };
+  };
+  rpc ProductMe (ProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/me"
+    };
+  };
+  rpc ProductNew (ProductSaveRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/new"
+      body: "*"
+    };
+  };
+  rpc RentStatus (StatusRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/rent-status"
+      body: "*"
+    };
+  };
+  rpc RentVisibility (VisibilityRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/rent-visibility"
+      body: "*"
+    };
+  };
+  rpc SaleStatus (StatusRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/sale-status"
+      body: "*"
+    };
+  };
+  rpc SaleVisibility (VisibilityRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/sale-visibility"
+      body: "*"
+    };
+  };
+  rpc Suggest (SuggestRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/suggest"
+      body: "*"
+    };
+  };
+  rpc GetDetail (IdRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/detail"
+    };
+  };
+  rpc GetHistories (IdRequest) returns (HistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/histories"
+    };
+  };
+  rpc GetMembers (IdRequest) returns (MemberResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/members"
+    };
+  };
+  rpc GetPosts (IdRequest) returns (PostResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/posts"
+    };
+  };
+  rpc UpdateProduct (ProductSaveRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/edit/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteProduct (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/product/{id}"
+    };
+  };
+  rpc AreaInfo (IdRequest) returns (AreaInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/area-info/{id}"
+    };
+  };
 }
 
 message Empty {}
@@ -39,6 +166,327 @@ message ProductInternalResponse {
 
 message ProductResponse {
   uint64 id = 1;
+	uint64 parentId = 2;
+	uint64 depositeId = 3;
+	Deposite deposite = 4;
+	uint64 assetId = 5;
+	uint64 propertyTypeId = 6;
+	PropertyType propertyType = 7;
+	uint64 docTypeId = 8;
+	DocType docType = 9;
+	repeated AmenityItem amenities = 10;
+	uint32 visibility = 11;
+	string name = 12;
+	string code = 13;
+	uint64 categoryId = 14;
+	double area = 15;
+	string positionUrl = 16;
+	string description = 17;
+	uint64 organizationId = 18;
+	int32 orgStatus = 19;
+	uint64 lastPriceId = 20;
+	ProductPrice price = 21;
+	uint64 apartmentId = 22;
+	Apartment apartment = 23;
+	ApartmentAttribute apartmentAttribute = 24;
+	ProjectBuild build = 25;
+	Project project = 26;
+	Developer developer = 27;
+	int32 sourceType = 28;
+	uint64 customerId = 29;
+	ProductPrivate privateData = 30;
+	string note = 31;
+	int32 transactionType = 32;
+	uint32 saleStatus = 33;
+	uint32 saleVisibility = 34;
+	uint32 rentStatus = 35;
+	uint32 rentVisibility = 36;
+	uint64 ownerUserId = 37;
+	uint32 ownerType = 38;
+	uint64 provinceId = 39;
+	Region province = 40;
+	uint64 districtId = 41;
+	Region district = 42;
+	uint64 wardId = 43;
+	Region ward = 44;
+	string address = 45;
+	string googleMapLink = 46;
+	repeated AttributeProduct attributes = 47;
+	repeated pb_shared.MediaItem mediaList = 48;
+	HouseInfo houseInfo = 49;
+	bool archived = 50;
+  optional double priceSuggest = 51;
+}
+
+message StatusRequest {
+  uint64 id = 1;
+  int32 status = 2;
+}
+
+message VisibilityRequest {
+  uint64 id = 1;
+  int32 visibility = 2;
+}
+
+message Response {
+  uint64 id = 1;
+  string message = 2;
+}
+
+message DepositRequest {
+  uint64 id = 1;
+  uint64 amount = 2;
+}
+
+message DeleteDepositeRequest {
+  uint64 id = 1;
+}
+
+message IdRequest {
+  uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string sort = 4;
+  string text = 5;
+}
+
+// message Product {
+//   uint64 id = 1;
+//   string name = 2;
+//   string code = 3;
+// }
+
+
+message SaveChildRequest {
+  uint64 parentId = 1;
   string name = 2;
   string code = 3;
+  double area = 4;
+  string description = 5;
+  string note = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  repeated uint64 amenityIds = 9;
+  optional uint64 projectId = 10;
+  optional uint64 provinceId = 11;
+  optional uint64 districtId = 12;
+  optional uint64 wardId = 13;
+  int32 transactionType = 14;
+  ProductPrice priceData = 15;
+  repeated pb_shared.MediaItem mediaItems = 16;
+  HouseInfo houseInfo = 17;
+  ProductPrivate productPrivate = 18;
+  string googleMapLink = 19;
+  uint32 sourceType = 20;
+  uint32 saleStatus = 21;
+  uint32 rentStatus = 22;
+  PostSaveWithProduct post = 23;
+  AssetCreateWithProduct asset = 24;
+  int32 saleVisibility = 25;
+  int32 rentVisibility = 26;
+}
+
+
+message HouseInfo {
+  uint64 id = 1;
+	int32 numBedroom = 2;
+	int32 numBathroom = 3;
+	int32 numFloor = 4;
+	int32 numFront = 5;
+	int32 numCarPark = 6;
+	string furniture = 7;
+	string orientation = 8;
+  int32 numToilet = 9;
+}
+
+message ProductPrivate {
+	uint64 id = 1;
+	uint64 productId = 2;
+	double importPrice = 3;
+	double operatingCost = 4;
+	string internalNote = 5;
+	double targetProfit = 6;
+	string privateDocs = 7;
+}
+
+message PostSaveWithProduct {
+  uint64 productId = 1;
+  string title = 2;
+  string content = 3;
+  double postPrice = 4;
+  int32 transactionType = 5;
+  int32 visibility = 6;
+  int32 packageVisible = 7;
+  int32 expiredAt = 8;
+  int32 numDate = 9;
+  bool hidden = 10;
+  repeated pb_shared.MediaItem metadatas = 11;
+}
+
+message AssetCreateWithProduct {
+  double purchasePrice = 1;
+  int32 purchaseDate = 2;
+  int32 legalStatus = 3;
+  int32 rentStatus = 4;
+  string description = 5;
+  repeated LegalItem legalItems = 6;
+}
+
+message LegalItem {
+	uint64 id = 1;
+	uint64 assetId = 2;
+	string documentName = 3;
+	string documentUrl = 4;
+	string issuedDate = 5;
+	string expiryDate = 6;
+	string description = 7;
+}
+
+message ProductPrice {
+  uint64 id = 1;
+	uint64 productId = 2;
+	string currency = 3;
+	optional double priceOwner = 4;
+	optional double salePrice = 5;
+	optional uint64 saleCommission = 6;
+	optional double deposite = 7;
+	optional double rentPrice = 8;
+	optional double rentCommission = 9;
+	optional uint32 rentPaymentCycle = 10;
+}
+
+message HistoryResponse {
+  repeated History data = 1;
+  uint32 totalElements = 2;
+}
+
+message History {
+  uint64 id = 1;
+	uint64 action = 2;
+	uint64 parentId = 3;
+	ProductInfo parent = 4;
+	uint64 productId = 5;
+	ProductInfo product = 6;
+	repeated uint64 childIds = 7;
+	repeated ProductInfo childs = 8;
+	repeated double areas = 9;
+	uint64 createdUserId = 10;
+  pb_user.ProfileItem createdUser = 11;
+}
+
+message ProductInfo {
+	uint64 id = 1;
+	string name = 2;
+	string code = 3;
+	uint64 categoryId = 4;
+	double area = 5;
+	uint64 lastPriceId = 6;
+}
+
+message ProductSearch {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string text = 4;
+  uint64 ownerId = 5;
+  uint64 ownerType = 6;
+  optional uint64 parentId = 7;
+  uint64 propertyTypeId = 8;
+  uint64 docTypeId = 9;
+  uint64 projectId = 10;
+  uint64 provinceId = 11;
+  uint64 districtId = 12;
+  uint64 wardId = 13;
+  int32 transactionType = 14;
+  int32 saleStatus = 15;
+  int32 rentStatus = 16;
+  int32 saleVisibility = 17;
+  int32 rentVisibility = 18;
+  int32 sourceType = 19;
+  int32 transactionPrice = 20;
+  int32 salePrice = 21;
+  int32 rentPrice = 22;
+  int32 saleCommission = 23;
+  int32 rentCommission = 24;
+  int32 rentPaymentCycle = 25;
+  optional bool archived = 26;
+}
+
+
+message SearchResponse {
+  repeated ProductResponse data = 1;
+  uint32 totalElements = 2;
+}
+
+message MemberResponse {
+  repeated ProductAccess data = 1;
+}
+
+message ProductAccess {
+  uint64 id = 1;
+	uint64 productId = 2;
+	string fields = 3;
+	uint32 targetType = 4;
+	uint64 targetId = 5;
+	float commission = 6;
+	string targetName = 7;
+	string avatar = 8;
+}
+
+message PostResponse {
+  repeated PostItem data = 1;
+}
+
+
+message AreaInfoResponse {
+  double totalArea = 1;
+	double avaiableArea = 2;
+	double splitArea = 3;
+}
+
+message DevideChildRequest {
+  uint64 parentId = 1;
+  repeated SaveChildRequest childs = 2;
+}
+
+message MergeChildRequest {
+  uint64 parentId = 1;
+  repeated uint64 childIds = 2;
+}
+
+
+message ProductSaveRequest {
+	optional uint64 parentId = 1;
+	string name = 2;
+	string code = 3;
+	double area = 4;
+	string description = 5;
+	string note = 6;
+	optional uint64 propertyTypeId = 7;
+	optional uint64 docTypeId = 8;
+	repeated uint64 amenityIds = 9;
+	optional uint64 projectId = 10;
+	optional uint64 provinceId = 11;
+	optional uint64 districtId = 12;
+	optional uint64 wardId = 13;
+	int32 transactionType = 14;
+	ProductPrice priceData = 15;
+	repeated pb_shared.MediaItem mediaItems = 16;
+	HouseInfo houseInfo = 17;
+	ProductPrivate productPrivate = 18;
+	string googleMapLink = 19;
+	uint32 sourceType = 20;
+	uint32 saleStatus = 21;
+	uint32 rentStatus = 22;
+	PostSaveWithProduct post = 23;
+	AssetCreateWithProduct asset = 24;
+	uint32 saleVisibility = 25;
+	uint32 rentVisibility = 26;
+	uint32 ownerType = 27;
+  uint64 id = 28;
+}
+
+
+message SuggestRequest {
+  string content = 1;
 }

@@ -140,7 +140,7 @@ func (s *GatewayNotiService) Remove(ctx context.Context, req *pb_noti.IdRequest)
 // @Router /list [get]
 func (s *GatewayNotiService) List(ctx context.Context, req *pb_noti.ListRequest) (*pb_noti.ListResponse, error) {
 	query := dto.SearchNotiRequest{
-		Page: _dto.Page{
+		Pagable: _dto.Pagable{
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},

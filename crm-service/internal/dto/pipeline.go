@@ -6,7 +6,7 @@ import (
 )
 
 type PipelineSearchDTO struct {
-	_dto.Page
+	_dto.Pagable
 	PipelineName string        `form:"pipelineName"`
 	Steps        []enums.EStep `form:"steps"`
 	Colors       []string      `form:"color"`

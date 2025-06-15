@@ -58,15 +58,16 @@ func (route *UserProductRouter) RegisterRoutes(r *gin.RouterGroup, path string) 
 	// api.DELETE("/:id", route.Delete)
 }
 
-// @Summary Tạo sản phẩm mới
-// @Description API để tạo một sản phẩm mới
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
-// @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
-// @Router /v1/bdspro/v2/user/product/new [post]
+// .
+// // @Summary Tạo sản phẩm mới
+// // @Description API để tạo một sản phẩm mới
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
+// // @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
+// // @Router /v1/bdspro/v2/user/product/new [post]
 func (route *UserProductRouter) CreateNewProduct(c *gin.Context) {
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
 	if err != nil {
@@ -77,15 +78,16 @@ func (route *UserProductRouter) CreateNewProduct(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Tạo sản phẩm mới
-// @Description API để tạo một sản phẩm mới
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
-// @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
-// @Router /v1/bdspro/v2/user/product/{id} [post]
+// .
+// // @Summary Tạo sản phẩm mới
+// // @Description API để tạo một sản phẩm mới
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
+// // @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
+// // @Router /v1/bdspro/v2/user/product/{id} [post]
 func (route *UserProductRouter) Detail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -100,14 +102,15 @@ func (route *UserProductRouter) Detail(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Lấy danh sách bài viết liên quan
-// @Description Returns a list of posts related to a product
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "Product ID"
-// @Router /v1/bdspro/v2/user/product/{id}/posts [get]
+// .
+// // @Summary Lấy danh sách bài viết liên quan
+// // @Description Returns a list of posts related to a product
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "Product ID"
+// // @Router /v1/bdspro/v2/user/product/{id}/posts [get]
 func (route *UserProductRouter) Posts(c *gin.Context) {
 	var dto dto.PostLinkSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -128,14 +131,15 @@ func (route *UserProductRouter) Posts(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Lấy danh sách thành viên của sản phẩm
-// @Description Returns a list of members of a product
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "Product ID"
-// @Router /v1/bdspro/v2/user/product/{id}/members [get]
+// .
+// // @Summary Lấy danh sách thành viên của sản phẩm
+// // @Description Returns a list of members of a product
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "Product ID"
+// // @Router /v1/bdspro/v2/user/product/{id}/members [get]
 func (route *UserProductRouter) Members(c *gin.Context) {
 	var dto dto.ProductAccessSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
@@ -156,14 +160,15 @@ func (route *UserProductRouter) Members(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Lấy danh sách lịch sử của sản phẩm
-// @Description Returns a list of history of a product
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "Product ID"
-// @Router /v1/bdspro/v2/user/product/{id}/history [get]
+// .
+// // @Summary Lấy danh sách lịch sử của sản phẩm
+// // @Description Returns a list of history of a product
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "Product ID"
+// // @Router /v1/bdspro/v2/user/product/{id}/history [get]
 func (route *UserProductRouter) History(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -191,24 +196,25 @@ func (route *UserProductRouter) History(c *gin.Context) {
 	}, err)
 }
 
-// SearchProductWithOwner godoc
-// @Summary Lấy danh sách sản phẩm của user hiện tại
-// @Description Returns a list of products based on search filters
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param name query string false "Product name"
-// @Param code query string false "Product code"
-// @Param area query number false "Product area"
-// @Param price query integer false "Product price"
-// @Param parentId query integer false "null=>all; 0=>parent; >0=>childrent"
-// @Param description query string false "Product description"
-// @Param note query string false "Additional notes"
-// @Param limit query int false "Limit results" default(10)
-// @Param skip query int false "Skip results" default(0)
-// @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/v2/user/product/me [get]
+// .
+// // SearchProductWithOwner godoc
+// // @Summary Lấy danh sách sản phẩm của user hiện tại
+// // @Description Returns a list of products based on search filters
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param name query string false "Product name"
+// // @Param code query string false "Product code"
+// // @Param area query number false "Product area"
+// // @Param price query integer false "Product price"
+// // @Param parentId query integer false "null=>all; 0=>parent; >0=>childrent"
+// // @Param description query string false "Product description"
+// // @Param note query string false "Additional notes"
+// // @Param limit query int false "Limit results" default(10)
+// // @Param skip query int false "Skip results" default(0)
+// // @Param sort query string false "Sort order" default("price_asc")
+// // @Router /v1/bdspro/v2/user/product/me [get]
 func (route *UserProductRouter) SearchProductWithOwner(c *gin.Context) {
 	body := dto.ProductSearchRequest{}
 	err := _utils.ParseQuery2(c, &body)
@@ -224,21 +230,22 @@ func (route *UserProductRouter) SearchProductWithOwner(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Lấy danh sách sản phẩm trang chủ
-// @Description Returns a list of products based on search filters
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Param name query string false "Product name"
-// @Param code query string false "Product code"
-// @Param area query number false "Product area"
-// @Param price query integer false "Product price"
-// @Param description query string false "Product description"
-// @Param note query string false "Additional notes"
-// @Param size query int false "Size results" default(10)
-// @Param page query int false "Page" default(0)
-// @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/v2/user/product/market [get]
+// .
+// // @Summary Lấy danh sách sản phẩm trang chủ
+// // @Description Returns a list of products based on search filters
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Param name query string false "Product name"
+// // @Param code query string false "Product code"
+// // @Param area query number false "Product area"
+// // @Param price query integer false "Product price"
+// // @Param description query string false "Product description"
+// // @Param note query string false "Additional notes"
+// // @Param size query int false "Size results" default(10)
+// // @Param page query int false "Page" default(0)
+// // @Param sort query string false "Sort order" default("price_asc")
+// // @Router /v1/bdspro/v2/user/product/market [get]
 func (route *UserProductRouter) SearchProductMarket(c *gin.Context) {
 	// _routes.RouteResult(c, nil, nil)
 	body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
@@ -250,17 +257,18 @@ func (route *UserProductRouter) SearchProductMarket(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Tìm kiếm tổng hợp
-// @Description Returns a list of products based on search filters
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param text query string true "Text"
-// @Param size query int false "Sizet results" default(10)
-// @Param page query int false "Page" default(0)
-// @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/v2/user/product/total [get]
+// .
+// // @Summary Tìm kiếm tổng hợp
+// // @Description Returns a list of products based on search filters
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param text query string true "Text"
+// // @Param size query int false "Sizet results" default(10)
+// // @Param page query int false "Page" default(0)
+// // @Param sort query string false "Sort order" default("price_asc")
+// // @Router /v1/bdspro/v2/user/product/total [get]
 func (route *UserProductRouter) SearchSmartProduct(c *gin.Context) {
 	query := dto.TextSearchRequest{}
 	if err := _utils.ParseQuery2(c, &query); err != nil {
@@ -276,37 +284,39 @@ func (route *UserProductRouter) SearchSmartProduct(c *gin.Context) {
 	}, err)
 }
 
-// @Summary Gợi ý các trường thông tin
-// @Description Returns a list of products based on search filters
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param name query string false "Product name"
-// @Param code query string false "Product code"
-// @Param area query number false "Product area"
-// @Param price query integer false "Product price"
-// @Param description query string false "Product description"
-// @Param note query string false "Additional notes"
-// @Param limit query int false "Limit results" default(10)
-// @Param skip query int false "Skip results" default(0)
-// @Param sort query string false "Sort order" default("price_asc")
-// @Router /v1/bdspro/v2/user/product/suggest [get]
+// .
+// // @Summary Gợi ý các trường thông tin
+// // @Description Returns a list of products based on search filters
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param name query string false "Product name"
+// // @Param code query string false "Product code"
+// // @Param area query number false "Product area"
+// // @Param price query integer false "Product price"
+// // @Param description query string false "Product description"
+// // @Param note query string false "Additional notes"
+// // @Param limit query int false "Limit results" default(10)
+// // @Param skip query int false "Skip results" default(0)
+// // @Param sort query string false "Sort order" default("price_asc")
+// // @Router /v1/bdspro/v2/user/product/suggest [get]
 func (route *UserProductRouter) SuggestProduct(c *gin.Context) {
 	_body, _ := _utils.ParseBody[dto.ProductSaveDetect](c)
-	result, err := route.UC.SuggestFields(c, _body)
+	result, err := route.UC.SuggestFields(c, _body.Content)
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật sản phẩm
-// @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Param productId path int true "Product ID"
-// @Security BearerAuth
-// @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/{productId} [put]
+// .
+// // @Summary Cập nhật sản phẩm
+// // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Param productId path int true "Product ID"
+// // @Security BearerAuth
+// // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/{productId} [put]
 func (route *UserProductRouter) Edit(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
@@ -318,15 +328,16 @@ func (route *UserProductRouter) Edit(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật sản phẩm
-// @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Param productId path int true "Product ID"
-// @Security BearerAuth
-// @Param body body dto.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/archived [put]
+// .
+// // @Summary Cập nhật sản phẩm
+// // @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Param productId path int true "Product ID"
+// // @Security BearerAuth
+// // @Param body body dto.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/archived [put]
 func (route *UserProductRouter) Archived(c *gin.Context) {
 	body := dto.ArchivedRequest{}
 
@@ -338,14 +349,15 @@ func (route *UserProductRouter) Archived(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Xóa sản phẩm
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Param productId path int true "Product ID"
-// @Security BearerAuth
-// @Router /v1/bdspro/v2/user/product/{productId} [delete]
+// .
+// // @Summary Xóa sản phẩm
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Param productId path int true "Product ID"
+// // @Security BearerAuth
+// // @Router /v1/bdspro/v2/user/product/{productId} [delete]
 func (route *UserProductRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -356,14 +368,15 @@ func (route *UserProductRouter) Delete(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Xóa sản phẩm
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/rent-status [put]
+// .
+// // @Summary Xóa sản phẩm
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/rent-status [put]
 func (route *UserProductRouter) RentStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
@@ -375,14 +388,15 @@ func (route *UserProductRouter) RentStatusUpdate(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Xóa sản phẩm
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/sale-status [put]
+// .
+// // @Summary Xóa sản phẩm
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/sale-status [put]
 func (route *UserProductRouter) SaleStatusUpdate(c *gin.Context) {
 	status := dto.StatusUpdate{}
 
@@ -394,14 +408,15 @@ func (route *UserProductRouter) SaleStatusUpdate(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Trạng thái sản phẩm
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/rent-visibility [put]
+// .
+// // @Summary Trạng thái sản phẩm
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/rent-visibility [put]
 func (route *UserProductRouter) RentVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
@@ -413,14 +428,15 @@ func (route *UserProductRouter) RentVisibilityUpdate(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Trạng thái sản phẩm
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/sale-visibility [put]
+// .
+// // @Summary Trạng thái sản phẩm
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/sale-visibility [put]
 func (route *UserProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 	status := dto.VisibilityUpdate{}
 
@@ -432,14 +448,15 @@ func (route *UserProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Cọc
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/user/product/deposite [post]
+// .
+// // @Summary Cọc
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/user/product/deposite [post]
 func (route *UserProductRouter) Deposite(c *gin.Context) {
 	dto := dto.DepositeRequest{}
 
@@ -451,14 +468,15 @@ func (route *UserProductRouter) Deposite(c *gin.Context) {
 	_routes.RouteResult(c, deposite, err)
 }
 
-// @Summary Hủy cọc
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param depositeId path int true "Deposite ID"
-// @Router /v1/bdspro/v2/user/product/deposite/{depositeId} [delete]
+// .
+// // @Summary Hủy cọc
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param depositeId path int true "Deposite ID"
+// // @Router /v1/bdspro/v2/user/product/deposite/{depositeId} [delete]
 func (route *UserProductRouter) CancelDeposite(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("depositeId"), 10, 64)
 	if err != nil {
@@ -516,17 +534,18 @@ func dereference(value interface{}) interface{} {
 	return value
 }
 
-// @Summary Xuất danh sách sản phẩm ra Excel
-// @Description API này dùng để xuất dữ liệu sản phẩm ra file Excel
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce application/octet-stream
-// @Security BearerAuth
-// @Param filter query string false "Bộ lọc sản phẩm (nếu có)"
-// @Success 200 {file} file "Excel file"
-// @Failure 400 {object} _routes.ResponseDTO
-// @Failure 500 {object} _routes.ResponseDTO
-// @Router /v1/bdspro/v2/user/product/export [post]
+// .
+// // @Summary Xuất danh sách sản phẩm ra Excel
+// // @Description API này dùng để xuất dữ liệu sản phẩm ra file Excel
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce application/octet-stream
+// // @Security BearerAuth
+// // @Param filter query string false "Bộ lọc sản phẩm (nếu có)"
+// // @Success 200 {file} file "Excel file"
+// // @Failure 400 {object} _routes.ResponseDTO
+// // @Failure 500 {object} _routes.ResponseDTO
+// // @Router /v1/bdspro/v2/user/product/export [post]
 func (route *UserProductRouter) ExportExcel(c *gin.Context) {
 	var query dto.ProductSearchRequest
 	if err := _utils.ParseQuery2(c, &query); err != nil {
@@ -604,7 +623,7 @@ func (route *UserProductRouter) ExportExcel(c *gin.Context) {
 			product.RentStatus,
 			product.RentVisibility,
 			product.OwnerUserID,
-			product.OwnerOrgID,
+			nil,
 			product.PositionUrl,
 			product.Address,
 			product.GoogleMapLink,

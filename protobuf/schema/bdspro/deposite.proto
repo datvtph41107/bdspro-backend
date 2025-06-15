@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package pb_bdspro;
+
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+message Deposite {
+  uint64 id = 1;
+  uint64 productId = 2;
+  double amount = 3;
+}

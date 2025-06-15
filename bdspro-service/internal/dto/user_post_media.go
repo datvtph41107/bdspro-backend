@@ -11,6 +11,6 @@ type PostMediaItem struct {
 }
 
 type PostMediaGetDTO struct {
-	_dto.Page
+	_dto.Pagable
 	PostID uint64 `form:"postId"`
 }

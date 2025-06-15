@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,53 +20,66 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	BdsproService_Ping_FullMethodName                   = "/pb_bdspro.BdsproService/Ping"
-	BdsproService_ListProductInternal_FullMethodName    = "/pb_bdspro.BdsproService/ListProductInternal"
-	BdsproService_GetAssets_FullMethodName              = "/pb_bdspro.BdsproService/GetAssets"
-	BdsproService_FilterAssets_FullMethodName           = "/pb_bdspro.BdsproService/FilterAssets"
-	BdsproService_BulkAction_FullMethodName             = "/pb_bdspro.BdsproService/BulkAction"
-	BdsproService_CreateAsset_FullMethodName            = "/pb_bdspro.BdsproService/CreateAsset"
-	BdsproService_CreateAssetFromProduct_FullMethodName = "/pb_bdspro.BdsproService/CreateAssetFromProduct"
-	BdsproService_ConvertProductToAsset_FullMethodName  = "/pb_bdspro.BdsproService/ConvertProductToAsset"
-	BdsproService_UpdateAsset_FullMethodName            = "/pb_bdspro.BdsproService/UpdateAsset"
-	BdsproService_DeleteAsset_FullMethodName            = "/pb_bdspro.BdsproService/DeleteAsset"
-	BdsproService_Archived_FullMethodName               = "/pb_bdspro.BdsproService/Archived"
-	BdsproService_GetAssetDetails_FullMethodName        = "/pb_bdspro.BdsproService/GetAssetDetails"
-	BdsproService_ShareAsset_FullMethodName             = "/pb_bdspro.BdsproService/ShareAsset"
-	BdsproService_SplitAsset_FullMethodName             = "/pb_bdspro.BdsproService/SplitAsset"
-	BdsproService_MergeAsset_FullMethodName             = "/pb_bdspro.BdsproService/MergeAsset"
-	BdsproService_GetAssetHistory_FullMethodName        = "/pb_bdspro.BdsproService/GetAssetHistory"
+	ProductService_ArchiveProduct_FullMethodName     = "/pb_bdspro.ProductService/ArchiveProduct"
+	ProductService_ChildDevideProduct_FullMethodName = "/pb_bdspro.ProductService/ChildDevideProduct"
+	ProductService_ChildHistories_FullMethodName     = "/pb_bdspro.ProductService/ChildHistories"
+	ProductService_ChildMergeProduct_FullMethodName  = "/pb_bdspro.ProductService/ChildMergeProduct"
+	ProductService_ChildMergeAll_FullMethodName      = "/pb_bdspro.ProductService/ChildMergeAll"
+	ProductService_ChildSplit_FullMethodName         = "/pb_bdspro.ProductService/ChildSplit"
+	ProductService_Deposite_FullMethodName           = "/pb_bdspro.ProductService/Deposite"
+	ProductService_DeleteDeposite_FullMethodName     = "/pb_bdspro.ProductService/DeleteDeposite"
+	ProductService_ExportProduct_FullMethodName      = "/pb_bdspro.ProductService/ExportProduct"
+	ProductService_ProductMe_FullMethodName          = "/pb_bdspro.ProductService/ProductMe"
+	ProductService_ProductNew_FullMethodName         = "/pb_bdspro.ProductService/ProductNew"
+	ProductService_RentStatus_FullMethodName         = "/pb_bdspro.ProductService/RentStatus"
+	ProductService_RentVisibility_FullMethodName     = "/pb_bdspro.ProductService/RentVisibility"
+	ProductService_SaleStatus_FullMethodName         = "/pb_bdspro.ProductService/SaleStatus"
+	ProductService_SaleVisibility_FullMethodName     = "/pb_bdspro.ProductService/SaleVisibility"
+	ProductService_Suggest_FullMethodName            = "/pb_bdspro.ProductService/Suggest"
+	ProductService_GetDetail_FullMethodName          = "/pb_bdspro.ProductService/GetDetail"
+	ProductService_GetHistories_FullMethodName       = "/pb_bdspro.ProductService/GetHistories"
+	ProductService_GetMembers_FullMethodName         = "/pb_bdspro.ProductService/GetMembers"
+	ProductService_GetPosts_FullMethodName           = "/pb_bdspro.ProductService/GetPosts"
+	ProductService_UpdateProduct_FullMethodName      = "/pb_bdspro.ProductService/UpdateProduct"
+	ProductService_DeleteProduct_FullMethodName      = "/pb_bdspro.ProductService/DeleteProduct"
+	ProductService_AreaInfo_FullMethodName           = "/pb_bdspro.ProductService/AreaInfo"
 )
 
-// BdsproServiceClient is the client API for BdsproService service.
+// ProductServiceClient is the client API for ProductService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BdsproServiceClient interface {
-	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error)
-	ListProductInternal(ctx context.Context, in *ProductInternalRequest, opts ...grpc.CallOption) (*ProductInternalResponse, error)
-	// assets
-	GetAssets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AssetList, error)
-	FilterAssets(ctx context.Context, in *FilterAssetsRequest, opts ...grpc.CallOption) (*AssetList, error)
-	BulkAction(ctx context.Context, in *BulkActionRequest, opts ...grpc.CallOption) (*Empty, error)
-	CreateAsset(ctx context.Context, in *CreateAssetRequest, opts ...grpc.CallOption) (*Asset, error)
-	CreateAssetFromProduct(ctx context.Context, in *CreateAssetRequestFromProduct, opts ...grpc.CallOption) (*Asset, error)
-	ConvertProductToAsset(ctx context.Context, in *CreateAssetRequestConvertProduct, opts ...grpc.CallOption) (*Asset, error)
-	UpdateAsset(ctx context.Context, in *UpdateAssetRequest, opts ...grpc.CallOption) (*Asset, error)
-	DeleteAsset(ctx context.Context, in *DeleteAssetRequest, opts ...grpc.CallOption) (*Empty, error)
-	Archived(ctx context.Context, in *ArchivedRequest, opts ...grpc.CallOption) (*Empty, error)
-	GetAssetDetails(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetDetails, error)
-	ShareAsset(ctx context.Context, in *ShareAssetRequest, opts ...grpc.CallOption) (*Empty, error)
-	SplitAsset(ctx context.Context, in *SplitAssetRequest, opts ...grpc.CallOption) (*Empty, error)
-	MergeAsset(ctx context.Context, in *MergeAssetRequest, opts ...grpc.CallOption) (*Asset, error)
-	GetAssetHistory(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*AssetHistory, error)
+type ProductServiceClient interface {
+	ArchiveProduct(ctx context.Context, in *shared.ArchivedRequest, opts ...grpc.CallOption) (*Response, error)
+	ChildDevideProduct(ctx context.Context, in *DevideChildRequest, opts ...grpc.CallOption) (*Response, error)
+	ChildHistories(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
+	ChildMergeProduct(ctx context.Context, in *MergeChildRequest, opts ...grpc.CallOption) (*Response, error)
+	ChildMergeAll(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
+	ChildSplit(ctx context.Context, in *SaveChildRequest, opts ...grpc.CallOption) (*Response, error)
+	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*Response, error)
+	DeleteDeposite(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
+	ExportProduct(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
+	ProductMe(ctx context.Context, in *ProductSearch, opts ...grpc.CallOption) (*SearchResponse, error)
+	ProductNew(ctx context.Context, in *ProductSaveRequest, opts ...grpc.CallOption) (*Response, error)
+	RentStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*Response, error)
+	RentVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*Response, error)
+	SaleStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*Response, error)
+	SaleVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*Response, error)
+	Suggest(ctx context.Context, in *SuggestRequest, opts ...grpc.CallOption) (*ProductResponse, error)
+	GetDetail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*ProductResponse, error)
+	GetHistories(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
+	GetMembers(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetPosts(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PostResponse, error)
+	UpdateProduct(ctx context.Context, in *ProductSaveRequest, opts ...grpc.CallOption) (*Response, error)
+	DeleteProduct(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
+	AreaInfo(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AreaInfoResponse, error)
 }
 
-type bdsproServiceClient struct {
+type productServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewBdsproServiceClient(cc grpc.ClientConnInterface) BdsproServiceClient {
-	return &bdsproServiceClient{cc}
+func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
+	return &productServiceClient{cc}
 }
 
 func (c *bdsproServiceClient) Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error) {
@@ -240,425 +254,579 @@ type BdsproServiceServer interface {
 type UnimplementedBdsproServiceServer struct {
 }
 
-func (UnimplementedBdsproServiceServer) Ping(context.Context, *Empty) (*PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedProductServiceServer) ArchiveProduct(context.Context, *shared.ArchivedRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArchiveProduct not implemented")
 }
-func (UnimplementedBdsproServiceServer) ListProductInternal(context.Context, *ProductInternalRequest) (*ProductInternalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListProductInternal not implemented")
+func (UnimplementedProductServiceServer) ChildDevideProduct(context.Context, *DevideChildRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChildDevideProduct not implemented")
 }
-func (UnimplementedBdsproServiceServer) GetAssets(context.Context, *Empty) (*AssetList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAssets not implemented")
+func (UnimplementedProductServiceServer) ChildHistories(context.Context, *IdRequest) (*HistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChildHistories not implemented")
 }
-func (UnimplementedBdsproServiceServer) FilterAssets(context.Context, *FilterAssetsRequest) (*AssetList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FilterAssets not implemented")
+func (UnimplementedProductServiceServer) ChildMergeProduct(context.Context, *MergeChildRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChildMergeProduct not implemented")
 }
-func (UnimplementedBdsproServiceServer) BulkAction(context.Context, *BulkActionRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BulkAction not implemented")
+func (UnimplementedProductServiceServer) ChildMergeAll(context.Context, *IdRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChildMergeAll not implemented")
 }
-func (UnimplementedBdsproServiceServer) CreateAsset(context.Context, *CreateAssetRequest) (*Asset, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAsset not implemented")
+func (UnimplementedProductServiceServer) ChildSplit(context.Context, *SaveChildRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChildSplit not implemented")
 }
-func (UnimplementedBdsproServiceServer) CreateAssetFromProduct(context.Context, *CreateAssetRequestFromProduct) (*Asset, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAssetFromProduct not implemented")
+func (UnimplementedProductServiceServer) Deposite(context.Context, *DepositRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Deposite not implemented")
 }
-func (UnimplementedBdsproServiceServer) ConvertProductToAsset(context.Context, *CreateAssetRequestConvertProduct) (*Asset, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ConvertProductToAsset not implemented")
+func (UnimplementedProductServiceServer) DeleteDeposite(context.Context, *IdRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDeposite not implemented")
 }
-func (UnimplementedBdsproServiceServer) UpdateAsset(context.Context, *UpdateAssetRequest) (*Asset, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAsset not implemented")
+func (UnimplementedProductServiceServer) ExportProduct(context.Context, *IdRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExportProduct not implemented")
 }
-func (UnimplementedBdsproServiceServer) DeleteAsset(context.Context, *DeleteAssetRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteAsset not implemented")
+func (UnimplementedProductServiceServer) ProductMe(context.Context, *ProductSearch) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProductMe not implemented")
 }
-func (UnimplementedBdsproServiceServer) Archived(context.Context, *ArchivedRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Archived not implemented")
+func (UnimplementedProductServiceServer) ProductNew(context.Context, *ProductSaveRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProductNew not implemented")
 }
-func (UnimplementedBdsproServiceServer) GetAssetDetails(context.Context, *GetAssetRequest) (*AssetDetails, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAssetDetails not implemented")
+func (UnimplementedProductServiceServer) RentStatus(context.Context, *StatusRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RentStatus not implemented")
 }
-func (UnimplementedBdsproServiceServer) ShareAsset(context.Context, *ShareAssetRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShareAsset not implemented")
+func (UnimplementedProductServiceServer) RentVisibility(context.Context, *VisibilityRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RentVisibility not implemented")
 }
-func (UnimplementedBdsproServiceServer) SplitAsset(context.Context, *SplitAssetRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SplitAsset not implemented")
+func (UnimplementedProductServiceServer) SaleStatus(context.Context, *StatusRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaleStatus not implemented")
 }
-func (UnimplementedBdsproServiceServer) MergeAsset(context.Context, *MergeAssetRequest) (*Asset, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MergeAsset not implemented")
+func (UnimplementedProductServiceServer) SaleVisibility(context.Context, *VisibilityRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaleVisibility not implemented")
 }
-func (UnimplementedBdsproServiceServer) GetAssetHistory(context.Context, *GetAssetRequest) (*AssetHistory, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAssetHistory not implemented")
+func (UnimplementedProductServiceServer) Suggest(context.Context, *SuggestRequest) (*ProductResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Suggest not implemented")
 }
 func (UnimplementedBdsproServiceServer) mustEmbedUnimplementedBdsproServiceServer() {}
 
-// UnsafeBdsproServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BdsproServiceServer will
+// UnsafeProductServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProductServiceServer will
 // result in compilation errors.
-type UnsafeBdsproServiceServer interface {
-	mustEmbedUnimplementedBdsproServiceServer()
+type UnsafeProductServiceServer interface {
+	mustEmbedUnimplementedProductServiceServer()
 }
 
 func RegisterBdsproServiceServer(s grpc.ServiceRegistrar, srv BdsproServiceServer) {
 	s.RegisterService(&BdsproService_ServiceDesc, srv)
 }
 
-func _BdsproService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+func _ProductService_ArchiveProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(shared.ArchivedRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).Ping(ctx, in)
+		return srv.(ProductServiceServer).ArchiveProduct(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_Ping_FullMethodName,
+		FullMethod: ProductService_ArchiveProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).Ping(ctx, req.(*Empty))
+		return srv.(ProductServiceServer).ArchiveProduct(ctx, req.(*shared.ArchivedRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_ListProductInternal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProductInternalRequest)
+func _ProductService_ChildDevideProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DevideChildRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).ListProductInternal(ctx, in)
+		return srv.(ProductServiceServer).ChildDevideProduct(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_ListProductInternal_FullMethodName,
+		FullMethod: ProductService_ChildDevideProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).ListProductInternal(ctx, req.(*ProductInternalRequest))
+		return srv.(ProductServiceServer).ChildDevideProduct(ctx, req.(*DevideChildRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_GetAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+func _ProductService_ChildHistories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).GetAssets(ctx, in)
+		return srv.(ProductServiceServer).ChildHistories(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_GetAssets_FullMethodName,
+		FullMethod: ProductService_ChildHistories_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).GetAssets(ctx, req.(*Empty))
+		return srv.(ProductServiceServer).ChildHistories(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_FilterAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FilterAssetsRequest)
+func _ProductService_ChildMergeProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MergeChildRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).FilterAssets(ctx, in)
+		return srv.(ProductServiceServer).ChildMergeProduct(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_FilterAssets_FullMethodName,
+		FullMethod: ProductService_ChildMergeProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).FilterAssets(ctx, req.(*FilterAssetsRequest))
+		return srv.(ProductServiceServer).ChildMergeProduct(ctx, req.(*MergeChildRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_BulkAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BulkActionRequest)
+func _ProductService_ChildMergeAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).BulkAction(ctx, in)
+		return srv.(ProductServiceServer).ChildMergeAll(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_BulkAction_FullMethodName,
+		FullMethod: ProductService_ChildMergeAll_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).BulkAction(ctx, req.(*BulkActionRequest))
+		return srv.(ProductServiceServer).ChildMergeAll(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_CreateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAssetRequest)
+func _ProductService_ChildSplit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveChildRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).CreateAsset(ctx, in)
+		return srv.(ProductServiceServer).ChildSplit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_CreateAsset_FullMethodName,
+		FullMethod: ProductService_ChildSplit_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).CreateAsset(ctx, req.(*CreateAssetRequest))
+		return srv.(ProductServiceServer).ChildSplit(ctx, req.(*SaveChildRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_CreateAssetFromProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAssetRequestFromProduct)
+func _ProductService_Deposite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DepositRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).CreateAssetFromProduct(ctx, in)
+		return srv.(ProductServiceServer).Deposite(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_CreateAssetFromProduct_FullMethodName,
+		FullMethod: ProductService_Deposite_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).CreateAssetFromProduct(ctx, req.(*CreateAssetRequestFromProduct))
+		return srv.(ProductServiceServer).Deposite(ctx, req.(*DepositRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_ConvertProductToAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAssetRequestConvertProduct)
+func _ProductService_DeleteDeposite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).ConvertProductToAsset(ctx, in)
+		return srv.(ProductServiceServer).DeleteDeposite(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_ConvertProductToAsset_FullMethodName,
+		FullMethod: ProductService_DeleteDeposite_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).ConvertProductToAsset(ctx, req.(*CreateAssetRequestConvertProduct))
+		return srv.(ProductServiceServer).DeleteDeposite(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_UpdateAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAssetRequest)
+func _ProductService_ExportProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).UpdateAsset(ctx, in)
+		return srv.(ProductServiceServer).ExportProduct(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_UpdateAsset_FullMethodName,
+		FullMethod: ProductService_ExportProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).UpdateAsset(ctx, req.(*UpdateAssetRequest))
+		return srv.(ProductServiceServer).ExportProduct(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_DeleteAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteAssetRequest)
+func _ProductService_ProductMe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProductSearch)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).DeleteAsset(ctx, in)
+		return srv.(ProductServiceServer).ProductMe(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_DeleteAsset_FullMethodName,
+		FullMethod: ProductService_ProductMe_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).DeleteAsset(ctx, req.(*DeleteAssetRequest))
+		return srv.(ProductServiceServer).ProductMe(ctx, req.(*ProductSearch))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_Archived_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ArchivedRequest)
+func _ProductService_ProductNew_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProductSaveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).Archived(ctx, in)
+		return srv.(ProductServiceServer).ProductNew(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_Archived_FullMethodName,
+		FullMethod: ProductService_ProductNew_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).Archived(ctx, req.(*ArchivedRequest))
+		return srv.(ProductServiceServer).ProductNew(ctx, req.(*ProductSaveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_GetAssetDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAssetRequest)
+func _ProductService_RentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).GetAssetDetails(ctx, in)
+		return srv.(ProductServiceServer).RentStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_GetAssetDetails_FullMethodName,
+		FullMethod: ProductService_RentStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).GetAssetDetails(ctx, req.(*GetAssetRequest))
+		return srv.(ProductServiceServer).RentStatus(ctx, req.(*StatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_ShareAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShareAssetRequest)
+func _ProductService_RentVisibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VisibilityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).ShareAsset(ctx, in)
+		return srv.(ProductServiceServer).RentVisibility(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_ShareAsset_FullMethodName,
+		FullMethod: ProductService_RentVisibility_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).ShareAsset(ctx, req.(*ShareAssetRequest))
+		return srv.(ProductServiceServer).RentVisibility(ctx, req.(*VisibilityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_SplitAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SplitAssetRequest)
+func _ProductService_SaleStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).SplitAsset(ctx, in)
+		return srv.(ProductServiceServer).SaleStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_SplitAsset_FullMethodName,
+		FullMethod: ProductService_SaleStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).SplitAsset(ctx, req.(*SplitAssetRequest))
+		return srv.(ProductServiceServer).SaleStatus(ctx, req.(*StatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_MergeAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MergeAssetRequest)
+func _ProductService_SaleVisibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VisibilityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).MergeAsset(ctx, in)
+		return srv.(ProductServiceServer).SaleVisibility(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_MergeAsset_FullMethodName,
+		FullMethod: ProductService_SaleVisibility_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).MergeAsset(ctx, req.(*MergeAssetRequest))
+		return srv.(ProductServiceServer).SaleVisibility(ctx, req.(*VisibilityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BdsproService_GetAssetHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAssetRequest)
+func _ProductService_Suggest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SuggestRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BdsproServiceServer).GetAssetHistory(ctx, in)
+		return srv.(ProductServiceServer).Suggest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BdsproService_GetAssetHistory_FullMethodName,
+		FullMethod: ProductService_Suggest_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BdsproServiceServer).GetAssetHistory(ctx, req.(*GetAssetRequest))
+		return srv.(ProductServiceServer).Suggest(ctx, req.(*SuggestRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// BdsproService_ServiceDesc is the grpc.ServiceDesc for BdsproService service.
+func _ProductService_GetDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_GetDetail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetDetail(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_GetHistories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetHistories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_GetHistories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetHistories(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_GetMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_GetMembers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetMembers(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_GetPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetPosts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_GetPosts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetPosts(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_UpdateProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProductSaveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).UpdateProduct(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_UpdateProduct_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).UpdateProduct(ctx, req.(*ProductSaveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_DeleteProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).DeleteProduct(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_DeleteProduct_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).DeleteProduct(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_AreaInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).AreaInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_AreaInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).AreaInfo(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ProductService_ServiceDesc is the grpc.ServiceDesc for ProductService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var BdsproService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb_bdspro.BdsproService",
-	HandlerType: (*BdsproServiceServer)(nil),
+var ProductService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "pb_bdspro.ProductService",
+	HandlerType: (*ProductServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Ping",
-			Handler:    _BdsproService_Ping_Handler,
+			MethodName: "ArchiveProduct",
+			Handler:    _ProductService_ArchiveProduct_Handler,
 		},
 		{
-			MethodName: "ListProductInternal",
-			Handler:    _BdsproService_ListProductInternal_Handler,
+			MethodName: "ChildDevideProduct",
+			Handler:    _ProductService_ChildDevideProduct_Handler,
 		},
 		{
-			MethodName: "GetAssets",
-			Handler:    _BdsproService_GetAssets_Handler,
+			MethodName: "ChildHistories",
+			Handler:    _ProductService_ChildHistories_Handler,
 		},
 		{
-			MethodName: "FilterAssets",
-			Handler:    _BdsproService_FilterAssets_Handler,
+			MethodName: "ChildMergeProduct",
+			Handler:    _ProductService_ChildMergeProduct_Handler,
 		},
 		{
-			MethodName: "BulkAction",
-			Handler:    _BdsproService_BulkAction_Handler,
+			MethodName: "ChildMergeAll",
+			Handler:    _ProductService_ChildMergeAll_Handler,
 		},
 		{
-			MethodName: "CreateAsset",
-			Handler:    _BdsproService_CreateAsset_Handler,
+			MethodName: "ChildSplit",
+			Handler:    _ProductService_ChildSplit_Handler,
 		},
 		{
-			MethodName: "CreateAssetFromProduct",
-			Handler:    _BdsproService_CreateAssetFromProduct_Handler,
+			MethodName: "Deposite",
+			Handler:    _ProductService_Deposite_Handler,
 		},
 		{
-			MethodName: "ConvertProductToAsset",
-			Handler:    _BdsproService_ConvertProductToAsset_Handler,
+			MethodName: "DeleteDeposite",
+			Handler:    _ProductService_DeleteDeposite_Handler,
 		},
 		{
-			MethodName: "UpdateAsset",
-			Handler:    _BdsproService_UpdateAsset_Handler,
+			MethodName: "ExportProduct",
+			Handler:    _ProductService_ExportProduct_Handler,
 		},
 		{
-			MethodName: "DeleteAsset",
-			Handler:    _BdsproService_DeleteAsset_Handler,
+			MethodName: "ProductMe",
+			Handler:    _ProductService_ProductMe_Handler,
 		},
 		{
-			MethodName: "Archived",
-			Handler:    _BdsproService_Archived_Handler,
+			MethodName: "ProductNew",
+			Handler:    _ProductService_ProductNew_Handler,
 		},
 		{
-			MethodName: "GetAssetDetails",
-			Handler:    _BdsproService_GetAssetDetails_Handler,
+			MethodName: "RentStatus",
+			Handler:    _ProductService_RentStatus_Handler,
 		},
 		{
-			MethodName: "ShareAsset",
-			Handler:    _BdsproService_ShareAsset_Handler,
+			MethodName: "RentVisibility",
+			Handler:    _ProductService_RentVisibility_Handler,
 		},
 		{
-			MethodName: "SplitAsset",
-			Handler:    _BdsproService_SplitAsset_Handler,
+			MethodName: "SaleStatus",
+			Handler:    _ProductService_SaleStatus_Handler,
 		},
 		{
-			MethodName: "MergeAsset",
-			Handler:    _BdsproService_MergeAsset_Handler,
+			MethodName: "SaleVisibility",
+			Handler:    _ProductService_SaleVisibility_Handler,
 		},
 		{
-			MethodName: "GetAssetHistory",
-			Handler:    _BdsproService_GetAssetHistory_Handler,
+			MethodName: "Suggest",
+			Handler:    _ProductService_Suggest_Handler,
+		},
+		{
+			MethodName: "GetDetail",
+			Handler:    _ProductService_GetDetail_Handler,
+		},
+		{
+			MethodName: "GetHistories",
+			Handler:    _ProductService_GetHistories_Handler,
+		},
+		{
+			MethodName: "GetMembers",
+			Handler:    _ProductService_GetMembers_Handler,
+		},
+		{
+			MethodName: "GetPosts",
+			Handler:    _ProductService_GetPosts_Handler,
+		},
+		{
+			MethodName: "UpdateProduct",
+			Handler:    _ProductService_UpdateProduct_Handler,
+		},
+		{
+			MethodName: "DeleteProduct",
+			Handler:    _ProductService_DeleteProduct_Handler,
+		},
+		{
+			MethodName: "AreaInfo",
+			Handler:    _ProductService_AreaInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
