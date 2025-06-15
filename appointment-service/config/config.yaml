@@ -1,0 +1,14 @@
+GRPC:
+  PORT: 50054
+
+Database:
+  PRIMARY_DB_TYPE: postgres
+  DB_DNS: host=localhost user=postgres password=postgres dbname=appointment port=5432 sslmode=disable
+
+Email:
+  HOST: smtp.gmail.com
+  PORT: 587
+  USERNAME: tuandq2112@gmail.com
+  PASSWORD: tuandq2112
+  FROM: tuandq2112@gmail.com
+  NAME: Tuấn Đặng

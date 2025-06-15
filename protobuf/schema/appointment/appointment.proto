@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package appointment;
+
+option go_package = "github.com/tuandq2112/protobuf/schema/appointment";
+
+import "google/api/annotations.proto";
+service AppointmentService {
+
+  rpc CreateAppointment(CreateAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        post: "/v2/appointment"
+        body: "*"
+    };
+  }
+  rpc GetAppointment(GetAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        get: "/v2/appointment/{id}"
+    };
+  }
+
+  rpc UpdateAppointment(UpdateAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        put: "/v2/appointment/{id}"
+        body: "*"
+    };
+  }
+
+  rpc DeleteAppointment(DeleteAppointmentRequest) returns (DeleteAppointmentResponse) {
+    option (google.api.http) = {
+        delete: "/v2/appointment/{id}"
+    };
+  }
+  
+  rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse) {
+    option (google.api.http) = {
+        get: "/v2/appointment"
+    };
+  }
+}
+
+message Appointment {
+  uint32 id = 1;
+  string title = 2;
+  string startTime = 4;
+  string endTime = 5;
+  string place = 6;
+  repeated uint32 participantIds = 7;
+  uint32 dealId = 8;
+  repeated uint32 productIds = 9;
+  string description = 10;
+  string reminderSchedule = 11;
+  uint32 status = 12;
+}
+
+message CreateAppointmentRequest {
+  string title = 1;
+  string startTime = 2;
+  string endTime = 3;
+  string place = 4;
+  repeated uint32 participantIds = 5;
+  uint32 dealId = 6;
+  repeated uint32 productIds = 7;
+  string description = 8;
+  string reminderSchedule = 9;
+  uint32 status = 10;
+}
+
+message GetAppointmentRequest {
+  uint32 id = 1;
+}
+
+message UpdateAppointmentRequest {
+  uint32 id = 1;
+  string title = 2;
+  string startTime = 3;
+  string endTime = 4;
+  string place = 5;
+  repeated uint32 participantIds = 6;
+  uint32 dealId = 7;
+  repeated uint32 productIds = 8;
+  string description = 9;
+  string reminderSchedule = 10;
+  uint32 status = 11;
+}
+
+message DeleteAppointmentRequest {
+  uint32 id = 1;
+}
+
+message DeleteAppointmentResponse {
+  uint32 id = 1;
+}
+
+message ListAppointmentsRequest {
+  string title = 1;
+  uint32 status = 2;
+  string startTime = 3;
+  string endTime = 4;
+  optional int32 page = 5;
+  optional int32 size = 6;
+}
+
+message ListAppointmentsResponse {
+  repeated Appointment appointments = 1;
+  int32 total = 2;
+} 

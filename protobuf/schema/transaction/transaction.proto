@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package transaction;
+
+option go_package = "github.com/tuandq2112/protobuf/schema/transaction";
+
+import "google/api/annotations.proto";
+
+service TransactionService {
+  rpc ListTransactions(ListTransactionsRequest) returns (ListTransactionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/transaction/list"
+    };
+  }
+
+  rpc GetTransactionDetail(GetTransactionDetailRequest) returns (Transaction) {
+    option (google.api.http) = {
+      get: "/v2/transaction/detail/{id}"
+    };
+  }
+
+  rpc CreateTransaction(CreateTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/transaction/create"
+      body: "*"
+    };
+  }
+
+  rpc UpdateTransaction(UpdateTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      put: "/v2/transaction/update/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteTransaction(DeleteTransactionRequest) returns (DeleteTransactionResponse) {
+    option (google.api.http) = {
+      delete: "/v2/transaction/delete/{id}"
+    };
+  }
+
+  rpc ApproveTransaction(ApproveTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/transaction/approve/{id}"
+    };
+  }
+
+  rpc RejectTransaction(RejectTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/transaction/reject/{id}"
+    };
+  }
+
+  rpc GetTransactionTypes(GetTransactionTypesRequest) returns (GetTransactionTypesResponse) {
+    option (google.api.http) = {
+      get: "/v2/transaction/types"
+    };
+  }
+}
+
+message Transaction {
+  uint32 id = 1;
+  uint32 ownerId = 2;
+  optional uint32 organizationId = 3;
+  double amount = 4;
+  string currency = 5;
+  string transactionName = 6;
+  string description = 7;
+  string transactionType = 8;
+  uint32 categoryId = 9;
+  uint32 paymentMethodId = 10;
+  optional uint32 relatedDealId = 11;
+  optional uint32 relatedTransactionId = 12;
+  string approvalStatus = 13;
+  optional uint32 approvedBy = 14;
+  optional string approvalDate = 15;
+  string transactionStatus = 16;
+  string transactionDate = 17;
+  bool isDeleted = 18;
+  string createdAt = 19;
+  string updatedAt = 20;
+}
+
+message ListTransactionsRequest {
+  optional string transactionType = 1;
+  optional string approvalStatus = 2;
+  optional string transactionStatus = 3;
+  optional string startDate = 4;
+  optional string endDate = 5;
+  optional int32 page = 6;
+  optional int32 size = 7;
+}
+
+message ListTransactionsResponse {
+  repeated Transaction transactions = 1;
+  int32 total = 2;
+}
+
+message GetTransactionDetailRequest {
+  uint32 id = 1;
+}
+
+message CreateTransactionRequest {
+  uint32 ownerId = 1;
+  optional uint32 organizationId = 2;
+  double amount = 3;
+  string currency = 4;
+  string transactionName = 5;
+  string description = 6;
+  string transactionType = 7;
+  uint32 categoryId = 8;
+  uint32 paymentMethodId = 9;
+  optional uint32 relatedDealId = 10;
+  optional uint32 relatedTransactionId = 11;
+  string transactionDate = 12;
+}
+
+message UpdateTransactionRequest {
+  uint32 id = 1;
+  double amount = 2;
+  string currency = 3;
+  string transactionName = 4;
+  string description = 5;
+  uint32 categoryId = 6;
+  uint32 paymentMethodId = 7;
+  optional uint32 relatedDealId = 8;
+  optional uint32 relatedTransactionId = 9;
+  string transactionDate = 10;
+}
+
+message DeleteTransactionRequest {
+  uint32 id = 1;
+}
+
+message DeleteTransactionResponse {
+  uint32 id = 1;
+}
+
+message ApproveTransactionRequest {
+  uint32 id = 1;
+}
+
+message RejectTransactionRequest {
+  uint32 id = 1;
+}
+
+message GetTransactionTypesRequest {}
+
+message GetTransactionTypesResponse {
+  repeated string types = 1;
+} 

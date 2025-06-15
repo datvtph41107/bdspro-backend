@@ -169,7 +169,10 @@ var HttpCmd = &cobra.Command{
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
 		service.RegisterSocialService(ctx, mux, env, opts)
+		service.RegisterAppointmentService(ctx, mux, env, opts)
+
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
+
 
 		r.Static("/swagger-doc", "docs")
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
