@@ -108,9 +108,15 @@ func PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.ContactEntity {
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
-		FullName:  pb.FullName,
-		Phone:     pb.Phone,
-		OwnerType: enums.EOwnerType(pb.OwnerType),
+		FullName:   pb.FullName,
+		Phone:      pb.Phone,
+		Email:      pb.Email,
+		OwnerType:  enums.EOwnerType(pb.OwnerType),
+		Note:       pb.Note,
+		Zalo:       pb.Zalo,
+		Company:    pb.Company,
+		Avatar:     pb.Avatar,
+		Visibility: enums.EVisibility(pb.Visibility),
 	}
 }
 

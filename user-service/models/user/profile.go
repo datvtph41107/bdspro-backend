@@ -58,6 +58,7 @@ type UserProfileEntity struct {
 	// transient
 	Certification []CertificationItem `gorm:"-" json:"certifications"`
 	Profession    []ProfessionItem    `gorm:"-" json:"professions"`
+	RateStats     *RateStats          `gorm:"-" json:"rateStats"`
 
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`

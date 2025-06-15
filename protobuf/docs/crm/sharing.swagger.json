@@ -61,7 +61,7 @@
         ]
       }
     },
-    "/v2/crm/sharing/{ownerType}": {
+    "/v2/crm/sharing/share": {
       "post": {
         "operationId": "SharingAccessService_Share",
         "responses": {
@@ -80,18 +80,11 @@
         },
         "parameters": [
           {
-            "name": "ownerType",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SharingAccessServiceShareBody"
+              "$ref": "#/definitions/crmpbSharingRequest"
             }
           }
         ],
@@ -102,7 +95,50 @@
     }
   },
   "definitions": {
-    "SharingAccessServiceShareBody": {
+    "crmpbSharingDTO": {
+      "type": "object",
+      "properties": {
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbSharingListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbSharingDTO"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "crmpbSharingRequest": {
       "type": "object",
       "properties": {
         "contactId": {
@@ -123,48 +159,19 @@
             "format": "uint64"
           }
         },
-        "note": {
-          "type": "string"
-        }
-      }
-    },
-    "crmpbSharingDTO": {
-      "type": "object",
-      "properties": {
-        "toId": {
-          "type": "string",
-          "format": "uint64"
-        },
         "ownerType": {
           "type": "integer",
           "format": "int32"
         },
-        "contactId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "permissions": {
-          "type": "integer",
-          "format": "int64"
-        },
         "note": {
           "type": "string"
-        }
-      }
-    },
-    "crmpbSharingListResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
+        },
+        "permissions": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/crmpbSharingDTO"
+            "type": "integer",
+            "format": "int32"
           }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },

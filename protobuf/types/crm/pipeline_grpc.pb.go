@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,11 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PipelineService_Search_FullMethodName = "/crmpb.PipelineService/Search"
-	PipelineService_Detail_FullMethodName = "/crmpb.PipelineService/Detail"
-	PipelineService_Create_FullMethodName = "/crmpb.PipelineService/Create"
-	PipelineService_Update_FullMethodName = "/crmpb.PipelineService/Update"
-	PipelineService_Delete_FullMethodName = "/crmpb.PipelineService/Delete"
+	PipelineService_Search_FullMethodName     = "/crmpb.PipelineService/Search"
+	PipelineService_GetDefault_FullMethodName = "/crmpb.PipelineService/GetDefault"
+	PipelineService_Detail_FullMethodName     = "/crmpb.PipelineService/Detail"
+	PipelineService_Create_FullMethodName     = "/crmpb.PipelineService/Create"
+	PipelineService_Update_FullMethodName     = "/crmpb.PipelineService/Update"
+	PipelineService_Delete_FullMethodName     = "/crmpb.PipelineService/Delete"
 )
 
 // PipelineServiceClient is the client API for PipelineService service.
@@ -31,6 +33,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PipelineServiceClient interface {
 	Search(ctx context.Context, in *PipelineSearchRequest, opts ...grpc.CallOption) (*PipelineListDTO, error)
+	GetDefault(ctx context.Context, in *shared.Empty, opts ...grpc.CallOption) (*PipelineDTO, error)
 	Detail(ctx context.Context, in *PipelineDTO, opts ...grpc.CallOption) (*PipelineDTO, error)
 	Create(ctx context.Context, in *PipelineDTO, opts ...grpc.CallOption) (*PipelineDTO, error)
 	Update(ctx context.Context, in *PipelineDTO, opts ...grpc.CallOption) (*PipelineDTO, error)
@@ -49,6 +52,16 @@ func (c *pipelineServiceClient) Search(ctx context.Context, in *PipelineSearchRe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PipelineListDTO)
 	err := c.cc.Invoke(ctx, PipelineService_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pipelineServiceClient) GetDefault(ctx context.Context, in *shared.Empty, opts ...grpc.CallOption) (*PipelineDTO, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PipelineDTO)
+	err := c.cc.Invoke(ctx, PipelineService_GetDefault_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +113,7 @@ func (c *pipelineServiceClient) Delete(ctx context.Context, in *PipelineDTO, opt
 // for forward compatibility.
 type PipelineServiceServer interface {
 	Search(context.Context, *PipelineSearchRequest) (*PipelineListDTO, error)
+	GetDefault(context.Context, *shared.Empty) (*PipelineDTO, error)
 	Detail(context.Context, *PipelineDTO) (*PipelineDTO, error)
 	Create(context.Context, *PipelineDTO) (*PipelineDTO, error)
 	Update(context.Context, *PipelineDTO) (*PipelineDTO, error)
@@ -116,6 +130,9 @@ type UnimplementedPipelineServiceServer struct{}
 
 func (UnimplementedPipelineServiceServer) Search(context.Context, *PipelineSearchRequest) (*PipelineListDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedPipelineServiceServer) GetDefault(context.Context, *shared.Empty) (*PipelineDTO, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDefault not implemented")
 }
 func (UnimplementedPipelineServiceServer) Detail(context.Context, *PipelineDTO) (*PipelineDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Detail not implemented")
@@ -164,6 +181,24 @@ func _PipelineService_Search_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PipelineServiceServer).Search(ctx, req.(*PipelineSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PipelineService_GetDefault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(shared.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PipelineServiceServer).GetDefault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PipelineService_GetDefault_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PipelineServiceServer).GetDefault(ctx, req.(*shared.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -250,6 +285,10 @@ var PipelineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _PipelineService_Search_Handler,
+		},
+		{
+			MethodName: "GetDefault",
+			Handler:    _PipelineService_GetDefault_Handler,
 		},
 		{
 			MethodName: "Detail",

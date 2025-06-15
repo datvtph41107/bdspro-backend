@@ -66,7 +66,7 @@ func NewProductUsecase(
 	depositeRepo repo.DepositeRepo,
 	productChildRepo repo.UProductChildRepo,
 ) *ProductUsecase {
-	return &ProductUsecase{
+	result := &ProductUsecase{
 		ProductRepo:        productRepo,
 		AssetRepo:          assetRepo,
 		ProductAccessRepo:  productAccessRepo,
@@ -87,6 +87,10 @@ func NewProductUsecase(
 		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 		// OwnerType:    ownerType,
 	}
+
+	result.PostUsecase.ProductUsecase = result
+
+	return result
 }
 
 func MakeProductUsecase(

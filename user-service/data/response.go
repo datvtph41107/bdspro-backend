@@ -137,6 +137,7 @@ type PublicUserInfo struct {
 	Youtube         string                `json:"youtube,omitempty"`
 	Introduction    string                `json:"introduction,omitempty"`
 	StatusOnline    enums.EOnlineStatus   `json:"statusOnline,omitempty"`
+	TabDefault      enums.ESettingTab     `json:"tabDefault,omitempty"`
 
 	// transient
 	Certifications []user_model.CertificationItem `json:"certifications,omitempty"`

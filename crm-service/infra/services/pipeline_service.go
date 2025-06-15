@@ -2,14 +2,13 @@ package grpc_service
 
 import (
 	_dto "common/dto"
-	_models "common/models"
 	_routes "common/routes"
 	"context"
-	"crm/internal/domain"
+	"crm/infra/mapper"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 )
@@ -23,10 +22,18 @@ func NewPipelineService(pipelineUsecase *usecase.PipelineUsecase) *PipelineServi
 	return &PipelineService{UC: pipelineUsecase}
 }
 
+// @Summary Tìm kiếm quy trình
+// @Description Tìm kiếm quy trình
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Param ownerId path int true "Owner ID"
+// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param dto query dto.PipelineSearchDTO true "Pipeline search dto"
+// @Security BearerAuth
+// @Router /pipeline/list [get]
 func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchRequest) (*crmpb.PipelineListDTO, error) {
 	pipelines, total, err := s.UC.Search(ctx,
-		req.OwnerId,
-		enums.EOwnerType(req.OwnerType),
 		dto.PipelineSearchDTO{
 			Pagable: _dto.Pagable{
 				Page: int(req.Page),
@@ -42,7 +49,7 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 
 	result := make([]*crmpb.PipelineDTO, len(pipelines))
 	for i, pipeline := range pipelines {
-		result[i] = s.DomainToPb(&pipeline)
+		result[i] = mapper.PipelineDomainToPb(&pipeline)
 	}
 
 	return &crmpb.PipelineListDTO{
@@ -53,32 +60,41 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 func (s *PipelineService) Detail(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
 	return nil, nil
 }
-func (s *PipelineService) Create(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
-	domain := s.PbToDomain(req)
 
-	if req.OwnerId == 0 || req.OwnerType == 0 {
-		return nil, &_routes.Except{
-			Code:    int(codes.InvalidArgument),
-			Message: "ownerId and ownerType are required",
-		}
-	}
+// @Summary Tạo quy trình
+// @Description Tạo quy trình
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Param entity body crmpb.PipelineDTO true "Pipeline entity"
+// @Security BearerAuth
+// @Router /pipeline [post]
+func (s *PipelineService) Create(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
+	domain := mapper.PipelinePbToDomain(req)
+
+	// if req.OwnerId == 0 || req.OwnerType == 0 {
+	// 	return nil, &_routes.Except{
+	// 		Code:    int(codes.InvalidArgument),
+	// 		Message: "ownerId and ownerType are required",
+	// 	}
+	// }
 
 	result, err := s.UC.Create(ctx, 0, domain)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.DomainToPb(result), nil
+	return mapper.PipelineDomainToPb(result), nil
 }
 func (s *PipelineService) Update(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
-	domain := s.PbToDomain(req)
+	domain := mapper.PipelinePbToDomain(req)
 
 	result, err := s.UC.Update(ctx, req.Id, domain)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.DomainToPb(result), nil
+	return mapper.PipelineDomainToPb(result), nil
 }
 
 // @Summary Xóa quy trình
@@ -101,39 +117,20 @@ func (s *PipelineService) Delete(ctx context.Context, req *crmpb.PipelineDTO) (*
 	return nil, err
 }
 
-// --map--
-
-func (s *PipelineService) PbToDTO(pb *crmpb.PipelineDTO) *dto.PipelineDTO {
-	return &dto.PipelineDTO{
-		ID:           pb.Id,
-		PipelineName: pb.PipelineName,
-		Color:        pb.Color,
-		Active:       pb.Active,
-		OwnerID:      pb.OwnerId,
-		OwnerType:    enums.EOwnerType(pb.OwnerType),
+// @Summary Lấy quy trình mặc định
+// @Description Lấy quy trình mặc định
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /pipeline/default [get]
+func (s *PipelineService) GetDefault(ctx context.Context, req *sharepb.Empty) (*crmpb.PipelineDTO, error) {
+	pipeline, stage, err := s.UC.GetDefault(ctx)
+	if err != nil {
+		return nil, err
 	}
-}
 
-func (s *PipelineService) PbToDomain(pb *crmpb.PipelineDTO) *domain.PipelineEntity {
-	return &domain.PipelineEntity{
-		BaseEntity: _models.BaseEntity{
-			ID: pb.Id,
-		},
-		PipelineName: pb.PipelineName,
-		Color:        pb.Color,
-		Active:       pb.Active,
-		OwnerID:      pb.OwnerId,
-		OwnerType:    enums.EOwnerType(pb.OwnerType),
-	}
-}
-
-func (s *PipelineService) DomainToPb(domain *domain.PipelineEntity) *crmpb.PipelineDTO {
-	return &crmpb.PipelineDTO{
-		Id:           domain.ID,
-		PipelineName: domain.PipelineName,
-		Color:        uint32(domain.Color),
-		Active:       domain.Active,
-		OwnerId:      domain.OwnerID,
-		OwnerType:    uint32(domain.OwnerType),
-	}
+	result := mapper.PipelineDomainToPb(pipeline)
+	result.DefaultStage = mapper.StageDomainToPb(stage)
+	return result, nil
 }

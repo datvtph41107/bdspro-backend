@@ -1,0 +1,41 @@
+basePath: /v2/organization
+info:
+  contact: {}
+  description: Organization Service API
+  title: Organization Service
+  version: "1.0"
+paths:
+  /members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang
+        đăng nhập
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      - description: Tên thành viên
+        in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng
+        nhập
+      tags:
+      - Thành viên
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

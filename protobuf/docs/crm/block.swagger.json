@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/crm/block": {
-      "delete": {
-        "operationId": "BlockService_UnblockUser",
+    "/v2/crm/block/list": {
+      "get": {
+        "operationId": "BlockService_ListBlockedUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/sharepbSubmitResponse"
+              "$ref": "#/definitions/crmpbListBlockResponse"
             }
           },
           "default": {
@@ -47,14 +47,14 @@
         ]
       }
     },
-    "/v2/crm/block/list": {
-      "get": {
-        "operationId": "BlockService_ListBlockedUsers",
+    "/v2/crm/block/{id}": {
+      "delete": {
+        "operationId": "BlockService_UnblockUser",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbListBlockResponse"
+              "$ref": "#/definitions/sharepbSubmitResponse"
             }
           },
           "default": {
@@ -67,8 +67,8 @@
         "parameters": [
           {
             "name": "id",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string",
             "format": "uint64"
           }

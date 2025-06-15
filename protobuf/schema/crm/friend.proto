@@ -19,6 +19,11 @@ service FriendService {
             body: "*"
         };
     };
+    rpc CancelFriendRequest(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/friend/request/cancel/{id}"
+        };
+    };
     rpc FriendAccept(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
             put: "/v2/crm/friend/accept/{id}"
@@ -27,8 +32,7 @@ service FriendService {
     };
     rpc FriendReject(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
-            put: "/v2/crm/friend/reject/{id}"
-            body: "*"
+            delete: "/v2/crm/friend/reject/{id}"
         };
     };
     rpc FriendUpdateGroup(GroupUpdateRequest) returns (sharepb.SubmitResponse) {

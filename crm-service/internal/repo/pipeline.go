@@ -13,4 +13,5 @@ type PipelineRepo interface {
 	Update(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error)
 	Delete(c context.Context, id uint64) error
 	GetByID(c context.Context, id uint64) (*domain.PipelineEntity, error)
+	GetDefault(c context.Context, organizationId uint64) (*domain.PipelineEntity, error)
 }

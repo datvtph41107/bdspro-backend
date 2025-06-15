@@ -45,6 +45,12 @@ service ContactService {
       get: "/v2/crm/contact/relation-ship/{id}"
     };
   };
+  rpc Note (NoteContactDTO) returns (NoteContactDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/note/{id}"
+      body: "*"
+    };
+  };
 }
 
 message ContactSearchRequest {
@@ -65,6 +71,13 @@ message ContactSaveDTO {
   string phone = 2;
   string fullName = 3;
   int32 ownerType = 4;
+  string email = 5;
+  string zalo = 6;
+  string company = 7;
+  string note = 8;
+  string avatar = 9;
+  int32 visibility = 10;
+  bool assignedCrm = 11;
 }
 
 message ContactDTO {
@@ -112,4 +125,9 @@ message RelationShipResponse {
   int64 numFollower = 4;
   int64 numFollowing = 5;
   int64 numFriend = 6;
+}
+
+message NoteContactDTO {
+  uint64 id = 1;
+  string note = 2;
 }

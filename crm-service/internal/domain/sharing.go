@@ -1,12 +1,21 @@
 package domain
 
-import "crm/internal/enums"
+import (
+	_models "common/models"
+	"crm/internal/enums"
+
+	"github.com/lib/pq"
+)
 
 type SharingEntity struct {
-	// BaseEntity
-	ContactID    uint64           `json:"contactId"`
-	ReceiverID   uint64           `json:"receiverId"`
-	ReceiverType enums.EOwnerType `json:"receiverType"`
-	Permissions  uint32           `json:"permissions"`
+	_models.BaseEntity
+	ContactID    uint64           `gorm:"primaryKey" json:"contactId"`
+	ReceiverID   uint64           `gorm:"primaryKey" json:"receiverId"`
+	ReceiverType enums.EOwnerType `gorm:"primaryKey" json:"receiverType"`
+	Permissions  pq.Int32Array    `gorm:"type:integer[]" json:"permissions"`
 	Note         string           `json:"note"`
+}
+
+func (s *SharingEntity) TableName() string {
+	return "sharing_access"
 }

@@ -300,6 +300,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/contact/note/{contactId}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ghi chú liên hệ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Liên hệ"
+                ],
+                "summary": "Ghi chú liên hệ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của liên hệ",
+                        "name": "contactId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/contact/relation-ship/{id}": {
             "get": {
                 "security": [
@@ -734,6 +764,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/friend/cancel/{receiverId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Hủy lời mời kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "receiverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã bị hủy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/friend/group/{requestId}/{groupId}": {
             "put": {
                 "security": [
@@ -883,6 +962,55 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/reject/{requestId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy lời mời kết bạn đang chờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Hủy kết bạn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời kết bạn",
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lời mời đã bị từ chối",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy lời mời",
                         "schema": {
                             "type": "string"
                         }
@@ -1055,55 +1183,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Lời mời đã được chấp nhận",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Không tìm thấy lời mời",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/friend/request/{requestId}/reject": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Hủy lời mời kết bạn đang chờ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Bạn bè"
-                ],
-                "summary": "Hủy kết bạn",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của lời mời kết bạn",
-                        "name": "requestId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lời mời đã bị từ chối",
                         "schema": {
                             "type": "string"
                         }
@@ -1860,21 +1939,21 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.PipelineEntity"
+                            "$ref": "#/definitions/crmpb.PipelineDTO"
                         }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/pipeline/{id}": {
-            "put": {
+        "/pipeline/default": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Cập nhật quy trình",
+                "description": "Lấy quy trình mặc định",
                 "consumes": [
                     "application/json"
                 ],
@@ -1884,57 +1963,11 @@ const docTemplate = `{
                 "tags": [
                     "Quy trình"
                 ],
-                "summary": "Cập nhật quy trình",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Pipeline entity",
-                        "name": "entity",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.PipelineEntity"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa quy trình",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Quy trình"
-                ],
-                "summary": "Xóa quy trình",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Lấy quy trình mặc định",
                 "responses": {}
             }
         },
-        "/pipeline/{ownerId}/{ownerType}": {
+        "/pipeline/list": {
             "get": {
                 "security": [
                     {
@@ -2021,6 +2054,73 @@ const docTemplate = `{
                         "collectionFormat": "csv",
                         "name": "steps",
                         "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/pipeline/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật quy trình",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy trình"
+                ],
+                "summary": "Cập nhật quy trình",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pipeline entity",
+                        "name": "entity",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.PipelineEntity"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa quy trình",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy trình"
+                ],
+                "summary": "Xóa quy trình",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -2265,6 +2365,83 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/sharing/list/{contactId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách chia sẻ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ liên hệ"
+                ],
+                "summary": "Lấy danh sách chia sẻ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "contactId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của liên hệ",
+                        "name": "contactId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/sharing/share": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chia sẻ liên hệ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chia sẻ liên hệ"
+                ],
+                "summary": "Chia sẻ liên hệ",
+                "parameters": [
+                    {
+                        "description": "Thông tin chia sẻ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.SharingRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/stage": {
             "post": {
                 "security": [
@@ -2419,16 +2596,37 @@ const docTemplate = `{
         "crmpb.ContactSaveDTO": {
             "type": "object",
             "properties": {
+                "assignedCrm": {
+                    "type": "boolean"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "company": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
                 "fullName": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
+                "note": {
+                    "type": "string"
+                },
                 "ownerType": {
                     "type": "integer"
                 },
                 "phone": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "zalo": {
                     "type": "string"
                 }
             }
@@ -2603,8 +2801,17 @@ const docTemplate = `{
                 "color": {
                     "type": "integer"
                 },
+                "defaultStage": {
+                    "$ref": "#/definitions/crmpb.StageDTO"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "isCustom": {
+                    "type": "boolean"
+                },
+                "isDefault": {
+                    "type": "boolean"
                 },
                 "ownerId": {
                     "type": "integer"
@@ -2692,6 +2899,61 @@ const docTemplate = `{
                 },
                 "link": {
                     "type": "string"
+                }
+            }
+        },
+        "crmpb.SharingDTO": {
+            "type": "object",
+            "properties": {
+                "contactId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "toId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.SharingRequest": {
+            "type": "object",
+            "properties": {
+                "contactId": {
+                    "type": "integer"
+                },
+                "deletedIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "receivers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.SharingDTO"
+                    }
                 }
             }
         },
@@ -2792,8 +3054,17 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "defaultStage": {
+                    "$ref": "#/definitions/domain.StageEntity"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "isCustom": {
+                    "type": "boolean"
+                },
+                "isDefault": {
+                    "type": "boolean"
                 },
                 "ownerId": {
                     "type": "integer"
@@ -2803,6 +3074,9 @@ const docTemplate = `{
                 },
                 "pipelineName": {
                     "type": "string"
+                },
+                "stageDefaultId": {
+                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"

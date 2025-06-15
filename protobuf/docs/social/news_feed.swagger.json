@@ -193,7 +193,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_socialEmpty"
+              "$ref": "#/definitions/sharepbEmpty"
             }
           },
           "default": {
@@ -864,9 +864,6 @@
         }
       }
     },
-    "pb_socialEmpty": {
-      "type": "object"
-    },
     "pb_socialListNewsFeed": {
       "type": "object",
       "properties": {
@@ -1029,6 +1026,9 @@
           }
         }
       }
+    },
+    "sharepbEmpty": {
+      "type": "object"
     },
     "sharepbProfileItem": {
       "type": "object",

@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization-member": {
+    "/v2/organization/member": {
       "post": {
         "operationId": "OrganizationMemberService_CreateOrganizationMember",
         "responses": {
@@ -48,7 +48,7 @@
         ]
       }
     },
-    "/v2/organization-member/{id}": {
+    "/v2/organization/member/{id}": {
       "delete": {
         "operationId": "OrganizationMemberService_DeleteOrganizationMember",
         "responses": {
@@ -116,7 +116,7 @@
         ]
       }
     },
-    "/v2/organization-member/{organizationId}": {
+    "/v2/organization/member/{organizationId}": {
       "get": {
         "operationId": "OrganizationMemberService_GetOrganizationMembers",
         "responses": {
@@ -156,6 +156,28 @@
             "format": "int64"
           }
         ],
+        "tags": [
+          "OrganizationMemberService"
+        ]
+      }
+    },
+    "/v2/organization/members": {
+      "get": {
+        "operationId": "OrganizationMemberService_GetOrganizationMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "OrganizationMemberService"
         ]

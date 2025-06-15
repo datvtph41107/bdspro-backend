@@ -14,6 +14,11 @@ require (
 )
 
 require (
+	github.com/hyperledger/fabric v2.1.1+incompatible // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/sykesm/zap-logfmt v0.0.4 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect

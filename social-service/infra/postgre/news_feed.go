@@ -24,7 +24,7 @@ func NewPostgreNewsFeed(db *gorm.DB) *PostgreNewsFeed {
 }
 
 func (r *PostgreNewsFeed) Create(ctx context.Context, post *domain.NewsFeed) (*domain.NewsFeed, error) {
-	err := GetDB(ctx, r.db).Create(post).Error
+	err := r.db.WithContext(ctx).Create(post).Error
 	return post, err
 }
 

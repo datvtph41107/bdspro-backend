@@ -209,30 +209,11 @@
             "format": "int64"
           },
           {
-            "name": "page",
+            "name": "type",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "text",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -359,6 +340,9 @@
         "type": {
           "type": "integer",
           "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -390,6 +374,9 @@
         "type": {
           "type": "integer",
           "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

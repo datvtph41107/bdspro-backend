@@ -13,29 +13,37 @@ service OrganizationMemberService {
     rpc SwitchOrganization(SwitchOrganizationRequest) returns (SwitchOrganizationResponse) {}
     rpc CreateOrganizationMember(CreateOrganizationMemberRequest) returns (CreateOrganizationMemberResponse) {
         option (google.api.http) = {
-            post: "/v2/organization-member"
+            post: "/v2/organization/member"
             body: "*"
         };
     }
     rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {
         option (google.api.http) = {
-            put: "/v2/organization-member/{id}"
+            put: "/v2/organization/member/{id}"
             body: "*"
         };
     }
     rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest) returns (DeleteOrganizationMemberResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization-member/{id}"
+            delete: "/v2/organization/member/{id}"
         };
     }
 
     rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/organization-member/{organizationId}"
+            get: "/v2/organization/member/{organizationId}"
+        };
+    }
+
+    rpc GetOrganizationMember(Empty) returns (GetOrganizationMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization/members"
         };
     }
 
 }
+
+message Empty {}
 
 message SwitchOrganizationRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];

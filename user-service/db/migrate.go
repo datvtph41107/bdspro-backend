@@ -15,9 +15,9 @@ func AutoMigrate() {
 		// &user_model.FriendEntity{},
 		// &user_model.GroupEntity{},
 		// &user_model.UserProfileEntity{},
-		// &user_model.ProfessionEntity{},
-		// &user_model.CertificationEntity{},
+		&user_model.ProfessionEntity{},
+		&user_model.CertificationEntity{},
 		// &user_model.Rate{},
-		&user_model.UserProfileEntity{},
+		// &user_model.UserProfileEntity{},
 	)
 }

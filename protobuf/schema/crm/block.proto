@@ -20,7 +20,7 @@ service BlockService {
     };
     rpc UnblockUser(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
-            delete: "/v2/crm/block"
+            delete: "/v2/crm/block/{id}"
         };
     };
 }

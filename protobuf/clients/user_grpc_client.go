@@ -70,3 +70,11 @@ func (c *UserGrpcClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint6
 
 	return profileMap, nil
 }
+
+func (c *UserGrpcClient) GetProfileByIds(ctx context.Context, profileIds []uint64) (*sharepb.GetProfileByIdsResponse, error) {
+	if c.Client == nil {
+		return nil, errors.New("user client not avaiable")
+	}
+
+	return c.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIds})
+}

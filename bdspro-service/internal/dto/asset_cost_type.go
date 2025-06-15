@@ -6,6 +6,6 @@ type AssetCostTypeSearchDTO struct {
 	_dto.Pagable
 	AssetID *uint64   `form:"assetId"`
 	TypeIDs *[]uint64 `form:"typeIds" parser:"uint64s"`
-	Types   *[]uint64 `form:"types" parser:"uint64s"`
+	Type    *uint32   `form:"type" parser:"uint32"`
 	Text    string    `form:"text"`
 }

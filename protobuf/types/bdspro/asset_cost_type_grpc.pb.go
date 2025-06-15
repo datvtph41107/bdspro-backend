@@ -31,7 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssetCostTypeServiceClient interface {
-	Search(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostTypeListDTO, error)
+	Search(ctx context.Context, in *CostTypeRequest, opts ...grpc.CallOption) (*AssetCostTypeListDTO, error)
 	SearchGroup(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*GroupType, error)
 	Detail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*AssetCostTypeDTO, error)
 	Create(ctx context.Context, in *AssetCostTypeDTO, opts ...grpc.CallOption) (*AssetCostTypeDTO, error)
@@ -96,7 +96,7 @@ func (c *assetCostTypeServiceClient) Delete(ctx context.Context, in *AssetCostTy
 // All implementations must embed UnimplementedAssetCostTypeServiceServer
 // for forward compatibility
 type AssetCostTypeServiceServer interface {
-	Search(context.Context, *IdRequest) (*AssetCostTypeListDTO, error)
+	Search(context.Context, *CostTypeRequest) (*AssetCostTypeListDTO, error)
 	SearchGroup(context.Context, *IdRequest) (*GroupType, error)
 	Detail(context.Context, *IdRequest) (*AssetCostTypeDTO, error)
 	Create(context.Context, *AssetCostTypeDTO) (*AssetCostTypeDTO, error)
@@ -109,7 +109,7 @@ type AssetCostTypeServiceServer interface {
 type UnimplementedAssetCostTypeServiceServer struct {
 }
 
-func (UnimplementedAssetCostTypeServiceServer) Search(context.Context, *IdRequest) (*AssetCostTypeListDTO, error) {
+func (UnimplementedAssetCostTypeServiceServer) Search(context.Context, *CostTypeRequest) (*AssetCostTypeListDTO, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedAssetCostTypeServiceServer) SearchGroup(context.Context, *IdRequest) (*GroupType, error) {
@@ -141,7 +141,7 @@ func RegisterAssetCostTypeServiceServer(s grpc.ServiceRegistrar, srv AssetCostTy
 }
 
 func _AssetCostTypeService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IdRequest)
+	in := new(CostTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func _AssetCostTypeService_Search_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: AssetCostTypeService_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AssetCostTypeServiceServer).Search(ctx, req.(*IdRequest))
+		return srv.(AssetCostTypeServiceServer).Search(ctx, req.(*CostTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

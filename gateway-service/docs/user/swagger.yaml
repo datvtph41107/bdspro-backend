@@ -1,8 +1,14 @@
 definitions:
   data.CertificationBatchSave:
     properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
       fileUrl:
         type: string
+      id:
+        type: integer
       issueDate:
         type: string
       issuer:
@@ -80,6 +86,8 @@ definitions:
     type: object
   data.ProfessionBatchSave:
     properties:
+      id:
+        type: integer
       issueDate:
         type: string
       issuer:
@@ -400,17 +408,6 @@ definitions:
       verifiedStatus:
         type: integer
     type: object
-  pb_user.FriendItem:
-    properties:
-      createdBy:
-        type: integer
-      id:
-        type: integer
-      receiverId:
-        type: integer
-      status:
-        type: integer
-    type: object
   pb_user.ProfessionItem:
     properties:
       id:
@@ -444,6 +441,8 @@ definitions:
         type: string
       following:
         type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
       frontIdentify:
         type: string
       fullName:
@@ -472,8 +471,6 @@ definitions:
         type: string
       referralCode:
         type: string
-      relationShip:
-        $ref: '#/definitions/pb_user.FriendItem'
       roleRealEstate:
         type: integer
       slogan:
@@ -481,6 +478,8 @@ definitions:
       startDate:
         type: string
       statusOnline:
+        type: integer
+      tabDefault:
         type: integer
       taxCode:
         type: string
@@ -506,6 +505,17 @@ definitions:
       star5Count:
         type: integer
       totalReviews:
+        type: integer
+    type: object
+  sharepb.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
         type: integer
     type: object
   user_model.CertificationItem:

@@ -17,4 +17,5 @@ type ContactRepo interface {
 	Existed(c context.Context, followId uint64) error
 	Bulk(c context.Context, entities []domain.ContactEntity) ([]domain.ContactEntity, error)
 	ExistByProfile(c context.Context, profileId uint64) (bool, error)
+	UpdateNote(c context.Context, id uint64, note string) error
 }

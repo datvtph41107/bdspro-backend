@@ -39,7 +39,7 @@ var filter_AssetCostTypeService_Get_0 = &utilities.DoubleArray{Encoding: map[str
 
 func request_AssetCostTypeService_Get_0(ctx context.Context, marshaler runtime.Marshaler, client AssetCostTypeServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq IdRequest
+		protoReq CostTypeRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)
@@ -59,7 +59,7 @@ func request_AssetCostTypeService_Get_0(ctx context.Context, marshaler runtime.M
 
 func local_request_AssetCostTypeService_Search_0(ctx context.Context, marshaler runtime.Marshaler, server AssetCostTypeServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq IdRequest
+		protoReq CostTypeRequest
 		metadata runtime.ServerMetadata
 		err      error
 	)

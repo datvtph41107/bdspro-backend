@@ -567,6 +567,15 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "defaultStage": {
+          "$ref": "#/definitions/crmpbStageDTO"
         }
       }
     },

@@ -83,6 +83,16 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 	return h.OrganizationMemberTransformer.EntityToDeleteOrganizationMemberResponse(organizationMember), nil
 }
 
+// @Summary Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
+// @Description Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param size query int false "Page size"
+// @Param text query string false "Tên thành viên"
+// @Security BearerAuth
+// @Router /members [get]
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	// Get pagination parameters
 	page := 0

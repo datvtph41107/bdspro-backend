@@ -10,6 +10,7 @@ message AssetCostTypeDTO {
   string typeName = 2;
   bool isCustom = 3;
   uint32 type = 4;
+  string description = 5;
 }
 
 message AssetCostTypeListDTO {
@@ -23,7 +24,7 @@ message GroupType {
 }
 
 service AssetCostTypeService {
-    rpc Search (IdRequest) returns (AssetCostTypeListDTO) {
+    rpc Search (CostTypeRequest) returns (AssetCostTypeListDTO) {
       option (google.api.http) = {
         get: "/v2/bdspro/v2/asset/cost-type/list/{id}/{ownerType}"
       };
@@ -55,4 +56,10 @@ service AssetCostTypeService {
         delete: "/v2/bdspro/v2/asset/cost-type/{id}"
       };
     };
+}
+
+message CostTypeRequest {
+  uint64 id = 1;
+  uint32 ownerType = 2;
+  optional uint32 type = 3;
 }

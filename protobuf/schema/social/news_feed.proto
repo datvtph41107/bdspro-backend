@@ -31,7 +31,7 @@ service NewsFeedService {
             get: "/v2/social/news-feed/detail/{newsFeedId}"
         };
     };
-    rpc DeleteNewsFeed(NewsFeed) returns (Empty) {
+    rpc DeleteNewsFeed(NewsFeed) returns (sharepb.Empty) {
         option (google.api.http) = {
             delete: "/v2/social/news-feed/{id}"
         };
@@ -60,7 +60,6 @@ message VisibilityRequest {
     int32 visibility = 2;
 }
 
-message Empty {}
 
 message NewsFeedMedia {
     uint64 id = 1;

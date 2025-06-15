@@ -20,14 +20,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FriendService_FriendList_FullMethodName        = "/crmpb.FriendService/FriendList"
-	FriendService_FriendRequest_FullMethodName     = "/crmpb.FriendService/FriendRequest"
-	FriendService_FriendAccept_FullMethodName      = "/crmpb.FriendService/FriendAccept"
-	FriendService_FriendReject_FullMethodName      = "/crmpb.FriendService/FriendReject"
-	FriendService_FriendUpdateGroup_FullMethodName = "/crmpb.FriendService/FriendUpdateGroup"
-	FriendService_FriendSent_FullMethodName        = "/crmpb.FriendService/FriendSent"
-	FriendService_FriendReceived_FullMethodName    = "/crmpb.FriendService/FriendReceived"
-	FriendService_FriendInfo_FullMethodName        = "/crmpb.FriendService/FriendInfo"
+	FriendService_FriendList_FullMethodName          = "/crmpb.FriendService/FriendList"
+	FriendService_FriendRequest_FullMethodName       = "/crmpb.FriendService/FriendRequest"
+	FriendService_CancelFriendRequest_FullMethodName = "/crmpb.FriendService/CancelFriendRequest"
+	FriendService_FriendAccept_FullMethodName        = "/crmpb.FriendService/FriendAccept"
+	FriendService_FriendReject_FullMethodName        = "/crmpb.FriendService/FriendReject"
+	FriendService_FriendUpdateGroup_FullMethodName   = "/crmpb.FriendService/FriendUpdateGroup"
+	FriendService_FriendSent_FullMethodName          = "/crmpb.FriendService/FriendSent"
+	FriendService_FriendReceived_FullMethodName      = "/crmpb.FriendService/FriendReceived"
+	FriendService_FriendInfo_FullMethodName          = "/crmpb.FriendService/FriendInfo"
 )
 
 // FriendServiceClient is the client API for FriendService service.
@@ -36,6 +37,7 @@ const (
 type FriendServiceClient interface {
 	FriendList(ctx context.Context, in *FriendListRequest, opts ...grpc.CallOption) (*FriendProfileListResponse, error)
 	FriendRequest(ctx context.Context, in *FriendRequestDTO, opts ...grpc.CallOption) (*FriendRequestResponse, error)
+	CancelFriendRequest(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendAccept(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendReject(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	FriendUpdateGroup(ctx context.Context, in *GroupUpdateRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
@@ -66,6 +68,16 @@ func (c *friendServiceClient) FriendRequest(ctx context.Context, in *FriendReque
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FriendRequestResponse)
 	err := c.cc.Invoke(ctx, FriendService_FriendRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *friendServiceClient) CancelFriendRequest(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(shared.SubmitResponse)
+	err := c.cc.Invoke(ctx, FriendService_CancelFriendRequest_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +150,7 @@ func (c *friendServiceClient) FriendInfo(ctx context.Context, in *shared.Empty, 
 type FriendServiceServer interface {
 	FriendList(context.Context, *FriendListRequest) (*FriendProfileListResponse, error)
 	FriendRequest(context.Context, *FriendRequestDTO) (*FriendRequestResponse, error)
+	CancelFriendRequest(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	FriendAccept(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	FriendReject(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	FriendUpdateGroup(context.Context, *GroupUpdateRequest) (*shared.SubmitResponse, error)
@@ -159,6 +172,9 @@ func (UnimplementedFriendServiceServer) FriendList(context.Context, *FriendListR
 }
 func (UnimplementedFriendServiceServer) FriendRequest(context.Context, *FriendRequestDTO) (*FriendRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendRequest not implemented")
+}
+func (UnimplementedFriendServiceServer) CancelFriendRequest(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelFriendRequest not implemented")
 }
 func (UnimplementedFriendServiceServer) FriendAccept(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendAccept not implemented")
@@ -231,6 +247,24 @@ func _FriendService_FriendRequest_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FriendServiceServer).FriendRequest(ctx, req.(*FriendRequestDTO))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FriendService_CancelFriendRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(shared.IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FriendServiceServer).CancelFriendRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FriendService_CancelFriendRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FriendServiceServer).CancelFriendRequest(ctx, req.(*shared.IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -357,6 +391,10 @@ var FriendService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FriendRequest",
 			Handler:    _FriendService_FriendRequest_Handler,
+		},
+		{
+			MethodName: "CancelFriendRequest",
+			Handler:    _FriendService_CancelFriendRequest_Handler,
 		},
 		{
 			MethodName: "FriendAccept",

@@ -1708,8 +1708,17 @@ const docTemplate = `{
         "data.CertificationBatchSave": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
                 "fileUrl": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "issueDate": {
                     "type": "string"
@@ -1824,6 +1833,9 @@ const docTemplate = `{
         "data.ProfessionBatchSave": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "issueDate": {
                     "type": "string"
                 },
@@ -2285,23 +2297,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_user.FriendItem": {
-            "type": "object",
-            "properties": {
-                "createdBy": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "receiverId": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "integer"
-                }
-            }
-        },
         "pb_user.ProfessionItem": {
             "type": "object",
             "properties": {
@@ -2352,6 +2347,9 @@ const docTemplate = `{
                 "following": {
                     "type": "boolean"
                 },
+                "friendStatus": {
+                    "$ref": "#/definitions/sharepb.FriendItem"
+                },
                 "frontIdentify": {
                     "type": "string"
                 },
@@ -2394,9 +2392,6 @@ const docTemplate = `{
                 "referralCode": {
                     "type": "string"
                 },
-                "relationShip": {
-                    "$ref": "#/definitions/pb_user.FriendItem"
-                },
                 "roleRealEstate": {
                     "type": "integer"
                 },
@@ -2407,6 +2402,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "statusOnline": {
+                    "type": "integer"
+                },
+                "tabDefault": {
                     "type": "integer"
                 },
                 "taxCode": {
@@ -2445,6 +2443,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 }
             }

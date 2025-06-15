@@ -1700,8 +1700,17 @@
         "data.CertificationBatchSave": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
                 "fileUrl": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "issueDate": {
                     "type": "string"
@@ -1816,6 +1825,9 @@
         "data.ProfessionBatchSave": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "issueDate": {
                     "type": "string"
                 },
@@ -2277,23 +2289,6 @@
                 }
             }
         },
-        "pb_user.FriendItem": {
-            "type": "object",
-            "properties": {
-                "createdBy": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "receiverId": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "integer"
-                }
-            }
-        },
         "pb_user.ProfessionItem": {
             "type": "object",
             "properties": {
@@ -2344,6 +2339,9 @@
                 "following": {
                     "type": "boolean"
                 },
+                "friendStatus": {
+                    "$ref": "#/definitions/sharepb.FriendItem"
+                },
                 "frontIdentify": {
                     "type": "string"
                 },
@@ -2386,9 +2384,6 @@
                 "referralCode": {
                     "type": "string"
                 },
-                "relationShip": {
-                    "$ref": "#/definitions/pb_user.FriendItem"
-                },
                 "roleRealEstate": {
                     "type": "integer"
                 },
@@ -2399,6 +2394,9 @@
                     "type": "string"
                 },
                 "statusOnline": {
+                    "type": "integer"
+                },
+                "tabDefault": {
                     "type": "integer"
                 },
                 "taxCode": {
@@ -2437,6 +2435,23 @@
                     "type": "integer"
                 },
                 "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 }
             }

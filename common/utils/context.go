@@ -30,6 +30,7 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 }
 
 func GetOrganizationIdFromContext(c context.Context) uint64 {
+	// todo: đổi sang profile sau khi xong
 	organizationId := c.Value("profileId")
 	if organizationId == nil {
 		return 0

@@ -31,8 +31,8 @@ func (r *PostgreUserCostType) QuerySearch(c context.Context, profileId uint64, o
 	if dto.Text != "" {
 		query = query.Where("type_name like ?", "%"+dto.Text+"%")
 	}
-	if dto.Types != nil {
-		query = query.Where("type in (?)", dto.Types)
+	if dto.Type != nil {
+		query = query.Where("type = ?", dto.Type)
 	}
 	query = query.Order("is_custom ASC")
 	return query, nil

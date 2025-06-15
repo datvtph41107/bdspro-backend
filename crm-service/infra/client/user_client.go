@@ -168,3 +168,15 @@ func (c *UserClient) FriendToUserPbs(ctx context.Context, friends []*crmpb.Frien
 
 	return profileMap.Profiles, nil
 }
+
+func (c *UserClient) ValidateProfileIds(ctx context.Context, profileIds []uint64) (bool, error) {
+	request := &sharepb.GetProfileByIdsRequest{
+		Ids: profileIds,
+	}
+	response, err := c.Client.GetProfileByIds(ctx, request)
+	if err != nil {
+		return false, err
+	}
+
+	return len(response.Profiles) == len(profileIds), nil
+}

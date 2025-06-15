@@ -2,13 +2,27 @@ basePath: /v2/crm
 definitions:
   crmpb.ContactSaveDTO:
     properties:
+      assignedCrm:
+        type: boolean
+      avatar:
+        type: string
+      company:
+        type: string
+      email:
+        type: string
       fullName:
         type: string
       id:
         type: integer
+      note:
+        type: string
       ownerType:
         type: integer
       phone:
+        type: string
+      visibility:
+        type: integer
+      zalo:
         type: string
     type: object
   crmpb.ContactSyncRequest:
@@ -123,8 +137,14 @@ definitions:
         type: boolean
       color:
         type: integer
+      defaultStage:
+        $ref: '#/definitions/crmpb.StageDTO'
       id:
         type: integer
+      isCustom:
+        type: boolean
+      isDefault:
+        type: boolean
       ownerId:
         type: integer
       ownerType:
@@ -182,6 +202,42 @@ definitions:
         type: string
       link:
         type: string
+    type: object
+  crmpb.SharingDTO:
+    properties:
+      contactId:
+        type: integer
+      note:
+        type: string
+      ownerType:
+        type: integer
+      permissions:
+        items:
+          type: integer
+        type: array
+      toId:
+        type: integer
+    type: object
+  crmpb.SharingRequest:
+    properties:
+      contactId:
+        type: integer
+      deletedIds:
+        items:
+          type: integer
+        type: array
+      note:
+        type: string
+      ownerType:
+        type: integer
+      permissions:
+        items:
+          type: integer
+        type: array
+      receivers:
+        items:
+          $ref: '#/definitions/crmpb.SharingDTO'
+        type: array
     type: object
   crmpb.StageDTO:
     properties:
@@ -246,14 +302,22 @@ definitions:
       createdBy:
         description: gorm.Model
         type: integer
+      defaultStage:
+        $ref: '#/definitions/domain.StageEntity'
       id:
         type: integer
+      isCustom:
+        type: boolean
+      isDefault:
+        type: boolean
       ownerId:
         type: integer
       ownerType:
         $ref: '#/definitions/enums.EOwnerType'
       pipelineName:
         type: string
+      stageDefaultId:
+        type: integer
       updatedAt:
         type: string
       updatedBy:
@@ -737,6 +801,25 @@ paths:
       summary: Lấy danh sách liên hệ
       tags:
       - Liên hệ
+  /contact/note/{contactId}:
+    put:
+      consumes:
+      - application/json
+      description: Ghi chú liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Ghi chú liên hệ
+      tags:
+      - Liên hệ
   /contact/relation-ship/{id}:
     get:
       consumes:
@@ -970,6 +1053,37 @@ paths:
       summary: Lấy danh sách nhóm
       tags:
       - Nhóm bạn bè
+  /friend/cancel/{receiverId}:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị hủy
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy lời mời kết bạn
+      tags:
+      - Bạn bè
   /friend/group/{requestId}/{groupId}:
     put:
       consumes:
@@ -1068,6 +1182,37 @@ paths:
       summary: Lấy danh sách bạn bè
       tags:
       - Bạn bè
+  /friend/reject/{requestId}:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
   /friend/request/{receiverId}:
     post:
       consumes:
@@ -1128,37 +1273,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Đồng ý kết bạn
-      tags:
-      - Bạn bè
-  /friend/request/{requestId}/reject:
-    delete:
-      consumes:
-      - application/json
-      description: Hủy lời mời kết bạn đang chờ
-      parameters:
-      - description: ID của lời mời kết bạn
-        in: path
-        name: requestId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Lời mời đã bị từ chối
-          schema:
-            type: string
-        "400":
-          description: Yêu cầu không hợp lệ
-          schema:
-            type: string
-        "404":
-          description: Không tìm thấy lời mời
-          schema:
-            type: string
-      security:
-      - BearerAuth: []
-      summary: Hủy kết bạn
       tags:
       - Bạn bè
   /friend/request/received:
@@ -1696,7 +1810,7 @@ paths:
         name: entity
         required: true
         schema:
-          $ref: '#/definitions/domain.PipelineEntity'
+          $ref: '#/definitions/crmpb.PipelineDTO'
       produces:
       - application/json
       responses: {}
@@ -1748,7 +1862,20 @@ paths:
       summary: Cập nhật quy trình
       tags:
       - Quy trình
-  /pipeline/{ownerId}/{ownerType}:
+  /pipeline/default:
+    get:
+      consumes:
+      - application/json
+      description: Lấy quy trình mặc định
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy quy trình mặc định
+      tags:
+      - Quy trình
+  /pipeline/list:
     get:
       consumes:
       - application/json
@@ -1960,6 +2087,54 @@ paths:
       summary: Tìm kiếm quy tắc
       tags:
       - Quy tắc
+  /sharing/list/{contactId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách chia sẻ
+      parameters:
+      - in: query
+        name: contactId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách chia sẻ
+      tags:
+      - Chia sẻ liên hệ
+  /sharing/share:
+    post:
+      consumes:
+      - application/json
+      description: Chia sẻ liên hệ
+      parameters:
+      - description: Thông tin chia sẻ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.SharingRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chia sẻ liên hệ
+      tags:
+      - Chia sẻ liên hệ
   /stage:
     post:
       consumes:

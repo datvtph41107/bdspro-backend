@@ -32,10 +32,13 @@ message LeadDTO {
   message PipelineDTO {
     uint64 id = 1;
     string pipelineName = 2;
-	uint32 color = 3;
-	bool active = 4;
-	uint64 ownerId = 5;
-	uint32 ownerType = 6;
+    uint32 color = 3;
+    bool active = 4;
+    uint64 ownerId = 5;
+    uint32 ownerType = 6;
+    bool isDefault = 7;
+    bool isCustom = 8;
+    StageDTO defaultStage = 9;
 }
 
 

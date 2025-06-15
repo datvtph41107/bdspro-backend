@@ -19,7 +19,6 @@ init:
 	cd organization-service && go mod tidy
 	cd appointment-service && go mod tidy
 
-# @deprecated
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
 buf-social:
@@ -32,6 +31,8 @@ buf-bdspro:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path bdspro
 buf-shared:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path shared
+buf-org:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path organization
 
 gen:
 	cd protobuf/schema && buf generate --template ./notification/buf.gen.yaml --path notification

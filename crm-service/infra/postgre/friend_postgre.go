@@ -46,7 +46,7 @@ func (repo *FriendPostgre) UpdateGroupReceiverId(ctx context.Context, id uint, g
 
 func (repo *FriendPostgre) FindBySenderIdAndReceiverId(ctx context.Context, sender uint64, receiver uint64) (*domain.FriendEntity, error) {
 	var request domain.FriendEntity
-	err := repo.DB.Where("created_by = ? AND receiver_id = ?", sender, receiver).First(&request).Error
+	err := repo.DB.Where("created_by = ? AND receiver_id = ? and status = ? and deleted_at is null", sender, receiver, enums.FriendStatusPending).First(&request).Error
 	return &request, err
 }
 
@@ -102,7 +102,7 @@ func (repo *FriendPostgre) SearchFriend(ctx context.Context, currentId uint64, d
 func (repo *FriendPostgre) ExistsByCreatedByAndReceiverId(ctx context.Context, createdBy uint64, receiverId uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&domain.FriendEntity{}).
-		Where("created_by = ? AND receiver_id = ? AND status <> ?", createdBy, receiverId, enums.FriendStatusReject).
+		Where("created_by = ? AND receiver_id = ? AND status <> ? and deleted_at is null", createdBy, receiverId, enums.FriendStatusReject).
 		Count(&count).Error
 	return count > 0, err
 }
@@ -174,4 +174,12 @@ func (repo *FriendPostgre) GetRelationShip(ctx context.Context, currentId uint64
 	}
 
 	return status, nil
+}
+
+func (repo *FriendPostgre) CancelRequest(ctx context.Context, id uint64) error {
+	return repo.DB.
+		Model(&domain.FriendEntity{}).
+		Where("id = ?", id).
+		Update("deleted_at", time.Now()).
+		Error
 }

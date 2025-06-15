@@ -176,6 +176,45 @@
         ]
       }
     },
+    "/v2/crm/contact/note/{id}": {
+      "put": {
+        "operationId": "ContactService_Note",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbNoteContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ContactServiceNoteBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/relation-ship/{id}": {
       "get": {
         "operationId": "ContactService_RelationShip",
@@ -309,6 +348,14 @@
     }
   },
   "definitions": {
+    "ContactServiceNoteBody": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string"
+        }
+      }
+    },
     "crmpbContactDTO": {
       "type": "object",
       "properties": {
@@ -409,6 +456,28 @@
         "ownerType": {
           "type": "integer",
           "format": "int32"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "assignedCrm": {
+          "type": "boolean"
         }
       }
     },
@@ -424,6 +493,28 @@
         "ownerType": {
           "type": "integer",
           "format": "int32"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "assignedCrm": {
+          "type": "boolean"
         }
       }
     },
@@ -460,6 +551,18 @@
         "totalElements": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "crmpbNoteContactDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },

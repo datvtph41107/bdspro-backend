@@ -66,7 +66,7 @@ func (r *GroupAssetRouter) GetAsset(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param productShareRequest body org_dto.ProductShareRequest true "Product Share Request"
-// @Success 200 {object} domain.ProductAccess "Thành công"
+// @Success 200 {object} domain.AssetShare "Thành công"
 // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "Lỗi server"
 // @Router /v1/bdspro/v2/group/asset/share [post]

@@ -185,3 +185,22 @@ func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdReques
 		NumFriend:    result.NumFriend,
 	}, nil
 }
+
+// @Summary Ghi chú liên hệ
+// @Description Ghi chú liên hệ
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param contactId path int true "ID của liên hệ"
+// @Security BearerAuth
+// @Router /contact/note/{contactId} [put]
+func (s *ContactService) Note(ctx context.Context, req *crmpb.NoteContactDTO) (*crmpb.NoteContactDTO, error) {
+	err := s.UC.Note(ctx, req.Id, req.Note)
+	if err != nil {
+		return nil, err
+	}
+	return &crmpb.NoteContactDTO{
+		Id:   req.Id,
+		Note: req.Note,
+	}, nil
+}

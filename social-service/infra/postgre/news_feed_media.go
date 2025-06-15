@@ -18,29 +18,26 @@ func NewPostgreNewsFeedMedia(db *gorm.DB) *PostgreNewsFeedMedia {
 }
 
 func (r *PostgreNewsFeedMedia) UpdateMedia(ctx context.Context, newsFeedID uint64, medias []domain.NewsFeedMedia) error {
-	return r.db.WithContext(ctx).
-		Transaction(func(tx *gorm.DB) error {
-			tx = GetDB(ctx, tx)
-			// 1. Xoá hết ảnh cũ
-			if err := tx.Model(&domain.NewsFeedMedia{}).
-				Where("news_feed_id = ?", newsFeedID).
-				Update("deleted_at", time.Now()).
-				Error; err != nil {
-				return err
-			}
+	tx := r.db.WithContext(ctx)
+	// 1. Xoá hết ảnh cũ
+	if err := tx.Model(&domain.NewsFeedMedia{}).
+		Where("news_feed_id = ?", newsFeedID).
+		Update("deleted_at", time.Now()).
+		Error; err != nil {
+		return err
+	}
 
-			// 2. Gán post_id cho tất cả ảnh mới (nếu cần)
-			for _, media := range medias {
-				media.NewsFeedID = &newsFeedID
-			}
+	// 2. Gán post_id cho tất cả ảnh mới (nếu cần)
+	for i := range medias {
+		medias[i].NewsFeedID = &newsFeedID
+	}
 
-			// 3. Tạo mới toàn bộ ảnh
-			if len(medias) > 0 {
-				if err := tx.Create(&medias).Error; err != nil {
-					return err
-				}
-			}
+	// 3. Tạo mới toàn bộ ảnh
+	if len(medias) > 0 {
+		if err := tx.Create(medias).Error; err != nil {
+			return err
+		}
+	}
 
-			return nil
-		})
+	return nil
 }

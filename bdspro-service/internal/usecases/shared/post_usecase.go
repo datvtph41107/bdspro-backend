@@ -22,10 +22,9 @@ type IPostUsecase interface {
 }
 
 type PostUsecase struct {
-	This     IPostUsecase
-	ClientUC iusecase.IClientUC
-	// productRepo        *u_product.UserProductRepo
-	ProductUsecase *ProductUsecase
+	This           IPostUsecase
+	ClientUC       iusecase.IClientUC
+	ProductUsecase *ProductUsecase // forward reference
 	ProductRepo    repo.ProductRepo
 	Repo           repo.UPostRepo
 	PostMediaRepo  repo.PostMediaRepo

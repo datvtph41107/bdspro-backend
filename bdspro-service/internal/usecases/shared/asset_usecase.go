@@ -30,7 +30,8 @@ type AssetUsecase struct {
 	AssetUsecase      IAssetUsecase
 }
 
-func NewSharedAssetUsecase(assetRepo repo.AssetRepo,
+func NewSharedAssetUsecase(
+	assetRepo repo.AssetRepo,
 	ProductRepo repo.ProductRepo,
 	RecordHistoryRepo repo.RecordHistoryRepo,
 	AssetLegalRepo repo.AssetLegalRepo,

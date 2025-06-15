@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	shared "pb/types/shared"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -37,7 +38,7 @@ type NewsFeedServiceClient interface {
 	UpdateNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*NewsFeed, error)
 	GetNewsFeedByUserID(ctx context.Context, in *NewsFeedSearch, opts ...grpc.CallOption) (*ListNewsFeed, error)
 	DetailNewsFeed(ctx context.Context, in *DetailRequest, opts ...grpc.CallOption) (*NewsFeed, error)
-	DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*Empty, error)
+	DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*shared.Empty, error)
 	GetGlobalNewsFeed(ctx context.Context, in *NewsFeedGlobalSearch, opts ...grpc.CallOption) (*ListNewsFeed, error)
 	ShareNewsFeed(ctx context.Context, in *ShareRequest, opts ...grpc.CallOption) (*ShareResponse, error)
 	UpdateVisibility(ctx context.Context, in *VisibilityRequest, opts ...grpc.CallOption) (*NewsFeed, error)
@@ -91,9 +92,9 @@ func (c *newsFeedServiceClient) DetailNewsFeed(ctx context.Context, in *DetailRe
 	return out, nil
 }
 
-func (c *newsFeedServiceClient) DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*Empty, error) {
+func (c *newsFeedServiceClient) DeleteNewsFeed(ctx context.Context, in *NewsFeed, opts ...grpc.CallOption) (*shared.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Empty)
+	out := new(shared.Empty)
 	err := c.cc.Invoke(ctx, NewsFeedService_DeleteNewsFeed_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -139,7 +140,7 @@ type NewsFeedServiceServer interface {
 	UpdateNewsFeed(context.Context, *NewsFeed) (*NewsFeed, error)
 	GetNewsFeedByUserID(context.Context, *NewsFeedSearch) (*ListNewsFeed, error)
 	DetailNewsFeed(context.Context, *DetailRequest) (*NewsFeed, error)
-	DeleteNewsFeed(context.Context, *NewsFeed) (*Empty, error)
+	DeleteNewsFeed(context.Context, *NewsFeed) (*shared.Empty, error)
 	GetGlobalNewsFeed(context.Context, *NewsFeedGlobalSearch) (*ListNewsFeed, error)
 	ShareNewsFeed(context.Context, *ShareRequest) (*ShareResponse, error)
 	UpdateVisibility(context.Context, *VisibilityRequest) (*NewsFeed, error)
@@ -165,7 +166,7 @@ func (UnimplementedNewsFeedServiceServer) GetNewsFeedByUserID(context.Context, *
 func (UnimplementedNewsFeedServiceServer) DetailNewsFeed(context.Context, *DetailRequest) (*NewsFeed, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DetailNewsFeed not implemented")
 }
-func (UnimplementedNewsFeedServiceServer) DeleteNewsFeed(context.Context, *NewsFeed) (*Empty, error) {
+func (UnimplementedNewsFeedServiceServer) DeleteNewsFeed(context.Context, *NewsFeed) (*shared.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNewsFeed not implemented")
 }
 func (UnimplementedNewsFeedServiceServer) GetGlobalNewsFeed(context.Context, *NewsFeedGlobalSearch) (*ListNewsFeed, error) {

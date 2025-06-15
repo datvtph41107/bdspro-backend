@@ -23,9 +23,11 @@ func (r *PostgrePipeline) Search(c context.Context, ownerId uint64, ownerType en
 	var entities []domain.PipelineEntity
 	query := r.db.WithContext(c).Model(&domain.PipelineEntity{})
 
-	query = query.Where("owner_id = ? AND owner_type = ?", ownerId, ownerType)
+	query = query.Where("(owner_id = ? AND owner_type = ?) OR is_custom = ?", ownerId, ownerType, false)
 
-	if err := query.Find(&entities).
+	if err := query.
+		Preload("DefaultStage").
+		Find(&entities).
 		Order("order_number ASC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
@@ -70,6 +72,19 @@ func (r *PostgrePipeline) GetByID(c context.Context, id uint64) (*domain.Pipelin
 	if err := r.db.WithContext(c).
 		Model(&domain.PipelineEntity{}).
 		Where("id = ?", id).
+		First(&entity).Error; err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *PostgrePipeline) GetDefault(c context.Context, organizationId uint64) (*domain.PipelineEntity, error) {
+	var entity domain.PipelineEntity
+	if err := r.db.WithContext(c).
+		Model(&domain.PipelineEntity{}).
+		Where("(owner_id = ? AND owner_type = ?) OR is_default = ?",
+			organizationId, enums.EOwnerTypeOrgnization, true).
+		Preload("DefaultStage").
 		First(&entity).Error; err != nil {
 		return nil, err
 	}

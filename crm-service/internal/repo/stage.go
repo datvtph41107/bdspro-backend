@@ -12,4 +12,5 @@ type StageRepo interface {
 	Update(c context.Context, entity *domain.StageEntity) (*domain.StageEntity, error)
 	Delete(c context.Context, id uint64) error
 	GetByID(c context.Context, id uint64) (*domain.StageEntity, error)
+	GetOneStageDefault(c context.Context, pipelineId uint64) (*domain.StageEntity, error)
 }

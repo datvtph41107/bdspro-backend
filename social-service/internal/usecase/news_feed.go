@@ -88,14 +88,14 @@ func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.N
 			}
 		}
 
-		if len(newsFeed.NewsFeedMedias) > 0 {
-			if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
-			}
-		}
+		// if len(newsFeed.NewsFeedMedias) > 0 {
+		// 	if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
+		// 		return &_routes.Except{
+		// 			Code:    http.StatusInternalServerError,
+		// 			Message: err.Error(),
+		// 		}
+		// 	}
+		// }
 
 		return nil // commit nếu mọi thứ ok
 	})

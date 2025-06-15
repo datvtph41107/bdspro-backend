@@ -141,7 +141,6 @@ service ProductService {
   };
 }
 
-message Empty {}
 message PingResponse {}
 message ProductInternalRequest {
   int32 page = 1;

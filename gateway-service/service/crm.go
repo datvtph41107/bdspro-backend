@@ -28,4 +28,5 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = crmpb.RegisterFriendGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterFriendServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterInvitationInstallServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = crmpb.RegisterSharingAccessServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

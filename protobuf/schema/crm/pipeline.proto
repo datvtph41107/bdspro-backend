@@ -5,6 +5,7 @@ package crmpb;
 option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
 import "crm/common.proto";
+import "shared/common.proto";
 
 message PipelineSearchRequest {
     uint32 page = 1;
@@ -16,6 +17,8 @@ message PipelineSearchRequest {
 
     uint64 ownerId = 6;
     uint32 ownerType = 7;
+    optional bool isDefault = 8;
+    optional bool isCustom = 9;
 }
 
 message PipelineListDTO {
@@ -26,7 +29,12 @@ message PipelineListDTO {
 service PipelineService {
     rpc Search (PipelineSearchRequest) returns (PipelineListDTO) {
         option (google.api.http) = {
-            get: "/v2/crm/pipeline/list/{ownerId}/{ownerType}"
+            get: "/v2/crm/pipeline/list"
+        };
+    };
+    rpc GetDefault (sharepb.Empty) returns (PipelineDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/default"
         };
     };
     rpc Detail (PipelineDTO) returns (PipelineDTO) {

@@ -27,6 +27,7 @@ const (
 	ContactService_Delete_FullMethodName       = "/crmpb.ContactService/Delete"
 	ContactService_Sync_FullMethodName         = "/crmpb.ContactService/Sync"
 	ContactService_RelationShip_FullMethodName = "/crmpb.ContactService/RelationShip"
+	ContactService_Note_FullMethodName         = "/crmpb.ContactService/Note"
 )
 
 // ContactServiceClient is the client API for ContactService service.
@@ -40,6 +41,7 @@ type ContactServiceClient interface {
 	Delete(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	Sync(ctx context.Context, in *ContactSyncRequest, opts ...grpc.CallOption) (*ContactSyncResponse, error)
 	RelationShip(ctx context.Context, in *shared.IdRequest, opts ...grpc.CallOption) (*RelationShipResponse, error)
+	Note(ctx context.Context, in *NoteContactDTO, opts ...grpc.CallOption) (*NoteContactDTO, error)
 }
 
 type contactServiceClient struct {
@@ -120,6 +122,16 @@ func (c *contactServiceClient) RelationShip(ctx context.Context, in *shared.IdRe
 	return out, nil
 }
 
+func (c *contactServiceClient) Note(ctx context.Context, in *NoteContactDTO, opts ...grpc.CallOption) (*NoteContactDTO, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NoteContactDTO)
+	err := c.cc.Invoke(ctx, ContactService_Note_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContactServiceServer is the server API for ContactService service.
 // All implementations must embed UnimplementedContactServiceServer
 // for forward compatibility.
@@ -131,6 +143,7 @@ type ContactServiceServer interface {
 	Delete(context.Context, *shared.IdRequest) (*shared.SubmitResponse, error)
 	Sync(context.Context, *ContactSyncRequest) (*ContactSyncResponse, error)
 	RelationShip(context.Context, *shared.IdRequest) (*RelationShipResponse, error)
+	Note(context.Context, *NoteContactDTO) (*NoteContactDTO, error)
 	mustEmbedUnimplementedContactServiceServer()
 }
 
@@ -161,6 +174,9 @@ func (UnimplementedContactServiceServer) Sync(context.Context, *ContactSyncReque
 }
 func (UnimplementedContactServiceServer) RelationShip(context.Context, *shared.IdRequest) (*RelationShipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RelationShip not implemented")
+}
+func (UnimplementedContactServiceServer) Note(context.Context, *NoteContactDTO) (*NoteContactDTO, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Note not implemented")
 }
 func (UnimplementedContactServiceServer) mustEmbedUnimplementedContactServiceServer() {}
 func (UnimplementedContactServiceServer) testEmbeddedByValue()                        {}
@@ -309,6 +325,24 @@ func _ContactService_RelationShip_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContactService_Note_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoteContactDTO)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).Note(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_Note_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).Note(ctx, req.(*NoteContactDTO))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContactService_ServiceDesc is the grpc.ServiceDesc for ContactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -343,6 +377,10 @@ var ContactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RelationShip",
 			Handler:    _ContactService_RelationShip_Handler,
+		},
+		{
+			MethodName: "Note",
+			Handler:    _ContactService_Note_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

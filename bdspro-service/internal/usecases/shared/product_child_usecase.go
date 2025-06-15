@@ -43,7 +43,6 @@ func NewProductChildUsecase(
 	docTypeRepo repo.DocTypeRepo,
 	propertyType repo.PropertyTypeRepo,
 	amenity repo.AmenityRepo,
-	// UserProductService *UProductUsecase,
 ) *ProductChildUsecase {
 	return &ProductChildUsecase{
 		productChildRepo:  productChildRepo,

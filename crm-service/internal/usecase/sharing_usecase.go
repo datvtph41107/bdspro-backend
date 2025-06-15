@@ -1,21 +1,35 @@
 package usecase
 
 import (
+	_routes "common/routes"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 )
 
 type SharingAccessUsecase struct {
-	repo repo.SharingAccessRepo
+	repo        repo.SharingAccessRepo
+	contactRepo repo.ContactRepo
+	userClient  iusecase.UserClient
 }
 
-func NewSharingAccessUsecase(repo repo.SharingAccessRepo) *SharingAccessUsecase {
-	return &SharingAccessUsecase{repo: repo}
+func NewSharingAccessUsecase(
+	repo repo.SharingAccessRepo,
+	contactRepo repo.ContactRepo,
+	userClient iusecase.UserClient,
+) *SharingAccessUsecase {
+	return &SharingAccessUsecase{
+		repo:        repo,
+		contactRepo: contactRepo,
+		userClient:  userClient,
+	}
 }
 
 func (s *SharingAccessUsecase) CheckPermission(c context.Context, contactId uint64) error {
+
 	return nil
 }
 
@@ -30,11 +44,51 @@ func (s *SharingAccessUsecase) List(c context.Context, contactId uint64, dto *dt
 	return sharing, total, nil
 }
 
-func (s *SharingAccessUsecase) BulkShare(c context.Context, contactId uint64, deletedIds []uint64, receivers []domain.SharingEntity) error {
+func (s *SharingAccessUsecase) BulkShare(c context.Context,
+	contactId uint64,
+	permissions []int32,
+	note string,
+	ownerType enums.EOwnerType,
+	deletedIds []uint64,
+	receivers []domain.SharingEntity,
+) error {
+	contact, err := s.contactRepo.GetByID(c, contactId)
+	if err != nil {
+		return err
+	}
+	if contact == nil || contact.ID == 0 {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Liên hệ không tồn tại",
+		}
+	}
+
+	profileIds := make([]uint64, len(receivers))
+	for i := range receivers {
+		profileIds[i] = receivers[i].ReceiverID
+	}
+	validated, err := s.userClient.ValidateProfileIds(c, profileIds)
+	if err != nil {
+		return err
+	}
+	if !validated {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Người dùng không tồn tại vui lòng kiểm tra lại",
+		}
+	}
+
 	if err := s.CheckPermission(c, contactId); err != nil {
 		return err
 	}
-	_, err := s.repo.Bulk(c, deletedIds, receivers)
+
+	for i := range receivers {
+		receivers[i].ContactID = contactId
+		receivers[i].Permissions = permissions
+		receivers[i].Note = note
+	}
+
+	_, err = s.repo.Bulk(c, deletedIds, receivers)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,11 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 		Debug().
 		Table("tb_contact").
 		Joins("LEFT JOIN block bl ON (bl.profile_id = ? AND bl.blocked_id = tb_contact.profile_id)", profileId).
-		Joins("LEFT JOIN friend fr ON (fr.created_by = tb_contact.profile_id OR fr.receiver_id = tb_contact.profile_id) and fr.deleted_at is null").
+		Joins(`LEFT JOIN friend fr ON (
+		(fr.created_by = tb_contact.profile_id and fr.receiver_id = ?) 
+		OR (fr.receiver_id = tb_contact.profile_id and fr.created_by = ?)) 
+		and fr.deleted_at is null`,
+			profileId, profileId).
 		Joins("LEFT JOIN follow fl ON fl.following_id = tb_contact.profile_id and fl.created_by = ? and fl.deleted_at is null", profileId).
 		Select(`tb_contact.*, 
 		fl.id IS NOT NULL AS following, 
@@ -53,7 +57,7 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 }
 
 func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	result := r.DB.Create(entity)
+	result := r.DB.WithContext(c).Create(entity)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -91,7 +95,7 @@ func (r *PostgreContact) Delete(c context.Context, id uint64) error {
 
 func (r *PostgreContact) GetByID(c context.Context, id uint64) (*domain.ContactEntity, error) {
 	var contact domain.ContactEntity
-	result := r.DB.Model(&domain.ContactEntity{}).Where("id = ?", id).First(&contact)
+	result := r.DB.Model(&domain.ContactEntity{}).Where("id = ? and deleted_at is null", id).First(&contact)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -173,4 +177,14 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 		return nil, result.Error
 	}
 	return &contact, nil
+}
+
+func (r *PostgreContact) UpdateNote(c context.Context, id uint64, note string) error {
+	result := r.DB.Model(&domain.ContactEntity{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("note", note)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }

@@ -41,7 +41,7 @@ func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*
 	}
 	if entity.OwnerType == enums.EOwnerTypeMember {
 		profileId := _utils.GetProfileIdWithContext(c)
-		if profileId != contactId {
+		if profileId != entity.OwnerID {
 			return nil, &_routes.Except{
 				Code:    403,
 				Message: "Bạn không có quyền truy cập",
@@ -61,10 +61,12 @@ func (s *ContactUsecase) Search(c context.Context, ownerType enums.EOwnerType, d
 }
 
 func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	if entity.OwnerType == enums.EOwnerTypeMember {
-		profileId := _utils.GetProfileIdWithContext(c)
-		entity.OwnerID = profileId
-	}
+	// if entity.OwnerType == enums.EOwnerTypeMember {
+	// 	profileId := _utils.GetProfileIdWithContext(c)
+	// 	entity.OwnerID = profileId
+	// }
+	profileId := _utils.GetProfileIdWithContext(c)
+	entity.OwnerID = profileId
 	return s.repo.Create(c, entity)
 }
 
@@ -120,10 +122,7 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 	}
 
 	if entity.ProfileID != 0 {
-		friendStatus, err := s.friendRepo.GetByUserID(c, entity.ProfileID)
-		if err != nil {
-			return nil, err
-		}
+		friendStatus, _ := s.friendRepo.GetByUserID(c, entity.ProfileID)
 		entity.FriendStatus = friendStatus
 	}
 	return entity, nil
@@ -147,4 +146,12 @@ func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *dto.
 		NumFollowing: numFollowing,
 		NumFriend:    friendNumber,
 	}
+}
+
+func (s *ContactUsecase) Note(c context.Context, id uint64, note string) error {
+	_, err := s.CheckPermission(c, id)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdateNote(c, id, note)
 }

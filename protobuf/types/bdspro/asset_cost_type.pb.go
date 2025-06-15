@@ -91,6 +91,13 @@ func (x *AssetCostTypeDTO) GetType() uint32 {
 	return 0
 }
 
+func (x *AssetCostTypeDTO) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 type AssetCostTypeListDTO struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -198,6 +205,66 @@ func (x *GroupType) GetSpends() []*AssetCostTypeDTO {
 	return nil
 }
 
+type CostTypeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	OwnerType     uint32                 `protobuf:"varint,2,opt,name=ownerType,proto3" json:"ownerType,omitempty"`
+	Type          *uint32                `protobuf:"varint,3,opt,name=type,proto3,oneof" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CostTypeRequest) Reset() {
+	*x = CostTypeRequest{}
+	mi := &file_bdspro_asset_cost_type_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CostTypeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CostTypeRequest) ProtoMessage() {}
+
+func (x *CostTypeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_bdspro_asset_cost_type_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CostTypeRequest.ProtoReflect.Descriptor instead.
+func (*CostTypeRequest) Descriptor() ([]byte, []int) {
+	return file_bdspro_asset_cost_type_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CostTypeRequest) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *CostTypeRequest) GetOwnerType() uint32 {
+	if x != nil {
+		return x.OwnerType
+	}
+	return 0
+}
+
+func (x *CostTypeRequest) GetType() uint32 {
+	if x != nil && x.Type != nil {
+		return *x.Type
+	}
+	return 0
+}
+
 var File_bdspro_asset_cost_type_proto protoreflect.FileDescriptor
 
 var file_bdspro_asset_cost_type_proto_rawDesc = []byte{
@@ -248,25 +315,26 @@ var file_bdspro_asset_cost_type_proto_goTypes = []interface{}{
 	(*AssetCostTypeDTO)(nil),     // 0: pb_bdspro.AssetCostTypeDTO
 	(*AssetCostTypeListDTO)(nil), // 1: pb_bdspro.AssetCostTypeListDTO
 	(*GroupType)(nil),            // 2: pb_bdspro.GroupType
-	(*IdRequest)(nil),            // 3: pb_bdspro.IdRequest
-	(*Response)(nil),             // 4: pb_bdspro.Response
+	(*CostTypeRequest)(nil),      // 3: pb_bdspro.CostTypeRequest
+	(*IdRequest)(nil),            // 4: pb_bdspro.IdRequest
+	(*Response)(nil),             // 5: pb_bdspro.Response
 }
 var file_bdspro_asset_cost_type_proto_depIdxs = []int32{
 	0, // 0: pb_bdspro.AssetCostTypeListDTO.data:type_name -> pb_bdspro.AssetCostTypeDTO
 	0, // 1: pb_bdspro.GroupType.incomes:type_name -> pb_bdspro.AssetCostTypeDTO
 	0, // 2: pb_bdspro.GroupType.spends:type_name -> pb_bdspro.AssetCostTypeDTO
-	3, // 3: pb_bdspro.AssetCostTypeService.Search:input_type -> pb_bdspro.IdRequest
-	3, // 4: pb_bdspro.AssetCostTypeService.SearchGroup:input_type -> pb_bdspro.IdRequest
-	3, // 5: pb_bdspro.AssetCostTypeService.Detail:input_type -> pb_bdspro.IdRequest
+	3, // 3: pb_bdspro.AssetCostTypeService.Search:input_type -> pb_bdspro.CostTypeRequest
+	4, // 4: pb_bdspro.AssetCostTypeService.SearchGroup:input_type -> pb_bdspro.IdRequest
+	4, // 5: pb_bdspro.AssetCostTypeService.Detail:input_type -> pb_bdspro.IdRequest
 	0, // 6: pb_bdspro.AssetCostTypeService.Create:input_type -> pb_bdspro.AssetCostTypeDTO
 	0, // 7: pb_bdspro.AssetCostTypeService.Update:input_type -> pb_bdspro.AssetCostTypeDTO
-	3, // 8: pb_bdspro.AssetCostTypeService.Delete:input_type -> pb_bdspro.IdRequest
+	4, // 8: pb_bdspro.AssetCostTypeService.Delete:input_type -> pb_bdspro.IdRequest
 	1, // 9: pb_bdspro.AssetCostTypeService.Search:output_type -> pb_bdspro.AssetCostTypeListDTO
 	2, // 10: pb_bdspro.AssetCostTypeService.SearchGroup:output_type -> pb_bdspro.GroupType
 	0, // 11: pb_bdspro.AssetCostTypeService.Detail:output_type -> pb_bdspro.AssetCostTypeDTO
 	0, // 12: pb_bdspro.AssetCostTypeService.Create:output_type -> pb_bdspro.AssetCostTypeDTO
 	0, // 13: pb_bdspro.AssetCostTypeService.Update:output_type -> pb_bdspro.AssetCostTypeDTO
-	4, // 14: pb_bdspro.AssetCostTypeService.Delete:output_type -> pb_bdspro.Response
+	5, // 14: pb_bdspro.AssetCostTypeService.Delete:output_type -> pb_bdspro.Response
 	9, // [9:15] is the sub-list for method output_type
 	3, // [3:9] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -311,7 +379,7 @@ func file_bdspro_asset_cost_type_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_bdspro_asset_cost_type_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

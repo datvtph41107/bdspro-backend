@@ -132,7 +132,7 @@ func (route *OrgProductRouter) Posts(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "ID của sản phẩm"
-// @Param members body dto.ProductAccessSearch true "Thông tin thành viên"
+// @Param members body dto.SharingAccessSearch true "Thông tin thành viên"
 // @Router /v1/bdspro/v2/org/product/{id}/members [get]
 func (route *OrgProductRouter) Members(c *gin.Context) {
 	var dto dto.SharingAccessSearch

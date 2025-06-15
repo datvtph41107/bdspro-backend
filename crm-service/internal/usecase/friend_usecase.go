@@ -136,15 +136,15 @@ func (s *FriendUsecase) ChangeStatus(c context.Context, requestId uint64, status
 		return 0, err
 	}
 
-	requestEntity, err := s.repo.FindByID(c, requestId)
+	// requestEntity, err := s.repo.FindByID(c, requestId)
+	profileId := _utils.GetProfileIdWithContext(c)
+	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, requestId, profileId)
 	if err != nil {
 		return 0, errors.New("Id không chính xác")
 	}
 
-	profileId := _utils.GetProfileIdWithContext(c)
-
 	if requestEntity.ReceiverID != profileId || requestEntity.Status != enums.FriendStatusPending {
-		return 0, errors.New("Không thể thực hiện yêu cầu")
+		return 0, errors.New("Bạn không phải người nhận yêu cầu hoặc không thể thực hiện yêu cầu")
 	}
 
 	// if requestEntity.Status != enums.Pending {
@@ -167,7 +167,7 @@ func (s *FriendUsecase) ChangeStatus(c context.Context, requestId uint64, status
 	// 	return s.repo.UpdateStatusById(request.Status, id, &t)
 	// }
 
-	return 0, s.repo.UpdateStatusById(c, status, requestId, nil)
+	return 0, s.repo.UpdateStatusById(c, status, requestEntity.ID, nil)
 }
 
 func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId uint64) (int, error) {
@@ -230,16 +230,16 @@ func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId
 // 	return s.repo.UpdateStatusById(request.Status, id, nil)
 // }
 
-func (s *FriendUsecase) Delete(c context.Context, id uint64, userID uint64) error {
-	existingRequest, err := s.repo.FindByID(c, id)
-	if err != nil {
-		return errors.New("Id không chính xác")
-	}
-	if existingRequest.ID != userID && existingRequest.ReceiverID != userID {
-		return errors.New("Bạn không thể xóa yêu cầu này")
-	}
-	return s.repo.DeleteByID(c, id)
-}
+// func (s *FriendUsecase) Delete(c context.Context, id uint64, userID uint64) error {
+// 	existingRequest, err := s.repo.FindByID(c, id)
+// 	if err != nil {
+// 		return errors.New("Id không chính xác")
+// 	}
+// 	if existingRequest.ID != userID && existingRequest.ReceiverID != userID {
+// 		return errors.New("Bạn không thể xóa yêu cầu này")
+// 	}
+// 	return s.repo.DeleteByID(c, id)
+// }
 
 func (s *FriendUsecase) FriendInfo(c context.Context) (*data.FollowInfoRes, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
@@ -254,4 +254,30 @@ func (s *FriendUsecase) FriendInfo(c context.Context) (*data.FollowInfoRes, erro
 		NumFollowing: numFollowing,
 		NumFriend:    friendNumber,
 	}, nil
+}
+
+func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(c)
+
+	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, profileId, receiverId)
+	if err != nil {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Id không chính xác",
+		}
+	}
+	if requestEntity == nil || requestEntity.ID == 0 {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Không tìm thấy lời mời kết bạn",
+		}
+	}
+
+	if requestEntity.Status != enums.FriendStatusPending {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Không thể hủy lời mời kết bạn",
+		}
+	}
+	return s.repo.CancelRequest(c, requestEntity.ID)
 }

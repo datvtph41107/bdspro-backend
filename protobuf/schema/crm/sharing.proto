@@ -9,7 +9,7 @@ option go_package = "pb/types/crm;crmpb";
 service SharingAccessService {
     rpc Share (SharingRequest) returns (SharingResponse) {
         option (google.api.http) = {
-            post: "/v2/crm/sharing/{ownerType}"
+            post: "/v2/crm/sharing/share"
             body: "*"
         };
     }
@@ -24,8 +24,13 @@ message SharingDTO {
     uint64 toId = 1;
     int32 ownerType = 2;
     uint64 contactId = 3;
-    uint32 permissions = 4;
+    repeated int32 permissions = 4;
     string note = 5;
+}
+
+message SharingBulkDTO {
+    int32 toId = 1;
+    int32 ownerType = 2;
 }
 
 message SharingRequest {
@@ -34,6 +39,7 @@ message SharingRequest {
     repeated uint64 deletedIds = 3;
     int32 ownerType = 4;
     string note = 5;
+    repeated int32 permissions = 6;
 }
 
 message SharingResponse {

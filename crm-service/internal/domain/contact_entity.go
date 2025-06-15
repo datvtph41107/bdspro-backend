@@ -18,7 +18,7 @@ type ContactEntity struct {
 	Visibility   enums.EVisibility `gorm:"column:visibility;default:30" json:"visibility"`
 	LeadID       uint64            `gorm:"column:lead_id" json:"leadId"`
 	OwnerID      uint64            `gorm:"column:owner_id" json:"ownerId"`
-	OwnerType    enums.EOwnerType  `gorm:"column:owner_type;default:10" json:"ownerType" binding:"required"`
+	OwnerType    enums.EOwnerType  `gorm:"column:owner_type;default:30" json:"ownerType" binding:"required"`
 	ProfileID    uint64            `gorm:"column:profile_id" json:"profileId"`
 	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
 }
@@ -33,6 +33,10 @@ type ContactItem struct {
 	Phone            string           `gorm:"column:phone" json:"phone"`
 	FullName         string           `gorm:"column:full_name" json:"fullName" binding:"required"`
 	Avatar           string           `gorm:"column:avatar" json:"avatar"`
+	Email            string           `gorm:"column:email" json:"email"`
+	Zalo             string           `gorm:"column:zalo" json:"zalo"`
+	Company          string           `gorm:"column:company" json:"company"`
+	Note             string           `gorm:"column:note" json:"note"`
 	OwnerID          uint64           `gorm:"column:owner_id" json:"ownerId"`
 	OwnerType        enums.EOwnerType `gorm:"column:owner_type;default:10" json:"ownerType" binding:"required"`
 	ProfileID        uint64           `gorm:"column:profile_id" json:"profileId"`

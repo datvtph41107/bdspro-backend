@@ -26,12 +26,16 @@ func NewAssetCostTypeServer(AssetCostTypeUc *shared_usecase.AssetCostTypeUsecase
 // @Summary Lấy danh sách loại chi phí
 // @Tags Hợp đồng & Thu chi & Loại chi phí
 // @Produce json
-// @Param id path uint64 true "ID"
-// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param body query pb_bdspro.CostTypeRequest true "Body"
 // @Security BearerAuth
-// @Router /v2/bdspro/v2/asset/cost-type/{id}/{ownerType} [get]
-func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostTypeListDTO, error) {
-	searchDTO := &dto.AssetCostTypeSearchDTO{}
+// @Param assetId path uint64 true "ID"
+// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Router /v2/bdspro/v2/asset/cost-type/list/{assetId}/{ownerType} [get]
+func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeRequest) (*pb_bdspro.AssetCostTypeListDTO, error) {
+	searchDTO := &dto.AssetCostTypeSearchDTO{
+		Type: req.Type,
+	}
+	copier.Copy(&searchDTO, &req)
 	result, total, err := s.UC.Search(c, enums.EOwnerType(req.OwnerType), searchDTO)
 
 	pbdatas := []*pb_bdspro.AssetCostTypeDTO{}
@@ -43,6 +47,13 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.IdRequest
 	}, err
 }
 
+// @Summary Lấy danh sách loại chi phí theo nhóm
+// @Tags Hợp đồng & Thu chi & Loại chi phí
+// @Produce json
+// @Param id path uint64 true "ID"
+// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType} [get]
 func (s AssetCostTypeService) SearchGroup(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.GroupType, error) {
 	searchDTO := &dto.AssetCostTypeSearchDTO{}
 	incomes, spends, err := s.UC.SearchGroup(c, enums.EOwnerType(req.OwnerType), searchDTO)

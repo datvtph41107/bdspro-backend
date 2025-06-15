@@ -48,6 +48,28 @@
         ]
       }
     },
+    "/v2/crm/pipeline/default": {
+      "get": {
+        "operationId": "PipelineService_GetDefault",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbPipelineDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PipelineService"
+        ]
+      }
+    },
     "/v2/crm/pipeline/detail/{id}": {
       "get": {
         "operationId": "PipelineService_Detail",
@@ -105,6 +127,72 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isDefault",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "isCustom",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "defaultStage.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.stageName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "defaultStage.orderNumber",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "defaultStage.pipelineId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.ruleId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.step",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "defaultStage.active",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "defaultStage.color",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -112,7 +200,7 @@
         ]
       }
     },
-    "/v2/crm/pipeline/list/{ownerId}/{ownerType}": {
+    "/v2/crm/pipeline/list": {
       "get": {
         "operationId": "PipelineService_Search",
         "responses": {
@@ -130,20 +218,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "ownerId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "ownerType",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
           {
             "name": "page",
             "in": "query",
@@ -177,6 +251,32 @@
           },
           {
             "name": "active",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "isDefault",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "isCustom",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -240,6 +340,72 @@
           },
           {
             "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "isDefault",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "isCustom",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "defaultStage.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.stageName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "defaultStage.orderNumber",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "defaultStage.pipelineId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.ruleId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "defaultStage.step",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "defaultStage.active",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "defaultStage.color",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -314,6 +480,15 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "defaultStage": {
+          "$ref": "#/definitions/crmpbStageDTO"
         }
       }
     },
@@ -351,6 +526,50 @@
           "format": "uint64"
         },
         "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "defaultStage": {
+          "$ref": "#/definitions/crmpbStageDTO"
+        }
+      }
+    },
+    "crmpbStageDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "stageName": {
+          "type": "string"
+        },
+        "orderNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pipelineId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ruleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "step": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "color": {
           "type": "integer",
           "format": "int64"
         }

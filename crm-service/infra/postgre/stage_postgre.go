@@ -79,3 +79,14 @@ func (r *PostgreStage) GetByID(c context.Context, id uint64) (*domain.StageEntit
 	}
 	return &entity, nil
 }
+
+func (r *PostgreStage) GetOneStageDefault(c context.Context, pipelineId uint64) (*domain.StageEntity, error) {
+	var entity domain.StageEntity
+	if err := r.db.WithContext(c).
+		Model(&domain.StageEntity{}).
+		Where("pipeline_id = ? AND is_default = ", pipelineId, true).
+		First(&entity).Error; err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}

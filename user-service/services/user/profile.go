@@ -55,6 +55,12 @@ func (s *ProfileService) GetInfoMe(c *gin.Context) (*user_model.UserProfileEntit
 	certifications, _ := s.CertificationRepo.ListItemByProfileID(c, id)
 	userInfo.Certification = certifications
 
+	stats, err := s.RateRepo.CountInfo(c, id, 10)
+	if err != nil {
+		return nil, err
+	}
+	userInfo.RateStats = &stats
+
 	return userInfo, nil
 }
 

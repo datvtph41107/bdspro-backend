@@ -69,6 +69,7 @@ message ProfilePublicInfo {
     RateStats rateStats = 31;
     sharepb.FriendItem friendStatus = 32;
     bool following = 33;
+    uint32 tabDefault = 34;
 }
 
 message CertificationItem {

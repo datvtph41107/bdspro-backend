@@ -13,6 +13,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
@@ -35,31 +36,14 @@ var (
 	_ = metadata.Join
 )
 
-var filter_PipelineService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{"ownerId": 0, "ownerType": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+var filter_PipelineService_Search_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_PipelineService_Search_0(ctx context.Context, marshaler runtime.Marshaler, client PipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq PipelineSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -74,24 +58,7 @@ func local_request_PipelineService_Search_0(ctx context.Context, marshaler runti
 	var (
 		protoReq PipelineSearchRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["ownerId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerId")
-	}
-	protoReq.OwnerId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerId", err)
-	}
-	val, ok = pathParams["ownerType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ownerType")
-	}
-	protoReq.OwnerType, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ownerType", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -99,6 +66,25 @@ func local_request_PipelineService_Search_0(ctx context.Context, marshaler runti
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Search(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_PipelineService_GetDefault_0(ctx context.Context, marshaler runtime.Marshaler, client PipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq sharepb.Empty
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.GetDefault(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_PipelineService_GetDefault_0(ctx context.Context, marshaler runtime.Marshaler, server PipelineServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq sharepb.Empty
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.GetDefault(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -282,7 +268,7 @@ func RegisterPipelineServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -295,6 +281,26 @@ func RegisterPipelineServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 		forward_PipelineService_Search_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_PipelineService_GetDefault_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/crmpb.PipelineService/GetDefault", runtime.WithHTTPPathPattern("/v2/crm/pipeline/default"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PipelineService_GetDefault_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PipelineService_GetDefault_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_PipelineService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -420,7 +426,7 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list/{ownerId}/{ownerType}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/Search", runtime.WithHTTPPathPattern("/v2/crm/pipeline/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -432,6 +438,23 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 			return
 		}
 		forward_PipelineService_Search_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_PipelineService_GetDefault_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/crmpb.PipelineService/GetDefault", runtime.WithHTTPPathPattern("/v2/crm/pipeline/default"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PipelineService_GetDefault_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PipelineService_GetDefault_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_PipelineService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -505,17 +528,19 @@ func RegisterPipelineServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_PipelineService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "crm", "pipeline", "list", "ownerId", "ownerType"}, ""))
-	pattern_PipelineService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "pipeline", "detail", "id"}, ""))
-	pattern_PipelineService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "pipeline"}, ""))
-	pattern_PipelineService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
-	pattern_PipelineService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
+	pattern_PipelineService_Search_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "pipeline", "list"}, ""))
+	pattern_PipelineService_GetDefault_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "crm", "pipeline", "default"}, ""))
+	pattern_PipelineService_Detail_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "crm", "pipeline", "detail", "id"}, ""))
+	pattern_PipelineService_Create_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "crm", "pipeline"}, ""))
+	pattern_PipelineService_Update_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
+	pattern_PipelineService_Delete_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "crm", "pipeline", "id"}, ""))
 )
 
 var (
-	forward_PipelineService_Search_0 = runtime.ForwardResponseMessage
-	forward_PipelineService_Detail_0 = runtime.ForwardResponseMessage
-	forward_PipelineService_Create_0 = runtime.ForwardResponseMessage
-	forward_PipelineService_Update_0 = runtime.ForwardResponseMessage
-	forward_PipelineService_Delete_0 = runtime.ForwardResponseMessage
+	forward_PipelineService_Search_0     = runtime.ForwardResponseMessage
+	forward_PipelineService_GetDefault_0 = runtime.ForwardResponseMessage
+	forward_PipelineService_Detail_0     = runtime.ForwardResponseMessage
+	forward_PipelineService_Create_0     = runtime.ForwardResponseMessage
+	forward_PipelineService_Update_0     = runtime.ForwardResponseMessage
+	forward_PipelineService_Delete_0     = runtime.ForwardResponseMessage
 )

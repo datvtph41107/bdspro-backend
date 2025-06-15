@@ -2,6 +2,7 @@ package usecase
 
 import (
 	_routes "common/routes"
+	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
@@ -14,6 +15,7 @@ type PipelineUsecase struct {
 	permissionUsecase PermissionUsecase
 	historyRepo       repo.HistoryRepo
 	customerRepo      repo.LeadRepo
+	stageRepo         repo.StageRepo
 }
 
 func NewPipelineUsecase(
@@ -21,20 +23,31 @@ func NewPipelineUsecase(
 	permissionUsecase PermissionUsecase,
 	historyRepo repo.HistoryRepo,
 	customerRepo repo.LeadRepo,
+	stageRepo repo.StageRepo,
 ) *PipelineUsecase {
 	return &PipelineUsecase{
 		pipelineRepo:      pipelineRepo,
 		permissionUsecase: permissionUsecase,
 		historyRepo:       historyRepo,
 		customerRepo:      customerRepo,
+		stageRepo:         stageRepo,
 	}
 }
 
-func (u *PipelineUsecase) Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.PipelineSearchDTO) ([]domain.PipelineEntity, int64, error) {
-	if err := u.permissionUsecase.UserInOwner(c, ownerId, ownerType); err != nil {
-		return nil, 0, err
+func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO) ([]domain.PipelineEntity, int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	if organizationId == 0 {
+		return nil, 0, &_routes.Except{
+			Code:    400,
+			Message: "Bạn không có quyền truy cập quy trình",
+		}
 	}
-	return u.pipelineRepo.Search(c, ownerId, ownerType, dto)
+
+	// if err := u.permissionUsecase.UserInOwner(c, ownerId, ownerType); err != nil {
+	// 	return nil, 0, err
+	// }
+	// ownerId
+	return u.pipelineRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto)
 }
 
 func (u *PipelineUsecase) Create(c context.Context, organizationId uint64, entity *domain.PipelineEntity) (*domain.PipelineEntity, error) {
@@ -42,6 +55,7 @@ func (u *PipelineUsecase) Create(c context.Context, organizationId uint64, entit
 		return nil, err
 	}
 
+	entity.IsCustom = true
 	pipeline, err := u.pipelineRepo.Create(c, entity)
 	if err != nil {
 		return nil, err
@@ -129,4 +143,30 @@ func (u *PipelineUsecase) Delete(c context.Context, id uint64) error {
 
 func (u *PipelineUsecase) GetByID(c context.Context, id uint64) (*domain.PipelineEntity, error) {
 	return u.pipelineRepo.GetByID(c, id)
+}
+
+func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity, *domain.StageEntity, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+	if organizationId == 0 {
+		return nil, nil, &_routes.Except{
+			Code:    400,
+			Message: "Bạn không có quyền truy cập quy trình mặc định",
+		}
+	}
+
+	profileId := _utils.GetProfileIdWithContext(c)
+	if profileId == 0 {
+		return nil, nil, &_routes.Except{
+			Code:    400,
+			Message: "Bạn không có quyền truy cập quy trình mặc định",
+		}
+	}
+
+	pipeline, err := u.pipelineRepo.GetDefault(c, organizationId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	stage, _ := u.stageRepo.GetByID(c, pipeline.StageDefaultID)
+	return pipeline, stage, nil
 }
