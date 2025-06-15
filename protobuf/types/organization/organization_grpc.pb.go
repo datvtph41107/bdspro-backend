@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	OrganizationService_CreateOrganization_FullMethodName = "/pb_organization.OrganizationService/CreateOrganization"
-	OrganizationService_UpdateOrganization_FullMethodName = "/pb_organization.OrganizationService/UpdateOrganization"
-	OrganizationService_GetOrganizations_FullMethodName   = "/pb_organization.OrganizationService/GetOrganizations"
+	OrganizationService_CreateOrganization_FullMethodName       = "/pb_organization.OrganizationService/CreateOrganization"
+	OrganizationService_UpdateOrganization_FullMethodName       = "/pb_organization.OrganizationService/UpdateOrganization"
+	OrganizationService_GetOrganizations_FullMethodName         = "/pb_organization.OrganizationService/GetOrganizations"
+	OrganizationService_GetOrganizationByUserId_FullMethodName  = "/pb_organization.OrganizationService/GetOrganizationByUserId"
+	OrganizationService_CheckOrganizationIsExist_FullMethodName = "/pb_organization.OrganizationService/CheckOrganizationIsExist"
 )
 
 // OrganizationServiceClient is the client API for OrganizationService service.
@@ -31,6 +33,8 @@ type OrganizationServiceClient interface {
 	CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*CreateOrganizationResponse, error)
 	UpdateOrganization(ctx context.Context, in *UpdateOrganizationRequest, opts ...grpc.CallOption) (*UpdateOrganizationResponse, error)
 	GetOrganizations(ctx context.Context, in *GetOrganizationsRequest, opts ...grpc.CallOption) (*GetOrganizationsResponse, error)
+	GetOrganizationByUserId(ctx context.Context, in *GetOrganizationByUserIdRequest, opts ...grpc.CallOption) (*GetOrganizationByUserIdResponse, error)
+	CheckOrganizationIsExist(ctx context.Context, in *CheckOrganizationIsExistRequest, opts ...grpc.CallOption) (*CheckOrganizationIsExistResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -68,6 +72,24 @@ func (c *organizationServiceClient) GetOrganizations(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *organizationServiceClient) GetOrganizationByUserId(ctx context.Context, in *GetOrganizationByUserIdRequest, opts ...grpc.CallOption) (*GetOrganizationByUserIdResponse, error) {
+	out := new(GetOrganizationByUserIdResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_GetOrganizationByUserId_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organizationServiceClient) CheckOrganizationIsExist(ctx context.Context, in *CheckOrganizationIsExistRequest, opts ...grpc.CallOption) (*CheckOrganizationIsExistResponse, error) {
+	out := new(CheckOrganizationIsExistResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_CheckOrganizationIsExist_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
@@ -75,6 +97,8 @@ type OrganizationServiceServer interface {
 	CreateOrganization(context.Context, *CreateOrganizationRequest) (*CreateOrganizationResponse, error)
 	UpdateOrganization(context.Context, *UpdateOrganizationRequest) (*UpdateOrganizationResponse, error)
 	GetOrganizations(context.Context, *GetOrganizationsRequest) (*GetOrganizationsResponse, error)
+	GetOrganizationByUserId(context.Context, *GetOrganizationByUserIdRequest) (*GetOrganizationByUserIdResponse, error)
+	CheckOrganizationIsExist(context.Context, *CheckOrganizationIsExistRequest) (*CheckOrganizationIsExistResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -90,6 +114,12 @@ func (UnimplementedOrganizationServiceServer) UpdateOrganization(context.Context
 }
 func (UnimplementedOrganizationServiceServer) GetOrganizations(context.Context, *GetOrganizationsRequest) (*GetOrganizationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrganizations not implemented")
+}
+func (UnimplementedOrganizationServiceServer) GetOrganizationByUserId(context.Context, *GetOrganizationByUserIdRequest) (*GetOrganizationByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganizationByUserId not implemented")
+}
+func (UnimplementedOrganizationServiceServer) CheckOrganizationIsExist(context.Context, *CheckOrganizationIsExistRequest) (*CheckOrganizationIsExistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckOrganizationIsExist not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
@@ -158,6 +188,42 @@ func _OrganizationService_GetOrganizations_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganizationService_GetOrganizationByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).GetOrganizationByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganizationService_GetOrganizationByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).GetOrganizationByUserId(ctx, req.(*GetOrganizationByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganizationService_CheckOrganizationIsExist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckOrganizationIsExistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).CheckOrganizationIsExist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganizationService_CheckOrganizationIsExist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).CheckOrganizationIsExist(ctx, req.(*CheckOrganizationIsExistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +242,14 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrganizations",
 			Handler:    _OrganizationService_GetOrganizations_Handler,
+		},
+		{
+			MethodName: "GetOrganizationByUserId",
+			Handler:    _OrganizationService_GetOrganizationByUserId_Handler,
+		},
+		{
+			MethodName: "CheckOrganizationIsExist",
+			Handler:    _OrganizationService_CheckOrganizationIsExist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

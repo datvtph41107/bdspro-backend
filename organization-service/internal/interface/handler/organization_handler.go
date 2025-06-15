@@ -87,3 +87,19 @@ func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organiz
 
 	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations, total), nil
 }
+
+func (h *OrganizationHandler) GetOrganizationByUserId(ctx context.Context, req *organizationpb.GetOrganizationByUserIdRequest) (*organizationpb.GetOrganizationByUserIdResponse, error) {
+	organizations, err := h.OrganizationUsecase.GetOrganizationByUserId(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationTransformer.EntitiesToGetOrganizationByUserIdResponse(organizations), nil
+}
+
+func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req *organizationpb.CheckOrganizationIsExistRequest) (*organizationpb.CheckOrganizationIsExistResponse, error) {
+	isExist, err := h.OrganizationUsecase.CheckOrganizationIsExist(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.CheckOrganizationIsExistResponse{IsExist: isExist}, nil
+}

@@ -91,6 +91,68 @@
         ]
       }
     },
+    "/v2/organization/check-is-exist/{id}": {
+      "get": {
+        "operationId": "OrganizationService_CheckOrganizationIsExist",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationCheckOrganizationIsExistResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
+    "/v2/organization/user/{userId}": {
+      "get": {
+        "operationId": "OrganizationService_GetOrganizationByUserId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_organizationGetOrganizationByUserIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
     "/v2/organization/{id}": {
       "put": {
         "operationId": "OrganizationService_UpdateOrganization",
@@ -164,6 +226,14 @@
         }
       }
     },
+    "pb_organizationCheckOrganizationIsExistResponse": {
+      "type": "object",
+      "properties": {
+        "isExist": {
+          "type": "boolean"
+        }
+      }
+    },
     "pb_organizationCreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -199,6 +269,18 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "pb_organizationGetOrganizationByUserIdResponse": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_organizationOrganization"
+          }
         }
       }
     },

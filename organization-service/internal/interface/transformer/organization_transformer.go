@@ -12,6 +12,7 @@ type OrganizationTransformer interface {
 	UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization
 	EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse
 	EntityToGetOrganizationsResponse(organizations []*entity.Organization, total uint32) *organizationpb.GetOrganizationsResponse
+	EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse
 }
 
 type organizationTransformer struct{}
@@ -77,5 +78,23 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 	return &organizationpb.GetOrganizationsResponse{
 		Organizations: organizationsResponse,
 		Total:        total,
+	}
+}
+
+func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse {
+	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
+	for i, org := range organizations {
+		organizationsResponse[i] = &organizationpb.Organization{
+			Id: org.ID,
+			Name: org.Name,
+			TaxCode: org.TaxCode,
+			BusinessLicenseUrl: org.BusinessLicenseUrl,
+			Address: org.Address,
+			Phone: org.Phone,
+			Email: org.Email,
+		}
+	}
+	return &organizationpb.GetOrganizationByUserIdResponse{
+		Organizations: organizationsResponse,
 	}
 }

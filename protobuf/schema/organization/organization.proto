@@ -26,6 +26,18 @@ service OrganizationService {
             get: "/v2/organization"
         };
     }
+
+    rpc GetOrganizationByUserId(GetOrganizationByUserIdRequest) returns (GetOrganizationByUserIdResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization/user/{userId}"
+        };
+    }
+
+    rpc CheckOrganizationIsExist(CheckOrganizationIsExistRequest) returns (CheckOrganizationIsExistResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization/check-is-exist/{id}"
+        };
+    }   
     
 }
 
@@ -82,4 +94,20 @@ message Organization {
 message GetOrganizationsResponse {
     repeated Organization organizations = 1 [json_name = "organizations"];
     uint32 total = 2 [json_name = "total"];
+}
+
+message GetOrganizationByUserIdRequest {
+    uint32 userId = 1 [json_name = "userId"];
+}
+
+message GetOrganizationByUserIdResponse {
+    repeated Organization organizations = 1 [json_name = "organizations"];
+}
+
+message CheckOrganizationIsExistRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message CheckOrganizationIsExistResponse {
+    bool isExist = 1 [json_name = "isExist"];
 }

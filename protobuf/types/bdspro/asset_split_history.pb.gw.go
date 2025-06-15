@@ -35,12 +35,18 @@ var (
 	_ = metadata.Join
 )
 
+var filter_AssetSplitHistoryService_Get_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+
 func request_AssetSplitHistoryService_Get_0(ctx context.Context, marshaler runtime.Marshaler, client AssetSplitHistoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Get_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -52,19 +58,37 @@ func local_request_AssetSplitHistoryService_Get_0(ctx context.Context, marshaler
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Get_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Get(ctx, &protoReq)
 	return msg, metadata, err
 }
 
+var filter_AssetSplitHistoryService_Detail_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 func request_AssetSplitHistoryService_Detail_0(ctx context.Context, marshaler runtime.Marshaler, client AssetSplitHistoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Detail_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Detail(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -75,8 +99,20 @@ func local_request_AssetSplitHistoryService_Detail_0(ctx context.Context, marsha
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Detail_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Detail(ctx, &protoReq)
@@ -111,9 +147,18 @@ func request_AssetSplitHistoryService_Update_0(ctx context.Context, marshaler ru
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.Update(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -123,20 +168,44 @@ func local_request_AssetSplitHistoryService_Update_0(ctx context.Context, marsha
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.Update(ctx, &protoReq)
 	return msg, metadata, err
 }
 
+var filter_AssetSplitHistoryService_Delete_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 func request_AssetSplitHistoryService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client AssetSplitHistoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Delete_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -147,8 +216,20 @@ func local_request_AssetSplitHistoryService_Delete_0(ctx context.Context, marsha
 	var (
 		protoReq AssetSplitHistoryDTO
 		metadata runtime.ServerMetadata
+		err      error
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AssetSplitHistoryService_Delete_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.Delete(ctx, &protoReq)
@@ -161,13 +242,13 @@ func local_request_AssetSplitHistoryService_Delete_0(ctx context.Context, marsha
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAssetSplitHistoryServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterAssetSplitHistoryServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AssetSplitHistoryServiceServer) error {
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AssetSplitHistoryService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Get", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Get"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Get", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -181,13 +262,13 @@ func RegisterAssetSplitHistoryServiceHandlerServer(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AssetSplitHistoryService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Detail", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Detail"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Detail", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -207,7 +288,7 @@ func RegisterAssetSplitHistoryServiceHandlerServer(ctx context.Context, mux *run
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Create", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Create"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Create", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -221,13 +302,13 @@ func RegisterAssetSplitHistoryServiceHandlerServer(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Create_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_AssetSplitHistoryService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Update", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Update"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Update", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -241,13 +322,13 @@ func RegisterAssetSplitHistoryServiceHandlerServer(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Update_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_AssetSplitHistoryService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Delete", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Delete"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Delete", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -301,11 +382,11 @@ func RegisterAssetSplitHistoryServiceHandler(ctx context.Context, mux *runtime.S
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "AssetSplitHistoryServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AssetSplitHistoryServiceClient) error {
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AssetSplitHistoryService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Get", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Get"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Get", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -318,11 +399,11 @@ func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Get_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_AssetSplitHistoryService_Detail_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Detail", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Detail"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Detail", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -339,7 +420,7 @@ func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *run
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Create", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Create"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Create", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -352,11 +433,11 @@ func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Create_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_AssetSplitHistoryService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Update", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Update"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Update", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -369,11 +450,11 @@ func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *run
 		}
 		forward_AssetSplitHistoryService_Update_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AssetSplitHistoryService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_AssetSplitHistoryService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Delete", runtime.WithHTTPPathPattern("/pb_bdspro.AssetSplitHistoryService/Delete"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_bdspro.AssetSplitHistoryService/Delete", runtime.WithHTTPPathPattern("/v2/bdspro/v2/asset-split-history/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -390,11 +471,11 @@ func RegisterAssetSplitHistoryServiceHandlerClient(ctx context.Context, mux *run
 }
 
 var (
-	pattern_AssetSplitHistoryService_Get_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetSplitHistoryService", "Get"}, ""))
-	pattern_AssetSplitHistoryService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetSplitHistoryService", "Detail"}, ""))
-	pattern_AssetSplitHistoryService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetSplitHistoryService", "Create"}, ""))
-	pattern_AssetSplitHistoryService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetSplitHistoryService", "Update"}, ""))
-	pattern_AssetSplitHistoryService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_bdspro.AssetSplitHistoryService", "Delete"}, ""))
+	pattern_AssetSplitHistoryService_Get_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2}, []string{"v2", "bdspro", "asset-split-history"}, ""))
+	pattern_AssetSplitHistoryService_Detail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-split-history", "id"}, ""))
+	pattern_AssetSplitHistoryService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2}, []string{"v2", "bdspro", "asset-split-history"}, ""))
+	pattern_AssetSplitHistoryService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-split-history", "id"}, ""))
+	pattern_AssetSplitHistoryService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 0, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "bdspro", "asset-split-history", "id"}, ""))
 )
 
 var (
