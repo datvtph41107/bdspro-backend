@@ -104,6 +104,11 @@ var publicRoutes = []string{
 	"/v2/social/news-feed/user",
 	"/v2/social/news-feed/detail",
 	"/v2/bdspro/v2/product/market",
+	"/v2/bdspro/v2/list/property-type",
+	"/v2/bdspro/v2/list/doc-type",
+	"/v2/bdspro/v2/list/region",
+	"/v2/bdspro/v2/list/project",
+	"/v2/bdspro/v2/list/amenity",
 	// "/v1/search/plan/list",
 }
 

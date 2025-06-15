@@ -7,46 +7,46 @@ import "bdspro/share.proto";
 import "google/api/annotations.proto";
 
 service AssetService {
-  rpc SearchInternal(SearchInternalRequest) returns (SearchInternalResponse) {
+  rpc SearchInternal(AssetSearchRequest) returns (AssetSearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/internal"
     };
   };
-  rpc SearchShare(SearchShareRequest) returns (SearchShareResponse) {
+  rpc SearchShare(AssetSearchRequest) returns (AssetSearchResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/asset/share"
+      get: "/v2/bdspro/v2/asset/search-share"
     };
   };
-  rpc SearchSplit(SearchSplitRequest) returns (SearchSplitResponse) {
+  rpc SearchSplit(AssetSearchRequest) returns (AssetSearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/split"
     };
   };
-  rpc Archived(ArchivedRequest) returns (ArchivedResponse) {
+  rpc Archived(ArchivedRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/asset/archived"
     };
   };
-  rpc CreateAsset(CreateAssetRequest) returns (Asset){
+  rpc CreateAsset(CreateAssetRequest) returns (Response){
     option (google.api.http) = {
       post: "/v2/bdspro/v2/asset"
       body: "*"
     };
   };
-  rpc UpdateAsset(UpdateAssetRequest) returns (Asset) {
+  rpc UpdateAsset(UpdateAssetRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/asset/{id}"
       body: "*"
     };
   };
-  rpc DeleteAsset(DeleteAssetRequest) returns (Empty) {
+  rpc DeleteAsset(IdRequest) returns (Response) {
     option (google.api.http) = {
       delete: "/v2/bdspro/v2/asset/{id}"
     };
   };
   rpc GetDetail(GetAssetRequest) returns (Asset){
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/asset/{id}"
+      get: "/v2/bdspro/v2/asset/detail/{id}"
     };
   };
   rpc Merge(MergeAssetRequest) returns (Asset) {
@@ -61,45 +61,21 @@ service AssetService {
       body: "*"
     };
   };
-  rpc History(HistoryRequest) returns (HistoryResponse) {
+  rpc History(IdRequest) returns (HistoryResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/asset/history"
+      get: "/v2/bdspro/v2/asset/history/{id}"
     };
   };
-  rpc HistoryOwner(HistoryOwnerRequest) returns (HistoryOwnerResponse) {
+  rpc HistoryOwner(IdRequest) returns (HistoryResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/history/owner"
     };
   };
-  rpc GetPublish(GetPublishRequest) returns (GetPublishResponse) {
+  rpc GetPublish(IdRequest) returns (AssetSearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/publish/{id}" // profileId
     };
   };
-}
-
-message Asset {
-  uint64 id = 1;
-  string name = 2;
-  uint64 wardId = 3;
-  uint64 districtId = 4;
-  uint64 provinceId = 5;
-  double price = 6;
-  google.protobuf.Timestamp buyedDate = 7;
-  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
-  optional uint64 productId = 9;
-  optional uint64 ownerUserId = 10;
-  optional uint64 ownerOrgId = 11;
-  optional uint64 parentAssetId = 12;
-  string splitMergeStatus = 13;
-  double purchasePrice = 14;
-  google.protobuf.Timestamp purchaseDate = 15;
-  string legalStatus = 16;
-  bool archived = 17;
-  uint32 rentStatus = 18;
-  double area = 19;
-  string address = 20;
-  string description = 21;
 }
 
 message AssetList {
@@ -185,7 +161,7 @@ message ShareAssetRequest {
 
 message SplitAssetRequest {
   uint64 id = 1;
-  repeated Asset parts = 2;
+  repeated Asset datas = 2;
 }
 
 message MergeAssetRequest {
@@ -229,3 +205,15 @@ message CreateAssetRequestConvertProduct {
   google.protobuf.Timestamp purchase_date = 6;
   double purchase_price = 7;
 }
+
+message AssetSearchRequest {
+  string keyword = 1;
+  uint32 type = 2;
+  bool archived = 3;
+}
+
+message AssetSearchResponse {
+  repeated Asset data = 1;
+  uint64 total = 2;
+}
+

@@ -14,12 +14,14 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	port := viper.GetString("service.port.bdspro")
 	url := "localhost"
 	if env == "release" {
-		url = "bdspro"
+		url = "bdspro_grpc"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	// _ = pb_bdspro.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterBdsproPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterProductServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_bdspro.RegisterAssetServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_bdspro.RegisterPostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterIncomeDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterAssetIncomeTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

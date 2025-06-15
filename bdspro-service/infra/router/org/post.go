@@ -142,8 +142,12 @@ func (r *OrgPostRouter) GetPersonalPost(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.PersonalPost(c, query)
-	_routes.RouteResult(c, result, err)
+	result, total, err := r.UC.PersonalPost(c, query)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // @Summary Lấy danh sách bài đăng toàn cục
@@ -159,8 +163,12 @@ func (r *OrgPostRouter) GetGlobalPost(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.GlobalPost(c, query)
-	_routes.RouteResult(c, *result, err)
+	result, total, err := r.UC.GlobalPost(c, query)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // todo: logic thanh toán chưa rõ ràng

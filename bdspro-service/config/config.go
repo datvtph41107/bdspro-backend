@@ -51,6 +51,7 @@ type ConfigApp struct {
 	// GrpcGenericServer *server.GenericGrpcServer
 	PostService    *service.PostService
 	ProductService *service.ProductService
+	AssetService   *service.AssetService
 	UserRouter     *user_router.RouterManager
 	OrgRouter      *org_router.RouterManager
 	// AdminRouter *admin_router.RouterManager
@@ -78,6 +79,7 @@ func NewConfigApp(
 	postService *service.PostService,
 	productService *service.ProductService,
 	bdsproPublicService *service.BdsproPublicService,
+	assetService *service.AssetService,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
 	// CostDocumentServer *service.CostDocumentServer,
@@ -99,6 +101,7 @@ func NewConfigApp(
 		GroupRouter:         groupRouter,
 		EnumRoute:           enumRouter,
 		BdsproPublicService: bdsproPublicService,
+		AssetService:        assetService,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

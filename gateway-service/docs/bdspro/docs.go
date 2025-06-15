@@ -4937,6 +4937,561 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/asset": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Cập nhật",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.UpdateAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Tạo mới",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.CreateAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/archived/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lấy theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_dto.AssetArchivedDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/history-owner": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lịch sử tách gộp tài sản dành cho user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/history/:id": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lịch sử tách gộp tài sản danh cho tài sản",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/merge": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Gộp tài sản",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_dto.MergeAssetDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/publish/{profileId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản đã đăng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản của người dùng",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "onlyParent",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/search-share": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản chia sẻ",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "onlyParent",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/split": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản có số lượng con",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "onlyParent",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "wardId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Tách tài sản",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user_dto.SplitAssetDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Xóa",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/list/amenity": {
             "get": {
                 "description": "Lấy danh sách tiện ích",
@@ -8409,6 +8964,75 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_bdspro.CreateAssetRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "buyedDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docStatus": {
+                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalStatus": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerOrgId": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
         "pb_bdspro.HouseInfo": {
             "type": "object",
             "properties": {
@@ -8678,6 +9302,75 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_bdspro.UpdateAssetRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "buyedDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docStatus": {
+                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalStatus": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerOrgId": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
         "pb_shared.ArchivedRequest": {
             "type": "object",
             "properties": {
@@ -8711,6 +9404,19 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
                     "type": "integer"
                 }
             }

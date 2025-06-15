@@ -88,8 +88,12 @@ func (r *OrgAssetRouter) SearchMe(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.SearchAssetMe(c, body)
-	_routes.RouteResult(c, result, err)
+	result, total, err := r.UC.SearchAssetMe(c, body)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 func (r *OrgAssetRouter) SearchShare(c *gin.Context) {
@@ -99,8 +103,12 @@ func (r *OrgAssetRouter) SearchShare(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.SearchAssetShare(c, body)
-	_routes.RouteResult(c, result, err)
+	result, total, err := r.UC.SearchAssetShare(c, body)
+	_routes.RouteResult(c, _routes.ResponseDTO{
+		Code:          0,
+		Data:          result,
+		TotalElements: &total,
+	}, err)
 }
 
 // @Summary Lấy danh sách tài sản có số lượng con

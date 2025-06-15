@@ -37,7 +37,7 @@ func NewUserPostUsecase(repo repo.UPostRepo,
 	// serviceManager *manager.ServiceManager,
 ) *UserPostUC {
 	uc := &UserPostUC{
-		PostUsecase: shared_usecase.NewPostUsecase(
+		PostUsecase: shared_usecase.NewSharedPostUsecase(
 			repo,
 			productRepo,
 			postMediaRepo,

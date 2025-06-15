@@ -31,7 +31,7 @@ type AssetUsecase struct {
 	AssetUsecase      IAssetUsecase
 }
 
-func NewUAssetUsecase(assetRepo user_repo.UAssetRepo,
+func NewSharedAssetUsecase(assetRepo user_repo.UAssetRepo,
 	ProductRepo user_repo.UProductRepo,
 	RecordHistoryRepo repo.RecordHistoryRepo,
 	AssetLegalRepo repo.AssetLegalRepo,
@@ -475,8 +475,9 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto user_dto.SplitAssetD
 		nAsset.DistrictID = currentAsset.DistrictID
 		nAsset.ProvinceID = currentAsset.ProvinceID
 		nAsset.Archived = false
-		nAsset.RentStatus = 1
+		nAsset.RentStatus = enums.EAssetStatusOwning
 		nAsset.ParentAssetID = &dto.ID
+		nAsset.PurchasePrice = dto.Datas[i].PurchasePrice
 		// nAsset.Area = sumArea
 	}
 
@@ -513,30 +514,23 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto user_dto.SplitAssetD
 	return dto.Datas, nil
 }
 
-func (uc *AssetUsecase) SearchAssetMe(ctx context.Context, dto user_dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+func (uc *AssetUsecase) SearchAssetMe(ctx context.Context, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	assets, total, err := uc.AssetRepo.SearchOwner(ctx, profileId, dto)
 	if err != nil {
-		return _routes.ResponseDTO{}, err
+		return nil, 0, err
 	}
-	return _routes.ResponseDTO{
-		Code:          0,
-		Data:          assets,
-		TotalElements: &total,
-	}, nil
+	return assets, total, nil
 }
 
 // UC6: Tìm kiếm tài sản theo từ khóa hoặc mã tài sản
-func (uc *AssetUsecase) SearchAssetShare(ctx context.Context, dto user_dto.AssetSearchDTO) (_routes.ResponseDTO, error) {
+func (uc *AssetUsecase) SearchAssetShare(ctx context.Context, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	results, total, err := uc.AssetRepo.SearchShare(ctx, profileId, dto)
 	if err != nil {
-		return _routes.ResponseDTO{}, err
+		return nil, 0, err
 	}
-	return _routes.ResponseDTO{
-		Data:          results,
-		TotalElements: &total,
-	}, nil
+	return results, total, nil
 }
 
 // UC13: Tách tài sản

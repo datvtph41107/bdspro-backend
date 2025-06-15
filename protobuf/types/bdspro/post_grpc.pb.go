@@ -19,9 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PostService_GetPostByID_FullMethodName  = "/pb_bdspro.PostService/GetPostByID"
-	PostService_OwnerPost_FullMethodName    = "/pb_bdspro.PostService/OwnerPost"
-	PostService_GetPostByIDs_FullMethodName = "/pb_bdspro.PostService/GetPostByIDs"
+	PostService_GetPostByID_FullMethodName     = "/pb_bdspro.PostService/GetPostByID"
+	PostService_OwnerPost_FullMethodName       = "/pb_bdspro.PostService/OwnerPost"
+	PostService_GetPostByIDs_FullMethodName    = "/pb_bdspro.PostService/GetPostByIDs"
+	PostService_CreatePost_FullMethodName      = "/pb_bdspro.PostService/CreatePost"
+	PostService_NewExpiredPost_FullMethodName  = "/pb_bdspro.PostService/NewExpiredPost"
+	PostService_GetDetail_FullMethodName       = "/pb_bdspro.PostService/GetDetail"
+	PostService_UpdatePost_FullMethodName      = "/pb_bdspro.PostService/UpdatePost"
+	PostService_Delete_FullMethodName          = "/pb_bdspro.PostService/Delete"
+	PostService_UpdateHidden_FullMethodName    = "/pb_bdspro.PostService/UpdateHidden"
+	PostService_GetPersonalPost_FullMethodName = "/pb_bdspro.PostService/GetPersonalPost"
+	PostService_GetGlobalPost_FullMethodName   = "/pb_bdspro.PostService/GetGlobalPost"
+	PostService_GetPublish_FullMethodName      = "/pb_bdspro.PostService/GetPublish"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -31,6 +40,15 @@ type PostServiceClient interface {
 	GetPostByID(ctx context.Context, in *GetPostByIDRequest, opts ...grpc.CallOption) (*Post, error)
 	OwnerPost(ctx context.Context, in *OwnerPostRequest, opts ...grpc.CallOption) (*OwnerPostResponse, error)
 	GetPostByIDs(ctx context.Context, in *GetPostByIDsRequest, opts ...grpc.CallOption) (*GetPostByIDsResponse, error)
+	CreatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error)
+	NewExpiredPost(ctx context.Context, in *PostExpiredRequest, opts ...grpc.CallOption) (*Post, error)
+	GetDetail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PostDetailResponse, error)
+	UpdatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error)
+	Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error)
+	UpdateHidden(ctx context.Context, in *UpdateHiddenRequest, opts ...grpc.CallOption) (*Response, error)
+	GetPersonalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error)
+	GetGlobalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error)
+	GetPublish(ctx context.Context, in *PostPublishSearch, opts ...grpc.CallOption) (*PostListResponse, error)
 }
 
 type postServiceClient struct {
@@ -68,6 +86,96 @@ func (c *postServiceClient) GetPostByIDs(ctx context.Context, in *GetPostByIDsRe
 	return out, nil
 }
 
+func (c *postServiceClient) CreatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Post)
+	err := c.cc.Invoke(ctx, PostService_CreatePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) NewExpiredPost(ctx context.Context, in *PostExpiredRequest, opts ...grpc.CallOption) (*Post, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Post)
+	err := c.cc.Invoke(ctx, PostService_NewExpiredPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetDetail(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PostDetailResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostDetailResponse)
+	err := c.cc.Invoke(ctx, PostService_GetDetail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) UpdatePost(ctx context.Context, in *PostSaveRequest, opts ...grpc.CallOption) (*Post, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Post)
+	err := c.cc.Invoke(ctx, PostService_UpdatePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Response)
+	err := c.cc.Invoke(ctx, PostService_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) UpdateHidden(ctx context.Context, in *UpdateHiddenRequest, opts ...grpc.CallOption) (*Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Response)
+	err := c.cc.Invoke(ctx, PostService_UpdateHidden_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetPersonalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostListResponse)
+	err := c.cc.Invoke(ctx, PostService_GetPersonalPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetGlobalPost(ctx context.Context, in *PostSearchRequest, opts ...grpc.CallOption) (*PostListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostListResponse)
+	err := c.cc.Invoke(ctx, PostService_GetGlobalPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetPublish(ctx context.Context, in *PostPublishSearch, opts ...grpc.CallOption) (*PostListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostListResponse)
+	err := c.cc.Invoke(ctx, PostService_GetPublish_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility
@@ -75,6 +183,15 @@ type PostServiceServer interface {
 	GetPostByID(context.Context, *GetPostByIDRequest) (*Post, error)
 	OwnerPost(context.Context, *OwnerPostRequest) (*OwnerPostResponse, error)
 	GetPostByIDs(context.Context, *GetPostByIDsRequest) (*GetPostByIDsResponse, error)
+	CreatePost(context.Context, *PostSaveRequest) (*Post, error)
+	NewExpiredPost(context.Context, *PostExpiredRequest) (*Post, error)
+	GetDetail(context.Context, *IdRequest) (*PostDetailResponse, error)
+	UpdatePost(context.Context, *PostSaveRequest) (*Post, error)
+	Delete(context.Context, *IdRequest) (*Response, error)
+	UpdateHidden(context.Context, *UpdateHiddenRequest) (*Response, error)
+	GetPersonalPost(context.Context, *PostSearchRequest) (*PostListResponse, error)
+	GetGlobalPost(context.Context, *PostSearchRequest) (*PostListResponse, error)
+	GetPublish(context.Context, *PostPublishSearch) (*PostListResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -90,6 +207,33 @@ func (UnimplementedPostServiceServer) OwnerPost(context.Context, *OwnerPostReque
 }
 func (UnimplementedPostServiceServer) GetPostByIDs(context.Context, *GetPostByIDsRequest) (*GetPostByIDsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPostByIDs not implemented")
+}
+func (UnimplementedPostServiceServer) CreatePost(context.Context, *PostSaveRequest) (*Post, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
+}
+func (UnimplementedPostServiceServer) NewExpiredPost(context.Context, *PostExpiredRequest) (*Post, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewExpiredPost not implemented")
+}
+func (UnimplementedPostServiceServer) GetDetail(context.Context, *IdRequest) (*PostDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDetail not implemented")
+}
+func (UnimplementedPostServiceServer) UpdatePost(context.Context, *PostSaveRequest) (*Post, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePost not implemented")
+}
+func (UnimplementedPostServiceServer) Delete(context.Context, *IdRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedPostServiceServer) UpdateHidden(context.Context, *UpdateHiddenRequest) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateHidden not implemented")
+}
+func (UnimplementedPostServiceServer) GetPersonalPost(context.Context, *PostSearchRequest) (*PostListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPersonalPost not implemented")
+}
+func (UnimplementedPostServiceServer) GetGlobalPost(context.Context, *PostSearchRequest) (*PostListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGlobalPost not implemented")
+}
+func (UnimplementedPostServiceServer) GetPublish(context.Context, *PostPublishSearch) (*PostListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublish not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 
@@ -158,6 +302,168 @@ func _PostService_GetPostByIDs_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSaveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).CreatePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_CreatePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).CreatePost(ctx, req.(*PostSaveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_NewExpiredPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostExpiredRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).NewExpiredPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_NewExpiredPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).NewExpiredPost(ctx, req.(*PostExpiredRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GetDetail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetDetail(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_UpdatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSaveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).UpdatePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_UpdatePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).UpdatePost(ctx, req.(*PostSaveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).Delete(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_UpdateHidden_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateHiddenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).UpdateHidden(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_UpdateHidden_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).UpdateHidden(ctx, req.(*UpdateHiddenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetPersonalPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPersonalPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GetPersonalPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPersonalPost(ctx, req.(*PostSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetGlobalPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetGlobalPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GetGlobalPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetGlobalPost(ctx, req.(*PostSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetPublish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostPublishSearch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPublish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GetPublish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPublish(ctx, req.(*PostPublishSearch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +482,42 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPostByIDs",
 			Handler:    _PostService_GetPostByIDs_Handler,
+		},
+		{
+			MethodName: "CreatePost",
+			Handler:    _PostService_CreatePost_Handler,
+		},
+		{
+			MethodName: "NewExpiredPost",
+			Handler:    _PostService_NewExpiredPost_Handler,
+		},
+		{
+			MethodName: "GetDetail",
+			Handler:    _PostService_GetDetail_Handler,
+		},
+		{
+			MethodName: "UpdatePost",
+			Handler:    _PostService_UpdatePost_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _PostService_Delete_Handler,
+		},
+		{
+			MethodName: "UpdateHidden",
+			Handler:    _PostService_UpdateHidden_Handler,
+		},
+		{
+			MethodName: "GetPersonalPost",
+			Handler:    _PostService_GetPersonalPost_Handler,
+		},
+		{
+			MethodName: "GetGlobalPost",
+			Handler:    _PostService_GetGlobalPost_Handler,
+		},
+		{
+			MethodName: "GetPublish",
+			Handler:    _PostService_GetPublish_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

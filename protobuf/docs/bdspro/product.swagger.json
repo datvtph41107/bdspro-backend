@@ -1475,15 +1475,9 @@
           "type": "string",
           "format": "uint64"
         },
-        "parent": {
-          "$ref": "#/definitions/pb_bdsproProductInfo"
-        },
         "productId": {
           "type": "string",
           "format": "uint64"
-        },
-        "product": {
-          "$ref": "#/definitions/pb_bdsproProductInfo"
         },
         "childIds": {
           "type": "array",
@@ -1492,26 +1486,13 @@
             "format": "uint64"
           }
         },
-        "childs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductInfo"
-          }
-        },
-        "areas": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "format": "double"
-          }
-        },
         "createdUserId": {
           "type": "string",
           "format": "uint64"
         },
         "createdUser": {
-          "$ref": "#/definitions/pb_userProfileItem"
+          "$ref": "#/definitions/pb_userProfileItem",
+          "title": "ProductInfo parent = 4;\n ProductInfo product = 6;\n repeated double areas = 10;\n repeated ProductInfo childs = 11;"
         }
       }
     },
@@ -1525,9 +1506,9 @@
             "$ref": "#/definitions/pb_bdsproHistory"
           }
         },
-        "totalElements": {
-          "type": "integer",
-          "format": "int64"
+        "total": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1796,33 +1777,6 @@
         },
         "avatar": {
           "type": "string"
-        }
-      }
-    },
-    "pb_bdsproProductInfo": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "categoryId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "area": {
-          "type": "number",
-          "format": "double"
-        },
-        "lastPriceId": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },

@@ -181,23 +181,23 @@ func (r *UserPostRouter) NewExpiredPost(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// todo: logic thanh toán chưa rõ ràng
-// @Summary Chia sẻ bài đăng
-// @Tags User: Tin đăng
-// @Produce json
-// @Param body body dto.PostExpiredRequest true "Body"
-// @Security BearerAuth
-// @Router /v1/bdspro/v2/user/post/share [post]
-func (r *UserPostRouter) Share(c *gin.Context) {
-	body := dto.PostExpiredRequest{}
-	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // todo: logic thanh toán chưa rõ ràng
+// // @Summary Chia sẻ bài đăng
+// // @Tags User: Tin đăng
+// // @Produce json
+// // @Param body body dto.PostExpiredRequest true "Body"
+// // @Security BearerAuth
+// // @Router /v1/bdspro/v2/user/post/share [post]
+// func (r *UserPostRouter) Share(c *gin.Context) {
+// 	body := dto.PostExpiredRequest{}
+// 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	result, err := r.UC.MakeNewExpired(c, body)
-	_routes.RouteResult(c, result, err)
-}
+// 	result, err := r.UC.MakeNewExpired(c, body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 // @Summary Xóa bài đăng
 // @Tags User: Tin đăng

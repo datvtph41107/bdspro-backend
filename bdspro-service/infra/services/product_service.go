@@ -95,8 +95,8 @@ func (s *ProductService) ChildHistories(ctx context.Context, req *pb_bdspro.IdRe
 	histories := make([]*pb_bdspro.History, 0)
 	copier.Copy(&histories, &result)
 	return &pb_bdspro.HistoryResponse{
-		Data:          histories,
-		TotalElements: uint32(total),
+		Data:  histories,
+		Total: uint64(total),
 	}, nil
 }
 
@@ -432,8 +432,8 @@ func (s *ProductService) GetHistories(ctx context.Context, req *pb_bdspro.IdRequ
 	historyResponse := make([]*pb_bdspro.History, 0)
 	copier.Copy(&historyResponse, &histories)
 	return &pb_bdspro.HistoryResponse{
-		Data:          historyResponse,
-		TotalElements: uint32(total),
+		Data:  historyResponse,
+		Total: uint64(total),
 	}, nil
 }
 

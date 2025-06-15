@@ -102,8 +102,9 @@ func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto user_dto.AssetSearchDTO) 
 
 func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, dto user_dto.AssetSearchDTO) *gorm.DB {
 	query := r.DB.
+		Model(&domain.AssetList{}).
 		Table("assets"). // <- quan trọng để Preload hiểu model gốc
-		// Preload("LegalItems", "deleted_at IS NULL").
+		Preload("LegalItems", "deleted_at IS NULL").
 		Select(`assets.*,
 		province.name as province_name, 
 		district.name as district_name, 

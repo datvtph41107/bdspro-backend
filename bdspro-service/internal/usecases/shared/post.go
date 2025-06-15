@@ -34,7 +34,7 @@ type PostUsecase struct {
 	PlanUsecase    usecases.PlanUsecase
 }
 
-func NewPostUsecase(repo repo.UPostRepo,
+func NewSharedPostUsecase(repo repo.UPostRepo,
 	// planService *providers.MemberPlanProvider,
 	productRepo user_repo.UProductRepo,
 	postMediaRepo repo.PostMediaRepo,
@@ -255,37 +255,23 @@ func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, err
 	}, nil
 }
 
-func (s *PostUsecase) PersonalPost(c context.Context, dto dto.PostSearchRequest) (_routes.ResponseDTO, error) {
+func (s *PostUsecase) PersonalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
 	if err != nil {
-		return _routes.ResponseDTO{}, &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return nil, 0, err
 	}
 
-	return _routes.ResponseDTO{
-		Code:          0,
-		Data:          entities,
-		TotalElements: &total,
-	}, nil
+	return entities, total, nil
 }
 
-func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) (*_routes.ResponseDTO, error) {
+func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error) {
 	entities, total, err := s.Repo.Global(c, dto)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return nil, 0, err
 	}
 
-	return &_routes.ResponseDTO{
-		Code:          0,
-		Data:          entities,
-		TotalElements: &total,
-	}, nil
+	return entities, total, nil
 }
 
 func (s *PostUsecase) ProductPostLink(c context.Context, id uint64, dto *dto.PostLinkSearch) (*[]domain.PostItem, error) {
