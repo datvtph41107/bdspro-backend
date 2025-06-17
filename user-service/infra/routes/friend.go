@@ -3,7 +3,7 @@ package routes
 import (
 	_routes "common/routes"
 	"user/enums"
-	user_service "user/services/user"
+	user_service "user/internal/services/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,7 +38,7 @@ func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
+// @Success 200 {array} dto.FriendDTO "Danh sách bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/list [get]
@@ -60,7 +60,7 @@ func (r *FriendRouter) FriendList(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người nhận"
 // @Router /v1/user/friend/request/{receiverId} [post]
 func (r *FriendRouter) FriendRequest(c *gin.Context) {
-	// var dto data.FriendDTO
+	// var dto dto.FriendDTO
 	// if err := c.ShouldBindJSON(&dto); err != nil {
 	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	// 	return
@@ -127,7 +127,7 @@ func (r *FriendRouter) FriendReject(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} data.FriendDTO "Danh sách lời mời đã gửi"
+// @Success 200 {array} dto.FriendDTO "Danh sách lời mời đã gửi"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/request/sent [get]
@@ -143,7 +143,7 @@ func (r *FriendRouter) FriendSent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} data.FriendDTO "Danh sách lời mời đã nhận"
+// @Success 200 {array} dto.FriendDTO "Danh sách lời mời đã nhận"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/request/received [get]
@@ -159,7 +159,7 @@ func (r *FriendRouter) FriendReceived(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} data.FollowInfoRes "Số lượng theo dõi và bạn bè"
+// @Success 200 {object} dto.FollowInfoRes "Số lượng theo dõi và bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/info [get]

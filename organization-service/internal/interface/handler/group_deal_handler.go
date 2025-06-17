@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
@@ -11,7 +11,7 @@ import (
 )
 
 type GroupDealHandler struct {
-	grouppb.UnimplementedGroupDealServiceServer
+	organizationpb.UnimplementedGroupDealServiceServer
 	GroupDealUsecase     usecase.GroupDealUsecase
 	GroupDealTransformer transformer.GroupDealTransformer
 	GroupDealValidator   validator.GroupDealValidator
@@ -29,7 +29,7 @@ func NewGroupDealHandler(
 	}
 }
 
-func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *grouppb.CreateGroupDealRequest) (*grouppb.CreateGroupDealResponse, error) {
+func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *organizationpb.CreateGroupDealRequest) (*organizationpb.CreateGroupDealResponse, error) {
 	if err := h.GroupDealValidator.ValidateCreateGroupDealRequest(req); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *grouppb.Cre
 	return h.GroupDealTransformer.EntityToCreateGroupDealResponse(deal), nil
 }
 
-func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *grouppb.UpdateGroupDealRequest) (*grouppb.UpdateGroupDealResponse, error) {
+func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *organizationpb.UpdateGroupDealRequest) (*organizationpb.UpdateGroupDealResponse, error) {
 	if err := h.GroupDealValidator.ValidateUpdateGroupDealRequest(req); err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *grouppb.Upd
 	return h.GroupDealTransformer.EntityToUpdateGroupDealResponse(deal), nil
 }
 
-func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *grouppb.DeleteGroupDealRequest) (*grouppb.DeleteGroupDealResponse, error) {
+func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *organizationpb.DeleteGroupDealRequest) (*organizationpb.DeleteGroupDealResponse, error) {
 	if err := h.GroupDealValidator.ValidateDeleteGroupDealRequest(req); err != nil {
 		return nil, err
 	}
@@ -69,10 +69,10 @@ func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *grouppb.Del
 		return nil, err
 	}
 
-	return &grouppb.DeleteGroupDealResponse{Id: req.Id}, nil
+	return &organizationpb.DeleteGroupDealResponse{Id: req.Id}, nil
 }
 
-func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *grouppb.GetGroupDealRequest) (*grouppb.GetGroupDealResponse, error) {
+func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb.GetGroupDealRequest) (*organizationpb.GetGroupDealResponse, error) {
 	if err := h.GroupDealValidator.ValidateGetGroupDealRequest(req); err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *grouppb.GetGro
 	return h.GroupDealTransformer.EntityToGetGroupDealResponse(deal), nil
 }
 
-func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *grouppb.GetGroupDealsRequest) (*grouppb.GetGroupDealsResponse, error) {
+func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *organizationpb.GetGroupDealsRequest) (*organizationpb.GetGroupDealsResponse, error) {
 	if err := h.GroupDealValidator.ValidateGetGroupDealsRequest(req); err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *grouppb.GetGr
 	return h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total), nil
 }
 
-func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *grouppb.UpdateGroupDealStatusRequest) (*grouppb.UpdateGroupDealStatusResponse, error) {
+func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *organizationpb.UpdateGroupDealStatusRequest) (*organizationpb.UpdateGroupDealStatusResponse, error) {
 	if err := h.GroupDealValidator.ValidateUpdateGroupDealStatusRequest(req); err != nil {
 		return nil, err
 	}
@@ -116,5 +116,5 @@ func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *group
 		return nil, err
 	}
 
-	return &grouppb.UpdateGroupDealStatusResponse{Id: req.Id}, nil
+	return &organizationpb.UpdateGroupDealStatusResponse{Id: req.Id}, nil
 }

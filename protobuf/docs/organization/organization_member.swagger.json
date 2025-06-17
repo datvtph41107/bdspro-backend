@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization/member": {
+    "/v2/org/organization/member": {
       "post": {
         "operationId": "OrganizationMemberService_CreateOrganizationMember",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationMemberResponse"
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberResponse"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationMemberRequest"
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberRequest"
             }
           }
         ],
@@ -48,14 +48,14 @@
         ]
       }
     },
-    "/v2/organization/member/{id}": {
+    "/v2/org/organization/member/{id}": {
       "delete": {
         "operationId": "OrganizationMemberService_DeleteOrganizationMember",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationDeleteOrganizationMemberResponse"
+              "$ref": "#/definitions/organizationpbDeleteOrganizationMemberResponse"
             }
           },
           "default": {
@@ -84,7 +84,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationUpdateOrganizationMemberResponse"
+              "$ref": "#/definitions/organizationpbUpdateOrganizationMemberResponse"
             }
           },
           "default": {
@@ -116,14 +116,14 @@
         ]
       }
     },
-    "/v2/organization/member/{organizationId}": {
+    "/v2/org/organization/member/{organizationId}": {
       "get": {
         "operationId": "OrganizationMemberService_GetOrganizationMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationMembersResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationMembersResponse"
             }
           },
           "default": {
@@ -161,14 +161,14 @@
         ]
       }
     },
-    "/v2/organization/members": {
+    "/v2/org/organization/members/me": {
       "get": {
-        "operationId": "OrganizationMemberService_GetOrganizationMember",
+        "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationMembersResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationMembersResponse"
             }
           },
           "default": {
@@ -194,7 +194,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationMemberRequest": {
+    "organizationpbCreateOrganizationMemberRequest": {
       "type": "object",
       "properties": {
         "organizationId": {
@@ -211,7 +211,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationMemberResponse": {
+    "organizationpbCreateOrganizationMemberResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -220,7 +220,7 @@
         }
       }
     },
-    "pb_organizationDeleteOrganizationMemberResponse": {
+    "organizationpbDeleteOrganizationMemberResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -229,14 +229,14 @@
         }
       }
     },
-    "pb_organizationGetOrganizationMembersResponse": {
+    "organizationpbGetOrganizationMembersResponse": {
       "type": "object",
       "properties": {
-        "organizationMembers": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganizationMember"
+            "$ref": "#/definitions/organizationpbOrganizationMember"
           }
         },
         "total": {
@@ -245,7 +245,7 @@
         }
       }
     },
-    "pb_organizationOrganizationMember": {
+    "organizationpbOrganizationMember": {
       "type": "object",
       "properties": {
         "id": {
@@ -268,7 +268,7 @@
         }
       }
     },
-    "pb_organizationSwitchOrganizationResponse": {
+    "organizationpbSwitchOrganizationResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -293,7 +293,7 @@
         }
       }
     },
-    "pb_organizationUpdateOrganizationMemberResponse": {
+    "organizationpbUpdateOrganizationMemberResponse": {
       "type": "object",
       "properties": {
         "id": {

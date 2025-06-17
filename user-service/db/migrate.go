@@ -2,7 +2,7 @@ package db
 
 import (
 	_db "common/db"
-	user_model "user/models/user"
+	user_model "user/internal/models/user"
 )
 
 func AutoMigrate() {

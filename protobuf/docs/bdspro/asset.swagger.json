@@ -916,7 +916,7 @@
           "format": "uint64"
         },
         "createdUser": {
-          "$ref": "#/definitions/pb_userProfileItem"
+          "$ref": "#/definitions/userpbProfileItem"
         },
         "childs": {
           "type": "array",
@@ -1046,7 +1046,7 @@
         }
       }
     },
-    "pb_userProfileItem": {
+    "userpbProfileItem": {
       "type": "object",
       "properties": {
         "id": {

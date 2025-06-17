@@ -49,7 +49,13 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
-		Text: req.Text,
+		Text:         req.Text,
+		FriendStatus: req.FriendStatus,
+		Following:    req.Following,
+		Roles:        req.Roles,
+		Leaded:       req.Leaded,
+		Connected:    req.Connected,
+		AppInstalled: req.AppInstalled,
 	})
 	if err != nil {
 		return nil, err
@@ -59,8 +65,8 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 
 	return &crmpb.ContactListDTO{
-		Data:          contactsPb,
-		TotalElements: uint32(total),
+		Data:  contactsPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -161,8 +167,8 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 		return nil, err
 	}
 	return &crmpb.ContactSyncResponse{
-		Data:          mapper.ListContactToPb(result),
-		TotalElements: uint32(len(result)),
+		Data:  mapper.ListContactToPb(result),
+		Total: uint32(len(result)),
 	}, nil
 }
 

@@ -37,7 +37,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Cập nhật thành công",
                         "schema": {
-                            "$ref": "#/definitions/data.PublicUserInfo"
+                            "$ref": "#/definitions/dto.PublicUserInfo"
                         }
                     }
                 }
@@ -73,7 +73,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.OtpRequest"
+                            "$ref": "#/definitions/dto.OtpRequest"
                         }
                     }
                 ],
@@ -100,7 +100,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.OtpRequest"
+                            "$ref": "#/definitions/dto.OtpRequest"
                         }
                     }
                 ],
@@ -127,7 +127,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.OtpVerifyRequest"
+                            "$ref": "#/definitions/dto.OtpVerifyRequest"
                         }
                     }
                 ],
@@ -159,7 +159,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.SessionQRConfirm"
+                            "$ref": "#/definitions/dto.SessionQRConfirm"
                         }
                     }
                 ],
@@ -186,7 +186,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.SessionQRRequest"
+                            "$ref": "#/definitions/dto.SessionQRRequest"
                         }
                     }
                 ],
@@ -194,7 +194,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.SessionQRResponse"
+                            "$ref": "#/definitions/dto.SessionQRResponse"
                         }
                     }
                 }
@@ -220,7 +220,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.SessionQRRequest"
+                            "$ref": "#/definitions/dto.SessionQRRequest"
                         }
                     }
                 ],
@@ -252,7 +252,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.RestorePhoneRequest"
+                            "$ref": "#/definitions/dto.RestorePhoneRequest"
                         }
                     }
                 ],
@@ -284,7 +284,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.SwitchOrganizationRequest"
+                            "$ref": "#/definitions/dto.SwitchOrganizationRequest"
                         }
                     }
                 ],
@@ -293,6 +293,11 @@ const docTemplate = `{
         },
         "/v1/user/auth/token/refresh": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Làm mới access token bằng refresh token trong cookie",
                 "consumes": [
                     "application/json"
@@ -667,7 +672,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Số lượng theo dõi và bạn bè",
                         "schema": {
-                            "$ref": "#/definitions/data.FollowInfoRes"
+                            "$ref": "#/definitions/dto.FollowInfoRes"
                         }
                     },
                     "400": {
@@ -709,7 +714,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -752,7 +757,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -795,7 +800,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -1264,7 +1269,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
+                            "$ref": "#/definitions/dto.UserInfoResponse"
                         }
                     },
                     "400": {
@@ -1310,7 +1315,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
+                            "$ref": "#/definitions/dto.UserInfoResponse"
                         }
                     },
                     "400": {
@@ -1365,7 +1370,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
+                            "$ref": "#/definitions/dto.UserInfoResponse"
                         }
                     },
                     "400": {
@@ -1420,7 +1425,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Cập nhật thành công",
                         "schema": {
-                            "$ref": "#/definitions/data.PublicUserInfo"
+                            "$ref": "#/definitions/dto.PublicUserInfo"
                         }
                     }
                 }
@@ -1448,7 +1453,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
+                            "$ref": "#/definitions/dto.UserInfoResponse"
                         }
                     },
                     "400": {
@@ -1497,7 +1502,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoRequest"
+                            "$ref": "#/definitions/dto.UserInfoRequest"
                         }
                     }
                 ],
@@ -1505,7 +1510,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Cập nhật thành công",
                         "schema": {
-                            "$ref": "#/definitions/data.UserInfoResponse"
+                            "$ref": "#/definitions/dto.UserInfoResponse"
                         }
                     }
                 }
@@ -1666,6 +1671,34 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/user/profile/accounts/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tài khoản của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy danh sách tài khoản của người dùng",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách tài khoản của người dùng",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AccountInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/user/profile/info/{id}": {
             "get": {
                 "security": [
@@ -1697,7 +1730,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thông tin công khai của người dùng",
                         "schema": {
-                            "$ref": "#/definitions/pb_user.ProfilePublicInfo"
+                            "$ref": "#/definitions/userpb.ProfilePublicInfo"
                         }
                     }
                 }
@@ -1705,7 +1738,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "data.CertificationBatchSave": {
+        "dto.CertificationBatchSave": {
             "type": "object",
             "properties": {
                 "fileName": {
@@ -1727,17 +1760,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "description": "Title     string    ` + "`" + `json:\"title,omitempty\"` + "`" + `\nType      uint8     ` + "`" + `json:\"type,omitempty\"` + "`" + `",
                     "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
                 }
             }
         },
-        "data.FollowInfoRes": {
+        "dto.FollowInfoRes": {
             "type": "object",
             "properties": {
                 "numFollower": {
@@ -1751,7 +1779,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.FriendDTO": {
+        "dto.FriendDTO": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -1784,7 +1812,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.OtpRequest": {
+        "dto.OtpRequest": {
             "type": "object",
             "required": [
                 "phone"
@@ -1799,7 +1827,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.OtpVerifyRequest": {
+        "dto.OtpVerifyRequest": {
             "type": "object",
             "required": [
                 "otp",
@@ -1830,9 +1858,18 @@ const docTemplate = `{
                 }
             }
         },
-        "data.ProfessionBatchSave": {
+        "dto.ProfessionBatchSave": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1847,7 +1884,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.PublicUserInfo": {
+        "dto.PublicUserInfo": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1941,6 +1978,9 @@ const docTemplate = `{
                 "statusOnline": {
                     "$ref": "#/definitions/enums.EOnlineStatus"
                 },
+                "tabDefault": {
+                    "$ref": "#/definitions/enums.ESettingTab"
+                },
                 "taxCode": {
                     "type": "string"
                 },
@@ -1955,7 +1995,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.RestorePhoneRequest": {
+        "dto.RestorePhoneRequest": {
             "type": "object",
             "required": [
                 "phone"
@@ -1966,7 +2006,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.SessionQRConfirm": {
+        "dto.SessionQRConfirm": {
             "type": "object",
             "properties": {
                 "sessionId": {
@@ -1975,7 +2015,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.SessionQRRequest": {
+        "dto.SessionQRRequest": {
             "type": "object",
             "properties": {
                 "clientId": {
@@ -2002,7 +2042,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.SessionQRResponse": {
+        "dto.SessionQRResponse": {
             "type": "object",
             "properties": {
                 "sessionId": {
@@ -2013,7 +2053,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.SwitchOrganizationRequest": {
+        "dto.SwitchOrganizationRequest": {
             "type": "object",
             "required": [
                 "organizationId"
@@ -2024,7 +2064,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.UserInfoRequest": {
+        "dto.UserInfoRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -2051,7 +2091,7 @@ const docTemplate = `{
                 "certifications": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/data.CertificationBatchSave"
+                        "$ref": "#/definitions/dto.CertificationBatchSave"
                     }
                 },
                 "departmentId": {
@@ -2096,7 +2136,7 @@ const docTemplate = `{
                 "professions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/data.ProfessionBatchSave"
+                        "$ref": "#/definitions/dto.ProfessionBatchSave"
                     }
                 },
                 "profileVisibility": {
@@ -2134,7 +2174,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.UserInfoResponse": {
+        "dto.UserInfoResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -2280,173 +2320,6 @@ const docTemplate = `{
                 "VerifyRejected"
             ]
         },
-        "pb_user.CertificationItem": {
-            "type": "object",
-            "properties": {
-                "fileUrl": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "verifiedStatus": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_user.ProfessionItem": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "verifiedStatus": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_user.ProfilePublicInfo": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "avatar": {
-                    "type": "string"
-                },
-                "backIdentify": {
-                    "type": "string"
-                },
-                "backgroundImage": {
-                    "type": "string"
-                },
-                "birth": {
-                    "type": "string"
-                },
-                "certifications": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_user.CertificationItem"
-                    }
-                },
-                "departmentId": {
-                    "type": "integer"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "facebook": {
-                    "type": "string"
-                },
-                "following": {
-                    "type": "boolean"
-                },
-                "friendStatus": {
-                    "$ref": "#/definitions/sharepb.FriendItem"
-                },
-                "frontIdentify": {
-                    "type": "string"
-                },
-                "fullName": {
-                    "type": "string"
-                },
-                "instagram": {
-                    "type": "string"
-                },
-                "introduction": {
-                    "type": "string"
-                },
-                "linkedin": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phone2": {
-                    "type": "string"
-                },
-                "position": {
-                    "type": "string"
-                },
-                "professions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_user.ProfessionItem"
-                    }
-                },
-                "profileId": {
-                    "type": "integer"
-                },
-                "rateStats": {
-                    "$ref": "#/definitions/pb_user.RateStats"
-                },
-                "referralBy": {
-                    "type": "string"
-                },
-                "referralCode": {
-                    "type": "string"
-                },
-                "roleRealEstate": {
-                    "type": "integer"
-                },
-                "slogan": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string"
-                },
-                "statusOnline": {
-                    "type": "integer"
-                },
-                "tabDefault": {
-                    "type": "integer"
-                },
-                "taxCode": {
-                    "type": "string"
-                },
-                "twitter": {
-                    "type": "string"
-                },
-                "website": {
-                    "type": "string"
-                },
-                "youtube": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_user.RateStats": {
-            "type": "object",
-            "properties": {
-                "averageScore": {
-                    "type": "number"
-                },
-                "star1Count": {
-                    "type": "integer"
-                },
-                "star2Count": {
-                    "type": "integer"
-                },
-                "star3Count": {
-                    "type": "integer"
-                },
-                "star4Count": {
-                    "type": "integer"
-                },
-                "star5Count": {
-                    "type": "integer"
-                },
-                "totalReviews": {
-                    "type": "integer"
-                }
-            }
-        },
         "sharepb.FriendItem": {
             "type": "object",
             "properties": {
@@ -2467,6 +2340,14 @@ const docTemplate = `{
         "user_model.CertificationItem": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "description": "Tên file",
+                    "type": "string"
+                },
+                "fileType": {
+                    "description": "Loại file",
+                    "type": "string"
+                },
                 "fileUrl": {
                     "description": "Link tài liệu",
                     "type": "string"
@@ -2474,8 +2355,8 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "title": {
-                    "description": "Tên văn bằng",
+                "name": {
+                    "description": "Tên chứng chỉ",
                     "type": "string"
                 },
                 "verifiedStatus": {
@@ -2641,6 +2522,213 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "profileId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.AccountInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.AccountInfoResponse": {
+            "type": "object",
+            "properties": {
+                "accountInfo": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.AccountInfo"
+                    }
+                }
+            }
+        },
+        "userpb.CertificationItem": {
+            "type": "object",
+            "properties": {
+                "fileUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ProfessionItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ProfilePublicInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "backIdentify": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "certifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.CertificationItem"
+                    }
+                },
+                "departmentId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "facebook": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "boolean"
+                },
+                "friendStatus": {
+                    "$ref": "#/definitions/sharepb.FriendItem"
+                },
+                "frontIdentify": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "instagram": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "linkedin": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "professions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ProfessionItem"
+                    }
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "rateStats": {
+                    "$ref": "#/definitions/userpb.RateStats"
+                },
+                "referralBy": {
+                    "type": "string"
+                },
+                "referralCode": {
+                    "type": "string"
+                },
+                "roleRealEstate": {
+                    "type": "integer"
+                },
+                "slogan": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "statusOnline": {
+                    "type": "integer"
+                },
+                "tabDefault": {
+                    "type": "integer"
+                },
+                "taxCode": {
+                    "type": "string"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "youtube": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.RateStats": {
+            "type": "object",
+            "properties": {
+                "averageScore": {
+                    "type": "number"
+                },
+                "star1Count": {
+                    "type": "integer"
+                },
+                "star2Count": {
+                    "type": "integer"
+                },
+                "star3Count": {
+                    "type": "integer"
+                },
+                "star4Count": {
+                    "type": "integer"
+                },
+                "star5Count": {
+                    "type": "integer"
+                },
+                "totalReviews": {
                     "type": "integer"
                 }
             }

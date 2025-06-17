@@ -1,8 +1,11 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
+
+	sharepb "pb/types/shared"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/custom_error"
@@ -11,7 +14,6 @@ import (
 	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
 	"github.com/tuandq2112/organization-service/internal/interface/dto"
 	"github.com/tuandq2112/organization-service/pkg/utils"
-	sharepb "pb/types/shared"
 )
 
 type GroupMemberUsecase interface {
@@ -48,8 +50,8 @@ func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepositor
 }
 
 func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	err := u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, uint32(currentUserId))
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +67,8 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 	if err != nil {
 		return nil, err
 	}
-	member.CreatedBy = currentUserId
-	member.UpdatedBy = currentUserId
+	member.CreatedBy = uint32(currentUserId)
+	member.UpdatedBy = uint32(currentUserId)
 	createdMember, err := u.groupMemberRepository.Create(ctx, member)
 	if err != nil {
 		return nil, err

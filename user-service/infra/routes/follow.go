@@ -2,7 +2,7 @@ package routes
 
 import (
 	_routes "common/routes"
-	user_service "user/services/user"
+	user_service "user/internal/services/user"
 
 	"github.com/gin-gonic/gin"
 )

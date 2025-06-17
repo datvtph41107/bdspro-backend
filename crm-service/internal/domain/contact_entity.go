@@ -19,7 +19,7 @@ type ContactEntity struct {
 	LeadID       uint64            `gorm:"column:lead_id" json:"leadId"`
 	OwnerID      uint64            `gorm:"column:owner_id" json:"ownerId"`
 	OwnerType    enums.EOwnerType  `gorm:"column:owner_type;default:30" json:"ownerType" binding:"required"`
-	ProfileID    uint64            `gorm:"column:profile_id" json:"profileId"`
+	ProfileID    *uint64           `gorm:"column:profile_id" json:"profileId"`
 	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
 }
 
@@ -39,7 +39,7 @@ type ContactItem struct {
 	Note             string           `gorm:"column:note" json:"note"`
 	OwnerID          uint64           `gorm:"column:owner_id" json:"ownerId"`
 	OwnerType        enums.EOwnerType `gorm:"column:owner_type;default:10" json:"ownerType" binding:"required"`
-	ProfileID        uint64           `gorm:"column:profile_id" json:"profileId"`
+	ProfileID        *uint64          `gorm:"column:profile_id" json:"profileId"`
 	Following        bool             `gorm:"column:following" json:"following"`
 	FriendID         uint64           `gorm:"column:friend_id" json:"friendId"`
 	FriendStatus     uint64           `gorm:"column:friend_status" json:"friendStatus"`

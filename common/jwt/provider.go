@@ -1,6 +1,7 @@
 package _jwt
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -15,27 +16,29 @@ import (
 
 // Principal chứa payload của token
 type Principal struct {
-	UserID    uint64           `json:"sub"`
-	ProfileId uint64           `json:"profile"`
-	PlanId    *uint64          `json:"plan"`
-	Type      string           `json:"type"`
-	Role      string           `json:"role"`
-	Session   uint             `json:"session"`
-	PlanFrom  *jwt.NumericDate `json:"start"`
+	UserID         uint64           `json:"sub"`
+	ProfileId      uint64           `json:"profile"`
+	OrganizationId *uint64          `json:"organization"`
+	PlanId         *uint64          `json:"plan"`
+	Type           string           `json:"type"`
+	Role           string           `json:"role"`
+	Session        uint             `json:"session"`
+	PlanFrom       *jwt.NumericDate `json:"start"`
 	jwt.RegisteredClaims
 }
 
 func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 	claims := jwt.MapClaims{
-		"profile":     jwtTokenProperties.ProfileID,
-		"role":        jwtTokenProperties.Role,
-		"type":        jwtTokenProperties.Type,
-		"session":     jwtTokenProperties.SessionID,
-		"authorities": jwtTokenProperties.Privileges,
-		"sub":         jwtTokenProperties.AuthID,
-		"plan":        jwtTokenProperties.PlanID,
-		"planAt":      jwtTokenProperties.PlanAt,
-		"iat":         time.Now().Unix(),
+		"profile":      jwtTokenProperties.ProfileID,
+		"organization": jwtTokenProperties.OrganizationID,
+		"role":         jwtTokenProperties.Role,
+		"type":         jwtTokenProperties.Type,
+		"session":      jwtTokenProperties.SessionID,
+		"authorities":  jwtTokenProperties.Privileges,
+		"sub":          jwtTokenProperties.AuthID,
+		"plan":         jwtTokenProperties.PlanID,
+		"planAt":       jwtTokenProperties.PlanAt,
+		"iat":          time.Now().Unix(),
 	}
 
 	// Nếu có thêm thông tin, merge vào claims
@@ -149,6 +152,15 @@ func GetPrincipal(c *gin.Context) *Principal {
 	return nil
 }
 
+func GetPrincipalContext(c context.Context) *Principal {
+	clms, ok := c.Value("claims").(*Principal)
+	if !ok {
+		return nil
+	}
+
+	return clms
+}
+
 func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	// Parse token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -172,6 +184,7 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	authID, _ := claims["sub"].(float64)
 	sessionID, _ := claims["session"].(float64)
 	profileID, _ := claims["profile"].(float64)
+	organizationID, _ := claims["organization"].(float64)
 	planID, _ := claims["plan"].(float64)
 	role, _ := claims["role"].(string)
 	tokenType, _ := claims["type"].(string)
@@ -181,16 +194,18 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 
 	planAt := time.Unix(planFrom, 0)
 	plan := uint64(planID)
+	organization := uint64(organizationID)
 	// Tạo đối tượng JwtTokenProperties
 	return &JwtTokenProperties{
-		SessionID:  uint64(sessionID),
-		AuthID:     uint64(authID),
-		ProfileID:  uint64(profileID),
-		PlanID:     &plan,
-		Role:       role,
-		Type:       TokenType(tokenType),
-		Privileges: privileges,
-		IssuedAt:   time.Unix(int64(issuedAt), 0),
-		PlanAt:     &planAt,
+		SessionID:      uint64(sessionID),
+		AuthID:         uint64(authID),
+		ProfileID:      uint64(profileID),
+		OrganizationID: &organization,
+		PlanID:         &plan,
+		Role:           role,
+		Type:           TokenType(tokenType),
+		Privileges:     privileges,
+		IssuedAt:       time.Unix(int64(issuedAt), 0),
+		PlanAt:         &planAt,
 	}, nil
 }

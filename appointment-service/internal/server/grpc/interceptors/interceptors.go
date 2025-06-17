@@ -30,7 +30,6 @@ func UnaryLoggerInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInter
 	}
 }
 
-
 func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -38,7 +37,7 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterce
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if info.FullMethod == "/pb_organization.OrganizationMemberService/SwitchOrganization" {
+		if info.FullMethod == "/organizationpb.OrganizationMemberService/SwitchOrganization" {
 			return handler(ctx, req)
 		}
 		md, ok := metadata.FromIncomingContext(ctx)

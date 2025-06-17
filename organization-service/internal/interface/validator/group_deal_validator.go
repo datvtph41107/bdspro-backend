@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,12 +9,12 @@ import (
 )
 
 type GroupDealValidator interface {
-	ValidateCreateGroupDealRequest(request *grouppb.CreateGroupDealRequest) error
-	ValidateUpdateGroupDealRequest(request *grouppb.UpdateGroupDealRequest) error
-	ValidateDeleteGroupDealRequest(request *grouppb.DeleteGroupDealRequest) error
-	ValidateGetGroupDealRequest(request *grouppb.GetGroupDealRequest) error
-	ValidateGetGroupDealsRequest(request *grouppb.GetGroupDealsRequest) error
-	ValidateUpdateGroupDealStatusRequest(request *grouppb.UpdateGroupDealStatusRequest) error
+	ValidateCreateGroupDealRequest(request *organizationpb.CreateGroupDealRequest) error
+	ValidateUpdateGroupDealRequest(request *organizationpb.UpdateGroupDealRequest) error
+	ValidateDeleteGroupDealRequest(request *organizationpb.DeleteGroupDealRequest) error
+	ValidateGetGroupDealRequest(request *organizationpb.GetGroupDealRequest) error
+	ValidateGetGroupDealsRequest(request *organizationpb.GetGroupDealsRequest) error
+	ValidateUpdateGroupDealStatusRequest(request *organizationpb.UpdateGroupDealStatusRequest) error
 }
 
 type groupDealValidator struct{}
@@ -23,7 +23,7 @@ func NewGroupDealValidator() GroupDealValidator {
 	return &groupDealValidator{}
 }
 
-func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *grouppb.CreateGroupDealRequest) error {
+func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *organizationpb.CreateGroupDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Name == "" {
 		details = append(details, &errdetails.BadRequest{
@@ -73,7 +73,7 @@ func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *grouppb.Cre
 	return nil
 }
 
-func (v *groupDealValidator) ValidateUpdateGroupDealRequest(request *grouppb.UpdateGroupDealRequest) error {
+func (v *groupDealValidator) ValidateUpdateGroupDealRequest(request *organizationpb.UpdateGroupDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -121,7 +121,7 @@ func (v *groupDealValidator) ValidateUpdateGroupDealRequest(request *grouppb.Upd
 	return nil
 }
 
-func (v *groupDealValidator) ValidateDeleteGroupDealRequest(request *grouppb.DeleteGroupDealRequest) error {
+func (v *groupDealValidator) ValidateDeleteGroupDealRequest(request *organizationpb.DeleteGroupDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -139,7 +139,7 @@ func (v *groupDealValidator) ValidateDeleteGroupDealRequest(request *grouppb.Del
 	return nil
 }
 
-func (v *groupDealValidator) ValidateGetGroupDealRequest(request *grouppb.GetGroupDealRequest) error {
+func (v *groupDealValidator) ValidateGetGroupDealRequest(request *organizationpb.GetGroupDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -157,7 +157,7 @@ func (v *groupDealValidator) ValidateGetGroupDealRequest(request *grouppb.GetGro
 	return nil
 }
 
-func (v *groupDealValidator) ValidateGetGroupDealsRequest(request *grouppb.GetGroupDealsRequest) error {
+func (v *groupDealValidator) ValidateGetGroupDealsRequest(request *organizationpb.GetGroupDealsRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -175,7 +175,7 @@ func (v *groupDealValidator) ValidateGetGroupDealsRequest(request *grouppb.GetGr
 	return nil
 }
 
-func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *grouppb.UpdateGroupDealStatusRequest) error {
+func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *organizationpb.UpdateGroupDealStatusRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{

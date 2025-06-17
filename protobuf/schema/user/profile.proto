@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb_user;
+package userpb;
 import "google/api/annotations.proto";
 import "shared/common.proto";
 
-option go_package = "pb/types/user;pb_user";
+option go_package = "pb/types/user;userpb";
 
 service ProfileService {
     rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
@@ -12,6 +12,11 @@ service ProfileService {
     rpc GetProfileInfo(IdRequest) returns (ProfilePublicInfo) {
         option (google.api.http) = {
             get: "/v2/user/profile/info/{id}"
+        };
+    }
+    rpc ListAccountMe(sharepb.Empty) returns (AccountInfoResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/accounts/me"
         };
     }
 }
@@ -101,4 +106,20 @@ message IdRequest {
 
 message GetProfileByPhonesRequest {
     repeated string phones = 1;
+}
+
+message AccountInfoResponse {
+    repeated AccountInfo data = 1;
+    uint64 total = 2;
+}
+
+message AccountInfo {
+    optional uint64 profileId = 1;
+    optional string fullName = 2;
+    optional string avatar = 3;
+    optional string phone = 4;
+    optional string email = 5;
+    optional string backgroundImage = 8;
+    optional uint32 organizationId = 9;
+    optional uint32 groupId = 10;
 }

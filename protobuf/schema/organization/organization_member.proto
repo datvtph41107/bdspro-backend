@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb_organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
 import "shared/common.proto";
 
-option go_package = "types/pb_organization";
+option go_package = "types/organizationpb";
 
 
 
@@ -14,31 +14,37 @@ service OrganizationMemberService {
     rpc SwitchOrganization(SwitchOrganizationRequest) returns (SwitchOrganizationResponse) {}
     rpc CreateOrganizationMember(CreateOrganizationMemberRequest) returns (CreateOrganizationMemberResponse) {
         option (google.api.http) = {
-            post: "/v2/organization/member"
+            post: "/v2/org/organization/member"
             body: "*"
         };
     }
     rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {
         option (google.api.http) = {
-            put: "/v2/organization/member/{id}"
+            put: "/v2/org/organization/member/{id}"
             body: "*"
         };
     }
     rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest) returns (DeleteOrganizationMemberResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization/member/{id}"
+            delete: "/v2/org/organization/member/{id}"
         };
     }
 
     rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/member/{organizationId}"
+            get: "/v2/org/organization/member/{organizationId}"
         };
     }
 
-    rpc GetOrganizationMember(Empty) returns (GetOrganizationMembersResponse) {
+    // rpc GetOrganizationMember(Empty) returns (GetOrganizationMembersResponse) {
+    //     option (google.api.http) = {
+    //         get: "/v2/org/organization/members"
+    //     };
+    // }
+
+    rpc GetCurrentOrganizationMembers(Empty) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/members"
+            get: "/v2/org/organization/members/me"
         };
     }
 
@@ -101,6 +107,6 @@ message OrganizationMember {
 }
 
 message GetOrganizationMembersResponse {
-    repeated OrganizationMember organizationMembers = 1 [json_name = "organizationMembers"];
+    repeated OrganizationMember data = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
 }

@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization-role": {
+    "/v2/org/organization-role": {
       "get": {
         "operationId": "OrganizationRoleService_GetRoles",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetRolesResponse"
+              "$ref": "#/definitions/organizationpbGetRolesResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateRoleResponse"
+              "$ref": "#/definitions/organizationpbCreateRoleResponse"
             }
           },
           "default": {
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateRoleRequest"
+              "$ref": "#/definitions/organizationpbCreateRoleRequest"
             }
           }
         ],
@@ -91,14 +91,14 @@
         ]
       }
     },
-    "/v2/organization-role/{id}": {
+    "/v2/org/organization-role/{id}": {
       "delete": {
         "operationId": "OrganizationRoleService_DeleteRole",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationDeleteRoleResponse"
+              "$ref": "#/definitions/organizationpbDeleteRoleResponse"
             }
           },
           "default": {
@@ -127,7 +127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationUpdateRoleResponse"
+              "$ref": "#/definitions/organizationpbUpdateRoleResponse"
             }
           },
           "default": {
@@ -179,7 +179,7 @@
         }
       }
     },
-    "pb_organizationCreateRoleRequest": {
+    "organizationpbCreateRoleRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -194,7 +194,7 @@
         }
       }
     },
-    "pb_organizationCreateRoleResponse": {
+    "organizationpbCreateRoleResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -203,7 +203,7 @@
         }
       }
     },
-    "pb_organizationDeleteRoleResponse": {
+    "organizationpbDeleteRoleResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -212,14 +212,14 @@
         }
       }
     },
-    "pb_organizationGetRolesResponse": {
+    "organizationpbGetRolesResponse": {
       "type": "object",
       "properties": {
         "roles": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationRole"
+            "$ref": "#/definitions/organizationpbRole"
           }
         },
         "total": {
@@ -228,7 +228,7 @@
         }
       }
     },
-    "pb_organizationRole": {
+    "organizationpbRole": {
       "type": "object",
       "properties": {
         "id": {
@@ -243,7 +243,7 @@
         }
       }
     },
-    "pb_organizationUpdateRoleResponse": {
+    "organizationpbUpdateRoleResponse": {
       "type": "object",
       "properties": {
         "id": {

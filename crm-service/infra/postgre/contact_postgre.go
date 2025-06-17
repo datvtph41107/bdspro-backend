@@ -23,10 +23,8 @@ func NewContactRepo(DB *gorm.DB) *PostgreContact {
 	}
 }
 
-func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
-	var contacts []domain.ContactItem
-	result := r.DB.
-		// Model(&domain.ContactEntity{}).
+func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) (*gorm.DB, error) {
+	tx = tx.Model(&domain.ContactEntity{}).
 		Debug().
 		Table("tb_contact").
 		Joins("LEFT JOIN block bl ON (bl.profile_id = ? AND bl.blocked_id = tb_contact.profile_id)", profileId).
@@ -37,14 +35,50 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 			profileId, profileId).
 		Joins("LEFT JOIN follow fl ON fl.following_id = tb_contact.profile_id and fl.created_by = ? and fl.deleted_at is null", profileId).
 		Select(`tb_contact.*, 
-		fl.id IS NOT NULL AS following, 
+		fl.id IS NOT NULL AS following,
 		fr.id AS friend_id,
 		fr.status AS friend_status,
 		fr.created_by AS friend_created_by,
 		fr.receiver_id AS friend_receiver_id,
-		bl.profile_id IS NOT NULL AS blocked
-		`).
-		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_type = ?", profileId, ownerType).
+		bl.profile_id IS NOT NULL AS blocked`).
+		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_type = ?", profileId, ownerType)
+
+	if dto.FriendStatus != nil {
+		tx = tx.Where("fr.status IN (?)", dto.FriendStatus)
+	}
+	// if dto.Following != nil {
+	// 	tx = tx.Where("following = ?", *dto.Following)
+	// }
+	// if dto.Roles != nil {
+	// 	tx = tx.Where("tb_contact.roles IN (?)", dto.Roles)
+	// }
+	// if dto.Leaded != nil {
+	// 	tx = tx.Where("tb_contact.lead_id IS NOT NULL = ?", *dto.Leaded)
+	// }
+	// if dto.Connected != nil {
+	// 	tx = tx.Where("tb_contact.connected = ?", *dto.Connected)
+	// }
+	if dto.AppInstalled != nil {
+		if *dto.AppInstalled {
+			tx = tx.Where("tb_contact.profile_id is not null")
+		} else {
+			tx = tx.Where("tb_contact.profile_id is null")
+		}
+	}
+
+	return tx, nil
+}
+
+func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+	var contacts []domain.ContactItem
+	query, err := r.QuerySearch(r.DB, profileId, ownerType, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := query.
+		// Model(&domain.ContactEntity{}).
+		Debug().
+		// Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_type = ?", profileId, ownerType).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Scan(&contacts)
@@ -52,7 +86,7 @@ func (r *PostgreContact) Search(c context.Context, profileId uint64, ownerType e
 		return nil, 0, result.Error
 	}
 	var total int64
-	r.DB.Model(&domain.ContactEntity{}).Where("deleted_at IS NULL AND owner_id = ? and owner_type = ?", profileId, ownerType).Count(&total)
+	query.Count(&total)
 	return contacts, total, nil
 }
 

@@ -6,9 +6,170 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/v2/organization",
+    "basePath": "/v2/org",
     "paths": {
-        "/members": {
+        "/group": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Tạo nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group-member": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo thành viên nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Tạo thành viên nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin thành viên",
+                        "name": "groupMember",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/user/{userId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tổ chức của người dùng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy tổ chức của người dùng hiện tại",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/member": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo thành viên tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Tạo thành viên tổ chức",
+                "parameters": [
+                    {
+                        "description": "Thông tin thành viên",
+                        "name": "organizationMember",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/members/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/members/{organizationId}": {
             "get": {
                 "security": [
                     {
@@ -44,9 +205,151 @@
                         "description": "Tên thành viên",
                         "name": "text",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của tổ chức",
+                        "name": "organizationId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/organization/new": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo tổ chức mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Tạo tổ chức mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin tổ chức",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/user/{userId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tổ chức của người dùng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy tổ chức của người dùng hiện tại",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "organizationpb.CreateGroupMemberRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateGroupRequest": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.CreateOrganizationMemberRequest": {
+            "type": "object",
+            "properties": {
+                "organizationId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateOrganizationRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "businessLicenseUrl": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "taxCode": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
             }
         }
     },

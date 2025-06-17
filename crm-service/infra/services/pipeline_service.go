@@ -131,6 +131,8 @@ func (s *PipelineService) GetDefault(ctx context.Context, req *sharepb.Empty) (*
 	}
 
 	result := mapper.PipelineDomainToPb(pipeline)
-	result.DefaultStage = mapper.StageDomainToPb(stage)
+	if stage != nil {
+		result.DefaultStage = mapper.StageDomainToPb(stage)
+	}
 	return result, nil
 }

@@ -54,7 +54,7 @@ message History {
     uint64 productId = 4;
     repeated uint64 childIds = 5;
     uint64 createdUserId = 6;
-    pb_user.ProfileItem createdUser = 7;
+    userpb.ProfileItem createdUser = 7;
     repeated ProductInfo childs = 8;
     // ProductInfo parent = 4;
     // ProductInfo product = 6;

@@ -52,9 +52,9 @@ var HistoryMap = map[EHistory]string{
 
 	// -- action for contact --
 	HistoryContactCreate:  "Tạo liên hệ",
-	HistoryContactUpdate:  "Cập nhật liên hệ",
 	HistoryContactDelete:  "Xóa liên hệ",
 	HistoryContactAssign:  "Phân công liên hệ",
+	HistoryContactUpdate:  "Cập nhật liên hệ",
 	HistoryContactInstall: "Mời cài app",
 	HistoryContactFriend:  "Gửi lời kết bạn",
 	HistoryContactStage:   "Cập nhật trạng thái CRM",

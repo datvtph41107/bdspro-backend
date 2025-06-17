@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,11 +9,11 @@ import (
 )
 
 type GroupDocumentValidator interface {
-	ValidateCreateGroupDocumentRequest(request *grouppb.CreateGroupDocumentRequest) error
-	ValidateUpdateGroupDocumentRequest(request *grouppb.UpdateGroupDocumentRequest) error
-	ValidateDeleteGroupDocumentRequest(request *grouppb.DeleteGroupDocumentRequest) error
-	ValidateGetGroupDocumentRequest(request *grouppb.GetGroupDocumentRequest) error
-	ValidateGetGroupDocumentsRequest(request *grouppb.GetGroupDocumentsRequest) error
+	ValidateCreateGroupDocumentRequest(request *organizationpb.CreateGroupDocumentRequest) error
+	ValidateUpdateGroupDocumentRequest(request *organizationpb.UpdateGroupDocumentRequest) error
+	ValidateDeleteGroupDocumentRequest(request *organizationpb.DeleteGroupDocumentRequest) error
+	ValidateGetGroupDocumentRequest(request *organizationpb.GetGroupDocumentRequest) error
+	ValidateGetGroupDocumentsRequest(request *organizationpb.GetGroupDocumentsRequest) error
 }
 
 type groupDocumentValidator struct{}
@@ -22,7 +22,7 @@ func NewGroupDocumentValidator() GroupDocumentValidator {
 	return &groupDocumentValidator{}
 }
 
-func (v *groupDocumentValidator) ValidateCreateGroupDocumentRequest(request *grouppb.CreateGroupDocumentRequest) error {
+func (v *groupDocumentValidator) ValidateCreateGroupDocumentRequest(request *organizationpb.CreateGroupDocumentRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -85,14 +85,14 @@ func (v *groupDocumentValidator) ValidateCreateGroupDocumentRequest(request *gro
 			},
 		})
 	}
-	
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
 }
 
-func (v *groupDocumentValidator) ValidateUpdateGroupDocumentRequest(request *grouppb.UpdateGroupDocumentRequest) error {
+func (v *groupDocumentValidator) ValidateUpdateGroupDocumentRequest(request *organizationpb.UpdateGroupDocumentRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -150,7 +150,7 @@ func (v *groupDocumentValidator) ValidateUpdateGroupDocumentRequest(request *gro
 	return nil
 }
 
-func (v *groupDocumentValidator) ValidateDeleteGroupDocumentRequest(request *grouppb.DeleteGroupDocumentRequest) error {
+func (v *groupDocumentValidator) ValidateDeleteGroupDocumentRequest(request *organizationpb.DeleteGroupDocumentRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -168,7 +168,7 @@ func (v *groupDocumentValidator) ValidateDeleteGroupDocumentRequest(request *gro
 	return nil
 }
 
-func (v *groupDocumentValidator) ValidateGetGroupDocumentRequest(request *grouppb.GetGroupDocumentRequest) error {
+func (v *groupDocumentValidator) ValidateGetGroupDocumentRequest(request *organizationpb.GetGroupDocumentRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -186,7 +186,7 @@ func (v *groupDocumentValidator) ValidateGetGroupDocumentRequest(request *groupp
 	return nil
 }
 
-func (v *groupDocumentValidator) ValidateGetGroupDocumentsRequest(request *grouppb.GetGroupDocumentsRequest) error {
+func (v *groupDocumentValidator) ValidateGetGroupDocumentsRequest(request *organizationpb.GetGroupDocumentsRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -202,4 +202,4 @@ func (v *groupDocumentValidator) ValidateGetGroupDocumentsRequest(request *group
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

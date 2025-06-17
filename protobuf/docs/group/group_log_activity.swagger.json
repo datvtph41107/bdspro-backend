@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupLogActivitiesResponse"
+              "$ref": "#/definitions/organizationpbGetGroupLogActivitiesResponse"
             }
           },
           "default": {
@@ -63,14 +63,14 @@
     }
   },
   "definitions": {
-    "pb_groupGetGroupLogActivitiesResponse": {
+    "organizationpbGetGroupLogActivitiesResponse": {
       "type": "object",
       "properties": {
         "logActivities": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_groupGroupLogActivity"
+            "$ref": "#/definitions/organizationpbGroupLogActivity"
           }
         },
         "total": {
@@ -79,7 +79,7 @@
         }
       }
     },
-    "pb_groupGroupLogActivity": {
+    "organizationpbGroupLogActivity": {
       "type": "object",
       "properties": {
         "id": {

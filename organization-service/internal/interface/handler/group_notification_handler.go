@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
@@ -10,7 +10,7 @@ import (
 )
 
 type GroupNotificationHandler struct {
-	grouppb.UnimplementedGroupNotificationServiceServer
+	organizationpb.UnimplementedGroupNotificationServiceServer
 	GroupNotificationUsecase     usecase.GroupNotificationUsecase
 	GroupNotificationTransformer transformer.GroupNotificationTransformer
 	GroupNotificationValidator   validator.GroupNotificationValidator
@@ -28,7 +28,7 @@ func NewGroupNotificationHandler(
 	}
 }
 
-func (h *GroupNotificationHandler) GetGroupNotifications(ctx context.Context, req *grouppb.GetGroupNotificationsRequest) (*grouppb.GetGroupNotificationsResponse, error) {
+func (h *GroupNotificationHandler) GetGroupNotifications(ctx context.Context, req *organizationpb.GetGroupNotificationsRequest) (*organizationpb.GetGroupNotificationsResponse, error) {
 	if err := h.GroupNotificationValidator.ValidateGetGroupNotificationsRequest(req); err != nil {
 		return nil, err
 	}
@@ -48,4 +48,4 @@ func (h *GroupNotificationHandler) GetGroupNotifications(ctx context.Context, re
 	}
 
 	return h.GroupNotificationTransformer.EntityToGetGroupNotificationsResponse(notifications), nil
-} 
+}

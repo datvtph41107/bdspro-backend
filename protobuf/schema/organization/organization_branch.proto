@@ -1,51 +1,51 @@
 syntax = "proto3";
 
-package pb_organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
 
-option go_package = "types/pb_organization";
+option go_package = "types/organizationpb";
 
 
 
 service OrganizationBranchService {
     rpc CreateOrganizationBranch(CreateOrganizationBranchRequest) returns (CreateOrganizationBranchResponse) {
         option (google.api.http) = {
-            post: "/v2/organization-branch"
+            post: "/v2/org/organization-branch"
             body: "*"
         };
     }
     rpc UpdateOrganizationBranch(UpdateOrganizationBranchRequest) returns (UpdateOrganizationBranchResponse) {
         option (google.api.http) = {
-            put: "/v2/organization-branch/{id}"
+            put: "/v2/org/organization-branch/{id}"
             body: "*"
         };
     }
     rpc DeleteOrganizationBranch(DeleteOrganizationBranchRequest) returns (DeleteOrganizationBranchResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization-branch/{id}"
+            delete: "/v2/org/organization-branch/{id}"
         };
     }
     rpc AddMemberToOrganizationBranch(AddMemberToOrganizationBranchRequest) returns (AddMemberToOrganizationBranchResponse) {
         option (google.api.http) = {
-            post: "/v2/organization-branch/{id}/add-member"
+            post: "/v2/org/organization-branch/{id}/add-member"
             body: "*"
         };
     }
     rpc RemoveMemberFromOrganizationBranch(RemoveMemberFromOrganizationBranchRequest) returns (RemoveMemberFromOrganizationBranchResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization-branch/{id}/remove-member/{userId}"
+            delete: "/v2/org/organization-branch/{id}/remove-member/{userId}"
         };
     }
     rpc GetOrganizationBranchMembers(GetOrganizationBranchMembersRequest) returns (GetOrganizationBranchMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/organization-branch/{id}/members"
+            get: "/v2/org/organization-branch/{id}/members"
         };
     }
     rpc GetOrganizationBranches(GetOrganizationBranchesRequest) returns (GetOrganizationBranchesResponse) {
         option (google.api.http) = {
-            get: "/v2/organization-branch"
+            get: "/v2/org/organization-branch"
         };
     }
 }

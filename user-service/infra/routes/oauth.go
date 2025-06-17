@@ -3,8 +3,8 @@ package routes
 import (
 	_routes "common/routes"
 	"net/http"
-	"user/data"
-	auth_service "user/services/auth"
+	"user/internal/dto"
+	auth_service "user/internal/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -80,7 +80,7 @@ func (route *OAuthRouter) OauthCallback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 	platform := c.Query("platform")
-	var result *data.AuthLoginResponse
+	var result *dto.AuthLoginResponse
 	var err error
 
 	switch provider {

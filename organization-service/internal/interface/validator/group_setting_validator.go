@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,11 +9,11 @@ import (
 )
 
 type GroupSettingValidator interface {
-	ValidateCreateGroupSettingRequest(request *grouppb.CreateGroupSettingRequest) error
-	ValidateUpdateGroupSettingRequest(request *grouppb.UpdateGroupSettingRequest) error
-	ValidateDeleteGroupSettingRequest(request *grouppb.DeleteGroupSettingRequest) error
-	ValidateGetGroupSettingRequest(request *grouppb.GetGroupSettingRequest) error
-	ValidateGetGroupSettingsRequest(request *grouppb.GetGroupSettingsRequest) error
+	ValidateCreateGroupSettingRequest(request *organizationpb.CreateGroupSettingRequest) error
+	ValidateUpdateGroupSettingRequest(request *organizationpb.UpdateGroupSettingRequest) error
+	ValidateDeleteGroupSettingRequest(request *organizationpb.DeleteGroupSettingRequest) error
+	ValidateGetGroupSettingRequest(request *organizationpb.GetGroupSettingRequest) error
+	ValidateGetGroupSettingsRequest(request *organizationpb.GetGroupSettingsRequest) error
 }
 
 type groupSettingValidator struct{}
@@ -22,7 +22,7 @@ func NewGroupSettingValidator() GroupSettingValidator {
 	return &groupSettingValidator{}
 }
 
-func (v *groupSettingValidator) ValidateCreateGroupSettingRequest(request *grouppb.CreateGroupSettingRequest) error {
+func (v *groupSettingValidator) ValidateCreateGroupSettingRequest(request *organizationpb.CreateGroupSettingRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -60,7 +60,7 @@ func (v *groupSettingValidator) ValidateCreateGroupSettingRequest(request *group
 	return nil
 }
 
-func (v *groupSettingValidator) ValidateUpdateGroupSettingRequest(request *grouppb.UpdateGroupSettingRequest) error {
+func (v *groupSettingValidator) ValidateUpdateGroupSettingRequest(request *organizationpb.UpdateGroupSettingRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -98,7 +98,7 @@ func (v *groupSettingValidator) ValidateUpdateGroupSettingRequest(request *group
 	return nil
 }
 
-func (v *groupSettingValidator) ValidateDeleteGroupSettingRequest(request *grouppb.DeleteGroupSettingRequest) error {
+func (v *groupSettingValidator) ValidateDeleteGroupSettingRequest(request *organizationpb.DeleteGroupSettingRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -116,7 +116,7 @@ func (v *groupSettingValidator) ValidateDeleteGroupSettingRequest(request *group
 	return nil
 }
 
-func (v *groupSettingValidator) ValidateGetGroupSettingRequest(request *grouppb.GetGroupSettingRequest) error {
+func (v *groupSettingValidator) ValidateGetGroupSettingRequest(request *organizationpb.GetGroupSettingRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -134,7 +134,7 @@ func (v *groupSettingValidator) ValidateGetGroupSettingRequest(request *grouppb.
 	return nil
 }
 
-func (v *groupSettingValidator) ValidateGetGroupSettingsRequest(request *grouppb.GetGroupSettingsRequest) error {
+func (v *groupSettingValidator) ValidateGetGroupSettingsRequest(request *organizationpb.GetGroupSettingsRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -170,4 +170,4 @@ func (v *groupSettingValidator) ValidateGetGroupSettingsRequest(request *grouppb
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

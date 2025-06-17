@@ -104,7 +104,7 @@ message ContactDTO {
 
 message ContactListDTO {
     repeated ContactDTO data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 message ContactSyncRequest {
@@ -115,7 +115,7 @@ message ContactSyncRequest {
 
 message ContactSyncResponse {
   repeated ContactDTO data = 1;
-  uint32 totalElements = 2;
+  uint32 total = 2;
 }
 
 message RelationShipResponse {

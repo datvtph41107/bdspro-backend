@@ -1,7 +1,7 @@
 package routes
 
 import (
-	profession_service "user/services/user"
+	profession_service "user/internal/services/user"
 
 	"github.com/gin-gonic/gin"
 )

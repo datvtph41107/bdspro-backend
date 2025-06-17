@@ -13,15 +13,17 @@ const (
 )
 
 type UserMetadata struct {
-	ProfileID *uint64
-	PlanID    *uint64
-	Role      []string
+	ProfileID      *uint64
+	OrganizationID *uint64
+	PlanID         *uint64
+	Role           []string
 }
 
 // JwtTokenProperties chứa thông tin JWT
 type JwtTokenProperties struct {
 	AuthID         uint64                 `json:"authId"`
 	ProfileID      uint64                 `json:"profileId"`
+	OrganizationID *uint64                `json:"organizationId"`
 	PlanID         *uint64                `json:"planId"`
 	Role           string                 `json:"role"`
 	SessionID      uint64                 `json:"sessionId"`

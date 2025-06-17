@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	pb_group "pb/types/group"
-	pb_organization "pb/types/organization"
+	organizationpb "pb/types/organization"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/viper"
@@ -18,17 +17,17 @@ func RegisterOrganizationService(ctx context.Context, mux *runtime.ServeMux, env
 		url = "organization"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	_ = pb_organization.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_organization.RegisterOrganizationMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_organization.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_organization.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_organization.RegisterOrganizationBranchServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_organization.RegisterOrganizationLogActivityServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupDealServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupLogActivityServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupSettingServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_group.RegisterGroupDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationBranchServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterOrganizationLogActivityServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupDealServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupLogActivityServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupSettingServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterGroupDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

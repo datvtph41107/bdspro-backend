@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,11 +9,11 @@ import (
 )
 
 type GroupValidator interface {
-	ValidateCreateGroupRequest(request *grouppb.CreateGroupRequest) error
-	ValidateUpdateGroupRequest(request *grouppb.UpdateGroupRequest) error
-	ValidateDeleteGroupRequest(request *grouppb.DeleteGroupRequest) error
-	ValidateGetGroupRequest(request *grouppb.GetGroupRequest) error
-	ValidateGetGroupsRequest(request *grouppb.GetGroupsRequest) error
+	ValidateCreateGroupRequest(request *organizationpb.CreateGroupRequest) error
+	ValidateUpdateGroupRequest(request *organizationpb.UpdateGroupRequest) error
+	ValidateDeleteGroupRequest(request *organizationpb.DeleteGroupRequest) error
+	ValidateGetGroupRequest(request *organizationpb.GetGroupRequest) error
+	ValidateGetGroupsRequest(request *organizationpb.GetGroupsRequest) error
 }
 
 type groupValidator struct{}
@@ -22,7 +22,7 @@ func NewGroupValidator() GroupValidator {
 	return &groupValidator{}
 }
 
-func (v *groupValidator) ValidateCreateGroupRequest(request *grouppb.CreateGroupRequest) error {
+func (v *groupValidator) ValidateCreateGroupRequest(request *organizationpb.CreateGroupRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Name == "" {
 		details = append(details, &errdetails.BadRequest{
@@ -34,14 +34,14 @@ func (v *groupValidator) ValidateCreateGroupRequest(request *grouppb.CreateGroup
 			},
 		})
 	}
-	
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
 }
 
-func (v *groupValidator) ValidateUpdateGroupRequest(request *grouppb.UpdateGroupRequest) error {
+func (v *groupValidator) ValidateUpdateGroupRequest(request *organizationpb.UpdateGroupRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -63,14 +63,14 @@ func (v *groupValidator) ValidateUpdateGroupRequest(request *grouppb.UpdateGroup
 			},
 		})
 	}
-	
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
 }
 
-func (v *groupValidator) ValidateDeleteGroupRequest(request *grouppb.DeleteGroupRequest) error {
+func (v *groupValidator) ValidateDeleteGroupRequest(request *organizationpb.DeleteGroupRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -88,7 +88,7 @@ func (v *groupValidator) ValidateDeleteGroupRequest(request *grouppb.DeleteGroup
 	return nil
 }
 
-func (v *groupValidator) ValidateGetGroupRequest(request *grouppb.GetGroupRequest) error {
+func (v *groupValidator) ValidateGetGroupRequest(request *organizationpb.GetGroupRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Id == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -106,12 +106,11 @@ func (v *groupValidator) ValidateGetGroupRequest(request *grouppb.GetGroupReques
 	return nil
 }
 
-func (v *groupValidator) ValidateGetGroupsRequest(request *grouppb.GetGroupsRequest) error {
+func (v *groupValidator) ValidateGetGroupsRequest(request *organizationpb.GetGroupsRequest) error {
 	details := []protoadapt.MessageV1{}
-	
-	
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

@@ -11,7 +11,8 @@ gateway:
 	cd gateway-service && go run main.go http
 crm:
 	cd crm-service && go run main.go grpc
-
+org:
+	cd organization-service && go run main.go grpc-server
 
 init:
 	cd gateway-service && go mod tidy
@@ -81,4 +82,13 @@ chat:
 	cd go-chat-service && go run main.go grpc-serve
 
 swag-merge:
-	cd code/script && go run add_swagger_security.go
+	cd code/script/merge_swagger && go run runtime.go
+
+chat-http:
+	cd go-chat-service && go run main.go http-serve
+
+chat-ws:
+	cd go-chat-service && go run main.go ws-serve
+
+chat-swagger:
+	cd go-chat-service && go run main.go swagger-serve

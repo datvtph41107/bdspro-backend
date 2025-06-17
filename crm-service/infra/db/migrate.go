@@ -14,7 +14,7 @@ func AutoMigrate() {
 		// &GroupEntity{},
 		// &domain.HistoryEntity{},
 		// &domain.AppInvitedEntity{},
-		// &domain.PipelineEntity{},
+		&domain.PipelineEntity{},
 		// &domain.StageEntity{},
 		// &domain.RuleEntity{},
 		// &domain.CustomerEntity{},

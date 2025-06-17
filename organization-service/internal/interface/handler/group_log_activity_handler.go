@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
@@ -10,7 +10,7 @@ import (
 )
 
 type GroupLogActivityHandler struct {
-	grouppb.UnimplementedGroupLogActivityServiceServer
+	organizationpb.UnimplementedGroupLogActivityServiceServer
 	GroupLogActivityUsecase     usecase.GroupLogActivityUsecase
 	GroupLogActivityTransformer transformer.GroupLogActivityTransformer
 	GroupLogActivityValidator   validator.GroupLogActivityValidator
@@ -28,7 +28,7 @@ func NewGroupLogActivityHandler(
 	}
 }
 
-func (h *GroupLogActivityHandler) GetGroupLogActivities(ctx context.Context, req *grouppb.GetGroupLogActivitiesRequest) (*grouppb.GetGroupLogActivitiesResponse, error) {
+func (h *GroupLogActivityHandler) GetGroupLogActivities(ctx context.Context, req *organizationpb.GetGroupLogActivitiesRequest) (*organizationpb.GetGroupLogActivitiesResponse, error) {
 	if err := h.GroupLogActivityValidator.ValidateGetGroupLogActivitiesRequest(req); err != nil {
 		return nil, err
 	}
@@ -49,4 +49,4 @@ func (h *GroupLogActivityHandler) GetGroupLogActivities(ctx context.Context, req
 	}
 
 	return h.GroupLogActivityTransformer.EntityToGetGroupLogActivitiesResponse(logActivities, total), nil
-} 
+}

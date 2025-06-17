@@ -1,13 +1,14 @@
 package transformer
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 	"time"
+
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 )
 
 type GroupNotificationTransformer interface {
-	EntityToGetGroupNotificationsResponse(notifications []*entity.GroupNotification) *grouppb.GetGroupNotificationsResponse
+	EntityToGetGroupNotificationsResponse(notifications []*entity.GroupNotification) *organizationpb.GetGroupNotificationsResponse
 }
 
 type groupNotificationTransformer struct{}
@@ -16,10 +17,10 @@ func NewGroupNotificationTransformer() GroupNotificationTransformer {
 	return &groupNotificationTransformer{}
 }
 
-func (t *groupNotificationTransformer) EntityToGetGroupNotificationsResponse(notifications []*entity.GroupNotification) *grouppb.GetGroupNotificationsResponse {
-	notificationsResponse := make([]*grouppb.GroupNotification, len(notifications))
+func (t *groupNotificationTransformer) EntityToGetGroupNotificationsResponse(notifications []*entity.GroupNotification) *organizationpb.GetGroupNotificationsResponse {
+	notificationsResponse := make([]*organizationpb.GroupNotification, len(notifications))
 	for i, notification := range notifications {
-		notificationsResponse[i] = &grouppb.GroupNotification{
+		notificationsResponse[i] = &organizationpb.GroupNotification{
 			Id:        notification.Id,
 			GroupId:   notification.GroupId,
 			Type:      notification.Type,
@@ -28,8 +29,8 @@ func (t *groupNotificationTransformer) EntityToGetGroupNotificationsResponse(not
 			UpdatedAt: notification.UpdatedAt.Format(time.RFC3339),
 		}
 	}
-	return &grouppb.GetGroupNotificationsResponse{
+	return &organizationpb.GetGroupNotificationsResponse{
 		Notifications: notificationsResponse,
-		Total:        uint32(len(notifications)),
+		Total:         uint32(len(notifications)),
 	}
-} 
+}

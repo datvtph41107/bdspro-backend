@@ -167,6 +167,12 @@ func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity,
 		return nil, nil, err
 	}
 
-	stage, _ := u.stageRepo.GetByID(c, pipeline.StageDefaultID)
+	var stage *domain.StageEntity
+	if pipeline.StageDefaultID != 0 {
+		stage, _ = u.stageRepo.GetByID(c, pipeline.StageDefaultID)
+	} else {
+		stage, _ = u.stageRepo.GetOneStageDefault(c, pipeline.ID)
+	}
+
 	return pipeline, stage, nil
 }

@@ -56,22 +56,40 @@ func (r *PostgreComment) SearchPublic(ctx context.Context, dto *dto.CommentReque
 	var comments []domain.CommentQuery
 	var total int64
 
-	_query := r.db.WithContext(ctx).
-		Table("comment")
-	err := _query.Count(&total).Error
+	// _query := r.db.WithContext(ctx).
+	// 	Table("comment")
+
+	query := ""
+	profileCond := "from comment c"
+	preQuery := "select c.* "
+	parentCond := "and c.parent_id is null"
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId != 0 {
+		preQuery = "select c.*, tl.created_at as like_at,tl.dis_like "
+		profileCond = fmt.Sprintf(`from public.comment c
+left join tb_like tl on tl.user_id = %d and tl.target_id = c.id and tl.target_type = 10`, profileId)
+	}
+	if dto.ParentID != nil {
+		parentCond = fmt.Sprintf("and c.parent_id = %d", *dto.ParentID)
+	}
+	query = fmt.Sprintf(`select count(*) %s
+where c.deleted_at is null and c.news_feed_id = ? %s
+ group by c.id
+order by c.created_at asc
+LIMIT ? OFFSET ?;`, profileCond, parentCond)
+
+	err := r.db.WithContext(ctx).
+		Debug().
+		Raw(query, dto.NewsFeedID, dto.GetLimit(), dto.GetOffset()).
+		Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	query := `SELECT * FROM comment where deleted_at is null and news_feed_id = ? LIMIT ? OFFSET ?;`
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	if profileId != 0 {
-		query = fmt.Sprintf(`select c.*, tl.created_at as like_at,tl.dis_like from public.comment c
-left join tb_like tl on tl.user_id = %d and tl.target_id  = c.id and tl.target_type = 10
-where c.deleted_at is null and c.news_feed_id = ?
+	query = fmt.Sprintf(`%s %s
+where c.deleted_at is null and c.news_feed_id = ? %s
 order by c.created_at asc
-LIMIT ? OFFSET ?;`, profileId)
-	}
+LIMIT ? OFFSET ?;`, preQuery, profileCond, parentCond)
 
 	err = r.db.WithContext(ctx).
 		Debug().

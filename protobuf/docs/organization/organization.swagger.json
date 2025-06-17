@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization": {
+    "/v2/org/organization": {
       "get": {
         "operationId": "OrganizationService_GetOrganizations",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationsResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationsResponse"
             }
           },
           "default": {
@@ -59,46 +59,16 @@
         "tags": [
           "OrganizationService"
         ]
-      },
-      "post": {
-        "operationId": "OrganizationService_CreateOrganization",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "OrganizationService"
-        ]
       }
     },
-    "/v2/organization/check-is-exist/{id}": {
+    "/v2/org/organization/check-is-exist/{id}": {
       "get": {
         "operationId": "OrganizationService_CheckOrganizationIsExist",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationCheckOrganizationIsExistResponse"
+              "$ref": "#/definitions/organizationpbCheckOrganizationIsExistResponse"
             }
           },
           "default": {
@@ -122,14 +92,46 @@
         ]
       }
     },
-    "/v2/organization/user/{userId}": {
+    "/v2/org/organization/new": {
+      "post": {
+        "operationId": "OrganizationService_CreateOrganization",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
+    "/v2/org/organization/user/{userId}": {
       "get": {
         "operationId": "OrganizationService_GetOrganizationByUserId",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationByUserIdResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationByUserIdResponse"
             }
           },
           "default": {
@@ -153,14 +155,14 @@
         ]
       }
     },
-    "/v2/organization/{id}": {
+    "/v2/org/organization/{id}": {
       "put": {
         "operationId": "OrganizationService_UpdateOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationUpdateOrganizationResponse"
+              "$ref": "#/definitions/organizationpbUpdateOrganizationResponse"
             }
           },
           "default": {
@@ -226,7 +228,7 @@
         }
       }
     },
-    "pb_organizationCheckOrganizationIsExistResponse": {
+    "organizationpbCheckOrganizationIsExistResponse": {
       "type": "object",
       "properties": {
         "isExist": {
@@ -234,7 +236,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationRequest": {
+    "organizationpbCreateOrganizationRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -263,7 +265,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationResponse": {
+    "organizationpbCreateOrganizationResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -272,26 +274,26 @@
         }
       }
     },
-    "pb_organizationGetOrganizationByUserIdResponse": {
+    "organizationpbGetOrganizationByUserIdResponse": {
       "type": "object",
       "properties": {
         "organizations": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganization"
+            "$ref": "#/definitions/organizationpbOrganization"
           }
         }
       }
     },
-    "pb_organizationGetOrganizationsResponse": {
+    "organizationpbGetOrganizationsResponse": {
       "type": "object",
       "properties": {
         "organizations": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganization"
+            "$ref": "#/definitions/organizationpbOrganization"
           }
         },
         "total": {
@@ -300,7 +302,7 @@
         }
       }
     },
-    "pb_organizationOrganization": {
+    "organizationpbOrganization": {
       "type": "object",
       "properties": {
         "id": {
@@ -333,7 +335,7 @@
         }
       }
     },
-    "pb_organizationUpdateOrganizationResponse": {
+    "organizationpbUpdateOrganizationResponse": {
       "type": "object",
       "properties": {
         "id": {

@@ -31,6 +31,7 @@ func NewHTTPServer(port string) *HTTPServer {
 
 	configs.InitConfig()
 
+	
 	db, err := postgres.NewPostgresDB(configs.DNS)
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)

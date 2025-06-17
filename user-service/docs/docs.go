@@ -677,7 +677,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -720,7 +720,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -763,7 +763,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -1490,7 +1490,7 @@ const docTemplate = `{
                 }
             }
         },
-        "data.FriendDTO": {
+        "dto.FriendDTO": {
             "type": "object",
             "properties": {
                 "groupId": {

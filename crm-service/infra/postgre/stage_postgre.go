@@ -84,7 +84,8 @@ func (r *PostgreStage) GetOneStageDefault(c context.Context, pipelineId uint64) 
 	var entity domain.StageEntity
 	if err := r.db.WithContext(c).
 		Model(&domain.StageEntity{}).
-		Where("pipeline_id = ? AND is_default = ", pipelineId, true).
+		Where("pipeline_id = ? and deleted_at is null", pipelineId).
+		Order("order_number asc").
 		First(&entity).Error; err != nil {
 		return nil, err
 	}

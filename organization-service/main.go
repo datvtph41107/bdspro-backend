@@ -10,7 +10,7 @@ import (
 // @title Organization Service
 // @version 1.0
 // @description Organization Service API
-// @BasePath /v2/organization
+// @BasePath /v2/org
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

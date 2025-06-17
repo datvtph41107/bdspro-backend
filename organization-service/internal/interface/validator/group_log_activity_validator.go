@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,7 +9,7 @@ import (
 )
 
 type GroupLogActivityValidator interface {
-	ValidateGetGroupLogActivitiesRequest(request *grouppb.GetGroupLogActivitiesRequest) error
+	ValidateGetGroupLogActivitiesRequest(request *organizationpb.GetGroupLogActivitiesRequest) error
 }
 
 type groupLogActivityValidator struct{}
@@ -18,7 +18,7 @@ func NewGroupLogActivityValidator() GroupLogActivityValidator {
 	return &groupLogActivityValidator{}
 }
 
-func (v *groupLogActivityValidator) ValidateGetGroupLogActivitiesRequest(request *grouppb.GetGroupLogActivitiesRequest) error {
+func (v *groupLogActivityValidator) ValidateGetGroupLogActivitiesRequest(request *organizationpb.GetGroupLogActivitiesRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -54,4 +54,4 @@ func (v *groupLogActivityValidator) ValidateGetGroupLogActivitiesRequest(request
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

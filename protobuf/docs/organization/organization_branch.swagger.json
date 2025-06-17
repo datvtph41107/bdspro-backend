@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization-branch": {
+    "/v2/org/organization-branch": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranches",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationBranchesResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationBranchesResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationBranchResponse"
+              "$ref": "#/definitions/organizationpbCreateOrganizationBranchResponse"
             }
           },
           "default": {
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreateOrganizationBranchRequest"
+              "$ref": "#/definitions/organizationpbCreateOrganizationBranchRequest"
             }
           }
         ],
@@ -91,14 +91,14 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}": {
+    "/v2/org/organization-branch/{id}": {
       "delete": {
         "operationId": "OrganizationBranchService_DeleteOrganizationBranch",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationDeleteOrganizationBranchResponse"
+              "$ref": "#/definitions/organizationpbDeleteOrganizationBranchResponse"
             }
           },
           "default": {
@@ -127,7 +127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationUpdateOrganizationBranchResponse"
+              "$ref": "#/definitions/organizationpbUpdateOrganizationBranchResponse"
             }
           },
           "default": {
@@ -159,14 +159,14 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/add-member": {
+    "/v2/org/organization-branch/{id}/add-member": {
       "post": {
         "operationId": "OrganizationBranchService_AddMemberToOrganizationBranch",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationAddMemberToOrganizationBranchResponse"
+              "$ref": "#/definitions/organizationpbAddMemberToOrganizationBranchResponse"
             }
           },
           "default": {
@@ -198,14 +198,14 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/members": {
+    "/v2/org/organization-branch/{id}/members": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranchMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationBranchMembersResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationBranchMembersResponse"
             }
           },
           "default": {
@@ -243,14 +243,14 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/remove-member/{userId}": {
+    "/v2/org/organization-branch/{id}/remove-member/{userId}": {
       "delete": {
         "operationId": "OrganizationBranchService_RemoveMemberFromOrganizationBranch",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationRemoveMemberFromOrganizationBranchResponse"
+              "$ref": "#/definitions/organizationpbRemoveMemberFromOrganizationBranchResponse"
             }
           },
           "default": {
@@ -309,7 +309,7 @@
         }
       }
     },
-    "pb_organizationAddMemberToOrganizationBranchResponse": {
+    "organizationpbAddMemberToOrganizationBranchResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -318,7 +318,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationBranchRequest": {
+    "organizationpbCreateOrganizationBranchRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -343,7 +343,7 @@
         }
       }
     },
-    "pb_organizationCreateOrganizationBranchResponse": {
+    "organizationpbCreateOrganizationBranchResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -352,7 +352,7 @@
         }
       }
     },
-    "pb_organizationDeleteOrganizationBranchResponse": {
+    "organizationpbDeleteOrganizationBranchResponse": {
       "type": "object",
       "properties": {
         "success": {
@@ -360,14 +360,14 @@
         }
       }
     },
-    "pb_organizationGetOrganizationBranchMembersResponse": {
+    "organizationpbGetOrganizationBranchMembersResponse": {
       "type": "object",
       "properties": {
         "members": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganizationBranchMember"
+            "$ref": "#/definitions/organizationpbOrganizationBranchMember"
           }
         },
         "total": {
@@ -376,14 +376,14 @@
         }
       }
     },
-    "pb_organizationGetOrganizationBranchesResponse": {
+    "organizationpbGetOrganizationBranchesResponse": {
       "type": "object",
       "properties": {
         "branches": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganizationBranch"
+            "$ref": "#/definitions/organizationpbOrganizationBranch"
           }
         },
         "total": {
@@ -392,7 +392,7 @@
         }
       }
     },
-    "pb_organizationOrganizationBranch": {
+    "organizationpbOrganizationBranch": {
       "type": "object",
       "properties": {
         "id": {
@@ -413,7 +413,7 @@
         }
       }
     },
-    "pb_organizationOrganizationBranchMember": {
+    "organizationpbOrganizationBranchMember": {
       "type": "object",
       "properties": {
         "id": {
@@ -426,7 +426,7 @@
         }
       }
     },
-    "pb_organizationRemoveMemberFromOrganizationBranchResponse": {
+    "organizationpbRemoveMemberFromOrganizationBranchResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -435,7 +435,7 @@
         }
       }
     },
-    "pb_organizationUpdateOrganizationBranchResponse": {
+    "organizationpbUpdateOrganizationBranchResponse": {
       "type": "object",
       "properties": {
         "id": {

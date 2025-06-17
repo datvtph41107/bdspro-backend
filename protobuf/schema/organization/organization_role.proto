@@ -1,36 +1,36 @@
 syntax = "proto3";
 
-package pb_organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
 
-option go_package = "types/pb_organization";
+option go_package = "types/organizationpb";
 
 service OrganizationRoleService {
     rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {
         option (google.api.http) = {
-            post: "/v2/organization-role"
+            post: "/v2/org/organization-role"
             body: "*"
         };
     }
 
     rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {
         option (google.api.http) = {
-            put: "/v2/organization-role/{id}"
+            put: "/v2/org/organization-role/{id}"
             body: "*"
         };
     }
 
     rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {
         option (google.api.http) = {
-            delete: "/v2/organization-role/{id}"
+            delete: "/v2/org/organization-role/{id}"
         };
     }
 
     rpc GetRoles(GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
-            get: "/v2/organization-role"
+            get: "/v2/org/organization-role"
         };
     }
     

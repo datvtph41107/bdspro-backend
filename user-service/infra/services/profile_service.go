@@ -1,13 +1,16 @@
 package services
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
+	organizationpb "pb/types/organization"
+	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
-	pb_user "pb/types/user"
+	userpb "pb/types/user"
 	"time"
-	"user/repo"
-	user_service "user/services/user"
+	user_repo "user/infra/repo"
+	user_service "user/internal/services/user"
 
 	"github.com/jinzhu/copier"
 	"github.com/patrickmn/go-cache"
@@ -16,17 +19,26 @@ import (
 )
 
 type GrpcProfileService struct {
-	pb_user.UnimplementedProfileServiceServer
-	ProfileRepo *repo.ProfileRepo
+	userpb.UnimplementedProfileServiceServer
+	ProfileRepo *user_repo.ProfileRepo
 	Profile     *user_service.ProfileService
 	cache       *cache.Cache
+	OrgClient   orgpb.OrganizationServiceClient
+	GroupClient organizationpb.GroupServiceClient
 }
 
-func NewGrpcProfileService(profileRepo *repo.ProfileRepo, profileService *user_service.ProfileService) *GrpcProfileService {
+func NewGrpcProfileService(
+	profileRepo *user_repo.ProfileRepo,
+	profileService *user_service.ProfileService,
+	orgClient orgpb.OrganizationServiceClient,
+	groupClient organizationpb.GroupServiceClient,
+) *GrpcProfileService {
 	return &GrpcProfileService{
 		ProfileRepo: profileRepo,
 		Profile:     profileService,
 		cache:       cache.New(5*time.Minute, 10*time.Minute),
+		OrgClient:   orgClient,
+		GroupClient: groupClient,
 	}
 }
 
@@ -69,7 +81,7 @@ func (s *GrpcProfileService) GetProfileByIds(ctx context.Context, req *sharepb.G
 	}, nil
 }
 
-func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *pb_user.GetProfileByPhonesRequest) (*sharepb.GetProfileByIdsResponse, error) {
+func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *userpb.GetProfileByPhonesRequest) (*sharepb.GetProfileByIdsResponse, error) {
 	profiles, err := s.ProfileRepo.GetProfileByPhones(req.Phones)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profiles: %v", err)
@@ -98,15 +110,77 @@ func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *pb_use
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "ID của Profile"
-// @Success 200 {object} pb_user.ProfilePublicInfo "Thông tin công khai của người dùng"
+// @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/{id} [get]
-func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *pb_user.IdRequest) (*pb_user.ProfilePublicInfo, error) {
+func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdRequest) (*userpb.ProfilePublicInfo, error) {
 	result, err := s.Profile.PublicUserInfo(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	dto := &pb_user.ProfilePublicInfo{}
+	dto := &userpb.ProfilePublicInfo{}
 	copier.Copy(dto, result)
 	return dto, nil
+}
+
+// @Summary Lấy danh sách tài khoản của người dùng
+// @Description Lấy danh sách tài khoản của người dùng
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} userpb.AccountInfoResponse "Danh sách tài khoản của người dùng"
+// @Router /v2/user/profile/accounts/me [get]
+func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Empty) (*userpb.AccountInfoResponse, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	orgs, _ := s.OrgClient.GetOrganizationByUserId(ctx, &orgpb.GetOrganizationByUserIdRequest{
+		UserId: uint32(profileId),
+	})
+
+	groups, _ := s.GroupClient.GetGroupByUserId(ctx, &organizationpb.GetGroupByUserIdRequest{
+		UserId: uint32(profileId),
+	})
+
+	profile, _ := s.ProfileRepo.GetByProfileID(profileId)
+
+	accountInfos := []*userpb.AccountInfo{}
+	accountInfos = append(accountInfos, &userpb.AccountInfo{
+		// Id:        uint64(profile.ProfileID),
+		FullName:  &profile.FullName,
+		Avatar:    &profile.Avatar,
+		Phone:     &profile.Phone,
+		Email:     &profile.Email,
+		ProfileId: &profileId,
+	})
+
+	if orgs != nil && len(orgs.Organizations) > 0 {
+		for _, org := range orgs.Organizations {
+			accountInfos = append(accountInfos, &userpb.AccountInfo{
+				// Id:              uint64(org.Id),
+				FullName:        &org.Name,
+				Avatar:          org.LogoUrl,
+				Phone:           org.Phone,
+				Email:           org.Email,
+				BackgroundImage: org.LogoUrl,
+				OrganizationId:  &org.Id,
+			})
+		}
+	}
+
+	if groups != nil && len(groups.Groups) > 0 {
+		for _, group := range groups.Groups {
+			accountInfos = append(accountInfos, &userpb.AccountInfo{
+				// Id:       uint64(group.Id),
+				FullName: &group.Name,
+				Avatar:   &group.AvatarUrl,
+				GroupId:  &group.Id,
+			})
+		}
+	}
+
+	return &userpb.AccountInfoResponse{
+		Data:  accountInfos,
+		Total: uint64(len(accountInfos)),
+	}, nil
 }

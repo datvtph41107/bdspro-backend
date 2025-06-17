@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupDocumentResponse"
+              "$ref": "#/definitions/organizationpbGetGroupDocumentResponse"
             }
           },
           "default": {
@@ -52,7 +52,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupDeleteGroupDocumentResponse"
+              "$ref": "#/definitions/organizationpbDeleteGroupDocumentResponse"
             }
           },
           "default": {
@@ -81,7 +81,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupUpdateGroupDocumentResponse"
+              "$ref": "#/definitions/organizationpbUpdateGroupDocumentResponse"
             }
           },
           "default": {
@@ -120,7 +120,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupDocumentsResponse"
+              "$ref": "#/definitions/organizationpbGetGroupDocumentsResponse"
             }
           },
           "default": {
@@ -163,7 +163,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupDocumentResponse"
+              "$ref": "#/definitions/organizationpbCreateGroupDocumentResponse"
             }
           },
           "default": {
@@ -239,7 +239,7 @@
         }
       }
     },
-    "pb_groupCreateGroupDocumentResponse": {
+    "organizationpbCreateGroupDocumentResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -248,7 +248,7 @@
         }
       }
     },
-    "pb_groupDeleteGroupDocumentResponse": {
+    "organizationpbDeleteGroupDocumentResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -257,22 +257,22 @@
         }
       }
     },
-    "pb_groupGetGroupDocumentResponse": {
+    "organizationpbGetGroupDocumentResponse": {
       "type": "object",
       "properties": {
         "document": {
-          "$ref": "#/definitions/pb_groupGroupDocument"
+          "$ref": "#/definitions/organizationpbGroupDocument"
         }
       }
     },
-    "pb_groupGetGroupDocumentsResponse": {
+    "organizationpbGetGroupDocumentsResponse": {
       "type": "object",
       "properties": {
         "documents": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_groupGroupDocument"
+            "$ref": "#/definitions/organizationpbGroupDocument"
           }
         },
         "total": {
@@ -281,7 +281,7 @@
         }
       }
     },
-    "pb_groupGroupDocument": {
+    "organizationpbGroupDocument": {
       "type": "object",
       "properties": {
         "id": {
@@ -316,7 +316,7 @@
         }
       }
     },
-    "pb_groupUpdateGroupDocumentResponse": {
+    "organizationpbUpdateGroupDocumentResponse": {
       "type": "object",
       "properties": {
         "id": {

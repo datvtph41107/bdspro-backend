@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization-permission": {
+    "/v2/org/organization-permission": {
       "get": {
         "operationId": "OrganizationPermissionService_GetPermissions",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetPermissionsResponse"
+              "$ref": "#/definitions/organizationpbGetPermissionsResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreatePermissionResponse"
+              "$ref": "#/definitions/organizationpbCreatePermissionResponse"
             }
           },
           "default": {
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_organizationCreatePermissionRequest"
+              "$ref": "#/definitions/organizationpbCreatePermissionRequest"
             }
           }
         ],
@@ -91,14 +91,14 @@
         ]
       }
     },
-    "/v2/organization-permission/{id}": {
+    "/v2/org/organization-permission/{id}": {
       "delete": {
         "operationId": "OrganizationPermissionService_DeletePermission",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationDeletePermissionResponse"
+              "$ref": "#/definitions/organizationpbDeletePermissionResponse"
             }
           },
           "default": {
@@ -127,7 +127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationUpdatePermissionResponse"
+              "$ref": "#/definitions/organizationpbUpdatePermissionResponse"
             }
           },
           "default": {
@@ -172,7 +172,7 @@
         }
       }
     },
-    "pb_organizationCreatePermissionRequest": {
+    "organizationpbCreatePermissionRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -187,7 +187,7 @@
         }
       }
     },
-    "pb_organizationCreatePermissionResponse": {
+    "organizationpbCreatePermissionResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -196,7 +196,7 @@
         }
       }
     },
-    "pb_organizationDeletePermissionResponse": {
+    "organizationpbDeletePermissionResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -205,14 +205,14 @@
         }
       }
     },
-    "pb_organizationGetPermissionsResponse": {
+    "organizationpbGetPermissionsResponse": {
       "type": "object",
       "properties": {
         "permissions": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationPermission"
+            "$ref": "#/definitions/organizationpbPermission"
           }
         },
         "total": {
@@ -221,7 +221,7 @@
         }
       }
     },
-    "pb_organizationPermission": {
+    "organizationpbPermission": {
       "type": "object",
       "properties": {
         "id": {
@@ -236,7 +236,7 @@
         }
       }
     },
-    "pb_organizationUpdatePermissionResponse": {
+    "organizationpbUpdatePermissionResponse": {
       "type": "object",
       "properties": {
         "id": {

@@ -1,5 +1,5 @@
 definitions:
-  data.CertificationBatchSave:
+  dto.CertificationBatchSave:
     properties:
       fileName:
         type: string
@@ -14,13 +14,12 @@ definitions:
       issuer:
         type: string
       name:
+        description: |-
+          Title     string    `json:"title,omitempty"`
+          Type      uint8     `json:"type,omitempty"`
         type: string
-      title:
-        type: string
-      type:
-        type: integer
     type: object
-  data.FollowInfoRes:
+  dto.FollowInfoRes:
     properties:
       numFollower:
         type: integer
@@ -29,7 +28,7 @@ definitions:
       numFriend:
         type: integer
     type: object
-  data.FriendDTO:
+  dto.FriendDTO:
     properties:
       groupId:
         type: integer
@@ -53,7 +52,7 @@ definitions:
       text:
         type: string
     type: object
-  data.OtpRequest:
+  dto.OtpRequest:
     properties:
       fullname:
         type: string
@@ -63,7 +62,7 @@ definitions:
     required:
     - phone
     type: object
-  data.OtpVerifyRequest:
+  dto.OtpVerifyRequest:
     properties:
       authId:
         type: integer
@@ -84,8 +83,14 @@ definitions:
     - otp
     - phone
     type: object
-  data.ProfessionBatchSave:
+  dto.ProfessionBatchSave:
     properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
       id:
         type: integer
       issueDate:
@@ -95,7 +100,7 @@ definitions:
       name:
         type: string
     type: object
-  data.PublicUserInfo:
+  dto.PublicUserInfo:
     properties:
       address:
         type: string
@@ -158,6 +163,8 @@ definitions:
         type: string
       statusOnline:
         $ref: '#/definitions/enums.EOnlineStatus'
+      tabDefault:
+        $ref: '#/definitions/enums.ESettingTab'
       taxCode:
         type: string
       twitter:
@@ -167,20 +174,20 @@ definitions:
       youtube:
         type: string
     type: object
-  data.RestorePhoneRequest:
+  dto.RestorePhoneRequest:
     properties:
       phone:
         type: string
     required:
     - phone
     type: object
-  data.SessionQRConfirm:
+  dto.SessionQRConfirm:
     properties:
       sessionId:
         description: ID của trình duyệt hoặc phiên web
         type: integer
     type: object
-  data.SessionQRRequest:
+  dto.SessionQRRequest:
     properties:
       clientId:
         description: ID của trình duyệt hoặc phiên web
@@ -199,21 +206,21 @@ definitions:
         description: Chuỗi nhận diện trình duyệt
         type: string
     type: object
-  data.SessionQRResponse:
+  dto.SessionQRResponse:
     properties:
       sessionId:
         type: integer
       sessionKey:
         type: string
     type: object
-  data.SwitchOrganizationRequest:
+  dto.SwitchOrganizationRequest:
     properties:
       organizationId:
         type: integer
     required:
     - organizationId
     type: object
-  data.UserInfoRequest:
+  dto.UserInfoRequest:
     properties:
       address:
         type: string
@@ -231,7 +238,7 @@ definitions:
         type: array
       certifications:
         items:
-          $ref: '#/definitions/data.CertificationBatchSave'
+          $ref: '#/definitions/dto.CertificationBatchSave'
         type: array
       departmentId:
         type: integer
@@ -261,7 +268,7 @@ definitions:
         type: array
       professions:
         items:
-          $ref: '#/definitions/data.ProfessionBatchSave'
+          $ref: '#/definitions/dto.ProfessionBatchSave'
         type: array
       profileVisibility:
         type: integer
@@ -286,7 +293,7 @@ definitions:
       youtube:
         type: string
     type: object
-  data.UserInfoResponse:
+  dto.UserInfoResponse:
     properties:
       address:
         type: string
@@ -397,116 +404,6 @@ definitions:
     - VerifyPending
     - VerifyVerified
     - VerifyRejected
-  pb_user.CertificationItem:
-    properties:
-      fileUrl:
-        type: string
-      id:
-        type: integer
-      title:
-        type: string
-      verifiedStatus:
-        type: integer
-    type: object
-  pb_user.ProfessionItem:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-      verifiedStatus:
-        type: integer
-    type: object
-  pb_user.ProfilePublicInfo:
-    properties:
-      address:
-        type: string
-      avatar:
-        type: string
-      backIdentify:
-        type: string
-      backgroundImage:
-        type: string
-      birth:
-        type: string
-      certifications:
-        items:
-          $ref: '#/definitions/pb_user.CertificationItem'
-        type: array
-      departmentId:
-        type: integer
-      email:
-        type: string
-      facebook:
-        type: string
-      following:
-        type: boolean
-      friendStatus:
-        $ref: '#/definitions/sharepb.FriendItem'
-      frontIdentify:
-        type: string
-      fullName:
-        type: string
-      instagram:
-        type: string
-      introduction:
-        type: string
-      linkedin:
-        type: string
-      phone:
-        type: string
-      phone2:
-        type: string
-      position:
-        type: string
-      professions:
-        items:
-          $ref: '#/definitions/pb_user.ProfessionItem'
-        type: array
-      profileId:
-        type: integer
-      rateStats:
-        $ref: '#/definitions/pb_user.RateStats'
-      referralBy:
-        type: string
-      referralCode:
-        type: string
-      roleRealEstate:
-        type: integer
-      slogan:
-        type: string
-      startDate:
-        type: string
-      statusOnline:
-        type: integer
-      tabDefault:
-        type: integer
-      taxCode:
-        type: string
-      twitter:
-        type: string
-      website:
-        type: string
-      youtube:
-        type: string
-    type: object
-  pb_user.RateStats:
-    properties:
-      averageScore:
-        type: number
-      star1Count:
-        type: integer
-      star2Count:
-        type: integer
-      star3Count:
-        type: integer
-      star4Count:
-        type: integer
-      star5Count:
-        type: integer
-      totalReviews:
-        type: integer
-    type: object
   sharepb.FriendItem:
     properties:
       createdBy:
@@ -520,13 +417,19 @@ definitions:
     type: object
   user_model.CertificationItem:
     properties:
+      fileName:
+        description: Tên file
+        type: string
+      fileType:
+        description: Loại file
+        type: string
       fileUrl:
         description: Link tài liệu
         type: string
       id:
         type: integer
-      title:
-        description: Tên văn bằng
+      name:
+        description: Tên chứng chỉ
         type: string
       verifiedStatus:
         allOf:
@@ -637,6 +540,142 @@ definitions:
       profileId:
         type: integer
     type: object
+  userpb.AccountInfo:
+    properties:
+      avatar:
+        type: string
+      backgroundImage:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      groupId:
+        type: integer
+      id:
+        type: integer
+      organizationId:
+        type: integer
+      phone:
+        type: string
+    type: object
+  userpb.AccountInfoResponse:
+    properties:
+      accountInfo:
+        items:
+          $ref: '#/definitions/userpb.AccountInfo'
+        type: array
+    type: object
+  userpb.CertificationItem:
+    properties:
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  userpb.ProfessionItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  userpb.ProfilePublicInfo:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      certifications:
+        items:
+          $ref: '#/definitions/userpb.CertificationItem'
+        type: array
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
+      frontIdentify:
+        type: string
+      fullName:
+        type: string
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
+      position:
+        type: string
+      professions:
+        items:
+          $ref: '#/definitions/userpb.ProfessionItem'
+        type: array
+      profileId:
+        type: integer
+      rateStats:
+        $ref: '#/definitions/userpb.RateStats'
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      roleRealEstate:
+        type: integer
+      slogan:
+        type: string
+      startDate:
+        type: string
+      statusOnline:
+        type: integer
+      tabDefault:
+        type: integer
+      taxCode:
+        type: string
+      twitter:
+        type: string
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  userpb.RateStats:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
 info:
   contact: {}
   description: API phần logic chính của BĐSPro
@@ -654,7 +693,7 @@ paths:
         "200":
           description: Cập nhật thành công
           schema:
-            $ref: '#/definitions/data.PublicUserInfo'
+            $ref: '#/definitions/dto.PublicUserInfo'
       security:
       - BearerAuth: []
       summary: Xóa tài khoản
@@ -678,7 +717,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/data.OtpRequest'
+          $ref: '#/definitions/dto.OtpRequest'
       produces:
       - application/json
       responses: {}
@@ -696,7 +735,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/data.OtpRequest'
+          $ref: '#/definitions/dto.OtpRequest'
       produces:
       - application/json
       responses: {}
@@ -714,7 +753,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/data.OtpVerifyRequest'
+          $ref: '#/definitions/dto.OtpVerifyRequest'
       produces:
       - application/json
       responses: {}
@@ -733,7 +772,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/data.SessionQRConfirm'
+          $ref: '#/definitions/dto.SessionQRConfirm'
       produces:
       - application/json
       responses: {}
@@ -753,14 +792,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/data.SessionQRRequest'
+          $ref: '#/definitions/dto.SessionQRRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.SessionQRResponse'
+            $ref: '#/definitions/dto.SessionQRResponse'
       summary: Tạo QR Login
       tags:
       - Auth
@@ -775,7 +814,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/data.SessionQRRequest'
+          $ref: '#/definitions/dto.SessionQRRequest'
       produces:
       - application/json
       responses: {}
@@ -793,7 +832,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/data.RestorePhoneRequest'
+          $ref: '#/definitions/dto.RestorePhoneRequest'
       produces:
       - application/json
       responses: {}
@@ -813,7 +852,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/data.SwitchOrganizationRequest'
+          $ref: '#/definitions/dto.SwitchOrganizationRequest'
       produces:
       - application/json
       responses: {}
@@ -830,6 +869,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Refresh token
       tags:
       - Auth
@@ -1057,7 +1098,7 @@ paths:
         "200":
           description: Số lượng theo dõi và bạn bè
           schema:
-            $ref: '#/definitions/data.FollowInfoRes'
+            $ref: '#/definitions/dto.FollowInfoRes'
         "400":
           description: Yêu cầu không hợp lệ
           schema:
@@ -1083,7 +1124,7 @@ paths:
           description: Danh sách bạn bè
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ
@@ -1203,7 +1244,7 @@ paths:
           description: Danh sách lời mời đã nhận
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ
@@ -1230,7 +1271,7 @@ paths:
           description: Danh sách lời mời đã gửi
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ
@@ -1440,7 +1481,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.UserInfoResponse'
+            $ref: '#/definitions/dto.UserInfoResponse'
         "400":
           description: Bad Request
           schema:
@@ -1469,7 +1510,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.UserInfoResponse'
+            $ref: '#/definitions/dto.UserInfoResponse'
         "400":
           description: Bad Request
           schema:
@@ -1504,7 +1545,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.UserInfoResponse'
+            $ref: '#/definitions/dto.UserInfoResponse'
         "400":
           description: Bad Request
           schema:
@@ -1539,7 +1580,7 @@ paths:
         "200":
           description: Cập nhật thành công
           schema:
-            $ref: '#/definitions/data.PublicUserInfo'
+            $ref: '#/definitions/dto.PublicUserInfo'
       security:
       - BearerAuth: []
       summary: Xem thông tin public của người dùng
@@ -1556,7 +1597,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.UserInfoResponse'
+            $ref: '#/definitions/dto.UserInfoResponse'
         "400":
           description: Bad Request
           schema:
@@ -1585,14 +1626,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/data.UserInfoRequest'
+          $ref: '#/definitions/dto.UserInfoRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Cập nhật thành công
           schema:
-            $ref: '#/definitions/data.UserInfoResponse'
+            $ref: '#/definitions/dto.UserInfoResponse'
       security:
       - BearerAuth: []
       summary: Cập nhật thông tin hồ sơ
@@ -1700,6 +1741,23 @@ paths:
       summary: Lấy danh sách đánh giá
       tags:
       - Rate
+  /v2/user/profile/accounts/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tài khoản của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách tài khoản của người dùng
+          schema:
+            $ref: '#/definitions/userpb.AccountInfoResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài khoản của người dùng
+      tags:
+      - Profile
   /v2/user/profile/info/{id}:
     get:
       consumes:
@@ -1717,7 +1775,7 @@ paths:
         "200":
           description: Thông tin công khai của người dùng
           schema:
-            $ref: '#/definitions/pb_user.ProfilePublicInfo'
+            $ref: '#/definitions/userpb.ProfilePublicInfo'
       security:
       - BearerAuth: []
       summary: Lấy thông tin công khai của người dùng

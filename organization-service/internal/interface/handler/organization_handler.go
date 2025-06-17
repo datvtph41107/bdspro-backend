@@ -31,6 +31,14 @@ func NewOrganizationHandler(organizationUsecase usecase.OrganizationUsecase,
 	}
 }
 
+// @Summary Tạo tổ chức mới
+// @Description Tạo tổ chức mới
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.CreateOrganizationRequest true "Thông tin tổ chức"
+// @Security BearerAuth
+// @Router /organization/new [post]
 func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organizationpb.CreateOrganizationRequest) (*organizationpb.CreateOrganizationResponse, error) {
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
 	organization.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
@@ -88,6 +96,14 @@ func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organiz
 	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations, total), nil
 }
 
+// @Summary Lấy tổ chức của người dùng hiện tại
+// @Description Lấy tổ chức của người dùng hiện tại
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param userId path int true "ID của người dùng"
+// @Security BearerAuth
+// @Router /organization/user/{userId} [get]
 func (h *OrganizationHandler) GetOrganizationByUserId(ctx context.Context, req *organizationpb.GetOrganizationByUserIdRequest) (*organizationpb.GetOrganizationByUserIdResponse, error) {
 	organizations, err := h.OrganizationUsecase.GetOrganizationByUserId(ctx, req.UserId)
 	if err != nil {

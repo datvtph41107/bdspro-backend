@@ -7,7 +7,13 @@ import (
 
 type ContactSearchDTO struct {
 	_dto.Pagable
-	Text string `form:"text"`
+	Text         string  `form:"text"`
+	FriendStatus []int32 `form:"friendStatus"`
+	Following    *bool   `form:"following"`
+	Roles        []int32 `form:"roles"`
+	Leaded       *bool   `form:"leaded"`
+	Connected    *bool   `form:"connected"`
+	AppInstalled *bool   `form:"appInstalled"`
 }
 
 type RelationShipDTO struct {

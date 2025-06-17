@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	sharepb "pb/types/shared"
 
 	"github.com/tuandq2112/organization-service/appconfig"
@@ -23,6 +25,8 @@ type OrganizationMemberUsecase interface {
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
 	GetOrganizationMembers(ctx context.Context, organizationId uint32, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
+	GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
+	// GetOrganizationOfMember(ctx context.Context) (*entity.Organization, error)
 }
 
 type organizationMemberUsecase struct {
@@ -108,9 +112,9 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	// Log member creation
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: organizationMember.OrganizationID,
-		ActorId:       currentUserId,
-		LogType:       "MEMBER_CREATE",
-		LogData:       "Added new member to organization",
+		ActorId:        currentUserId,
+		LogType:        "MEMBER_CREATE",
+		LogData:        "Added new member to organization",
 	})
 
 	return member, nil
@@ -145,9 +149,9 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	// Log member update
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: organizationMember.OrganizationID,
-		ActorId:       currentUserId,
-		LogType:       "MEMBER_UPDATE",
-		LogData:       "Updated organization member",
+		ActorId:        currentUserId,
+		LogType:        "MEMBER_UPDATE",
+		LogData:        "Updated organization member",
 	})
 
 	return member, nil
@@ -182,9 +186,9 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	// Log member deletion
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: member.OrganizationID,
-		ActorId:       currentUserId,
-		LogType:       "MEMBER_DELETE",
-		LogData:       "Removed member from organization",
+		ActorId:        currentUserId,
+		LogType:        "MEMBER_DELETE",
+		LogData:        "Removed member from organization",
 	})
 
 	return deletedMember, nil
@@ -202,6 +206,45 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 	}
 
 	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	profileIds := make([]uint64, len(members))
+	for i, member := range members {
+		profileIds[i] = uint64(member.UserID)
+	}
+
+	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: profileIds,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
+	for i, member := range members {
+		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
+			OrganizationMember: member,
+			Profile:            profiles.Profiles[i],
+		}
+	}
+	return membersWithProfiles, total, nil
+}
+
+func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
+	fmt.Println("ctx=", ctx)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, uint32(profileId), uint32(currentOrgId), appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), page, size)
 	if err != nil {
 		return nil, 0, err
 	}

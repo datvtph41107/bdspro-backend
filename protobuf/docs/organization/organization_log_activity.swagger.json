@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/organization/log/{id}": {
+    "/v2/org/organization/log/{id}": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivityByID",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationLogActivityByIDResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationLogActivityByIDResponse"
             }
           },
           "default": {
@@ -47,14 +47,14 @@
         ]
       }
     },
-    "/v2/organization/logs/actor/{actor_id}": {
+    "/v2/org/organization/logs/actor/{actor_id}": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationLogActivitiesByActorIDResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationLogActivitiesByActorIDResponse"
             }
           },
           "default": {
@@ -92,14 +92,14 @@
         ]
       }
     },
-    "/v2/organization/{organization_id}/logs": {
+    "/v2/org/organization/{organization_id}/logs": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_organizationGetOrganizationLogActivitiesByOrganizationIDResponse"
+              "$ref": "#/definitions/organizationpbGetOrganizationLogActivitiesByOrganizationIDResponse"
             }
           },
           "default": {
@@ -139,14 +139,14 @@
     }
   },
   "definitions": {
-    "pb_organizationGetOrganizationLogActivitiesByActorIDResponse": {
+    "organizationpbGetOrganizationLogActivitiesByActorIDResponse": {
       "type": "object",
       "properties": {
         "logs": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganizationLogActivity"
+            "$ref": "#/definitions/organizationpbOrganizationLogActivity"
           }
         },
         "total": {
@@ -155,14 +155,14 @@
         }
       }
     },
-    "pb_organizationGetOrganizationLogActivitiesByOrganizationIDResponse": {
+    "organizationpbGetOrganizationLogActivitiesByOrganizationIDResponse": {
       "type": "object",
       "properties": {
         "logs": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_organizationOrganizationLogActivity"
+            "$ref": "#/definitions/organizationpbOrganizationLogActivity"
           }
         },
         "total": {
@@ -171,15 +171,15 @@
         }
       }
     },
-    "pb_organizationGetOrganizationLogActivityByIDResponse": {
+    "organizationpbGetOrganizationLogActivityByIDResponse": {
       "type": "object",
       "properties": {
         "log": {
-          "$ref": "#/definitions/pb_organizationOrganizationLogActivity"
+          "$ref": "#/definitions/organizationpbOrganizationLogActivity"
         }
       }
     },
-    "pb_organizationOrganizationLogActivity": {
+    "organizationpbOrganizationLogActivity": {
       "type": "object",
       "properties": {
         "id": {

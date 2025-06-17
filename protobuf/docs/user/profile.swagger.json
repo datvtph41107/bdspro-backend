@@ -16,6 +16,28 @@
     "application/json"
   ],
   "paths": {
+    "/v2/user/profile/accounts/me": {
+      "get": {
+        "operationId": "ProfileService_ListAccountMe",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAccountInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/info/{id}": {
       "get": {
         "operationId": "ProfileService_GetProfileInfo",
@@ -23,7 +45,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_userProfilePublicInfo"
+              "$ref": "#/definitions/userpbProfilePublicInfo"
             }
           },
           "default": {
@@ -49,7 +71,137 @@
     }
   },
   "definitions": {
-    "pb_userCertificationItem": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbGetProfileByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "userpbAccountInfo": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "userpbAccountInfoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbAccountInfo"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "userpbCertificationItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -68,7 +220,7 @@
         }
       }
     },
-    "pb_userProfessionItem": {
+    "userpbProfessionItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -84,7 +236,7 @@
         }
       }
     },
-    "pb_userProfilePublicInfo": {
+    "userpbProfilePublicInfo": {
       "type": "object",
       "properties": {
         "profileId": {
@@ -176,18 +328,18 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_userCertificationItem"
+            "$ref": "#/definitions/userpbCertificationItem"
           }
         },
         "professions": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_userProfessionItem"
+            "$ref": "#/definitions/userpbProfessionItem"
           }
         },
         "rateStats": {
-          "$ref": "#/definitions/pb_userRateStats"
+          "$ref": "#/definitions/userpbRateStats"
         },
         "friendStatus": {
           "$ref": "#/definitions/sharepbFriendItem"
@@ -201,7 +353,7 @@
         }
       }
     },
-    "pb_userRateStats": {
+    "userpbRateStats": {
       "type": "object",
       "properties": {
         "totalReviews": {
@@ -231,88 +383,6 @@
         "star5Count": {
           "type": "string",
           "format": "uint64"
-        }
-      }
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    },
-    "sharepbFriendItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "receiverId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "createdBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "sharepbGetProfileByIdsResponse": {
-      "type": "object",
-      "properties": {
-        "profiles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/sharepbProfileItem"
-          }
-        }
-      }
-    },
-    "sharepbProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "tickVerified": {
-          "type": "boolean"
-        },
-        "phone": {
-          "type": "string"
         }
       }
     }

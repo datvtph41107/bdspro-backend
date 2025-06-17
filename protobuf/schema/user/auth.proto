@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package userpb;
+import "shared/common.proto";
+
+option go_package = "pb/types/user;userpb";
+
+service AuthService {
+    
+}

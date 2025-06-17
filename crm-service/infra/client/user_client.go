@@ -7,7 +7,7 @@ import (
 	"crm/internal/domain"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
-	pb_user "pb/types/user"
+	userpb "pb/types/user"
 
 	"pb/clients"
 )
@@ -22,7 +22,7 @@ func NewUserClient() *UserClient {
 }
 
 func (c *UserClient) GetProfileByPhones(ctx context.Context, phones []string) (map[string]*domain.Profile, error) {
-	request := &pb_user.GetProfileByPhonesRequest{
+	request := &userpb.GetProfileByPhonesRequest{
 		Phones: phones,
 	}
 	response, err := c.Client.GetProfileByPhones(ctx, request)

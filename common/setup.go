@@ -42,9 +42,17 @@ func ProfileIDInterceptor(
 
 		profileID, err := strconv.ParseUint(profileIDStr, 10, 64)
 		if err == nil {
-			log.Printf("Gán profileID", profileID)
-			// Gán profileID vào context mới
 			ctx = context.WithValue(ctx, "profileId", profileID)
+		}
+	}
+
+	organizationIDList := md.Get("organizationid")
+	if len(organizationIDList) > 0 {
+		organizationIDStr := organizationIDList[0]
+
+		organizationID, err := strconv.ParseUint(organizationIDStr, 10, 64)
+		if err == nil {
+			ctx = context.WithValue(ctx, "organizationId", organizationID)
 		}
 	}
 

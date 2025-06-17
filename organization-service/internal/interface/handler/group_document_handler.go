@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
@@ -14,7 +14,7 @@ import (
 )
 
 type GroupDocumentHandler struct {
-	grouppb.UnimplementedGroupDocumentServiceServer
+	organizationpb.UnimplementedGroupDocumentServiceServer
 	GroupDocumentUsecase     usecase.GroupDocumentUsecase
 	GroupDocumentTransformer transformer.GroupDocumentTransformer
 	GroupDocumentValidator   validator.GroupDocumentValidator
@@ -32,7 +32,7 @@ func NewGroupDocumentHandler(
 	}
 }
 
-func (h *GroupDocumentHandler) CreateGroupDocument(ctx context.Context, req *grouppb.CreateGroupDocumentRequest) (*grouppb.CreateGroupDocumentResponse, error) {
+func (h *GroupDocumentHandler) CreateGroupDocument(ctx context.Context, req *organizationpb.CreateGroupDocumentRequest) (*organizationpb.CreateGroupDocumentResponse, error) {
 	if err := h.GroupDocumentValidator.ValidateCreateGroupDocumentRequest(req); err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (h *GroupDocumentHandler) CreateGroupDocument(ctx context.Context, req *gro
 	return h.GroupDocumentTransformer.EntityToCreateGroupDocumentResponse(document), nil
 }
 
-func (h *GroupDocumentHandler) UpdateGroupDocument(ctx context.Context, req *grouppb.UpdateGroupDocumentRequest) (*grouppb.UpdateGroupDocumentResponse, error) {
+func (h *GroupDocumentHandler) UpdateGroupDocument(ctx context.Context, req *organizationpb.UpdateGroupDocumentRequest) (*organizationpb.UpdateGroupDocumentResponse, error) {
 	if err := h.GroupDocumentValidator.ValidateUpdateGroupDocumentRequest(req); err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (h *GroupDocumentHandler) UpdateGroupDocument(ctx context.Context, req *gro
 	return h.GroupDocumentTransformer.EntityToUpdateGroupDocumentResponse(document), nil
 }
 
-func (h *GroupDocumentHandler) DeleteGroupDocument(ctx context.Context, req *grouppb.DeleteGroupDocumentRequest) (*grouppb.DeleteGroupDocumentResponse, error) {
+func (h *GroupDocumentHandler) DeleteGroupDocument(ctx context.Context, req *organizationpb.DeleteGroupDocumentRequest) (*organizationpb.DeleteGroupDocumentResponse, error) {
 	if err := h.GroupDocumentValidator.ValidateDeleteGroupDocumentRequest(req); err != nil {
 		return nil, err
 	}
@@ -74,10 +74,10 @@ func (h *GroupDocumentHandler) DeleteGroupDocument(ctx context.Context, req *gro
 		return nil, err
 	}
 
-	return &grouppb.DeleteGroupDocumentResponse{Id: req.Id}, nil
+	return &organizationpb.DeleteGroupDocumentResponse{Id: req.Id}, nil
 }
 
-func (h *GroupDocumentHandler) GetGroupDocument(ctx context.Context, req *grouppb.GetGroupDocumentRequest) (*grouppb.GetGroupDocumentResponse, error) {
+func (h *GroupDocumentHandler) GetGroupDocument(ctx context.Context, req *organizationpb.GetGroupDocumentRequest) (*organizationpb.GetGroupDocumentResponse, error) {
 	if err := h.GroupDocumentValidator.ValidateGetGroupDocumentRequest(req); err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (h *GroupDocumentHandler) GetGroupDocument(ctx context.Context, req *groupp
 	return h.GroupDocumentTransformer.EntityToGetGroupDocumentResponse(document), nil
 }
 
-func (h *GroupDocumentHandler) GetGroupDocuments(ctx context.Context, req *grouppb.GetGroupDocumentsRequest) (*grouppb.GetGroupDocumentsResponse, error) {
+func (h *GroupDocumentHandler) GetGroupDocuments(ctx context.Context, req *organizationpb.GetGroupDocumentsRequest) (*organizationpb.GetGroupDocumentsResponse, error) {
 	if err := h.GroupDocumentValidator.ValidateGetGroupDocumentsRequest(req); err != nil {
 		return nil, err
 	}
@@ -109,4 +109,4 @@ func (h *GroupDocumentHandler) GetGroupDocuments(ctx context.Context, req *group
 	}
 
 	return h.GroupDocumentTransformer.EntityToGetGroupDocumentsResponse(documents, total), nil
-} 
+}

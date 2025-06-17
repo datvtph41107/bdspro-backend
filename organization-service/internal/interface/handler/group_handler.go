@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
@@ -10,7 +10,7 @@ import (
 )
 
 type GroupHandler struct {
-	grouppb.UnimplementedGroupServiceServer
+	organizationpb.UnimplementedGroupServiceServer
 	GroupUsecase     usecase.GroupUsecase
 	GroupTransformer transformer.GroupTransformer
 	GroupValidator   validator.GroupValidator
@@ -28,7 +28,15 @@ func NewGroupHandler(
 	}
 }
 
-func (h *GroupHandler) CreateGroup(ctx context.Context, req *grouppb.CreateGroupRequest) (*grouppb.CreateGroupResponse, error) {
+// @Summary Tạo nhóm
+// @Description Tạo nhóm
+// @Tags Nhóm
+// @Accept json
+// @Produce json
+// @Param group body organizationpb.CreateGroupRequest true "Thông tin nhóm"
+// @Security BearerAuth
+// @Router /group [post]
+func (h *GroupHandler) CreateGroup(ctx context.Context, req *organizationpb.CreateGroupRequest) (*organizationpb.CreateGroupResponse, error) {
 	if err := h.GroupValidator.ValidateCreateGroupRequest(req); err != nil {
 		return nil, err
 	}
@@ -43,7 +51,7 @@ func (h *GroupHandler) CreateGroup(ctx context.Context, req *grouppb.CreateGroup
 	return h.GroupTransformer.EntityToCreateGroupResponse(group), nil
 }
 
-func (h *GroupHandler) UpdateGroup(ctx context.Context, req *grouppb.UpdateGroupRequest) (*grouppb.UpdateGroupResponse, error) {
+func (h *GroupHandler) UpdateGroup(ctx context.Context, req *organizationpb.UpdateGroupRequest) (*organizationpb.UpdateGroupResponse, error) {
 	if err := h.GroupValidator.ValidateUpdateGroupRequest(req); err != nil {
 		return nil, err
 	}
@@ -58,7 +66,7 @@ func (h *GroupHandler) UpdateGroup(ctx context.Context, req *grouppb.UpdateGroup
 	return h.GroupTransformer.EntityToUpdateGroupResponse(group), nil
 }
 
-func (h *GroupHandler) DeleteGroup(ctx context.Context, req *grouppb.DeleteGroupRequest) (*grouppb.DeleteGroupResponse, error) {
+func (h *GroupHandler) DeleteGroup(ctx context.Context, req *organizationpb.DeleteGroupRequest) (*organizationpb.DeleteGroupResponse, error) {
 	if err := h.GroupValidator.ValidateDeleteGroupRequest(req); err != nil {
 		return nil, err
 	}
@@ -67,10 +75,10 @@ func (h *GroupHandler) DeleteGroup(ctx context.Context, req *grouppb.DeleteGroup
 		return nil, err
 	}
 
-	return &grouppb.DeleteGroupResponse{Id: req.Id}, nil
+	return &organizationpb.DeleteGroupResponse{Id: req.Id}, nil
 }
 
-func (h *GroupHandler) GetGroup(ctx context.Context, req *grouppb.GetGroupRequest) (*grouppb.GetGroupResponse, error) {
+func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGroupRequest) (*organizationpb.GetGroupResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupRequest(req); err != nil {
 		return nil, err
 	}
@@ -83,7 +91,7 @@ func (h *GroupHandler) GetGroup(ctx context.Context, req *grouppb.GetGroupReques
 	return h.GroupTransformer.EntityToGetGroupResponse(group), nil
 }
 
-func (h *GroupHandler) GetGroups(ctx context.Context, req *grouppb.GetGroupsRequest) (*grouppb.GetGroupsResponse, error) {
+func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGroupsRequest) (*organizationpb.GetGroupsResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupsRequest(req); err != nil {
 		return nil, err
 	}
@@ -103,4 +111,20 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *grouppb.GetGroupsRequ
 	}
 
 	return h.GroupTransformer.EntityToGetGroupsResponse(groups, total), nil
+}
+
+// @Summary Lấy tổ chức của người dùng hiện tại
+// @Description Lấy tổ chức của người dùng hiện tại
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param userId path int true "ID của người dùng"
+// @Security BearerAuth
+// @Router /group/user/{userId} [get]
+func (h *GroupHandler) GetGroupByUserId(ctx context.Context, req *organizationpb.GetGroupByUserIdRequest) (*organizationpb.GetGroupsResponse, error) {
+	groups, err := h.GroupUsecase.GetGroupByUserId(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return h.GroupTransformer.EntityToGetGroupsResponse(groups, uint32(len(groups))), nil
 }

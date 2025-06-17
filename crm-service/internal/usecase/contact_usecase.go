@@ -96,7 +96,7 @@ func (s *ContactUsecase) Sync(c context.Context, ownerType enums.EOwnerType, con
 		for i := 0; i < len(contacts); i++ {
 			existedProfile, ok := profiles[contacts[i].Phone]
 			if ok {
-				contacts[i].ProfileID = existedProfile.ProfileId
+				contacts[i].ProfileID = &existedProfile.ProfileId
 			}
 		}
 	}
@@ -121,8 +121,8 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 		return nil, err
 	}
 
-	if entity.ProfileID != 0 {
-		friendStatus, _ := s.friendRepo.GetByUserID(c, entity.ProfileID)
+	if entity.ProfileID != nil {
+		friendStatus, _ := s.friendRepo.GetByUserID(c, *entity.ProfileID)
 		entity.FriendStatus = friendStatus
 	}
 	return entity, nil

@@ -2,12 +2,11 @@ package routes
 
 import (
 	_dto "common/dto"
-	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
-	"user/data"
-	user_service "user/services/user"
+	"user/internal/dto"
+	user_service "user/internal/services/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,12 +21,9 @@ func NewProfileRouter(profileService *user_service.ProfileService) *ProfileRoute
 	}
 }
 
-var publicRoutes = []string{"/user/profile/info/", "/user/profile/find-by-phone"}
-
 func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 	profileGroup := r.Group("/user/profile")
 	{
-		profileGroup.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		profileGroup.GET("/find-by-phone", router.FindByPhone)
 		profileGroup.GET("/chat/find", router.FindOnChat)
 		profileGroup.GET("/find/ids", router.FindByIds)
@@ -54,7 +50,7 @@ func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} data.UserInfoResponse
+// @Success 200 {object} dto.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/user/profile/find-by-phone [get]
@@ -71,12 +67,12 @@ func (p *ProfileRouter) FindByPhone(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} data.UserInfoResponse
+// @Success 200 {object} dto.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/user/profile/find-by-phone [get]
 func (p *ProfileRouter) FindWithFriend(c *gin.Context) {
-	var dto data.ProfileSearch
+	var dto dto.ProfileSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -200,7 +196,7 @@ func (p *ProfileRouter) FindWithOrg(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param text query string true "ID của Profile"
-// @Success 200 {object} data.UserInfoResponse
+// @Success 200 {object} dto.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/user/profile/chat/find [get]
@@ -218,7 +214,7 @@ func (p *ProfileRouter) FindOnChat(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param ids query string true "ID của Profile"
-// @Success 200 {object} data.UserInfoResponse
+// @Success 200 {object} dto.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/user/profile/find/ids [get]
@@ -241,7 +237,7 @@ func (p *ProfileRouter) Find(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} data.UserInfoResponse
+// @Success 200 {object} dto.UserInfoResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/user/profile/me [get]
@@ -258,11 +254,11 @@ func (p *ProfileRouter) ProfileMe(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body data.UserInfoRequest true "Thông tin cập nhật"
-// @Success 200 {object} data.UserInfoResponse "Cập nhật thành công"
+// @Param request body dto.UserInfoRequest true "Thông tin cập nhật"
+// @Success 200 {object} dto.UserInfoResponse "Cập nhật thành công"
 // @Router /v1/user/profile/set-info [put]
 func (p *ProfileRouter) SetInfo(c *gin.Context) {
-	var dto data.UserInfoRequest
+	var dto dto.UserInfoRequest
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -279,7 +275,7 @@ func (p *ProfileRouter) SetInfo(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param profileId path string true "ID của Profile"
-// @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
+// @Success 200 {object} dto.PublicUserInfo "Cập nhật thành công"
 // @Router /v1/user/profile/info/{profileId} [get]
 func (p *ProfileRouter) PublicInfo(c *gin.Context) {
 	profileId, _ := strconv.ParseUint(c.Param("profileId"), 10, 64)

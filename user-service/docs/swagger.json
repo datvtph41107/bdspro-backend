@@ -670,7 +670,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -713,7 +713,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -756,7 +756,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.FriendDTO"
+                                "$ref": "#/definitions/dto.FriendDTO"
                             }
                         }
                     },
@@ -1483,7 +1483,7 @@
                 }
             }
         },
-        "data.FriendDTO": {
+        "dto.FriendDTO": {
             "type": "object",
             "properties": {
                 "groupId": {

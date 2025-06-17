@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
@@ -13,9 +13,9 @@ import (
 )
 
 type GroupMemberHandler struct {
-	grouppb.UnimplementedGroupMemberServiceServer
-	groupMemberUsecase    usecase.GroupMemberUsecase
-	groupMemberValidator  validator.GroupMemberValidator
+	organizationpb.UnimplementedGroupMemberServiceServer
+	groupMemberUsecase     usecase.GroupMemberUsecase
+	groupMemberValidator   validator.GroupMemberValidator
 	groupMemberTransformer transformer.GroupMemberTransformer
 }
 
@@ -25,13 +25,21 @@ func NewGroupMemberHandler(
 	groupMemberTransformer transformer.GroupMemberTransformer,
 ) *GroupMemberHandler {
 	return &GroupMemberHandler{
-		groupMemberUsecase:    groupMemberUsecase,
-		groupMemberValidator:  groupMemberValidator,
+		groupMemberUsecase:     groupMemberUsecase,
+		groupMemberValidator:   groupMemberValidator,
 		groupMemberTransformer: groupMemberTransformer,
 	}
 }
 
-func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *grouppb.CreateGroupMemberRequest) (*grouppb.CreateGroupMemberResponse, error) {
+// @Summary Tạo thành viên nhóm
+// @Description Tạo thành viên nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param groupMember body organizationpb.CreateGroupMemberRequest true "Thông tin thành viên"
+// @Security BearerAuth
+// @Router /group-member [post]
+func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *organizationpb.CreateGroupMemberRequest) (*organizationpb.CreateGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateCreateGroupMemberRequest(request); err != nil {
 		return nil, err
 	}
@@ -50,7 +58,7 @@ func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *gro
 	return h.groupMemberTransformer.EntityToCreateGroupMemberResponse(createdMember), nil
 }
 
-func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *grouppb.UpdateGroupMemberRequest) (*grouppb.UpdateGroupMemberResponse, error) {
+func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *organizationpb.UpdateGroupMemberRequest) (*organizationpb.UpdateGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateUpdateGroupMemberRequest(request); err != nil {
 		return nil, err
 	}
@@ -68,7 +76,7 @@ func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *gro
 	return h.groupMemberTransformer.EntityToUpdateGroupMemberResponse(updatedMember), nil
 }
 
-func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *grouppb.DeleteGroupMemberRequest) (*grouppb.DeleteGroupMemberResponse, error) {
+func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *organizationpb.DeleteGroupMemberRequest) (*organizationpb.DeleteGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateDeleteGroupMemberRequest(request); err != nil {
 		return nil, err
 	}
@@ -77,12 +85,12 @@ func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *gro
 		return nil, err
 	}
 
-	return &grouppb.DeleteGroupMemberResponse{
+	return &organizationpb.DeleteGroupMemberResponse{
 		Id: request.Id,
 	}, nil
 }
 
-func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *grouppb.GetGroupMemberRequest) (*grouppb.GetGroupMemberResponse, error) {
+func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *organizationpb.GetGroupMemberRequest) (*organizationpb.GetGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMemberRequest(request); err != nil {
 		return nil, err
 	}
@@ -95,7 +103,7 @@ func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *groupp
 	return h.groupMemberTransformer.EntityToGetGroupMemberResponse(member), nil
 }
 
-func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *grouppb.GetGroupMembersRequest) (*grouppb.GetGroupMembersResponse, error) {
+func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organizationpb.GetGroupMembersRequest) (*organizationpb.GetGroupMembersResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMembersRequest(request); err != nil {
 		return nil, err
 	}
@@ -106,4 +114,4 @@ func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *group
 	}
 
 	return h.groupMemberTransformer.EntityToGetGroupMembersResponse(members), nil
-} 
+}

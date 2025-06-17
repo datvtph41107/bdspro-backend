@@ -16,6 +16,7 @@ type GroupUsecase interface {
 	DeleteGroup(ctx context.Context, id uint32) error
 	GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error)
 	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, uint32, error)
+	GetGroupByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error)
 }
 
 type groupUsecase struct {
@@ -130,4 +131,8 @@ func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	return u.groupRepository.List(ctx, page, size, currentUserId)
+}
+
+func (u *groupUsecase) GetGroupByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error) {
+	return u.groupRepository.FindByUserId(ctx, userId)
 }

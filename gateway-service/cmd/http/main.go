@@ -150,6 +150,9 @@ var HttpCmd = &cobra.Command{
 		gateway := pkg.NewGateway("url")
 		// gateway.FetchServices()
 
+		os.Setenv("TZ", "Europe/London")
+		time.Local = time.FixedZone("Europe/London", 7*60*60)
+
 		r := gin.Default()
 		env := os.Getenv("APP_ENV")
 
@@ -195,7 +198,7 @@ var HttpCmd = &cobra.Command{
 			handler(c)
 		})
 
-		r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+		// r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		r.Use(cors.New(cors.Config{ // Cho phép gọi từ frontend
 			AllowOrigins: []string{
 				"http://localhost:3000",
@@ -211,7 +214,7 @@ var HttpCmd = &cobra.Command{
 		}))
 
 		Forwarding := pkg.ForwardingRequest(gateway, env)
-		r.Any("/v1/:service/*path", Forwarding)
+		r.Any("/v1/:service/*path", _jwt.JWTAuthMiddleware(publicRoutes), Forwarding)
 
 		log.Println("Start gateway server at port: ", port)
 		if err := r.Run(":" + port); err != nil {

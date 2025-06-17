@@ -97,7 +97,7 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 			fullName = currentUser.FullName
 		}
 
-		contact, err := s.contact.GetByProfileID(newCtx, receiverId, profileId, enums.EOwnerTypeMember)
+		contact, err := s.contact.GetByProfileID(newCtx, receiverId, profileId, enums.EOwnerTypeOrgnization)
 		if err != nil {
 			return
 		}

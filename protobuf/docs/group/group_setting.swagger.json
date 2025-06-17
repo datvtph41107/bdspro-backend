@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupSettingsResponse"
+              "$ref": "#/definitions/organizationpbGetGroupSettingsResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupSettingResponse"
+              "$ref": "#/definitions/organizationpbCreateGroupSettingResponse"
             }
           },
           "default": {
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupSettingRequest"
+              "$ref": "#/definitions/organizationpbCreateGroupSettingRequest"
             }
           }
         ],
@@ -98,7 +98,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupSettingResponse"
+              "$ref": "#/definitions/organizationpbGetGroupSettingResponse"
             }
           },
           "default": {
@@ -127,7 +127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupDeleteGroupSettingResponse"
+              "$ref": "#/definitions/organizationpbDeleteGroupSettingResponse"
             }
           },
           "default": {
@@ -156,7 +156,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupUpdateGroupSettingResponse"
+              "$ref": "#/definitions/organizationpbUpdateGroupSettingResponse"
             }
           },
           "default": {
@@ -201,7 +201,7 @@
         }
       }
     },
-    "pb_groupCreateGroupSettingRequest": {
+    "organizationpbCreateGroupSettingRequest": {
       "type": "object",
       "properties": {
         "groupId": {
@@ -216,7 +216,7 @@
         }
       }
     },
-    "pb_groupCreateGroupSettingResponse": {
+    "organizationpbCreateGroupSettingResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -225,7 +225,7 @@
         }
       }
     },
-    "pb_groupDeleteGroupSettingResponse": {
+    "organizationpbDeleteGroupSettingResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -234,22 +234,22 @@
         }
       }
     },
-    "pb_groupGetGroupSettingResponse": {
+    "organizationpbGetGroupSettingResponse": {
       "type": "object",
       "properties": {
         "setting": {
-          "$ref": "#/definitions/pb_groupGroupSetting"
+          "$ref": "#/definitions/organizationpbGroupSetting"
         }
       }
     },
-    "pb_groupGetGroupSettingsResponse": {
+    "organizationpbGetGroupSettingsResponse": {
       "type": "object",
       "properties": {
         "settings": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_groupGroupSetting"
+            "$ref": "#/definitions/organizationpbGroupSetting"
           }
         },
         "total": {
@@ -258,7 +258,7 @@
         }
       }
     },
-    "pb_groupGroupSetting": {
+    "organizationpbGroupSetting": {
       "type": "object",
       "properties": {
         "id": {
@@ -277,7 +277,7 @@
         }
       }
     },
-    "pb_groupUpdateGroupSettingResponse": {
+    "organizationpbUpdateGroupSettingResponse": {
       "type": "object",
       "properties": {
         "id": {

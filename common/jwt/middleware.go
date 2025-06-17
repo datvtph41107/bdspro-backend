@@ -30,7 +30,7 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 		// Lấy token từ header Authorization
 		tokenString := c.GetHeader("Authorization")
 		ignoreToken := false
-		if pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path) && tokenString == "" {
+		if pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path) {
 			ignoreToken = true
 		}
 		if tokenString == "" && !ignoreToken {
@@ -44,7 +44,10 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 
 		// Parse và xác thực token
 		claims, err := ParseJWT(tokenString)
+		log.Printf("claims=%v, ignoreToken=%v", claims, ignoreToken)
 		if err != nil && !ignoreToken {
+			log.Printf("PATH=%s", c.Request.URL.Path)
+			log.Printf("err_IGNORE_TOKEN: %v %s", err, c.Request.URL.Path)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
@@ -57,6 +60,7 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 		// Gắn claims vào context để các handler sau có thể sử dụng
 		if claims != nil {
 			c.Set("claims", claims)
+			c.Set("organizationId", claims.OrganizationId)
 			c.Set("profileId", claims.ProfileId)
 			c.Set("planId", claims.PlanId)
 		}
@@ -112,6 +116,7 @@ func JwtMiddleware(next http.Handler, publicPaths []string) gin.HandlerFunc {
 		// Nếu cần: inject thông tin user vào context Gin
 		c.Set("userInfo", claims)
 		c.Set("profileId", claims.ProfileId)
+		c.Set("organizationId", claims.OrganizationId)
 
 		c.Next() // Cho request đi tiếp
 
@@ -154,6 +159,9 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 	md.Append("profileId", fmt.Sprintf("%d", claims.ProfileId))
 	if claims.PlanId != nil {
 		md.Append("planId", fmt.Sprintf("%d", *claims.PlanId))
+	}
+	if claims.OrganizationId != nil {
+		md.Append("organizationId", fmt.Sprintf("%d", *claims.OrganizationId))
 	}
 	md.Append("method", r.Method)
 

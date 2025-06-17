@@ -90,7 +90,7 @@ func (r *groupPostgresRepository) GetByID(ctx context.Context, id uint32) (*enti
 
 func (r *groupPostgresRepository) List(ctx context.Context, page, size int, currentUserId uint32) ([]*entity.Group, uint32, error) {
 	var models []*GroupModel
-	if err := r.db.WithContext(ctx).Offset(page * size).Limit(size).Where("created_by = ?", currentUserId).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Offset(page*size).Limit(size).Where("created_by = ?", currentUserId).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.Group, len(models))
@@ -103,4 +103,25 @@ func (r *groupPostgresRepository) List(ctx context.Context, page, size int, curr
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
+}
+
+func (r *groupPostgresRepository) FindByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error) {
+	var groups []*GroupModel
+	if err := r.db.WithContext(ctx).
+		Joins("LEFT JOIN group_members ON groups.id = group_members.group_id").
+		Where("groups.created_by = ? OR group_members.user_id = ?", userId, userId).
+		Distinct().
+		Order("groups.created_at DESC").
+		Find(&groups).Error; err != nil {
+		return nil, err
+	}
+	return GroupModelsToEntities(groups), nil
+}
+
+func GroupModelsToEntities(models []*GroupModel) []*entity.Group {
+	entities := make([]*entity.Group, len(models))
+	for i, model := range models {
+		entities[i] = GroupModelToEntity(model)
+	}
+	return entities
 }

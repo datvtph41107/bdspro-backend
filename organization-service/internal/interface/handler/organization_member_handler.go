@@ -51,6 +51,14 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 	}, nil
 }
 
+// @Summary Tạo thành viên tổ chức
+// @Description Tạo thành viên tổ chức
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param organizationMember body organizationpb.CreateOrganizationMemberRequest true "Thông tin thành viên"
+// @Security BearerAuth
+// @Router /member [post]
 func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context, req *organizationpb.CreateOrganizationMemberRequest) (*organizationpb.CreateOrganizationMemberResponse, error) {
 	organizationMember := h.OrganizationMemberTransformer.CreateOrganizationMemberRequestToEntity(req)
 	if err := h.OrganizationMemberValidator.ValidateCreateOrganizationMemberRequest(req); err != nil {
@@ -91,8 +99,9 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 // @Param page query int false "Page number"
 // @Param size query int false "Page size"
 // @Param text query string false "Tên thành viên"
+// @Param organizationId path int true "ID của tổ chức"
 // @Security BearerAuth
-// @Router /members [get]
+// @Router /organization/members/{organizationId} [get]
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	// Get pagination parameters
 	page := 0
@@ -110,5 +119,22 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 		return nil, err
 	}
 
+	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
+}
+
+// @Summary Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
+// @Description Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param size query int false "Page size"
+// @Security BearerAuth
+// @Router /organization/members/me [get]
+func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetOrganizationMembersResponse, error) {
+	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, 0, 50)
+	if err != nil {
+		return nil, err
+	}
 	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
 }

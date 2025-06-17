@@ -15,6 +15,7 @@ type OrganizationMemberTransformer interface {
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToDeleteOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.DeleteOrganizationMemberResponse
 	EntityToGetOrganizationMembersResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse
+	// EntityToGetOrganizationOfMemberResponse(organization *entity.Organization) *organizationpb.GetOrganizationMembersResponse
 }
 
 type organizationMemberTransformer struct{}
@@ -76,10 +77,23 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{
-		OrganizationMembers: membersResponse,
-		Total:               total,
+		Data:  membersResponse,
+		Total: total,
 	}
 }
+
+// func (o *organizationMemberTransformer) EntityToGetOrganizationOfMemberResponse(organization *entity.Organization) *organizationpb.GetOrganizationMembersResponse {
+// 	return &organizationpb.GetOrganizationMembersResponse{
+// 		OrganizationMembers: []*organizationpb.OrganizationMember{
+// 			{
+// 				Id:     organization.ID,
+// 				UserId: organization.CreatedBy,
+// 				Role:   organization.CreatedBy,
+// 				Status: getStatusString(entity.OrganizationMemberStatusActive),
+// 			},
+// 		},
+// 	}
+// }
 
 func getStatusString(status entity.OrganizationMemberStatus) string {
 	switch status {

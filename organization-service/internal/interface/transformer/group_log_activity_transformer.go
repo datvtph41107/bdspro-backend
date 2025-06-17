@@ -1,14 +1,14 @@
 package transformer
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 	"time"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 )
 
 type GroupLogActivityTransformer interface {
-	EntityToGetGroupLogActivitiesResponse(logActivities []*entity.GroupLogActivity, total uint32) *grouppb.GetGroupLogActivitiesResponse
+	EntityToGetGroupLogActivitiesResponse(logActivities []*entity.GroupLogActivity, total uint32) *organizationpb.GetGroupLogActivitiesResponse
 }
 
 type groupLogActivityTransformer struct{}
@@ -17,14 +17,14 @@ func NewGroupLogActivityTransformer() GroupLogActivityTransformer {
 	return &groupLogActivityTransformer{}
 }
 
-func (t *groupLogActivityTransformer) EntityToGetGroupLogActivitiesResponse(logActivities []*entity.GroupLogActivity, total uint32) *grouppb.GetGroupLogActivitiesResponse {
-	response := &grouppb.GetGroupLogActivitiesResponse{
-		LogActivities: make([]*grouppb.GroupLogActivity, 0, len(logActivities)),
+func (t *groupLogActivityTransformer) EntityToGetGroupLogActivitiesResponse(logActivities []*entity.GroupLogActivity, total uint32) *organizationpb.GetGroupLogActivitiesResponse {
+	response := &organizationpb.GetGroupLogActivitiesResponse{
+		LogActivities: make([]*organizationpb.GroupLogActivity, 0, len(logActivities)),
 		Total:         total,
 	}
 
 	for _, logActivity := range logActivities {
-		response.LogActivities = append(response.LogActivities, &grouppb.GroupLogActivity{
+		response.LogActivities = append(response.LogActivities, &organizationpb.GroupLogActivity{
 			Id:        logActivity.Id,
 			GroupId:   logActivity.GroupId,
 			ActorId:   logActivity.ActorId,

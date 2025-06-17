@@ -1,27 +1,27 @@
 syntax = "proto3";
 
-package pb_organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 
-option go_package = "types/pb_organization";
+option go_package = "types/organizationpb";
 
 service OrganizationLogActivityService {
     rpc GetOrganizationLogActivityByID(GetOrganizationLogActivityByIDRequest) returns (GetOrganizationLogActivityByIDResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/log/{id}"
+            get: "/v2/org/organization/log/{id}"
         };
     }
 
     rpc GetOrganizationLogActivitiesByOrganizationID(GetOrganizationLogActivitiesByOrganizationIDRequest) returns (GetOrganizationLogActivitiesByOrganizationIDResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/{organization_id}/logs"
+            get: "/v2/org/organization/{organization_id}/logs"
         };
     }
 
     rpc GetOrganizationLogActivitiesByActorID(GetOrganizationLogActivitiesByActorIDRequest) returns (GetOrganizationLogActivitiesByActorIDResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/logs/actor/{actor_id}"
+            get: "/v2/org/organization/logs/actor/{actor_id}"
         };
     }
 }

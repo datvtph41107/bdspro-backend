@@ -1,41 +1,41 @@
 syntax = "proto3";
 
-package pb_organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 
-option go_package = "types/pb_organization";
+option go_package = "types/organizationpb";
 
 service OrganizationService {
     rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
         option (google.api.http) = {
-            post: "/v2/organization"
+            post: "/v2/org/organization/new"
             body: "*"
         };
     }
 
     rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {
         option (google.api.http) = {
-            put: "/v2/organization/{id}"
+            put: "/v2/org/organization/{id}"
             body: "*"
         };
     }
 
     rpc GetOrganizations(GetOrganizationsRequest) returns (GetOrganizationsResponse) {
         option (google.api.http) = {
-            get: "/v2/organization"
+            get: "/v2/org/organization"
         };
     }
 
     rpc GetOrganizationByUserId(GetOrganizationByUserIdRequest) returns (GetOrganizationByUserIdResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/user/{userId}"
+            get: "/v2/org/organization/user/{userId}"
         };
     }
 
     rpc CheckOrganizationIsExist(CheckOrganizationIsExistRequest) returns (CheckOrganizationIsExistResponse) {
         option (google.api.http) = {
-            get: "/v2/organization/check-is-exist/{id}"
+            get: "/v2/org/organization/check-is-exist/{id}"
         };
     }   
     

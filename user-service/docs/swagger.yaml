@@ -9,7 +9,7 @@ definitions:
       numFriend:
         type: integer
     type: object
-  data.FriendDTO:
+  dto.FriendDTO:
     properties:
       groupId:
         type: integer
@@ -634,7 +634,7 @@ paths:
           description: Danh sách bạn bè
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ
@@ -754,7 +754,7 @@ paths:
           description: Danh sách lời mời đã nhận
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ
@@ -781,7 +781,7 @@ paths:
           description: Danh sách lời mời đã gửi
           schema:
             items:
-              $ref: '#/definitions/data.FriendDTO'
+              $ref: '#/definitions/dto.FriendDTO'
             type: array
         "400":
           description: Yêu cầu không hợp lệ

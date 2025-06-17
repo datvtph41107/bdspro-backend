@@ -25,10 +25,10 @@ type OrganizationModel struct {
 	Email              *string
 	Website            *string
 	LogoUrl            *string
-	Status             string `gorm:"index:idx_organizations_status_created_at"`
+	Status             string    `gorm:"index:idx_organizations_status_created_at"`
 	CreatedAt          time.Time `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
-	CreatedBy          uint32 `gorm:"index:idx_organizations_created_by"`
+	CreatedBy          uint32    `gorm:"index:idx_organizations_created_by"`
 	UpdatedBy          uint32
 }
 

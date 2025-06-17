@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/group": {
+    "/v2/org/group": {
       "get": {
         "operationId": "GroupService_GetGroups",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupsResponse"
+              "$ref": "#/definitions/organizationpbGetGroupsResponse"
             }
           },
           "default": {
@@ -59,7 +59,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupResponse"
+              "$ref": "#/definitions/organizationpbCreateGroupResponse"
             }
           },
           "default": {
@@ -75,7 +75,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupRequest"
+              "$ref": "#/definitions/organizationpbCreateGroupRequest"
             }
           }
         ],
@@ -84,14 +84,45 @@
         ]
       }
     },
-    "/v2/group/{id}": {
+    "/v2/org/group/user/{userId}": {
+      "get": {
+        "operationId": "GroupService_GetGroupsByUserId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupsByUserIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
+    "/v2/org/group/{id}": {
       "get": {
         "operationId": "GroupService_GetGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupResponse"
+              "$ref": "#/definitions/organizationpbGetGroupResponse"
             }
           },
           "default": {
@@ -120,7 +151,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupDeleteGroupResponse"
+              "$ref": "#/definitions/organizationpbDeleteGroupResponse"
             }
           },
           "default": {
@@ -149,7 +180,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupUpdateGroupResponse"
+              "$ref": "#/definitions/organizationpbUpdateGroupResponse"
             }
           },
           "default": {
@@ -194,7 +225,7 @@
         }
       }
     },
-    "pb_groupCreateGroupRequest": {
+    "organizationpbCreateGroupRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -208,7 +239,7 @@
         }
       }
     },
-    "pb_groupCreateGroupResponse": {
+    "organizationpbCreateGroupResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -217,7 +248,7 @@
         }
       }
     },
-    "pb_groupDeleteGroupResponse": {
+    "organizationpbDeleteGroupResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -226,22 +257,34 @@
         }
       }
     },
-    "pb_groupGetGroupResponse": {
+    "organizationpbGetGroupResponse": {
       "type": "object",
       "properties": {
         "group": {
-          "$ref": "#/definitions/pb_groupGroup"
+          "$ref": "#/definitions/organizationpbGroup"
         }
       }
     },
-    "pb_groupGetGroupsResponse": {
+    "organizationpbGetGroupsByUserIdResponse": {
       "type": "object",
       "properties": {
         "groups": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_groupGroup"
+            "$ref": "#/definitions/organizationpbGroup"
+          }
+        }
+      }
+    },
+    "organizationpbGetGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbGroup"
           }
         },
         "total": {
@@ -250,7 +293,7 @@
         }
       }
     },
-    "pb_groupGroup": {
+    "organizationpbGroup": {
       "type": "object",
       "properties": {
         "id": {
@@ -268,7 +311,7 @@
         }
       }
     },
-    "pb_groupUpdateGroupResponse": {
+    "organizationpbUpdateGroupResponse": {
       "type": "object",
       "properties": {
         "id": {

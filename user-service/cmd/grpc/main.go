@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
-	pb_user "pb/types/user"
+	userpb "pb/types/user"
 	"time"
 	"user/config"
 	"user/db"
@@ -39,7 +39,7 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(
 			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 		)
-		pb_user.RegisterProfileServiceServer(s, app.ProfileService)
+		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

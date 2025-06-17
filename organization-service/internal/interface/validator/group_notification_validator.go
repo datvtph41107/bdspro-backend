@@ -1,7 +1,7 @@
 package validator
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -9,7 +9,7 @@ import (
 )
 
 type GroupNotificationValidator interface {
-	ValidateGetGroupNotificationsRequest(request *grouppb.GetGroupNotificationsRequest) error
+	ValidateGetGroupNotificationsRequest(request *organizationpb.GetGroupNotificationsRequest) error
 }
 
 type groupNotificationValidator struct{}
@@ -18,7 +18,7 @@ func NewGroupNotificationValidator() GroupNotificationValidator {
 	return &groupNotificationValidator{}
 }
 
-func (v *groupNotificationValidator) ValidateGetGroupNotificationsRequest(request *grouppb.GetGroupNotificationsRequest) error {
+func (v *groupNotificationValidator) ValidateGetGroupNotificationsRequest(request *organizationpb.GetGroupNotificationsRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.GroupId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -54,4 +54,4 @@ func (v *groupNotificationValidator) ValidateGetGroupNotificationsRequest(reques
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

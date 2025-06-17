@@ -4,9 +4,9 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
-	"user/data"
-	user_model "user/models/user"
-	user_service "user/services/user"
+	"user/internal/dto"
+	user_model "user/internal/models/user"
+	user_service "user/internal/services/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,7 +65,7 @@ func (r *RateRouter) List(c *gin.Context) {
 	targetID, _ := strconv.ParseUint(c.Param("targetId"), 10, 64)
 	targetType, _ := strconv.ParseUint(c.Param("targetType"), 10, 8)
 
-	var dto data.RateSearch
+	var dto dto.RateSearch
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	pb_user "pb/types/user"
+	userpb "pb/types/user"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/viper"
@@ -18,5 +18,5 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 		url = "user_grpc"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	_ = pb_user.RegisterProfileServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterProfileServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

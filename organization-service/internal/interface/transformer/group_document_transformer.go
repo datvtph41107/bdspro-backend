@@ -3,18 +3,18 @@ package transformer
 import (
 	"time"
 
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 )
 
 type GroupDocumentTransformer interface {
-	CreateGroupDocumentRequestToEntity(request *grouppb.CreateGroupDocumentRequest) *entity.GroupDocument
-	UpdateGroupDocumentRequestToEntity(request *grouppb.UpdateGroupDocumentRequest) *entity.GroupDocument
-	EntityToCreateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.CreateGroupDocumentResponse
-	EntityToUpdateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.UpdateGroupDocumentResponse
-	EntityToGetGroupDocumentResponse(document *entity.GroupDocument) *grouppb.GetGroupDocumentResponse
-	EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *grouppb.GetGroupDocumentsResponse
+	CreateGroupDocumentRequestToEntity(request *organizationpb.CreateGroupDocumentRequest) *entity.GroupDocument
+	UpdateGroupDocumentRequestToEntity(request *organizationpb.UpdateGroupDocumentRequest) *entity.GroupDocument
+	EntityToCreateGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.CreateGroupDocumentResponse
+	EntityToUpdateGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.UpdateGroupDocumentResponse
+	EntityToGetGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.GetGroupDocumentResponse
+	EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *organizationpb.GetGroupDocumentsResponse
 }
 
 type groupDocumentTransformer struct{}
@@ -23,7 +23,7 @@ func NewGroupDocumentTransformer() GroupDocumentTransformer {
 	return &groupDocumentTransformer{}
 }
 
-func (t *groupDocumentTransformer) CreateGroupDocumentRequestToEntity(request *grouppb.CreateGroupDocumentRequest) *entity.GroupDocument {
+func (t *groupDocumentTransformer) CreateGroupDocumentRequestToEntity(request *organizationpb.CreateGroupDocumentRequest) *entity.GroupDocument {
 	return &entity.GroupDocument{
 		GroupId:     request.GroupId,
 		Name:        request.Name,
@@ -34,7 +34,7 @@ func (t *groupDocumentTransformer) CreateGroupDocumentRequestToEntity(request *g
 	}
 }
 
-func (t *groupDocumentTransformer) UpdateGroupDocumentRequestToEntity(request *grouppb.UpdateGroupDocumentRequest) *entity.GroupDocument {
+func (t *groupDocumentTransformer) UpdateGroupDocumentRequestToEntity(request *organizationpb.UpdateGroupDocumentRequest) *entity.GroupDocument {
 	return &entity.GroupDocument{
 		Id:          request.Id,
 		Name:        request.Name,
@@ -45,21 +45,21 @@ func (t *groupDocumentTransformer) UpdateGroupDocumentRequestToEntity(request *g
 	}
 }
 
-func (t *groupDocumentTransformer) EntityToCreateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.CreateGroupDocumentResponse {
-	return &grouppb.CreateGroupDocumentResponse{
+func (t *groupDocumentTransformer) EntityToCreateGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.CreateGroupDocumentResponse {
+	return &organizationpb.CreateGroupDocumentResponse{
 		Id: document.Id,
 	}
 }
 
-func (t *groupDocumentTransformer) EntityToUpdateGroupDocumentResponse(document *entity.GroupDocument) *grouppb.UpdateGroupDocumentResponse {
-	return &grouppb.UpdateGroupDocumentResponse{
+func (t *groupDocumentTransformer) EntityToUpdateGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.UpdateGroupDocumentResponse {
+	return &organizationpb.UpdateGroupDocumentResponse{
 		Id: document.Id,
 	}
 }
 
-func (t *groupDocumentTransformer) EntityToGetGroupDocumentResponse(document *entity.GroupDocument) *grouppb.GetGroupDocumentResponse {
-	return &grouppb.GetGroupDocumentResponse{
-		Document: &grouppb.GroupDocument{
+func (t *groupDocumentTransformer) EntityToGetGroupDocumentResponse(document *entity.GroupDocument) *organizationpb.GetGroupDocumentResponse {
+	return &organizationpb.GetGroupDocumentResponse{
+		Document: &organizationpb.GroupDocument{
 			Id:          document.Id,
 			GroupId:     document.GroupId,
 			Name:        document.Name,
@@ -73,10 +73,10 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentResponse(document *en
 	}
 }
 
-func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *grouppb.GetGroupDocumentsResponse {
-	documentsResponse := make([]*grouppb.GroupDocument, len(documents))
+func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents []*entity.GroupDocument, total uint32) *organizationpb.GetGroupDocumentsResponse {
+	documentsResponse := make([]*organizationpb.GroupDocument, len(documents))
 	for i, document := range documents {
-		documentsResponse[i] = &grouppb.GroupDocument{
+		documentsResponse[i] = &organizationpb.GroupDocument{
 			Id:          document.Id,
 			GroupId:     document.GroupId,
 			Name:        document.Name,
@@ -88,8 +88,8 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents [
 			UpdatedAt:   document.UpdatedAt.Format(time.RFC3339),
 		}
 	}
-	return &grouppb.GetGroupDocumentsResponse{
+	return &organizationpb.GetGroupDocumentsResponse{
 		Documents: documentsResponse,
 		Total:     total,
 	}
-} 
+}

@@ -1,18 +1,18 @@
 package transformer
 
 import (
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 )
 
 type GroupSettingTransformer interface {
-	CreateGroupSettingRequestToEntity(request *grouppb.CreateGroupSettingRequest) *entity.GroupSetting
-	UpdateGroupSettingRequestToEntity(request *grouppb.UpdateGroupSettingRequest) *entity.GroupSetting
-	EntityToCreateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.CreateGroupSettingResponse
-	EntityToUpdateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.UpdateGroupSettingResponse
-	EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *grouppb.GetGroupSettingResponse
-	EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *grouppb.GetGroupSettingsResponse
+	CreateGroupSettingRequestToEntity(request *organizationpb.CreateGroupSettingRequest) *entity.GroupSetting
+	UpdateGroupSettingRequestToEntity(request *organizationpb.UpdateGroupSettingRequest) *entity.GroupSetting
+	EntityToCreateGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.CreateGroupSettingResponse
+	EntityToUpdateGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.UpdateGroupSettingResponse
+	EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.GetGroupSettingResponse
+	EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *organizationpb.GetGroupSettingsResponse
 }
 
 type groupSettingTransformer struct{}
@@ -21,7 +21,7 @@ func NewGroupSettingTransformer() GroupSettingTransformer {
 	return &groupSettingTransformer{}
 }
 
-func (t *groupSettingTransformer) CreateGroupSettingRequestToEntity(request *grouppb.CreateGroupSettingRequest) *entity.GroupSetting {
+func (t *groupSettingTransformer) CreateGroupSettingRequestToEntity(request *organizationpb.CreateGroupSettingRequest) *entity.GroupSetting {
 	return &entity.GroupSetting{
 		GroupId:     request.GroupId,
 		ConfigKey:   request.ConfigKey,
@@ -29,7 +29,7 @@ func (t *groupSettingTransformer) CreateGroupSettingRequestToEntity(request *gro
 	}
 }
 
-func (t *groupSettingTransformer) UpdateGroupSettingRequestToEntity(request *grouppb.UpdateGroupSettingRequest) *entity.GroupSetting {
+func (t *groupSettingTransformer) UpdateGroupSettingRequestToEntity(request *organizationpb.UpdateGroupSettingRequest) *entity.GroupSetting {
 	return &entity.GroupSetting{
 		Id:          request.Id,
 		ConfigKey:   request.ConfigKey,
@@ -37,21 +37,21 @@ func (t *groupSettingTransformer) UpdateGroupSettingRequestToEntity(request *gro
 	}
 }
 
-func (t *groupSettingTransformer) EntityToCreateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.CreateGroupSettingResponse {
-	return &grouppb.CreateGroupSettingResponse{
+func (t *groupSettingTransformer) EntityToCreateGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.CreateGroupSettingResponse {
+	return &organizationpb.CreateGroupSettingResponse{
 		Id: setting.Id,
 	}
 }
 
-func (t *groupSettingTransformer) EntityToUpdateGroupSettingResponse(setting *entity.GroupSetting) *grouppb.UpdateGroupSettingResponse {
-	return &grouppb.UpdateGroupSettingResponse{
+func (t *groupSettingTransformer) EntityToUpdateGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.UpdateGroupSettingResponse {
+	return &organizationpb.UpdateGroupSettingResponse{
 		Id: setting.Id,
 	}
 }
 
-func (t *groupSettingTransformer) EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *grouppb.GetGroupSettingResponse {
-	return &grouppb.GetGroupSettingResponse{
-		Setting: &grouppb.GroupSetting{
+func (t *groupSettingTransformer) EntityToGetGroupSettingResponse(setting *entity.GroupSetting) *organizationpb.GetGroupSettingResponse {
+	return &organizationpb.GetGroupSettingResponse{
+		Setting: &organizationpb.GroupSetting{
 			Id:          setting.Id,
 			ConfigKey:   setting.ConfigKey,
 			ConfigValue: setting.ConfigValue,
@@ -59,17 +59,17 @@ func (t *groupSettingTransformer) EntityToGetGroupSettingResponse(setting *entit
 	}
 }
 
-func (t *groupSettingTransformer) EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *grouppb.GetGroupSettingsResponse {
-	settingsResponse := make([]*grouppb.GroupSetting, len(settings))
+func (t *groupSettingTransformer) EntityToGetGroupSettingsResponse(settings []*entity.GroupSetting, total uint32) *organizationpb.GetGroupSettingsResponse {
+	settingsResponse := make([]*organizationpb.GroupSetting, len(settings))
 	for i, setting := range settings {
-		settingsResponse[i] = &grouppb.GroupSetting{
+		settingsResponse[i] = &organizationpb.GroupSetting{
 			Id:          setting.Id,
 			ConfigKey:   setting.ConfigKey,
 			ConfigValue: setting.ConfigValue,
 		}
 	}
-	return &grouppb.GetGroupSettingsResponse{
+	return &organizationpb.GetGroupSettingsResponse{
 		Settings: settingsResponse,
 		Total:    total,
 	}
-} 
+}

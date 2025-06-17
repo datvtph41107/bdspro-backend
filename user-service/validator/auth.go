@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 	"user/config/property"
-	"user/data"
 	"user/enums"
+	"user/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +27,7 @@ func NewAuthValidator(props *property.UserProperties) *AuthValidator {
 	}
 }
 
-func ValidateAuth(c *gin.Context, authCodes []enums.AuthCodeEnum, param *data.AuthParam) error {
+func ValidateAuth(c *gin.Context, authCodes []enums.AuthCodeEnum, param *dto.AuthParam) error {
 	for _, code := range authCodes {
 		if err := Validate(c, code, param); err != nil {
 			return err
@@ -36,7 +36,7 @@ func ValidateAuth(c *gin.Context, authCodes []enums.AuthCodeEnum, param *data.Au
 	return nil
 }
 
-func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthParam) error {
+func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *dto.AuthParam) error {
 	if param == nil {
 		return &_routes.Except{
 			Code:    400,
@@ -129,7 +129,7 @@ func Validate(c *gin.Context, validCode enums.AuthCodeEnum, param *data.AuthPara
 	return nil
 }
 
-func LockAccount(c *gin.Context, param *data.AuthParam) {
+func LockAccount(c *gin.Context, param *dto.AuthParam) {
 	statusEntity := param.Status
 	otpEntity := param.OTP
 

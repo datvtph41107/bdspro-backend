@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/group-member": {
+    "/v2/org/group-member": {
       "get": {
         "operationId": "GroupMemberService_GetGroupMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupMembersResponse"
+              "$ref": "#/definitions/organizationpbGetGroupMembersResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupMemberResponse"
+              "$ref": "#/definitions/organizationpbCreateGroupMemberResponse"
             }
           },
           "default": {
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_groupCreateGroupMemberRequest"
+              "$ref": "#/definitions/organizationpbCreateGroupMemberRequest"
             }
           }
         ],
@@ -91,14 +91,14 @@
         ]
       }
     },
-    "/v2/group-member/{id}": {
+    "/v2/org/group-member/{id}": {
       "get": {
         "operationId": "GroupMemberService_GetGroupMember",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupGetGroupMemberResponse"
+              "$ref": "#/definitions/organizationpbGetGroupMemberResponse"
             }
           },
           "default": {
@@ -127,7 +127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupDeleteGroupMemberResponse"
+              "$ref": "#/definitions/organizationpbDeleteGroupMemberResponse"
             }
           },
           "default": {
@@ -156,7 +156,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_groupUpdateGroupMemberResponse"
+              "$ref": "#/definitions/organizationpbUpdateGroupMemberResponse"
             }
           },
           "default": {
@@ -198,7 +198,7 @@
         }
       }
     },
-    "pb_groupCreateGroupMemberRequest": {
+    "organizationpbCreateGroupMemberRequest": {
       "type": "object",
       "properties": {
         "groupId": {
@@ -214,7 +214,7 @@
         }
       }
     },
-    "pb_groupCreateGroupMemberResponse": {
+    "organizationpbCreateGroupMemberResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -223,7 +223,7 @@
         }
       }
     },
-    "pb_groupDeleteGroupMemberResponse": {
+    "organizationpbDeleteGroupMemberResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -232,22 +232,22 @@
         }
       }
     },
-    "pb_groupGetGroupMemberResponse": {
+    "organizationpbGetGroupMemberResponse": {
       "type": "object",
       "properties": {
         "member": {
-          "$ref": "#/definitions/pb_groupGroupMember"
+          "$ref": "#/definitions/organizationpbGroupMember"
         }
       }
     },
-    "pb_groupGetGroupMembersResponse": {
+    "organizationpbGetGroupMembersResponse": {
       "type": "object",
       "properties": {
         "members": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_groupGroupMember"
+            "$ref": "#/definitions/organizationpbGroupMember"
           }
         },
         "total": {
@@ -256,7 +256,7 @@
         }
       }
     },
-    "pb_groupGroupMember": {
+    "organizationpbGroupMember": {
       "type": "object",
       "properties": {
         "id": {
@@ -279,7 +279,7 @@
         }
       }
     },
-    "pb_groupUpdateGroupMemberResponse": {
+    "organizationpbUpdateGroupMemberResponse": {
       "type": "object",
       "properties": {
         "id": {

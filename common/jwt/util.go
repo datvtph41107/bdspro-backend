@@ -29,6 +29,16 @@ func MetadataFromContext(ctx context.Context) *UserMetadata {
 				metadata.ProfileID = &profileID
 			}
 		}
+		if key == "organizationid" {
+			if len(values) > 0 {
+				organizationID, err := strconv.ParseUint(values[0], 10, 64)
+				if err != nil {
+					fmt.Println("Error parsing profileId:", err)
+					return nil
+				}
+				metadata.OrganizationID = &organizationID
+			}
+		}
 		// Nếu tìm thấy "role", lưu giá trị role
 		if key == "role" {
 			metadata.Role = values

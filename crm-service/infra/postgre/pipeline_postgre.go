@@ -82,8 +82,9 @@ func (r *PostgrePipeline) GetDefault(c context.Context, organizationId uint64) (
 	var entity domain.PipelineEntity
 	if err := r.db.WithContext(c).
 		Model(&domain.PipelineEntity{}).
-		Where("(owner_id = ? AND owner_type = ?) OR is_default = ?",
-			organizationId, enums.EOwnerTypeOrgnization, true).
+		Where("(owner_id = ? AND owner_type = ?) OR is_custom = ?",
+			organizationId, enums.EOwnerTypeOrgnization, false).
+		Order("is_default DESC").
 		Preload("DefaultStage").
 		First(&entity).Error; err != nil {
 		return nil, err

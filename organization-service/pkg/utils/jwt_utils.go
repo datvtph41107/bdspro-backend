@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	_utils "common/utils"
 )
 
 func GetUserFromContext(ctx context.Context, key string) any {
@@ -21,14 +23,15 @@ func GetUserFromContext(ctx context.Context, key string) any {
 }
 
 func GetUserID(ctx context.Context, key string) uint32 {
-	claims := GetUserFromContext(ctx, key)
-	if claims == nil {
-		return 0
-	}
-	id, ok := claims.(map[string]interface{})["profile"].(float64)
-	if !ok {
-		return 0
-	}
+	id := _utils.GetProfileIdWithContext(ctx)
+	// claims := GetUserFromContext(ctx, key)
+	// if claims == nil {
+	// 	return 0
+	// }
+	// id, ok := claims.(map[string]interface{})["profile"].(float64)
+	// if !ok {
+	// 	return 0
+	// }
 
 	return uint32(id)
 }

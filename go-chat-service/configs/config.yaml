@@ -1,6 +1,6 @@
 database:
   type: "POSTGRES"
-  dns: "host=localhost port=5432 user=postgres dbname=chat sslmode=disable password=postgres"
+  dns: "host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_chat port=5432 sslmode=disable"
 
 timeout:
   transaction: 30s

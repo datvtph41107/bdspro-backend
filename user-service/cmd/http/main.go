@@ -2,10 +2,14 @@ package cmd_http
 
 import (
 	"common"
+	"os"
+	"time"
 	"user/config"
 	"user/db"
 	"user/infra/routes"
 	"user/wire"
+
+	_jwt "common/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -36,6 +40,8 @@ var HttpCmd = &cobra.Command{
 			PublicRoutes: publicRoutes,
 			Prefix:       "/user",
 		}
+		os.Setenv("TZ", "Europe/London")
+		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		common.SetupRestfulAPI(parameters, func() {
 			config.LoadProperties()
@@ -43,6 +49,7 @@ var HttpCmd = &cobra.Command{
 			app, _ := wire.InitializeApp()
 			db.AutoMigrate()
 
+			r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 			routes.AuthRoutes(r, app.Auth)
 			routes.OAuthRoutes(r, app.OAuthRouter)
 			routes.ProfileRoutes(r, app.ProfileRouter)

@@ -20,7 +20,7 @@ func ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
 		Phone:         contact.Phone,
 		OwnerId:       contact.OwnerID,
 		OwnerType:     int32(contact.OwnerType),
-		ProfileId:     &contact.ProfileID,
+		ProfileId:     contact.ProfileID,
 		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
 		CreatedBy:     contact.CreatedBy,
 		ContactStatus: 20, // todo status
@@ -69,7 +69,7 @@ func ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
 		OwnerId:       contact.OwnerID,
 		OwnerType:     int32(contact.OwnerType),
 		Avatar:        contact.Avatar,
-		ProfileId:     &contact.ProfileID,
+		ProfileId:     contact.ProfileID,
 		ContactStatus: uint32(contact.FriendStatus),
 		Blocked:       contact.Blocked,
 		// todo: map in client

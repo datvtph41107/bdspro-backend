@@ -434,7 +434,7 @@
             "$ref": "#/definitions/crmpbContactDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }
@@ -548,7 +548,7 @@
             "$ref": "#/definitions/crmpbContactDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }

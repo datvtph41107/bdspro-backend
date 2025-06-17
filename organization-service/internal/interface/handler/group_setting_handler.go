@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	grouppb "pb/types/group"
+	organizationpb "pb/types/organization"
 
 	"github.com/tuandq2112/organization-service/internal/interface/transformer"
 	"github.com/tuandq2112/organization-service/internal/interface/validator"
@@ -10,7 +10,7 @@ import (
 )
 
 type GroupSettingHandler struct {
-	grouppb.UnimplementedGroupSettingServiceServer
+	organizationpb.UnimplementedGroupSettingServiceServer
 	GroupSettingUsecase     usecase.GroupSettingUsecase
 	GroupSettingTransformer transformer.GroupSettingTransformer
 	GroupSettingValidator   validator.GroupSettingValidator
@@ -28,7 +28,7 @@ func NewGroupSettingHandler(
 	}
 }
 
-func (h *GroupSettingHandler) CreateGroupSetting(ctx context.Context, req *grouppb.CreateGroupSettingRequest) (*grouppb.CreateGroupSettingResponse, error) {
+func (h *GroupSettingHandler) CreateGroupSetting(ctx context.Context, req *organizationpb.CreateGroupSettingRequest) (*organizationpb.CreateGroupSettingResponse, error) {
 	if err := h.GroupSettingValidator.ValidateCreateGroupSettingRequest(req); err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (h *GroupSettingHandler) CreateGroupSetting(ctx context.Context, req *group
 	return h.GroupSettingTransformer.EntityToCreateGroupSettingResponse(setting), nil
 }
 
-func (h *GroupSettingHandler) UpdateGroupSetting(ctx context.Context, req *grouppb.UpdateGroupSettingRequest) (*grouppb.UpdateGroupSettingResponse, error) {
+func (h *GroupSettingHandler) UpdateGroupSetting(ctx context.Context, req *organizationpb.UpdateGroupSettingRequest) (*organizationpb.UpdateGroupSettingResponse, error) {
 	if err := h.GroupSettingValidator.ValidateUpdateGroupSettingRequest(req); err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (h *GroupSettingHandler) UpdateGroupSetting(ctx context.Context, req *group
 	return h.GroupSettingTransformer.EntityToUpdateGroupSettingResponse(setting), nil
 }
 
-func (h *GroupSettingHandler) DeleteGroupSetting(ctx context.Context, req *grouppb.DeleteGroupSettingRequest) (*grouppb.DeleteGroupSettingResponse, error) {
+func (h *GroupSettingHandler) DeleteGroupSetting(ctx context.Context, req *organizationpb.DeleteGroupSettingRequest) (*organizationpb.DeleteGroupSettingResponse, error) {
 	if err := h.GroupSettingValidator.ValidateDeleteGroupSettingRequest(req); err != nil {
 		return nil, err
 	}
@@ -68,10 +68,10 @@ func (h *GroupSettingHandler) DeleteGroupSetting(ctx context.Context, req *group
 		return nil, err
 	}
 
-	return &grouppb.DeleteGroupSettingResponse{Id: req.Id}, nil
+	return &organizationpb.DeleteGroupSettingResponse{Id: req.Id}, nil
 }
 
-func (h *GroupSettingHandler) GetGroupSetting(ctx context.Context, req *grouppb.GetGroupSettingRequest) (*grouppb.GetGroupSettingResponse, error) {
+func (h *GroupSettingHandler) GetGroupSetting(ctx context.Context, req *organizationpb.GetGroupSettingRequest) (*organizationpb.GetGroupSettingResponse, error) {
 	if err := h.GroupSettingValidator.ValidateGetGroupSettingRequest(req); err != nil {
 		return nil, err
 	}
@@ -84,12 +84,12 @@ func (h *GroupSettingHandler) GetGroupSetting(ctx context.Context, req *grouppb.
 	return h.GroupSettingTransformer.EntityToGetGroupSettingResponse(setting), nil
 }
 
-func (h *GroupSettingHandler) GetGroupSettings(ctx context.Context, req *grouppb.GetGroupSettingsRequest) (*grouppb.GetGroupSettingsResponse, error) {
+func (h *GroupSettingHandler) GetGroupSettings(ctx context.Context, req *organizationpb.GetGroupSettingsRequest) (*organizationpb.GetGroupSettingsResponse, error) {
 	if err := h.GroupSettingValidator.ValidateGetGroupSettingsRequest(req); err != nil {
 		return nil, err
 	}
 
-	page :=0
+	page := 0
 	size := 10
 	if req.Page != nil {
 		page = int(*req.Page)
@@ -104,4 +104,4 @@ func (h *GroupSettingHandler) GetGroupSettings(ctx context.Context, req *grouppb
 	}
 
 	return h.GroupSettingTransformer.EntityToGetGroupSettingsResponse(settings, total), nil
-} 
+}

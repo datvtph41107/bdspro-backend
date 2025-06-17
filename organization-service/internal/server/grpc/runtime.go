@@ -7,8 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	grouppb "pb/types/group"
 	organizationpb "pb/types/organization"
+
+	"common"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
@@ -124,8 +125,9 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
-		interceptors.UnaryAuthInterceptor(logger),
+		// interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
+		common.ProfileIDInterceptor,
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
@@ -139,14 +141,14 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
 			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
 
-			grouppb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
+			organizationpb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
 
-			grouppb.RegisterGroupServiceServer(s, groupHandler)
-			grouppb.RegisterGroupDealServiceServer(s, groupDealHandler)
-			grouppb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
-			grouppb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
-			grouppb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
-			grouppb.RegisterGroupMemberServiceServer(s, groupMemberHandler)
+			organizationpb.RegisterGroupServiceServer(s, groupHandler)
+			organizationpb.RegisterGroupDealServiceServer(s, groupDealHandler)
+			organizationpb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
+			organizationpb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
+			organizationpb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
+			organizationpb.RegisterGroupMemberServiceServer(s, groupMemberHandler)
 
 			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
 		},

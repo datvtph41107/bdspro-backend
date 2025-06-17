@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"user/config/property"
-	"user/data"
-	auth_service "user/services/auth"
+	"user/internal/dto"
+	auth_service "user/internal/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,10 +53,10 @@ func AuthRoutes(r *gin.Engine, router *AuthRouter) {
 // @Description Gửi lại OTP hoặc submit lúc nhập SĐT
 // @Accept  json
 // @Produce  json
-// @Param body body data.OtpRequest true "OTP Request"
+// @Param body body dto.OtpRequest true "OTP Request"
 // @Router /v1/user/auth/otp/request [post]
 func (router *AuthRouter) RequestOTP(c *gin.Context) {
-	var dto data.OtpRequest
+	var dto dto.OtpRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,10 +71,10 @@ func (router *AuthRouter) RequestOTP(c *gin.Context) {
 // @Description Xác minh OTP đã nhận
 // @Accept  json
 // @Produce  json
-// @Param body body data.OtpVerifyRequest true "OTP Verify Request"
+// @Param body body dto.OtpVerifyRequest true "OTP Verify Request"
 // @Router /v1/user/auth/otp/verify [post]
 func (router *AuthRouter) VerifyOTP(c *gin.Context) {
-	var dto data.OtpVerifyRequest
+	var dto dto.OtpVerifyRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -90,10 +90,10 @@ func (router *AuthRouter) VerifyOTP(c *gin.Context) {
 // @Description Gửi lại OTP mới
 // @Accept  json
 // @Produce  json
-// @Param body body data.OtpRequest true "OTP Request"
+// @Param body body dto.OtpRequest true "OTP Request"
 // @Router /v1/user/auth/otp/resend [post]
 func (router *AuthRouter) ResendOTP(c *gin.Context) {
-	var dto data.OtpRequest
+	var dto dto.OtpRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -107,10 +107,11 @@ func (router *AuthRouter) ResendOTP(c *gin.Context) {
 // @Description Làm mới access token bằng refresh token trong cookie
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Router /v1/user/auth/token/refresh [post]
 func (router *AuthRouter) RefreshToken(c *gin.Context) {
 	refreshToken, _ := c.Cookie("rt")
-	result, err := router.Service.RefreshToken(refreshToken)
+	result, err := router.Service.RefreshToken(c, refreshToken)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -130,11 +131,11 @@ func (router *AuthRouter) Logout(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Security BearerAuth
-// @Param body body data.RestorePhoneRequest true "Restore Phone Request"
+// @Param body body dto.RestorePhoneRequest true "Restore Phone Request"
 // @Tags Auth
 // @Router /v1/user/auth/restore [put]
 func (router *AuthRouter) Restore(c *gin.Context) {
-	var dto data.RestorePhoneRequest
+	var dto dto.RestorePhoneRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dữ liệu không hợp lệ"})
 		return
@@ -149,11 +150,11 @@ func (router *AuthRouter) Restore(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body data.SessionQRRequest true "Thông tin tạo QR"
-// @Success 200 {object} data.SessionQRResponse
+// @Param request body dto.SessionQRRequest true "Thông tin tạo QR"
+// @Success 200 {object} dto.SessionQRResponse
 // @Router /v1/user/auth/qr/init [post]
 func (router *AuthRouter) QRInit(c *gin.Context) {
-	var dto data.SessionQRRequest
+	var dto dto.SessionQRRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
@@ -174,10 +175,10 @@ func (router *AuthRouter) QRInit(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body data.SessionQRConfirm true "Thông tin xác nhận QR"
+// @Param request body dto.SessionQRConfirm true "Thông tin xác nhận QR"
 // @Router /v1/user/auth/qr/confirm [post]
 func (router *AuthRouter) QRConfirm(c *gin.Context) {
-	var dto data.SessionQRConfirm
+	var dto dto.SessionQRConfirm
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
@@ -193,10 +194,10 @@ func (router *AuthRouter) QRConfirm(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body data.SessionQRRequest true "Thông tin kiểm tra QR"
+// @Param request body dto.SessionQRRequest true "Thông tin kiểm tra QR"
 // @Router /v1/user/auth/qr/status [post]
 func (router *AuthRouter) QRStatus(c *gin.Context) {
-	var dto data.SessionQRRequest
+	var dto dto.SessionQRRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
@@ -216,7 +217,7 @@ func (router *AuthRouter) QRStatus(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} data.PublicUserInfo "Cập nhật thành công"
+// @Success 200 {object} dto.PublicUserInfo "Cập nhật thành công"
 // @Router /v1/user/auth/delete [delete]
 func (p *AuthRouter) Delete(c *gin.Context) {
 	result, err := p.Service.Delete(c)
@@ -230,10 +231,10 @@ func (p *AuthRouter) Delete(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body data.SwitchOrganizationRequest true "Thông tin chuyển đổi tổ chức"
+// @Param request body dto.SwitchOrganizationRequest true "Thông tin chuyển đổi tổ chức"
 // @Router /v1/user/auth/switch/organization [post]
 func (router *AuthRouter) SwitchOrganization(c *gin.Context) {
-	var dto data.SwitchOrganizationRequest
+	var dto dto.SwitchOrganizationRequest
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
