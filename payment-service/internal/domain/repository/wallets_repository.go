@@ -1,0 +1,19 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/tuandq2112/payment-service/internal/domain/entity"
+)
+
+type WalletsRepository interface {
+	GetWalletById(ctx context.Context, id uint32) (*entity.Wallet, error)
+	GetWalletByIdForUpdate(ctx context.Context, id uint32) (*entity.Wallet, error)
+	UpdateWallet(ctx context.Context, wallet *entity.Wallet) error
+	BeginTx(ctx context.Context) Transaction
+}
+
+type Transaction interface {
+	Commit() error
+	Rollback() error
+}
