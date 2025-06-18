@@ -19,6 +19,7 @@ init:
 	cd user-service && go mod tidy
 	cd organization-service && go mod tidy
 	cd appointment-service && go mod tidy
+	cd payment-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
@@ -44,22 +45,10 @@ buf-group:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path group
 buf-payment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
-
 buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-group buf-payment buf-group buf-payment
 	echo "done"	
 	
 
-gen:
-	cd protobuf/schema && buf generate --template ./notification/buf.gen.yaml --path notification
-	cd protobuf/schema && buf generate --template ./bdspro/buf.gen.yaml --path bdspro
-	cd protobuf/schema && buf generate --template ./task/buf.gen.yaml --path task
-	cd protobuf/schema && buf generate --template ./payment/buf.gen.yaml --path payment
-	cd protobuf/schema && buf generate --template ./spec/buf.gen.yaml --path spec
-	cd protobuf/schema && buf generate --template ./generic/buf.gen.yaml --path generic
-	cd protobuf/schema && buf generate --template ./organization/buf.gen.yaml --path organization
-
-payment:
-	cd payment-service && go run main.go http
 bdspro:
 	cd bdspro-service && go run main.go grpc
 user:
@@ -74,12 +63,17 @@ social:
 	cd social-service && go run main.go grpc
 appointment:
 	cd appointment-service && go run main.go grpc-server
+<<<<<<< HEAD
 
+=======
+buf-crm:
+	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
+>>>>>>> d7e7d37 (#Add payment grpc server and make file)
 user-http:
 	cd user-service && go run main.go http
-
 chat:
 	cd go-chat-service && go run main.go grpc-serve
+<<<<<<< HEAD
 
 swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
@@ -92,3 +86,7 @@ chat-ws:
 
 chat-swagger:
 	cd go-chat-service && go run main.go swagger-serve
+=======
+payment:
+	cd payment-service && go run main.go grpc-server
+>>>>>>> d7e7d37 (#Add payment grpc server and make file)

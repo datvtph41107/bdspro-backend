@@ -89,10 +89,10 @@ func (p *paymentUsecase) GetWalletDashboard(ctx context.Context, req *paymentpb.
 
 	return &paymentpb.WalletDashboard{
 		Balance:             wallet.Balance,
-		TotalIncome:        totalIncome,
-		TotalExpense:       totalExpense,
+		TotalIncome:         totalIncome,
+		TotalExpense:        totalExpense,
 		PendingTransactions: int32(pendingCount),
-		Alerts:             alerts,
+		Alerts:              alerts,
 	}, nil
 }
 
@@ -126,10 +126,10 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	// Create transaction record
 	transaction := &entity.WalletTransaction{
 		WalletId:          req.WalletId,
-		Type:             "DEPOSIT",
-		Amount:           req.Amount,
-		Status:           "COMPLETED",
-		PaymentMethod:    req.PaymentMethod,
+		Type:              "DEPOSIT",
+		Amount:            req.Amount,
+		Status:            "COMPLETED",
+		PaymentMethod:     req.PaymentMethod,
 		ExternalPaymentId: req.ExternalPaymentId,
 	}
 
@@ -200,7 +200,7 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 
 	// Create transaction record
 	transaction := &entity.WalletTransaction{
-		WalletId:       req.WalletId,
+		WalletId:      req.WalletId,
 		Type:          "WITHDRAWAL",
 		Amount:        -req.Amount,
 		Status:        "PENDING",
@@ -239,11 +239,11 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 	// Create transaction record
 	transaction := &entity.WalletTransaction{
 		WalletId:       req.WalletId,
-		Type:          "PAYMENT",
-		Amount:        -req.Amount,
-		Status:        "COMPLETED",
+		Type:           "PAYMENT",
+		Amount:         -req.Amount,
+		Status:         "COMPLETED",
 		RelatedService: req.RelatedService,
-		RelatedId:     req.RelatedId,
+		RelatedId:      req.RelatedId,
 	}
 
 	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
@@ -299,9 +299,9 @@ func (p *paymentUsecase) GetPaymentMethods(ctx context.Context, req *paymentpb.G
 func (p *paymentUsecase) CreatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
 	method := &entity.PaymentMethod{
 		OrganizationId: req.OrganizationId,
-		Name:          req.Name,
-		Code:          req.Code,
-		IsActive:      req.IsActive,
+		Name:           req.Name,
+		Code:           req.Code,
+		IsActive:       req.IsActive,
 	}
 
 	_, err := p.paymentRepository.CreatePaymentMethod(ctx, method)
@@ -388,10 +388,10 @@ func (p *paymentUsecase) GetDealTransactionsDashboard(ctx context.Context, req *
 	}
 
 	return &paymentpb.DealTransactionsDashboard{
-		TotalIncome:        totalIncome,
-		TotalExpense:       totalExpense,
+		TotalIncome:         totalIncome,
+		TotalExpense:        totalExpense,
 		PendingTransactions: int32(pendingCount),
-		Alerts:             alerts,
+		Alerts:              alerts,
 	}, nil
 }
 
@@ -427,11 +427,11 @@ func (p *paymentUsecase) CreateDealTransaction(ctx context.Context, req *payment
 
 	// Create deal transaction record
 	transaction := &entity.WalletTransaction{
-		Type:          "DEAL",
-		Amount:        req.Amount,
-		Status:        "PENDING",
+		Type:           "DEAL",
+		Amount:         req.Amount,
+		Status:         "PENDING",
 		RelatedService: "DEAL",
-		RelatedId:     fmt.Sprintf("%d", req.Id),
+		RelatedId:      fmt.Sprintf("%d", req.Id),
 	}
 
 	err := p.walletTransactionRepository.CreateTransaction(ctx, transaction)
@@ -577,5 +577,3 @@ func (p *paymentUsecase) DeleteTransactionType(ctx context.Context, req *payment
 
 	return &paymentpb.Empty{}, nil
 }
-
-	

@@ -3,34 +3,237 @@ syntax = "proto3";
 package pb_payment;
 option go_package = "types/payment";
 
+import "google/protobuf/timestamp.proto";
+
 service PaymentService {
-  rpc Register (RegisterRequest) returns (RegisterResponse);
-  rpc MakeTransaction (TransactionRequest) returns (TransactionResponse);
-  rpc Balance (Empty) returns (BalanceRes);
+  // Wallet Dashboard
+  rpc GetWalletDashboard(Wallet) returns (WalletDashboard) {}
+  
+  // Wallet Transactions
+  rpc GetWalletTransactions(GetWalletTransactionsRequest) returns (WalletTransactionList) {}
+  rpc Deposit(DepositRequest) returns (WalletTransaction) {}
+  rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {}
+  rpc MakePayment(PaymentRequest) returns (WalletTransaction) {}
+  
+  // Payment Methods
+  rpc GetPaymentMethods(GetPaymentMethodsRequest) returns (PaymentMethodList) {}
+  rpc CreatePaymentMethod(PaymentMethod) returns (PaymentMethod) {}
+  rpc UpdatePaymentMethod(PaymentMethod) returns (PaymentMethod) {}
+  rpc DeletePaymentMethod(DeletePaymentMethodRequest) returns (Empty) {}
+  
+  // Reports
+  rpc GetWalletReport(ReportRequest) returns (ReportResponse) {}
+  rpc ExportWalletData(ReportRequest) returns (ExportResponse) {}
+  
+  // Deal Transactions
+  rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {}
+  rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {}
+  rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {}
+  rpc CreateDealTransaction(DealTransaction) returns (DealTransaction) {}
+  rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {}
+  rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {}
+  rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {}
+  
+  // Transaction Types
+  rpc GetTransactionTypes(Empty) returns (TransactionTypeList) {}
+  rpc CreateTransactionType(TransactionType) returns (TransactionType) {}
+  rpc UpdateTransactionType(TransactionType) returns (TransactionType) {}
+  rpc DeleteTransactionType(DeleteTransactionTypeRequest) returns (Empty) {}
 }
 
-message RegisterRequest {
-    int64 userId = 1;
-    string fullname = 2;
-    string phone = 3;
+// Common messages
+message PaginationRequest {
+  int32 page = 1;
+  int32 size = 2;
 }
 
-message RegisterResponse {
-    bool success = 1;
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 size = 3;
 }
 
-message TransactionRequest {
-	uint64 accountId = 1;
-    double amount = 2;
-    uint32 transactionType = 3;
-    uint64 targetId = 4;
+// Wallet related messages
+message Wallet {
+  uint32 id = 1;
+  uint32 userId = 2;
+  double balance = 3;
+  string currency = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp updatedAt = 6;
 }
 
-message TransactionResponse {
-    int32 data = 1;
+message WalletDashboard {
+  double balance = 1;
+  double totalIncome = 2;
+  double totalExpense = 3;
+  int32 pendingTransactions = 4;
+  repeated string alerts = 5;
 }
 
+message WalletTransaction {
+  uint32 id = 1;
+  uint32 walletId = 2;
+  string type = 3;
+  double amount = 4;
+  string status = 5;
+  string relatedService = 6;
+  string relatedId = 7;
+  string externalPaymentId = 8;
+  google.protobuf.Timestamp createdAt = 9;
+  google.protobuf.Timestamp updatedAt = 10;
+}
+
+message WalletTransactionList {
+  repeated WalletTransaction transactions = 1;
+  PaginationResponse pagination = 2;
+}
+
+message PaymentMethod {
+  uint32 id = 1;
+  uint32 organizationId = 2;
+  string name = 3;
+  string code = 4;
+  bool isActive = 5;
+  google.protobuf.Timestamp createdAt = 6;
+  google.protobuf.Timestamp updatedAt = 7;
+}
+
+message WithdrawalRequest {
+  uint32 id = 1;
+  uint32 walletId = 2;
+  double amount = 3;
+  string status = 4;
+  string paymentMethod = 5;
+  string bankAccountInfo = 6;
+  uint32 requestedBy = 7;
+  uint32 approvedBy = 8;
+  google.protobuf.Timestamp createdAt = 9;
+  google.protobuf.Timestamp updatedAt = 10;
+}
+
+// Request/Response messages
+message DepositRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string paymentMethod = 3;
+  string externalPaymentId = 4;
+}
+
+message WithdrawRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string paymentMethod = 3;
+  string bankAccountInfo = 4;
+}
+
+message PaymentRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string relatedService = 3;
+  string relatedId = 4;
+}
+
+message TransactionFilter {
+  string type = 1;
+  string status = 2;
+  google.protobuf.Timestamp fromDate = 3;
+  google.protobuf.Timestamp toDate = 4;
+}
+
+message ReportRequest {
+  google.protobuf.Timestamp fromDate = 1;
+  google.protobuf.Timestamp toDate = 2;
+  string type = 3;
+}
+
+message ReportResponse {
+  double totalAmount = 1;
+  int32 totalTransactions = 2;
+  repeated WalletTransaction transactions = 3;
+}
+
+// Additional messages for request/response
 message Empty {}
-message BalanceRes {
-    double balance = 1;
+
+message GetWalletTransactionsRequest {
+  uint32 walletId = 1;
+  TransactionFilter filter = 2;
+  PaginationRequest pagination = 3;
+}
+
+message GetPaymentMethodsRequest {
+  uint32 organizationId = 1;
+  PaginationRequest pagination = 2;
+}
+
+message PaymentMethodList {
+  repeated PaymentMethod paymentMethods = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeletePaymentMethodRequest {
+  uint32 id = 1;
+}
+
+message ExportResponse {
+  bytes data = 1;
+  string format = 2;
+}
+
+message DealTransactionsDashboard {
+  double totalIncome = 1;
+  double totalExpense = 2;
+  int32 pendingTransactions = 3;
+  repeated string alerts = 4;
+}
+
+message GetDealTransactionsRequest {
+  TransactionFilter filter = 1;
+  PaginationRequest pagination = 2;
+}
+
+message DealTransactionList {
+  repeated DealTransaction transactions = 1;
+  PaginationResponse pagination = 2;
+}
+
+message GetDealTransactionRequest {
+  uint32 id = 1;
+}
+
+message DealTransaction {
+  uint32 id = 1;
+  string type = 2;
+  double amount = 3;
+  string status = 4;
+  string description = 5;
+  uint32 createdBy = 6;
+  uint32 approvedBy = 7;
+  google.protobuf.Timestamp createdAt = 8;
+  google.protobuf.Timestamp updatedAt = 9;
+}
+
+message ApproveDealTransactionRequest {
+  uint32 id = 1;
+  uint32 approvedBy = 2;
+  string comment = 3;
+}
+
+message TransactionType {
+  uint32 id = 1;
+  string name = 2;
+  string code = 3;
+  string category = 4;
+  bool isActive = 5;
+  google.protobuf.Timestamp createdAt = 6;
+  google.protobuf.Timestamp updatedAt = 7;
+}
+
+message TransactionTypeList {
+  repeated TransactionType types = 1;
+}
+
+message DeleteTransactionTypeRequest {
+  uint32 id = 1;
 }

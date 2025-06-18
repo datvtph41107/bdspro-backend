@@ -1,101 +1,103 @@
 package handler
 
 import (
-	paymentpb "pb/types/payment"
 	"context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	paymentpb "pb/types/payment"
+
+	"github.com/tuandq2112/payment-service/internal/usecase"
 )
 
-
 type PaymentHandler struct {
-	 paymentpb.UnimplementedPaymentServiceServer
+	paymentpb.UnimplementedPaymentServiceServer
+	paymentUsecase usecase.PaymentUsecase
 }
 
-func NewPaymentHandler() *PaymentHandler {
-	return &PaymentHandler{}
+func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase) *PaymentHandler {
+	return &PaymentHandler{
+		paymentUsecase: paymentUsecase,
+	}
 }
 
 func (h *PaymentHandler) GetWalletDashboard(ctx context.Context, req *paymentpb.Wallet) (*paymentpb.WalletDashboard, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWalletDashboard not implemented")
+	return h.paymentUsecase.GetWalletDashboard(ctx, req)
 }
 
 func (h *PaymentHandler) GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWalletTransactions not implemented")
+	return h.paymentUsecase.GetWalletTransactions(ctx, req)
 }
 
 func (h *PaymentHandler) Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Deposit not implemented")
+	return h.paymentUsecase.Deposit(ctx, req)
 }
 
 func (h *PaymentHandler) Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Withdraw not implemented")
+	return h.paymentUsecase.Withdraw(ctx, req)
 }
 
 func (h *PaymentHandler) MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MakePayment not implemented")
+	return h.paymentUsecase.MakePayment(ctx, req)
 }
 
 func (h *PaymentHandler) GetPaymentMethods(ctx context.Context, req *paymentpb.GetPaymentMethodsRequest) (*paymentpb.PaymentMethodList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPaymentMethods not implemented")
+	return h.paymentUsecase.GetPaymentMethods(ctx, req)
 }
 
 func (h *PaymentHandler) CreatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePaymentMethod not implemented")
+	return h.paymentUsecase.CreatePaymentMethod(ctx, req)
 }
 
 func (h *PaymentHandler) UpdatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePaymentMethod not implemented")
+	return h.paymentUsecase.UpdatePaymentMethod(ctx, req)
 }
 
 func (h *PaymentHandler) DeletePaymentMethod(ctx context.Context, req *paymentpb.DeletePaymentMethodRequest) (*paymentpb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePaymentMethod not implemented")
+	return h.paymentUsecase.DeletePaymentMethod(ctx, req)
 }
 
 func (h *PaymentHandler) GetWalletReport(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ReportResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWalletReport not implemented")
+	return h.paymentUsecase.GetWalletReport(ctx, req)
 }
 
 func (h *PaymentHandler) ExportWalletData(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ExportResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExportWalletData not implemented")
+	return h.paymentUsecase.ExportWalletData(ctx, req)
 }
 
 func (h *PaymentHandler) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransactionsDashboard not implemented")
+	return h.paymentUsecase.GetDealTransactionsDashboard(ctx, req)
 }
 
 func (h *PaymentHandler) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransactions not implemented")
+	return h.paymentUsecase.GetDealTransactions(ctx, req)
 }
 
 func (h *PaymentHandler) GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransaction not implemented")
+	return h.paymentUsecase.GetDealTransaction(ctx, req)
 }
 
 func (h *PaymentHandler) CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateDealTransaction not implemented")
+	return h.paymentUsecase.CreateDealTransaction(ctx, req)
 }
 
 func (h *PaymentHandler) UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateDealTransaction not implemented")
+	return h.paymentUsecase.UpdateDealTransaction(ctx, req)
 }
 
 func (h *PaymentHandler) ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ApproveDealTransaction not implemented")
+	return h.paymentUsecase.ApproveDealTransaction(ctx, req)
 }
 
 func (h *PaymentHandler) GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionTypes not implemented")
+	return h.paymentUsecase.GetTransactionTypes(ctx, req)
 }
 
 func (h *PaymentHandler) CreateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTransactionType not implemented")
+	return h.paymentUsecase.CreateTransactionType(ctx, req)
 }
 
 func (h *PaymentHandler) UpdateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateTransactionType not implemented")
+	return h.paymentUsecase.UpdateTransactionType(ctx, req)
 }
 
 func (h *PaymentHandler) DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteTransactionType not implemented")
+	return h.paymentUsecase.DeleteTransactionType(ctx, req)
 }

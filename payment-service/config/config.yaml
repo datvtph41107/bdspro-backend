@@ -1,4 +1,5 @@
 host: 0.0.0.0
-port: 8080
-user_service_host: localhost
-user_service_port: 50051
+port: 50055
+database:
+  type: postgres
+  url: host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable
