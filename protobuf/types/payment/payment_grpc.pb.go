@@ -33,7 +33,6 @@ const (
 	PaymentService_GetDealTransactionsDashboard_FullMethodName = "/pb_payment.PaymentService/GetDealTransactionsDashboard"
 	PaymentService_GetDealTransactions_FullMethodName          = "/pb_payment.PaymentService/GetDealTransactions"
 	PaymentService_GetDealTransaction_FullMethodName           = "/pb_payment.PaymentService/GetDealTransaction"
-	PaymentService_CreateDealTransaction_FullMethodName        = "/pb_payment.PaymentService/CreateDealTransaction"
 	PaymentService_UpdateDealTransaction_FullMethodName        = "/pb_payment.PaymentService/UpdateDealTransaction"
 	PaymentService_ApproveDealTransaction_FullMethodName       = "/pb_payment.PaymentService/ApproveDealTransaction"
 	PaymentService_GetDealTransactionsReport_FullMethodName    = "/pb_payment.PaymentService/GetDealTransactionsReport"
@@ -66,7 +65,6 @@ type PaymentServiceClient interface {
 	GetDealTransactionsDashboard(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*DealTransactionsDashboard, error)
 	GetDealTransactions(ctx context.Context, in *GetDealTransactionsRequest, opts ...grpc.CallOption) (*DealTransactionList, error)
 	GetDealTransaction(ctx context.Context, in *GetDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error)
-	CreateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error)
 	UpdateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error)
 	ApproveDealTransaction(ctx context.Context, in *ApproveDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error)
 	GetDealTransactionsReport(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error)
@@ -211,15 +209,6 @@ func (c *paymentServiceClient) GetDealTransaction(ctx context.Context, in *GetDe
 	return out, nil
 }
 
-func (c *paymentServiceClient) CreateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error) {
-	out := new(DealTransaction)
-	err := c.cc.Invoke(ctx, PaymentService_CreateDealTransaction_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *paymentServiceClient) UpdateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error) {
 	out := new(DealTransaction)
 	err := c.cc.Invoke(ctx, PaymentService_UpdateDealTransaction_FullMethodName, in, out, opts...)
@@ -306,7 +295,6 @@ type PaymentServiceServer interface {
 	GetDealTransactionsDashboard(context.Context, *Empty) (*DealTransactionsDashboard, error)
 	GetDealTransactions(context.Context, *GetDealTransactionsRequest) (*DealTransactionList, error)
 	GetDealTransaction(context.Context, *GetDealTransactionRequest) (*DealTransaction, error)
-	CreateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error)
 	UpdateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error)
 	ApproveDealTransaction(context.Context, *ApproveDealTransactionRequest) (*DealTransaction, error)
 	GetDealTransactionsReport(context.Context, *ReportRequest) (*ReportResponse, error)
@@ -363,9 +351,6 @@ func (UnimplementedPaymentServiceServer) GetDealTransactions(context.Context, *G
 }
 func (UnimplementedPaymentServiceServer) GetDealTransaction(context.Context, *GetDealTransactionRequest) (*DealTransaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransaction not implemented")
-}
-func (UnimplementedPaymentServiceServer) CreateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateDealTransaction not implemented")
 }
 func (UnimplementedPaymentServiceServer) UpdateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDealTransaction not implemented")
@@ -653,24 +638,6 @@ func _PaymentService_GetDealTransaction_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PaymentService_CreateDealTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DealTransaction)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).CreateDealTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_CreateDealTransaction_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).CreateDealTransaction(ctx, req.(*DealTransaction))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _PaymentService_UpdateDealTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DealTransaction)
 	if err := dec(in); err != nil {
@@ -859,10 +826,6 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDealTransaction",
 			Handler:    _PaymentService_GetDealTransaction_Handler,
-		},
-		{
-			MethodName: "CreateDealTransaction",
-			Handler:    _PaymentService_CreateDealTransaction_Handler,
 		},
 		{
 			MethodName: "UpdateDealTransaction",

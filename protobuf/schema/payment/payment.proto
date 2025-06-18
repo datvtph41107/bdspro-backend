@@ -4,41 +4,124 @@ package pb_payment;
 option go_package = "types/payment";
 
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
 service PaymentService {
   // Wallet Dashboard
-  rpc GetWalletDashboard(Wallet) returns (WalletDashboard) {}
+  rpc GetWalletDashboard(Wallet) returns (WalletDashboard) {
+    option (google.api.http) = {
+      get: "/v2/wallets/{id}/dashboard"
+    };
+  }
   
   // Wallet Transactions
-  rpc GetWalletTransactions(GetWalletTransactionsRequest) returns (WalletTransactionList) {}
-  rpc Deposit(DepositRequest) returns (WalletTransaction) {}
-  rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {}
-  rpc MakePayment(PaymentRequest) returns (WalletTransaction) {}
+  rpc GetWalletTransactions(GetWalletTransactionsRequest) returns (WalletTransactionList) {
+    option (google.api.http) = {
+      get: "/v2/wallets/{walletId}/transactions"
+    };
+  }
+  rpc Deposit(DepositRequest) returns (WalletTransaction) {
+    option (google.api.http) = {
+      post: "/v2/wallets/{walletId}/deposit"
+      body: "*"
+    };
+  }
+  rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {
+    option (google.api.http) = {
+      post: "/v2/wallets/{walletId}/withdraw"
+      body: "*"
+    };
+  }
+  rpc MakePayment(PaymentRequest) returns (WalletTransaction) {
+    option (google.api.http) = {
+      post: "/v2/wallets/{walletId}/payment"
+      body: "*"
+    };
+  }
   
   // Payment Methods
   rpc GetPaymentMethods(GetPaymentMethodsRequest) returns (PaymentMethodList) {}
-  rpc CreatePaymentMethod(PaymentMethod) returns (PaymentMethod) {}
+  rpc CreatePaymentMethod(PaymentMethod) returns (PaymentMethod) {
+    option (google.api.http) = {
+      post: "/v2/payment-methods"
+      body: "*"
+    };
+  }
   rpc UpdatePaymentMethod(PaymentMethod) returns (PaymentMethod) {}
-  rpc DeletePaymentMethod(DeletePaymentMethodRequest) returns (Empty) {}
+  rpc DeletePaymentMethod(DeletePaymentMethodRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v2/payment-methods/{id}"
+    };
+  }
   
   // Reports
-  rpc GetWalletReport(ReportRequest) returns (ReportResponse) {}
-  rpc ExportWalletData(ReportRequest) returns (ExportResponse) {}
+  rpc GetWalletReport(ReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {  
+      get: "/v2/wallets/{walletId}/report"
+    };
+  }
+  rpc ExportWalletData(ReportRequest) returns (ExportResponse) {
+    option (google.api.http) = {
+      get: "/v2/wallets/{walletId}/export"
+    };
+  }
   
   // Deal Transactions
-  rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {}
-  rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {}
-  rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {}
-  rpc CreateDealTransaction(DealTransaction) returns (DealTransaction) {}
-  rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {}
-  rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {}
-  rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {}
-  
+  rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
+    option (google.api.http) = {
+      get: "/v2/deal-transactions/dashboard"
+    };
+  }
+  rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
+    option (google.api.http) = {
+      get: "/v2/deal-transactions"
+    };
+  }
+  rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
+    option (google.api.http) = {
+      get: "/v2/deal-transactions/{id}"
+    };
+  }
+  rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
+    option (google.api.http) = {
+      put: "/v2/deal-transactions/{id}"
+      body: "*"
+    };
+  }
+  rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
+    option (google.api.http) = {
+      post: "/v2/deal-transactions/{id}/approve"
+      body: "*"
+    };
+  }
+  rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {
+      get: "/v2/deal-transactions/report"
+    };
+  }
   // Transaction Types
-  rpc GetTransactionTypes(Empty) returns (TransactionTypeList) {}
-  rpc CreateTransactionType(TransactionType) returns (TransactionType) {}
-  rpc UpdateTransactionType(TransactionType) returns (TransactionType) {}
-  rpc DeleteTransactionType(DeleteTransactionTypeRequest) returns (Empty) {}
+  rpc GetTransactionTypes(Empty) returns (TransactionTypeList) {
+    option (google.api.http) = {
+      get: "/v2/transaction-types"
+    };
+  }
+  rpc CreateTransactionType(TransactionType) returns (TransactionType) {
+    option (google.api.http) = {
+      post: "/v2/transaction-types"
+      body: "*"
+    };
+  }
+  rpc UpdateTransactionType(TransactionType) returns (TransactionType) {
+    option (google.api.http) = {
+      put: "/v2/transaction-types/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteTransactionType(DeleteTransactionTypeRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v2/transaction-types/{id}"
+    };
+  }
 }
 
 // Common messages
@@ -142,9 +225,10 @@ message TransactionFilter {
 }
 
 message ReportRequest {
-  google.protobuf.Timestamp fromDate = 1;
-  google.protobuf.Timestamp toDate = 2;
-  string type = 3;
+  uint32 walletId = 1;    
+  google.protobuf.Timestamp fromDate = 2;
+  google.protobuf.Timestamp toDate = 3;
+  string type = 4;
 }
 
 message ReportResponse {
