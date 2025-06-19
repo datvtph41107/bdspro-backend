@@ -13,6 +13,7 @@ var (
 	Host            string
 	Port            string
 	DB_URL          string
+	Whitelist       []string
 )
 
 func InitConfig() {
@@ -48,5 +49,8 @@ func ReadConfig() {
 	}
 	if DB_URL = cfg.GetString("database.url"); DB_URL == "" {
 		DB_URL = "host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable"
+	}
+	if Whitelist = cfg.GetStringSlice("whitelist"); Whitelist == nil {
+		Whitelist = []string{}
 	}
 }

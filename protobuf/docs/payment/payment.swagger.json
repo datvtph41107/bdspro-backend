@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/deal-transactions": {
+    "/v2/payment/deal-transactions": {
       "get": {
         "operationId": "PaymentService_GetDealTransactions",
         "responses": {
@@ -50,15 +50,13 @@
             "name": "filter.fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "filter.toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "pagination.page",
@@ -80,7 +78,7 @@
         ]
       }
     },
-    "/v2/deal-transactions/dashboard": {
+    "/v2/payment/deal-transactions/dashboard": {
       "get": {
         "summary": "Deal Transactions",
         "operationId": "PaymentService_GetDealTransactionsDashboard",
@@ -103,7 +101,7 @@
         ]
       }
     },
-    "/v2/deal-transactions/report": {
+    "/v2/payment/deal-transactions/report": {
       "get": {
         "operationId": "PaymentService_GetDealTransactionsReport",
         "responses": {
@@ -132,15 +130,13 @@
             "name": "fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "type",
@@ -154,7 +150,7 @@
         ]
       }
     },
-    "/v2/deal-transactions/{id}": {
+    "/v2/payment/deal-transactions/{id}": {
       "get": {
         "operationId": "PaymentService_GetDealTransaction",
         "responses": {
@@ -222,7 +218,7 @@
         ]
       }
     },
-    "/v2/deal-transactions/{id}/approve": {
+    "/v2/payment/deal-transactions/{id}/approve": {
       "post": {
         "operationId": "PaymentService_ApproveDealTransaction",
         "responses": {
@@ -261,7 +257,51 @@
         ]
       }
     },
-    "/v2/payment-methods": {
+    "/v2/payment/payment-methods": {
+      "get": {
+        "summary": "Payment Methods",
+        "operationId": "PaymentService_GetPaymentMethods",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethodList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pagination.page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      },
       "post": {
         "operationId": "PaymentService_CreatePaymentMethod",
         "responses": {
@@ -293,7 +333,7 @@
         ]
       }
     },
-    "/v2/payment-methods/{id}": {
+    "/v2/payment/payment-methods/{id}": {
       "delete": {
         "operationId": "PaymentService_DeletePaymentMethod",
         "responses": {
@@ -322,9 +362,46 @@
         "tags": [
           "PaymentService"
         ]
+      },
+      "put": {
+        "operationId": "PaymentService_UpdatePaymentMethod",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethod"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PaymentServiceUpdatePaymentMethodBody"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
       }
     },
-    "/v2/transaction-types": {
+    "/v2/payment/transaction-types": {
       "get": {
         "summary": "Transaction Types",
         "operationId": "PaymentService_GetTransactionTypes",
@@ -377,7 +454,7 @@
         ]
       }
     },
-    "/v2/transaction-types/{id}": {
+    "/v2/payment/transaction-types/{id}": {
       "delete": {
         "operationId": "PaymentService_DeleteTransactionType",
         "responses": {
@@ -445,7 +522,7 @@
         ]
       }
     },
-    "/v2/wallets/{id}/dashboard": {
+    "/v2/payment/wallets/dashboard": {
       "get": {
         "summary": "Wallet Dashboard",
         "operationId": "PaymentService_GetWalletDashboard",
@@ -463,55 +540,12 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "balance",
-            "in": "query",
-            "required": false,
-            "type": "number",
-            "format": "double"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "createdAt",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "name": "updatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          }
-        ],
         "tags": [
           "PaymentService"
         ]
       }
     },
-    "/v2/wallets/{walletId}/deposit": {
+    "/v2/payment/wallets/deposit": {
       "post": {
         "operationId": "PaymentService_Deposit",
         "responses": {
@@ -530,18 +564,11 @@
         },
         "parameters": [
           {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/PaymentServiceDepositBody"
+              "$ref": "#/definitions/pb_paymentDepositRequest"
             }
           }
         ],
@@ -550,7 +577,140 @@
         ]
       }
     },
-    "/v2/wallets/{walletId}/export": {
+    "/v2/payment/wallets/payment": {
+      "post": {
+        "operationId": "PaymentService_MakePayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletTransaction"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/transactions": {
+      "get": {
+        "operationId": "PaymentService_GetWalletTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletTransactionList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "filter.type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.fromDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.toDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagination.page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/withdraw": {
+      "post": {
+        "operationId": "PaymentService_Withdraw",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWithdrawalRequest"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWithdrawRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/{walletId}/export": {
       "get": {
         "operationId": "PaymentService_ExportWalletData",
         "responses": {
@@ -579,15 +739,13 @@
             "name": "fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "type",
@@ -601,46 +759,7 @@
         ]
       }
     },
-    "/v2/wallets/{walletId}/payment": {
-      "post": {
-        "operationId": "PaymentService_MakePayment",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransaction"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PaymentServiceMakePaymentBody"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/wallets/{walletId}/report": {
+    "/v2/payment/wallets/{walletId}/report": {
       "get": {
         "summary": "Reports",
         "operationId": "PaymentService_GetWalletReport",
@@ -670,132 +789,19 @@
             "name": "fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "type",
             "in": "query",
             "required": false,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/wallets/{walletId}/transactions": {
-      "get": {
-        "summary": "Wallet Transactions",
-        "operationId": "PaymentService_GetWalletTransactions",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransactionList"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "filter.type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter.status",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter.fromDate",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "name": "filter.toDate",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "name": "pagination.page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "pagination.size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/wallets/{walletId}/withdraw": {
-      "post": {
-        "operationId": "PaymentService_Withdraw",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWithdrawalRequest"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PaymentServiceWithdrawBody"
-            }
           }
         ],
         "tags": [
@@ -813,37 +819,6 @@
           "format": "int64"
         },
         "comment": {
-          "type": "string"
-        }
-      }
-    },
-    "PaymentServiceDepositBody": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "paymentMethod": {
-          "type": "string"
-        },
-        "externalPaymentId": {
-          "type": "string"
-        }
-      },
-      "title": "Request/Response messages"
-    },
-    "PaymentServiceMakePaymentBody": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "relatedService": {
-          "type": "string"
-        },
-        "relatedId": {
           "type": "string"
         }
       }
@@ -873,12 +848,34 @@
           "format": "int64"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
+        }
+      }
+    },
+    "PaymentServiceUpdatePaymentMethodBody": {
+      "type": "object",
+      "properties": {
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -898,27 +895,19 @@
           "type": "boolean"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
-    "PaymentServiceWithdrawBody": {
+    "pb_paymentCreateWalletResponse": {
       "type": "object",
       "properties": {
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "paymentMethod": {
-          "type": "string"
-        },
-        "bankAccountInfo": {
-          "type": "string"
+        "id": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -951,12 +940,10 @@
           "format": "int64"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -995,6 +982,25 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "pb_paymentDepositRequest": {
+      "type": "object",
+      "properties": {
+        "walletId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "externalPaymentId": {
+          "type": "string"
         }
       }
     },
@@ -1066,12 +1072,10 @@
           "type": "boolean"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -1085,8 +1089,28 @@
             "$ref": "#/definitions/pb_paymentPaymentMethod"
           }
         },
-        "pagination": {
-          "$ref": "#/definitions/pb_paymentPaginationResponse"
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_paymentPaymentRequest": {
+      "type": "object",
+      "properties": {
+        "walletId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "relatedService": {
+          "type": "string"
+        },
+        "relatedId": {
+          "type": "string"
         }
       }
     },
@@ -1120,12 +1144,10 @@
           "type": "string"
         },
         "fromDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "toDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -1149,12 +1171,10 @@
           "type": "boolean"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -1169,6 +1189,33 @@
           }
         }
       }
+    },
+    "pb_paymentWallet": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "balance": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Wallet related messages"
     },
     "pb_paymentWalletDashboard": {
       "type": "object",
@@ -1228,12 +1275,10 @@
           "type": "string"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -1249,6 +1294,25 @@
         },
         "pagination": {
           "$ref": "#/definitions/pb_paymentPaginationResponse"
+        }
+      }
+    },
+    "pb_paymentWithdrawRequest": {
+      "type": "object",
+      "properties": {
+        "walletId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "bankAccountInfo": {
+          "type": "string"
         }
       }
     },
@@ -1285,12 +1349,10 @@
           "format": "int64"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },

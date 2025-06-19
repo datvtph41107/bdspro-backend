@@ -56,7 +56,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
-		interceptors.UnaryAuthInterceptor(logger),
+		interceptors.UnaryAuthInterceptor(logger, appconfig.Whitelist),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
 	streamInts := []grpc.StreamServerInterceptor{}

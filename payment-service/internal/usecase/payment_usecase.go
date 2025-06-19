@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 	paymentpb "pb/types/payment"
+	"time"
 
 	"github.com/tuandq2112/payment-service/internal/domain/entity"
 	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"github.com/tuandq2112/payment-service/appconfig"
+	"github.com/tuandq2112/payment-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 type PaymentUsecase interface {
-	GetWalletDashboard(ctx context.Context, req *paymentpb.Wallet) (*paymentpb.WalletDashboard, error)
+	GetWalletDashboard(ctx context.Context) (*paymentpb.WalletDashboard, error)
 	GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error)
 	Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error)
 	Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error)
@@ -31,6 +35,8 @@ type PaymentUsecase interface {
 	CreateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error)
 	UpdateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error)
 	DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error)
+	CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error)
+	GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error)
 }
 
 type paymentUsecase struct {
@@ -57,9 +63,11 @@ func NewPaymentUsecase(
 	}
 }
 
-func (p *paymentUsecase) GetWalletDashboard(ctx context.Context, req *paymentpb.Wallet) (*paymentpb.WalletDashboard, error) {
+func (p *paymentUsecase) GetWalletDashboard(ctx context.Context) (*paymentpb.WalletDashboard, error) {
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+
 	// Get wallet details
-	wallet, err := p.walletRepository.GetWalletById(ctx, req.Id)
+	wallet, err := p.walletRepository.GetWalletById(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +172,13 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 		return nil, err
 	}
 
-	return transaction.ToProto(), nil
+	return &paymentpb.WalletTransaction{
+		Id:               transaction.Id,
+		WalletId:         transaction.WalletId,
+		Type:             transaction.Type,
+		Amount:           transaction.Amount,
+		Status:           transaction.Status,
+	}, nil
 }
 
 func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error) {
@@ -217,7 +231,14 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 		return nil, err
 	}
 
-	return withdrawal.ToProto(), nil
+	return &paymentpb.WithdrawalRequest{
+		Id:              withdrawal.Id,
+		WalletId:        withdrawal.WalletId,
+		Amount:          withdrawal.Amount,
+		Status:          withdrawal.Status,
+		PaymentMethod:   withdrawal.PaymentMethod,
+		BankAccountInfo: withdrawal.BankAccountInfo,
+	}, nil
 }
 
 func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error) {
@@ -277,22 +298,31 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 		return nil, err
 	}
 
-	return transaction.ToProto(), nil
+	return &paymentpb.WalletTransaction{
+		Id:               transaction.Id,
+		WalletId:         transaction.WalletId,
+		Type:             transaction.Type,
+		Amount:           transaction.Amount,
+		Status:           transaction.Status,
+	}, nil
 }
 
 func (p *paymentUsecase) GetPaymentMethods(ctx context.Context, req *paymentpb.GetPaymentMethodsRequest) (*paymentpb.PaymentMethodList, error) {
-	methods, total, err := p.paymentRepository.GetPaymentMethods(ctx, req.OrganizationId, req.Pagination)
+	page := 0
+
+	size := 10
+	if req.Pagination != nil {
+		page = int(req.Pagination.Page)
+		size = int(req.Pagination.Size)
+	}
+	methods, total, err := p.paymentRepository.GetPaymentMethods(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
 
 	return &paymentpb.PaymentMethodList{
 		PaymentMethods: methods,
-		Pagination: &paymentpb.PaginationResponse{
-			Total: int32(total),
-			Page:  req.Pagination.Page,
-			Size:  req.Pagination.Size,
-		},
+		Total:          uint32(total),
 	}, nil
 }
 
@@ -304,12 +334,20 @@ func (p *paymentUsecase) CreatePaymentMethod(ctx context.Context, req *paymentpb
 		IsActive:       req.IsActive,
 	}
 
-	_, err := p.paymentRepository.CreatePaymentMethod(ctx, method)
+	method, err := p.paymentRepository.CreatePaymentMethod(ctx, method)
 	if err != nil {
 		return nil, err
 	}
 
-	return method.ToProto(), nil
+	return &paymentpb.PaymentMethod{
+		Id:             method.Id,
+		OrganizationId: method.OrganizationId,
+		Name:           method.Name,
+		Code:           method.Code,
+		IsActive:       method.IsActive,
+		CreatedAt:      method.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      method.UpdatedAt.Format(time.RFC3339),
+	}, nil
 }
 
 func (p *paymentUsecase) UpdatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
@@ -324,12 +362,20 @@ func (p *paymentUsecase) UpdatePaymentMethod(ctx context.Context, req *paymentpb
 	method.Code = req.Code
 	method.IsActive = req.IsActive
 
-	_, err = p.paymentRepository.UpdatePaymentMethod(ctx, method)
+	method, err = p.paymentRepository.UpdatePaymentMethod(ctx, method)
 	if err != nil {
 		return nil, err
 	}
 
-	return method.ToProto(), nil
+	return &paymentpb.PaymentMethod{
+		Id:             method.Id,
+		OrganizationId: method.OrganizationId,
+		Name:           method.Name,
+		Code:           method.Code,
+		IsActive:       method.IsActive,
+		CreatedAt:      method.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      method.UpdatedAt.Format(time.RFC3339),
+	}, nil
 }
 
 func (p *paymentUsecase) DeletePaymentMethod(ctx context.Context, req *paymentpb.DeletePaymentMethodRequest) (*paymentpb.Empty, error) {
@@ -576,4 +622,38 @@ func (p *paymentUsecase) DeleteTransactionType(ctx context.Context, req *payment
 	}
 
 	return &paymentpb.Empty{}, nil
+}
+
+func (p *paymentUsecase) CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error) {
+	wallet := &entity.Wallet{
+		UserId:   req.UserId,
+		Balance:  req.Balance,
+		Currency: req.Currency,
+	}
+
+	wallet, err := p.walletRepository.CreateWallet(ctx, wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &paymentpb.CreateWalletResponse{
+		Id: wallet.Id,
+	}, nil
+}
+
+func (p *paymentUsecase) GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error) {
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, req.Id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}	
+		return nil, err
+	}
+
+	return &paymentpb.Wallet{
+		Id: wallet.Id,
+		UserId: wallet.UserId,
+		Balance: wallet.Balance,
+		Currency: wallet.Currency,
+	}, nil
 }

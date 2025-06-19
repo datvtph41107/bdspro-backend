@@ -3,3 +3,6 @@ port: 50055
 database:
   type: postgres
   url: host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable
+whitelist:
+  - /pb_payment.PaymentService/GetWallet
+  - /pb_payment.PaymentService/CreateWallet

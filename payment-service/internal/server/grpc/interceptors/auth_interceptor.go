@@ -2,7 +2,7 @@ package interceptors
 
 import (
 	"context"
-
+	"slices"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/pkg/utils"
@@ -12,14 +12,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterceptor {
+func UnaryAuthInterceptor(logger *flogging.FabricLogger, whitelist []string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if info.FullMethod == "/pb_organization.OrganizationMemberService/SwitchOrganization" {
+		if slices.Contains(whitelist, info.FullMethod) {
 			return handler(ctx, req)
 		}
 		md, ok := metadata.FromIncomingContext(ctx)

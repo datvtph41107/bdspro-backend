@@ -94,3 +94,26 @@ func (r *walletsPostgresRepository) BeginTx(ctx context.Context) repository.Tran
 	}
 }
 
+func (r *walletsPostgresRepository) CreateWallet(ctx context.Context, wallet *entity.Wallet) (*entity.Wallet, error) {
+	model := WalletEntityToModel(wallet)
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		return nil, err
+	}
+	return WalletModelToEntity(model), nil
+}
+
+func (r *walletsPostgresRepository) GetWalletByUserId(ctx context.Context, userId uint32) (*entity.Wallet, error) {
+	var model WalletModel
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userId).First(&model).Error; err != nil {
+		return nil, err
+	}
+	return WalletModelToEntity(&model), nil
+}
+
+func (r *walletsPostgresRepository) GetWalletBySubAccount(ctx context.Context, subAccount string) (*entity.Wallet, error) {
+	var wallet entity.Wallet
+	if err := r.db.WithContext(ctx).Where("sub_account = ?", subAccount).First(&wallet).Error; err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}

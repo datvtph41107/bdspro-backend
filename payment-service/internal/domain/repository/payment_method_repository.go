@@ -9,7 +9,7 @@ import (
 )
 
 type PaymentMethodRepository interface {
-	GetPaymentMethods(ctx context.Context, organizationId uint32, pagination *paymentpb.PaginationRequest) ([]*paymentpb.PaymentMethod, int64, error)
+	GetPaymentMethods(ctx context.Context, organizationId uint32, page int, size int) ([]*paymentpb.PaymentMethod, int64, error)
 	CreatePaymentMethod(ctx context.Context, method *entity.PaymentMethod) (*entity.PaymentMethod, error)
 	GetPaymentMethodById(ctx context.Context, id uint32) (*entity.PaymentMethod, error)
 	UpdatePaymentMethod(ctx context.Context, method *entity.PaymentMethod) (*entity.PaymentMethod, error)

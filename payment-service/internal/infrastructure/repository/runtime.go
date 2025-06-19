@@ -25,7 +25,7 @@ func NewWalletRepository(db *gorm.DB) repository.WalletsRepository {
 }
 
 func NewWalletTransactionRepository(db *gorm.DB) repository.WalletTransactionsRepository {
-	err := db.AutoMigrate(&postgres.WalletTransactionModel{})
+	err := db.AutoMigrate(&postgres.WalletTransactionModel{}, &postgres.TransactionTypeModel{})
 	if err != nil {
 		log.Fatalf("Failed to migrate wallet transaction table: %v", err)
 	}

@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	paymentpb "pb/types/payment"
 
 	"github.com/tuandq2112/payment-service/internal/domain/entity"
 	"github.com/tuandq2112/payment-service/internal/domain/repository"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -93,7 +93,18 @@ func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walle
 	transactions := make([]*paymentpb.WalletTransaction, len(models))
 	for i, model := range models {
 		entity := WalletTransactionModelToEntity(model)
-		transactions[i] = entity.ToProto()
+		transactions[i] = &paymentpb.WalletTransaction{
+			Id:               entity.Id,
+			WalletId:         entity.WalletId,
+			Type:             entity.Type,
+			Amount:           entity.Amount,
+			Status:           entity.Status,
+		}
+		transactions[i].RelatedService = entity.RelatedService
+		transactions[i].RelatedId = entity.RelatedId
+		transactions[i].ExternalPaymentId = entity.ExternalPaymentId
+		transactions[i].CreatedAt = entity.CreatedAt.Format(time.RFC3339)
+		transactions[i].UpdatedAt = entity.UpdatedAt.Format(time.RFC3339)
 	}
 
 	return transactions, total, nil
@@ -163,7 +174,18 @@ func (r *walletTransactionRepository) GetTransactionsReport(ctx context.Context,
 	transactions := make([]*paymentpb.WalletTransaction, len(models))
 	for i, model := range models {
 		entity := WalletTransactionModelToEntity(model)
-		transactions[i] = entity.ToProto()
+		transactions[i] = &paymentpb.WalletTransaction{
+			Id:               entity.Id,
+			WalletId:         entity.WalletId,
+			Type:             entity.Type,
+			Amount:           entity.Amount,
+			Status:           entity.Status,
+		}
+		transactions[i].RelatedService = entity.RelatedService
+		transactions[i].RelatedId = entity.RelatedId
+		transactions[i].ExternalPaymentId = entity.ExternalPaymentId
+		transactions[i].CreatedAt = entity.CreatedAt.Format(time.RFC3339)
+		transactions[i].UpdatedAt = entity.UpdatedAt.Format(time.RFC3339)
 	}
 
 	return transactions, total, totalAmount, nil
@@ -203,8 +225,8 @@ func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, f
 			Type:        model.Type,
 			Amount:      model.Amount,
 			Status:      model.Status,
-			CreatedAt:   timestamppb.New(model.CreatedAt),
-			UpdatedAt:   timestamppb.New(model.UpdatedAt),
+			CreatedAt:   model.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 
@@ -221,8 +243,8 @@ func (r *walletTransactionRepository) GetDealTransactionById(ctx context.Context
 		Type:        model.Type,
 		Amount:      model.Amount,
 		Status:      model.Status,
-		CreatedAt:   timestamppb.New(model.CreatedAt),
-		UpdatedAt:   timestamppb.New(model.UpdatedAt),
+		CreatedAt:   model.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -281,6 +303,7 @@ func (r *walletTransactionRepository) CreateTransactionType(ctx context.Context,
 }
 
 func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context, transactionType *paymentpb.TransactionType) error {
+	fmt.Printf("Transaction Type: %+v\n", transactionType)
 	model := &TransactionTypeModel{
 		ID:       transactionType.Id,
 		Name:     transactionType.Name,
@@ -288,7 +311,7 @@ func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context,
 		Category: transactionType.Category,
 		IsActive: transactionType.IsActive,
 	}
-	return r.db.WithContext(ctx).Save(model).Error
+	return r.db.WithContext(ctx).Model(&TransactionTypeModel{}).Where("id = ?", transactionType.Id).Updates(model).Error
 }
 
 func (r *walletTransactionRepository) DeleteTransactionType(ctx context.Context, id uint32) error {

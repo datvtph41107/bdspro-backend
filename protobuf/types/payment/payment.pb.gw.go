@@ -35,74 +35,81 @@ var (
 	_ = metadata.Join
 )
 
-var filter_PaymentService_GetWalletDashboard_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 func request_PaymentService_GetWalletDashboard_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq Wallet
+		protoReq Empty
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PaymentService_GetWalletDashboard_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	msg, err := client.GetWalletDashboard(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
 func local_request_PaymentService_GetWalletDashboard_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq Wallet
+		protoReq Empty
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-	protoReq.Id, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PaymentService_GetWalletDashboard_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	msg, err := server.GetWalletDashboard(ctx, &protoReq)
 	return msg, metadata, err
 }
 
-var filter_PaymentService_GetWalletTransactions_0 = &utilities.DoubleArray{Encoding: map[string]int{"walletId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+func request_PaymentService_CreateWallet_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CreateWalletRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.CreateWallet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_PaymentService_CreateWallet_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CreateWalletRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.CreateWallet(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_PaymentService_GetWallet_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetWalletRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetWallet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_PaymentService_GetWallet_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetWalletRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetWallet(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+var filter_PaymentService_GetWalletTransactions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_PaymentService_GetWalletTransactions_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetWalletTransactionsRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -117,16 +124,7 @@ func local_request_PaymentService_GetWalletTransactions_0(ctx context.Context, m
 	var (
 		protoReq GetWalletTransactionsRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -137,106 +135,13 @@ func local_request_PaymentService_GetWalletTransactions_0(ctx context.Context, m
 	return msg, metadata, err
 }
 
-func request_PaymentService_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq DepositRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
-	msg, err := client.Deposit(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_PaymentService_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq DepositRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
-	msg, err := server.Deposit(ctx, &protoReq)
-	return msg, metadata, err
-}
-
-func request_PaymentService_Withdraw_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq WithdrawRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
-	msg, err := client.Withdraw(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_PaymentService_Withdraw_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq WithdrawRequest
-		metadata runtime.ServerMetadata
-		err      error
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
-	msg, err := server.Withdraw(ctx, &protoReq)
-	return msg, metadata, err
-}
-
 func request_PaymentService_MakePayment_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq PaymentRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
 	}
 	msg, err := client.MakePayment(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -246,29 +151,74 @@ func local_request_PaymentService_MakePayment_0(ctx context.Context, marshaler r
 	var (
 		protoReq PaymentRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["walletId"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletId")
-	}
-	protoReq.WalletId, err = runtime.Uint32(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletId", err)
-	}
 	msg, err := server.MakePayment(ctx, &protoReq)
 	return msg, metadata, err
 }
+
+func request_PaymentService_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq DepositRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.Deposit(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_PaymentService_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq DepositRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.Deposit(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_PaymentService_Withdraw_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq WithdrawRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.Withdraw(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_PaymentService_Withdraw_0(ctx context.Context, marshaler runtime.Marshaler, server PaymentServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq WithdrawRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.Withdraw(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+var filter_PaymentService_GetPaymentMethods_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_PaymentService_GetPaymentMethods_0(ctx context.Context, marshaler runtime.Marshaler, client PaymentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetPaymentMethodsRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	io.Copy(io.Discard, req.Body)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PaymentService_GetPaymentMethods_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.GetPaymentMethods(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -280,7 +230,10 @@ func local_request_PaymentService_GetPaymentMethods_0(ctx context.Context, marsh
 		protoReq GetPaymentMethodsRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PaymentService_GetPaymentMethods_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.GetPaymentMethods(ctx, &protoReq)
@@ -315,9 +268,18 @@ func request_PaymentService_UpdatePaymentMethod_0(ctx context.Context, marshaler
 	var (
 		protoReq PaymentMethod
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := client.UpdatePaymentMethod(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -327,9 +289,18 @@ func local_request_PaymentService_UpdatePaymentMethod_0(ctx context.Context, mar
 	var (
 		protoReq PaymentMethod
 		metadata runtime.ServerMetadata
+		err      error
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+	protoReq.Id, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 	msg, err := server.UpdatePaymentMethod(ctx, &protoReq)
 	return msg, metadata, err
@@ -814,7 +785,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletDashboard", runtime.WithHTTPPathPattern("/v2/wallets/{id}/dashboard"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletDashboard", runtime.WithHTTPPathPattern("/v2/payment/wallets/dashboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -828,13 +799,53 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_GetWalletDashboard_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_CreateWallet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/CreateWallet", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/CreateWallet"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PaymentService_CreateWallet_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_CreateWallet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_GetWallet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWallet", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/GetWallet"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PaymentService_GetWallet_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_GetWallet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodGet, pattern_PaymentService_GetWalletTransactions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletTransactions", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/transactions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletTransactions", runtime.WithHTTPPathPattern("/v2/payment/wallets/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -848,13 +859,33 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_GetWalletTransactions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_MakePayment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/MakePayment", runtime.WithHTTPPathPattern("/v2/payment/wallets/payment"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PaymentService_MakePayment_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_MakePayment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_PaymentService_Deposit_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/Deposit", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/deposit"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/Deposit", runtime.WithHTTPPathPattern("/v2/payment/wallets/deposit"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -874,7 +905,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/Withdraw", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/withdraw"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/Withdraw", runtime.WithHTTPPathPattern("/v2/payment/wallets/withdraw"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -888,33 +919,13 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_Withdraw_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_MakePayment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_PaymentService_GetPaymentMethods_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/MakePayment", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/payment"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_PaymentService_MakePayment_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_PaymentService_MakePayment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_GetPaymentMethods_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetPaymentMethods", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/GetPaymentMethods"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetPaymentMethods", runtime.WithHTTPPathPattern("/v2/payment/payment-methods"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -934,7 +945,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/CreatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment-methods"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/CreatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -948,13 +959,13 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_CreatePaymentMethod_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_UpdatePaymentMethod_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_PaymentService_UpdatePaymentMethod_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdatePaymentMethod", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/UpdatePaymentMethod"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -974,7 +985,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/DeletePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment-methods/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/DeletePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -994,7 +1005,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletReport", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/report"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletReport", runtime.WithHTTPPathPattern("/v2/payment/wallets/{walletId}/report"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1014,7 +1025,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/ExportWalletData", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/export"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/ExportWalletData", runtime.WithHTTPPathPattern("/v2/payment/wallets/{walletId}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1034,7 +1045,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsDashboard", runtime.WithHTTPPathPattern("/v2/deal-transactions/dashboard"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsDashboard", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/dashboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1054,7 +1065,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactions", runtime.WithHTTPPathPattern("/v2/deal-transactions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactions", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1074,7 +1085,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1094,7 +1105,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1114,7 +1125,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/ApproveDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}/approve"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/ApproveDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}/approve"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1134,7 +1145,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsReport", runtime.WithHTTPPathPattern("/v2/deal-transactions/report"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsReport", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/report"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1154,7 +1165,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetTransactionTypes", runtime.WithHTTPPathPattern("/v2/transaction-types"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/GetTransactionTypes", runtime.WithHTTPPathPattern("/v2/payment/transaction-types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1174,7 +1185,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/CreateTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/CreateTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1194,7 +1205,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1214,7 +1225,7 @@ func RegisterPaymentServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/DeleteTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb_payment.PaymentService/DeleteTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1272,7 +1283,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletDashboard", runtime.WithHTTPPathPattern("/v2/wallets/{id}/dashboard"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletDashboard", runtime.WithHTTPPathPattern("/v2/payment/wallets/dashboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1285,11 +1296,45 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_GetWalletDashboard_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_CreateWallet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/CreateWallet", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/CreateWallet"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PaymentService_CreateWallet_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_CreateWallet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_GetWallet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWallet", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/GetWallet"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PaymentService_GetWallet_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_GetWallet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodGet, pattern_PaymentService_GetWalletTransactions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletTransactions", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/transactions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletTransactions", runtime.WithHTTPPathPattern("/v2/payment/wallets/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1302,11 +1347,28 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_GetWalletTransactions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_PaymentService_MakePayment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/MakePayment", runtime.WithHTTPPathPattern("/v2/payment/wallets/payment"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PaymentService_MakePayment_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_PaymentService_MakePayment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_PaymentService_Deposit_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/Deposit", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/deposit"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/Deposit", runtime.WithHTTPPathPattern("/v2/payment/wallets/deposit"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1323,7 +1385,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/Withdraw", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/withdraw"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/Withdraw", runtime.WithHTTPPathPattern("/v2/payment/wallets/withdraw"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1336,28 +1398,11 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_Withdraw_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_MakePayment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_PaymentService_GetPaymentMethods_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/MakePayment", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/payment"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_PaymentService_MakePayment_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_PaymentService_MakePayment_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_GetPaymentMethods_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetPaymentMethods", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/GetPaymentMethods"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetPaymentMethods", runtime.WithHTTPPathPattern("/v2/payment/payment-methods"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1374,7 +1419,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/CreatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment-methods"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/CreatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1387,11 +1432,11 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_PaymentService_CreatePaymentMethod_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_PaymentService_UpdatePaymentMethod_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_PaymentService_UpdatePaymentMethod_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdatePaymentMethod", runtime.WithHTTPPathPattern("/pb_payment.PaymentService/UpdatePaymentMethod"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdatePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1408,7 +1453,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/DeletePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment-methods/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/DeletePaymentMethod", runtime.WithHTTPPathPattern("/v2/payment/payment-methods/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1425,7 +1470,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletReport", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/report"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetWalletReport", runtime.WithHTTPPathPattern("/v2/payment/wallets/{walletId}/report"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1442,7 +1487,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/ExportWalletData", runtime.WithHTTPPathPattern("/v2/wallets/{walletId}/export"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/ExportWalletData", runtime.WithHTTPPathPattern("/v2/payment/wallets/{walletId}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1459,7 +1504,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsDashboard", runtime.WithHTTPPathPattern("/v2/deal-transactions/dashboard"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsDashboard", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/dashboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1476,7 +1521,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactions", runtime.WithHTTPPathPattern("/v2/deal-transactions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactions", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1493,7 +1538,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1510,7 +1555,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1527,7 +1572,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/ApproveDealTransaction", runtime.WithHTTPPathPattern("/v2/deal-transactions/{id}/approve"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/ApproveDealTransaction", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/{id}/approve"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1544,7 +1589,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsReport", runtime.WithHTTPPathPattern("/v2/deal-transactions/report"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetDealTransactionsReport", runtime.WithHTTPPathPattern("/v2/payment/deal-transactions/report"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1561,7 +1606,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetTransactionTypes", runtime.WithHTTPPathPattern("/v2/transaction-types"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/GetTransactionTypes", runtime.WithHTTPPathPattern("/v2/payment/transaction-types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1578,7 +1623,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/CreateTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/CreateTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1595,7 +1640,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/UpdateTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1612,7 +1657,7 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/DeleteTransactionType", runtime.WithHTTPPathPattern("/v2/transaction-types/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/pb_payment.PaymentService/DeleteTransactionType", runtime.WithHTTPPathPattern("/v2/payment/transaction-types/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1629,35 +1674,39 @@ func RegisterPaymentServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 }
 
 var (
-	pattern_PaymentService_GetWalletDashboard_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "id", "dashboard"}, ""))
-	pattern_PaymentService_GetWalletTransactions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "transactions"}, ""))
-	pattern_PaymentService_Deposit_0                      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "deposit"}, ""))
-	pattern_PaymentService_Withdraw_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "withdraw"}, ""))
-	pattern_PaymentService_MakePayment_0                  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "payment"}, ""))
-	pattern_PaymentService_GetPaymentMethods_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_payment.PaymentService", "GetPaymentMethods"}, ""))
-	pattern_PaymentService_CreatePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "payment-methods"}, ""))
-	pattern_PaymentService_UpdatePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_payment.PaymentService", "UpdatePaymentMethod"}, ""))
-	pattern_PaymentService_DeletePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "payment-methods", "id"}, ""))
-	pattern_PaymentService_GetWalletReport_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "report"}, ""))
-	pattern_PaymentService_ExportWalletData_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "wallets", "walletId", "export"}, ""))
-	pattern_PaymentService_GetDealTransactionsDashboard_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "deal-transactions", "dashboard"}, ""))
-	pattern_PaymentService_GetDealTransactions_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "deal-transactions"}, ""))
-	pattern_PaymentService_GetDealTransaction_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "deal-transactions", "id"}, ""))
-	pattern_PaymentService_UpdateDealTransaction_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "deal-transactions", "id"}, ""))
-	pattern_PaymentService_ApproveDealTransaction_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v2", "deal-transactions", "id", "approve"}, ""))
-	pattern_PaymentService_GetDealTransactionsReport_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "deal-transactions", "report"}, ""))
-	pattern_PaymentService_GetTransactionTypes_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "transaction-types"}, ""))
-	pattern_PaymentService_CreateTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v2", "transaction-types"}, ""))
-	pattern_PaymentService_UpdateTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "transaction-types", "id"}, ""))
-	pattern_PaymentService_DeleteTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v2", "transaction-types", "id"}, ""))
+	pattern_PaymentService_GetWalletDashboard_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "wallets", "dashboard"}, ""))
+	pattern_PaymentService_CreateWallet_0                 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_payment.PaymentService", "CreateWallet"}, ""))
+	pattern_PaymentService_GetWallet_0                    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"pb_payment.PaymentService", "GetWallet"}, ""))
+	pattern_PaymentService_GetWalletTransactions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "wallets", "transactions"}, ""))
+	pattern_PaymentService_MakePayment_0                  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 1}, []string{"v2", "payment", "wallets"}, ""))
+	pattern_PaymentService_Deposit_0                      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "wallets", "deposit"}, ""))
+	pattern_PaymentService_Withdraw_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "wallets", "withdraw"}, ""))
+	pattern_PaymentService_GetPaymentMethods_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "payment", "payment-methods"}, ""))
+	pattern_PaymentService_CreatePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "payment", "payment-methods"}, ""))
+	pattern_PaymentService_UpdatePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "payment-methods", "id"}, ""))
+	pattern_PaymentService_DeletePaymentMethod_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "payment-methods", "id"}, ""))
+	pattern_PaymentService_GetWalletReport_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "payment", "wallets", "walletId", "report"}, ""))
+	pattern_PaymentService_ExportWalletData_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "payment", "wallets", "walletId", "export"}, ""))
+	pattern_PaymentService_GetDealTransactionsDashboard_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "deal-transactions", "dashboard"}, ""))
+	pattern_PaymentService_GetDealTransactions_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "payment", "deal-transactions"}, ""))
+	pattern_PaymentService_GetDealTransaction_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "deal-transactions", "id"}, ""))
+	pattern_PaymentService_UpdateDealTransaction_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "deal-transactions", "id"}, ""))
+	pattern_PaymentService_ApproveDealTransaction_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "payment", "deal-transactions", "id", "approve"}, ""))
+	pattern_PaymentService_GetDealTransactionsReport_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "payment", "deal-transactions", "report"}, ""))
+	pattern_PaymentService_GetTransactionTypes_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "payment", "transaction-types"}, ""))
+	pattern_PaymentService_CreateTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v2", "payment", "transaction-types"}, ""))
+	pattern_PaymentService_UpdateTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "transaction-types", "id"}, ""))
+	pattern_PaymentService_DeleteTransactionType_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v2", "payment", "transaction-types", "id"}, ""))
 )
 
 var (
 	forward_PaymentService_GetWalletDashboard_0           = runtime.ForwardResponseMessage
+	forward_PaymentService_CreateWallet_0                 = runtime.ForwardResponseMessage
+	forward_PaymentService_GetWallet_0                    = runtime.ForwardResponseMessage
 	forward_PaymentService_GetWalletTransactions_0        = runtime.ForwardResponseMessage
+	forward_PaymentService_MakePayment_0                  = runtime.ForwardResponseMessage
 	forward_PaymentService_Deposit_0                      = runtime.ForwardResponseMessage
 	forward_PaymentService_Withdraw_0                     = runtime.ForwardResponseMessage
-	forward_PaymentService_MakePayment_0                  = runtime.ForwardResponseMessage
 	forward_PaymentService_GetPaymentMethods_0            = runtime.ForwardResponseMessage
 	forward_PaymentService_CreatePaymentMethod_0          = runtime.ForwardResponseMessage
 	forward_PaymentService_UpdatePaymentMethod_0          = runtime.ForwardResponseMessage

@@ -21,10 +21,13 @@ import (
 	"user/validator"
 
 	organizationpb "pb/types/organization"
+	paymentpb "pb/types/payment"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthService struct {
@@ -41,6 +44,7 @@ type AuthService struct {
 	PreePlanID         *uint64
 	ProfileRepo        *repo.ProfileRepo
 	OrganizationClient organizationpb.OrganizationMemberServiceClient
+	PaymentClient      paymentpb.PaymentServiceClient
 	// ConfigProperties utils.PropertiesConfiguration
 	// Properties property.AppProperties
 }
@@ -65,6 +69,14 @@ func NewRedisService() *_redis.RedisService {
 // 	return organizationpb.NewOrganizationMemberServiceClient(conn)
 // }
 
+func NewPaymentClient() paymentpb.PaymentServiceClient {
+	conn, err := grpc.NewClient(viper.GetString("grpc.payment.host"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to payment service: %v", err)
+	}
+	return paymentpb.NewPaymentServiceClient(conn)
+}
+
 func NewAuthService(redisService *_redis.RedisService,
 	cookie *CookieService,
 	profileRepo *repo.ProfileRepo,
@@ -76,7 +88,8 @@ func NewAuthService(redisService *_redis.RedisService,
 		CookieService:      cookie,
 		PreePlanID:         &planId,
 		ProfileRepo:        profileRepo,
-		OrganizationClient: organizationClient,
+		OrganizationClient: NewOrganizationClient(),
+		PaymentClient:      NewPaymentClient(),
 	}
 }
 
@@ -201,6 +214,29 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp dto.OtpVerifyRequest) (*dto.
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), property.AppProperties.Jwt.RefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, e, newSession.SessionID)
+	wallet, err := s.PaymentClient.GetWallet(c.Request.Context(), &paymentpb.GetWalletRequest{
+		Id: uint32(infoEntity.ProfileID),
+	})
+
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi lấy ví",
+		}
+	}
+	if wallet == nil || wallet.Id == 0 {
+		_, err := s.PaymentClient.CreateWallet(c.Request.Context(), &paymentpb.CreateWalletRequest{
+			UserId: uint32(infoEntity.ProfileID),
+			Currency: "VND",
+			Balance: 0,
+		})
+		if err != nil {
+			return nil, &_routes.Except{
+				Code:    500,
+				Message: "Lỗi khi tạo ví",
+			}
+		}
+	}
 
 	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
 }

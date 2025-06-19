@@ -18,8 +18,8 @@ func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase) *PaymentHandler {
 	}
 }
 
-func (h *PaymentHandler) GetWalletDashboard(ctx context.Context, req *paymentpb.Wallet) (*paymentpb.WalletDashboard, error) {
-	return h.paymentUsecase.GetWalletDashboard(ctx, req)
+func (h *PaymentHandler) GetWalletDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.WalletDashboard, error) {
+	return h.paymentUsecase.GetWalletDashboard(ctx)
 }
 
 func (h *PaymentHandler) GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error) {
@@ -100,4 +100,12 @@ func (h *PaymentHandler) UpdateTransactionType(ctx context.Context, req *payment
 
 func (h *PaymentHandler) DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error) {
 	return h.paymentUsecase.DeleteTransactionType(ctx, req)
+}
+
+func (h *PaymentHandler) CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error) {
+	return h.paymentUsecase.CreateWallet(ctx, req)
+}
+
+func (h *PaymentHandler) GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error) {
+	return h.paymentUsecase.GetWallet(ctx, req)
 }

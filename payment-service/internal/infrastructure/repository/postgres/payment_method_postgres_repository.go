@@ -57,20 +57,30 @@ func NewPaymentMethodRepository(db *gorm.DB) repository.PaymentMethodRepository 
 	return &paymentMethodRepository{db: db}
 }
 
-func (r *paymentMethodRepository) GetPaymentMethods(ctx context.Context, organizationId uint32, pagination *paymentpb.PaginationRequest) ([]*paymentpb.PaymentMethod, int64, error) {
+func (r *paymentMethodRepository) GetPaymentMethods(ctx context.Context, organizationId uint32, page int, size int) ([]*paymentpb.PaymentMethod, int64, error) {
 	var models []*PaymentMethodModel
 	var total int64
 
-	if err := r.db.WithContext(ctx).Model(&PaymentMethodModel{}).Where("organization_id = ?", organizationId).Count(&total).Error; err != nil {
+	query := r.db.WithContext(ctx).Where("organization_id = ?", organizationId)
+	if err := query.Limit(size).Offset(page * size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.WithContext(ctx).Limit(int(pagination.Size)).Offset(int(pagination.Page * pagination.Size)).Find(&models).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
+
 	paymentMethods := make([]*paymentpb.PaymentMethod, len(models))
 	for i, model := range models {
-		paymentMethods[i] = PaymentMethodModelToEntity(model).ToProto()
+		paymentMethods[i] = &paymentpb.PaymentMethod{
+			Id:             model.ID,
+			OrganizationId: model.OrganizationID,
+			Name:           model.Name,
+			Code:           model.Code,
+			IsActive:       model.IsActive,
+		}
+		paymentMethods[i].CreatedAt = model.CreatedAt.Format(time.RFC3339)
+		paymentMethods[i].UpdatedAt = model.UpdatedAt.Format(time.RFC3339)
 	}
 	return paymentMethods, total, nil
 }
