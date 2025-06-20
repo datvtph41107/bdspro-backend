@@ -136,6 +136,13 @@ service PaymentService {
       delete: "/v2/payment/transaction-types/{id}"
     };
   }
+
+  rpc SepayWebhook(SepayWebhookRequest) returns (Empty) {
+    option (google.api.http) = {
+      post: "/v2/payment/sepay/webhook"
+      body: "*"
+    };
+  }
 }
 
 // Common messages
@@ -179,6 +186,7 @@ message WalletTransaction {
   string externalPaymentId = 8;
   string createdAt = 9;
   string updatedAt = 10;
+  string transactionCode = 11;
 }
 
 message WalletTransactionList {
@@ -353,4 +361,19 @@ message TransactionTypeList {
 
 message DeleteTransactionTypeRequest {
   uint32 id = 1;
+}
+
+message SepayWebhookRequest {
+  string Gateway = 1;
+  string TransactionDate = 2;
+  string AccountNumber = 3;
+  string SubAccount = 4;
+  string Code = 5;
+  string Content = 6;
+  string TransferType = 7;
+  string Description = 8;
+  double TransferAmount = 9;
+  string ReferenceCode = 10;
+  double Accumulated = 11;
+  uint32 Id = 12;
 }

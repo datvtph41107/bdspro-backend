@@ -15,12 +15,13 @@ import (
 type WalletTransactionModel struct {
 	ID                uint32    `gorm:"primaryKey"`
 	WalletID          uint32
-	Type              string
+	Type              entity.TransactionType
 	Amount            float64
-	Status            string
+	Status            entity.TransactionStatus
 	RelatedService    string
 	RelatedID         string
 	ExternalPaymentID string
+	TransactionCode   string `gorm:"unique"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }
@@ -39,6 +40,7 @@ func WalletTransactionModelToEntity(m *WalletTransactionModel) *entity.WalletTra
 		RelatedService:   m.RelatedService,
 		RelatedId:        m.RelatedID,
 		ExternalPaymentId: m.ExternalPaymentID,
+		TransactionCode:  m.TransactionCode,
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,
 	}
@@ -54,6 +56,7 @@ func WalletTransactionEntityToModel(e *entity.WalletTransaction) *WalletTransact
 		RelatedService:    e.RelatedService,
 		RelatedID:         e.RelatedId,
 		ExternalPaymentID: e.ExternalPaymentId,
+		TransactionCode:   e.TransactionCode,
 		CreatedAt:         e.CreatedAt,
 		UpdatedAt:         e.UpdatedAt,
 	}
@@ -96,9 +99,9 @@ func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walle
 		transactions[i] = &paymentpb.WalletTransaction{
 			Id:               entity.Id,
 			WalletId:         entity.WalletId,
-			Type:             entity.Type,
+			Type:             string(entity.Type),
 			Amount:           entity.Amount,
-			Status:           entity.Status,
+			Status:           string(entity.Status),
 		}
 		transactions[i].RelatedService = entity.RelatedService
 		transactions[i].RelatedId = entity.RelatedId
@@ -177,9 +180,9 @@ func (r *walletTransactionRepository) GetTransactionsReport(ctx context.Context,
 		transactions[i] = &paymentpb.WalletTransaction{
 			Id:               entity.Id,
 			WalletId:         entity.WalletId,
-			Type:             entity.Type,
+			Type:             string(entity.Type),
 			Amount:           entity.Amount,
-			Status:           entity.Status,
+			Status:           string(entity.Status),
 		}
 		transactions[i].RelatedService = entity.RelatedService
 		transactions[i].RelatedId = entity.RelatedId
@@ -222,9 +225,9 @@ func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, f
 	for i, model := range models {
 		transactions[i] = &paymentpb.DealTransaction{
 			Id:          model.ID,
-			Type:        model.Type,
+			Type:        string(model.Type),
 			Amount:      model.Amount,
-			Status:      model.Status,
+			Status:      string(model.Status),
 			CreatedAt:   model.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
 		}
@@ -240,9 +243,9 @@ func (r *walletTransactionRepository) GetDealTransactionById(ctx context.Context
 	}
 	return &paymentpb.DealTransaction{
 		Id:          model.ID,
-		Type:        model.Type,
+		Type:        string(model.Type),
 		Amount:      model.Amount,
-		Status:      model.Status,
+		Status:      string(model.Status),
 		CreatedAt:   model.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
 	}, nil
@@ -251,9 +254,9 @@ func (r *walletTransactionRepository) GetDealTransactionById(ctx context.Context
 func (r *walletTransactionRepository) UpdateDealTransaction(ctx context.Context, transaction *paymentpb.DealTransaction) error {
 	model := &WalletTransactionModel{
 		ID:     transaction.Id,
-		Type:   transaction.Type,
+		Type:   entity.TransactionType(transaction.Type)	,
 		Amount: transaction.Amount,
-		Status: transaction.Status,
+		Status: entity.TransactionStatus(transaction.Status),
 	}
 	return r.db.WithContext(ctx).Save(model).Error
 }
@@ -316,5 +319,13 @@ func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context,
 
 func (r *walletTransactionRepository) DeleteTransactionType(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Delete(&TransactionTypeModel{}, id).Error
+}
+
+func (r *walletTransactionRepository) GetTransactionByCode(ctx context.Context, code string) (*entity.WalletTransaction, error) {
+	var model WalletTransactionModel
+	if err := r.db.WithContext(ctx).Where("transaction_code = ?", code).First(&model).Error; err != nil {
+		return nil, err
+	}
+	return WalletTransactionModelToEntity(&model), nil
 }
 

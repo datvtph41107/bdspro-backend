@@ -14,6 +14,7 @@ var (
 	Port            string
 	DB_URL          string
 	Whitelist       []string
+	SepayAPIKey     string
 )
 
 func InitConfig() {
@@ -52,5 +53,8 @@ func ReadConfig() {
 	}
 	if Whitelist = cfg.GetStringSlice("whitelist"); Whitelist == nil {
 		Whitelist = []string{}
+	}
+	if SepayAPIKey = cfg.GetString("sepay.api_key"); SepayAPIKey == "" {
+		SepayAPIKey = "APi cuc xin"
 	}
 }

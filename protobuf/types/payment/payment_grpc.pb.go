@@ -42,6 +42,7 @@ const (
 	PaymentService_CreateTransactionType_FullMethodName        = "/pb_payment.PaymentService/CreateTransactionType"
 	PaymentService_UpdateTransactionType_FullMethodName        = "/pb_payment.PaymentService/UpdateTransactionType"
 	PaymentService_DeleteTransactionType_FullMethodName        = "/pb_payment.PaymentService/DeleteTransactionType"
+	PaymentService_SepayWebhook_FullMethodName                 = "/pb_payment.PaymentService/SepayWebhook"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -77,6 +78,7 @@ type PaymentServiceClient interface {
 	CreateTransactionType(ctx context.Context, in *TransactionType, opts ...grpc.CallOption) (*TransactionType, error)
 	UpdateTransactionType(ctx context.Context, in *TransactionType, opts ...grpc.CallOption) (*TransactionType, error)
 	DeleteTransactionType(ctx context.Context, in *DeleteTransactionTypeRequest, opts ...grpc.CallOption) (*Empty, error)
+	SepayWebhook(ctx context.Context, in *SepayWebhookRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type paymentServiceClient struct {
@@ -294,6 +296,15 @@ func (c *paymentServiceClient) DeleteTransactionType(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *paymentServiceClient) SepayWebhook(ctx context.Context, in *SepayWebhookRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, PaymentService_SepayWebhook_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServiceServer is the server API for PaymentService service.
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility
@@ -327,6 +338,7 @@ type PaymentServiceServer interface {
 	CreateTransactionType(context.Context, *TransactionType) (*TransactionType, error)
 	UpdateTransactionType(context.Context, *TransactionType) (*TransactionType, error)
 	DeleteTransactionType(context.Context, *DeleteTransactionTypeRequest) (*Empty, error)
+	SepayWebhook(context.Context, *SepayWebhookRequest) (*Empty, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -402,6 +414,9 @@ func (UnimplementedPaymentServiceServer) UpdateTransactionType(context.Context, 
 }
 func (UnimplementedPaymentServiceServer) DeleteTransactionType(context.Context, *DeleteTransactionTypeRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTransactionType not implemented")
+}
+func (UnimplementedPaymentServiceServer) SepayWebhook(context.Context, *SepayWebhookRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SepayWebhook not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 
@@ -830,6 +845,24 @@ func _PaymentService_DeleteTransactionType_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_SepayWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SepayWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).SepayWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_SepayWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).SepayWebhook(ctx, req.(*SepayWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -928,6 +961,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTransactionType",
 			Handler:    _PaymentService_DeleteTransactionType_Handler,
+		},
+		{
+			MethodName: "SepayWebhook",
+			Handler:    _PaymentService_SepayWebhook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

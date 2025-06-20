@@ -3,8 +3,12 @@ package handler
 import (
 	"context"
 	paymentpb "pb/types/payment"
-
+	"regexp"
+	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/internal/usecase"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type PaymentHandler struct {
@@ -108,4 +112,29 @@ func (h *PaymentHandler) CreateWallet(ctx context.Context, req *paymentpb.Create
 
 func (h *PaymentHandler) GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error) {
 	return h.paymentUsecase.GetWallet(ctx, req)
+}
+
+func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayWebhookRequest) (*paymentpb.Empty, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing metadata")
+	}
+	authHeader := md.Get("grpcgateway-authorization")
+	
+	if authHeader[0] != appconfig.SepayAPIKey {
+		return nil, status.Error(codes.Unauthenticated, "invalid api key")
+	}
+
+	depositCode := ExtractDepositCode(req.Content)
+	_, err := h.paymentUsecase.HandleDepositWebhook(ctx, depositCode, req.TransferAmount)
+	if err != nil {
+		return nil, err
+	}
+	return &paymentpb.Empty{}, nil
+}
+
+func ExtractDepositCode(content string) string {
+    re := regexp.MustCompile(`DEP\d+`)
+    match := re.FindString(content)
+    return match
 }

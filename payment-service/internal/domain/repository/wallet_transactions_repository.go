@@ -15,6 +15,7 @@ type WalletTransactionsRepository interface {
 	CreateTransaction(ctx context.Context, transaction *entity.WalletTransaction) error
 	UpdateTransaction(ctx context.Context, transaction *entity.WalletTransaction) error
 	GetTransactionByDealId(ctx context.Context, dealId uint32) (*entity.WalletTransaction, error)
+	GetTransactionByCode(ctx context.Context, code string) (*entity.WalletTransaction, error)
 	GetTransactionsReport(ctx context.Context, req *paymentpb.ReportRequest) ([]*paymentpb.WalletTransaction, int64, float64, error)
 	ExportTransactions(ctx context.Context, req *paymentpb.ReportRequest) ([]byte, error)
 	GetDealTransactions(ctx context.Context, filter *paymentpb.TransactionFilter, pagination *paymentpb.PaginationRequest) ([]*paymentpb.DealTransaction, int64, error)

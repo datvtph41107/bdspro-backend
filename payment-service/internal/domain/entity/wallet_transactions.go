@@ -4,12 +4,40 @@ import (
 	"time"
 )
 
+type TransactionType string
+
+type TransactionStatus string
+
+const (
+	TransactionStatusPending TransactionStatus = "PENDING"
+	TransactionStatusCompleted TransactionStatus = "COMPLETED"
+	TransactionStatusCanceled TransactionStatus = "CANCELED"
+)
+
+const (
+	// Deposit related types
+	TransactionTypeDeposit TransactionType = "DEPOSIT"
+
+	// Withdrawal related types
+	TransactionTypeWithdrawal TransactionType = "WITHDRAWAL"
+
+	// Payment related types
+	TransactionTypePayment TransactionType = "PAYMENT"
+
+	// Deal related types
+	TransactionTypeDealIncome  TransactionType = "DEAL_INCOME"
+	TransactionTypeDealExpense TransactionType = "DEAL_EXPENSE"
+
+	// General types
+	TransactionTypeIncome  TransactionType = "INCOME"
+	TransactionTypeExpense TransactionType = "EXPENSE"
+)
 type WalletTransaction struct {
 	Id                uint32
 	WalletId          uint32
-	Type              string
+	Type              TransactionType
 	Amount            float64
-	Status            string
+	Status            TransactionStatus
 	RelatedService    string
 	RelatedId         string
 	ExternalPaymentId string
@@ -17,6 +45,7 @@ type WalletTransaction struct {
 	Description       string
 	CreatedBy         uint32
 	ApprovedBy        uint32
+	TransactionCode   string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

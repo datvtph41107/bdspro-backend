@@ -401,6 +401,38 @@
         ]
       }
     },
+    "/v2/payment/sepay/webhook": {
+      "post": {
+        "operationId": "PaymentService_SepayWebhook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentSepayWebhookRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
     "/v2/payment/transaction-types": {
       "get": {
         "summary": "Transaction Types",
@@ -1134,6 +1166,50 @@
         }
       }
     },
+    "pb_paymentSepayWebhookRequest": {
+      "type": "object",
+      "properties": {
+        "Gateway": {
+          "type": "string"
+        },
+        "TransactionDate": {
+          "type": "string"
+        },
+        "AccountNumber": {
+          "type": "string"
+        },
+        "SubAccount": {
+          "type": "string"
+        },
+        "Code": {
+          "type": "string"
+        },
+        "Content": {
+          "type": "string"
+        },
+        "TransferType": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "TransferAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "ReferenceCode": {
+          "type": "string"
+        },
+        "Accumulated": {
+          "type": "number",
+          "format": "double"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "pb_paymentTransactionFilter": {
       "type": "object",
       "properties": {
@@ -1278,6 +1354,9 @@
           "type": "string"
         },
         "updatedAt": {
+          "type": "string"
+        },
+        "transactionCode": {
           "type": "string"
         }
       }

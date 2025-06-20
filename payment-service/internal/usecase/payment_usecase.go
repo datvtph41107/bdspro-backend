@@ -6,9 +6,9 @@ import (
 	paymentpb "pb/types/payment"
 	"time"
 
+	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/internal/domain/entity"
 	"github.com/tuandq2112/payment-service/internal/domain/repository"
-	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -37,6 +37,7 @@ type PaymentUsecase interface {
 	DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error)
 	CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error)
 	GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error)
+	HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error)
 }
 
 type paymentUsecase struct {
@@ -67,7 +68,7 @@ func (p *paymentUsecase) GetWalletDashboard(ctx context.Context) (*paymentpb.Wal
 	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
 	// Get wallet details
-	wallet, err := p.walletRepository.GetWalletById(ctx, userID)
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,48 +122,32 @@ func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *payment
 }
 
 func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error) {
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
 	defer tx.Rollback()
 
 	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.WalletId)
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Generate random transaction code
+	transactionCode := fmt.Sprintf("DEP%d%d", time.Now().UnixNano(), wallet.Id)
 
 	// Create transaction record
 	transaction := &entity.WalletTransaction{
-		WalletId:          req.WalletId,
-		Type:              "DEPOSIT",
+		WalletId:          wallet.Id,
+		Type:              entity.TransactionTypeDeposit,
 		Amount:            req.Amount,
-		Status:            "COMPLETED",
+		Status:            entity.TransactionStatusPending, // Set initial status as pending
 		PaymentMethod:     req.PaymentMethod,
 		ExternalPaymentId: req.ExternalPaymentId,
+		TransactionCode:   transactionCode,
 	}
 
 	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	// Update wallet balance
-	oldBalance := wallet.Balance
-	wallet.Balance += req.Amount
-	err = p.walletRepository.UpdateWallet(ctx, wallet)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create audit log
-	auditLog := &entity.WalletAuditLog{
-		WalletId:   req.WalletId,
-		OldBalance: oldBalance,
-		NewBalance: wallet.Balance,
-		Reason:     fmt.Sprintf("Deposit via %s", req.PaymentMethod),
-		ChangedBy:  0, // System
-	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, auditLog)
 	if err != nil {
 		return nil, err
 	}
@@ -175,9 +160,10 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	return &paymentpb.WalletTransaction{
 		Id:               transaction.Id,
 		WalletId:         transaction.WalletId,
-		Type:             transaction.Type,
+		Type:             string(transaction.Type),
 		Amount:           transaction.Amount,
-		Status:           transaction.Status,
+		Status:           string(transaction.Status),
+		TransactionCode:  transaction.TransactionCode,
 	}, nil
 }
 
@@ -201,10 +187,10 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 	withdrawal := &entity.WithdrawalRequest{
 		WalletId:        req.WalletId,
 		Amount:          req.Amount,
-		Status:          "PENDING",
+		Status:          string(entity.TransactionStatusPending),
 		PaymentMethod:   req.PaymentMethod,
 		BankAccountInfo: req.BankAccountInfo,
-		RequestedBy:     0, // TODO: Get from context
+		RequestedBy:     0, 
 	}
 
 	err = p.withdrawalRequestRepository.CreateWithdrawalRequest(ctx, withdrawal)
@@ -215,9 +201,9 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 	// Create transaction record
 	transaction := &entity.WalletTransaction{
 		WalletId:      req.WalletId,
-		Type:          "WITHDRAWAL",
+		Type:          entity.TransactionTypeWithdrawal,
 		Amount:        -req.Amount,
-		Status:        "PENDING",
+		Status:        entity.TransactionStatusPending,
 		PaymentMethod: req.PaymentMethod,
 	}
 
@@ -301,9 +287,9 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 	return &paymentpb.WalletTransaction{
 		Id:               transaction.Id,
 		WalletId:         transaction.WalletId,
-		Type:             transaction.Type,
+		Type:             string(transaction.Type),
 		Amount:           transaction.Amount,
-		Status:           transaction.Status,
+		Status:           string(transaction.Status),
 	}, nil
 }
 
@@ -413,12 +399,12 @@ func (p *paymentUsecase) ExportWalletData(ctx context.Context, req *paymentpb.Re
 }
 
 func (p *paymentUsecase) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
-	totalIncome, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, "DEAL_INCOME")
+	totalIncome, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, string(entity.TransactionTypeDealIncome))
 	if err != nil {
 		return nil, err
 	}
 
-	totalExpense, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, "DEAL_EXPENSE")
+	totalExpense, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, string(entity.TransactionTypeDealExpense))
 	if err != nil {
 		return nil, err
 	}
@@ -473,9 +459,9 @@ func (p *paymentUsecase) CreateDealTransaction(ctx context.Context, req *payment
 
 	// Create deal transaction record
 	transaction := &entity.WalletTransaction{
-		Type:           "DEAL",
+		Type:           entity.TransactionTypeDealIncome,
 		Amount:         req.Amount,
-		Status:         "PENDING",
+		Status:         entity.TransactionStatusPending,
 		RelatedService: "DEAL",
 		RelatedId:      fmt.Sprintf("%d", req.Id),
 	}
@@ -655,5 +641,72 @@ func (p *paymentUsecase) GetWallet(ctx context.Context, req *paymentpb.GetWallet
 		UserId: wallet.UserId,
 		Balance: wallet.Balance,
 		Currency: wallet.Currency,
+	}, nil
+}
+
+func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error) {
+	// Start transaction
+	tx := p.walletRepository.BeginTx(ctx)
+	defer tx.Rollback()
+	
+	// Get transaction by code
+	transaction, err := p.walletTransactionRepository.GetTransactionByCode(ctx, transactionCode)
+	if err != nil {
+		return nil, err
+	}
+	if transaction.Amount != amount {
+		return nil, fmt.Errorf("transaction amount mismatch")
+	}
+
+	// Check if transaction is already completed
+	if transaction.Status == entity.TransactionStatusCompleted {
+		return nil, fmt.Errorf("transaction already completed")
+	}
+
+	// Get wallet
+	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, transaction.WalletId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update wallet balance
+	oldBalance := wallet.Balance
+	wallet.Balance += transaction.Amount
+	err = p.walletRepository.UpdateWallet(ctx, wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update transaction status
+	transaction.Status = entity.TransactionStatusCompleted
+	err = p.walletTransactionRepository.UpdateTransaction(ctx, transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create audit log
+	auditLog := &entity.WalletAuditLog{
+		WalletId:   transaction.WalletId,
+		OldBalance: oldBalance,
+		NewBalance: wallet.Balance,
+		Reason:     fmt.Sprintf("Deposit completed via %s", transaction.PaymentMethod),
+		ChangedBy:  0, // System
+	}
+	err = p.walletAuditLogRepository.CreateAuditLog(ctx, auditLog)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &paymentpb.WalletTransaction{
+		Id:               transaction.Id,
+		WalletId:         transaction.WalletId,
+		Type:             string(transaction.Type),
+		Amount:           transaction.Amount,
+		Status:           string(transaction.Status),
 	}, nil
 }
