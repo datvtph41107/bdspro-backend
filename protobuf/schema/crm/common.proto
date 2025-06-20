@@ -26,7 +26,14 @@ message LeadDTO {
     uint64 id = 18;
     optional StageDTO stage = 19;
     optional PipelineDTO pipeline = 20;
-    optional sharepb.ProfileItem chargeUser = 21;
+    optional sharepb.ProfileItem chargePerson = 21;
+    string avatar = 22;
+    string zalo = 23;
+    string company = 24;
+    repeated uint64 productCareIds = 25;
+    int32 priority = 26;
+    repeated DocumentDTO documents = 27;
+    repeated uint64 removeDocumentIds = 28;
   }
 
   message PipelineDTO {
@@ -51,4 +58,34 @@ message StageDTO {
     uint32 step = 6;
     bool active = 7;
     uint32 color = 8;
+}
+
+message DocumentDTO {
+    uint64 id = 1;
+    string fileName = 2;
+    string fileUrl = 3;
+    string fileType = 4;
+}
+
+
+message ContactDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  uint64 ownerId = 4;
+  int32 ownerType = 5;
+  string createdAt = 6;
+  optional uint64 createdBy = 7;
+  uint32 contactStatus = 8;
+  string statusName = 9;
+  sharepb.FriendItem friendStatus = 10;
+  bool following = 11;
+  string avatar = 12;
+  sharepb.ProfileItem profileInfo = 13;
+  optional uint64 profileId = 14;
+  bool blocked = 15;
+  string email = 16;
+  string zalo = 17;
+  string company = 18;
+  string note = 19;
 }

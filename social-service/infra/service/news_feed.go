@@ -84,11 +84,10 @@ func (s *NewsFeedService) UpdateNewsFeed(ctx context.Context, req *socialpb.News
 // @Tags News Feed
 // @Accept json
 // @Produce json
-// @Param post body pb_social.NewsFeed true "NewsFeed"
-// @Router /news-feed [delete]
-func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*sharepb.Empty, error) {
-	post := s.PbPostToDomain(req)
-	err := s.newsFeedUsecase.DeletePost(ctx, post)
+// @Param id path uint64 true "NewsFeedId"
+// @Router /news-feed/{id} [delete]
+func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
+	err := s.newsFeedUsecase.DeletePost(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}

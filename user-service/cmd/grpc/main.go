@@ -12,6 +12,8 @@ import (
 	"user/db"
 	"user/wire"
 
+	_middleware "common/middleware"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -37,9 +39,10 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to listen: %v", err)
 		}
 		s := grpc.NewServer(
-			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
 		)
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
+		userpb.RegisterAuthServiceServer(s, app.AuthService)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

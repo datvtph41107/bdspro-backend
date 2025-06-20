@@ -1,8 +1,10 @@
 package service
 
 import (
+	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/repo"
 	shared_usecase "bdspro/internal/usecases/shared"
 	"context"
 	pb_bdspro "pb/types/bdspro"
@@ -14,12 +16,14 @@ import (
 
 type ProductService struct {
 	pb_bdspro.UnimplementedProductServiceServer
-	UC *shared_usecase.ProductUsecase
+	UC          *shared_usecase.ProductUsecase
+	ProductRepo repo.ProductRepo
 }
 
-func NewProductService(uc *shared_usecase.ProductUsecase) *ProductService {
+func NewProductService(uc *shared_usecase.ProductUsecase, productRepo repo.ProductRepo) *ProductService {
 	return &ProductService{
-		UC: uc,
+		UC:          uc,
+		ProductRepo: productRepo,
 	}
 }
 
@@ -551,5 +555,16 @@ func (s *ProductService) AreaInfo(ctx context.Context, req *pb_bdspro.IdRequest)
 		TotalArea:    areaInfo.Total,
 		AvaiableArea: areaInfo.Avaiable,
 		SplitArea:    areaInfo.Area,
+	}, nil
+}
+
+func (s *ProductService) GetDetailByIds(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.ProductInternalResponse, error) {
+	products, err := s.ProductRepo.GetDetailByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	productResponse := mapper.MapProductPbList(products)
+	return &pb_bdspro.ProductInternalResponse{
+		Data: productResponse,
 	}, nil
 }

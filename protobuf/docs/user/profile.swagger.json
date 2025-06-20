@@ -182,6 +182,10 @@
         "groupId": {
           "type": "integer",
           "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

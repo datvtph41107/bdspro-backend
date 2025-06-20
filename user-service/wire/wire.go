@@ -46,6 +46,7 @@ var wireSet = wire.NewSet(
 	user_infra_repo.NewGroupRepo,
 	user_infra_routes.NewGroupRouter,
 	user_internal_services_user.NewGroupService,
+	user_infra_services.NewGrpcAuthService,
 	user_infra_services.NewGrpcProfileService,
 	user_internal_services_auth.NewHttpClient,
 	user_infra_routes.NewOAuthRouter,

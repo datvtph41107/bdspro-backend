@@ -2,9 +2,36 @@ syntax = "proto3";
 
 package userpb;
 import "shared/common.proto";
+import "google/api/annotations.proto";
 
 option go_package = "pb/types/user;userpb";
 
+
 service AuthService {
-    
+    rpc SwitchAccount(SwitchAccountRequest) returns (SwitchAccountResponse) {
+        option (google.api.http) = {
+            post: "/v2/user/auth/switch-account"
+            body: "*"
+        };
+    }
+}
+
+message SwitchAccountRequest {
+    uint64 profileId = 1;
+    optional uint64 organizationId = 2;
+    optional uint64 groupId = 3;
+    optional uint32 ownerType = 4;
+}
+
+message SwitchAccountResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    optional uint64 organizationId = 3;
+    optional uint64 groupId = 4;
+    string role = 5;
+    string fullName = 6;
+    string avatar = 7;
+    string email = 8;
+    string phone = 9;
+    string accessToken = 10;
 }

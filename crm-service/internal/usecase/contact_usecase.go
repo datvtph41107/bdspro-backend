@@ -75,7 +75,7 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.Update(c, entity)
+	return s.repo.Update(c, id, entity)
 }
 
 func (s *ContactUsecase) Delete(c context.Context, id uint64) error {

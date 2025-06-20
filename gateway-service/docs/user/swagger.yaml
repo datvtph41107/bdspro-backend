@@ -552,19 +552,21 @@ definitions:
         type: string
       groupId:
         type: integer
-      id:
-        type: integer
       organizationId:
         type: integer
       phone:
         type: string
+      profileId:
+        type: integer
     type: object
   userpb.AccountInfoResponse:
     properties:
-      accountInfo:
+      data:
         items:
           $ref: '#/definitions/userpb.AccountInfo'
         type: array
+      total:
+        type: integer
     type: object
   userpb.CertificationItem:
     properties:
@@ -674,6 +676,15 @@ definitions:
       star5Count:
         type: integer
       totalReviews:
+        type: integer
+    type: object
+  userpb.SwitchAccountRequest:
+    properties:
+      groupId:
+        type: integer
+      organizationId:
+        type: integer
+      profileId:
         type: integer
     type: object
 info:
@@ -1741,6 +1752,26 @@ paths:
       summary: Lấy danh sách đánh giá
       tags:
       - Rate
+  /v2/user/auth/switch-account:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển đổi tài khoản
+      parameters:
+      - description: Thông tin tài khoản
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.SwitchAccountRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển đổi tài khoản
+      tags:
+      - Auth
   /v2/user/profile/accounts/me:
     get:
       consumes:

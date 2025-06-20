@@ -144,6 +144,19 @@ services:
   #   networks:
   #     - internal
 
+  organization:
+    build:
+      context: ./organization-service
+      dockerfile: Dockerfile
+    container_name: organization
+    volumes:
+      - ${PWD}/config:/app/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
+    command: ["./main", "grpc-server"]
+    networks:
+      - internal
+
   http-server:
     build: 
       context: ./go-chat-service
@@ -190,6 +203,7 @@ services:
     networks:
       - internal
 
+      
   # eureka:
   #   build:
   #     context: ./eureka-server

@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 import "shared/common.proto";
 import "crm/sharing.proto";
 import "crm/common.proto";
+import "bdspro/common.proto";
 
 service LeadService {
   rpc Search (LeadSearchRequest) returns (LeadListDTO) {
@@ -15,7 +16,7 @@ service LeadService {
       get: "/v2/crm/lead/list"
     };
   };
-  rpc Detail (sharepb.IdRequest) returns (LeadDTO) {
+  rpc Detail (sharepb.IdRequest) returns (LeadDetailDTO) {
     option (google.api.http) = {
       get: "/v2/crm/lead/detail/{id}"
     };
@@ -25,13 +26,13 @@ service LeadService {
       get: "/v2/crm/lead/by-contact/{id}"
     };
   };
-  rpc Create (LeadDTO) returns (LeadDTO) {
+  rpc Create (LeadSaveRequest) returns (LeadDTO) {
     option (google.api.http) = {
       post: "/v2/crm/lead"
       body: "*"
     };
   };
-  rpc Update (LeadDTO) returns (LeadDTO) {
+  rpc Update (LeadSaveRequest) returns (LeadDTO) {
     option (google.api.http) = {
       put: "/v2/crm/lead/{id}"
       body: "*"
@@ -42,9 +43,15 @@ service LeadService {
       delete: "/v2/crm/lead/{id}"
     };
   };
-  rpc Assign (LeadAssignRequest) returns (LeadDTO) {
+  rpc AssignCharge (LeadAssignPersonRequest) returns (LeadDTO) {
     option (google.api.http) = {
-      post: "/v2/crm/lead/assign"
+      post: "/v2/crm/lead/assign-person"
+      body: "*"
+    };
+  };
+  rpc AssignCrm (LeadAssignCrmRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead/assign-crm"
       body: "*"
     };
   };
@@ -60,7 +67,7 @@ message LeadSearchRequest {
   repeated int32 steps = 5;                 // EStep (int32)
   repeated uint64 stageIds = 6;
   repeated int32 sources = 7;               // ESourceLead (int32)
-  repeated uint64 chargeIds = 8;
+  repeated uint64 chargePersonIds = 8;
 
   int32 chargeType = 9; // [deprecated = true]; // EOwnerType (int32), deprecated
 
@@ -78,12 +85,12 @@ message LeadListDTO {
     uint32 totalElements = 2;
 }
 
-message LeadAssignRequest {
+message LeadAssignPersonRequest {
   uint64 leadId = 1;
   uint64 ownerId = 2;
   int32 ownerType = 3;
-  uint64 chargeId = 4;
-  int32 chargeType = 5;
+  uint64 chargePersonId = 4;
+  int32 chargePersonType = 5;
   string noteAssign = 6;
 }
 
@@ -95,4 +102,52 @@ message LeadNoteRequest {
 message LeadStageRequest {
   uint64 leadId = 1;
   uint64 stageId = 2;
+}
+
+message LeadAssignCrmRequest {
+  uint64 contactId = 1;
+  uint64 personChargeId = 2;
+  uint64 stageId = 3;
+  string note = 4;
+}
+
+message LeadSaveRequest {
+  uint64 id = 1;
+  string fullName = 2;
+  string phone = 3;
+  string avatar = 4;
+  string email = 5;
+  string zalo = 6;
+  string company = 7;
+  string address = 8;
+  string birthday = 9;
+  string note = 10;
+
+  int32 source = 11;
+  string assignNote = 12;
+  uint64 stageId = 13;
+  int32 priority = 14;
+  uint64 chargePersonId = 15;
+  repeated uint64 productCareIds = 16;
+  repeated DocumentDTO documents = 17;
+  repeated uint64 removeDocumentIds = 18;
+}
+
+message LeadDetailDTO {
+  uint64 id = 1;
+  uint32 source = 2;
+  string assignNote = 3;
+  optional uint64 pipelineId = 4;
+  optional uint64 stageId = 5;
+  optional uint64 chargePersonId = 6;
+  uint32 priority = 7;
+  repeated uint64 productCareIds = 8;
+  repeated DocumentDTO documents = 9;
+  optional ContactDTO contact = 10;
+  optional StageDTO stage = 11;
+  optional PipelineDTO pipeline = 12;
+  repeated pb_bdspro.ProductResponse products = 13;
+  string sourceName = 14;
+  string priorityName = 15;
+  optional sharepb.ProfileItem chargePerson = 21;
 }

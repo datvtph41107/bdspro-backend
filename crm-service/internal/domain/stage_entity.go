@@ -14,6 +14,8 @@ type StageEntity struct {
 	Step        enums.EStep `json:"step"`
 	Active      bool        `json:"active"`
 	Color       uint32      `gorm:"default:10" json:"color"`
+
+	Pipeline *PipelineEntity `gorm:"references:ID" json:"pipeline"`
 }
 
 func (StageEntity) TableName() string {

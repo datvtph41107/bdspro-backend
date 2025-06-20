@@ -1,5 +1,57 @@
 basePath: /v2/crm
 definitions:
+  _routes.Except:
+    properties:
+      code:
+        type: integer
+      errors:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  crmpb.ContactDTO:
+    properties:
+      avatar:
+        type: string
+      blocked:
+        type: boolean
+      company:
+        type: string
+      contactStatus:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      email:
+        type: string
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+      profileInfo:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      statusName:
+        type: string
+      zalo:
+        type: string
+    type: object
   crmpb.ContactSaveDTO:
     properties:
       assignedCrm:
@@ -36,6 +88,17 @@ definitions:
       ownerType:
         type: integer
     type: object
+  crmpb.DocumentDTO:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+    type: object
   crmpb.FriendGroup:
     properties:
       created_at:
@@ -49,11 +112,22 @@ definitions:
       updated_at:
         type: string
     type: object
-  crmpb.LeadAssignRequest:
+  crmpb.LeadAssignCrmRequest:
     properties:
-      chargeId:
+      contactId:
         type: integer
-      chargeType:
+      note:
+        type: string
+      personChargeId:
+        type: integer
+      stageId:
+        type: integer
+    type: object
+  crmpb.LeadAssignPersonRequest:
+    properties:
+      chargePersonId:
+        type: integer
+      chargePersonType:
         type: integer
       leadId:
         type: integer
@@ -64,45 +138,42 @@ definitions:
       ownerType:
         type: integer
     type: object
-  crmpb.LeadDTO:
+  crmpb.LeadDetailDTO:
     properties:
-      address:
-        type: string
       assignNote:
         type: string
-      birthday:
-        type: string
-      chargeId:
-        type: integer
-      chargeType:
-        description: EOwnerType (int32)
-        type: integer
-      chargeUser:
+      chargePerson:
         $ref: '#/definitions/sharepb.ProfileItem'
-      contactId:
+      chargePersonId:
         type: integer
-      email:
-        type: string
-      fullName:
-        type: string
+      contact:
+        $ref: '#/definitions/crmpb.ContactDTO'
+      documents:
+        items:
+          $ref: '#/definitions/crmpb.DocumentDTO'
+        type: array
       id:
         type: integer
-      note:
-        type: string
-      ownerId:
-        type: integer
-      ownerType:
-        description: EOwnerType (int32)
-        type: integer
-      phone:
-        type: string
       pipeline:
         $ref: '#/definitions/crmpb.PipelineDTO'
       pipelineId:
         type: integer
-      source:
-        description: ESourceLead (int32)
+      priority:
         type: integer
+      priorityName:
+        type: string
+      productCareIds:
+        items:
+          type: integer
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/pb_bdspro.ProductResponse'
+        type: array
+      source:
+        type: integer
+      sourceName:
+        type: string
       stage:
         $ref: '#/definitions/crmpb.StageDTO'
       stageId:
@@ -113,6 +184,51 @@ definitions:
       leadId:
         type: integer
       note:
+        type: string
+    type: object
+  crmpb.LeadSaveRequest:
+    properties:
+      address:
+        type: string
+      assignNote:
+        type: string
+      avatar:
+        type: string
+      birthday:
+        type: string
+      chargePersonId:
+        type: integer
+      company:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/crmpb.DocumentDTO'
+        type: array
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      phone:
+        type: string
+      priority:
+        type: integer
+      productCareIds:
+        items:
+          type: integer
+        type: array
+      removeDocumentIds:
+        items:
+          type: integer
+        type: array
+      source:
+        type: integer
+      stageId:
+        type: integer
+      zalo:
         type: string
     type: object
   crmpb.LeadStageRequest:
@@ -130,6 +246,13 @@ definitions:
         type: array
       total:
         type: integer
+    type: object
+  crmpb.NoteContactDTO:
+    properties:
+      id:
+        type: integer
+      note:
+        type: string
     type: object
   crmpb.PipelineDTO:
     properties:
@@ -380,6 +503,8 @@ definitions:
         type: integer
       orderNumber:
         type: integer
+      pipeline:
+        $ref: '#/definitions/domain.PipelineEntity'
       pipelineId:
         type: integer
       ruleId:
@@ -529,6 +654,280 @@ definitions:
     - FriendStatusPending
     - FriendStatusAccepted
     - FriendStatusReject
+  pb_bdspro.AmenityItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.Apartment:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.ApartmentAttribute:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.AttributeProduct:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.Deposite:
+    properties:
+      amount:
+        type: number
+      id:
+        type: integer
+      productId:
+        type: integer
+    type: object
+  pb_bdspro.Developer:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.DocType:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.HouseInfo:
+    properties:
+      furniture:
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        type: integer
+      numBedroom:
+        type: integer
+      numCarPark:
+        type: integer
+      numFloor:
+        type: integer
+      numFront:
+        type: integer
+      numToilet:
+        type: integer
+      orientation:
+        type: string
+    type: object
+  pb_bdspro.MediaItem:
+    properties:
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      order:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+    type: object
+  pb_bdspro.ProductPrice:
+    properties:
+      currency:
+        type: string
+      deposite:
+        type: number
+      id:
+        type: integer
+      priceOwner:
+        type: number
+      productId:
+        type: integer
+      rentCommission:
+        type: number
+      rentPaymentCycle:
+        type: integer
+      rentPrice:
+        type: number
+      saleCommission:
+        type: integer
+      salePrice:
+        type: number
+    type: object
+  pb_bdspro.ProductPrivate:
+    properties:
+      id:
+        type: integer
+      importPrice:
+        type: number
+      internalNote:
+        type: string
+      operatingCost:
+        type: number
+      privateDocs:
+        type: string
+      productId:
+        type: integer
+      targetProfit:
+        type: number
+    type: object
+  pb_bdspro.ProductResponse:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          $ref: '#/definitions/pb_bdspro.AmenityItem'
+        type: array
+      apartment:
+        $ref: '#/definitions/pb_bdspro.Apartment'
+      apartmentAttribute:
+        $ref: '#/definitions/pb_bdspro.ApartmentAttribute'
+      apartmentId:
+        type: integer
+      archived:
+        type: boolean
+      area:
+        type: number
+      assetId:
+        type: integer
+      attributes:
+        items:
+          $ref: '#/definitions/pb_bdspro.AttributeProduct'
+        type: array
+      build:
+        $ref: '#/definitions/pb_bdspro.ProjectBuild'
+      categoryId:
+        type: integer
+      code:
+        type: string
+      customerId:
+        type: integer
+      deposite:
+        $ref: '#/definitions/pb_bdspro.Deposite'
+      depositeId:
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/pb_bdspro.Developer'
+      district:
+        $ref: '#/definitions/pb_bdspro.Region'
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      docType:
+        $ref: '#/definitions/pb_bdspro.DocType'
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/pb_bdspro.HouseInfo'
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/pb_bdspro.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      orgStatus:
+        type: integer
+      organizationId:
+        type: integer
+      ownerType:
+        type: integer
+      ownerUserId:
+        type: integer
+      parentId:
+        type: integer
+      positionUrl:
+        type: string
+      price:
+        $ref: '#/definitions/pb_bdspro.ProductPrice'
+      priceSuggest:
+        type: number
+      privateData:
+        $ref: '#/definitions/pb_bdspro.ProductPrivate'
+      project:
+        $ref: '#/definitions/pb_bdspro.Project'
+      propertyType:
+        $ref: '#/definitions/pb_bdspro.PropertyType'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/pb_bdspro.Region'
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      rentStatus:
+        type: integer
+      rentVisibility:
+        type: integer
+      saleStatus:
+        type: integer
+      saleVisibility:
+        type: integer
+      sourceType:
+        type: integer
+      transactionType:
+        type: integer
+      visibility:
+        type: integer
+      ward:
+        $ref: '#/definitions/pb_bdspro.Region'
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  pb_bdspro.Project:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.ProjectBuild:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.PropertyType:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pb_bdspro.Region:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   sharepb.FriendItem:
     properties:
       createdBy:
@@ -812,6 +1211,12 @@ paths:
         name: contactId
         required: true
         type: integer
+      - description: Ghi chú
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.NoteContactDTO'
       produces:
       - application/json
       responses: {}
@@ -1575,7 +1980,7 @@ paths:
         name: entity
         required: true
         schema:
-          $ref: '#/definitions/crmpb.LeadDTO'
+          $ref: '#/definitions/crmpb.LeadSaveRequest'
       produces:
       - application/json
       responses: {}
@@ -1618,7 +2023,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/crmpb.LeadDTO'
+          $ref: '#/definitions/crmpb.LeadSaveRequest'
       produces:
       - application/json
       responses: {}
@@ -1627,24 +2032,44 @@ paths:
       summary: Cập nhật khách hàng
       tags:
       - Khách hàng
-  /lead/assign:
+  /lead/assign-crm:
     post:
       consumes:
       - application/json
-      description: Gán khách hàng
+      description: Gán liên hệ vào CRM
       parameters:
       - description: Gán khách hàng
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/crmpb.LeadAssignRequest'
+          $ref: '#/definitions/crmpb.LeadAssignCrmRequest'
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Gán khách hàng
+      summary: Gán liên hệ vào CRM
+      tags:
+      - Khách hàng
+  /lead/assign-person:
+    post:
+      consumes:
+      - application/json
+      description: Gán liên hệ cho nhân viên phụ trách
+      parameters:
+      - description: Gán khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadAssignPersonRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán liên hệ cho nhân viên phụ trách
       tags:
       - Khách hàng
   /lead/by-contact/{id}:
@@ -1677,15 +2102,17 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Khách hàng
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/crmpb.LeadDTO'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/crmpb.LeadDetailDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/_routes.Except'
       security:
       - BearerAuth: []
       summary: Chi tiết khách hàng
@@ -1701,7 +2128,7 @@ paths:
         in: query
         items:
           type: integer
-        name: chargeIds
+        name: chargePersonIds
         type: array
       - description: '[deprecated = true]; // EOwnerType (int32), deprecated'
         in: query
@@ -1881,20 +2308,6 @@ paths:
       - application/json
       description: Tìm kiếm quy trình
       parameters:
-      - description: Owner ID
-        in: path
-        name: ownerId
-        required: true
-        type: integer
-      - description: Owner Type
-        enum:
-        - 10
-        - 20
-        - 30
-        in: path
-        name: ownerType
-        required: true
-        type: integer
       - in: query
         name: active
         type: boolean
@@ -2198,7 +2611,7 @@ paths:
       summary: Cập nhật giai đoạn
       tags:
       - Giai đoạn
-  /stage/{pipelineId}:
+  /stage/list/{pipelineId}:
     get:
       consumes:
       - application/json

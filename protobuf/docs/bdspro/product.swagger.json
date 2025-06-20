@@ -105,6 +105,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -201,6 +212,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -912,6 +934,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -976,6 +1009,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1040,6 +1084,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1104,6 +1159,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1168,6 +1234,17 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1197,6 +1274,13 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -1220,6 +1304,13 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -1243,6 +1334,13 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -1917,6 +2015,18 @@
         }
       }
     },
+    "pb_bdsproProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductResponse"
+          }
+        }
+      }
+    },
     "pb_bdsproProductPrice": {
       "type": "object",
       "properties": {
@@ -2185,6 +2295,15 @@
         "priceSuggest": {
           "type": "number",
           "format": "double"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },
@@ -2516,21 +2635,6 @@
         }
       }
     },
-    "userpbProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -2556,6 +2660,21 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "userpbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
         }
       }
     }

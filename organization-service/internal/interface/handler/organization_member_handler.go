@@ -58,7 +58,7 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 // @Produce json
 // @Param organizationMember body organizationpb.CreateOrganizationMemberRequest true "Thông tin thành viên"
 // @Security BearerAuth
-// @Router /member [post]
+// @Router /organization/member [post]
 func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context, req *organizationpb.CreateOrganizationMemberRequest) (*organizationpb.CreateOrganizationMemberResponse, error) {
 	organizationMember := h.OrganizationMemberTransformer.CreateOrganizationMemberRequestToEntity(req)
 	if err := h.OrganizationMemberValidator.ValidateCreateOrganizationMemberRequest(req); err != nil {
@@ -101,7 +101,7 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 // @Param text query string false "Tên thành viên"
 // @Param organizationId path int true "ID của tổ chức"
 // @Security BearerAuth
-// @Router /organization/members/{organizationId} [get]
+// @Router /organization/member/{organizationId} [get]
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	// Get pagination parameters
 	page := 0

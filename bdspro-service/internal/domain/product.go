@@ -32,7 +32,7 @@ type Product struct {
 	OrganizationID  *uint64              `json:"organizationId,omitempty"`
 	OrgStatus       int16                `json:"orgStatus,omitempty"`
 	LastPriceID     *uint64              `json:"lastPriceId,omitempty"`
-	Price           *ProductPrice        `gorm:"foreignKey:ID;references:ProductID" json:"price,omitempty"`
+	Price           *ProductPrice        `gorm:"foreignKey:LastPriceID;references:ID" json:"price,omitempty"`
 	ApartmentID     *uint64              `json:"apartmentId,omitempty"`
 	Apartment       *Apartment           `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
 	ApartmentAttr   *ApartmentAttribute  `gorm:"-" json:"apartmentAttribute,omitempty"`

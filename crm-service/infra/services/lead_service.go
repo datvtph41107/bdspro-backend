@@ -18,12 +18,20 @@ import (
 
 type LeadService struct {
 	crmpb.UnimplementedLeadServiceServer
-	UC         *usecase.LeadUsecase
-	UserClient *client.UserClient
+	UC           *usecase.LeadUsecase
+	UserClient   *client.UserClient
+	BdsproClient *client.BdsproClient
 }
 
-func NewLeadService(uc *usecase.LeadUsecase, userClient *client.UserClient) *LeadService {
-	return &LeadService{UC: uc, UserClient: userClient}
+func NewLeadService(uc *usecase.LeadUsecase,
+	userClient *client.UserClient,
+	bdsproClient *client.BdsproClient,
+) *LeadService {
+	return &LeadService{
+		UC:           uc,
+		UserClient:   userClient,
+		BdsproClient: bdsproClient,
+	}
 }
 
 // @Summary Lấy danh sách khách hàng
@@ -48,13 +56,13 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 			Page: int(req.Page),
 			Size: int(req.Size),
 		},
-		Phone:      req.Phone,
-		FullName:   req.FullName,
-		Steps:      steps,
-		StageIDs:   req.StageIds,
-		Sources:    sources,
-		ChargeIds:  req.ChargeIds,
-		ChargeType: enums.EOwnerType(req.ChargeType),
+		Phone:           req.Phone,
+		FullName:        req.FullName,
+		Steps:           steps,
+		StageIDs:        req.StageIds,
+		Sources:         sources,
+		ChargePersonIds: req.ChargePersonIds,
+		ChargeType:      enums.EOwnerType(req.ChargeType),
 	}
 
 	result, total, err := s.UC.Search(ctx, req.OwnerId, enums.EOwnerType(req.OwnerType), dto)
@@ -76,11 +84,15 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 // @Produce json
 // @Param id path int true "ID"
 // @Security BearerAuth
-// @Param body body crmpb.LeadDTO true "Khách hàng"
+// @Response 200 {object} crmpb.LeadDetailDTO
+// @Response 404 {object} _routes.Except
 // @Router /lead/detail/{id} [get]
-func (s *LeadService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDTO, error) {
+func (s *LeadService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDetailDTO, error) {
 	result, err := s.UC.GetByID(ctx, req.Id)
-	return mapper.LeadToPb(result), err
+	leadPb := mapper.LeadDetailToPb(result)
+	s.BdsproClient.MapProductPbByIds(ctx, leadPb)
+	s.UserClient.PbChargePersonToLeadDetail(ctx, leadPb)
+	return leadPb, err
 }
 
 // @Summary Lấy khách hàng theo liên hệ
@@ -98,7 +110,7 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 	}
 
 	leadPb := mapper.LeadToPb(result)
-	s.UserClient.PbUserToLead(ctx, leadPb)
+	s.UserClient.PbChargePersonToLead(ctx, leadPb)
 
 	return leadPb, err
 }
@@ -108,20 +120,14 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 // @Tags Khách hàng
 // @Accept json
 // @Produce json
-// @Param entity body crmpb.LeadDTO true "Khách hàng"
+// @Param entity body crmpb.LeadSaveRequest true "Khách hàng"
 // @Security BearerAuth
 // @Router /lead [post]
-func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadDTO) (*crmpb.LeadDTO, error) {
-	entity := mapper.LeadToDomain(req)
+func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
+	dto := mapper.LeadSaveToDomain(req)
 
-	// if entity.OwnerID == nil ||
-	// 	entity.OwnerType == 0 {
-	// 	return nil, status.Errorf(codes.InvalidArgument, "ownerId and ownerType are required")
-	// }
-
-	_, err := s.UC.Create(ctx, entity)
-	// return mapper.LeadToPb(result), err
-	return nil, err
+	result, err := s.UC.Create(ctx, dto)
+	return mapper.LeadToPb(result), err
 }
 
 // @Summary Cập nhật khách hàng
@@ -130,11 +136,11 @@ func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadDTO) (*crmpb.Le
 // @Accept json
 // @Produce json
 // @Param id path int true "ID"
-// @Param body body crmpb.LeadDTO true "Khách hàng"
+// @Param body body crmpb.LeadSaveRequest true "Khách hàng"
 // @Security BearerAuth
 // @Router /lead/{id} [put]
-func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadDTO) (*crmpb.LeadDTO, error) {
-	entity := mapper.LeadToDomain(req)
+func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
+	dto := mapper.LeadSaveToDomain(req)
 	if req.Id == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -142,7 +148,7 @@ func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadDTO) (*crmpb.Le
 		}
 	}
 
-	result, err := s.UC.Update(ctx, entity.ID, entity)
+	result, err := s.UC.Update(ctx, req.Id, dto)
 	return mapper.LeadToPb(result), err
 }
 
@@ -162,21 +168,21 @@ func (s *LeadService) Delete(ctx context.Context, req *sharepb.IdRequest) (*shar
 	}, err
 }
 
-// @Summary Gán khách hàng
-// @Description Gán khách hàng
+// @Summary Gán liên hệ cho nhân viên phụ trách
+// @Description Gán liên hệ cho nhân viên phụ trách
 // @Tags Khách hàng
 // @Accept json
 // @Produce json
-// @Param body body crmpb.LeadAssignRequest true "Gán khách hàng"
+// @Param body body crmpb.LeadAssignPersonRequest true "Gán khách hàng"
 // @Security BearerAuth
-// @Router /lead/assign [post]
-func (s *LeadService) Assign(ctx context.Context, req *crmpb.LeadAssignRequest) (*crmpb.LeadDTO, error) {
+// @Router /lead/assign-person [post]
+func (s *LeadService) AssignPerson(ctx context.Context, req *crmpb.LeadAssignPersonRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.Assign(ctx, req.LeadId, &dto.LeadDTO{
-		OwnerID:    &req.OwnerId,
-		OwnerType:  enums.EOwnerType(req.OwnerType),
-		ChargeId:   &req.ChargeId,
-		ChargeType: enums.EOwnerType(req.ChargeType),
-		AssignNote: req.NoteAssign,
+		OwnerID:        &req.OwnerId,
+		OwnerType:      enums.EOwnerType(req.OwnerType),
+		ChargePersonId: &req.ChargePersonId,
+		ChargeType:     enums.EOwnerType(req.ChargePersonType),
+		AssignNote:     req.NoteAssign,
 	})
 	return mapper.LeadToPb(result), err
 }
@@ -206,5 +212,21 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 // @Router /lead/stage [post]
 func (s *LeadService) Stage(ctx context.Context, req *crmpb.LeadStageRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId)
+	return mapper.LeadToPb(result), err
+}
+
+// @Summary Gán liên hệ vào CRM
+// @Description Gán liên hệ vào CRM
+// @Tags Khách hàng
+// @Accept json
+// @Produce json
+// @Param body body crmpb.LeadAssignCrmRequest true "Gán khách hàng"
+// @Security BearerAuth
+// @Router /lead/assign-crm [post]
+func (s *LeadService) AssignCrm(ctx context.Context, req *crmpb.LeadAssignCrmRequest) (*crmpb.LeadDTO, error) {
+	result, err := s.UC.AssignCrm(ctx, req.ContactId, req.PersonChargeId, req.StageId, req.Note)
+	if err != nil {
+		return nil, err
+	}
 	return mapper.LeadToPb(result), err
 }

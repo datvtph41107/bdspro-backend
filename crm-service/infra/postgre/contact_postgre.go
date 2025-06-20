@@ -24,7 +24,7 @@ func NewContactRepo(DB *gorm.DB) *PostgreContact {
 }
 
 func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) (*gorm.DB, error) {
-	tx = tx.Model(&domain.ContactEntity{}).
+	tx = tx.Model(&domain.ContactItem{}).
 		Debug().
 		Table("tb_contact").
 		Joins("LEFT JOIN block bl ON (bl.profile_id = ? AND bl.blocked_id = tb_contact.profile_id)", profileId).
@@ -40,7 +40,12 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType en
 		fr.status AS friend_status,
 		fr.created_by AS friend_created_by,
 		fr.receiver_id AS friend_receiver_id,
-		bl.profile_id IS NOT NULL AS blocked`).
+		bl.profile_id IS NOT NULL AS blocked,
+		CASE 
+			WHEN fr.status = 20 THEN 20
+			WHEN tb_contact.profile_id is not null THEN 30
+			ELSE 10
+		END AS status`).
 		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_type = ?", profileId, ownerType)
 
 	if dto.FriendStatus != nil {
@@ -98,10 +103,10 @@ func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity)
 	return entity, nil
 }
 
-func (r *PostgreContact) Update(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
 	result := r.DB.WithContext(c).
 		Model(&domain.ContactEntity{}).
-		Where("id = ?", entity.ID).
+		Where("id = ?", id).
 		Update("full_name", entity.FullName).
 		Update("phone", entity.Phone).
 		Update("avatar", entity.Avatar).
@@ -221,4 +226,26 @@ func (r *PostgreContact) UpdateNote(c context.Context, id uint64, note string) e
 		return result.Error
 	}
 	return nil
+}
+
+func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerType enums.EOwnerType, phone string) (*domain.ContactEntity, error) {
+	var contact domain.ContactEntity
+	result := r.DB.Model(&domain.ContactEntity{}).
+		Where("phone = ? and deleted_at is null and owner_id = ? and owner_type = ?", phone, profileId, ownerType).
+		First(&contact)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &contact, nil
+}
+
+func (r *PostgreContact) UpdateContactID(c context.Context, contactId uint64, leadId uint64) (*domain.ContactEntity, error) {
+	result := r.DB.WithContext(c).
+		Model(&domain.ContactEntity{}).
+		Where("id = ? and deleted_at is null", contactId).
+		Update("lead_id", leadId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return nil, nil
 }

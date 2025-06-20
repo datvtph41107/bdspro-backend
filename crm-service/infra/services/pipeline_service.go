@@ -27,8 +27,6 @@ func NewPipelineService(pipelineUsecase *usecase.PipelineUsecase) *PipelineServi
 // @Tags Quy trình
 // @Accept json
 // @Produce json
-// @Param ownerId path int true "Owner ID"
-// @Param ownerType path enums.EOwnerType true "Owner Type"
 // @Param dto query dto.PipelineSearchDTO true "Pipeline search dto"
 // @Security BearerAuth
 // @Router /pipeline/list [get]

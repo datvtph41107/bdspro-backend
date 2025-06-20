@@ -21,6 +21,7 @@ type NewsFeed struct {
 	NumShare       int              `json:"num_share"`
 	NumView        int              `json:"num_view"`
 	IsReel         bool             `json:"is_reel"`
+	Rank           uint64           `gorm:"column:rank_feed" json:"rank"`
 	NewsFeedMedias []NewsFeedMedia  `gorm:"foreignKey:NewsFeedID" json:"news_feed_medias"`
 	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
 	FriendTagIds   []uint64         `gorm:"-" json:"friend_tag_ids"`

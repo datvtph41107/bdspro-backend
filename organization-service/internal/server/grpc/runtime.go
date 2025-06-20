@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	_middleware "common/middleware"
 	"fmt"
 	"net"
 	"os"
@@ -8,8 +9,6 @@ import (
 	"syscall"
 
 	organizationpb "pb/types/organization"
-
-	"common"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
@@ -127,12 +126,12 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		interceptors.UnaryLoggerInterceptor(logger),
 		// interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
-		common.ProfileIDInterceptor,
+		_middleware.ParseGrpcMetadataContextMiddleware,
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
-		fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),
+		fmt.Sprintf(":%s", appconfig.GRPC_PORT),
 		func(s *grpc.Server) {
 			logger.Info("Registering OrganizationServiceServer")
 			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)

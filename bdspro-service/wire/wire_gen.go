@@ -97,7 +97,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	groupManager := group_router.NewGroupRouter(groupProductRouter, groupAssetRouter)
 	publicRouter := public_router.NewPublicRouter()
 	postService := service.NewGrpcPostService(gormPostRepo, postUsecase)
-	productService := service.NewProductService(productUsecase)
+	productService := service.NewProductService(productUsecase, gormUserProductRepo)
 	bdsproPublicService := service.NewBdsproPublicService(productUsecase, listUsecase)
 	assetService := service.NewGrpcAssetService(assetUsecase)
 	assetExploitationService := service.NewAssetExploitationServer(assetExploitationUsecase)

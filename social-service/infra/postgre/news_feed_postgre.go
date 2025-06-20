@@ -332,3 +332,7 @@ func (r *PostgreNewsFeed) IncrementNumberShare(ctx context.Context, newsFeedID u
 			return nil
 		})
 }
+
+func (r *PostgreNewsFeed) SyncData(ctx context.Context) error {
+	return r.db.Exec(`REFRESH MATERIALIZED VIEW public.news_feed_global`).Error
+}

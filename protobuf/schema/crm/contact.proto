@@ -5,6 +5,7 @@ package crmpb;
 option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "crm/common.proto";
 
 service ContactService {
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
@@ -78,28 +79,6 @@ message ContactSaveDTO {
   string avatar = 9;
   int32 visibility = 10;
   bool assignedCrm = 11;
-}
-
-message ContactDTO {
-  uint64 id = 1;
-  string phone = 2;
-  string fullName = 3;
-  uint64 ownerId = 4;
-  int32 ownerType = 5;
-  string createdAt = 6;
-  optional uint64 createdBy = 7;
-  uint32 contactStatus = 8;
-  string statusName = 9;
-  sharepb.FriendItem friendStatus = 10;
-  bool following = 11;
-  string avatar = 12;
-  sharepb.ProfileItem profileInfo = 13;
-  optional uint64 profileId = 14;
-  bool blocked = 15;
-  string email = 16;
-  string zalo = 17;
-  string company = 18;
-  string note = 19;
 }
 
 message ContactListDTO {

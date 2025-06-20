@@ -8,18 +8,22 @@ import (
 
 type LeadEntity struct {
 	_models.BaseEntity
-	ContactID  *uint64           `json:"contactId"`
-	Source     enums.ESourceLead `json:"customerSource"`
-	Note       string            `json:"note"`
-	AssignNote string            `json:"assignNote"`
-	PipelineID *uint64           `json:"pipelineId"`
-	StageID    *uint64           `json:"stageId"`
-	ChargeId   *uint64           `json:"chargeId"`
-	ChargeType enums.EOwnerType  `json:"chargeType"`
-	OwnerID    *uint64           `json:"ownerId" binding:"required"`
-	OwnerType  enums.EOwnerType  `json:"ownerType" binding:"required"`
-	Stage      *StageEntity      `gorm:"-" json:"stage"`
-	Pipeline   *PipelineEntity   `gorm:"-" json:"pipeline"`
+	ContactID        uint64            `json:"contactId"`
+	Source           enums.ESourceLead `json:"customerSource"`
+	AssignNote       string            `json:"assignNote"`
+	PipelineID       *uint64           `json:"pipelineId"`
+	StageID          *uint64           `json:"stageId"`
+	Priority         enums.EPriority   `json:"priority"`
+	ChargePersonID   *uint64           `json:"chargePersonId"`
+	ChargePersonType enums.EOwnerType  `json:"chargePersonType"`
+	OwnerID          *uint64           `json:"ownerId" binding:"required"`
+	OwnerType        enums.EOwnerType  `json:"ownerType" binding:"required"`
+
+	Stage        *StageEntity        `gorm:"references:ID" json:"stage"`
+	Pipeline     *PipelineEntity     `gorm:"references:ID" json:"pipeline"`
+	Documents    []DocumentEntity    `gorm:"foreignKey:LeadID" json:"documents"`
+	ProductCares []ProductCareEntity `gorm:"foreignKey:LeadID" json:"productCares"`
+	Contact      *ContactEntity      `gorm:"foreignKey:ContactID" json:"contact"`
 	// FullName   string                `json:"fullName" binding:"required"`
 	// Phone      string                `json:"phone"`
 	// Email      string                `json:"email"`

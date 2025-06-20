@@ -30,7 +30,7 @@ func NewStageService(uc *usecase.StageUsecase) *StageService {
 // @Param pipelineId path int true "Pipeline ID"
 // @Param dto query dto.StageSearchDTO true "Stage search dto"
 // @Security BearerAuth
-// @Router /stage/{pipelineId} [get]
+// @Router /stage/list/{pipelineId} [get]
 func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest) (*crmpb.StageListDTO, error) {
 	stages, total, err := s.UC.Search(ctx, req.PipelineId, dto.StageSearchDTO{
 		Pagable: _dto.Pagable{

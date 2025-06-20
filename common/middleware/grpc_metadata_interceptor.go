@@ -1,0 +1,236 @@
+package _middleware
+
+import (
+	_jwt "common/jwt"
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+)
+
+type AuthError struct {
+	Message string
+}
+type authErrorKeyType string
+
+const authErrorKey authErrorKeyType = "auth_error"
+
+func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) metadata.MD {
+	md := metadata.MD{}
+
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		ctx = context.WithValue(ctx, authErrorKey, AuthError{Message: "missing token"})
+		return md
+	}
+
+	// Tách token từ "Bearer ..."
+	parts := strings.SplitN(tokenString, "Bearer ", 2)
+	tokenStr := strings.TrimSpace(parts[len(parts)-1]) // lấy phần cuối bất kể có "Bearer " hay không
+
+	claims, err := _jwt.ParseJWT(tokenStr)
+	if err != nil || claims == nil {
+		ctx = context.WithValue(ctx, authErrorKey, AuthError{Message: "invalid or expired token"})
+		return md
+	}
+
+	appendIfExists(md, "profileId", claims.ProfileId)
+	if claims.OrganizationId != nil {
+		appendIfExists(md, "organizationId", *claims.OrganizationId)
+	}
+	appendIfExists(md, "session", claims.Session)
+	appendIfExists(md, "role", claims.Role)
+	appendIfExists(md, "type", claims.Type)
+	appendIfExists(md, "authId", claims.AuthID)
+	if claims.PlanId != nil {
+		appendIfExists(md, "planId", *claims.PlanId)
+	}
+	if claims.PlanFrom != nil {
+		appendIfExists(md, "planFrom", *claims.PlanFrom)
+	}
+	appendIfExists(md, "method", r.Method)
+
+	return md
+}
+
+type ctxKey string
+
+const (
+	ProfileIDKey      ctxKey = "profileId"
+	OrganizationIDKey ctxKey = "organizationId"
+	AuthIDKey         ctxKey = "authId"
+	SessionKey        ctxKey = "session"
+	RoleKey           ctxKey = "role"
+	TypeKey           ctxKey = "type"
+	PlanIDKey         ctxKey = "planId"
+	PlanFromKey       ctxKey = "planFrom"
+)
+
+func ParseGrpcMetadataContextMiddleware(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return handler(ctx, req)
+	}
+
+	ctx = parseUint64Metadata(ctx, md, "profileId", ProfileIDKey)
+	ctx = parseUint64Metadata(ctx, md, "organizationId", OrganizationIDKey)
+	ctx = parseUint64Metadata(ctx, md, "authId", AuthIDKey)
+	ctx = parseUint64Metadata(ctx, md, "session", SessionKey)
+	ctx = parseUint64Metadata(ctx, md, "planId", PlanIDKey)
+	ctx = parseStringMetadata(ctx, md, "role", RoleKey)
+	ctx = parseStringMetadata(ctx, md, "type", TypeKey)
+	ctx = parseTimeMetadata(ctx, md, "planFrom", PlanFromKey)
+
+	return handler(ctx, req)
+}
+
+// PrincipalFromContext đọc toàn bộ metadata và sinh ra struct Principal.
+func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, errors.New("no grpc metadata found in context")
+	}
+
+	p := &_jwt.Principal{}
+	// ─── helper nội bộ ────────────────────────────────────────────────────────────
+	parseUint64 := func(key string) (uint64, bool) {
+		if v := md.Get(key); len(v) > 0 {
+			if num, err := strconv.ParseUint(v[0], 10, 64); err == nil {
+				return num, true
+			}
+		}
+		return 0, false
+	}
+
+	parseUintPtr := func(key string) *uint64 {
+		if num, ok := parseUint64(key); ok {
+			return &num
+		}
+		return nil
+	}
+
+	parseString := func(key string) string {
+		if v := md.Get(key); len(v) > 0 {
+			return v[0]
+		}
+		return ""
+	}
+
+	// ─── map metadata→struct ─────────────────────────────────────────────────────
+	if v, ok := parseUint64("authId"); ok {
+		p.AuthID = v
+	}
+	if v, ok := parseUint64("profileId"); ok {
+		p.ProfileId = v
+	}
+
+	p.OrganizationId = parseUintPtr("organizationId")
+	p.PlanId = parseUintPtr("planId")
+
+	p.Role = parseString("role")
+	p.Type = parseString("type")
+
+	if v, ok := parseUint64("session"); ok {
+		p.Session = v
+	}
+
+	// planFrom (RFC3339 → jwt.NumericDate)
+	if ts := parseString("planFrom"); ts != "" {
+		if t, err := time.Parse(time.RFC3339, ts); err == nil {
+			p.PlanFrom = jwt.NewNumericDate(t)
+		}
+	}
+
+	// RegisteredClaims (nếu bạn muốn copy thêm fields standard như iss/exp…)
+	// vd: p.ExpiresAt = jwt.NewNumericDate(time.Now().Add(24*time.Hour))
+
+	return p, nil
+}
+
+func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+	vals := md.Get(key)
+	if len(vals) == 0 {
+		return ctx
+	}
+	if val, err := strconv.ParseUint(vals[0], 10, 64); err == nil {
+		return context.WithValue(ctx, ctxKey, val)
+	}
+	return ctx
+}
+
+func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+	vals := md.Get(key)
+	if len(vals) > 0 && vals[0] != "" {
+		return context.WithValue(ctx, ctxKey, vals[0])
+	}
+	return ctx
+}
+
+func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+	vals := md.Get(key)
+	if len(vals) == 0 {
+		return ctx
+	}
+	if t, err := time.Parse(time.RFC3339, vals[0]); err == nil {
+		return context.WithValue(ctx, ctxKey, t)
+	}
+	return ctx
+}
+
+func appendIfExists(md metadata.MD, key string, value any) {
+	if value == nil {
+		return
+	}
+
+	// v := reflect.ValueOf(value)
+
+	// Nếu là con trỏ, kiểm tra nil và dereference
+	// if v.Kind() == reflect.Ptr {
+	// 	if v.IsNil() {
+	// 		return
+	// 	}
+	// 	v = v.Elem()
+	// 	value = v.Interface()
+	// }
+
+	switch v := value.(type) {
+	case string:
+		if v != "" {
+			md.Append(key, v)
+		}
+	case *string:
+		if v != nil && *v != "" {
+			md.Append(key, *v)
+		}
+	case int, int64, uint64, float64:
+		md.Append(key, fmt.Sprintf("%v", v))
+	case *int, *int64, *uint64, *float64:
+		if v != nil {
+			md.Append(key, fmt.Sprintf("%v", v))
+		}
+	case *time.Time:
+		if v != nil && !v.IsZero() {
+			md.Append(key, v.Format(time.RFC3339))
+		}
+	case jwt.NumericDate:
+		if !v.Time.IsZero() {
+			md.Append(key, v.Time.Format(time.RFC3339))
+		}
+	case *jwt.NumericDate:
+		if v != nil && !v.Time.IsZero() {
+			md.Append(key, v.Time.Format(time.RFC3339))
+		}
+	}
+}

@@ -198,6 +198,7 @@ func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdReques
 // @Accept json
 // @Produce json
 // @Param contactId path int true "ID của liên hệ"
+// @Param note body crmpb.NoteContactDTO true "Ghi chú"
 // @Security BearerAuth
 // @Router /contact/note/{contactId} [put]
 func (s *ContactService) Note(ctx context.Context, req *crmpb.NoteContactDTO) (*crmpb.NoteContactDTO, error) {

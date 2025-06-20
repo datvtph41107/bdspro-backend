@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	_routes "common/routes"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
@@ -43,8 +44,8 @@ func (r *LeadPostgre) Search(c context.Context, ownerId uint64, ownerType enums.
 		query.Where("source_id in (?)", dto.Sources)
 	}
 
-	if len(dto.ChargeIds) > 0 {
-		query.Where("charge_id in (?)", dto.ChargeIds)
+	if len(dto.ChargePersonIds) > 0 {
+		query.Where("charge_id in (?)", dto.ChargePersonIds)
 	}
 
 	if dto.FromDate != nil {
@@ -76,13 +77,19 @@ func (r *LeadPostgre) Create(ctx context.Context, entity *domain.LeadEntity) (*d
 	return entity, err
 }
 
-func (r *LeadPostgre) Update(ctx context.Context, id uint64, customer *domain.LeadEntity) (*domain.LeadEntity, error) {
+func (r *LeadPostgre) Update(ctx context.Context, id uint64, entity *domain.LeadEntity) (*domain.LeadEntity, error) {
 	err := r.db.WithContext(ctx).
 		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
-		Updates(customer).
+		Update("source", entity.Source).
+		Update("assign_note", entity.AssignNote).
+		Update("stage_id", entity.StageID).
+		Update("priority", entity.Priority).
+		Update("charge_person_id", entity.ChargePersonID).
+		Update("charge_person_type", entity.ChargePersonType).
+		Update("pipeline_id", entity.PipelineID).
 		Error
-	return customer, err
+	return entity, err
 }
 
 func (r *LeadPostgre) Delete(ctx context.Context, id uint64) error {
@@ -96,8 +103,18 @@ func (r *LeadPostgre) Delete(ctx context.Context, id uint64) error {
 func (r *LeadPostgre) GetByID(ctx context.Context, id uint64) (*domain.LeadEntity, error) {
 	var customer domain.LeadEntity
 	err := r.db.WithContext(ctx).
+		Preload("Stage").
+		Preload("Stage.Pipeline").
+		Preload("Documents").
+		Preload("ProductCares").
+		Preload("Contact").
 		Where("id = ? and deleted_at is null", id).
 		First(&customer).Error
+
+	if customer.Stage != nil {
+		customer.Pipeline = customer.Stage.Pipeline
+	}
+
 	return &customer, err
 }
 
@@ -120,7 +137,7 @@ func (r *LeadPostgre) Assign(c context.Context, id uint64, dto *dto.LeadDTO) (*d
 	err := r.db.WithContext(c).
 		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
-		Update("charge_id", dto.ChargeId).
+		Update("charge_id", dto.ChargePersonId).
 		Update("assign_note", dto.AssignNote).
 		Error
 	return &customer, err
@@ -197,6 +214,15 @@ func (r *LeadPostgre) GetByContactID(ctx context.Context, contactID uint64) (*do
 	err := r.db.WithContext(ctx).
 		Where("contact_id = ? and deleted_at is null", contactID).
 		First(&customer).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &_routes.Except{
+				Code:    404,
+				Message: "Liên hệ không tồn tại",
+			}
+		}
+		return nil, err
+	}
 	return &customer, err
 }
 

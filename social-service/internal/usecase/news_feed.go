@@ -4,6 +4,7 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"log"
 	"net/http"
 	"social/internal/domain"
 	"social/internal/dto"
@@ -179,12 +180,19 @@ func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, newsFeed *domain.NewsF
 	return newsFeed, nil
 }
 
-func (u *NewsFeedUsecase) DeletePost(ctx context.Context, post *domain.NewsFeed) error {
-	profileId := ctx.Value("profile").(*uint64)
-	if err := u.bdsproClient.OwnerPost(ctx, post.ID, *profileId); err != nil {
+func (u *NewsFeedUsecase) DeletePost(ctx context.Context, newsFeedID uint64) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	newsfeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	if err != nil {
 		return err
 	}
-	return u.newsFeedRepo.Delete(ctx, post)
+	if newsfeed.CreatedBy != nil && *newsfeed.CreatedBy != profileId {
+		return &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "bạn không có quyền xóa bài viết này",
+		}
+	}
+	return u.newsFeedRepo.Delete(ctx, newsfeed)
 }
 
 func (u *NewsFeedUsecase) GetListPostByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
@@ -239,4 +247,13 @@ func (u *NewsFeedUsecase) UpdateVisibility(ctx context.Context, newsFeedID uint6
 		return nil, err
 	}
 	return newsFeed, nil
+}
+
+func (u *NewsFeedUsecase) SyncNewsFeed(ctx context.Context) {
+	log.Printf("SyncNewsFeed start")
+	err := u.newsFeedRepo.SyncData(ctx)
+	if err != nil {
+		log.Printf("SyncNewsFeed error: %v", err)
+	}
+	log.Printf("SyncNewsFeed success")
 }

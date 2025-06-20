@@ -143,8 +143,12 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 	})
 
 	profile, _ := s.ProfileRepo.GetByProfileID(profileId)
+	if profile == nil {
+		return nil, status.Errorf(codes.NotFound, "profile not found")
+	}
 
 	accountInfos := []*userpb.AccountInfo{}
+	ownerType := uint32(10)
 	accountInfos = append(accountInfos, &userpb.AccountInfo{
 		// Id:        uint64(profile.ProfileID),
 		FullName:  &profile.FullName,
@@ -152,10 +156,12 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		Phone:     &profile.Phone,
 		Email:     &profile.Email,
 		ProfileId: &profileId,
+		OwnerType: &ownerType,
 	})
 
 	if orgs != nil && len(orgs.Organizations) > 0 {
 		for _, org := range orgs.Organizations {
+			ownerType := uint32(10)
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
 				// Id:              uint64(org.Id),
 				FullName:        &org.Name,
@@ -164,12 +170,13 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 				Email:           org.Email,
 				BackgroundImage: org.LogoUrl,
 				OrganizationId:  &org.Id,
+				OwnerType:       &ownerType,
 			})
 		}
 	}
 
-	if groups != nil && len(groups.Groups) > 0 {
-		for _, group := range groups.Groups {
+	if groups != nil && len(groups.Data) > 0 {
+		for _, group := range groups.Data {
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
 				// Id:       uint64(group.Id),
 				FullName: &group.Name,

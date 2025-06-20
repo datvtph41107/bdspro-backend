@@ -106,7 +106,7 @@ func (c *UserClient) PbUserToContacts(ctx context.Context, contacts []*crmpb.Con
 	}
 }
 
-func (c *UserClient) PbUserToLead(ctx context.Context, lead *crmpb.LeadDTO) {
+func (c *UserClient) PbChargePersonToLead(ctx context.Context, lead *crmpb.LeadDTO) {
 	profileIDSet := make(map[uint64]struct{})
 	if lead.ChargeId != nil {
 		profileIDSet[*lead.ChargeId] = struct{}{}
@@ -118,7 +118,25 @@ func (c *UserClient) PbUserToLead(ctx context.Context, lead *crmpb.LeadDTO) {
 	}
 
 	if profile, ok := profileMap[*lead.ChargeId]; ok {
-		lead.ChargeUser = profile
+		profile.Phone = ""
+		lead.ChargePerson = profile
+	}
+}
+
+func (c *UserClient) PbChargePersonToLeadDetail(ctx context.Context, lead *crmpb.LeadDetailDTO) {
+	profileIDSet := make(map[uint64]struct{})
+	if lead.ChargePersonId != nil {
+		profileIDSet[*lead.ChargePersonId] = struct{}{}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return
+	}
+
+	if profile, ok := profileMap[*lead.ChargePersonId]; ok {
+		profile.Phone = ""
+		lead.ChargePerson = profile
 	}
 }
 

@@ -115,3 +115,11 @@ func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organ
 
 	return h.groupMemberTransformer.EntityToGetGroupMembersResponse(members), nil
 }
+
+func (h *GroupMemberHandler) SwitchGroup(ctx context.Context, request *organizationpb.SwitchGroupRequest) (*organizationpb.SwitchGroupResponse, error) {
+	// todo: thêm logic đổi nhóm check xem có thuộc nhóm không
+
+	return &organizationpb.SwitchGroupResponse{
+		IsSuccess: true,
+	}, nil
+}

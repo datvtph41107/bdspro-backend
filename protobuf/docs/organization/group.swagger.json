@@ -268,7 +268,7 @@
     "organizationpbGetGroupsResponse": {
       "type": "object",
       "properties": {
-        "groups": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

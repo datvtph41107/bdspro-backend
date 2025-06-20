@@ -1,6 +1,6 @@
 package enums
 
-type EStatusContact uint
+type EStatusContact uint32
 
 const (
 	StatusContactUnknown      EStatusContact = 10

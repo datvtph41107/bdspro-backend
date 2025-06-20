@@ -700,3 +700,17 @@ func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetI
 
 	return results, total, nil
 }
+
+func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error) {
+	var products []domain.Product
+	if err := r.DB.WithContext(ctx).
+		Preload("Price").
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Where("id IN (?) and deleted_at is null", ids).
+		Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}

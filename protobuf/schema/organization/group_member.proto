@@ -8,6 +8,7 @@ import "shared/common.proto";
 option go_package = "types/organizationpb";
 
 service GroupMemberService {
+    rpc SwitchGroup(SwitchGroupRequest) returns (SwitchGroupResponse);
     rpc CreateGroupMember(CreateGroupMemberRequest) returns (CreateGroupMemberResponse) {
         option (google.api.http) = {
             post: "/v2/org/group-member"
@@ -93,4 +94,13 @@ message GroupMember {
     uint32 userId = 3;
     string role = 4;
     sharepb.ProfileItem profile = 5;
+}
+
+message SwitchGroupRequest {
+    uint32 groupId = 1;
+    uint32 userId = 2;
+}
+
+message SwitchGroupResponse {
+    bool isSuccess = 1;
 }

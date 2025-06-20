@@ -2,6 +2,7 @@ package cmd
 
 import (
 	_jwt "common/jwt"
+	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -157,7 +158,7 @@ var HttpCmd = &cobra.Command{
 		env := os.Getenv("APP_ENV")
 
 		mux := runtime.NewServeMux(
-			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
+			runtime.WithMetadata(_middleware.InjectGrpcMetadataContextMiddleware),
 			// // runtime.WithMetadata(CustomMetadataMethod),
 			// runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 			// 	_jwt.ErrorToGatewayResponse(ctx, w, err)
@@ -181,8 +182,8 @@ var HttpCmd = &cobra.Command{
 		service.RegisterCrmService(ctx, mux, env, opts)
 		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
-
 		service.RegisterUserService(ctx, mux, env, opts)
+
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 
 		r.Static("/swagger-doc", "docs")

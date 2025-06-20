@@ -325,6 +325,15 @@ const docTemplate = `{
                         "name": "contactId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Ghi chú",
+                        "name": "note",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.NoteContactDTO"
+                        }
                     }
                 ],
                 "responses": {}
@@ -1569,21 +1578,21 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/crmpb.LeadDTO"
+                            "$ref": "#/definitions/crmpb.LeadSaveRequest"
                         }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/lead/assign": {
+        "/lead/assign-crm": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Gán khách hàng",
+                "description": "Gán liên hệ vào CRM",
                 "consumes": [
                     "application/json"
                 ],
@@ -1593,7 +1602,7 @@ const docTemplate = `{
                 "tags": [
                     "Khách hàng"
                 ],
-                "summary": "Gán khách hàng",
+                "summary": "Gán liên hệ vào CRM",
                 "parameters": [
                     {
                         "description": "Gán khách hàng",
@@ -1601,7 +1610,39 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/crmpb.LeadAssignRequest"
+                            "$ref": "#/definitions/crmpb.LeadAssignCrmRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/lead/assign-person": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gán liên hệ cho nhân viên phụ trách",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Gán liên hệ cho nhân viên phụ trách",
+                "parameters": [
+                    {
+                        "description": "Gán khách hàng",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.LeadAssignPersonRequest"
                         }
                     }
                 ],
@@ -1663,18 +1704,22 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Khách hàng",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/crmpb.LeadDTO"
-                        }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.LeadDetailDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/_routes.Except"
+                        }
+                    }
+                }
             }
         },
         "/lead/list": {
@@ -1702,7 +1747,7 @@ const docTemplate = `{
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
-                        "name": "chargeIds",
+                        "name": "chargePersonIds",
                         "in": "query"
                     },
                     {
@@ -1879,7 +1924,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/crmpb.LeadDTO"
+                            "$ref": "#/definitions/crmpb.LeadSaveRequest"
                         }
                     }
                 ],
@@ -1986,25 +2031,6 @@ const docTemplate = `{
                 ],
                 "summary": "Tìm kiếm quy trình",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Owner ID",
-                        "name": "ownerId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30
-                        ],
-                        "type": "integer",
-                        "description": "Owner Type",
-                        "name": "ownerType",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "type": "boolean",
                         "name": "active",
@@ -2474,6 +2500,56 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/stage/list/{pipelineId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm giai đoạn theo pipeline",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giai đoạn"
+                ],
+                "summary": "Tìm kiếm giai đoạn theo pipeline",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pipeline ID",
+                        "name": "pipelineId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "stageName",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/stage/{id}": {
             "put": {
                 "security": [
@@ -2540,59 +2616,88 @@ const docTemplate = `{
                 ],
                 "responses": {}
             }
-        },
-        "/stage/{pipelineId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tìm kiếm giai đoạn theo pipeline",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Giai đoạn"
-                ],
-                "summary": "Tìm kiếm giai đoạn theo pipeline",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Pipeline ID",
-                        "name": "pipelineId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "stageName",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
         }
     },
     "definitions": {
+        "_routes.Except": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "errors": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.ContactDTO": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "blocked": {
+                    "type": "boolean"
+                },
+                "company": {
+                    "type": "string"
+                },
+                "contactStatus": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "boolean"
+                },
+                "friendStatus": {
+                    "$ref": "#/definitions/sharepb.FriendItem"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "profileInfo": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "zalo": {
+                    "type": "string"
+                }
+            }
+        },
         "crmpb.ContactSaveDTO": {
             "type": "object",
             "properties": {
@@ -2648,6 +2753,23 @@ const docTemplate = `{
                 }
             }
         },
+        "crmpb.DocumentDTO": {
+            "type": "object",
+            "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
         "crmpb.FriendGroup": {
             "type": "object",
             "properties": {
@@ -2668,13 +2790,30 @@ const docTemplate = `{
                 }
             }
         },
-        "crmpb.LeadAssignRequest": {
+        "crmpb.LeadAssignCrmRequest": {
             "type": "object",
             "properties": {
-                "chargeId": {
+                "contactId": {
                     "type": "integer"
                 },
-                "chargeType": {
+                "note": {
+                    "type": "string"
+                },
+                "personChargeId": {
+                    "type": "integer"
+                },
+                "stageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crmpb.LeadAssignPersonRequest": {
+            "type": "object",
+            "properties": {
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "chargePersonType": {
                     "type": "integer"
                 },
                 "leadId": {
@@ -2691,52 +2830,29 @@ const docTemplate = `{
                 }
             }
         },
-        "crmpb.LeadDTO": {
+        "crmpb.LeadDetailDTO": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
                 "assignNote": {
                     "type": "string"
                 },
-                "birthday": {
-                    "type": "string"
-                },
-                "chargeId": {
-                    "type": "integer"
-                },
-                "chargeType": {
-                    "description": "EOwnerType (int32)",
-                    "type": "integer"
-                },
-                "chargeUser": {
+                "chargePerson": {
                     "$ref": "#/definitions/sharepb.ProfileItem"
                 },
-                "contactId": {
+                "chargePersonId": {
                     "type": "integer"
                 },
-                "email": {
-                    "type": "string"
+                "contact": {
+                    "$ref": "#/definitions/crmpb.ContactDTO"
                 },
-                "fullName": {
-                    "type": "string"
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.DocumentDTO"
+                    }
                 },
                 "id": {
                     "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "ownerId": {
-                    "type": "integer"
-                },
-                "ownerType": {
-                    "description": "EOwnerType (int32)",
-                    "type": "integer"
-                },
-                "phone": {
-                    "type": "string"
                 },
                 "pipeline": {
                     "$ref": "#/definitions/crmpb.PipelineDTO"
@@ -2744,9 +2860,29 @@ const docTemplate = `{
                 "pipelineId": {
                     "type": "integer"
                 },
-                "source": {
-                    "description": "ESourceLead (int32)",
+                "priority": {
                     "type": "integer"
+                },
+                "priorityName": {
+                    "type": "string"
+                },
+                "productCareIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.ProductResponse"
+                    }
+                },
+                "source": {
+                    "type": "integer"
+                },
+                "sourceName": {
+                    "type": "string"
                 },
                 "stage": {
                     "$ref": "#/definitions/crmpb.StageDTO"
@@ -2763,6 +2899,74 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "crmpb.LeadSaveRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "assignNote": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "birthday": {
+                    "type": "string"
+                },
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "company": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.DocumentDTO"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "productCareIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "removeDocumentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "source": {
+                    "type": "integer"
+                },
+                "stageId": {
+                    "type": "integer"
+                },
+                "zalo": {
                     "type": "string"
                 }
             }
@@ -2789,6 +2993,17 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "crmpb.NoteContactDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
                 }
             }
         },
@@ -3168,6 +3383,9 @@ const docTemplate = `{
                 "orderNumber": {
                     "type": "integer"
                 },
+                "pipeline": {
+                    "$ref": "#/definitions/domain.PipelineEntity"
+                },
                 "pipelineId": {
                     "type": "integer"
                 },
@@ -3341,6 +3559,425 @@ const docTemplate = `{
                 "FriendStatusAccepted",
                 "FriendStatusReject"
             ]
+        },
+        "pb_bdspro.AmenityItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.Apartment": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.ApartmentAttribute": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.AttributeProduct": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.Deposite": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.Developer": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.DocType": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.HouseInfo": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "numFront": {
+                    "type": "integer"
+                },
+                "numToilet": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.MediaItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.ProductPrice": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "deposite": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "priceOwner": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "rentCommission": {
+                    "type": "number"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "type": "integer"
+                },
+                "salePrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.ProductPrivate": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "importPrice": {
+                    "type": "number"
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "operatingCost": {
+                    "type": "number"
+                },
+                "privateDocs": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.AmenityItem"
+                    }
+                },
+                "apartment": {
+                    "$ref": "#/definitions/pb_bdspro.Apartment"
+                },
+                "apartmentAttribute": {
+                    "$ref": "#/definitions/pb_bdspro.ApartmentAttribute"
+                },
+                "apartmentId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.AttributeProduct"
+                    }
+                },
+                "build": {
+                    "$ref": "#/definitions/pb_bdspro.ProjectBuild"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "deposite": {
+                    "$ref": "#/definitions/pb_bdspro.Deposite"
+                },
+                "depositeId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/pb_bdspro.Developer"
+                },
+                "district": {
+                    "$ref": "#/definitions/pb_bdspro.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "docType": {
+                    "$ref": "#/definitions/pb_bdspro.DocType"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/pb_bdspro.HouseInfo"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "orgStatus": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "positionUrl": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/pb_bdspro.ProductPrice"
+                },
+                "priceSuggest": {
+                    "type": "number"
+                },
+                "privateData": {
+                    "$ref": "#/definitions/pb_bdspro.ProductPrivate"
+                },
+                "project": {
+                    "$ref": "#/definitions/pb_bdspro.Project"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/pb_bdspro.PropertyType"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/pb_bdspro.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "rentVisibility": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "saleVisibility": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "ward": {
+                    "$ref": "#/definitions/pb_bdspro.Region"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.Project": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.ProjectBuild": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.PropertyType": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.Region": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
         },
         "sharepb.FriendItem": {
             "type": "object",

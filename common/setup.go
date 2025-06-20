@@ -56,6 +56,16 @@ func ProfileIDInterceptor(
 		}
 	}
 
+	authIdList := md.Get("authId")
+	if len(authIdList) > 0 {
+		authIdStr := authIdList[0]
+
+		authId, err := strconv.ParseUint(authIdStr, 10, 64)
+		if err == nil {
+			ctx = context.WithValue(ctx, "authId", authId)
+		}
+	}
+
 	// Gọi handler tiếp theo (controller thực sự)
 	return handler(ctx, req)
 }

@@ -122,4 +122,5 @@ message AccountInfo {
     optional string backgroundImage = 8;
     optional uint32 organizationId = 9;
     optional uint32 groupId = 10;
+    optional uint32 ownerType = 11;
 }

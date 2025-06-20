@@ -8,37 +8,37 @@ import (
 
 type LeadSearchDTO struct {
 	_dto.Pagable
-	Phone          string              `form:"phone"`
-	FullName       string              `form:"fullName"`
-	Steps          []enums.EStep       `form:"steps" parser:"uint64s"`
-	StageIDs       []uint64            `form:"stageIds" parser:"uint64s"`
-	Sources        []enums.ESourceLead `form:"customerSources" parser:"uint64s"`
-	ChargeIds      []uint64            `form:"chargeIds" parser:"uint64s"`
-	ChargeType     enums.EOwnerType    `form:"chargeType"` // deprecated
-	FromDate       *time.Time          `form:"fromDate"`
-	ToDate         *time.Time          `form:"toDate"`
-	ProductCareIDs []uint64            `form:"productCareIds" parser:"uint64s"` // todo: add product care
+	Phone           string              `form:"phone"`
+	FullName        string              `form:"fullName"`
+	Steps           []enums.EStep       `form:"steps" parser:"uint64s"`
+	StageIDs        []uint64            `form:"stageIds" parser:"uint64s"`
+	Sources         []enums.ESourceLead `form:"customerSources" parser:"uint64s"`
+	ChargePersonIds []uint64            `form:"chargePersonIds" parser:"uint64s"`
+	ChargeType      enums.EOwnerType    `form:"chargeType"` // deprecated
+	FromDate        *time.Time          `form:"fromDate"`
+	ToDate          *time.Time          `form:"toDate"`
+	ProductCareIDs  []uint64            `form:"productCareIds" parser:"uint64s"` // todo: add product care
 	// OwnerID    uint64                  `form:"ownerId"`
 	// OwnerType  enums.EOwnerType        `form:"ownerType"`
 
 }
 
 type LeadDTO struct {
-	ContactID  *uint64           `json:"contactId"`
-	FullName   string            `json:"fullName"`
-	Phone      string            `json:"phone"`
-	Source     enums.ESourceLead `json:"source"`
-	Email      string            `json:"email"`
-	Address    string            `json:"address"`
-	Birthday   *time.Time        `json:"birthday"`
-	Note       string            `json:"note"`
-	AssignNote string            `json:"assignNote"`
-	PipelineID *uint64           `json:"pipelineId"`
-	StageID    *uint64           `json:"stageId"`
-	ChargeId   *uint64           `json:"chargeId"`
-	ChargeType enums.EOwnerType  `json:"chargeType"`
-	OwnerID    *uint64           `json:"ownerId"`
-	OwnerType  enums.EOwnerType  `json:"ownerType"`
+	ContactID      *uint64           `json:"contactId"`
+	FullName       string            `json:"fullName"`
+	Phone          string            `json:"phone"`
+	Source         enums.ESourceLead `json:"source"`
+	Email          string            `json:"email"`
+	Address        string            `json:"address"`
+	Birthday       *time.Time        `json:"birthday"`
+	Note           string            `json:"note"`
+	AssignNote     string            `json:"assignNote"`
+	PipelineID     *uint64           `json:"pipelineId"`
+	StageID        *uint64           `json:"stageId"`
+	ChargePersonId *uint64           `json:"chargePersonId"`
+	ChargeType     enums.EOwnerType  `json:"chargeType"`
+	OwnerID        *uint64           `json:"ownerId"`
+	OwnerType      enums.EOwnerType  `json:"ownerType"`
 }
 
 type CustomerWithRuleDTO struct {

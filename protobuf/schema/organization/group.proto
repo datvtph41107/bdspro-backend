@@ -90,7 +90,7 @@ message GetGroupsRequest {
 }
 
 message GetGroupsResponse {
-    repeated Group groups = 1;
+    repeated Group data = 1;
     uint32 total = 2;
 }
 

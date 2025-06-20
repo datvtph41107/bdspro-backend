@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"log"
 	"social/infra/service"
+	"social/internal/usecase"
 
 	"github.com/spf13/viper"
 )
@@ -34,6 +35,7 @@ type ConfigApp struct {
 	ReportService   *service.ReportService
 	CommentService  *service.CommentService
 	LikeService     *service.LikeService
+	NewsFeedUsecase *usecase.NewsFeedUsecase
 }
 
 func NewConfigApp(
@@ -41,12 +43,14 @@ func NewConfigApp(
 	reportService *service.ReportService,
 	commentService *service.CommentService,
 	likeService *service.LikeService,
+	newsFeedUsecase *usecase.NewsFeedUsecase,
 ) *ConfigApp {
 	return &ConfigApp{
 		NewsFeedService: newsFeedService,
 		ReportService:   reportService,
 		CommentService:  commentService,
 		LikeService:     likeService,
+		NewsFeedUsecase: newsFeedUsecase,
 	}
 }
 func LoadConfig() {

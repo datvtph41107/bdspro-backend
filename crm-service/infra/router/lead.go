@@ -3,7 +3,6 @@ package router
 import (
 	_routes "common/routes"
 	_utils "common/utils"
-	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/usecase"
 	"crm/utils"
@@ -67,7 +66,7 @@ func (r *LeadRouter) Search(c *gin.Context) {
 // // @Router /lead [post]
 // // Thêm khách hàng
 func (r *LeadRouter) Create(c *gin.Context) {
-	entity := domain.LeadEntity{}
+	entity := dto.LeadSaveDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -95,7 +94,7 @@ func (r *LeadRouter) Update(c *gin.Context) {
 		})
 		return
 	}
-	entity := domain.LeadEntity{}
+	entity := dto.LeadSaveDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &entity); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

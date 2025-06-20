@@ -109,7 +109,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/member": {
+        "/organization/member": {
             "post": {
                 "security": [
                     {
@@ -141,42 +141,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/organization/members/me": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Thành viên"
-                ],
-                "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/organization/members/{organizationId}": {
+        "/organization/member/{organizationId}": {
             "get": {
                 "security": [
                     {
@@ -219,6 +184,41 @@ const docTemplate = `{
                         "name": "organizationId",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/members/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

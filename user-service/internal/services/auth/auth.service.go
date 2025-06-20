@@ -339,7 +339,7 @@ func (s *AuthService) Delete(c *gin.Context) (uint64, error) {
 	for _, cookie := range cookies {
 		c.SetCookie(cookie.Name, "", -1, "/", "", false, true)
 	}
-	s.RedisService.DeleteToken(principal.UserID)
+	s.RedisService.DeleteToken(principal.AuthID)
 
 	return profile.ProfileID, nil
 }
@@ -621,7 +621,7 @@ func (s *AuthService) ConfirmQRSession(c *gin.Context, e *dto.SessionQRConfirm) 
 		}
 	}
 
-	sessionEntity.AuthID = props.UserID
+	sessionEntity.AuthID = props.AuthID
 	_db.SaveWithAudit(c, sessionEntity)
 
 	return sessionEntity, nil
@@ -721,13 +721,13 @@ func (s *AuthService) SwitchOrganization(c *gin.Context, organizationID uint32) 
 			Message: "Không thể chuyển đổi tổ chức",
 		}
 	}
-	authEntity, err := auth_model.AuthGetWithId(principal.UserID)
+	authEntity, err := auth_model.AuthGetWithId(principal.AuthID)
 	if err != nil {
 		return nil, err
 	}
 	profile := s.GetProfileByID(principal.ProfileId)
 	payload := _jwt.JwtTokenProperties{
-		AuthID:    principal.UserID,
+		AuthID:    principal.AuthID,
 		ProfileID: principal.ProfileId,
 		SessionID: uint64(principal.Session),
 		Role:      "ROLE_USER",
@@ -743,7 +743,7 @@ func (s *AuthService) SwitchOrganization(c *gin.Context, organizationID uint32) 
 		return nil, err
 	}
 	response := &dto.AuthLoginResponse{
-		AuthID:         principal.UserID,
+		AuthID:         principal.AuthID,
 		AccessToken:    newAccessToken,
 		Role:           "ROLE_USER",
 		Username:       profile.FullName,

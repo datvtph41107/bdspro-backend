@@ -2,13 +2,14 @@ syntax = "proto3";
 
 package pb_bdspro;
 import "bdspro/asset.proto";
-import "bdspro/share.proto";
+import "bdspro/common.proto";
 import "google/api/annotations.proto";
 import "user/profile.proto";
 import "bdspro/post.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 service ProductService {
+  rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
   rpc ArchiveProduct (ArchivedRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/product/archived"

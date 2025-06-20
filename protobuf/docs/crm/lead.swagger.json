@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/crmpbLeadDTO"
+              "$ref": "#/definitions/crmpbLeadSaveRequest"
             }
           }
         ],
@@ -48,9 +48,9 @@
         ]
       }
     },
-    "/v2/crm/lead/assign": {
+    "/v2/crm/lead/assign-crm": {
       "post": {
-        "operationId": "LeadService_Assign",
+        "operationId": "LeadService_AssignCrm",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -71,7 +71,39 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/crmpbLeadAssignRequest"
+              "$ref": "#/definitions/crmpbLeadAssignCrmRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LeadService"
+        ]
+      }
+    },
+    "/v2/crm/lead/assign-person": {
+      "post": {
+        "operationId": "LeadService_AssignCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadAssignPersonRequest"
             }
           }
         ],
@@ -118,7 +150,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbLeadDTO"
+              "$ref": "#/definitions/crmpbLeadDetailDTO"
             }
           },
           "default": {
@@ -222,7 +254,7 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "chargeIds",
+            "name": "chargePersonIds",
             "in": "query",
             "required": false,
             "type": "array",
@@ -355,7 +387,113 @@
     }
   },
   "definitions": {
-    "crmpbLeadAssignRequest": {
+    "crmpbContactDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "contactStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/sharepbFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "profileInfo": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "blocked": {
+          "type": "boolean"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbDocumentDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbLeadAssignCrmRequest": {
+      "type": "object",
+      "properties": {
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "personChargeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "stageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbLeadAssignPersonRequest": {
       "type": "object",
       "properties": {
         "leadId": {
@@ -370,11 +508,11 @@
           "type": "integer",
           "format": "int32"
         },
-        "chargeId": {
+        "chargePersonId": {
           "type": "string",
           "format": "uint64"
         },
-        "chargeType": {
+        "chargePersonType": {
           "type": "integer",
           "format": "int32"
         },
@@ -452,7 +590,112 @@
         "pipeline": {
           "$ref": "#/definitions/crmpbPipelineDTO"
         },
-        "chargeUser": {
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "productCareIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbDocumentDTO"
+          }
+        },
+        "removeDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "crmpbLeadDetailDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "source": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "assignNote": {
+          "type": "string"
+        },
+        "pipelineId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "stageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productCareIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbDocumentDTO"
+          }
+        },
+        "contact": {
+          "$ref": "#/definitions/crmpbContactDTO"
+        },
+        "stage": {
+          "$ref": "#/definitions/crmpbStageDTO"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/crmpbPipelineDTO"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductResponse"
+          }
+        },
+        "sourceName": {
+          "type": "string"
+        },
+        "priorityName": {
+          "type": "string"
+        },
+        "chargePerson": {
           "$ref": "#/definitions/sharepbProfileItem"
         }
       }
@@ -473,10 +716,10 @@
         }
       }
     },
-    "crmpbLeadServiceUpdateBody": {
+    "crmpbLeadSaveRequest": {
       "type": "object",
       "properties": {
-        "contactId": {
+        "id": {
           "type": "string",
           "format": "uint64"
         },
@@ -486,12 +729,16 @@
         "phone": {
           "type": "string"
         },
-        "source": {
-          "type": "integer",
-          "format": "int32",
-          "title": "ESourceLead (int32)"
+        "avatar": {
+          "type": "string"
         },
         "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
           "type": "string"
         },
         "address": {
@@ -503,43 +750,117 @@
         "note": {
           "type": "string"
         },
+        "source": {
+          "type": "integer",
+          "format": "int32"
+        },
         "assignNote": {
           "type": "string"
-        },
-        "pipelineId": {
-          "type": "string",
-          "format": "uint64"
         },
         "stageId": {
           "type": "string",
           "format": "uint64"
         },
-        "chargeId": {
+        "priority": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "chargePersonId": {
           "type": "string",
           "format": "uint64"
         },
-        "chargeType": {
-          "type": "integer",
-          "format": "int32",
-          "title": "EOwnerType (int32)"
+        "productCareIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         },
-        "ownerId": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbDocumentDTO"
+          }
+        },
+        "removeDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "crmpbLeadServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "birthday": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "source": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "assignNote": {
+          "type": "string"
+        },
+        "stageId": {
           "type": "string",
           "format": "uint64"
         },
-        "ownerType": {
+        "priority": {
           "type": "integer",
-          "format": "int32",
-          "title": "EOwnerType (int32)"
+          "format": "int32"
         },
-        "stage": {
-          "$ref": "#/definitions/crmpbStageDTO"
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
         },
-        "pipeline": {
-          "$ref": "#/definitions/crmpbPipelineDTO"
+        "productCareIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         },
-        "chargeUser": {
-          "$ref": "#/definitions/sharepbProfileItem"
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbDocumentDTO"
+          }
+        },
+        "removeDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -614,6 +935,492 @@
         }
       }
     },
+    "pb_bdsproAmenityItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproApartment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproApartmentAttribute": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproAttributeProduct": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproDeposite": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "pb_bdsproDeveloper": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproDocType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproHouseInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFront": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numCarPark": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "numToilet": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "pb_bdsproMediaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "pb_bdsproProductPrice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "priceOwner": {
+          "type": "number",
+          "format": "double"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommission": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deposite": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPaymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproProductPrivate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "importPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "operatingCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "privateDocs": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproProductResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deposite": {
+          "$ref": "#/definitions/pb_bdsproDeposite"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/pb_bdsproPropertyType"
+        },
+        "docTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docType": {
+          "$ref": "#/definitions/pb_bdsproDocType"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproAmenityItem"
+          }
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "positionUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "orgStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "price": {
+          "$ref": "#/definitions/pb_bdsproProductPrice"
+        },
+        "apartmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartment": {
+          "$ref": "#/definitions/pb_bdsproApartment"
+        },
+        "apartmentAttribute": {
+          "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+        },
+        "build": {
+          "$ref": "#/definitions/pb_bdsproProjectBuild"
+        },
+        "project": {
+          "$ref": "#/definitions/pb_bdsproProject"
+        },
+        "developer": {
+          "$ref": "#/definitions/pb_bdsproDeveloper"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "privateData": {
+          "$ref": "#/definitions/pb_bdsproProductPrivate"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "province": {
+          "$ref": "#/definitions/pb_bdsproRegion"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "district": {
+          "$ref": "#/definitions/pb_bdsproRegion"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ward": {
+          "$ref": "#/definitions/pb_bdsproRegion"
+        },
+        "address": {
+          "type": "string"
+        },
+        "googleMapLink": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproAttributeProduct"
+          }
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproMediaItem"
+          }
+        },
+        "houseInfo": {
+          "$ref": "#/definitions/pb_bdsproHouseInfo"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "priceSuggest": {
+          "type": "number",
+          "format": "double"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproProjectBuild": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproPropertyType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproRegion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -639,6 +1446,27 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

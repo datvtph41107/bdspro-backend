@@ -31,7 +31,7 @@ service NewsFeedService {
             get: "/v2/social/news-feed/detail/{newsFeedId}"
         };
     };
-    rpc DeleteNewsFeed(NewsFeed) returns (sharepb.Empty) {
+    rpc DeleteNewsFeed(sharepb.IdRequest) returns (sharepb.Empty) {
         option (google.api.http) = {
             delete: "/v2/social/news-feed/{id}"
         };

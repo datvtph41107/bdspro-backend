@@ -1,6 +1,7 @@
 package _models
 
 import (
+	_middleware "common/middleware"
 	"log"
 
 	"gorm.io/gorm"
@@ -32,7 +33,7 @@ func (base *AuditBase) BeforeUpdate(tx *gorm.DB) error {
 
 func GetCurrentUserID(tx *gorm.DB) uint64 {
 	// Lấy profileId từ context
-	profileId := tx.Statement.Context.Value("profileId")
+	profileId := tx.Statement.Context.Value(_middleware.ProfileIDKey)
 	if profileId == nil {
 		return 0
 	}

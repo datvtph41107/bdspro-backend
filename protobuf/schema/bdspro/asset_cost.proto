@@ -4,7 +4,7 @@ package pb_bdspro;
 option go_package = "pb/types/bdspro;pb_bdspro";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
-import "bdspro/share.proto";
+import "bdspro/common.proto";
 
 message AssetCostDTO {
   uint64 id = 1;

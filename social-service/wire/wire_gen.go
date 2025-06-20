@@ -52,7 +52,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	commentService := service.NewCommentService(commentUsecase, userClient)
 	likeUsecase := usecase.NewLikeUsecase(postgreLike, postgreComment, postgreNewsFeed, numberUpdateUsecase, userClient, notificationClient)
 	likeService := service.NewLikeService(likeUsecase)
-	configApp := config.NewConfigApp(newsFeedService, reportService, commentService, likeService)
+	configApp := config.NewConfigApp(newsFeedService, reportService, commentService, likeService, newsFeedUsecase)
 	return configApp, nil
 }
 

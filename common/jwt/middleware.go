@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
@@ -46,8 +47,6 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 		claims, err := ParseJWT(tokenString)
 		log.Printf("claims=%v, ignoreToken=%v", claims, ignoreToken)
 		if err != nil && !ignoreToken {
-			log.Printf("PATH=%s", c.Request.URL.Path)
-			log.Printf("err_IGNORE_TOKEN: %v %s", err, c.Request.URL.Path)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
@@ -157,11 +156,26 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 	}
 
 	md.Append("profileId", fmt.Sprintf("%d", claims.ProfileId))
+	if claims.OrganizationId != nil {
+		md.Append("organizationId", fmt.Sprintf("%d", *claims.OrganizationId))
+	}
+	if claims.Session != 0 {
+		md.Append("session", fmt.Sprintf("%d", claims.Session))
+	}
+	if claims.Role != "" {
+		md.Append("role", claims.Role)
+	}
+	if claims.Type != "" {
+		md.Append("type", claims.Type)
+	}
+	if claims.AuthID != 0 {
+		md.Append("authId", fmt.Sprintf("%d", claims.AuthID))
+	}
 	if claims.PlanId != nil {
 		md.Append("planId", fmt.Sprintf("%d", *claims.PlanId))
 	}
-	if claims.OrganizationId != nil {
-		md.Append("organizationId", fmt.Sprintf("%d", *claims.OrganizationId))
+	if claims.PlanFrom != nil && !claims.PlanFrom.Time.IsZero() {
+		md.Append("planFrom", claims.PlanFrom.Time.Format(time.RFC3339))
 	}
 	md.Append("method", r.Method)
 

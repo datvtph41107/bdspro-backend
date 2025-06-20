@@ -7,6 +7,7 @@ option go_package = "pb/types/crm;crmpb";
 import "shared/common.proto";
 import "google/api/annotations.proto";
 import "crm/contact.proto";
+import "crm/common.proto";
 
 service InvitationInstallService {
     rpc SendInvitation(SendInvitationRequest) returns (SendInvitationResponse) {

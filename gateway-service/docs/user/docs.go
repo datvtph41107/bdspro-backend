@@ -1671,6 +1671,38 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/user/auth/switch-account": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chuyển đổi tài khoản",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Chuyển đổi tài khoản",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài khoản",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.SwitchAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/user/profile/accounts/me": {
             "get": {
                 "security": [
@@ -2544,25 +2576,28 @@ const docTemplate = `{
                 "groupId": {
                     "type": "integer"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "organizationId": {
                     "type": "integer"
                 },
                 "phone": {
                     "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
                 }
             }
         },
         "userpb.AccountInfoResponse": {
             "type": "object",
             "properties": {
-                "accountInfo": {
+                "data": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/userpb.AccountInfo"
                     }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -2729,6 +2764,20 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.SwitchAccountRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "profileId": {
                     "type": "integer"
                 }
             }

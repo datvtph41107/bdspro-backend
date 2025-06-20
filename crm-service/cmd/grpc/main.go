@@ -42,7 +42,8 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to listen: %v", err)
 		}
 		interceptors := grpc.ChainUnaryInterceptor(
-			common.ProfileIDInterceptor,
+			// common.ProfileIDInterceptor,
+			_middleware.ParseGrpcMetadataContextMiddleware,
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
 		s := grpc.NewServer(interceptors)

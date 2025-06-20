@@ -27,4 +27,5 @@ type NewsFeedRepo interface {
 	UpdateLikeNumber(ctx context.Context, newFeedID uint64, totalLike int) error
 	UpdateCommentNumber(ctx context.Context, newFeedID uint64, totalComment int) error
 	IncrementNumberShare(ctx context.Context, newFeedID uint64) error
+	SyncData(ctx context.Context) error
 }

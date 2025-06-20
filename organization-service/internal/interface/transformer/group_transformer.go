@@ -71,7 +71,7 @@ func (t *groupTransformer) EntityToGetGroupsResponse(groups []*entity.Group, tot
 		}
 	}
 	return &grouppb.GetGroupsResponse{
-		Groups: groupsResponse,
-		Total:  total,
+		Data:  groupsResponse,
+		Total: total,
 	}
 }

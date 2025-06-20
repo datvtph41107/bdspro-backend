@@ -39,6 +39,7 @@ message IdRequest {
     string sort = 4;
     string text = 5;
     uint32 ownerType = 6;
+    repeated uint64 ids = 7;
 }
 
 
@@ -154,6 +155,9 @@ message ProductResponse {
     HouseInfo houseInfo = 49;
     bool archived = 50;
     optional double priceSuggest = 51;
+    string districtName = 52;
+    string provinceName = 53;
+    string wardName = 54;
 }
 
 message Asset {

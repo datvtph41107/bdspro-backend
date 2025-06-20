@@ -193,10 +193,10 @@ func (u *RuleEventUsecase) TriggerAssignLead(c context.Context, customer dto.Cus
 	}
 
 	_, err = u.customerRepo.Assign(c, customer.CustomerID, &dto.LeadDTO{
-		OwnerID:    &customer.OwnerID,
-		OwnerType:  customer.OwnerType,
-		ChargeId:   &chargeId,
-		AssignNote: fmt.Sprintf("Tương tác tự động gán cho thành viên phụ trách %s", "."),
+		OwnerID:        &customer.OwnerID,
+		OwnerType:      customer.OwnerType,
+		ChargePersonId: &chargeId,
+		AssignNote:     fmt.Sprintf("Tương tác tự động gán cho thành viên phụ trách %s", "."),
 	})
 	return err
 }

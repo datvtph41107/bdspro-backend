@@ -98,6 +98,11 @@ case "$1" in
     path_jar=main
     payload_build=social
     ;;
+  "org")
+    service_path=organization-service
+    path_jar=main
+    payload_build=organization
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -141,6 +146,9 @@ if [ "$1" = "chathttp" ]; then
 fi
 if [ "$1" = "chatws" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
+if [ "$1" = "org" ]; then
+  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 
 if [ "$1" = "swagger-chat" ]; then

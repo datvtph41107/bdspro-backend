@@ -70,8 +70,9 @@ func ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
 		OwnerType:     int32(contact.OwnerType),
 		Avatar:        contact.Avatar,
 		ProfileId:     contact.ProfileID,
-		ContactStatus: uint32(contact.FriendStatus),
 		Blocked:       contact.Blocked,
+		ContactStatus: uint32(contact.Status),
+		StatusName:    enums.StatusContactMap[contact.Status],
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
 	}

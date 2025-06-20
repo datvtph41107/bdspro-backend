@@ -92,6 +92,6 @@ otp:
 
 grpc:
   organization:
-    host: localhost:50052
+    host: :50052
   group:
-    host: localhost:50052
+    host: :50052

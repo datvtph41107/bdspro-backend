@@ -16,13 +16,13 @@ import (
 
 // Principal chứa payload của token
 type Principal struct {
-	UserID         uint64           `json:"sub"`
+	AuthID         uint64           `json:"sub"`
 	ProfileId      uint64           `json:"profile"`
 	OrganizationId *uint64          `json:"organization"`
 	PlanId         *uint64          `json:"plan"`
 	Type           string           `json:"type"`
 	Role           string           `json:"role"`
-	Session        uint             `json:"session"`
+	Session        uint64           `json:"session"`
 	PlanFrom       *jwt.NumericDate `json:"start"`
 	jwt.RegisteredClaims
 }
@@ -115,13 +115,14 @@ func ParseJWT(tokenStr string) (*Principal, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		claims, _ := token.Claims.(*Principal)
+		return claims, err
 	}
-
 	// Nếu token hợp lệ, trả về claims
 	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
 		return claims, nil
 	}
+
 	return nil, fmt.Errorf("invalid token")
 }
 
