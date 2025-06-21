@@ -9,3 +9,7 @@ whitelist:
   - /pb_payment.PaymentService/SepayWebhook
 sepay:
   api_key: Apikey APi cuc xin
+grpc:
+  notification:
+    host: localhost
+    port: 8004

@@ -15,6 +15,8 @@ var (
 	DB_URL          string
 	Whitelist       []string
 	SepayAPIKey     string
+	NOTIFICATION_SERVICE_HOST string
+	NOTIFICATION_SERVICE_PORT string
 )
 
 func InitConfig() {
@@ -56,5 +58,11 @@ func ReadConfig() {
 	}
 	if SepayAPIKey = cfg.GetString("sepay.api_key"); SepayAPIKey == "" {
 		SepayAPIKey = "APi cuc xin"
+	}
+	if NOTIFICATION_SERVICE_HOST = cfg.GetString("notification.host"); NOTIFICATION_SERVICE_HOST == "" {
+		NOTIFICATION_SERVICE_HOST = "localhost"
+	}
+	if NOTIFICATION_SERVICE_PORT = cfg.GetString("notification.port"); NOTIFICATION_SERVICE_PORT == "" {
+		NOTIFICATION_SERVICE_PORT = "8004"
 	}
 }

@@ -8,6 +8,7 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
+	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
 	"github.com/tuandq2112/payment-service/internal/infrastructure/database"
 	"github.com/tuandq2112/payment-service/internal/infrastructure/repository"
 	"github.com/tuandq2112/payment-service/internal/interface/handler"
@@ -24,7 +25,8 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	walletTransactionsRepository := repository.NewWalletTransactionRepository(db)
 	walletAuditLogRepository := repository.NewWalletAuditLogRepository(db)
 	withdrawalRequestsRepository := repository.NewWithdrawalRequestRepository(db)
-	paymentUsecase := usecase.NewPaymentUsecase(paymentMethodRepository, walletsRepository, walletTransactionsRepository, walletAuditLogRepository, withdrawalRequestsRepository)
+	notificationClient := client.NewNotificationClient()
+	paymentUsecase := usecase.NewPaymentUsecase(paymentMethodRepository, walletsRepository, walletTransactionsRepository, walletAuditLogRepository, withdrawalRequestsRepository, notificationClient)
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
 	grpcServer := grpc.NewGRPCServer(paymentHandler)
 	return grpcServer
@@ -36,6 +38,8 @@ var databaseSet = wire.NewSet(database.NewPostgresDB)
 
 var repositorySet = wire.NewSet(repository.NewPaymentRepository, repository.NewWalletRepository, repository.NewWalletTransactionRepository, repository.NewWalletAuditLogRepository, repository.NewWithdrawalRequestRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewPaymentUsecase)
+var clientSet = wire.NewSet(client.NewNotificationClient)
+
+var usecaseSet = wire.NewSet(usecase.NewPaymentUsecase, usecase.NewNotificationWorker)
 
 var handlerSet = wire.NewSet(handler.NewPaymentHandler)

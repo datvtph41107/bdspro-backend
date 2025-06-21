@@ -231,5 +231,14 @@ func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.Ty
 	if typeMessage == enums.JoinOrganization {
 		return []string{"", "Quản trị viên đã thêm bạn vào tổ chức: \"" + attachData[1] + "\""}
 	}
+	if typeMessage == enums.Deposit {
+		return []string{"", attachData[0], " đã nạp tiền vào tài khoản của bạn"}
+	}
+	if typeMessage == enums.Withdraw {
+		return []string{"", attachData[0], " đã rút tiền từ tài khoản của bạn"}
+	}
+	if typeMessage == enums.Payment {
+		return []string{"", attachData[0], " đã thanh toán cho bạn"}
+	}	
 	return []string{}
 }

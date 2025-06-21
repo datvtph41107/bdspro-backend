@@ -34,9 +34,9 @@ func (h *PaymentHandler) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	return h.paymentUsecase.Deposit(ctx, req)
 }
 
-func (h *PaymentHandler) Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error) {
-	return h.paymentUsecase.Withdraw(ctx, req)
-}
+// func (h *PaymentHandler) Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error) {
+// 	return h.paymentUsecase.Withdraw(ctx, req)
+// }
 
 func (h *PaymentHandler) MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error) {
 	return h.paymentUsecase.MakePayment(ctx, req)
@@ -66,29 +66,29 @@ func (h *PaymentHandler) ExportWalletData(ctx context.Context, req *paymentpb.Re
 	return h.paymentUsecase.ExportWalletData(ctx, req)
 }
 
-func (h *PaymentHandler) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
-	return h.paymentUsecase.GetDealTransactionsDashboard(ctx, req)
-}
+// func (h *PaymentHandler) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
+// 	return h.paymentUsecase.GetDealTransactionsDashboard(ctx, req)
+// }
 
-func (h *PaymentHandler) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
-	return h.paymentUsecase.GetDealTransactions(ctx, req)
-}
+// func (h *PaymentHandler) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
+// 	return h.paymentUsecase.GetDealTransactions(ctx, req)
+// }
 
-func (h *PaymentHandler) GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	return h.paymentUsecase.GetDealTransaction(ctx, req)
-}
+// func (h *PaymentHandler) GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error) {
+// 	return h.paymentUsecase.GetDealTransaction(ctx, req)
+// }
 
-func (h *PaymentHandler) CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	return h.paymentUsecase.CreateDealTransaction(ctx, req)
-}
+// func (h *PaymentHandler) CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
+// 	return h.paymentUsecase.CreateDealTransaction(ctx, req)
+// }
 
-func (h *PaymentHandler) UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	return h.paymentUsecase.UpdateDealTransaction(ctx, req)
-}
+// func (h *PaymentHandler) UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
+// 	return h.paymentUsecase.UpdateDealTransaction(ctx, req)
+// }
 
-func (h *PaymentHandler) ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	return h.paymentUsecase.ApproveDealTransaction(ctx, req)
-}
+// func (h *PaymentHandler) ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error) {
+// 	return h.paymentUsecase.ApproveDealTransaction(ctx, req)
+// }
 
 func (h *PaymentHandler) GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error) {
 	return h.paymentUsecase.GetTransactionTypes(ctx, req)

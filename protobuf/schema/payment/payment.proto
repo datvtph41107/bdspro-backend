@@ -36,12 +36,12 @@ service PaymentService {
       body: "*"
     };
   }
-  rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {
-    option (google.api.http) = {
-      post: "/v2/payment/wallets/withdraw"
-      body: "*"
-    };
-  }
+  // rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {
+  //   option (google.api.http) = {
+  //     post: "/v2/payment/wallets/withdraw"
+  //     body: "*"
+  //   };
+  // }
   
   
   // Payment Methods
@@ -80,39 +80,39 @@ service PaymentService {
     };
   }
   
-  // Deal Transactions
-  rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
-    option (google.api.http) = {
-      get: "/v2/payment/deal-transactions/dashboard"
-    };
-  }
-  rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
-    option (google.api.http) = {
-      get: "/v2/payment/deal-transactions"
-    };
-  }
-  rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
-    option (google.api.http) = {
-      get: "/v2/payment/deal-transactions/{id}"
-    };
-  }
-  rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
-    option (google.api.http) = {
-      put: "/v2/payment/deal-transactions/{id}"
-      body: "*"
-    };
-  }
-  rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
-    option (google.api.http) = {
-      post: "/v2/payment/deal-transactions/{id}/approve"
-      body: "*"
-    };
-  }
-  rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
-    option (google.api.http) = {
-      get: "/v2/payment/deal-transactions/report"
-    };
-  }
+  // // Deal Transactions
+  // rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/dashboard"
+  //   };
+  // }
+  // rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions"
+  //   };
+  // }
+  // rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/{id}"
+  //   };
+  // }
+  // rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     put: "/v2/payment/deal-transactions/{id}"
+  //     body: "*"
+  //   };
+  // }
+  // rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     post: "/v2/payment/deal-transactions/{id}/approve"
+  //     body: "*"
+  //   };
+  // }
+  // rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/report"
+  //   };
+  // }
   // Transaction Types
   rpc GetTransactionTypes(Empty) returns (TransactionTypeList) {
     option (google.api.http) = {
@@ -143,12 +143,6 @@ service PaymentService {
       body: "*"
     };
   }
-}
-
-// Common messages
-message PaginationRequest {
-  int32 page = 1;
-  int32 size = 2;
 }
 
 message PaginationResponse {
@@ -191,7 +185,7 @@ message WalletTransaction {
 
 message WalletTransactionList {
   repeated WalletTransaction transactions = 1;
-  PaginationResponse pagination = 2;
+  uint32 total = 2;
 }
 
 message GetWalletRequest {
@@ -258,12 +252,7 @@ message PaymentRequest {
   string relatedId = 4;
 }
 
-message TransactionFilter {
-  string type = 1;
-  string status = 2;
-  string fromDate = 3;
-  string toDate = 4;
-}
+
 
 message ReportRequest {
   uint32 walletId = 1;    
@@ -282,14 +271,18 @@ message ReportResponse {
 message Empty {}
 
 message GetWalletTransactionsRequest {
-  uint32 walletId = 1;
-  TransactionFilter filter = 2;
-  PaginationRequest pagination = 3;
+  string type = 1;
+  string status = 2;
+  string fromDate = 3;
+  string toDate = 4;
+  uint32 page = 5;
+  uint32 size = 6;
 }
 
 message GetPaymentMethodsRequest {
   uint32 organizationId = 1;
-  PaginationRequest pagination = 2;
+  uint32 page = 2;
+  uint32 size = 3;
 }
 
 message PaymentMethodList {
@@ -314,13 +307,17 @@ message DealTransactionsDashboard {
 }
 
 message GetDealTransactionsRequest {
-  TransactionFilter filter = 1;
-  PaginationRequest pagination = 2;
+  string type = 1;
+  string status = 2;
+  string fromDate = 3;
+  string toDate = 4; 
+  uint32 page = 5;
+  uint32 size = 6;
 }
 
 message DealTransactionList {
   repeated DealTransaction transactions = 1;
-  PaginationResponse pagination = 2;
+  uint32 total = 2;
 }
 
 message GetDealTransactionRequest {

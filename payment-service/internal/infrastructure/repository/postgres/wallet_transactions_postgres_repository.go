@@ -70,29 +70,40 @@ func NewWalletTransactionRepository(db *gorm.DB) repository.WalletTransactionsRe
 	return &walletTransactionRepository{db: db}
 }
 
-func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walletId uint32, filter *paymentpb.TransactionFilter, pagination *paymentpb.PaginationRequest) ([]*paymentpb.WalletTransaction, int64, error) {
+func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walletId uint32, req *paymentpb.GetWalletTransactionsRequest) ([]*paymentpb.WalletTransaction, int64, error) {
 	var models []*WalletTransactionModel
 	var total int64
+	page := 0
+	size := 10
+		query := r.db.WithContext(ctx).Model(&WalletTransactionModel{}).Where("wallet_id = ?", walletId)
 
-	query := r.db.WithContext(ctx).Model(&WalletTransactionModel{}).Where("wallet_id = ?", walletId)
-
-	if filter != nil {
-		if filter.Type != "" {
-			query = query.Where("type = ?", filter.Type)
+	if req != nil {
+		if req.Type != "" {
+			query = query.Where("type = ?", req.Type)
 		}
-		if filter.Status != "" {
-			query = query.Where("status = ?", filter.Status)
+		if req.Status != "" {
+			query = query.Where("status = ?", req.Status)
+		}
+		if req.FromDate != "" {
+			query = query.Where("created_at >= ?", req.FromDate)
+		}
+		if req.ToDate != "" {
+			query = query.Where("created_at <= ?", req.ToDate)
+		}
+		if req.Page != 0 {
+			page = int(req.Page)
+		}
+		if req.Size != 0 {
+			size = int(req.Size)
 		}
 	}
 
+	if err := query.Offset(page).Limit(size).Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-
-	if err := query.Offset(int(pagination.Page * pagination.Size)).Limit(int(pagination.Size)).Find(&models).Error; err != nil {
-		return nil, 0, err
-	}
-
 	transactions := make([]*paymentpb.WalletTransaction, len(models))
 	for i, model := range models {
 		entity := WalletTransactionModelToEntity(model)
@@ -199,17 +210,30 @@ func (r *walletTransactionRepository) ExportTransactions(ctx context.Context, re
 	return nil, nil
 }
 
-func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, filter *paymentpb.TransactionFilter, pagination *paymentpb.PaginationRequest) ([]*paymentpb.DealTransaction, int64, error) {
+func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) ([]*paymentpb.DealTransaction, int64, error) {
 	var models []*WalletTransactionModel
 	var total int64
-
+	page := 0
+	size := 10
 	query := r.db.WithContext(ctx).Model(&WalletTransactionModel{})
-	if filter != nil {
-		if filter.Type != "" {
-			query = query.Where("type = ?", filter.Type)
+	if req != nil {
+		if req.Type != "" {
+			query = query.Where("type = ?", req.Type)
 		}
-		if filter.Status != "" {
-			query = query.Where("status = ?", filter.Status)
+		if req.Status != "" {
+			query = query.Where("status = ?", req.Status)
+		}
+		if req.FromDate != "" {
+			query = query.Where("created_at >= ?", req.FromDate)
+		}
+		if req.ToDate != "" {
+			query = query.Where("created_at <= ?", req.ToDate)
+		}
+		if req.Page != 0 {
+			page = int(req.Page)
+		}
+		if req.Size != 0 {
+			size = int(req.Size)
 		}
 	}
 
@@ -217,7 +241,7 @@ func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, f
 		return nil, 0, err
 	}
 
-	if err := query.Offset(int(pagination.Page * pagination.Size)).Limit(int(pagination.Size)).Find(&models).Error; err != nil {
+	if err := query.Offset(page).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -19,30 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PaymentService_GetWalletDashboard_FullMethodName           = "/pb_payment.PaymentService/GetWalletDashboard"
-	PaymentService_CreateWallet_FullMethodName                 = "/pb_payment.PaymentService/CreateWallet"
-	PaymentService_GetWallet_FullMethodName                    = "/pb_payment.PaymentService/GetWallet"
-	PaymentService_GetWalletTransactions_FullMethodName        = "/pb_payment.PaymentService/GetWalletTransactions"
-	PaymentService_MakePayment_FullMethodName                  = "/pb_payment.PaymentService/MakePayment"
-	PaymentService_Deposit_FullMethodName                      = "/pb_payment.PaymentService/Deposit"
-	PaymentService_Withdraw_FullMethodName                     = "/pb_payment.PaymentService/Withdraw"
-	PaymentService_GetPaymentMethods_FullMethodName            = "/pb_payment.PaymentService/GetPaymentMethods"
-	PaymentService_CreatePaymentMethod_FullMethodName          = "/pb_payment.PaymentService/CreatePaymentMethod"
-	PaymentService_UpdatePaymentMethod_FullMethodName          = "/pb_payment.PaymentService/UpdatePaymentMethod"
-	PaymentService_DeletePaymentMethod_FullMethodName          = "/pb_payment.PaymentService/DeletePaymentMethod"
-	PaymentService_GetWalletReport_FullMethodName              = "/pb_payment.PaymentService/GetWalletReport"
-	PaymentService_ExportWalletData_FullMethodName             = "/pb_payment.PaymentService/ExportWalletData"
-	PaymentService_GetDealTransactionsDashboard_FullMethodName = "/pb_payment.PaymentService/GetDealTransactionsDashboard"
-	PaymentService_GetDealTransactions_FullMethodName          = "/pb_payment.PaymentService/GetDealTransactions"
-	PaymentService_GetDealTransaction_FullMethodName           = "/pb_payment.PaymentService/GetDealTransaction"
-	PaymentService_UpdateDealTransaction_FullMethodName        = "/pb_payment.PaymentService/UpdateDealTransaction"
-	PaymentService_ApproveDealTransaction_FullMethodName       = "/pb_payment.PaymentService/ApproveDealTransaction"
-	PaymentService_GetDealTransactionsReport_FullMethodName    = "/pb_payment.PaymentService/GetDealTransactionsReport"
-	PaymentService_GetTransactionTypes_FullMethodName          = "/pb_payment.PaymentService/GetTransactionTypes"
-	PaymentService_CreateTransactionType_FullMethodName        = "/pb_payment.PaymentService/CreateTransactionType"
-	PaymentService_UpdateTransactionType_FullMethodName        = "/pb_payment.PaymentService/UpdateTransactionType"
-	PaymentService_DeleteTransactionType_FullMethodName        = "/pb_payment.PaymentService/DeleteTransactionType"
-	PaymentService_SepayWebhook_FullMethodName                 = "/pb_payment.PaymentService/SepayWebhook"
+	PaymentService_GetWalletDashboard_FullMethodName    = "/pb_payment.PaymentService/GetWalletDashboard"
+	PaymentService_CreateWallet_FullMethodName          = "/pb_payment.PaymentService/CreateWallet"
+	PaymentService_GetWallet_FullMethodName             = "/pb_payment.PaymentService/GetWallet"
+	PaymentService_GetWalletTransactions_FullMethodName = "/pb_payment.PaymentService/GetWalletTransactions"
+	PaymentService_MakePayment_FullMethodName           = "/pb_payment.PaymentService/MakePayment"
+	PaymentService_Deposit_FullMethodName               = "/pb_payment.PaymentService/Deposit"
+	PaymentService_GetPaymentMethods_FullMethodName     = "/pb_payment.PaymentService/GetPaymentMethods"
+	PaymentService_CreatePaymentMethod_FullMethodName   = "/pb_payment.PaymentService/CreatePaymentMethod"
+	PaymentService_UpdatePaymentMethod_FullMethodName   = "/pb_payment.PaymentService/UpdatePaymentMethod"
+	PaymentService_DeletePaymentMethod_FullMethodName   = "/pb_payment.PaymentService/DeletePaymentMethod"
+	PaymentService_GetWalletReport_FullMethodName       = "/pb_payment.PaymentService/GetWalletReport"
+	PaymentService_ExportWalletData_FullMethodName      = "/pb_payment.PaymentService/ExportWalletData"
+	PaymentService_GetTransactionTypes_FullMethodName   = "/pb_payment.PaymentService/GetTransactionTypes"
+	PaymentService_CreateTransactionType_FullMethodName = "/pb_payment.PaymentService/CreateTransactionType"
+	PaymentService_UpdateTransactionType_FullMethodName = "/pb_payment.PaymentService/UpdateTransactionType"
+	PaymentService_DeleteTransactionType_FullMethodName = "/pb_payment.PaymentService/DeleteTransactionType"
+	PaymentService_SepayWebhook_FullMethodName          = "/pb_payment.PaymentService/SepayWebhook"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -57,7 +50,6 @@ type PaymentServiceClient interface {
 	GetWalletTransactions(ctx context.Context, in *GetWalletTransactionsRequest, opts ...grpc.CallOption) (*WalletTransactionList, error)
 	MakePayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*WalletTransaction, error)
 	Deposit(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WalletTransaction, error)
-	Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawalRequest, error)
 	// Payment Methods
 	GetPaymentMethods(ctx context.Context, in *GetPaymentMethodsRequest, opts ...grpc.CallOption) (*PaymentMethodList, error)
 	CreatePaymentMethod(ctx context.Context, in *PaymentMethod, opts ...grpc.CallOption) (*PaymentMethod, error)
@@ -66,13 +58,46 @@ type PaymentServiceClient interface {
 	// Reports
 	GetWalletReport(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error)
 	ExportWalletData(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ExportResponse, error)
-	// Deal Transactions
-	GetDealTransactionsDashboard(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*DealTransactionsDashboard, error)
-	GetDealTransactions(ctx context.Context, in *GetDealTransactionsRequest, opts ...grpc.CallOption) (*DealTransactionList, error)
-	GetDealTransaction(ctx context.Context, in *GetDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error)
-	UpdateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error)
-	ApproveDealTransaction(ctx context.Context, in *ApproveDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error)
-	GetDealTransactionsReport(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error)
+	// // Deal Transactions
+	//
+	//	rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/dashboard"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/{id}"
+	//	  };
+	//	}
+	//
+	//	rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    put: "/v2/payment/deal-transactions/{id}"
+	//	    body: "*"
+	//	  };
+	//	}
+	//
+	//	rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    post: "/v2/payment/deal-transactions/{id}/approve"
+	//	    body: "*"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/report"
+	//	  };
+	//	}
+	//
 	// Transaction Types
 	GetTransactionTypes(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TransactionTypeList, error)
 	CreateTransactionType(ctx context.Context, in *TransactionType, opts ...grpc.CallOption) (*TransactionType, error)
@@ -143,15 +168,6 @@ func (c *paymentServiceClient) Deposit(ctx context.Context, in *DepositRequest, 
 	return out, nil
 }
 
-func (c *paymentServiceClient) Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawalRequest, error) {
-	out := new(WithdrawalRequest)
-	err := c.cc.Invoke(ctx, PaymentService_Withdraw_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *paymentServiceClient) GetPaymentMethods(ctx context.Context, in *GetPaymentMethodsRequest, opts ...grpc.CallOption) (*PaymentMethodList, error) {
 	out := new(PaymentMethodList)
 	err := c.cc.Invoke(ctx, PaymentService_GetPaymentMethods_FullMethodName, in, out, opts...)
@@ -200,60 +216,6 @@ func (c *paymentServiceClient) GetWalletReport(ctx context.Context, in *ReportRe
 func (c *paymentServiceClient) ExportWalletData(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ExportResponse, error) {
 	out := new(ExportResponse)
 	err := c.cc.Invoke(ctx, PaymentService_ExportWalletData_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) GetDealTransactionsDashboard(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*DealTransactionsDashboard, error) {
-	out := new(DealTransactionsDashboard)
-	err := c.cc.Invoke(ctx, PaymentService_GetDealTransactionsDashboard_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) GetDealTransactions(ctx context.Context, in *GetDealTransactionsRequest, opts ...grpc.CallOption) (*DealTransactionList, error) {
-	out := new(DealTransactionList)
-	err := c.cc.Invoke(ctx, PaymentService_GetDealTransactions_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) GetDealTransaction(ctx context.Context, in *GetDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error) {
-	out := new(DealTransaction)
-	err := c.cc.Invoke(ctx, PaymentService_GetDealTransaction_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) UpdateDealTransaction(ctx context.Context, in *DealTransaction, opts ...grpc.CallOption) (*DealTransaction, error) {
-	out := new(DealTransaction)
-	err := c.cc.Invoke(ctx, PaymentService_UpdateDealTransaction_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) ApproveDealTransaction(ctx context.Context, in *ApproveDealTransactionRequest, opts ...grpc.CallOption) (*DealTransaction, error) {
-	out := new(DealTransaction)
-	err := c.cc.Invoke(ctx, PaymentService_ApproveDealTransaction_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) GetDealTransactionsReport(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
-	out := new(ReportResponse)
-	err := c.cc.Invoke(ctx, PaymentService_GetDealTransactionsReport_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +279,6 @@ type PaymentServiceServer interface {
 	GetWalletTransactions(context.Context, *GetWalletTransactionsRequest) (*WalletTransactionList, error)
 	MakePayment(context.Context, *PaymentRequest) (*WalletTransaction, error)
 	Deposit(context.Context, *DepositRequest) (*WalletTransaction, error)
-	Withdraw(context.Context, *WithdrawRequest) (*WithdrawalRequest, error)
 	// Payment Methods
 	GetPaymentMethods(context.Context, *GetPaymentMethodsRequest) (*PaymentMethodList, error)
 	CreatePaymentMethod(context.Context, *PaymentMethod) (*PaymentMethod, error)
@@ -326,13 +287,46 @@ type PaymentServiceServer interface {
 	// Reports
 	GetWalletReport(context.Context, *ReportRequest) (*ReportResponse, error)
 	ExportWalletData(context.Context, *ReportRequest) (*ExportResponse, error)
-	// Deal Transactions
-	GetDealTransactionsDashboard(context.Context, *Empty) (*DealTransactionsDashboard, error)
-	GetDealTransactions(context.Context, *GetDealTransactionsRequest) (*DealTransactionList, error)
-	GetDealTransaction(context.Context, *GetDealTransactionRequest) (*DealTransaction, error)
-	UpdateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error)
-	ApproveDealTransaction(context.Context, *ApproveDealTransactionRequest) (*DealTransaction, error)
-	GetDealTransactionsReport(context.Context, *ReportRequest) (*ReportResponse, error)
+	// // Deal Transactions
+	//
+	//	rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/dashboard"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/{id}"
+	//	  };
+	//	}
+	//
+	//	rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    put: "/v2/payment/deal-transactions/{id}"
+	//	    body: "*"
+	//	  };
+	//	}
+	//
+	//	rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
+	//	  option (google.api.http) = {
+	//	    post: "/v2/payment/deal-transactions/{id}/approve"
+	//	    body: "*"
+	//	  };
+	//	}
+	//
+	//	rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
+	//	  option (google.api.http) = {
+	//	    get: "/v2/payment/deal-transactions/report"
+	//	  };
+	//	}
+	//
 	// Transaction Types
 	GetTransactionTypes(context.Context, *Empty) (*TransactionTypeList, error)
 	CreateTransactionType(context.Context, *TransactionType) (*TransactionType, error)
@@ -364,9 +358,6 @@ func (UnimplementedPaymentServiceServer) MakePayment(context.Context, *PaymentRe
 func (UnimplementedPaymentServiceServer) Deposit(context.Context, *DepositRequest) (*WalletTransaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Deposit not implemented")
 }
-func (UnimplementedPaymentServiceServer) Withdraw(context.Context, *WithdrawRequest) (*WithdrawalRequest, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Withdraw not implemented")
-}
 func (UnimplementedPaymentServiceServer) GetPaymentMethods(context.Context, *GetPaymentMethodsRequest) (*PaymentMethodList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPaymentMethods not implemented")
 }
@@ -384,24 +375,6 @@ func (UnimplementedPaymentServiceServer) GetWalletReport(context.Context, *Repor
 }
 func (UnimplementedPaymentServiceServer) ExportWalletData(context.Context, *ReportRequest) (*ExportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExportWalletData not implemented")
-}
-func (UnimplementedPaymentServiceServer) GetDealTransactionsDashboard(context.Context, *Empty) (*DealTransactionsDashboard, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransactionsDashboard not implemented")
-}
-func (UnimplementedPaymentServiceServer) GetDealTransactions(context.Context, *GetDealTransactionsRequest) (*DealTransactionList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransactions not implemented")
-}
-func (UnimplementedPaymentServiceServer) GetDealTransaction(context.Context, *GetDealTransactionRequest) (*DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransaction not implemented")
-}
-func (UnimplementedPaymentServiceServer) UpdateDealTransaction(context.Context, *DealTransaction) (*DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateDealTransaction not implemented")
-}
-func (UnimplementedPaymentServiceServer) ApproveDealTransaction(context.Context, *ApproveDealTransactionRequest) (*DealTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ApproveDealTransaction not implemented")
-}
-func (UnimplementedPaymentServiceServer) GetDealTransactionsReport(context.Context, *ReportRequest) (*ReportResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDealTransactionsReport not implemented")
 }
 func (UnimplementedPaymentServiceServer) GetTransactionTypes(context.Context, *Empty) (*TransactionTypeList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionTypes not implemented")
@@ -539,24 +512,6 @@ func _PaymentService_Deposit_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PaymentService_Withdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WithdrawRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).Withdraw(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_Withdraw_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).Withdraw(ctx, req.(*WithdrawRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _PaymentService_GetPaymentMethods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPaymentMethodsRequest)
 	if err := dec(in); err != nil {
@@ -661,114 +616,6 @@ func _PaymentService_ExportWalletData_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PaymentServiceServer).ExportWalletData(ctx, req.(*ReportRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_GetDealTransactionsDashboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).GetDealTransactionsDashboard(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_GetDealTransactionsDashboard_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).GetDealTransactionsDashboard(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_GetDealTransactions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDealTransactionsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).GetDealTransactions(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_GetDealTransactions_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).GetDealTransactions(ctx, req.(*GetDealTransactionsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_GetDealTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDealTransactionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).GetDealTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_GetDealTransaction_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).GetDealTransaction(ctx, req.(*GetDealTransactionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_UpdateDealTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DealTransaction)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).UpdateDealTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_UpdateDealTransaction_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).UpdateDealTransaction(ctx, req.(*DealTransaction))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_ApproveDealTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ApproveDealTransactionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).ApproveDealTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_ApproveDealTransaction_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).ApproveDealTransaction(ctx, req.(*ApproveDealTransactionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_GetDealTransactionsReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReportRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).GetDealTransactionsReport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_GetDealTransactionsReport_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).GetDealTransactionsReport(ctx, req.(*ReportRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -895,10 +742,6 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PaymentService_Deposit_Handler,
 		},
 		{
-			MethodName: "Withdraw",
-			Handler:    _PaymentService_Withdraw_Handler,
-		},
-		{
 			MethodName: "GetPaymentMethods",
 			Handler:    _PaymentService_GetPaymentMethods_Handler,
 		},
@@ -921,30 +764,6 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExportWalletData",
 			Handler:    _PaymentService_ExportWalletData_Handler,
-		},
-		{
-			MethodName: "GetDealTransactionsDashboard",
-			Handler:    _PaymentService_GetDealTransactionsDashboard_Handler,
-		},
-		{
-			MethodName: "GetDealTransactions",
-			Handler:    _PaymentService_GetDealTransactions_Handler,
-		},
-		{
-			MethodName: "GetDealTransaction",
-			Handler:    _PaymentService_GetDealTransaction_Handler,
-		},
-		{
-			MethodName: "UpdateDealTransaction",
-			Handler:    _PaymentService_UpdateDealTransaction_Handler,
-		},
-		{
-			MethodName: "ApproveDealTransaction",
-			Handler:    _PaymentService_ApproveDealTransaction_Handler,
-		},
-		{
-			MethodName: "GetDealTransactionsReport",
-			Handler:    _PaymentService_GetDealTransactionsReport_Handler,
 		},
 		{
 			MethodName: "GetTransactionTypes",

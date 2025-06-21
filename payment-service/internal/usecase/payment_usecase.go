@@ -9,6 +9,7 @@ import (
 	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/internal/domain/entity"
 	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
 	"github.com/tuandq2112/payment-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -46,6 +47,7 @@ type paymentUsecase struct {
 	walletTransactionRepository repository.WalletTransactionsRepository
 	walletAuditLogRepository    repository.WalletAuditLogRepository
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository
+	notificationWorker          *notificationWorker
 }
 
 func NewPaymentUsecase(
@@ -54,13 +56,17 @@ func NewPaymentUsecase(
 	walletTransactionRepository repository.WalletTransactionsRepository,
 	walletAuditLogRepository repository.WalletAuditLogRepository,
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository,
+	notificationClient client.NotificationClient,
 ) PaymentUsecase {
+	notificationWorker := NewNotificationWorker(notificationClient)
+	notificationWorker.Start()
 	return &paymentUsecase{
 		paymentRepository:           paymentRepository,
 		walletRepository:            walletRepository,
 		walletTransactionRepository: walletTransactionRepository,
 		walletAuditLogRepository:    walletAuditLogRepository,
 		withdrawalRequestRepository: withdrawalRequestRepository,
+		notificationWorker:          notificationWorker,
 	}
 }
 
@@ -106,18 +112,18 @@ func (p *paymentUsecase) GetWalletDashboard(ctx context.Context) (*paymentpb.Wal
 }
 
 func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error) {
-	transactions, total, err := p.walletTransactionRepository.GetTransactions(ctx, req.WalletId, req.Filter, req.Pagination)
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-
+	transactions, total, err := p.walletTransactionRepository.GetTransactions(ctx, wallet.Id, req)
+	if err != nil {
+		return nil, err
+	}
 	return &paymentpb.WalletTransactionList{
 		Transactions: transactions,
-		Pagination: &paymentpb.PaginationResponse{
-			Total: int32(total),
-			Page:  req.Pagination.Page,
-			Size:  req.Pagination.Size,
-		},
+		Total:        uint32(total),
 	}, nil
 }
 
@@ -156,14 +162,14 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
+	go p.notificationWorker.PushToQueue(ctx, transaction, "Tạo giao dịch nạp tiền thành công")
 	return &paymentpb.WalletTransaction{
-		Id:               transaction.Id,
-		WalletId:         transaction.WalletId,
-		Type:             string(transaction.Type),
-		Amount:           transaction.Amount,
-		Status:           string(transaction.Status),
-		TransactionCode:  transaction.TransactionCode,
+		Id:              transaction.Id,
+		WalletId:        transaction.WalletId,
+		Type:            string(transaction.Type),
+		Amount:          transaction.Amount,
+		Status:          string(transaction.Status),
+		TransactionCode: transaction.TransactionCode,
 	}, nil
 }
 
@@ -190,7 +196,7 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 		Status:          string(entity.TransactionStatusPending),
 		PaymentMethod:   req.PaymentMethod,
 		BankAccountInfo: req.BankAccountInfo,
-		RequestedBy:     0, 
+		RequestedBy:     0,
 	}
 
 	err = p.withdrawalRequestRepository.CreateWithdrawalRequest(ctx, withdrawal)
@@ -216,7 +222,7 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
+	go p.notificationWorker.PushToQueue(ctx, transaction, "Rút tiền thành công")
 	return &paymentpb.WithdrawalRequest{
 		Id:              withdrawal.Id,
 		WalletId:        withdrawal.WalletId,
@@ -232,8 +238,9 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 	tx := p.walletRepository.BeginTx(ctx)
 	defer tx.Rollback()
 
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.WalletId)
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -242,15 +249,16 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 	if wallet.Balance < req.Amount {
 		return nil, fmt.Errorf("insufficient balance")
 	}
+	transactionCode := fmt.Sprintf("DEP%d%d", time.Now().UnixNano(), wallet.Id)
 
-	// Create transaction record
 	transaction := &entity.WalletTransaction{
-		WalletId:       req.WalletId,
-		Type:           "PAYMENT",
-		Amount:         -req.Amount,
-		Status:         "COMPLETED",
-		RelatedService: req.RelatedService,
-		RelatedId:      req.RelatedId,
+		WalletId:        req.WalletId,
+		Type:            "PAYMENT",
+		Amount:          -req.Amount,
+		Status:          "COMPLETED",
+		RelatedService:  req.RelatedService,
+		RelatedId:       req.RelatedId,
+		TransactionCode: transactionCode,
 	}
 
 	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
@@ -283,23 +291,24 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
+	go p.notificationWorker.PushToQueue(ctx, transaction, "Thanh toán thành công")
 	return &paymentpb.WalletTransaction{
-		Id:               transaction.Id,
-		WalletId:         transaction.WalletId,
-		Type:             string(transaction.Type),
-		Amount:           transaction.Amount,
-		Status:           string(transaction.Status),
+		Id:       transaction.Id,
+		WalletId: transaction.WalletId,
+		Type:     string(transaction.Type),
+		Amount:   transaction.Amount,
+		Status:   string(transaction.Status),
 	}, nil
 }
 
 func (p *paymentUsecase) GetPaymentMethods(ctx context.Context, req *paymentpb.GetPaymentMethodsRequest) (*paymentpb.PaymentMethodList, error) {
 	page := 0
-
 	size := 10
-	if req.Pagination != nil {
-		page = int(req.Pagination.Page)
-		size = int(req.Pagination.Size)
+	if req.Page != 0 {
+		page = int(req.Page)
+	}
+	if req.Size != 0 {
+		size = int(req.Size)
 	}
 	methods, total, err := p.paymentRepository.GetPaymentMethods(ctx, req.OrganizationId, page, size)
 	if err != nil {
@@ -428,18 +437,14 @@ func (p *paymentUsecase) GetDealTransactionsDashboard(ctx context.Context, req *
 }
 
 func (p *paymentUsecase) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
-	transactions, total, err := p.walletTransactionRepository.GetDealTransactions(ctx, req.Filter, req.Pagination)
+	transactions, total, err := p.walletTransactionRepository.GetDealTransactions(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
 	return &paymentpb.DealTransactionList{
 		Transactions: transactions,
-		Pagination: &paymentpb.PaginationResponse{
-			Total: int32(total),
-			Page:  req.Pagination.Page,
-			Size:  req.Pagination.Size,
-		},
+		Total:        uint32(total),
 	}, nil
 }
 
@@ -632,14 +637,14 @@ func (p *paymentUsecase) GetWallet(ctx context.Context, req *paymentpb.GetWallet
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
-		}	
+		}
 		return nil, err
 	}
 
 	return &paymentpb.Wallet{
-		Id: wallet.Id,
-		UserId: wallet.UserId,
-		Balance: wallet.Balance,
+		Id:       wallet.Id,
+		UserId:   wallet.UserId,
+		Balance:  wallet.Balance,
 		Currency: wallet.Currency,
 	}, nil
 }
@@ -648,7 +653,7 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
 	defer tx.Rollback()
-	
+
 	// Get transaction by code
 	transaction, err := p.walletTransactionRepository.GetTransactionByCode(ctx, transactionCode)
 	if err != nil {
@@ -701,12 +706,12 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
+	go p.notificationWorker.PushToQueue(ctx, transaction, "Nạp tiền thành công")
 	return &paymentpb.WalletTransaction{
-		Id:               transaction.Id,
-		WalletId:         transaction.WalletId,
-		Type:             string(transaction.Type),
-		Amount:           transaction.Amount,
-		Status:           string(transaction.Status),
+		Id:       transaction.Id,
+		WalletId: transaction.WalletId,
+		Type:     string(transaction.Type),
+		Amount:   transaction.Amount,
+		Status:   string(transaction.Status),
 	}, nil
 }

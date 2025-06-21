@@ -20,6 +20,7 @@ init:
 	cd organization-service && go mod tidy
 	cd appointment-service && go mod tidy
 	cd payment-service && go mod tidy
+	cd notification-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
