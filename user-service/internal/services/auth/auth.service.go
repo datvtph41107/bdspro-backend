@@ -26,8 +26,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthService struct {
@@ -69,18 +67,13 @@ func NewRedisService() *_redis.RedisService {
 // 	return organizationpb.NewOrganizationMemberServiceClient(conn)
 // }
 
-func NewPaymentClient() paymentpb.PaymentServiceClient {
-	conn, err := grpc.NewClient(viper.GetString("grpc.payment.host"), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to connect to payment service: %v", err)
-	}
-	return paymentpb.NewPaymentServiceClient(conn)
-}
+
 
 func NewAuthService(redisService *_redis.RedisService,
 	cookie *CookieService,
 	profileRepo *repo.ProfileRepo,
 	organizationClient organizationpb.OrganizationMemberServiceClient,
+	paymentClient paymentpb.PaymentServiceClient,
 ) *AuthService {
 	planId := uint64(1)
 	return &AuthService{
@@ -88,8 +81,8 @@ func NewAuthService(redisService *_redis.RedisService,
 		CookieService:      cookie,
 		PreePlanID:         &planId,
 		ProfileRepo:        profileRepo,
-		OrganizationClient: NewOrganizationClient(),
-		PaymentClient:      NewPaymentClient(),
+		OrganizationClient: organizationClient,
+		PaymentClient:      paymentClient,
 	}
 }
 

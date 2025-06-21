@@ -24,6 +24,10 @@ init:
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
+buf-group:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path group
+buf-document:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path document
 buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
 buf-noti:
@@ -42,11 +46,9 @@ buf-appointment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path appointment
 buf-transaction:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path transaction
-buf-group:
-	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path group
 buf-payment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
-buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-group buf-payment buf-group buf-payment
+buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-payment buf-payment buf-crm
 	echo "done"	
 	
 
@@ -64,17 +66,11 @@ social:
 	cd social-service && go run main.go grpc
 appointment:
 	cd appointment-service && go run main.go grpc-server
-<<<<<<< HEAD
 
-=======
-buf-crm:
-	cd protobuf/schema && buf generate --template ./crm/buf.gen.yaml --path crm
->>>>>>> d7e7d37 (#Add payment grpc server and make file)
 user-http:
 	cd user-service && go run main.go http
 chat:
 	cd go-chat-service && go run main.go grpc-serve
-<<<<<<< HEAD
 
 swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
@@ -87,7 +83,17 @@ chat-ws:
 
 chat-swagger:
 	cd go-chat-service && go run main.go swagger-serve
-=======
 payment:
 	cd payment-service && go run main.go grpc-server
->>>>>>> d7e7d37 (#Add payment grpc server and make file)
+
+
+start-all:
+	make buf-all
+	make swag-merge
+	make chat-http
+	make chat-ws
+	make chat-swagger
+	make payment
+	make org
+	make user-http
+	make chat
