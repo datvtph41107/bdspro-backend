@@ -6,7 +6,7 @@ service:
   domain: localhost
   port:
     notification: 8004
-    payment: 8805
+    payment: 50055
     bdspro: 8202
     organization: 50052
     crm: 8206

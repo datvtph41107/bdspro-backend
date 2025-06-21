@@ -51,6 +51,7 @@ var wireSet = wire.NewSet(
 	user_internal_services_auth.NewHttpClient,
 	user_infra_routes.NewOAuthRouter,
 	user_internal_services_auth.NewOAuthService,
+	user_infra_client.NewPaymentClient,
 	user_infra_client.NewOrganizationClient,
 	user_infra_client.NewOrganizationMemberClient,
 	user_infra_repo.NewProfessionRepo,

@@ -15,6 +15,9 @@ const (
 	JoinGroup        TypeEnum = 80  //"JOIN_GROUP"
 	JoinOrganization TypeEnum = 90  //"JOIN_ORGANIZATION"
 	ShareProduct     TypeEnum = 100 //"SHARE_PRODUCT"
+	Deposit          TypeEnum = 110 //"DEPOSIT"
+	Withdraw         TypeEnum = 111 //"WITHDRAW"
+	Payment          TypeEnum = 112 //"PAYMENT"
 )
 
 var TypeEnumMap = map[TypeEnum]string{
@@ -28,6 +31,9 @@ var TypeEnumMap = map[TypeEnum]string{
 	ShareNewsFeed:    "Chia sẻ bài viết",
 	JoinGroup:        "Tham gia nhóm",
 	JoinOrganization: "Tham gia tổ chức",
+	Deposit:          "Nạp tiền",
+	Withdraw:         "Rút tiền",
+	Payment:          "Thanh toán",
 }
 
 // IsValid kiểm tra xem giá trị có hợp lệ không

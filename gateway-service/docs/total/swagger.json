@@ -422,6 +422,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -486,6 +497,17 @@
             "name": "text",
             "required": false,
             "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -595,6 +617,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -696,6 +729,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -760,6 +804,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -861,6 +916,17 @@
             "name": "text",
             "required": false,
             "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -988,6 +1054,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1052,6 +1129,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1153,6 +1241,17 @@
             "name": "text",
             "required": false,
             "type": "string"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1217,6 +1316,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1281,6 +1391,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1420,6 +1541,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1600,6 +1732,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -1953,6 +2096,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -2356,6 +2510,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -2489,6 +2654,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -2585,6 +2761,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -3451,6 +3638,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -3515,6 +3713,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -3579,6 +3788,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -3643,6 +3863,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -3707,6 +3938,17 @@
             "name": "ownerType",
             "required": false,
             "type": "integer"
+          },
+          {
+            "collectionFormat": "multi",
+            "in": "query",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            },
+            "name": "ids",
+            "required": false,
+            "type": "array"
           }
         ],
         "responses": {
@@ -5405,7 +5647,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/crmpbLeadDTO"
+              "$ref": "#/definitions/crmpbLeadSaveRequest"
             }
           }
         ],
@@ -5428,16 +5670,48 @@
         ]
       }
     },
-    "/v2/crm/lead/assign": {
+    "/v2/crm/lead/assign-crm": {
       "post": {
-        "operationId": "LeadService_Assign",
+        "operationId": "LeadService_AssignCrm",
         "parameters": [
           {
             "in": "body",
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/crmpbLeadAssignRequest"
+              "$ref": "#/definitions/crmpbLeadAssignCrmRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "LeadService"
+        ]
+      }
+    },
+    "/v2/crm/lead/assign-person": {
+      "post": {
+        "operationId": "LeadService_AssignCharge",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadAssignPersonRequest"
             }
           }
         ],
@@ -5507,7 +5781,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbLeadDTO"
+              "$ref": "#/definitions/crmpbLeadDetailDTO"
             }
           },
           "default": {
@@ -5594,7 +5868,7 @@
               "format": "uint64",
               "type": "string"
             },
-            "name": "chargeIds",
+            "name": "chargePersonIds",
             "required": false,
             "type": "array"
           },
@@ -6821,74 +7095,6 @@
         ]
       }
     },
-    "/v2/group": {
-      "get": {
-        "operationId": "GroupService_GetGroups",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "page",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "size",
-            "required": false,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupService"
-        ]
-      },
-      "post": {
-        "operationId": "GroupService_CreateGroup",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
     "/v2/group-deal": {
       "get": {
         "operationId": "GroupDealService_GetGroupDeals",
@@ -6920,36 +7126,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbGetGroupDealsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupDealService"
-        ]
-      },
-      "post": {
-        "operationId": "GroupDealService_CreateGroupDeal",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupDealRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupDealResponse"
             }
           },
           "default": {
@@ -7097,178 +7273,6 @@
         },
         "tags": [
           "GroupDealService"
-        ]
-      }
-    },
-    "/v2/group-member": {
-      "get": {
-        "operationId": "GroupMemberService_GetGroupMembers",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "groupId",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "page",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "size",
-            "required": false,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupMembersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupMemberService"
-        ]
-      },
-      "post": {
-        "operationId": "GroupMemberService_CreateGroupMember",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupMemberRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupMemberResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupMemberService"
-        ]
-      }
-    },
-    "/v2/group-member/{id}": {
-      "delete": {
-        "operationId": "GroupMemberService_DeleteGroupMember",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbDeleteGroupMemberResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupMemberService"
-        ]
-      },
-      "get": {
-        "operationId": "GroupMemberService_GetGroupMember",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupMemberResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupMemberService"
-        ]
-      },
-      "put": {
-        "operationId": "GroupMemberService_UpdateGroupMember",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupMemberServiceUpdateGroupMemberBody"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbUpdateGroupMemberResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupMemberService"
         ]
       }
     },
@@ -7616,103 +7620,6 @@
         ]
       }
     },
-    "/v2/group/{id}": {
-      "delete": {
-        "operationId": "GroupService_DeleteGroup",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbDeleteGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupService"
-        ]
-      },
-      "get": {
-        "operationId": "GroupService_GetGroup",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupService"
-        ]
-      },
-      "put": {
-        "operationId": "GroupService_UpdateGroup",
-        "parameters": [
-          {
-            "format": "int64",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "integer"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupServiceUpdateGroupBody"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbUpdateGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
     "/v2/notification/count": {
       "get": {
         "operationId": "GatewayNotificationService_Count",
@@ -7965,7 +7872,945 @@
         ]
       }
     },
-    "/v2/organization": {
+    "/v2/org/documents/{id}": {
+      "delete": {
+        "operationId": "GroupDocumentService_DeleteGroupDocument",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteGroupDocumentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDocumentService"
+        ]
+      },
+      "get": {
+        "operationId": "GroupDocumentService_GetGroupDocument",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDocumentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDocumentService"
+        ]
+      },
+      "put": {
+        "operationId": "GroupDocumentService_UpdateGroupDocument",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDocumentServiceUpdateGroupDocumentBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupDocumentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDocumentService"
+        ]
+      }
+    },
+    "/v2/org/group": {
+      "get": {
+        "operationId": "GroupService_GetGroups",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      },
+      "post": {
+        "operationId": "GroupService_CreateGroup",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
+    "/v2/org/group-deal": {
+      "post": {
+        "operationId": "GroupDealService_CreateGroupDeal",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDealRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/group-deal/{id}": {
+      "delete": {
+        "operationId": "GroupDealService_DeleteGroupDeal",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteGroupDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDealService"
+        ]
+      },
+      "get": {
+        "operationId": "GroupDealService_GetGroupDeal",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDealService"
+        ]
+      },
+      "put": {
+        "operationId": "GroupDealService_UpdateGroupDeal",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/group-member": {
+      "get": {
+        "operationId": "GroupMemberService_GetGroupMembers",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "groupId",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupMemberService"
+        ]
+      },
+      "post": {
+        "operationId": "GroupMemberService_CreateGroupMember",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupMemberService"
+        ]
+      }
+    },
+    "/v2/org/group-member/{id}": {
+      "delete": {
+        "operationId": "GroupMemberService_DeleteGroupMember",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupMemberService"
+        ]
+      },
+      "get": {
+        "operationId": "GroupMemberService_GetGroupMember",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupMemberService"
+        ]
+      },
+      "put": {
+        "operationId": "GroupMemberService_UpdateGroupMember",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupMemberServiceUpdateGroupMemberBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupMemberService"
+        ]
+      }
+    },
+    "/v2/org/group-notification": {
+      "get": {
+        "operationId": "GroupNotificationService_GetGroupNotifications",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "groupId",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupNotificationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupNotificationService"
+        ]
+      }
+    },
+    "/v2/org/group-setting": {
+      "get": {
+        "operationId": "GroupSettingService_GetGroupSettings",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "groupId",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupSettingService"
+        ]
+      },
+      "post": {
+        "operationId": "GroupSettingService_CreateGroupSetting",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupSettingRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupSettingService"
+        ]
+      }
+    },
+    "/v2/org/group-setting/{id}": {
+      "delete": {
+        "operationId": "GroupSettingService_DeleteGroupSetting",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteGroupSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupSettingService"
+        ]
+      },
+      "get": {
+        "operationId": "GroupSettingService_GetGroupSetting",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupSettingService"
+        ]
+      },
+      "put": {
+        "operationId": "GroupSettingService_UpdateGroupSetting",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupSettingServiceUpdateGroupSettingBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupSettingService"
+        ]
+      }
+    },
+    "/v2/org/group/log-activity": {
+      "get": {
+        "operationId": "GroupLogActivityService_GetGroupLogActivities",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "groupId",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupLogActivitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupLogActivityService"
+        ]
+      }
+    },
+    "/v2/org/group/user/{userId}": {
+      "get": {
+        "operationId": "GroupService_GetGroupByUserId",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
+    "/v2/org/group/{groupId}/documents": {
+      "get": {
+        "operationId": "GroupDocumentService_GetGroupDocuments",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDocumentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDocumentService"
+        ]
+      },
+      "post": {
+        "operationId": "GroupDocumentService_CreateGroupDocument",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDocumentServiceCreateGroupDocumentBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDocumentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupDocumentService"
+        ]
+      }
+    },
+    "/v2/org/group/{id}": {
+      "delete": {
+        "operationId": "GroupService_DeleteGroup",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      },
+      "get": {
+        "operationId": "GroupService_GetGroup",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      },
+      "put": {
+        "operationId": "GroupService_UpdateGroup",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupServiceUpdateGroupBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
+    "/v2/org/organization": {
       "get": {
         "operationId": "OrganizationService_GetOrganizations",
         "parameters": [
@@ -8008,39 +8853,9 @@
         "tags": [
           "OrganizationService"
         ]
-      },
-      "post": {
-        "operationId": "OrganizationService_CreateOrganization",
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateOrganizationRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateOrganizationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "OrganizationService"
-        ]
       }
     },
-    "/v2/organization-branch": {
+    "/v2/org/organization-branch": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranches",
         "parameters": [
@@ -8115,7 +8930,7 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}": {
+    "/v2/org/organization-branch/{id}": {
       "delete": {
         "operationId": "OrganizationBranchService_DeleteOrganizationBranch",
         "parameters": [
@@ -8183,7 +8998,7 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/add-member": {
+    "/v2/org/organization-branch/{id}/add-member": {
       "post": {
         "operationId": "OrganizationBranchService_AddMemberToOrganizationBranch",
         "parameters": [
@@ -8222,7 +9037,7 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/members": {
+    "/v2/org/organization-branch/{id}/members": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranchMembers",
         "parameters": [
@@ -8267,7 +9082,7 @@
         ]
       }
     },
-    "/v2/organization-branch/{id}/remove-member/{userId}": {
+    "/v2/org/organization-branch/{id}/remove-member/{userId}": {
       "delete": {
         "operationId": "OrganizationBranchService_RemoveMemberFromOrganizationBranch",
         "parameters": [
@@ -8305,7 +9120,7 @@
         ]
       }
     },
-    "/v2/organization-permission": {
+    "/v2/org/organization-permission": {
       "get": {
         "operationId": "OrganizationPermissionService_GetPermissions",
         "parameters": [
@@ -8380,7 +9195,7 @@
         ]
       }
     },
-    "/v2/organization-permission/{id}": {
+    "/v2/org/organization-permission/{id}": {
       "delete": {
         "operationId": "OrganizationPermissionService_DeletePermission",
         "parameters": [
@@ -8448,7 +9263,7 @@
         ]
       }
     },
-    "/v2/organization-role": {
+    "/v2/org/organization-role": {
       "get": {
         "operationId": "OrganizationRoleService_GetRoles",
         "parameters": [
@@ -8523,7 +9338,7 @@
         ]
       }
     },
-    "/v2/organization-role/{id}": {
+    "/v2/org/organization-role/{id}": {
       "delete": {
         "operationId": "OrganizationRoleService_DeleteRole",
         "parameters": [
@@ -8591,7 +9406,7 @@
         ]
       }
     },
-    "/v2/organization/check-is-exist/{id}": {
+    "/v2/org/organization/check-is-exist/{id}": {
       "get": {
         "operationId": "OrganizationService_CheckOrganizationIsExist",
         "parameters": [
@@ -8622,7 +9437,7 @@
         ]
       }
     },
-    "/v2/organization/log/{id}": {
+    "/v2/org/organization/log/{id}": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivityByID",
         "parameters": [
@@ -8653,7 +9468,7 @@
         ]
       }
     },
-    "/v2/organization/logs/actor/{actor_id}": {
+    "/v2/org/organization/logs/actor/{actor_id}": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivitiesByActorID",
         "parameters": [
@@ -8698,7 +9513,7 @@
         ]
       }
     },
-    "/v2/organization/member": {
+    "/v2/org/organization/member": {
       "post": {
         "operationId": "OrganizationMemberService_CreateOrganizationMember",
         "parameters": [
@@ -8730,7 +9545,7 @@
         ]
       }
     },
-    "/v2/organization/member/{id}": {
+    "/v2/org/organization/member/{id}": {
       "delete": {
         "operationId": "OrganizationMemberService_DeleteOrganizationMember",
         "parameters": [
@@ -8798,7 +9613,7 @@
         ]
       }
     },
-    "/v2/organization/member/{organizationId}": {
+    "/v2/org/organization/member/{organizationId}": {
       "get": {
         "operationId": "OrganizationMemberService_GetOrganizationMembers",
         "parameters": [
@@ -8843,9 +9658,9 @@
         ]
       }
     },
-    "/v2/organization/members": {
+    "/v2/org/organization/members/me": {
       "get": {
-        "operationId": "OrganizationMemberService_GetOrganizationMember",
+        "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -8865,7 +9680,39 @@
         ]
       }
     },
-    "/v2/organization/user/{userId}": {
+    "/v2/org/organization/new": {
+      "post": {
+        "operationId": "OrganizationService_CreateOrganization",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
+    "/v2/org/organization/user/{userId}": {
       "get": {
         "operationId": "OrganizationService_GetOrganizationByUserId",
         "parameters": [
@@ -8896,7 +9743,7 @@
         ]
       }
     },
-    "/v2/organization/{id}": {
+    "/v2/org/organization/{id}": {
       "put": {
         "operationId": "OrganizationService_UpdateOrganization",
         "parameters": [
@@ -8935,7 +9782,7 @@
         ]
       }
     },
-    "/v2/organization/{organization_id}/logs": {
+    "/v2/org/organization/{organization_id}/logs": {
       "get": {
         "operationId": "OrganizationLogActivityService_GetOrganizationLogActivitiesByOrganizationID",
         "parameters": [
@@ -8977,6 +9824,551 @@
         },
         "tags": [
           "OrganizationLogActivityService"
+        ]
+      }
+    },
+    "/v2/payment/payment-methods": {
+      "get": {
+        "operationId": "PaymentService_GetPaymentMethods",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "organizationId",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethodList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "summary": "Payment Methods",
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "post": {
+        "operationId": "PaymentService_CreatePaymentMethod",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethod"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethod"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/payment-methods/{id}": {
+      "delete": {
+        "operationId": "PaymentService_DeletePaymentMethod",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "put": {
+        "operationId": "PaymentService_UpdatePaymentMethod",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PaymentServiceUpdatePaymentMethodBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentMethod"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/sepay/webhook": {
+      "post": {
+        "operationId": "PaymentService_SepayWebhook",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentSepayWebhookRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/transaction-types": {
+      "get": {
+        "operationId": "PaymentService_GetTransactionTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentTransactionTypeList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "summary": "// Deal Transactions\nrpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/dashboard\"\n  };\n}\nrpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions\"\n  };\n}\nrpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/{id}\"\n  };\n}\nrpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {\n  option (google.api.http) = {\n    put: \"/v2/payment/deal-transactions/{id}\"\n    body: \"*\"\n  };\n}\nrpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    post: \"/v2/payment/deal-transactions/{id}/approve\"\n    body: \"*\"\n  };\n}\nrpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/report\"\n  };\n}\nTransaction Types",
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "post": {
+        "operationId": "PaymentService_CreateTransactionType",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentTransactionType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentTransactionType"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/transaction-types/{id}": {
+      "delete": {
+        "operationId": "PaymentService_DeleteTransactionType",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "put": {
+        "operationId": "PaymentService_UpdateTransactionType",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PaymentServiceUpdateTransactionTypeBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentTransactionType"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/dashboard": {
+      "get": {
+        "operationId": "PaymentService_GetWalletDashboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletDashboard"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "summary": "Wallet Dashboard",
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/deposit": {
+      "post": {
+        "operationId": "PaymentService_Deposit",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentDepositRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletTransaction"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/payment": {
+      "post": {
+        "operationId": "PaymentService_MakePayment",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_paymentPaymentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletTransaction"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/transactions": {
+      "get": {
+        "operationId": "PaymentService_GetWalletTransactions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "fromDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentWalletTransactionList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/{walletId}/export": {
+      "get": {
+        "operationId": "PaymentService_ExportWalletData",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "walletId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "fromDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentExportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/v2/payment/wallets/{walletId}/report": {
+      "get": {
+        "operationId": "PaymentService_GetWalletReport",
+        "parameters": [
+          {
+            "format": "int64",
+            "in": "path",
+            "name": "walletId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "fromDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "summary": "Reports",
+        "tags": [
+          "PaymentService"
         ]
       }
     },
@@ -9605,305 +10997,6 @@
             "name": "id",
             "required": true,
             "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "title",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "content",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "image",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "link",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "visibility",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "numLike",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "numComment",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "numShare",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "numView",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "in": "query",
-            "name": "updatedAt",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "postId",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "collectionFormat": "multi",
-            "in": "query",
-            "items": {
-              "format": "uint64",
-              "type": "string"
-            },
-            "name": "friendTagIds",
-            "required": false,
-            "type": "array"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "author.id",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "author.fullName",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "author.avatar",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "author.tickVerified",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "in": "query",
-            "name": "author.phone",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "isReel",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.id",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.productId",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.expiredAt",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "int64",
-            "in": "query",
-            "name": "post.status",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "in": "query",
-            "name": "post.visibility",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.hidden",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "in": "query",
-            "name": "post.content",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.transactionType",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.title",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "int32",
-            "in": "query",
-            "name": "post.numDate",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "description": "1: normal, 2: feed, 3: share",
-            "in": "query",
-            "name": "post.type",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "double",
-            "in": "query",
-            "name": "post.postPrice",
-            "required": false,
-            "type": "number"
-          },
-          {
-            "description": "1: chính thức, 2: thỏa thuận",
-            "format": "int64",
-            "in": "query",
-            "name": "post.priceType",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "description": "1: thường, 2: VIP",
-            "format": "int64",
-            "in": "query",
-            "name": "post.packageVisible",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.like",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.comment",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.numView",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "post.ownerId",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "description": "1: user, 2: admin",
-            "format": "int64",
-            "in": "query",
-            "name": "post.ownerType",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "in": "query",
-            "name": "post.mediaUrl",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.mediaType",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.provinceName",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.districtName",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "post.wardName",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "format": "uint64",
-            "in": "query",
-            "name": "createdBy",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "likeAt",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "disLike",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "responses": {
@@ -10586,6 +11679,60 @@
         },
         "tags": [
           "TransactionService"
+        ]
+      }
+    },
+    "/v2/user/auth/switch-account": {
+      "post": {
+        "operationId": "AuthService_SwitchAccount",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbSwitchAccountRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbSwitchAccountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/user/profile/accounts/me": {
+      "get": {
+        "operationId": "ProfileService_ListAccountMe",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAccountInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ProfileService"
         ]
       }
     },

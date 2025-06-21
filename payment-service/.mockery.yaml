@@ -1,0 +1,11 @@
+with-expecter: True
+inpackage: True
+dir: "{{.InterfaceDir}}"
+mockname: "Mock{{firstUpper .InterfaceName}}"
+outpkg: "{{.PackageName}}"
+filename: "mock_{{lower .InterfaceName}}.go"
+all: True
+packages:
+  github.com/blcvn/go-clean-architecture-template/controllers:
+    config:
+      recursive: True

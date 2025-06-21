@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-
+	"log"
 	pb_payment "pb/types/payment"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -18,5 +18,8 @@ func RegisterPaymentService(ctx context.Context, mux *runtime.ServeMux, env stri
 		url = "payment"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	_ = pb_payment.RegisterPaymentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	err := pb_payment.RegisterPaymentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	if err != nil {
+		log.Fatalf("Failed to register payment service: %v", err)
+	}
 }

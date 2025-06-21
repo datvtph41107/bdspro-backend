@@ -21,6 +21,7 @@ import (
 	"user/validator"
 
 	organizationpb "pb/types/organization"
+	paymentpb "pb/types/payment"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -41,6 +42,7 @@ type AuthService struct {
 	PreePlanID         *uint64
 	ProfileRepo        *repo.ProfileRepo
 	OrganizationClient organizationpb.OrganizationMemberServiceClient
+	PaymentClient      paymentpb.PaymentServiceClient
 	// ConfigProperties utils.PropertiesConfiguration
 	// Properties property.AppProperties
 }
@@ -65,10 +67,13 @@ func NewRedisService() *_redis.RedisService {
 // 	return organizationpb.NewOrganizationMemberServiceClient(conn)
 // }
 
+
+
 func NewAuthService(redisService *_redis.RedisService,
 	cookie *CookieService,
 	profileRepo *repo.ProfileRepo,
 	organizationClient organizationpb.OrganizationMemberServiceClient,
+	paymentClient paymentpb.PaymentServiceClient,
 ) *AuthService {
 	planId := uint64(1)
 	return &AuthService{
@@ -77,6 +82,7 @@ func NewAuthService(redisService *_redis.RedisService,
 		PreePlanID:         &planId,
 		ProfileRepo:        profileRepo,
 		OrganizationClient: organizationClient,
+		PaymentClient:      paymentClient,
 	}
 }
 
@@ -201,6 +207,29 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp dto.OtpVerifyRequest) (*dto.
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), property.AppProperties.Jwt.RefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, e, newSession.SessionID)
+	wallet, err := s.PaymentClient.GetWallet(c.Request.Context(), &paymentpb.GetWalletRequest{
+		Id: uint32(infoEntity.ProfileID),
+	})
+
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi lấy ví",
+		}
+	}
+	if wallet == nil || wallet.Id == 0 {
+		_, err := s.PaymentClient.CreateWallet(c.Request.Context(), &paymentpb.CreateWalletRequest{
+			UserId: uint32(infoEntity.ProfileID),
+			Currency: "VND",
+			Balance: 0,
+		})
+		if err != nil {
+			return nil, &_routes.Except{
+				Code:    500,
+				Message: "Lỗi khi tạo ví",
+			}
+		}
+	}
 
 	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
 }

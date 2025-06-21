@@ -1,0 +1,15 @@
+host: 0.0.0.0
+port: 50055
+database:
+  type: postgres
+  url: host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable
+whitelist:
+  - /pb_payment.PaymentService/GetWallet
+  - /pb_payment.PaymentService/CreateWallet
+  - /pb_payment.PaymentService/SepayWebhook
+sepay:
+  api_key: Apikey APi cuc xin
+grpc:
+  notification:
+    host: localhost
+    port: 8004
