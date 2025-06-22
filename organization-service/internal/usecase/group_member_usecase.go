@@ -46,6 +46,7 @@ func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepositor
 		logWorker:             logWorker,
 		groupAuthUsecase:      groupAuthUsecase,
 		groupChatUsecase:      groupChatUsecase,
+		userGrpcClient:        userGrpcClient,
 	}
 }
 
@@ -160,19 +161,16 @@ func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, group
 	if err != nil {
 		return nil, err
 	}
-
 	profileIds := make([]uint64, len(members))
 	for i, member := range members {
 		profileIds[i] = uint64(member.UserId)
 	}
-
 	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
 		Ids: profileIds,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	membersWithProfiles := make([]*dto.GroupMemberWithProfile, len(members))
 	for i, member := range members {
 		membersWithProfiles[i] = &dto.GroupMemberWithProfile{
@@ -180,6 +178,5 @@ func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, group
 			Profile:     profiles.Profiles[i],
 		}
 	}
-
 	return membersWithProfiles, nil
 }

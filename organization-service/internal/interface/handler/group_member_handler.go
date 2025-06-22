@@ -107,12 +107,10 @@ func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organ
 	if err := h.groupMemberValidator.ValidateGetGroupMembersRequest(request); err != nil {
 		return nil, err
 	}
-
 	members, err := h.groupMemberUsecase.GetGroupMembersByGroupID(ctx, request.GroupId)
 	if err != nil {
 		return nil, err
 	}
-
 	return h.groupMemberTransformer.EntityToGetGroupMembersResponse(members), nil
 }
 
