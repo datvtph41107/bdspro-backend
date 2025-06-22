@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 	user_model "user/internal/models/user"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,9 @@ func (r *ProfessionRepo) BatchSave(
 
 	// Xóa bản ghi nếu có deletedIds
 	if len(deletedIds) > 0 {
-		if err := tx.Where("id IN ?", deletedIds).Delete(&user_model.ProfessionEntity{}).Error; err != nil {
+		if err := tx.Model(&user_model.ProfessionEntity{}).
+			Where("id IN ?", deletedIds).
+			Update("deleted_at", time.Now()).Error; err != nil {
 			tx.Rollback()
 			return err
 		}

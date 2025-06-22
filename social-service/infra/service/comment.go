@@ -160,13 +160,14 @@ func (s *CommentService) DomainCommentQueryToPb(comment *domain.CommentQuery) *p
 		ParentId:   comment.ParentID,
 		NewsFeedId: comment.NewsFeedID,
 		UpdatedAt:  _utils.FormatTimeToString(comment.UpdatedAt),
+		CreatedAt:  _utils.FormatTimeToString(comment.CreatedAt),
 		NumLike:    comment.NumLike,
 		NumDisLike: comment.NumDisLike,
 		NumReply:   comment.NumReply,
 		CreatedBy:  comment.CreatedBy,
 		MediaUrl:   comment.MediaUrl,
 		MediaType:  comment.MediaType,
-		LikedAt:    _utils.FormatTimeToString(comment.LikeAt),
+		LikedAt:    _utils.FormatTimeToString(comment.LikedAt),
 		Dislike:    comment.DisLike,
 	}
 }

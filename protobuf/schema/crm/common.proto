@@ -58,6 +58,7 @@ message StageDTO {
     uint32 step = 6;
     bool active = 7;
     uint32 color = 8;
+    string colorRGB = 9;
 }
 
 message DocumentDTO {

@@ -68,15 +68,16 @@ func (u *NumberUpdateUsecase) UpdateLikeNumberNewsFeed(ctx context.Context, news
 }
 
 func (u *NumberUpdateUsecase) UpdateLikeNumberComment(ctx context.Context, comment *domain.Comment, dislike bool) (bool, error) {
-	ok := u.RequiredTimeUpdate(comment.UpdatedAt)
-	if !ok {
-		return false, nil
-	}
-
 	totalLike, err := u.likeRepo.Count(ctx, comment.ID, enums.TargetTypeComment, dislike)
 	if err != nil {
 		return false, err
 	}
+
+	ok := u.RequiredTimeUpdate(comment.UpdatedAt)
+	if !ok && totalLike > 0 {
+		return false, nil
+	}
+
 	err = u.commentRepo.UpdateLikeNumber(ctx, comment.ID, totalLike, dislike)
 	if err != nil {
 		return false, err
@@ -102,16 +103,17 @@ func (u *NumberUpdateUsecase) UpdateNumberReplyComment(ctx context.Context,
 	parentComment *domain.Comment,
 	newsFeed *domain.NewsFeed,
 ) (bool, error) {
-	ok := u.RequiredTimeUpdate(newsFeed.UpdatedAt)
-	if !ok {
-		return false, nil
-	}
-
 	// update number reply of comment
 	totalReply, err := u.commentRepo.CountReply(ctx, parentComment.ID)
 	if err != nil {
 		return false, err
 	}
+
+	ok := u.RequiredTimeUpdate(newsFeed.UpdatedAt)
+	if !ok && totalReply > 0 {
+		return false, nil
+	}
+
 	err = u.commentRepo.UpdateNumberReply(ctx, parentComment.ID, totalReply)
 	if err != nil {
 		return false, err

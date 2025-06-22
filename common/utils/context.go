@@ -1,7 +1,7 @@
 package _utils
 
 import (
-	_middleware "common/middleware"
+	_constants "common/constants"
 	"context"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +23,7 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 	// 	return claims.ProfileId
 	// }
 	// return 0
-	profileId := ctx.Value(_middleware.ProfileIDKey)
+	profileId := ctx.Value(_constants.ProfileIDKey)
 	if profileId == nil {
 		return 0
 	}
@@ -32,7 +32,7 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 
 func GetOrganizationIdFromContext(c context.Context) uint64 {
 	// todo: đổi sang profile sau khi xong
-	organizationId := c.Value(_middleware.OrganizationIDKey)
+	organizationId := c.Value(_constants.OrganizationIDKey)
 	if organizationId == nil {
 		return 0
 	}
@@ -51,7 +51,7 @@ func CloneContext(ctx context.Context) context.Context {
 	cloneCtx := context.Background()
 	profileId := GetProfileIdWithContext(ctx)
 	organizationId := GetOrganizationIdFromContext(ctx)
-	cloneCtx = context.WithValue(cloneCtx, _middleware.ProfileIDKey, profileId)
-	cloneCtx = context.WithValue(cloneCtx, _middleware.OrganizationIDKey, organizationId)
+	cloneCtx = context.WithValue(cloneCtx, _constants.ProfileIDKey, profileId)
+	cloneCtx = context.WithValue(cloneCtx, _constants.OrganizationIDKey, organizationId)
 	return cloneCtx
 }

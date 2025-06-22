@@ -45,7 +45,7 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 
 		// Parse và xác thực token
 		claims, err := ParseJWT(tokenString)
-		log.Printf("claims=%v, ignoreToken=%v", claims, ignoreToken)
+		log.Printf("claims=%v, ignoreToken=%v, err=%v", claims, ignoreToken, err)
 		if err != nil && !ignoreToken {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()

@@ -114,16 +114,21 @@ func ParseJWT(tokenStr string) (*Principal, error) {
 		return []byte(key), nil
 	})
 
-	if err != nil {
-		claims, _ := token.Claims.(*Principal)
-		return claims, err
-	}
-	// Nếu token hợp lệ, trả về claims
-	if claims, ok := token.Claims.(*Principal); ok && token.Valid {
-		return claims, nil
+	var claims *Principal
+	if token != nil && token.Claims != nil {
+		claims = token.Claims.(*Principal)
 	}
 
-	return nil, fmt.Errorf("invalid token")
+	// if err == nil {
+	// 	return claims, nil
+	// }
+
+	// Nếu token hợp lệ, trả về claims
+	// if claims, ok := token.Claims.(*Principal); ok && token.Valid {
+	// 	return claims, nil
+	// }
+
+	return claims, err
 }
 
 func GetProfileId(c *gin.Context) uint64 {

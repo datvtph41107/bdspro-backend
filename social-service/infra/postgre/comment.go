@@ -65,7 +65,7 @@ func (r *PostgreComment) SearchPublic(ctx context.Context, dto *dto.CommentReque
 	parentCond := "and c.parent_id is null"
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId != 0 {
-		preQuery = "select c.*, tl.created_at as like_at,tl.dis_like "
+		preQuery = "select c.*, tl.created_at as liked_at,tl.dis_like "
 		profileCond = fmt.Sprintf(`from public.comment c
 left join tb_like tl on tl.user_id = %d and tl.target_id = c.id and tl.target_type = 10`, profileId)
 	}

@@ -59,6 +59,7 @@ message CommentResponse {
     string mediaType = 12;
     string likedAt = 13;
     optional bool dislike = 14;
+    string createdAt = 15;
 }
 
 message CommentListResponse {

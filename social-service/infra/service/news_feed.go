@@ -334,7 +334,7 @@ func (s *NewsFeedService) DomainPostToPb(post *domain.NewsFeed) *socialpb.NewsFe
 		CreatedBy:    post.CreatedBy,
 		MediaFeeds:   medias,
 		UpdatedAt:    _utils.FormatTimeToString(post.UpdatedAt),
-		LikeAt:       _utils.FormatTimeToString(post.LikeAt),
+		LikedAt:      _utils.FormatTimeToString(post.LikedAt),
 		DisLike:      post.DisLike,
 	}
 }
@@ -363,7 +363,7 @@ func (s *NewsFeedService) DomainPublicToPb(post *dto.NewsFeedPublic) *socialpb.N
 		PostId:       post.PostID,
 		CreatedBy:    post.CreatedBy,
 		UpdatedAt:    _utils.FormatTimeToString(&post.UpdatedAt),
-		LikeAt:       _utils.FormatTimeToString(post.LikeAt),
+		LikedAt:      _utils.FormatTimeToString(post.LikedAt),
 		DisLike:      post.DisLike,
 	}
 	return result

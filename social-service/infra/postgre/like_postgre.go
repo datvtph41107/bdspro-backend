@@ -96,3 +96,11 @@ func (r *PostgreLike) SumUserComment(ctx context.Context, targetId uint64, targe
 
 	return count, err
 }
+
+func (r *PostgreLike) Update(ctx context.Context, like *domain.Like) (*domain.Like, error) {
+	err := r.db.WithContext(ctx).
+		Model(&domain.Like{}).
+		Where("target_id = ? AND target_type = ? AND user_id = ?", like.TargetID, like.TargetType, like.UserID).
+		Update("dis_like", like.DisLike).Error
+	return like, err
+}

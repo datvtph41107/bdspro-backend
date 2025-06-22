@@ -33,7 +33,7 @@ type CommentQuery struct {
 	NumReply   uint32     `json:"num_reply"`
 	MediaUrl   string     `json:"media_url"`
 	MediaType  string     `json:"media_type"`
-	LikeAt     *time.Time `gorm:"column:like_at" json:"like_at"`
+	LikedAt    *time.Time `gorm:"column:liked_at" json:"liked_at"`
 	DisLike    *bool      `gorm:"column:dis_like" json:"dis_like"`
 }
 

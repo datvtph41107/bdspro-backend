@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 	"user/enums"
 	user_model "user/internal/models/user"
 
@@ -55,7 +56,9 @@ func (r *CertificationRepo) UpdateCertification(c *gin.Context, certification *u
 }
 
 func (r *CertificationRepo) DeleteCertification(c *gin.Context, id uint64) error {
-	return r.DB.WithContext(c).Delete(&user_model.CertificationEntity{}, id).Error
+	return r.DB.WithContext(c).Model(&user_model.CertificationEntity{}).
+		Where("id = ?", id).
+		Update("deleted_at", time.Now()).Error
 }
 
 func (r *CertificationRepo) BatchSave(
@@ -67,14 +70,16 @@ func (r *CertificationRepo) BatchSave(
 	return r.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		// Nếu có danh sách cần xóa
 		if len(deletedIds) > 0 {
-			if err := tx.Where("id IN ?", deletedIds).Delete(&user_model.CertificationEntity{}).Error; err != nil {
+			if err := tx.WithContext(c).Model(&user_model.CertificationEntity{}).
+				Where("id IN ?", deletedIds).
+				Update("deleted_at", time.Now()).Error; err != nil {
 				return err // rollback
 			}
 		}
 
 		// Nếu có danh sách cần thêm
 		if len(*certifications) > 0 {
-			if err := tx.Save(certifications).Error; err != nil {
+			if err := tx.WithContext(c).Save(certifications).Error; err != nil {
 				return err // rollback
 			}
 		}

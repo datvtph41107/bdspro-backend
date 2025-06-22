@@ -131,15 +131,19 @@ func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enum
 			Message: "unauthorized",
 		}
 	}
-	liked, err := u.likeRepo.ExistByTargetIdAndTypeAndUserId(ctx,
+	liked, _ := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx,
 		targetId,
 		targetType,
 		profileId,
 	)
-	if err != nil {
-		return nil, err
-	}
-	if liked {
+	// if err != nil {
+	// 	return nil, err
+	// }
+	if liked != nil &&
+		liked.TargetID == targetId &&
+		liked.TargetType == targetType &&
+		liked.UserID == profileId &&
+		liked.DisLike == dislike {
 		return nil, errors.New("already like")
 	}
 
@@ -149,6 +153,11 @@ func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enum
 		UserID:     profileId,
 		DisLike:    dislike,
 		CreatedAt:  _utils.NowPtr(),
+	}
+
+	if liked != nil {
+		liked.DisLike = dislike
+		return u.likeRepo.Update(ctx, like)
 	}
 
 	return u.likeRepo.Create(ctx, like)

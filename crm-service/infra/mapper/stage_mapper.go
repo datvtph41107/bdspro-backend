@@ -19,6 +19,7 @@ func StagePbToDomain(pb *crmpb.StageDTO) *domain.StageEntity {
 		Step:        enums.EStep(pb.Step),
 		Active:      pb.Active,
 		Color:       pb.Color,
+		ColorRGB:    pb.ColorRGB,
 	}
 }
 
@@ -32,5 +33,6 @@ func StageDomainToPb(domain *domain.StageEntity) *crmpb.StageDTO {
 		Step:        uint32(domain.Step),
 		Active:      domain.Active,
 		Color:       domain.Color,
+		ColorRGB:    domain.ColorRGB,
 	}
 }

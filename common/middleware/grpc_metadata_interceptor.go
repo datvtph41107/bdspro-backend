@@ -1,6 +1,7 @@
 package _middleware
 
 import (
+	_constants "common/constants"
 	_jwt "common/jwt"
 	"context"
 	"errors"
@@ -60,19 +61,6 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	return md
 }
 
-type ctxKey string
-
-const (
-	ProfileIDKey      ctxKey = "profileId"
-	OrganizationIDKey ctxKey = "organizationId"
-	AuthIDKey         ctxKey = "authId"
-	SessionKey        ctxKey = "session"
-	RoleKey           ctxKey = "role"
-	TypeKey           ctxKey = "type"
-	PlanIDKey         ctxKey = "planId"
-	PlanFromKey       ctxKey = "planFrom"
-)
-
 func ParseGrpcMetadataContextMiddleware(
 	ctx context.Context,
 	req interface{},
@@ -84,14 +72,14 @@ func ParseGrpcMetadataContextMiddleware(
 		return handler(ctx, req)
 	}
 
-	ctx = parseUint64Metadata(ctx, md, "profileId", ProfileIDKey)
-	ctx = parseUint64Metadata(ctx, md, "organizationId", OrganizationIDKey)
-	ctx = parseUint64Metadata(ctx, md, "authId", AuthIDKey)
-	ctx = parseUint64Metadata(ctx, md, "session", SessionKey)
-	ctx = parseUint64Metadata(ctx, md, "planId", PlanIDKey)
-	ctx = parseStringMetadata(ctx, md, "role", RoleKey)
-	ctx = parseStringMetadata(ctx, md, "type", TypeKey)
-	ctx = parseTimeMetadata(ctx, md, "planFrom", PlanFromKey)
+	ctx = parseUint64Metadata(ctx, md, "profileId", _constants.ProfileIDKey)
+	ctx = parseUint64Metadata(ctx, md, "organizationId", _constants.OrganizationIDKey)
+	ctx = parseUint64Metadata(ctx, md, "authId", _constants.AuthIDKey)
+	ctx = parseUint64Metadata(ctx, md, "session", _constants.SessionKey)
+	ctx = parseUint64Metadata(ctx, md, "planId", _constants.PlanIDKey)
+	ctx = parseStringMetadata(ctx, md, "role", _constants.RoleKey)
+	ctx = parseStringMetadata(ctx, md, "type", _constants.TypeKey)
+	ctx = parseTimeMetadata(ctx, md, "planFrom", _constants.PlanFromKey)
 
 	return handler(ctx, req)
 }
@@ -159,7 +147,7 @@ func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	return p, nil
 }
 
-func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) == 0 {
 		return ctx
@@ -170,7 +158,7 @@ func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey
 	return ctx
 }
 
-func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) > 0 && vals[0] != "" {
 		return context.WithValue(ctx, ctxKey, vals[0])
@@ -178,7 +166,7 @@ func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey
 	return ctx
 }
 
-func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey ctxKey) context.Context {
+func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) == 0 {
 		return ctx

@@ -234,3 +234,23 @@ func (r *LeadPostgre) GetByContactID(ctx context.Context, contactID uint64) (*do
 // 		First(&customer).Error
 // 	return &customer, err
 // }
+
+func (r *LeadPostgre) CareExpiredTime(c context.Context, organizationId uint64) (int64, error) {
+	var count int64
+
+	from := time.Now().AddDate(0, 0, -7) // 7 ngày trước
+	to := from.AddDate(0, 0, 3)          // từ ngày đó + 3 ngày = khoảng 3 ngày
+
+	err := r.db.WithContext(c).
+		Debug().
+		Model(&domain.LeadEntity{}).
+		Where(`
+			owner_id = ? 
+			AND owner_type = ? 
+			AND deleted_at IS NULL 
+			AND updated_at BETWEEN ? AND ?`,
+			organizationId, enums.EOwnerTypeOrgnization, from, to).
+		Count(&count).Error
+
+	return count, err
+}

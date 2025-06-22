@@ -69,7 +69,7 @@ func (r *PostgreNewsFeed) QuerySeach(ctx context.Context, dto *dto.NewsFeedGloba
 
 type NewsFeedQuery struct {
 	domain.NewsFeed
-	LikeAt            *time.Time      `gorm:"column:like_at" json:"likeAt"`
+	LikedAt           *time.Time      `gorm:"column:liked_at" json:"likedAt"`
 	DisLike           *bool           `gorm:"column:dis_like" json:"disLike"`
 	NewsFeedMediaRaws json.RawMessage `gorm:"column:news_feed_medias" json:"newsFeedMedias"` // hoặc []Media nếu dùng pgx/json decoding
 	FriendTagRaws     json.RawMessage `gorm:"column:friend_tag_ids" json:"friendTagIds"`     // hoặc []uint64
@@ -94,7 +94,7 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 		Joins("left join tb_like tl on tl.target_id = news_feeds.id and tl.target_type = 20 and tl.user_id = ?", userId).
 		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
 		Joins("left join friend_tag ft on ft.news_feed_id = news_feeds.id").
-		Select(`news_feeds.*, tl.created_at as like_at, tl.dis_like,
+		Select(`news_feeds.*, tl.created_at as liked_at, tl.dis_like,
 		
   COALESCE(
     JSON_AGG(
@@ -127,9 +127,9 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 	results := make([]*domain.NewsFeed, 0)
 	for _, newsFeed := range newsFeeds {
 		results = append(results, &newsFeed.NewsFeed)
-		results[len(results)-1].LikeAt = newsFeed.LikeAt
+		results[len(results)-1].LikedAt = newsFeed.LikedAt
 		results[len(results)-1].DisLike = newsFeed.DisLike
-		newsFeed.NewsFeed.LikeAt = newsFeed.LikeAt
+		newsFeed.NewsFeed.LikedAt = newsFeed.LikedAt
 		newsFeed.NewsFeed.DisLike = newsFeed.DisLike
 		newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
 		var medias []domain.NewsFeedMedia
@@ -178,7 +178,7 @@ func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, req *dto.NewsFeedGlobal
 	query := `SELECT * FROM news_feed_global %s LIMIT ? OFFSET ?;`
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId != 0 {
-		query = fmt.Sprintf(`select g.*, tl.created_at as like_at,tl.dis_like from public.news_feed_global g
+		query = fmt.Sprintf(`select g.*, tl.created_at as liked_at,tl.dis_like from public.news_feed_global g
 left join tb_like tl on tl.user_id = %d and tl.target_id  = g.id and tl.target_type = 20 %s LIMIT ? OFFSET ?;`, profileId, whereCondition)
 	} else {
 		query = fmt.Sprintf(query, whereCondition)

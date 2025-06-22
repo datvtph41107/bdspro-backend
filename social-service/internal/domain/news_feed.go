@@ -26,6 +26,6 @@ type NewsFeed struct {
 	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
 	FriendTagIds   []uint64         `gorm:"-" json:"friend_tag_ids"`
 	Author         *dto.UserProfile `gorm:"-" json:"author"`
-	LikeAt         *time.Time       `gorm:"-" json:"likeAt"`
+	LikedAt        *time.Time       `gorm:"-" json:"likedAt"`
 	DisLike        *bool            `gorm:"-" json:"disLike"`
 }

@@ -228,7 +228,7 @@ func (u *NewsFeedUsecase) GetNewsFeedByID(ctx context.Context, newsFeedID uint64
 	}
 	like, err := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx, newsFeedID, enums.TargetTypeNewsFeed, profileId)
 	if like != nil && err == nil {
-		newsFeed.LikeAt = like.CreatedAt
+		newsFeed.LikedAt = like.CreatedAt
 		newsFeed.DisLike = &like.DisLike
 	}
 	return newsFeed, nil

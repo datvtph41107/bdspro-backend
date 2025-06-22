@@ -38,6 +38,6 @@ type NewsFeedPublic struct {
 	FriendTagIds   json.RawMessage `db:"friend_tag_ids" json:"friend_tag_ids"`
 	Author         *UserProfile    `gorm:"-" db:"-" json:"author"`
 	Post           *BdsproPost     `gorm:"-" db:"-" json:"post"`
-	LikeAt         *time.Time      `gorm:"like_at" db:"like_at" json:"like_at"`
+	LikedAt        *time.Time      `gorm:"liked_at" db:"liked_at" json:"liked_at"`
 	DisLike        *bool           `gorm:"dis_like" db:"dis_like" json:"is_like"`
 }
