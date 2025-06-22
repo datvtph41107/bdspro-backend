@@ -15,6 +15,8 @@ type AppointmentReminderModel struct {
 	RemindAt      time.Time
 	IsSent        bool
 	SentAt        time.Time
+	DeletedAt     *time.Time `gorm:"index"`
+	IsDeleted     bool       `gorm:"default:false"`
 }
 
 func (m *AppointmentReminderModel) TableName() string {
@@ -62,7 +64,7 @@ func (r *appointmentReminderPostgresRepository) Create(ctx context.Context, appo
 
 func (r *appointmentReminderPostgresRepository) GetReminders(ctx context.Context, limit int) ([]*entity.AppointmentReminder, error) {
 	var models []*AppointmentReminderModel
-	err := r.db.WithContext(ctx).Where("is_sent = ?", false).Limit(limit).Order("remind_at ASC").Find(&models).Error
+	err := r.db.WithContext(ctx).Where("is_sent = ? AND is_deleted = ?", false, false).Limit(limit).Order("remind_at ASC").Find(&models).Error
 	if err != nil {
 		return nil, err
 	}

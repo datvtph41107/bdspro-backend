@@ -32,6 +32,9 @@ type AppointmentModel struct {
 	Description      string
 	ReminderSchedule string
 	Status           uint32
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (a *AppointmentModel) TableName() string {
@@ -138,7 +141,7 @@ func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment 
 
 func (r *appointmentPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.Appointment, error) {
 	var appointment AppointmentModel
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&appointment).Error
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&appointment).Error
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +163,7 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 			UserId:        participant,
 		})
 	}
-	if err := tx.Where("appointment_id = ?", appointment.Id).
+	if err := tx.Where("appointment_id = ? AND is_deleted = ?", appointment.Id, false).
 		Delete(&AppointmentParticipantModel{}).Error; err != nil {
 		tx.Rollback()
 		return nil, err
@@ -179,7 +182,12 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 }
 
 func (r *appointmentPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	err := r.db.WithContext(ctx).Where("id = ?", id).Delete(&AppointmentModel{}).Error
+	err := r.db.WithContext(ctx).Model(&AppointmentModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 	if err != nil {
 		return err
 	}
@@ -204,7 +212,7 @@ func (r *appointmentPostgresRepository) List(ctx context.Context, filter map[str
 		appointmentsEntities = append(appointmentsEntities, AppointmentModelToEntity(appointment))
 	}
 	var count int64
-	err = r.db.WithContext(ctx).Model(&AppointmentModel{}).Where(filter).Count(&count).Error
+	err = r.db.WithContext(ctx).Model(&AppointmentModel{}).Where("is_deleted = ?", false).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}

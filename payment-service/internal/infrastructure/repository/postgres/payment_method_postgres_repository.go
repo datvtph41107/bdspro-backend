@@ -19,6 +19,9 @@ type PaymentMethodModel struct {
 	IsActive       bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (m *PaymentMethodModel) TableName() string {
@@ -61,7 +64,7 @@ func (r *paymentMethodRepository) GetPaymentMethods(ctx context.Context, organiz
 	var models []*PaymentMethodModel
 	var total int64
 
-	query := r.db.WithContext(ctx).Where("organization_id = ?", organizationId)
+	query := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false)
 	if err := query.Limit(size).Offset(page * size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
@@ -102,12 +105,17 @@ func (r *paymentMethodRepository) UpdatePaymentMethod(ctx context.Context, req *
 }
 
 func (r *paymentMethodRepository) DeletePaymentMethod(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&PaymentMethodModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&PaymentMethodModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *paymentMethodRepository) GetPaymentMethodById(ctx context.Context, id uint32) (*entity.PaymentMethod, error) {
 	var model PaymentMethodModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return PaymentMethodModelToEntity(&model), nil

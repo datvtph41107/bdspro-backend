@@ -21,6 +21,9 @@ type GroupMemberModel struct {
 	UserId uint32 `gorm:"not null;index:idx_group_members_user_id;index:idx_group_members_group_user,priority:2"`
 	Role entity.GroupMemberRole `gorm:"not null;index:idx_group_members_role"`
 	Status entity.GroupMemberStatus `gorm:"not null;index:idx_group_members_status"`
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool `gorm:"default:false"`
 }
 
 func (GroupMemberModel) TableName() string {
@@ -79,12 +82,17 @@ func (r *groupMemberPostgresRepository) Update(ctx context.Context, member *enti
 }
 
 func (r *groupMemberPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupMemberModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
 	var model *GroupMemberModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupMemberModelToEntity(model), nil
@@ -92,7 +100,7 @@ func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) 
 
 func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
 	var models []*GroupMemberModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Order("created_at DESC").Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
 	entities := make([]*entity.GroupMember, len(models))
@@ -104,7 +112,7 @@ func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupI
 
 func (r *groupMemberPostgresRepository) GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error) {
 	var models []*GroupMemberModel
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_deleted = ?", userID, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	entities := make([]*entity.GroupMember, len(models))
@@ -116,16 +124,16 @@ func (r *groupMemberPostgresRepository) GetByUserID(ctx context.Context, userID 
 
 
 func (r *groupMemberPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.GroupMemberStatus) error {
-	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", id).Update("status", status).Error
+	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
 }
 
 func (r *groupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint32, role entity.GroupMemberRole) error {
-	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", id).Update("role", role).Error
+	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("role", role).Error
 }
 
 func (r *groupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error) {
 	var model *GroupMemberModel
-	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id = ?", groupID, userID).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id = ? AND is_deleted = ?", groupID, userID, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

@@ -15,7 +15,7 @@ func NewPaymentClient() paymentpb.PaymentServiceClient {
 	if env.ENV_RUNTIME == "release" {
 		url = "payment"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:50052", url), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(fmt.Sprintf("%s:50055", url), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to payment service: %v", err)
 	}

@@ -18,6 +18,8 @@ type OrganizationRoleModel struct {
 	UpdatedAt      time.Time                      `gorm:"autoUpdateTime"`
 	Permissions    []*OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
 	OrganizationId uint32                         `gorm:"not null;index:idx_org_roles_organization_id"`
+	DeletedAt      *time.Time                     `gorm:"index"`
+	IsDeleted      bool                          `gorm:"default:false"`
 }
 
 func (OrganizationRoleModel) TableName() string {
@@ -51,6 +53,7 @@ func RoleEntityToModel(entity *entity.OrganizationRole) *OrganizationRoleModel {
 		Key:            entity.Key,
 		OrganizationId: entity.OrganizationId,
 		Permissions:    permissions,
+		IsDeleted:      false,
 	}
 }
 
@@ -75,6 +78,7 @@ func (r *organizationRoleRepository) Create(ctx context.Context, role *entity.Or
 		Name:           role.Name,
 		Key:            role.Key,
 		OrganizationId: role.OrganizationId,
+		IsDeleted:      false,
 	}
 
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
@@ -86,7 +90,7 @@ func (r *organizationRoleRepository) Create(ctx context.Context, role *entity.Or
 
 func (r *organizationRoleRepository) GetAll(ctx context.Context) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("is_deleted = ?", false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 
@@ -95,7 +99,7 @@ func (r *organizationRoleRepository) GetAll(ctx context.Context) ([]*entity.Orga
 
 func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -107,7 +111,7 @@ func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*
 
 func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := RoleEntityToModel(role)
-	if err := r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).Where("id = ?", model.ID).Updates(model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).Where("id = ? AND is_deleted = ?", model.ID, false).Updates(model).Error; err != nil {
 		return nil, err
 	} else {
 		if err := r.db.WithContext(ctx).Model(model).Association("Permissions").Replace(model.Permissions); err != nil {
@@ -119,7 +123,12 @@ func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.Or
 }
 
 func (r *organizationRoleRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&OrganizationRoleModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *organizationRoleRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationRole, error) {
@@ -135,7 +144,7 @@ func (r *organizationRoleRepository) GetByKey(ctx context.Context, key string) (
 
 func (r *organizationRoleRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ?", organizationId).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	return RoleModelsToEntities(models), nil
@@ -143,7 +152,7 @@ func (r *organizationRoleRepository) FindByOrganizationId(ctx context.Context, o
 
 func (r *organizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ? AND key = ?", organizationId, key).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("organization_id = ? AND key = ? AND is_deleted = ?", organizationId, key, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -157,14 +166,14 @@ func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 	var total int64
 
 	// Get total count
-	err := r.db.Model(&OrganizationRoleModel{}).Where("organization_id = ?", organizationId).Count(&total).Error
+	err := r.db.Model(&OrganizationRoleModel{}).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
 	// Get paginated data
 	offset := (page - 1) * size
-	err = r.db.Where("organization_id = ?", organizationId).
+	err = r.db.Where("organization_id = ? AND is_deleted = ?", organizationId, false).
 		Offset(offset).
 		Limit(size).
 		Find(&roles).Error
@@ -173,4 +182,13 @@ func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 	}
 
 	return roles, uint32(total), nil
+}
+
+func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) error {
+	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }

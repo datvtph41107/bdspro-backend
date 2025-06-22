@@ -104,7 +104,7 @@ func (r *organizationLogActivityPostgresRepository) GetByActorID(ctx context.Con
 
 func (r *organizationLogActivityPostgresRepository) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
 	var models []*OrganizationLogActivityModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ?", organizationID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.OrganizationLogActivity, len(models))
@@ -112,7 +112,7 @@ func (r *organizationLogActivityPostgresRepository) GetByOrganizationIDWithPagin
 		entities[i] = OrganizationLogActivityModelToEntity(model)
 	}
 	var total int64
-	if err := r.db.WithContext(ctx).Model(&OrganizationLogActivityModel{}).Where("organization_id = ?", organizationID).Count(&total).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationLogActivityModel{}).Where("organization_id = ? AND is_deleted = ?", organizationID, false).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(total), nil
@@ -120,7 +120,7 @@ func (r *organizationLogActivityPostgresRepository) GetByOrganizationIDWithPagin
 
 func (r *organizationLogActivityPostgresRepository) GetByActorIDWithPagination(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
 	var models []*OrganizationLogActivityModel
-	if err := r.db.WithContext(ctx).Where("actor_id = ?", actorID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("actor_id = ? AND is_deleted = ?", actorID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.OrganizationLogActivity, len(models))
@@ -128,7 +128,7 @@ func (r *organizationLogActivityPostgresRepository) GetByActorIDWithPagination(c
 		entities[i] = OrganizationLogActivityModelToEntity(model)
 	}
 	var total int64
-	if err := r.db.WithContext(ctx).Model(&OrganizationLogActivityModel{}).Where("actor_id = ?", actorID).Count(&total).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationLogActivityModel{}).Where("actor_id = ? AND is_deleted = ?", actorID, false).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(total), nil

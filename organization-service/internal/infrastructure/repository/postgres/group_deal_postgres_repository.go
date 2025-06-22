@@ -20,6 +20,8 @@ type GroupDealModel struct {
 	Name    string            `gorm:"not null;index:idx_group_deals_name"`
 	Amount  float64           `gorm:"not null"`
 	Status  entity.DealStatus `gorm:"not null;index:idx_group_deals_status"`
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool `gorm:"default:false"`
 }
 
 func (GroupDealModel) TableName() string {
@@ -79,12 +81,17 @@ func (r *groupDealPostgresRepository) Update(ctx context.Context, deal *entity.D
 }
 
 func (r *groupDealPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupDealModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupDealModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupDealPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.Deal, error) {
 	var model GroupDealModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupDealModelToEntity(&model), nil
@@ -92,7 +99,7 @@ func (r *groupDealPostgresRepository) GetByID(ctx context.Context, id uint32) (*
 
 func (r *groupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.Deal, uint32, error) {
 	var models []GroupDealModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.Deal, len(models))
@@ -100,12 +107,12 @@ func (r *groupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID 
 		entities[i] = GroupDealModelToEntity(&model)
 	}
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("group_id = ? AND is_deleted = ?", groupID, false).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
 }
 
 func (r *groupDealPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.DealStatus) error {
-	return r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("id = ?", id).Update("status", status).Error
+	return r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
 }

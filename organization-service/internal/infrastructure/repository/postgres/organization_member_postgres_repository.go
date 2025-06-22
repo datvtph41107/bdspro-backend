@@ -19,6 +19,8 @@ type OrganizationMemberModel struct {
 	Status         uint32    `gorm:"default:1;index:idx_org_members_status_org,priority:1"`
 	JoinedAt       time.Time `gorm:"autoCreateTime"`
 	RemovedAt      *time.Time
+	DeletedAt      *time.Time `gorm:"index"`
+	IsDeleted      bool       `gorm:"default:false"`
 
 	Organization *OrganizationModel
 }
@@ -55,6 +57,7 @@ func OrganizationMemberEntityToModel(entity *entity.OrganizationMember) *Organiz
 		Status:         uint32(entity.Status),
 		JoinedAt:       entity.JoinedAt,
 		RemovedAt:      entity.RemovedAt,
+		IsDeleted:      false,
 	}
 }
 
@@ -94,9 +97,10 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		Joins("left join organization_roles or2 on om.role = or2.id").
 		Joins("left join role_permissions rp on or2.id = rp.organization_role_model_id").
 		Joins("left join organization_permissions op on rp.organization_permission_model_id = op.id").
-		Where("om.user_id = ? AND om.organization_id = ?", userId, organizationId).
+		Where("om.user_id = ? AND om.organization_id = ? AND om.is_deleted = ?", userId, organizationId, false).
 		Group("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name").
 		First(&result).Error
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -104,34 +108,37 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		return nil, err
 	}
 
-	permissions := strings.Split(result.Permissions, ",")
-	role := &entity.OrganizationRole{
-		Id:   result.RoleId,
-		Name: result.RoleName,
-		Key:  result.RoleKey,
-		Permissions: make([]*entity.OrganizationPermission, len(permissions)),
-	}
-	for i, p := range permissions {
-		role.Permissions[i] = &entity.OrganizationPermission{
-			Key: p,
-		}
-	}
-
-	return &entity.OrganizationMember{
+	member := &entity.OrganizationMember{
 		ID:             result.ID,
-		UserID:         result.UserID,
 		OrganizationID: result.OrganizationID,
+		UserID:         result.UserID,
 		RoleId:         result.RoleId,
 		Status:         entity.OrganizationMemberStatus(result.Status),
 		JoinedAt:       result.JoinedAt,
 		RemovedAt:      result.RemovedAt,
-		Role:           role,
-	}, nil
+		Role: &entity.OrganizationRole{
+			Id:   result.RoleId,
+			Name: result.RoleName,
+			Key:  result.RoleKey,
+		},
+	}
+
+	if result.Permissions != "" {
+		permissions := strings.Split(result.Permissions, ",")
+		member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
+		for i, permission := range permissions {
+			member.Role.Permissions[i] = &entity.OrganizationPermission{
+				Key: permission,
+			}
+		}
+	}
+
+	return member, nil
 }
 
 func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error) {
 	var organizationMemberModel *OrganizationMemberModel
-	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_id = ?", userId, organizationId).First(&organizationMemberModel).Error
+	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_id = ? AND is_deleted = ?", userId, organizationId, false).First(&organizationMemberModel).Error
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +156,7 @@ func (r *OrganizationMemberPostgresRepository) CreateOrganizationMember(ctx cont
 
 func (r *OrganizationMemberPostgresRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationMember, error) {
 	var organizationMemberModel *OrganizationMemberModel
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&organizationMemberModel).Error
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&organizationMemberModel).Error
 	if err != nil {
 		return nil, err
 	}
@@ -206,4 +213,36 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
+}
+
+func (r *OrganizationMemberPostgresRepository) AddParticipant(ctx context.Context, participant *entity.OrganizationMember) error {
+	model := OrganizationMemberEntityToModel(participant)
+	model.IsDeleted = false
+	return r.db.WithContext(ctx).Create(model).Error
+}
+
+func (r *OrganizationMemberPostgresRepository) HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (uint64, error) {
+	var conversationID uint64
+	err := r.db.WithContext(ctx).
+		Model(&OrganizationMemberModel{}).
+		Select("conversation_id").
+		Group("conversation_id").
+		Having("COUNT(*) = ? AND COUNT(CASE WHEN user_id IN ? AND is_deleted = ? THEN 1 END) = ?", len(userIDs), userIDs, false, len(userIDs)).
+		Limit(1).
+		Scan(&conversationID).Error
+	if err != nil {
+		return 0, err
+	}
+	return conversationID, nil
+}
+
+// Add soft delete function
+func (r *OrganizationMemberPostgresRepository) DeleteMember(ctx context.Context, id uint32) error {
+	return r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+			"removed_at": time.Now(),
+		}).Error
 }

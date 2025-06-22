@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"time"
 
 	"github.com/tuandq3/go-chat-service/models"
 	"gorm.io/gorm"
@@ -39,12 +40,13 @@ LEFT JOIN (
 	WHERE m.is_deleted = FALSE AND rr.message_id IS NULL
 	GROUP BY m.conversation_id
 ) unread ON unread.conversation_id = c.id
-WHERE c.type = $2 AND p.user_id = $3 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($4))) || '%'
+WHERE c.type = $2 AND p.user_id = $3 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($4))) || '%' AND c.is_deleted = FALSE
 ORDER BY c.created_at DESC
 LIMIT $5 OFFSET $6
-	`
+`
 
 func (r *gormRepository) CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
+	conversation.IsDeleted = false
 	return conversation, r.db.WithContext(ctx).Create(conversation).Error
 }
 
@@ -81,7 +83,7 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 
 func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
-	err := r.db.WithContext(ctx).Where("id = ?", conversationID).First(&conversation).Error
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", conversationID, false).First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
@@ -89,7 +91,7 @@ func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID
 }
 
 func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImage string) error {
-	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", id).Updates(map[string]any{
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", id, false).Updates(map[string]any{
 		"is_broadcast":     isBoardCast,
 		"forbid_forward":   forbidForward,
 		"name":             name,
@@ -100,11 +102,11 @@ func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBo
 func (r *gormRepository) GetMessageOrConversation(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error) {
 	var conversations []*models.ConversationModel
 	var messages []*models.MessageModel
-	err := r.db.WithContext(ctx).Where("name LIKE ?", "%"+keyword+"%").Limit(int(limit)).Offset(int(offset)).Find(&conversations).Error
+	err := r.db.WithContext(ctx).Where("name LIKE ? AND is_deleted = ?", "%"+keyword+"%", false).Limit(int(limit)).Offset(int(offset)).Find(&conversations).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	err = r.db.WithContext(ctx).Where("content LIKE ?", "%"+keyword+"%").Limit(int(limit)).Offset(int(offset)).Find(&messages).Error
+	err = r.db.WithContext(ctx).Where("content LIKE ? AND is_deleted = ?", "%"+keyword+"%", false).Limit(int(limit)).Offset(int(offset)).Find(&messages).Error
 	if err != nil {
 		return nil, nil, err
 	}
@@ -116,7 +118,7 @@ func (r *gormRepository) GetMessageOrConversation(ctx context.Context, keyword s
 
 func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
-	err := r.db.WithContext(ctx).Where("id = ?", conversationID).Preload("Participants").First(&conversation).Error
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", conversationID, false).Preload("Participants").First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
@@ -124,5 +126,9 @@ func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conv
 }
 
 func (r *gormRepository) DeleteConversation(ctx context.Context, conversationID uint64) error {
-	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", conversationID).Update("is_deleted", true).Error
+	// Soft delete by setting is_deleted to true and updating deleted_at
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", conversationID).Updates(map[string]interface{}{
+		"is_deleted": true,
+		"deleted_at": time.Now(),
+	}).Error
 }

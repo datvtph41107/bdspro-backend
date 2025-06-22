@@ -182,7 +182,29 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp dto.OtpVerifyRequest) (*dto.
 		e.UserID = infoEntity.ProfileID
 		_db.SaveWithAudit(c, e)
 	}
+	wallet, err := s.PaymentClient.GetWallet(c.Request.Context(), &paymentpb.GetWalletRequest{
+		Id: uint32(infoEntity.ProfileID),
+	})
 
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi lấy ví",
+		}
+	}
+	if wallet == nil || wallet.Id == 0 {
+		_, err := s.PaymentClient.CreateWallet(c.Request.Context(), &paymentpb.CreateWalletRequest{
+			UserId: uint32(infoEntity.ProfileID),
+			Currency: "VND",
+			Balance: 0,
+		})
+		if err != nil {
+			return nil, &_routes.Except{
+				Code:    500,
+				Message: "Lỗi khi tạo ví",
+			}
+		}
+	}
 	// Liên kết tài khoản OAuth với hồ sơ người dùng
 	if otp.AuthID != 0 {
 		var oauthAcc *auth_model.UserAuthEntity
@@ -207,29 +229,7 @@ func (s *AuthService) VerifyOtp(c *gin.Context, otp dto.OtpVerifyRequest) (*dto.
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), property.AppProperties.Jwt.RefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, e, newSession.SessionID)
-	wallet, err := s.PaymentClient.GetWallet(c.Request.Context(), &paymentpb.GetWalletRequest{
-		Id: uint32(infoEntity.ProfileID),
-	})
-
-	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi lấy ví",
-		}
-	}
-	if wallet == nil || wallet.Id == 0 {
-		_, err := s.PaymentClient.CreateWallet(c.Request.Context(), &paymentpb.CreateWalletRequest{
-			UserId: uint32(infoEntity.ProfileID),
-			Currency: "VND",
-			Balance: 0,
-		})
-		if err != nil {
-			return nil, &_routes.Except{
-				Code:    500,
-				Message: "Lỗi khi tạo ví",
-			}
-		}
-	}
+	
 
 	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
 }

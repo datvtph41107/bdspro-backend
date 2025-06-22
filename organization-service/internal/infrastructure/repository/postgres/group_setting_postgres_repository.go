@@ -16,10 +16,11 @@ type GroupSettingModel struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 	CreatedBy uint32    `gorm:"not null;index:idx_group_settings_created_by"`
 	UpdatedBy uint32    `gorm:"not null"`
-
 	GroupId     uint32 `gorm:"not null;index:idx_group_settings_group_id"`
 	ConfigKey   string `gorm:"not null;index:idx_group_settings_config_key"`
 	ConfigValue string `gorm:"not null"`
+	DeletedAt   *time.Time `gorm:"index"`
+	IsDeleted   bool       `gorm:"default:false"`
 }
 
 func (GroupSettingModel) TableName() string {
@@ -49,6 +50,7 @@ func GroupSettingEntityToModel(entity *entity.GroupSetting) *GroupSettingModel {
 		GroupId:     entity.GroupId,
 		ConfigKey:   entity.ConfigKey,
 		ConfigValue: entity.ConfigValue,
+		IsDeleted:   false,
 	}
 }
 
@@ -62,7 +64,9 @@ func NewGroupSettingPostgresRepository(db *gorm.DB) repository.GroupSettingRepos
 
 func (r *groupSettingPostgresRepository) Create(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
 	model := GroupSettingEntityToModel(setting)
-	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+	model.IsDeleted = false
+	err := r.db.WithContext(ctx).Create(model).Error
+	if err != nil {
 		return nil, err
 	}
 	return GroupSettingModelToEntity(model), nil
@@ -70,35 +74,46 @@ func (r *groupSettingPostgresRepository) Create(ctx context.Context, setting *en
 
 func (r *groupSettingPostgresRepository) Update(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
 	model := GroupSettingEntityToModel(setting)
-	if err := r.db.WithContext(ctx).Model(&GroupSettingModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", setting.Id, false).Updates(model).Error
+	if err != nil {
 		return nil, err
 	}
 	return GroupSettingModelToEntity(model), nil
 }
 
 func (r *groupSettingPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupSettingModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupSettingModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupSettingPostgresRepository) GetByConfigKey(ctx context.Context, configKey string) (*entity.GroupSetting, error) {
 	var model *GroupSettingModel
-	if err := r.db.WithContext(ctx).Where("config_key = ?", configKey).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("config_key = ? AND is_deleted = ?", configKey, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupSettingModelToEntity(model), nil
 }
 
 func (r *groupSettingPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupSetting, error) {
-	var model *GroupSettingModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	var model GroupSettingModel
+	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error
+	if err != nil {
 		return nil, err
 	}
-	return GroupSettingModelToEntity(model), nil
+	return GroupSettingModelToEntity(&model), nil
 }
 
 func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupSetting, uint32, error) {
 	var models []*GroupSettingModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("group_id = ? AND is_deleted = ?", groupID, false).
+		Offset(page * size).
+		Limit(size).
+		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.GroupSetting, len(models))
@@ -106,7 +121,10 @@ func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, group
 		entities[i] = GroupSettingModelToEntity(model)
 	}
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&GroupSettingModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Model(&GroupSettingModel{}).
+		Where("group_id = ? AND is_deleted = ?", groupID, false).
+		Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil

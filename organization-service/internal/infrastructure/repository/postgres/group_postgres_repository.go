@@ -20,6 +20,9 @@ type GroupModel struct {
 	Name        string `gorm:"not null;index:idx_groups_name"`
 	Description string
 	AvatarUrl   string
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (GroupModel) TableName() string {
@@ -77,12 +80,17 @@ func (r *groupPostgresRepository) Update(ctx context.Context, group *entity.Grou
 }
 
 func (r *groupPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.Group, error) {
 	var model *GroupModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupModelToEntity(model), nil
@@ -90,7 +98,7 @@ func (r *groupPostgresRepository) GetByID(ctx context.Context, id uint32) (*enti
 
 func (r *groupPostgresRepository) List(ctx context.Context, page, size int, currentUserId uint32) ([]*entity.Group, uint32, error) {
 	var models []*GroupModel
-	if err := r.db.WithContext(ctx).Offset(page*size).Limit(size).Where("created_by = ?", currentUserId).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Offset(page*size).Limit(size).Where("created_by = ? AND is_deleted = ?", currentUserId, false).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.Group, len(models))
@@ -99,7 +107,7 @@ func (r *groupPostgresRepository) List(ctx context.Context, page, size int, curr
 	}
 
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&GroupModel{}).Where("created_by = ?", currentUserId).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&GroupModel{}).Where("created_by = ? AND is_deleted = ?", currentUserId, false).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
@@ -109,7 +117,7 @@ func (r *groupPostgresRepository) FindByUserId(ctx context.Context, userId uint3
 	var groups []*GroupModel
 	if err := r.db.WithContext(ctx).
 		Joins("LEFT JOIN group_members ON groups.id = group_members.group_id").
-		Where("groups.created_by = ? OR group_members.user_id = ?", userId, userId).
+		Where("groups.created_by = ? OR group_members.user_id = ? AND groups.is_deleted = ?", userId, userId, false).
 		Distinct().
 		Order("groups.created_at DESC").
 		Find(&groups).Error; err != nil {

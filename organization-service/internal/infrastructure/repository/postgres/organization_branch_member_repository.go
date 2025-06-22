@@ -16,6 +16,9 @@ type OrganizationBranchMemberModel struct {
 	CreatedAt            time.Time `gorm:"autoCreateTime;index:idx_org_branch_members_created_at"`
 	UpdatedAt            time.Time `gorm:"autoUpdateTime"`
 	CreatedBy            uint32    `gorm:"index:idx_org_branch_members_created_by"`
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool `gorm:"default:false"`
 }
 
 func (m *OrganizationBranchMemberModel) TableName() string {
@@ -62,12 +65,17 @@ func (r *organizationBranchMemberRepository) CreateOrganizationBranchMember(ctx 
 }
 
 func (r *organizationBranchMemberRepository) DeleteOrganizationBranchMember(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&OrganizationBranchMemberModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&OrganizationBranchMemberModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByOrganizationBranchId(ctx context.Context, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error) {
 	var models []OrganizationBranchMemberModel
-	err := r.db.WithContext(ctx).Where("organization_branch_id = ?", organizationBranchId).Find(&models).Error
+	err := r.db.WithContext(ctx).Where("organization_branch_id = ? AND is_deleted = ?", organizationBranchId, false).Find(&models).Error
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +89,7 @@ func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByOrgani
 
 func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByUserIdAndOrganizationBranchId(ctx context.Context, userId uint32, organizationBranchId uint32) (*entity.OrganizationBranchMember, error) {
 	var model OrganizationBranchMemberModel
-	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_branch_id = ?", userId, organizationBranchId).First(&model).Error
+	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_branch_id = ? AND is_deleted = ?", userId, organizationBranchId, false).First(&model).Error
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +98,7 @@ func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByUserId
 
 func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByOrganizationBranchIdWithPagination(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error) {
 	var models []OrganizationBranchMemberModel
-	err := r.db.WithContext(ctx).Where("organization_branch_id = ?", organizationBranchId).Offset(page * size).Limit(size).Find(&models).Error
+	err := r.db.WithContext(ctx).Where("organization_branch_id = ? AND is_deleted = ?", organizationBranchId, false).Offset(page * size).Limit(size).Find(&models).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -101,7 +109,7 @@ func (r *organizationBranchMemberRepository) GetOrganizationBranchMemberByOrgani
 	}
 
 	var total int64
-	if err := r.db.WithContext(ctx).Model(&OrganizationBranchMemberModel{}).Where("organization_branch_id = ?", organizationBranchId).Count(&total).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&OrganizationBranchMemberModel{}).Where("organization_branch_id = ? AND is_deleted = ?", organizationBranchId, false).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 

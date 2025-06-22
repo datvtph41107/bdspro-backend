@@ -19,6 +19,9 @@ type GroupNotificationModel struct {
 	GroupId uint32 `gorm:"not null;index:idx_group_notifications_group_id"`
 	Type    string `gorm:"not null;index:idx_group_notifications_type"`
 	Content string `gorm:"not null"`
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool `gorm:"default:false"`
 }
 
 func (GroupNotificationModel) TableName() string {
@@ -76,12 +79,17 @@ func (r *groupNotificationPostgresRepository) Update(ctx context.Context, notifi
 }
 
 func (r *groupNotificationPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupNotificationModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupNotificationModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupNotificationPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupNotification, error) {
 	var model *GroupNotificationModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupNotificationModelToEntity(model), nil
@@ -89,7 +97,7 @@ func (r *groupNotificationPostgresRepository) GetByID(ctx context.Context, id ui
 
 func (r *groupNotificationPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupNotification, error) {
 	var models []*GroupNotificationModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	entities := make([]*entity.GroupNotification, len(models))
@@ -101,7 +109,7 @@ func (r *groupNotificationPostgresRepository) GetByGroupID(ctx context.Context, 
 
 func (r *groupNotificationPostgresRepository) GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupNotification, error) {
 	var models []*GroupNotificationModel
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_deleted = ?", userID, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	entities := make([]*entity.GroupNotification, len(models))

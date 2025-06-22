@@ -17,6 +17,9 @@ type WalletModel struct {
 	UserId    uint32
 	Balance   float64
 	Currency  string
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`	
 }
 
 func (m *WalletModel) TableName() string {
@@ -104,7 +107,7 @@ func (r *walletsPostgresRepository) CreateWallet(ctx context.Context, wallet *en
 
 func (r *walletsPostgresRepository) GetWalletByUserId(ctx context.Context, userId uint32) (*entity.Wallet, error) {
 	var model WalletModel
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userId).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_deleted = ?", userId, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return WalletModelToEntity(&model), nil
@@ -112,7 +115,7 @@ func (r *walletsPostgresRepository) GetWalletByUserId(ctx context.Context, userI
 
 func (r *walletsPostgresRepository) GetWalletBySubAccount(ctx context.Context, subAccount string) (*entity.Wallet, error) {
 	var wallet entity.Wallet
-	if err := r.db.WithContext(ctx).Where("sub_account = ?", subAccount).First(&wallet).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("sub_account = ? AND is_deleted = ?", subAccount, false).First(&wallet).Error; err != nil {
 		return nil, err
 	}
 	return &wallet, nil

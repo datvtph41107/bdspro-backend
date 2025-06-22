@@ -22,6 +22,9 @@ type GroupDocumentModel struct {
 	FileUrl     string `gorm:"not null"`
 	FileType    string `gorm:"not null;index:idx_group_documents_file_type"`
 	FileSize    uint64 `gorm:"not null"`
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool `gorm:"default:false"`
 }
 
 func (GroupDocumentModel) TableName() string {
@@ -85,12 +88,17 @@ func (r *groupDocumentPostgresRepository) Update(ctx context.Context, document *
 }
 
 func (r *groupDocumentPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&GroupDocumentModel{}, id).Error
+	return r.db.WithContext(ctx).Model(&GroupDocumentModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *groupDocumentPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupDocument, error) {
 	var model *GroupDocumentModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return GroupDocumentModelToEntity(model), nil
@@ -98,7 +106,7 @@ func (r *groupDocumentPostgresRepository) GetByID(ctx context.Context, id uint32
 
 func (r *groupDocumentPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupDocument, uint32, error) {
 	var models []*GroupDocumentModel
-	if err := r.db.WithContext(ctx).Where("group_id = ?", groupID).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.GroupDocument, len(models))
@@ -106,7 +114,7 @@ func (r *groupDocumentPostgresRepository) GetByGroupID(ctx context.Context, grou
 		entities[i] = GroupDocumentModelToEntity(model)
 	}
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&GroupDocumentModel{}).Where("group_id = ?", groupID).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&GroupDocumentModel{}).Where("group_id = ? AND is_deleted = ?", groupID, false).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil

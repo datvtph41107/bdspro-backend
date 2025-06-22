@@ -57,7 +57,6 @@ func WithdrawalRequestEntityToModel(e *entity.WithdrawalRequest) *WithdrawalRequ
 	}
 }
 
-
 type withdrawalRequestsPostgresRepository struct {
 	db *gorm.DB
 }
@@ -75,7 +74,7 @@ func (r *withdrawalRequestsPostgresRepository) CreateWithdrawalRequest(ctx conte
 
 func (r *withdrawalRequestsPostgresRepository) GetWithdrawalRequestById(ctx context.Context, id uint32) (*entity.WithdrawalRequest, error) {
 	var model WithdrawalRequestModel
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return WithdrawalRequestModelToEntity(&model), nil

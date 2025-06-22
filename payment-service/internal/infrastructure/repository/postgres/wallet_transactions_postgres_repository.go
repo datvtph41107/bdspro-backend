@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	paymentpb "pb/types/payment"
@@ -24,6 +23,9 @@ type WalletTransactionModel struct {
 	TransactionCode   string `gorm:"unique"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (m *WalletTransactionModel) TableName() string {
@@ -330,7 +332,6 @@ func (r *walletTransactionRepository) CreateTransactionType(ctx context.Context,
 }
 
 func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context, transactionType *paymentpb.TransactionType) error {
-	fmt.Printf("Transaction Type: %+v\n", transactionType)
 	model := &TransactionTypeModel{
 		ID:       transactionType.Id,
 		Name:     transactionType.Name,
@@ -342,12 +343,16 @@ func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context,
 }
 
 func (r *walletTransactionRepository) DeleteTransactionType(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Delete(&TransactionTypeModel{}, id).Error
+	return r.db.WithContext(ctx).Delete(&TransactionTypeModel{}, id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error
 }
 
 func (r *walletTransactionRepository) GetTransactionByCode(ctx context.Context, code string) (*entity.WalletTransaction, error) {
 	var model WalletTransactionModel
-	if err := r.db.WithContext(ctx).Where("transaction_code = ?", code).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("transaction_code = ? AND is_deleted = ?", code, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return WalletTransactionModelToEntity(&model), nil

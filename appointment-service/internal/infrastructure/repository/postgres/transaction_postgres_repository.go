@@ -32,9 +32,11 @@ type TransactionModel struct {
 	ApprovalDate         *time.Time
 	TransactionStatus    transaction.TransactionStatus `gorm:"index:idx_status"`
 	TransactionDate      time.Time                     `gorm:"index:idx_date"`
-	IsDeleted            bool                          `gorm:"index:idx_deleted"`
 	CreatedAt            time.Time                     `gorm:"autoCreateTime"`
 	UpdatedAt            time.Time                     `gorm:"autoUpdateTime"`
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (t *TransactionModel) TableName() string {
@@ -134,7 +136,12 @@ func (r *transactionPostgresRepository) Update(ctx context.Context, tx *transact
 }
 
 func (r *transactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	result := r.db.WithContext(ctx).Delete(&TransactionModel{}, id)
+	result := r.db.WithContext(ctx).Model(&TransactionModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at":  time.Now(),
+		})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -171,7 +178,7 @@ func (r *transactionPostgresRepository) List(ctx context.Context, filters *repos
 
 	var models []*TransactionModel
 	err = query.Order("created_at DESC").
-		Offset((filters.Page - 1) * filters.Size).
+		Offset((filters.Page) * filters.Size).
 		Limit(filters.Size).
 		Find(&models).Error
 	if err != nil {

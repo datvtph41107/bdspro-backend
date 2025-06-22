@@ -17,6 +17,9 @@ type WalletAuditLogModel struct {
 	Reason      string
 	ChangedBy   uint32
 	ChangedAt   time.Time
+
+	DeletedAt *time.Time `gorm:"index"`
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (m *WalletAuditLogModel) TableName() string {
@@ -57,7 +60,7 @@ func NewWalletAuditLogRepository(db *gorm.DB) repository.WalletAuditLogRepositor
 
 func (r *walletAuditLogRepository) GetWalletAuditLog(ctx context.Context, req *entity.WalletAuditLog) (*entity.WalletAuditLog, error) {
 	var model WalletAuditLogModel
-	if err := r.db.WithContext(ctx).Where("wallet_id = ?", req.WalletId).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("wallet_id = ? AND is_deleted = ?", req.WalletId, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return WalletAuditLogModelToEntity(&model), nil
@@ -79,7 +82,12 @@ func (r *walletAuditLogRepository) UpdateWalletAuditLog(ctx context.Context, req
 }
 
 func (r *walletAuditLogRepository) DeleteWalletAuditLog(ctx context.Context, req *entity.WalletAuditLog) (*entity.WalletAuditLog, error) {
-	if err := r.db.WithContext(ctx).Delete(&WalletAuditLogModel{}, req.Id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&WalletAuditLogModel{}).
+		Where("id = ?", req.Id).
+		Updates(map[string]interface{}{
+			"is_deleted":  true,
+			"deleted_at": time.Now(),
+		}).Error; err != nil {
 		return nil, err
 	}
 	return req, nil
