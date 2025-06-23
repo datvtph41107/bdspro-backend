@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
+	"chat/internal/delivery/errors"
 )
 
 type responseRecorder struct {

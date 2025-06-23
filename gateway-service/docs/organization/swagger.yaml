@@ -1,5 +1,10 @@
 basePath: /v2/org
 definitions:
+  organizationpb.CheckOrganizationIsExistRequest:
+    properties:
+      id:
+        type: integer
+    type: object
   organizationpb.CreateGroupMemberRequest:
     properties:
       groupId:
@@ -46,6 +51,92 @@ definitions:
       website:
         type: string
     type: object
+  organizationpb.CreateRoleRequest:
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+      organizationId:
+        type: integer
+    type: object
+  organizationpb.GetOrganizationsRequest:
+    properties:
+      id:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  organizationpb.GetRolesRequest:
+    properties:
+      organizationId:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupMemberRequest:
+    properties:
+      id:
+        type: integer
+      role:
+        type: string
+    type: object
+  organizationpb.UpdateGroupRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  organizationpb.UpdateOrganizationMemberRequest:
+    properties:
+      id:
+        type: integer
+      role:
+        type: integer
+    type: object
+  organizationpb.UpdateOrganizationRequest:
+    properties:
+      address:
+        type: string
+      businessLicenseUrl:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+      taxCode:
+        type: string
+      website:
+        type: string
+    type: object
+  organizationpb.UpdateRoleRequest:
+    properties:
+      id:
+        type: integer
+      key:
+        type: string
+      name:
+        type: string
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
 info:
   contact: {}
   description: Organization Service API
@@ -53,6 +144,24 @@ info:
   version: "1.0"
 paths:
   /group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm
     post:
       consumes:
       - application/json
@@ -73,6 +182,18 @@ paths:
       tags:
       - Nhóm
   /group-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thành viên nhóm
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thành viên nhóm
+      tags:
+      - Thành viên
     post:
       consumes:
       - application/json
@@ -92,6 +213,138 @@ paths:
       summary: Tạo thành viên nhóm
       tags:
       - Thành viên
+  /group-member/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên nhóm
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên nhóm
+      tags:
+      - Thành viên
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thành viên nhóm
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: groupMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/switch:
+    post:
+      consumes:
+      - application/json
+      description: Đổi nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đổi nhóm
+      tags:
+      - Thành viên
+  /group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa nhóm
+      tags:
+      - Nhóm
+    get:
+      consumes:
+      - application/json
+      description: Lấy nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy nhóm
+      tags:
+      - Nhóm
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật nhóm
+      tags:
+      - Nhóm
   /group/user/{userId}:
     get:
       consumes:
@@ -109,6 +362,66 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy tổ chức của người dùng hiện tại
+      tags:
+      - Tổ chức
+  /organization:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tổ chức
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.GetOrganizationsRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tổ chức
+      tags:
+      - Tổ chức
+  /organization/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật tổ chức
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tổ chức
+      tags:
+      - Tổ chức
+  /organization/check/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Kiểm tra tổ chức có tồn tại không
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CheckOrganizationIsExistRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Kiểm tra tổ chức có tồn tại không
       tags:
       - Tổ chức
   /organization/member:
@@ -129,6 +442,44 @@ paths:
       security:
       - BearerAuth: []
       summary: Tạo thành viên tổ chức
+      tags:
+      - Thành viên
+  /organization/member/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên tổ chức
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên tổ chức
+      tags:
+      - Thành viên
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thành viên tổ chức
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: organizationMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thành viên tổ chức
       tags:
       - Thành viên
   /organization/member/{organizationId}:
@@ -208,6 +559,84 @@ paths:
       summary: Tạo tổ chức mới
       tags:
       - Tổ chức
+  /organization/role:
+    post:
+      consumes:
+      - application/json
+      description: Tạo vai trò
+      parameters:
+      - description: Thông tin vai trò
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateRoleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo vai trò
+      tags:
+      - Vai trò
+  /organization/role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa vai trò
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa vai trò
+      tags:
+      - Vai trò
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật vai trò
+      parameters:
+      - description: Thông tin vai trò
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật vai trò
+      tags:
+      - Vai trò
+  /organization/roles:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách vai trò
+      parameters:
+      - description: Thông tin vai trò
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.GetRolesRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách vai trò
+      tags:
+      - Vai trò
   /organization/user/{userId}:
     get:
       consumes:

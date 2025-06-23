@@ -5,16 +5,19 @@ import (
 	"fmt"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+
 	"github.com/tuandq2112/organization-service/appconfig"
 	"google.golang.org/grpc"
 )
 
 type UserClient interface {
 	GetProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error)
+	GetMapProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (map[uint64]*sharepb.ProfileItem, error)
 }
 type userClient struct {
 	client userpb.ProfileServiceClient
 }
+
 func NewUserClient() UserClient {
 	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", appconfig.USER_SERVICE_HOST, appconfig.USER_SERVICE_PORT), grpc.WithInsecure())
 	if err != nil {
@@ -29,3 +32,14 @@ func (c *userClient) GetProfileByIds(ctx context.Context, in *sharepb.GetProfile
 	return c.client.GetProfileByIds(ctx, in)
 }
 
+func (c *userClient) GetMapProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (map[uint64]*sharepb.ProfileItem, error) {
+	profiles, err := c.client.GetProfileByIds(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, profile := range profiles.Profiles {
+		profileMap[profile.Id] = profile
+	}
+	return profileMap, nil
+}

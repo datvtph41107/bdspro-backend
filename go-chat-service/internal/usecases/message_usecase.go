@@ -1,12 +1,12 @@
 package usecases
 
 import (
+	"chat/internal/delivery/errors"
 	"context"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
-	"github.com/tuandq3/go-chat-service/models"
-	"github.com/tuandq3/go-chat-service/utils"
+	"chat/models"
+	"chat/utils"
 )
 
 type messageUsecases struct {

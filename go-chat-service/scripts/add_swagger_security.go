@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"chat/configs"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
 )
 
 var logger = flogging.MustGetLogger("scripts")

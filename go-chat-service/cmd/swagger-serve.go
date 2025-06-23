@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"chat/internal/server"
+	"chat/scripts"
+
 	"github.com/spf13/cobra"
-	"github.com/tuandq3/go-chat-service/internal/server"
-	"github.com/tuandq3/go-chat-service/scripts"
 )
 
 var swaggerCMD = &cobra.Command{

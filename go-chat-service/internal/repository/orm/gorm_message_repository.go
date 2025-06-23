@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
+
 	"gorm.io/gorm"
 )
 

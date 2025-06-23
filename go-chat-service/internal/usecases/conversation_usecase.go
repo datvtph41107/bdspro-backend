@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
-	"github.com/tuandq3/go-chat-service/models"
-	messagepb "github.com/tuandq3/go-chat-service/proto/types/message"
-	"github.com/tuandq3/go-chat-service/utils"
+	"chat/internal/delivery/errors"
+	"chat/models"
+	"chat/utils"
+	chatpb "pb/types/chat"
 )
 
 type conversationUsecases struct {
@@ -32,7 +32,7 @@ func (c *conversationUsecases) CreateConversation(ctx context.Context, conversat
 	}
 	if existedConversationId != 0 {
 		return nil, errors.ConversationAlreadyExists(
-			&messagepb.ExistedConversationResponse{
+			&chatpb.ExistedConversationResponse{
 				ConversationId: int32(existedConversationId),
 			},
 		)
@@ -104,7 +104,6 @@ func (c *conversationUsecases) EditChannel(
 
 	return c.repo.UpdateConversation(ctx, conversationId, broadcastVal, forbidForwardVal, nameVal, bgImageVal)
 }
-
 
 func (c *conversationUsecases) CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
 	panic("unimplemented")

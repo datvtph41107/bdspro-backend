@@ -3,7 +3,7 @@ package usecases
 import (
 	"context"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
 )
 
 type backgroundImageUsecases struct {

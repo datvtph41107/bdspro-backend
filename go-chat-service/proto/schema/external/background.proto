@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package external;
 
-option go_package = "github.com/tuandq3/go-chat-service/proto/types/external;external";
+option go_package = "chat/proto/types/external;external";
 
 
 enum ImageType {

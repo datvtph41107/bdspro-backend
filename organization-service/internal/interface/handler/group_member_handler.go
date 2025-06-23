@@ -58,6 +58,14 @@ func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *org
 	return h.groupMemberTransformer.EntityToCreateGroupMemberResponse(createdMember), nil
 }
 
+// @Summary Cập nhật thành viên nhóm
+// @Description Cập nhật thành viên nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param groupMember body organizationpb.UpdateGroupMemberRequest true "Thông tin thành viên"
+// @Security BearerAuth
+// @Router /group-member/{id} [put]
 func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *organizationpb.UpdateGroupMemberRequest) (*organizationpb.UpdateGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateUpdateGroupMemberRequest(request); err != nil {
 		return nil, err
@@ -76,6 +84,14 @@ func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *org
 	return h.groupMemberTransformer.EntityToUpdateGroupMemberResponse(updatedMember), nil
 }
 
+// @Summary Xóa thành viên nhóm
+// @Description Xóa thành viên nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của thành viên"
+// @Security BearerAuth
+// @Router /group-member/{id} [delete]
 func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *organizationpb.DeleteGroupMemberRequest) (*organizationpb.DeleteGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateDeleteGroupMemberRequest(request); err != nil {
 		return nil, err
@@ -90,6 +106,13 @@ func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *org
 	}, nil
 }
 
+// @Summary Lấy thành viên nhóm
+// @Description Lấy thành viên nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /group-member/{groupId} [get]
 func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *organizationpb.GetGroupMemberRequest) (*organizationpb.GetGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMemberRequest(request); err != nil {
 		return nil, err
@@ -103,6 +126,14 @@ func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *organi
 	return h.groupMemberTransformer.EntityToGetGroupMemberResponse(member), nil
 }
 
+// @Summary Lấy danh sách thành viên nhóm
+// @Description Lấy danh sách thành viên nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param groupId path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group-member/list [get]
 func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organizationpb.GetGroupMembersRequest) (*organizationpb.GetGroupMembersResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMembersRequest(request); err != nil {
 		return nil, err
@@ -114,6 +145,14 @@ func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organ
 	return h.groupMemberTransformer.EntityToGetGroupMembersResponse(members), nil
 }
 
+// @Summary Đổi nhóm
+// @Description Đổi nhóm
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param groupId path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group-member/switch [post]
 func (h *GroupMemberHandler) SwitchGroup(ctx context.Context, request *organizationpb.SwitchGroupRequest) (*organizationpb.SwitchGroupResponse, error) {
 	// todo: thêm logic đổi nhóm check xem có thuộc nhóm không
 

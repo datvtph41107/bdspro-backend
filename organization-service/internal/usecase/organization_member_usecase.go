@@ -254,7 +254,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 		profileIds[i] = uint64(member.UserID)
 	}
 
-	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+	profiles, err := u.userGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
 		Ids: profileIds,
 	})
 	if err != nil {
@@ -265,7 +265,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 	for i, member := range members {
 		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
 			OrganizationMember: member,
-			Profile:            profiles.Profiles[i],
+			Profile:            profiles[uint64(member.UserID)],
 		}
 	}
 	return membersWithProfiles, total, nil

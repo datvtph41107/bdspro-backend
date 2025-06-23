@@ -9,14 +9,15 @@ import (
 	"syscall"
 	"time"
 
+	"chat/configs"
+	"chat/infrastructure/database/postgres"
+	"chat/internal/delivery/handlers"
+	middlewares "chat/internal/delivery/middleware"
+	"chat/internal/repository"
+	"chat/internal/usecases"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/infrastructure/database/postgres"
-	"github.com/tuandq3/go-chat-service/internal/delivery/handlers"
-	middlewares "github.com/tuandq3/go-chat-service/internal/delivery/middleware"
-	"github.com/tuandq3/go-chat-service/internal/repository"
-	"github.com/tuandq3/go-chat-service/internal/usecases"
 )
 
 var logger = flogging.MustGetLogger("http_server")
@@ -31,7 +32,6 @@ func NewHTTPServer(port string) *HTTPServer {
 
 	configs.InitConfig()
 
-	
 	db, err := postgres.NewPostgresDB(configs.DNS)
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)

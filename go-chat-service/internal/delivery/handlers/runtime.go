@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 
+	chatpb "pb/types/chat"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	chatpb "github.com/tuandq3/go-chat-service/proto/types/chat"
-	externalpb "github.com/tuandq3/go-chat-service/proto/types/external"
 	"google.golang.org/grpc"
 )
 
@@ -38,7 +38,7 @@ func (d *Delivery) RegisterHTTPServer(ctx context.Context, mux *runtime.ServeMux
 	if err != nil {
 		return err
 	}
-	err = externalpb.RegisterBackgroundImageServiceHandlerServer(ctx, mux, d.externalHandler)
+	err = chatpb.RegisterBackgroundImageServiceHandlerServer(ctx, mux, d.externalHandler)
 	if err != nil {
 		return err
 	}
@@ -47,5 +47,5 @@ func (d *Delivery) RegisterHTTPServer(ctx context.Context, mux *runtime.ServeMux
 
 func (d *Delivery) RegisterGRPCServer(server *grpc.Server) {
 	chatpb.RegisterChatServiceServer(server, d.chatHandler)
-	externalpb.RegisterBackgroundImageServiceServer(server, d.externalHandler)
+	chatpb.RegisterBackgroundImageServiceServer(server, d.externalHandler)
 }

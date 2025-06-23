@@ -66,14 +66,17 @@ func (o *organizationMemberTransformer) EntityToDeleteOrganizationMemberResponse
 func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse {
 	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
 	for i, member := range members {
-		profile := member.Profile
-		profile.Phone = ""
 		membersResponse[i] = &organizationpb.OrganizationMember{
-			Id:      member.OrganizationMember.ID,
-			UserId:  member.OrganizationMember.UserID,
-			Role:    member.OrganizationMember.RoleId,
-			Status:  getStatusString(member.OrganizationMember.Status),
-			Profile: profile,
+			Id:     member.OrganizationMember.ID,
+			UserId: member.OrganizationMember.UserID,
+			Role:   member.OrganizationMember.RoleId,
+			Status: getStatusString(member.OrganizationMember.Status),
+			// Profile: profile,
+		}
+		profile := member.Profile
+		if profile != nil {
+			profile.Phone = ""
+			membersResponse[i].Profile = profile
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{

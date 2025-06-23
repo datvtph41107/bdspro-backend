@@ -48,6 +48,8 @@ buf-transaction:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path transaction
 buf-payment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
+buf-chat:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path chat
 buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-payment buf-payment buf-crm
 	echo "done"	
 	

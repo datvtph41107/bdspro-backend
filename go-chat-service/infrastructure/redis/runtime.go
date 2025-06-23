@@ -3,9 +3,10 @@ package redis
 import (
 	"context"
 
+	"chat/configs"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
 )
 
 type RedisClient struct {

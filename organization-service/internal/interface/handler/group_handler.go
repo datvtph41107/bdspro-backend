@@ -51,6 +51,14 @@ func (h *GroupHandler) CreateGroup(ctx context.Context, req *organizationpb.Crea
 	return h.GroupTransformer.EntityToCreateGroupResponse(group), nil
 }
 
+// @Summary Cập nhật nhóm
+// @Description Cập nhật nhóm
+// @Tags Nhóm
+// @Accept json
+// @Produce json
+// @Param group body organizationpb.UpdateGroupRequest true "Thông tin nhóm"
+// @Security BearerAuth
+// @Router /group/{id} [put]
 func (h *GroupHandler) UpdateGroup(ctx context.Context, req *organizationpb.UpdateGroupRequest) (*organizationpb.UpdateGroupResponse, error) {
 	if err := h.GroupValidator.ValidateUpdateGroupRequest(req); err != nil {
 		return nil, err
@@ -66,6 +74,14 @@ func (h *GroupHandler) UpdateGroup(ctx context.Context, req *organizationpb.Upda
 	return h.GroupTransformer.EntityToUpdateGroupResponse(group), nil
 }
 
+// @Summary Xóa nhóm
+// @Description Xóa nhóm
+// @Tags Nhóm
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group/{id} [delete]
 func (h *GroupHandler) DeleteGroup(ctx context.Context, req *organizationpb.DeleteGroupRequest) (*organizationpb.DeleteGroupResponse, error) {
 	if err := h.GroupValidator.ValidateDeleteGroupRequest(req); err != nil {
 		return nil, err
@@ -78,6 +94,14 @@ func (h *GroupHandler) DeleteGroup(ctx context.Context, req *organizationpb.Dele
 	return &organizationpb.DeleteGroupResponse{Id: req.Id}, nil
 }
 
+// @Summary Lấy nhóm
+// @Description Lấy nhóm
+// @Tags Nhóm
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group/{id} [get]
 func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGroupRequest) (*organizationpb.GetGroupResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupRequest(req); err != nil {
 		return nil, err
@@ -91,6 +115,14 @@ func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGrou
 	return h.GroupTransformer.EntityToGetGroupResponse(group), nil
 }
 
+// @Summary Lấy danh sách nhóm
+// @Description Lấy danh sách nhóm
+// @Tags Nhóm
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group [get]
 func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGroupsRequest) (*organizationpb.GetGroupsResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupsRequest(req); err != nil {
 		return nil, err

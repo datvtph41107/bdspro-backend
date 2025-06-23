@@ -2,7 +2,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 
 package chat;
-option go_package = "github.com/tuandq3/go-chat-service/proto/types/chat;chat";
+option go_package = "chat/proto/types/chat;chat";
 
 service ChatService {
   rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse);

@@ -28,6 +28,14 @@ func NewOrganizationRoleHandler(
 	}
 }
 
+// @Summary Tạo vai trò
+// @Description Tạo vai trò
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.CreateRoleRequest true "Thông tin vai trò"
+// @Security BearerAuth
+// @Router /organization/role [post]
 func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizationpb.CreateRoleRequest) (*organizationpb.CreateRoleResponse, error) {
 	role := h.OrganizationRoleTransformer.CreateRoleRequestToEntity(req)
 	if err := h.OrganizationRoleValidator.ValidateCreateRoleRequest(req); err != nil {
@@ -40,6 +48,14 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 	return h.OrganizationRoleTransformer.EntityToCreateRoleResponse(role), nil
 }
 
+// @Summary Cập nhật vai trò
+// @Description Cập nhật vai trò
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.UpdateRoleRequest true "Thông tin vai trò"
+// @Security BearerAuth
+// @Router /organization/role/{id} [put]
 func (h *OrganizationRoleHandler) UpdateRole(ctx context.Context, req *organizationpb.UpdateRoleRequest) (*organizationpb.UpdateRoleResponse, error) {
 	role := h.OrganizationRoleTransformer.UpdateRoleRequestToEntity(req)
 	if err := h.OrganizationRoleValidator.ValidateUpdateRoleRequest(req); err != nil {
@@ -52,6 +68,14 @@ func (h *OrganizationRoleHandler) UpdateRole(ctx context.Context, req *organizat
 	return h.OrganizationRoleTransformer.EntityToUpdateRoleResponse(role), nil
 }
 
+// @Summary Xóa vai trò
+// @Description Xóa vai trò
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của vai trò"
+// @Security BearerAuth
+// @Router /organization/role/{id} [delete]
 func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizationpb.DeleteRoleRequest) (*organizationpb.DeleteRoleResponse, error) {
 	if err := h.OrganizationRoleValidator.ValidateDeleteRoleRequest(req); err != nil {
 		return nil, err
@@ -65,6 +89,14 @@ func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizat
 	}, nil
 }
 
+// @Summary Lấy danh sách vai trò
+// @Description Lấy danh sách vai trò
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.GetRolesRequest true "Thông tin vai trò"
+// @Security BearerAuth
+// @Router /organization/roles [get]
 func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizationpb.GetRolesRequest) (*organizationpb.GetRolesResponse, error) {
 	// Set default pagination values
 	page := 1

@@ -83,10 +83,10 @@ case "$1" in
     path_jar=main
     payload_build=http-server
     ;;
-  "chatws")
-    service_path=go-chat-service
+  "relay")
+    service_path=relay-service
     path_jar=main
-    payload_build=ws-server
+    payload_build=relay
     ;;
   "swagger-chat")
     service_path=go-chat-service
@@ -144,8 +144,8 @@ fi
 if [ "$1" = "chathttp" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
-if [ "$1" = "chatws" ]; then
-  scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+if [ "$1" = "relay" ]; then
+  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ "$1" = "org" ]; then
   scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}

@@ -4,7 +4,7 @@ package error;
 
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/tuandq3/go-chat-service/proto/types/error;error";
+option go_package = "chat/proto/types/error;error";
 
 message ErrorResponse {
     int32 code = 1;

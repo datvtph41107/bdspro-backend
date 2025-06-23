@@ -3,9 +3,9 @@ package usecases
 import (
 	"context"
 
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
-	"github.com/tuandq3/go-chat-service/models"
-	"github.com/tuandq3/go-chat-service/utils"
+	"chat/internal/delivery/errors"
+	"chat/models"
+	"chat/utils"
 )
 
 type messageReactionUsecases struct {

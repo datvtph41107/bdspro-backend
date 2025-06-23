@@ -171,16 +171,16 @@ services:
     networks:
       - internal
 
-  ws-server:
-    build: ./go-chat-service
-    container_name: ws-server
+  relay:
+    build: ./relay-service
+    container_name: relay
     ports:
-      - "8105:3001"
-    command: ["sh", "-c", "sleep 5 && /app/main ws-serve --wsPort=3001 || sleep infinity"]
+      - "8105:8204"
+    command: ["sh", "-c", "sleep 5 && /app/main || sleep infinity"]
     volumes:
-      - ${PWD}/configs:/app/configs
+      - ${PWD}/config:/app/config
     environment:
-      - CONFIG_FILE=/app/configs/docker_config.yaml 
+      - CONFIG_FILE=/app/config/release.yml 
     networks:
       - internal
   

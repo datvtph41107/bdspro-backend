@@ -3,7 +3,7 @@ package orm
 import (
 	"context"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
 )
 
 func (r *gormRepository) ExistParticipant(ctx context.Context, conversationID uint64, userID uint64) (bool, error) {

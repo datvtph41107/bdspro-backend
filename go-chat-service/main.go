@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuandq3/go-chat-service/cmd"
+	"chat/cmd"
 )
 
 func main() {

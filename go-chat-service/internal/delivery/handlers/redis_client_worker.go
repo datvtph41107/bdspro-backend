@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	messagepb "github.com/tuandq3/go-chat-service/proto/types/message"
+	chatpb "pb/types/chat"
+
+	"chat/internal/constants"
 
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/internal/constants"
 )
 
 type redisClientWorker struct {
@@ -34,7 +35,7 @@ func (r *redisClientWorker) serve() {
 
 		switch v := event.(type) {
 
-		case *messagepb.UpdateRoomMessage:
+		case *chatpb.UpdateRoomMessage:
 			members, err := r.parent.participantUsecases.InternalGetListParticipant(r.ctx, v.Data.RoomId)
 			if err != nil {
 				r.parent.logger.Errorf("Failed to get list participant: %v", err)

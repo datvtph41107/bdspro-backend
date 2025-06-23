@@ -71,6 +71,14 @@ func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context
 	return h.OrganizationMemberTransformer.EntityToCreateOrganizationMemberResponse(organizationMember), nil
 }
 
+// @Summary Cập nhật thành viên tổ chức
+// @Description Cập nhật thành viên tổ chức
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param organizationMember body organizationpb.UpdateOrganizationMemberRequest true "Thông tin thành viên"
+// @Security BearerAuth
+// @Router /organization/member/{id} [put]
 func (h *OrganizationMemberHandler) UpdateOrganizationMember(ctx context.Context, req *organizationpb.UpdateOrganizationMemberRequest) (*organizationpb.UpdateOrganizationMemberResponse, error) {
 	organizationMember := h.OrganizationMemberTransformer.UpdateOrganizationMemberRequestToEntity(req)
 	if err := h.OrganizationMemberValidator.ValidateUpdateOrganizationMemberRequest(req); err != nil {
@@ -83,6 +91,14 @@ func (h *OrganizationMemberHandler) UpdateOrganizationMember(ctx context.Context
 	return h.OrganizationMemberTransformer.EntityToUpdateOrganizationMemberResponse(organizationMember), nil
 }
 
+// @Summary Xóa thành viên tổ chức
+// @Description Xóa thành viên tổ chức
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của thành viên"
+// @Security BearerAuth
+// @Router /organization/member/{id} [delete]
 func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context, req *organizationpb.DeleteOrganizationMemberRequest) (*organizationpb.DeleteOrganizationMemberResponse, error) {
 	organizationMember, err := h.OrganizationMemberUsecase.DeleteOrganizationMember(ctx, req.Id)
 	if err != nil {

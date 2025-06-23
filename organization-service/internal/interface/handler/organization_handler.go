@@ -58,6 +58,14 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 	return h.OrganizationTransformer.EntityToCreateOrganizationResponse(organization), nil
 }
 
+// @Summary Cập nhật tổ chức
+// @Description Cập nhật tổ chức
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.UpdateOrganizationRequest true "Thông tin tổ chức"
+// @Security BearerAuth
+// @Router /organization/{id} [put]
 func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organizationpb.UpdateOrganizationRequest) (*organizationpb.UpdateOrganizationResponse, error) {
 	if err := h.OrganizationValidator.ValidateUpdateOrganizationRequest(req); err != nil {
 		return nil, err
@@ -73,6 +81,14 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 	return h.OrganizationTransformer.EntityToUpdateOrganizationResponse(organization), nil
 }
 
+// @Summary Lấy danh sách tổ chức
+// @Description Lấy danh sách tổ chức
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.GetOrganizationsRequest true "Thông tin tổ chức"
+// @Security BearerAuth
+// @Router /organization [get]
 func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organizationpb.GetOrganizationsRequest) (*organizationpb.GetOrganizationsResponse, error) {
 	// Get pagination parameters
 	page := 0
@@ -112,6 +128,14 @@ func (h *OrganizationHandler) GetOrganizationByUserId(ctx context.Context, req *
 	return h.OrganizationTransformer.EntitiesToGetOrganizationByUserIdResponse(organizations), nil
 }
 
+// @Summary Kiểm tra tổ chức có tồn tại không
+// @Description Kiểm tra tổ chức có tồn tại không
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.CheckOrganizationIsExistRequest true "Thông tin tổ chức"
+// @Security BearerAuth
+// @Router /organization/check/{id} [get]
 func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req *organizationpb.CheckOrganizationIsExistRequest) (*organizationpb.CheckOrganizationIsExistResponse, error) {
 	isExist, err := h.OrganizationUsecase.CheckOrganizationIsExist(ctx, req.Id)
 	if err != nil {

@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tuandq3/go-chat-service/internal/constants"
-	errorpb "github.com/tuandq3/go-chat-service/proto/types/error"
+	"chat/internal/constants"
+	sharepb "pb/types/shared"
+
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -80,7 +81,7 @@ func ExtractPayload(tokenString string) (map[string]any, error) {
 }
 
 func writeErrorResponse(w http.ResponseWriter, code int, message string) {
-	response := &errorpb.ErrorResponse{
+	response := &sharepb.ErrorResponse{
 		Code:    int32(code),
 		Message: message,
 		Data:    &anypb.Any{},

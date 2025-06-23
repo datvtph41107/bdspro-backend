@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
 )
 
 type repository interface {

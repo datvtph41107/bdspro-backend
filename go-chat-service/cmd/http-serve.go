@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"chat/internal/server"
+
 	"github.com/spf13/cobra"
-	"github.com/tuandq3/go-chat-service/internal/server"
 )
 
 var serveCmd = &cobra.Command{
@@ -13,9 +14,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		httpServer:=server.NewHTTPServer(httpPort)
+		httpServer := server.NewHTTPServer(httpPort)
 		httpServer.Start()
 	},
 }
-
-

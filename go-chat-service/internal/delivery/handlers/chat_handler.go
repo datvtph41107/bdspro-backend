@@ -5,20 +5,21 @@ import (
 	"strconv"
 	"time"
 
+	chatpb "pb/types/chat"
+	sharepb "pb/types/shared"
+
+	"chat/configs"
+	"chat/infrastructure/redis"
+	"chat/internal/constants"
+	"chat/internal/delivery/errors"
+	"chat/models"
+	"chat/utils"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/infrastructure/redis"
-	"github.com/tuandq3/go-chat-service/internal/constants"
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
-	"github.com/tuandq3/go-chat-service/models"
-	"github.com/tuandq3/go-chat-service/proto/types/chat"
-	pb "github.com/tuandq3/go-chat-service/proto/types/chat"
-	messagepb "github.com/tuandq3/go-chat-service/proto/types/message"
-	"github.com/tuandq3/go-chat-service/utils"
 )
 
 type chatHandler struct {
-	pb.UnimplementedChatServiceServer
+	chatpb.UnimplementedChatServiceServer
 	logger                  *flogging.FabricLogger
 	conversationUsecases    conversationUsecases
 	messageUsecases         messageUsecases
@@ -52,7 +53,7 @@ func NewChatHandler(
 	}
 }
 
-func (s *chatHandler) CreateConversation(ctx context.Context, req *pb.CreateConversationRequest) (*pb.CreateConversationResponse, error) {
+func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.CreateConversationRequest) (*chatpb.CreateConversationResponse, error) {
 	if len(req.Members) > s.maxParticipant {
 		return nil, errors.MaxParticipantsReached()
 	}
@@ -73,20 +74,20 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *pb.CreateConv
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.CreateRoom{
+	event := &chatpb.CreateRoom{
 		Type: constants.CREATE_ROOM_TYPE,
-		Data: &messagepb.CreateRoomData{
+		Data: &chatpb.CreateRoomData{
 			RoomId:  strconv.Itoa(int(model.ID)),
 			Members: utils.Int32SliceToStringSlice(req.Members),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.CreateConversationResponse{
+	return &chatpb.CreateConversationResponse{
 		ConversationId: int32(model.ID),
 	}, nil
 }
 
-func (s *chatHandler) GetConversations(ctx context.Context, req *pb.GetConversationsRequest) (*pb.GetConversationsResponse, error) {
+func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConversationsRequest) (*chatpb.GetConversationsResponse, error) {
 	var limit, offset int64
 	if req.Limit != nil {
 		limit = int64(*req.Limit)
@@ -105,27 +106,27 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *pb.GetConversat
 		return nil, err
 	}
 
-	var pbConversations []*pb.Conversation
+	var pbConversations []*chatpb.Conversation
 	for _, conv := range conversations {
 		if conv.LatestMessage.ID == 0 {
-			pbConversations = append(pbConversations, &pb.Conversation{
+			pbConversations = append(pbConversations, &chatpb.Conversation{
 				ConversationId:  int32(conv.ID),
 				Name:            *conv.Name,
-				Type:            pb.ConversationTypeEnum(conv.Type),
+				Type:            chatpb.ConversationTypeEnum(conv.Type),
 				UpdatedAt:       conv.UpdatedAt.Local().Format(time.RFC3339),
 				Avatar:          conv.Avatar,
 				UnreadCount:     int32(conv.UnreadCount),
 				BackgroundImage: conv.BackgroundImage,
 			})
 		} else {
-			pbConversations = append(pbConversations, &pb.Conversation{
+			pbConversations = append(pbConversations, &chatpb.Conversation{
 				ConversationId: int32(conv.ID),
 				Name:           *conv.Name,
-				Type:           pb.ConversationTypeEnum(conv.Type),
+				Type:           chatpb.ConversationTypeEnum(conv.Type),
 				UpdatedAt:      conv.UpdatedAt.Format(time.DateTime),
 				Avatar:         conv.Avatar,
 				UnreadCount:    int32(conv.UnreadCount),
-				LastMessage: &pb.Message{
+				LastMessage: &chatpb.Message{
 					MessageId:   int32(conv.LatestMessage.ID),
 					SenderId:    int32(conv.LatestMessage.SenderID),
 					Content:     conv.LatestMessage.Content,
@@ -138,12 +139,12 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *pb.GetConversat
 		}
 	}
 
-	return &pb.GetConversationsResponse{
+	return &chatpb.GetConversationsResponse{
 		Conversations: pbConversations,
 	}, nil
 }
 
-func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
+func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
 	message, err := s.messageUsecases.SendMessage(ctx, &models.MessageModel{
 		ConversationID: uint64(req.ConversationId),
 		SenderID:       uint64(req.SenderId),
@@ -156,9 +157,9 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageReques
 		return nil, err
 	}
 
-	event := &messagepb.SendMessage{
+	event := &chatpb.SendMessage{
 		Type: constants.MESSAGE_TYPE,
-		Data: &pb.Message{
+		Data: &chatpb.Message{
 			MessageId:   int32(message.ID),
 			SenderId:    int32(message.SenderID),
 			Content:     message.Content,
@@ -170,7 +171,7 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageReques
 		},
 	}
 	if message.ReplyMessage != nil {
-		event.Data.ReplyMessage = &pb.Message{
+		event.Data.ReplyMessage = &chatpb.Message{
 			MessageId:   int32(message.ReplyMessage.ID),
 			SenderId:    int32(message.ReplyMessage.SenderID),
 			Content:     message.ReplyMessage.Content,
@@ -183,20 +184,20 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *pb.SendMessageReques
 	}
 	s.eventChannel <- event
 
-	updateRoomEvent := &messagepb.UpdateRoomMessage{
+	updateRoomEvent := &chatpb.UpdateRoomMessage{
 		Type: constants.UPDATE_ROOM_TYPE,
-		Data: &messagepb.UpdateRoomMessageData{
+		Data: &chatpb.UpdateRoomMessageData{
 			RoomId: strconv.FormatUint(message.ConversationID, 10),
 		},
 	}
 	s.eventChannel <- updateRoomEvent
-	return &pb.SendMessageResponse{
+	return &chatpb.SendMessageResponse{
 		MessageId: int32(message.ID),
 		CreatedAt: message.CreatedAt.Local().Format(time.RFC3339),
 	}, nil
 }
 
-func (s *chatHandler) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
+func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
 	var limit, offset int64
 	var sort string
 	var fromDate, toDate *time.Time
@@ -233,9 +234,9 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *pb.GetMessagesReques
 		return nil, err
 	}
 
-	var pbMessages []*pb.Message
+	var pbMessages []*chatpb.Message
 	for _, msg := range messages {
-		newMessage := &pb.Message{
+		newMessage := &chatpb.Message{
 			MessageId:   int32(msg.ID),
 			SenderId:    int32(msg.SenderID),
 			Content:     msg.Content,
@@ -246,7 +247,7 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *pb.GetMessagesReques
 			IsRecall:    msg.Recall,
 		}
 		if msg.ReplyMessage != nil {
-			newMessage.ReplyMessage = &pb.Message{
+			newMessage.ReplyMessage = &chatpb.Message{
 				MessageId:   int32(msg.ReplyMessage.ID),
 				SenderId:    int32(msg.ReplyMessage.SenderID),
 				Content:     msg.ReplyMessage.Content,
@@ -257,9 +258,9 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *pb.GetMessagesReques
 			}
 		}
 		if msg.Reactions != nil {
-			newMessage.Reactions = make([]*pb.MessageReaction, len(msg.Reactions))
+			newMessage.Reactions = make([]*chatpb.MessageReaction, len(msg.Reactions))
 			for i, reaction := range msg.Reactions {
-				newMessage.Reactions[i] = &pb.MessageReaction{
+				newMessage.Reactions[i] = &chatpb.MessageReaction{
 					UserId:    int32(reaction.UserID),
 					MessageId: int32(reaction.MessageID),
 					CreatedAt: reaction.CreatedAt.Local().Format(time.RFC3339),
@@ -272,19 +273,19 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *pb.GetMessagesReques
 		pbMessages = append(pbMessages, newMessage)
 	}
 
-	return &pb.GetMessagesResponse{
+	return &chatpb.GetMessagesResponse{
 		Messages: pbMessages,
 	}, nil
 }
 
-func (s *chatHandler) ForwardMessage(ctx context.Context, req *pb.ForwardMessageRequest) (*pb.ForwardMessageResponse, error) {
+func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMessageRequest) (*chatpb.ForwardMessageResponse, error) {
 	message, err := s.messageUsecases.ForwardMessage(ctx, uint64(req.MessageId), uint64(req.TargetConversationId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.SendMessage{
+	event := &chatpb.SendMessage{
 		Type: constants.MESSAGE_TYPE,
-		Data: &pb.Message{
+		Data: &chatpb.Message{
 			MessageId:   int32(message.ID),
 			SenderId:    int32(message.SenderID),
 			Content:     message.Content,
@@ -295,20 +296,20 @@ func (s *chatHandler) ForwardMessage(ctx context.Context, req *pb.ForwardMessage
 		},
 	}
 	s.eventChannel <- event
-	return &pb.ForwardMessageResponse{
+	return &chatpb.ForwardMessageResponse{
 		MessageId: int32(message.ID),
 	}, nil
 }
 
-func (s *chatHandler) MarkAsRead(ctx context.Context, req *pb.MarkAsReadRequest) (*pb.MarkAsReadResponse, error) {
+func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequest) (*chatpb.MarkAsReadResponse, error) {
 	err := s.readReceptUsecases.MarkAsRead(ctx, uint64(req.ConversationId), utils.Int32SliceToUint64Slice(req.MessageIds))
 	if err != nil {
 		return nil, err
 	}
 	userIdStr := strconv.FormatUint(utils.GetCurrentUserID(ctx), 10)
-	event := &messagepb.ReadMessage{
+	event := &chatpb.ReadMessage{
 		Type: constants.READ_TYPE,
-		Data: &messagepb.ReadMessageData{
+		Data: &chatpb.ReadMessageData{
 			RoomId:     strconv.Itoa(int(req.ConversationId)),
 			UserId:     userIdStr,
 			MessageIds: utils.Int32SliceToStringSlice(req.MessageIds),
@@ -316,101 +317,101 @@ func (s *chatHandler) MarkAsRead(ctx context.Context, req *pb.MarkAsReadRequest)
 	}
 
 	s.eventChannel <- event
-	return &pb.MarkAsReadResponse{
+	return &chatpb.MarkAsReadResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) PinMessage(ctx context.Context, req *pb.PinMessageRequest) (*pb.PinMessageResponse, error) {
+func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequest) (*chatpb.PinMessageResponse, error) {
 	_, err := s.messageUsecases.PinMessage(ctx, uint64(req.MessageId), uint64(req.ConversationId), req.DoPin)
 	if err != nil {
 		return nil, err
 	}
 
-	event := &messagepb.PinMessage{
+	event := &chatpb.PinMessage{
 		Type: constants.PIN_MESSAGE_TYPE,
-		Data: &messagepb.PinMessageData{
+		Data: &chatpb.PinMessageData{
 			RoomId:    strconv.Itoa(int(req.ConversationId)),
 			MessageId: strconv.Itoa(int(req.MessageId)),
 		},
 	}
 	s.eventChannel <- event
 
-	return &pb.PinMessageResponse{
+	return &chatpb.PinMessageResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) RecallMessage(ctx context.Context, req *pb.RecallMessageRequest) (*pb.RecallMessageResponse, error) {
+func (s *chatHandler) RecallMessage(ctx context.Context, req *chatpb.RecallMessageRequest) (*chatpb.RecallMessageResponse, error) {
 	message, err := s.messageUsecases.RecallMessage(ctx, uint64(req.MessageId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.RecallMessage{
+	event := &chatpb.RecallMessage{
 		Type: constants.RECALL_MESSAGE_TYPE,
-		Data: &messagepb.RecallMessageData{
+		Data: &chatpb.RecallMessageData{
 			RoomId:    strconv.Itoa(int(message.ConversationID)),
 			MessageId: strconv.Itoa(int(req.MessageId)),
 		},
 	}
 	s.eventChannel <- event
 
-	return &pb.RecallMessageResponse{
+	return &chatpb.RecallMessageResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) RemoveUser(ctx context.Context, req *pb.RemoveUserRequest) (*pb.RemoveUserResponse, error) {
+func (s *chatHandler) RemoveUser(ctx context.Context, req *chatpb.RemoveUserRequest) (*chatpb.RemoveUserResponse, error) {
 	err := s.participantUsecases.RemoveUser(ctx, uint64(req.ConversationId), uint64(req.TargetUserId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.RemoveMember{
+	event := &chatpb.RemoveMember{
 		Type: constants.REMOVE_MEMBER_TYPE,
-		Data: &messagepb.RemoveMemberData{
+		Data: &chatpb.RemoveMemberData{
 			RoomId: strconv.Itoa(int(req.ConversationId)),
 			UserId: strconv.Itoa(int(req.TargetUserId)),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.RemoveUserResponse{
+	return &chatpb.RemoveUserResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) EditChannel(ctx context.Context, req *pb.EditChannelRequest) (*pb.EditChannelResponse, error) {
+func (s *chatHandler) EditChannel(ctx context.Context, req *chatpb.EditChannelRequest) (*chatpb.EditChannelResponse, error) {
 	err := s.conversationUsecases.EditChannel(ctx, uint64(req.ConversationId), req.IsBroadcast, req.ForbidForward, req.Name, req.BackgroundImage)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.EditChannelResponse{
+	return &chatpb.EditChannelResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) CreateOrgChannel(ctx context.Context, req *pb.CreateOrgChannelRequest) (*pb.CreateOrgChannelResponse, error) {
+func (s *chatHandler) CreateOrgChannel(ctx context.Context, req *chatpb.CreateOrgChannelRequest) (*chatpb.CreateOrgChannelResponse, error) {
 	channel, err := s.conversationUsecases.CreateOrgChannel(ctx, &models.ConversationModel{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.CreateOrgChannelResponse{
+	return &chatpb.CreateOrgChannelResponse{
 		ConversationId: int32(channel.ID),
 	}, nil
 }
 
-func (s *chatHandler) MuteConversation(ctx context.Context, req *pb.MuteConversationRequest) (*pb.MuteConversationResponse, error) {
+func (s *chatHandler) MuteConversation(ctx context.Context, req *chatpb.MuteConversationRequest) (*chatpb.MuteConversationResponse, error) {
 	err := s.participantUsecases.MuteConversation(ctx, uint64(req.ConversationId), req.Mute)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.MuteConversationResponse{
+	return &chatpb.MuteConversationResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*chatpb.SearchResponse, error) {
 	var searchType, limit, offset int
 	if req.Type != nil {
 		searchType = int(*req.Type)
@@ -427,9 +428,9 @@ func (s *chatHandler) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Se
 		return nil, err
 	}
 
-	var pbMessages []*pb.Message
+	var pbMessages []*chatpb.Message
 	for _, msg := range messages {
-		pbMessages = append(pbMessages, &pb.Message{
+		pbMessages = append(pbMessages, &chatpb.Message{
 			MessageId:   int32(msg.ID),
 			SenderId:    int32(msg.SenderID),
 			Content:     msg.Content,
@@ -440,42 +441,42 @@ func (s *chatHandler) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Se
 		})
 	}
 
-	var pbConversations []*pb.Conversation
+	var pbConversations []*chatpb.Conversation
 	for _, conv := range conversations {
-		pbConversations = append(pbConversations, &pb.Conversation{
+		pbConversations = append(pbConversations, &chatpb.Conversation{
 			ConversationId: int32(conv.ID),
 			Name:           *conv.Name,
-			Type:           pb.ConversationTypeEnum(conv.Type),
+			Type:           chatpb.ConversationTypeEnum(conv.Type),
 		})
 	}
 
-	return &pb.SearchResponse{
+	return &chatpb.SearchResponse{
 		Messages:      pbMessages,
 		Conversations: pbConversations,
 	}, nil
 }
 
-func (s *chatHandler) GetConversationById(ctx context.Context, req *pb.GetConversationByIdRequest) (*pb.GetConversationByIdResponse, error) {
+func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetConversationByIdRequest) (*chatpb.GetConversationByIdResponse, error) {
 	conversation, err := s.conversationUsecases.GetConversationById(ctx, uint64(req.ConversationId), req.IncludeMembers)
 	if err != nil {
 		return nil, err
 	}
-	var participants []*pb.Participant
+	var participants []*chatpb.Participant
 	if req.IncludeMembers {
 		for _, participant := range conversation.Participants {
-			participants = append(participants, &pb.Participant{
+			participants = append(participants, &chatpb.Participant{
 				UserId:    (participant.UserID),
-				Role:      pb.ParticipantRoleEnum(participant.Role),
+				Role:      chatpb.ParticipantRoleEnum(participant.Role),
 				JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
 				MuteNotif: participant.MuteNotif,
 			})
 		}
 	}
 
-	return &pb.GetConversationByIdResponse{
+	return &chatpb.GetConversationByIdResponse{
 		ConversationId:  int32(conversation.ID),
 		Name:            *conversation.Name,
-		Type:            pb.ConversationTypeEnum(conversation.Type),
+		Type:            chatpb.ConversationTypeEnum(conversation.Type),
 		CreatedBy:       int32(conversation.CreatedBy),
 		IsBroadcast:     conversation.IsBroadcast,
 		ForbidForward:   conversation.ForbidForward,
@@ -487,53 +488,53 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *pb.GetConver
 	}, nil
 }
 
-func (s *chatHandler) GetListParticipant(ctx context.Context, req *pb.GetListParticipantRequest) (*pb.GetListParticipantResponse, error) {
+func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetListParticipantRequest) (*chatpb.GetListParticipantResponse, error) {
 	participants, total, err := s.participantUsecases.GetListParticipant(ctx, req.ConversationId)
 	if err != nil {
 		return nil, err
 	}
-	var pbParticipants []*pb.Participant
+	var pbParticipants []*chatpb.Participant
 	for _, participant := range participants {
-		pbParticipants = append(pbParticipants, &pb.Participant{
+		pbParticipants = append(pbParticipants, &chatpb.Participant{
 			UserId:    (participant.UserID),
-			Role:      pb.ParticipantRoleEnum(participant.Role),
+			Role:      chatpb.ParticipantRoleEnum(participant.Role),
 			JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
 			MuteNotif: participant.MuteNotif,
 		})
 	}
-	return &pb.GetListParticipantResponse{
+	return &chatpb.GetListParticipantResponse{
 		Participants: pbParticipants,
 		Total:        total,
 	}, nil
 }
 
-func (s *chatHandler) GetReadReceipt(ctx context.Context, req *pb.GetReadReceiptRequest) (*pb.GetReadReceiptResponse, error) {
+func (s *chatHandler) GetReadReceipt(ctx context.Context, req *chatpb.GetReadReceiptRequest) (*chatpb.GetReadReceiptResponse, error) {
 	messages, total, err := s.readReceptUsecases.GetReadReceipt(ctx, req.Page, req.Size, req.MessageId)
 	if err != nil {
 		return nil, err
 	}
-	var pbReadReceipts []*pb.ReadReceipt
+	var pbReadReceipts []*chatpb.ReadReceipt
 	for _, readReceipt := range messages {
-		pbReadReceipts = append(pbReadReceipts, &pb.ReadReceipt{
+		pbReadReceipts = append(pbReadReceipts, &chatpb.ReadReceipt{
 			UserId: (readReceipt.UserID),
 			ReadAt: readReceipt.ReadAt.Local().Format(time.RFC3339),
 		})
 	}
-	return &pb.GetReadReceiptResponse{
+	return &chatpb.GetReadReceiptResponse{
 		ReadReceipts: pbReadReceipts,
 		Total:        total,
 	}, nil
 }
 
-func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
+func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
 	messages, err := s.messageUsecases.GetPinnedMessages(ctx, uint64(req.ConversationId))
 	if err != nil {
 		return nil, err
 	}
 
-	var pbMessages []*pb.Message
+	var pbMessages []*chatpb.Message
 	for _, msg := range messages {
-		pbMessages = append(pbMessages, &pb.Message{
+		pbMessages = append(pbMessages, &chatpb.Message{
 			MessageId:   int32(msg.ID),
 			SenderId:    int32(msg.SenderID),
 			Content:     msg.Content,
@@ -544,108 +545,108 @@ func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *pb.GetMessages
 		})
 	}
 
-	return &pb.GetMessagesResponse{
+	return &chatpb.GetMessagesResponse{
 		Messages: pbMessages,
 		Total:    int64(len(messages)),
 	}, nil
 }
 
-func (s *chatHandler) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.AddUserResponse, error) {
+func (s *chatHandler) AddUser(ctx context.Context, req *chatpb.AddUserRequest) (*chatpb.AddUserResponse, error) {
 	err := s.participantUsecases.AddUser(ctx, uint64(req.ConversationId), uint64(req.UserId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.JoinRoom{
+	event := &chatpb.JoinRoom{
 		Type: constants.JOIN_ROOM_TYPE,
-		Data: &messagepb.JoinRoomData{
+		Data: &chatpb.JoinRoomData{
 			RoomId: strconv.Itoa(int(req.ConversationId)),
 			UserId: strconv.Itoa(int(req.UserId)),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.AddUserResponse{
+	return &chatpb.AddUserResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) LeaveRoom(ctx context.Context, req *pb.LeaveRoomRequest) (*pb.LeaveRoomResponse, error) {
+func (s *chatHandler) LeaveRoom(ctx context.Context, req *chatpb.LeaveRoomRequest) (*chatpb.LeaveRoomResponse, error) {
 	err := s.conversationUsecases.LeaveRoom(ctx, uint64(req.ConversationId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.LeaveRoom{
+	event := &chatpb.LeaveRoom{
 		Type: constants.LEAVE_ROOM_TYPE,
-		Data: &messagepb.LeaveRoomData{
+		Data: &chatpb.LeaveRoomData{
 			RoomId: strconv.Itoa(int(req.ConversationId)),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.LeaveRoomResponse{
+	return &chatpb.LeaveRoomResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) EditMessage(ctx context.Context, req *pb.EditMessageRequest) (*pb.EditMessageResponse, error) {
+func (s *chatHandler) EditMessage(ctx context.Context, req *chatpb.EditMessageRequest) (*chatpb.EditMessageResponse, error) {
 	message, err := s.messageUsecases.EditMessage(ctx, uint64(req.MessageId), req.Content)
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.EditMessage{
+	event := &chatpb.EditMessage{
 		Type: constants.EDIT_MESSAGE_TYPE,
-		Data: &messagepb.EditMessageData{
+		Data: &chatpb.EditMessageData{
 			RoomId:     strconv.Itoa(int(message.ConversationID)),
 			MessageId:  strconv.Itoa(int(req.MessageId)),
 			NewMessage: message.Content,
 		},
 	}
 	s.eventChannel <- event
-	return &pb.EditMessageResponse{
+	return &chatpb.EditMessageResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) DeleteViolation(ctx context.Context, req *pb.DeleteViolationRequest) (*pb.DeleteViolationResponse, error) {
+func (s *chatHandler) DeleteViolation(ctx context.Context, req *chatpb.DeleteViolationRequest) (*chatpb.DeleteViolationResponse, error) {
 	err := s.messageUsecases.DeleteViolation(ctx, uint64(req.MessageId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.DeleteViolationMessage{
+	event := &chatpb.DeleteViolationMessage{
 		Type: constants.DELETE_VIOLATION_MESSAGE_TYPE,
-		Data: &messagepb.DeleteViolationMessageData{
+		Data: &chatpb.DeleteViolationMessageData{
 			MessageId: strconv.Itoa(int(req.MessageId)),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.DeleteViolationResponse{
+	return &chatpb.DeleteViolationResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) DeleteRoom(ctx context.Context, req *pb.DeleteRoomRequest) (*pb.DeleteRoomResponse, error) {
+func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequest) (*chatpb.DeleteRoomResponse, error) {
 	err := s.conversationUsecases.DeleteRoom(ctx, uint64(req.ConversationId))
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.DeleteRoom{
+	event := &chatpb.DeleteRoom{
 		Type: constants.DELETE_ROOM_TYPE,
-		Data: &messagepb.DeleteRoomData{
+		Data: &chatpb.DeleteRoomData{
 			RoomId: strconv.Itoa(int(req.ConversationId)),
 		},
 	}
 	s.eventChannel <- event
-	return &pb.DeleteRoomResponse{
+	return &chatpb.DeleteRoomResponse{
 		Success: true,
 	}, nil
 }
 
-func (s *chatHandler) GetSetting(ctx context.Context, req *pb.GetSettingRequest) (*pb.GetSettingResponse, error) {
+func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequest) (*chatpb.GetSettingResponse, error) {
 	conversation, participant, err := s.conversationUsecases.GetSetting(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetSettingResponse{
+	return &chatpb.GetSettingResponse{
 		Id:              conversation.ID,
-		Type:            pb.ConversationTypeEnum(conversation.Type),
+		Type:            chatpb.ConversationTypeEnum(conversation.Type),
 		Name:            conversation.Name,
 		IsBroadcast:     conversation.IsBroadcast,
 		ForbidForward:   conversation.ForbidForward,
@@ -655,15 +656,15 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *pb.GetSettingRequest)
 	}, nil
 }
 
-func (s *chatHandler) GetFiles(ctx context.Context, req *pb.GetFilesRequest) (*pb.GetFilesResponse, error) {
+func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest) (*chatpb.GetFilesResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"FILE", "video", "audio", "pdf"})
 	if err != nil {
 		return nil, err
 	}
 
-	var pbMessage []*pb.Message
+	var pbMessage []*chatpb.Message
 	for _, file := range files {
-		pbMessage = append(pbMessage, &pb.Message{
+		pbMessage = append(pbMessage, &chatpb.Message{
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
@@ -675,21 +676,21 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *pb.GetFilesRequest) (*p
 		})
 	}
 
-	return &pb.GetFilesResponse{
+	return &chatpb.GetFilesResponse{
 		Messages: pbMessage,
 		Total:    total,
 	}, nil
 }
 
-func (s *chatHandler) GetImages(ctx context.Context, req *pb.GetImagesRequest) (*pb.GetImagesResponse, error) {
+func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesRequest) (*chatpb.GetImagesResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"IMAGE"})
 	if err != nil {
 		return nil, err
 	}
 
-	var pbMessage []*pb.Message
+	var pbMessage []*chatpb.Message
 	for _, file := range files {
-		pbMessage = append(pbMessage, &pb.Message{
+		pbMessage = append(pbMessage, &chatpb.Message{
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
@@ -701,21 +702,21 @@ func (s *chatHandler) GetImages(ctx context.Context, req *pb.GetImagesRequest) (
 		})
 	}
 
-	return &pb.GetImagesResponse{
+	return &chatpb.GetImagesResponse{
 		Messages: pbMessage,
 		Total:    total,
 	}, nil
 }
 
-func (s *chatHandler) GetLinks(ctx context.Context, req *pb.GetLinksRequest) (*pb.GetLinksResponse, error) {
+func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest) (*chatpb.GetLinksResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"LINK"})
 	if err != nil {
 		return nil, err
 	}
 
-	var pbMessage []*pb.Message
+	var pbMessage []*chatpb.Message
 	for _, file := range files {
-		pbMessage = append(pbMessage, &pb.Message{
+		pbMessage = append(pbMessage, &chatpb.Message{
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
@@ -727,20 +728,20 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *pb.GetLinksRequest) (*p
 		})
 	}
 
-	return &pb.GetLinksResponse{
+	return &chatpb.GetLinksResponse{
 		Messages: pbMessage,
 		Total:    total,
 	}, nil
 }
 
-func (s *chatHandler) ReactionMessage(ctx context.Context, req *pb.ReactionMessageRequest) (*pb.ReactionMessageResponse, error) {
+func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionMessageRequest) (*chatpb.ReactionMessageResponse, error) {
 	model, err := s.messageReactionUsecases.CreateMessageReaction(ctx, uint64(req.MessageId), req.Reaction)
 	if err != nil {
 		return nil, err
 	}
-	event := &messagepb.ReactionMessage{
+	event := &chatpb.ReactionMessage{
 		Type: constants.REACT_MESSAGE_TYPE,
-		Data: &chat.MessageReaction{
+		Data: &chatpb.MessageReaction{
 			MessageId: int32(model.MessageID),
 			UserId:    int32(model.UserID),
 			Reaction:  model.Reaction,
@@ -750,7 +751,7 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *pb.ReactionMessa
 		},
 	}
 	s.eventChannel <- event
-	return &pb.ReactionMessageResponse{
+	return &chatpb.ReactionMessageResponse{
 		Success: true,
 	}, nil
 }
@@ -760,4 +761,12 @@ func (s *chatHandler) Start() {
 		redisClientWorker := NewRedisClientWorker(s, s.redisClient, s.logger)
 		go redisClientWorker.serve()
 	}
+}
+
+func (s *chatHandler) ValidConversationAndCurrentUser(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
+	err := s.conversationUsecases.ValidateConversationAndCurrentUser(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.Empty{}, nil
 }

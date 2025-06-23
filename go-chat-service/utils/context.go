@@ -3,7 +3,7 @@ package utils
 import (
 	"context"
 
-	"github.com/tuandq3/go-chat-service/internal/constants"
+	"chat/internal/constants"
 )
 
 func GetCurrentUserID(ctx context.Context) uint64 {

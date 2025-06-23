@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"sync"
 
+	"chat/infrastructure/redis"
+	"chat/internal/constants"
+	"chat/utils"
+
 	"github.com/gorilla/websocket"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/infrastructure/redis"
-	"github.com/tuandq3/go-chat-service/internal/constants"
-	"github.com/tuandq3/go-chat-service/utils"
 )
 
 var wsLogger = flogging.MustGetLogger("ws_handler")

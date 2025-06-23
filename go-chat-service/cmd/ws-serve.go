@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"chat/internal/server"
+
 	"github.com/spf13/cobra"
-	"github.com/tuandq3/go-chat-service/internal/server"
 )
 
 var wsCmd = &cobra.Command{
@@ -16,5 +17,3 @@ var wsCmd = &cobra.Command{
 		server.NewWSServer(wsPort).Start()
 	},
 }
-
-

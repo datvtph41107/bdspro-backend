@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
 )
 
 type redisClient interface {
@@ -22,6 +22,7 @@ type conversationUsecases interface {
 	LeaveRoom(ctx context.Context, conversationId uint64) error
 	DeleteRoom(ctx context.Context, conversationId uint64) error
 	GetSetting(ctx context.Context, conversationId uint64) (*models.ConversationModel, *models.ParticipantModel, error)
+	ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error
 }
 
 type messageUsecases interface {

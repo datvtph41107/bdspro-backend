@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq3/go-chat-service/models"
+	"chat/models"
 )
 
 func (r *gormRepository) GetBackgroundImages(ctx context.Context, page, size *int64) ([]*models.BackgroundImageModel, int64, error) {
@@ -58,7 +58,7 @@ func (r *gormRepository) UpdateBackgroundImage(ctx context.Context, model *model
 
 func (r *gormRepository) DeleteBackgroundImage(ctx context.Context, id uint64) error {
 	err := r.db.WithContext(ctx).Model(&models.BackgroundImageModel{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"is_deleted":  true,
+		"is_deleted": true,
 		"deleted_at": time.Now(),
 	}).Error
 	if err != nil {

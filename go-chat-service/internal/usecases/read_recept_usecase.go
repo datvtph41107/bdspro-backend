@@ -4,21 +4,22 @@ import (
 	"context"
 	"time"
 
+	"chat/internal/delivery/errors"
+	"chat/models"
+	"chat/utils"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/internal/delivery/errors"
-	"github.com/tuandq3/go-chat-service/models"
-	"github.com/tuandq3/go-chat-service/utils"
 )
 
 type readReceptUsecases struct {
-	repo repository
+	repo   repository
 	logger *flogging.FabricLogger
 }
 
 func NewReadReceptUsecases(repository repository) *readReceptUsecases {
 	return &readReceptUsecases{
-		repo: repository,
-		logger:  flogging.MustGetLogger("read_recept_usecases"),
+		repo:   repository,
+		logger: flogging.MustGetLogger("read_recept_usecases"),
 	}
 }
 

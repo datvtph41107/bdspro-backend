@@ -1,6 +1,8 @@
-module github.com/tuandq3/go-chat-service
+module chat
 
 go 1.24.1
+
+replace pb => ../protobuf
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
@@ -11,10 +13,11 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/swaggo/http-swagger v1.3.4
-	google.golang.org/grpc v1.71.0
-	google.golang.org/protobuf v1.36.5
+	google.golang.org/grpc v1.72.0
+	google.golang.org/protobuf v1.36.6
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
+	pb v0.0.0-00010101000000-000000000000
 )
 
 require (

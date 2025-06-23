@@ -9,14 +9,15 @@ import (
 	"syscall"
 	"time"
 
+	"chat/configs"
+	"chat/infrastructure/database/postgres"
+	"chat/internal/constants"
+	middlewares "chat/internal/delivery/middleware"
+	"chat/internal/delivery/wshandler"
+	"chat/internal/repository"
+	"chat/internal/usecases"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/infrastructure/database/postgres"
-	"github.com/tuandq3/go-chat-service/internal/constants"
-	middlewares "github.com/tuandq3/go-chat-service/internal/delivery/middleware"
-	"github.com/tuandq3/go-chat-service/internal/delivery/wshandler"
-	"github.com/tuandq3/go-chat-service/internal/repository"
-	"github.com/tuandq3/go-chat-service/internal/usecases"
 )
 
 var wsLogger = flogging.MustGetLogger("ws_server")

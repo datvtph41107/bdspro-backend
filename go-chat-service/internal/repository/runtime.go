@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"chat/configs"
+	"chat/internal/repository/orm"
+	"chat/models"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/internal/repository/orm"
-	"github.com/tuandq3/go-chat-service/models"
 	"gorm.io/gorm"
 )
 

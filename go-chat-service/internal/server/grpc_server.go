@@ -9,12 +9,13 @@ import (
 	"syscall"
 	"time"
 
+	"chat/configs"
+	"chat/infrastructure/database/postgres"
+	"chat/internal/delivery/handlers"
+	"chat/internal/repository"
+	"chat/internal/usecases"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq3/go-chat-service/configs"
-	"github.com/tuandq3/go-chat-service/infrastructure/database/postgres"
-	"github.com/tuandq3/go-chat-service/internal/delivery/handlers"
-	"github.com/tuandq3/go-chat-service/internal/repository"
-	"github.com/tuandq3/go-chat-service/internal/usecases"
 	"google.golang.org/grpc"
 )
 
@@ -92,4 +93,3 @@ func (s *GRPCServer) Start() {
 		grpcLogger.Info("Server stopped gracefully")
 	}
 }
-
