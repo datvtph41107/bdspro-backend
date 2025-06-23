@@ -16,7 +16,39 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/documents/{id}": {
+    "/v2/org/group/document": {
+      "post": {
+        "operationId": "GroupDocumentService_CreateGroupDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDocumentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDocumentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDocumentService"
+        ]
+      }
+    },
+    "/v2/org/group/document/detail/{id}": {
       "get": {
         "operationId": "GroupDocumentService_GetGroupDocument",
         "responses": {
@@ -45,7 +77,54 @@
         "tags": [
           "GroupDocumentService"
         ]
-      },
+      }
+    },
+    "/v2/org/group/document/list/{groupId}": {
+      "get": {
+        "operationId": "GroupDocumentService_GetGroupDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDocumentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GroupDocumentService"
+        ]
+      }
+    },
+    "/v2/org/group/document/{id}": {
       "delete": {
         "operationId": "GroupDocumentService_DeleteGroupDocument",
         "responses": {
@@ -112,92 +191,10 @@
           "GroupDocumentService"
         ]
       }
-    },
-    "/v2/org/group/{groupId}/documents": {
-      "get": {
-        "operationId": "GroupDocumentService_GetGroupDocuments",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupDocumentsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "GroupDocumentService"
-        ]
-      },
-      "post": {
-        "operationId": "GroupDocumentService_CreateGroupDocument",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbCreateGroupDocumentResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupDocumentServiceCreateGroupDocumentBody"
-            }
-          }
-        ],
-        "tags": [
-          "GroupDocumentService"
-        ]
-      }
     }
   },
   "definitions": {
-    "GroupDocumentServiceCreateGroupDocumentBody": {
+    "GroupDocumentServiceUpdateGroupDocumentBody": {
       "type": "object",
       "properties": {
         "name": {
@@ -218,9 +215,13 @@
         }
       }
     },
-    "GroupDocumentServiceUpdateGroupDocumentBody": {
+    "organizationpbCreateGroupDocumentRequest": {
       "type": "object",
       "properties": {
+        "groupId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
           "type": "string"
         },

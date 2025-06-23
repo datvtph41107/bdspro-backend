@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	chatpb "chatservice/proto/types/chat"
+	chatpb "pb/types/chat"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"github.com/tuandq2112/organization-service/internal/custom_error"
@@ -30,8 +30,8 @@ type groupChatUsecase struct {
 
 func NewGroupChatUsecase(groupChatRepository repository.GroupChatRepository, chatServiceClient client.ChatClient) GroupChatUsecase {
 	return &groupChatUsecase{
-			groupChatRepository: groupChatRepository,
-			chatServiceClient:   chatServiceClient,
+		groupChatRepository: groupChatRepository,
+		chatServiceClient:   chatServiceClient,
 	}
 }
 

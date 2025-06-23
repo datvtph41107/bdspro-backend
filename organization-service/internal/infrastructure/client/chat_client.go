@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	chatpb "chatservice/proto/types/chat"
+	chatpb "pb/types/chat"
 
 	"github.com/tuandq2112/organization-service/appconfig"
 	"google.golang.org/grpc"
@@ -17,6 +17,7 @@ type ChatClient interface {
 type chatClient struct {
 	client chatpb.ChatServiceClient
 }
+
 func NewChatClient() ChatClient {
 	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", appconfig.CHAT_SERVICE_HOST, appconfig.CHAT_SERVICE_PORT), grpc.WithInsecure())
 	if err != nil {

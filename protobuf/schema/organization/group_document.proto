@@ -9,33 +9,33 @@ option go_package = "types/organizationpb";
 service GroupDocumentService {
     rpc CreateGroupDocument(CreateGroupDocumentRequest) returns (CreateGroupDocumentResponse) {
         option (google.api.http) = {
-            post: "/v2/org/group/{groupId}/documents"
+            post: "/v2/org/group/document"
             body: "*"
         };
     }
 
     rpc UpdateGroupDocument(UpdateGroupDocumentRequest) returns (UpdateGroupDocumentResponse) {
         option (google.api.http) = {
-            put: "/v2/org/documents/{id}"
+            put: "/v2/org/group/document/{id}"
             body: "*"
         };
     }
 
     rpc DeleteGroupDocument(DeleteGroupDocumentRequest) returns (DeleteGroupDocumentResponse) {
         option (google.api.http) = {
-            delete: "/v2/org/documents/{id}"
+            delete: "/v2/org/group/document/{id}"
         };
     }
 
     rpc GetGroupDocument(GetGroupDocumentRequest) returns (GetGroupDocumentResponse) {
         option (google.api.http) = {
-            get: "/v2/org/documents/{id}"
+            get: "/v2/org/group/document/detail/{id}"
         };
     }
     
     rpc GetGroupDocuments(GetGroupDocumentsRequest) returns (GetGroupDocumentsResponse) {
         option (google.api.http) = {
-            get: "/v2/org/group/{groupId}/documents"
+            get: "/v2/org/group/document/list/{groupId}"
         };
     }
 }

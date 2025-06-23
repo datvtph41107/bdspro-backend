@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	organizationpb "pb/types/organization"
 
@@ -28,6 +29,14 @@ func NewOrganizationBranchHandler(
 	}
 }
 
+// @Summary Tạo chi nhánh
+// @Description Tạo chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch body organizationpb.CreateOrganizationBranchRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch [post]
 func (h *OrganizationBranchHandler) CreateOrganizationBranch(ctx context.Context, req *organizationpb.CreateOrganizationBranchRequest) (*organizationpb.CreateOrganizationBranchResponse, error) {
 	if err := h.validator.ValidateCreateOrganizationBranch(req); err != nil {
 		return nil, err
@@ -42,6 +51,14 @@ func (h *OrganizationBranchHandler) CreateOrganizationBranch(ctx context.Context
 	}, nil
 }
 
+// @Summary Cập nhật chi nhánh
+// @Description Cập nhật chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch body organizationpb.UpdateOrganizationBranchRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch/{id} [put]
 func (h *OrganizationBranchHandler) UpdateOrganizationBranch(ctx context.Context, req *organizationpb.UpdateOrganizationBranchRequest) (*organizationpb.UpdateOrganizationBranchResponse, error) {
 	if err := h.validator.ValidateUpdateOrganizationBranch(req); err != nil {
 		return nil, err
@@ -56,6 +73,14 @@ func (h *OrganizationBranchHandler) UpdateOrganizationBranch(ctx context.Context
 	}, nil
 }
 
+// @Summary Xóa chi nhánh
+// @Description Xóa chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch body organizationpb.DeleteOrganizationBranchRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch/{id} [delete]
 func (h *OrganizationBranchHandler) DeleteOrganizationBranch(ctx context.Context, req *organizationpb.DeleteOrganizationBranchRequest) (*organizationpb.DeleteOrganizationBranchResponse, error) {
 	if err := h.validator.ValidateDeleteOrganizationBranch(req); err != nil {
 		return nil, err
@@ -69,6 +94,14 @@ func (h *OrganizationBranchHandler) DeleteOrganizationBranch(ctx context.Context
 	}, nil
 }
 
+// @Summary Thêm thành viên vào chi nhánh
+// @Description Thêm thành viên vào chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch body organizationpb.AddMemberToOrganizationBranchRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch/{id}/member [post]
 func (h *OrganizationBranchHandler) AddMemberToOrganizationBranch(ctx context.Context, req *organizationpb.AddMemberToOrganizationBranchRequest) (*organizationpb.AddMemberToOrganizationBranchResponse, error) {
 	if err := h.validator.ValidateAddMemberToOrganizationBranch(req); err != nil {
 		return nil, err
@@ -82,6 +115,14 @@ func (h *OrganizationBranchHandler) AddMemberToOrganizationBranch(ctx context.Co
 	}, nil
 }
 
+// @Summary Xóa thành viên khỏi chi nhánh
+// @Description Xóa thành viên khỏi chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch body organizationpb.RemoveMemberFromOrganizationBranchRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch/{id}/member/{user_id} [delete]
 func (h *OrganizationBranchHandler) RemoveMemberFromOrganizationBranch(ctx context.Context, req *organizationpb.RemoveMemberFromOrganizationBranchRequest) (*organizationpb.RemoveMemberFromOrganizationBranchResponse, error) {
 	if err := h.validator.ValidateRemoveMemberFromOrganizationBranch(req); err != nil {
 		return nil, err
@@ -96,6 +137,14 @@ func (h *OrganizationBranchHandler) RemoveMemberFromOrganizationBranch(ctx conte
 	}, nil
 }
 
+// @Summary Lấy danh sách thành viên của chi nhánh
+// @Description Lấy danh sách thành viên của chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch query organizationpb.GetOrganizationBranchMembersRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch/{id}/member [get]
 func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Context, req *organizationpb.GetOrganizationBranchMembersRequest) (*organizationpb.GetOrganizationBranchMembersResponse, error) {
 	if err := h.validator.ValidateGetOrganizationBranchMembers(req); err != nil {
 		return nil, err
@@ -127,6 +176,14 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 	}, nil
 }
 
+// @Summary Lấy danh sách chi nhánh
+// @Description Lấy danh sách chi nhánh
+// @Tags Chi nhánh
+// @Accept json
+// @Produce json
+// @Param organization_branch query organizationpb.GetOrganizationBranchesRequest true "Thông tin chi nhánh"
+// @Security BearerAuth
+// @Router /organization/branch [get]
 func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context, req *organizationpb.GetOrganizationBranchesRequest) (*organizationpb.GetOrganizationBranchesResponse, error) {
 	page := 0
 	size := 10
@@ -135,8 +192,9 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 	}
 	if req.Size != nil {
 		size = int(*req.Size)
-	}	
-	branches, total, err := h.usecase.GetOrganizationBranches(ctx, req.OrganizationId, page, size)
+	}
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	branches, total, err := h.usecase.GetOrganizationBranches(ctx, uint32(organizationId), page, size)
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/organization-branch": {
+    "/v2/org/organization/branch": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranches",
         "responses": {
@@ -91,7 +91,7 @@
         ]
       }
     },
-    "/v2/org/organization-branch/{id}": {
+    "/v2/org/organization/branch/{id}": {
       "delete": {
         "operationId": "OrganizationBranchService_DeleteOrganizationBranch",
         "responses": {
@@ -159,7 +159,7 @@
         ]
       }
     },
-    "/v2/org/organization-branch/{id}/add-member": {
+    "/v2/org/organization/branch/{id}/add-member": {
       "post": {
         "operationId": "OrganizationBranchService_AddMemberToOrganizationBranch",
         "responses": {
@@ -198,7 +198,7 @@
         ]
       }
     },
-    "/v2/org/organization-branch/{id}/members": {
+    "/v2/org/organization/branch/{id}/members": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranchMembers",
         "responses": {
@@ -243,7 +243,7 @@
         ]
       }
     },
-    "/v2/org/organization-branch/{id}/remove-member/{userId}": {
+    "/v2/org/organization/branch/{id}/remove-member/{userId}": {
       "delete": {
         "operationId": "OrganizationBranchService_RemoveMemberFromOrganizationBranch",
         "responses": {

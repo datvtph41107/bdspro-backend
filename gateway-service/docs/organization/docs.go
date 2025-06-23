@@ -76,25 +76,6 @@ const docTemplate = `{
             }
         },
         "/group-member": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy thành viên nhóm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Thành viên"
-                ],
-                "summary": "Lấy thành viên nhóm",
-                "responses": {}
-            },
             "post": {
                 "security": [
                     {
@@ -121,6 +102,36 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/organizationpb.CreateGroupMemberRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group-member/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Lấy danh sách thành viên nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -163,7 +174,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách thành viên nhóm",
+                "description": "Lấy thành viên nhóm",
                 "consumes": [
                     "application/json"
                 ],
@@ -173,16 +184,7 @@ const docTemplate = `{
                 "tags": [
                     "Thành viên"
                 ],
-                "summary": "Lấy danh sách thành viên nhóm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của nhóm",
-                        "name": "groupId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Lấy thành viên nhóm",
                 "responses": {}
             }
         },
@@ -239,6 +241,253 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ID của thành viên",
                         "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/document": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo tài liệu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài liệu"
+                ],
+                "summary": "Tạo tài liệu",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài liệu",
+                        "name": "group_document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupDocumentRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của tài liệu",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/document/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tài liệu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài liệu"
+                ],
+                "summary": "Lấy tài liệu",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của tài liệu",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/document/list/{groupId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tài liệu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài liệu"
+                ],
+                "summary": "Lấy danh sách tài liệu",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng mục trên mỗi trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/document/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật tài liệu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài liệu"
+                ],
+                "summary": "Cập nhật tài liệu",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài liệu",
+                        "name": "group_document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDocumentRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của tài liệu",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa tài liệu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tài liệu"
+                ],
+                "summary": "Xóa tài liệu",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài liệu",
+                        "name": "group_document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DeleteGroupDocumentRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của tài liệu",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/log-activity/{groupId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách hoạt động của nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hoạt động"
+                ],
+                "summary": "Lấy danh sách hoạt động của nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "groupId",
                         "in": "path",
                         "required": true
                     }
@@ -390,6 +639,236 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/organizationpb.GetOrganizationsRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Lấy danh sách chi nhánh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Tạo chi nhánh",
+                "parameters": [
+                    {
+                        "description": "Thông tin chi nhánh",
+                        "name": "organization_branch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationBranchRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Cập nhật chi nhánh",
+                "parameters": [
+                    {
+                        "description": "Thông tin chi nhánh",
+                        "name": "organization_branch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateOrganizationBranchRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Xóa chi nhánh",
+                "parameters": [
+                    {
+                        "description": "Thông tin chi nhánh",
+                        "name": "organization_branch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DeleteOrganizationBranchRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch/{id}/member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên của chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Lấy danh sách thành viên của chi nhánh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm thành viên vào chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Thêm thành viên vào chi nhánh",
+                "parameters": [
+                    {
+                        "description": "Thông tin chi nhánh",
+                        "name": "organization_branch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.AddMemberToOrganizationBranchRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch/{id}/member/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa thành viên khỏi chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Xóa thành viên khỏi chi nhánh",
+                "parameters": [
+                    {
+                        "description": "Thông tin chi nhánh",
+                        "name": "organization_branch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.RemoveMemberFromOrganizationBranchRequest"
                         }
                     }
                 ],
@@ -635,7 +1114,181 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/organization/permission": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách quyền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quyền"
+                ],
+                "summary": "Lấy danh sách quyền",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của tổ chức",
+                        "name": "organizationId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng mục trên mỗi trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo quyền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quyền"
+                ],
+                "summary": "Tạo quyền",
+                "parameters": [
+                    {
+                        "description": "Thông tin quyền",
+                        "name": "permission",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreatePermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/permission/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật quyền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quyền"
+                ],
+                "summary": "Cập nhật quyền",
+                "parameters": [
+                    {
+                        "description": "Thông tin quyền",
+                        "name": "permission",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdatePermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa quyền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quyền"
+                ],
+                "summary": "Xóa quyền",
+                "parameters": [
+                    {
+                        "description": "Thông tin quyền",
+                        "name": "permission",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DeletePermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/organization/role": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách vai trò",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vai trò"
+                ],
+                "summary": "Lấy danh sách vai trò",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của tổ chức",
+                        "name": "organization_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng mục trên mỗi trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
             "post": {
                 "security": [
                     {
@@ -727,38 +1380,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/organization/roles": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách vai trò",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Vai trò"
-                ],
-                "summary": "Lấy danh sách vai trò",
-                "parameters": [
-                    {
-                        "description": "Thông tin vai trò",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.GetRolesRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/organization/user/{userId}": {
             "get": {
                 "security": [
@@ -823,11 +1444,45 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "organizationpb.AddMemberToOrganizationBranchRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.CheckOrganizationIsExistRequest": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateGroupDocumentRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "fileSize": {
+                    "type": "integer"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -855,6 +1510,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.CreateOrganizationBranchRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "managerId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "phone": {
                     "type": "string"
                 }
             }
@@ -902,6 +1580,20 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.CreatePermissionRequest": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.CreateRoleRequest": {
             "type": "object",
             "properties": {
@@ -912,6 +1604,30 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "organizationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DeleteGroupDocumentRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DeleteOrganizationBranchRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DeletePermissionRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -930,17 +1646,37 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.GetRolesRequest": {
+        "organizationpb.RemoveMemberFromOrganizationBranchRequest": {
             "type": "object",
             "properties": {
-                "organizationId": {
+                "id": {
                     "type": "integer"
                 },
-                "page": {
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDocumentRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "fileSize": {
                     "type": "integer"
                 },
-                "size": {
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -965,6 +1701,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateOrganizationBranchRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 }
             }
@@ -1011,6 +1767,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdatePermissionRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }

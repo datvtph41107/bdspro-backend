@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/organization-role": {
+    "/v2/org/organization/role": {
       "get": {
         "operationId": "OrganizationRoleService_GetRoles",
         "responses": {
@@ -91,7 +91,7 @@
         ]
       }
     },
-    "/v2/org/organization-role/{id}": {
+    "/v2/org/organization/role/{id}": {
       "delete": {
         "operationId": "OrganizationRoleService_DeleteRole",
         "responses": {

@@ -28,6 +28,15 @@ func NewGroupLogActivityHandler(
 	}
 }
 
+// @Summary Lấy danh sách hoạt động của nhóm
+// @Description Lấy danh sách hoạt động của nhóm
+// @Tags Hoạt động
+// @Accept json
+// @Produce json
+// @Param group_log_activity query organizationpb.GetGroupLogActivitiesRequest true "Thông tin hoạt động"
+// @Param groupId path int true "ID của nhóm"
+// @Security BearerAuth
+// @Router /group/log-activity/{groupId} [get]
 func (h *GroupLogActivityHandler) GetGroupLogActivities(ctx context.Context, req *organizationpb.GetGroupLogActivitiesRequest) (*organizationpb.GetGroupLogActivitiesResponse, error) {
 	if err := h.GroupLogActivityValidator.ValidateGetGroupLogActivitiesRequest(req); err != nil {
 		return nil, err

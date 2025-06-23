@@ -10,7 +10,7 @@ service GroupLogActivityService {
     
     rpc GetGroupLogActivities(GetGroupLogActivitiesRequest) returns (GetGroupLogActivitiesResponse) {
         option (google.api.http) = {
-            get: "/v2/org/group/log-activity"
+            get: "/v2/org/group/log-activity/{groupId}"
         };
     }  
 }

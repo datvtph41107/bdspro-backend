@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/organization-permission": {
+    "/v2/org/organization/permission": {
       "get": {
         "operationId": "OrganizationPermissionService_GetPermissions",
         "responses": {
@@ -91,7 +91,7 @@
         ]
       }
     },
-    "/v2/org/organization-permission/{id}": {
+    "/v2/org/organization/permission/{id}": {
       "delete": {
         "operationId": "OrganizationPermissionService_DeletePermission",
         "responses": {

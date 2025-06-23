@@ -45,7 +45,7 @@ func NewOrganizationBranchUsecase(
 
 func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	
+
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -112,6 +112,8 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
+
+	// todo: kiểm tra số lượng thành viên theo plan
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/group/log-activity": {
+    "/v2/org/group/log-activity/{groupId}": {
       "get": {
         "operationId": "GroupLogActivityService_GetGroupLogActivities",
         "responses": {
@@ -36,8 +36,8 @@
         "parameters": [
           {
             "name": "groupId",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "integer",
             "format": "int64"
           },

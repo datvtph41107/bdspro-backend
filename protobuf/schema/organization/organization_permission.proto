@@ -11,27 +11,27 @@ service OrganizationPermissionService {
   
     rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {
         option (google.api.http) = {
-            post: "/v2/org/organization-permission"
+            post: "/v2/org/organization/permission"
             body: "*"
         };
     }
 
     rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {
         option (google.api.http) = {
-            put: "/v2/org/organization-permission/{id}"
+            put: "/v2/org/organization/permission/{id}"
             body: "*"
         };
     }
 
     rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {
         option (google.api.http) = {
-            delete: "/v2/org/organization-permission/{id}"
+            delete: "/v2/org/organization/permission/{id}"
         };
     }
 
     rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
         option (google.api.http) = {
-            get: "/v2/org/organization-permission"
+            get: "/v2/org/organization/permission"
         };
     }
 }

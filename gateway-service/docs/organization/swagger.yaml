@@ -1,9 +1,31 @@
 basePath: /v2/org
 definitions:
+  organizationpb.AddMemberToOrganizationBranchRequest:
+    properties:
+      id:
+        type: integer
+      userId:
+        type: integer
+    type: object
   organizationpb.CheckOrganizationIsExistRequest:
     properties:
       id:
         type: integer
+    type: object
+  organizationpb.CreateGroupDocumentRequest:
+    properties:
+      description:
+        type: string
+      fileSize:
+        type: integer
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      groupId:
+        type: integer
+      name:
+        type: string
     type: object
   organizationpb.CreateGroupMemberRequest:
     properties:
@@ -21,6 +43,21 @@ definitions:
       description:
         type: string
       name:
+        type: string
+    type: object
+  organizationpb.CreateOrganizationBranchRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      managerId:
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      phone:
         type: string
     type: object
   organizationpb.CreateOrganizationMemberRequest:
@@ -51,6 +88,15 @@ definitions:
       website:
         type: string
     type: object
+  organizationpb.CreatePermissionRequest:
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+      organizationId:
+        type: integer
+    type: object
   organizationpb.CreateRoleRequest:
     properties:
       key:
@@ -58,6 +104,21 @@ definitions:
       name:
         type: string
       organizationId:
+        type: integer
+    type: object
+  organizationpb.DeleteGroupDocumentRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.DeleteOrganizationBranchRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.DeletePermissionRequest:
+    properties:
+      id:
         type: integer
     type: object
   organizationpb.GetOrganizationsRequest:
@@ -69,14 +130,27 @@ definitions:
       size:
         type: integer
     type: object
-  organizationpb.GetRolesRequest:
+  organizationpb.RemoveMemberFromOrganizationBranchRequest:
     properties:
-      organizationId:
+      id:
         type: integer
-      page:
+      userId:
         type: integer
-      size:
+    type: object
+  organizationpb.UpdateGroupDocumentRequest:
+    properties:
+      description:
+        type: string
+      fileSize:
         type: integer
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   organizationpb.UpdateGroupMemberRequest:
     properties:
@@ -92,6 +166,19 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+    type: object
+  organizationpb.UpdateOrganizationBranchRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
         type: string
     type: object
   organizationpb.UpdateOrganizationMemberRequest:
@@ -122,6 +209,15 @@ definitions:
       taxCode:
         type: string
       website:
+        type: string
+    type: object
+  organizationpb.UpdatePermissionRequest:
+    properties:
+      id:
+        type: integer
+      key:
+        type: string
+      name:
         type: string
     type: object
   organizationpb.UpdateRoleRequest:
@@ -182,18 +278,6 @@ paths:
       tags:
       - Nhóm
   /group-member:
-    get:
-      consumes:
-      - application/json
-      description: Lấy thành viên nhóm
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy thành viên nhóm
-      tags:
-      - Thành viên
     post:
       consumes:
       - application/json
@@ -217,19 +301,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách thành viên nhóm
-      parameters:
-      - description: ID của nhóm
-        in: path
-        name: groupId
-        required: true
-        type: integer
+      description: Lấy thành viên nhóm
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách thành viên nhóm
+      summary: Lấy thành viên nhóm
       tags:
       - Thành viên
   /group-member/{id}:
@@ -268,6 +346,25 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên nhóm
       tags:
       - Thành viên
   /group-member/switch:
@@ -345,6 +442,163 @@ paths:
       summary: Cập nhật nhóm
       tags:
       - Nhóm
+  /group/document:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo tài liệu
+      tags:
+      - Tài liệu
+  /group/document/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DeleteGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa tài liệu
+      tags:
+      - Tài liệu
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tài liệu
+      tags:
+      - Tài liệu
+  /group/document/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tài liệu
+      parameters:
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tài liệu
+      tags:
+      - Tài liệu
+  /group/document/list/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tài liệu
+      parameters:
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài liệu
+      tags:
+      - Tài liệu
+  /group/log-activity/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách hoạt động của nhóm
+      parameters:
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách hoạt động của nhóm
+      tags:
+      - Hoạt động
   /group/user/{userId}:
     get:
       consumes:
@@ -404,6 +658,149 @@ paths:
       summary: Cập nhật tổ chức
       tags:
       - Tổ chức
+  /organization/branch:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách chi nhánh
+      parameters:
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách chi nhánh
+      tags:
+      - Chi nhánh
+    post:
+      consumes:
+      - application/json
+      description: Tạo chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DeleteOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa chi nhánh
+      tags:
+      - Chi nhánh
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}/member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của chi nhánh
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của chi nhánh
+      tags:
+      - Chi nhánh
+    post:
+      consumes:
+      - application/json
+      description: Thêm thành viên vào chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.AddMemberToOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Thêm thành viên vào chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}/member/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên khỏi chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.RemoveMemberFromOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên khỏi chi nhánh
+      tags:
+      - Chi nhánh
   /organization/check/{id}:
     get:
       consumes:
@@ -559,7 +956,118 @@ paths:
       summary: Tạo tổ chức mới
       tags:
       - Tổ chức
+  /organization/permission:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách quyền
+      parameters:
+      - description: ID của tổ chức
+        in: query
+        name: organizationId
+        required: true
+        type: integer
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách quyền
+      tags:
+      - Quyền
+    post:
+      consumes:
+      - application/json
+      description: Tạo quyền
+      parameters:
+      - description: Thông tin quyền
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quyền
+      tags:
+      - Quyền
+  /organization/permission/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quyền
+      parameters:
+      - description: Thông tin quyền
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DeletePermissionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quyền
+      tags:
+      - Quyền
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quyền
+      parameters:
+      - description: Thông tin quyền
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quyền
+      tags:
+      - Quyền
   /organization/role:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách vai trò
+      parameters:
+      - description: ID của tổ chức
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách vai trò
+      tags:
+      - Vai trò
     post:
       consumes:
       - application/json
@@ -615,26 +1123,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật vai trò
-      tags:
-      - Vai trò
-  /organization/roles:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách vai trò
-      parameters:
-      - description: Thông tin vai trò
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.GetRolesRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách vai trò
       tags:
       - Vai trò
   /organization/user/{userId}:

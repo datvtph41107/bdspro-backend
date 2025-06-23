@@ -19,7 +19,7 @@ type OrganizationRoleModel struct {
 	Permissions    []*OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
 	OrganizationId uint32                         `gorm:"not null;index:idx_org_roles_organization_id"`
 	DeletedAt      *time.Time                     `gorm:"index"`
-	IsDeleted      bool                          `gorm:"default:false"`
+	IsDeleted      bool                           `gorm:"default:false"`
 }
 
 func (OrganizationRoleModel) TableName() string {
@@ -126,7 +126,7 @@ func (r *organizationRoleRepository) Delete(ctx context.Context, id uint32) erro
 	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
@@ -173,10 +173,12 @@ func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 
 	// Get paginated data
 	offset := (page - 1) * size
-	err = r.db.Where("organization_id = ? AND is_deleted = ?", organizationId, false).
+	err = r.db.
+		Table("organization_roles").
+		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
 		Offset(offset).
 		Limit(size).
-		Find(&roles).Error
+		Scan(&roles).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -188,7 +190,7 @@ func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) 
 	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
