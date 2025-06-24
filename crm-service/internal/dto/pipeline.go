@@ -2,6 +2,7 @@ package dto
 
 import (
 	_dto "common/dto"
+	"crm/internal/domain"
 	"crm/internal/enums"
 )
 
@@ -20,4 +21,14 @@ type PipelineDTO struct {
 	Active       bool             `json:"active"`
 	OwnerID      uint64           `json:"ownerId"`
 	OwnerType    enums.EOwnerType `json:"ownerType"`
+}
+
+type PipelineSaveDTO struct {
+	ID             uint64                `json:"id"`
+	PipelineName   string                `json:"pipelineName"`
+	Color          uint32                `json:"color"`
+	Active         bool                  `json:"active"`
+	IsDefault      bool                  `json:"isDefault"`
+	Stages         []*domain.StageEntity `json:"stages"`
+	RemoveStageIds []uint64              `json:"removeStageIds"`
 }

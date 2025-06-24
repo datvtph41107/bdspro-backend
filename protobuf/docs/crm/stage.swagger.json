@@ -119,6 +119,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "colorRGB",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -279,6 +285,9 @@
         "color": {
           "type": "integer",
           "format": "int64"
+        },
+        "colorRGB": {
+          "type": "string"
         }
       }
     },
@@ -326,6 +335,9 @@
         "color": {
           "type": "integer",
           "format": "int64"
+        },
+        "colorRGB": {
+          "type": "string"
         }
       }
     },

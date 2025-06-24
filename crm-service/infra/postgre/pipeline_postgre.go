@@ -71,6 +71,10 @@ func (r *PostgrePipeline) GetByID(c context.Context, id uint64) (*domain.Pipelin
 	var entity domain.PipelineEntity
 	if err := r.db.WithContext(c).
 		Model(&domain.PipelineEntity{}).
+		Preload("Stages", func(db *gorm.DB) *gorm.DB {
+			return db.Order("order_number ASC")
+		}).
+		Preload("DefaultStage").
 		Where("id = ?", id).
 		First(&entity).Error; err != nil {
 		return nil, err

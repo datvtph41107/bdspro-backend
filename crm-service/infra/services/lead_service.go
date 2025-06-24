@@ -71,6 +71,7 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 	for i, lead := range result {
 		leads[i] = mapper.LeadToPb(&lead)
 	}
+	// s.UserClient.PbChargePersonToLead(ctx, leads)
 	return &crmpb.LeadListDTO{
 		Data:          leads,
 		TotalElements: uint32(total),

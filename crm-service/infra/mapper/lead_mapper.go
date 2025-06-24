@@ -54,12 +54,16 @@ func LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 		StageId:    lead.StageID,
 		ChargeId:   lead.ChargePersonID,
 		ChargeType: int32(lead.ChargePersonType),
+		ContactId:  &lead.ContactID,
+	}
+	if lead.Contact != nil {
+		result.Contact = ContactToPb(lead.Contact)
 	}
 	if lead.Stage != nil {
 		result.Stage = StageDomainToPb(lead.Stage)
 	}
-	if lead.Pipeline != nil {
-		result.Pipeline = PipelineDomainToPb(lead.Pipeline)
+	if lead.Stage != nil && lead.Stage.Pipeline != nil {
+		result.Pipeline = PipelineDomainToPb(lead.Stage.Pipeline)
 	}
 	if lead.Documents != nil {
 		result.Documents = make([]*crmpb.DocumentDTO, len(lead.Documents))

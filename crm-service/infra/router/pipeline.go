@@ -66,19 +66,10 @@ func (r *PipelineRouter) Create(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.Create(c, 0, entity)
+	result, err := r.UC.Create(c, entity)
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Cập nhật quy trình
-// @Description Cập nhật quy trình
-// @Tags Quy trình
-// @Accept json
-// @Produce json
-// @Param id path int true "ID"
-// @Param entity body domain.PipelineEntity true "Pipeline entity"
-// @Security BearerAuth
-// @Router /pipeline/{id} [put]
 func (r *PipelineRouter) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -86,7 +77,7 @@ func (r *PipelineRouter) Update(c *gin.Context) {
 		return
 	}
 
-	entity := &domain.PipelineEntity{}
+	entity := &dto.PipelineSaveDTO{}
 	if err := _utils.ParseBodyWithValidator(c, entity); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

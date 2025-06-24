@@ -48,7 +48,7 @@ service PipelineService {
             body: "*"
         };
     };
-    rpc Update (PipelineDTO) returns (PipelineDTO) {
+    rpc Update (PipelineSaveRequest) returns (PipelineDTO) {
         option (google.api.http) = {
             put: "/v2/crm/pipeline/{id}"
             body: "*"
@@ -59,4 +59,15 @@ service PipelineService {
             delete: "/v2/crm/pipeline/{id}"
         };
     };
+}
+
+
+message PipelineSaveRequest {
+    uint64 id = 1;
+    string pipelineName = 2;
+    uint32 color = 3;
+    bool active = 4;
+    bool isDefault = 5;
+    repeated StageDTO stages = 6;
+    repeated uint64 removeStageIds = 7;
 }

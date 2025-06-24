@@ -23,7 +23,7 @@ type LeadEntity struct {
 	Pipeline     *PipelineEntity     `gorm:"references:ID" json:"pipeline"`
 	Documents    []DocumentEntity    `gorm:"foreignKey:LeadID" json:"documents"`
 	ProductCares []ProductCareEntity `gorm:"foreignKey:LeadID" json:"productCares"`
-	Contact      *ContactEntity      `gorm:"foreignKey:ContactID" json:"contact"`
+	Contact      *ContactEntity      `gorm:"foreignKey:ContactID;references:ID" json:"contact"`
 	// FullName   string                `json:"fullName" binding:"required"`
 	// Phone      string                `json:"phone"`
 	// Email      string                `json:"email"`

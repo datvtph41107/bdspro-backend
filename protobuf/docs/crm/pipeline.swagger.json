@@ -193,6 +193,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "defaultStage.colorRGB",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -410,6 +416,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "defaultStage.colorRGB",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -489,6 +501,13 @@
         },
         "defaultStage": {
           "$ref": "#/definitions/crmpbStageDTO"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbStageDTO"
+          }
         }
       }
     },
@@ -521,22 +540,22 @@
         "active": {
           "type": "boolean"
         },
-        "ownerId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "ownerType": {
-          "type": "integer",
-          "format": "int64"
-        },
         "isDefault": {
           "type": "boolean"
         },
-        "isCustom": {
-          "type": "boolean"
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbStageDTO"
+          }
         },
-        "defaultStage": {
-          "$ref": "#/definitions/crmpbStageDTO"
+        "removeStageIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -572,6 +591,9 @@
         "color": {
           "type": "integer",
           "format": "int64"
+        },
+        "colorRGB": {
+          "type": "string"
         }
       }
     },

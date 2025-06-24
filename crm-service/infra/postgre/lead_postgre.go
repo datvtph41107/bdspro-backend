@@ -25,6 +25,9 @@ func (r *LeadPostgre) Search(c context.Context, ownerId uint64, ownerType enums.
 	total := int64(0)
 	customers := []domain.LeadEntity{}
 	query := r.db.WithContext(c).
+		Preload("Contact").
+		Preload("Stage").
+		Preload("Stage.Pipeline").
 		Model(&domain.LeadEntity{}).
 		Where("deleted_at is null and owner_id = ? and owner_type = ?", ownerId, ownerType)
 

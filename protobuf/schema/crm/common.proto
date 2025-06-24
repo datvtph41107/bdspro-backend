@@ -34,6 +34,7 @@ message LeadDTO {
     int32 priority = 26;
     repeated DocumentDTO documents = 27;
     repeated uint64 removeDocumentIds = 28;
+    optional ContactDTO contact = 29;
   }
 
   message PipelineDTO {
@@ -46,6 +47,7 @@ message LeadDTO {
     bool isDefault = 7;
     bool isCustom = 8;
     StageDTO defaultStage = 9;
+    repeated StageDTO stages = 10;
 }
 
 

@@ -626,6 +626,9 @@
             "type": "string",
             "format": "uint64"
           }
+        },
+        "contact": {
+          "$ref": "#/definitions/crmpbContactDTO"
         }
       }
     },
@@ -897,6 +900,13 @@
         },
         "defaultStage": {
           "$ref": "#/definitions/crmpbStageDTO"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbStageDTO"
+          }
         }
       }
     },
@@ -932,6 +942,9 @@
         "color": {
           "type": "integer",
           "format": "int64"
+        },
+        "colorRGB": {
+          "type": "string"
         }
       }
     },

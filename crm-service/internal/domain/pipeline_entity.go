@@ -17,6 +17,7 @@ type PipelineEntity struct {
 	IsDefault      bool             `gorm:"not null;default:false" json:"isDefault"`
 	IsCustom       bool             `gorm:"not null;default:false" json:"isCustom"`
 	DefaultStage   *StageEntity     `gorm:"foreignKey:StageDefaultID" json:"defaultStage"`
+	Stages         []*StageEntity   `gorm:"foreignKey:PipelineID" json:"stages"`
 }
 
 func (PipelineEntity) TableName() string {

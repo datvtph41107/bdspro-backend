@@ -2012,6 +2012,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/pipeline/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy chi tiết quy trình",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy trình"
+                ],
+                "summary": "Lấy chi tiết quy trình",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/pipeline/list": {
             "get": {
                 "security": [
@@ -3036,6 +3066,12 @@ const docTemplate = `{
                 },
                 "pipelineName": {
                     "type": "string"
+                },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.StageDTO"
+                    }
                 }
             }
         },
@@ -3181,6 +3217,9 @@ const docTemplate = `{
                 "color": {
                     "type": "integer"
                 },
+                "colorRGB": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -3293,6 +3332,12 @@ const docTemplate = `{
                 "stageDefaultId": {
                     "type": "integer"
                 },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.StageEntity"
+                    }
+                },
                 "updatedAt": {
                     "type": "string"
                 },
@@ -3369,6 +3414,9 @@ const docTemplate = `{
                 },
                 "color": {
                     "type": "integer"
+                },
+                "colorRGB": {
+                    "type": "string"
                 },
                 "createdAt": {
                     "type": "string"

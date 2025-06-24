@@ -55,8 +55,22 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 		Data:          result,
 	}, nil
 }
+
+// @Summary Lấy chi tiết quy trình
+// @Description Lấy chi tiết quy trình
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /pipeline/detail/{id} [get]
 func (s *PipelineService) Detail(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
-	return nil, nil
+	pipeline, err := s.UC.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.PipelineDomainToPb(pipeline), nil
 }
 
 // @Summary Tạo quy trình
@@ -77,17 +91,26 @@ func (s *PipelineService) Create(ctx context.Context, req *crmpb.PipelineDTO) (*
 	// 	}
 	// }
 
-	result, err := s.UC.Create(ctx, 0, domain)
+	result, err := s.UC.Create(ctx, domain)
 	if err != nil {
 		return nil, err
 	}
 
 	return mapper.PipelineDomainToPb(result), nil
 }
-func (s *PipelineService) Update(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
-	domain := mapper.PipelinePbToDomain(req)
 
-	result, err := s.UC.Update(ctx, req.Id, domain)
+// @Summary Cập nhật quy trình
+// @Description Cập nhật quy trình
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Param entity body crmpb.PipelineSaveRequest true "Pipeline entity"
+// @Security BearerAuth
+// @Router /pipeline [put]
+func (s *PipelineService) Update(ctx context.Context, req *crmpb.PipelineSaveRequest) (*crmpb.PipelineDTO, error) {
+	dto := mapper.PipelineSavePbToDomain(req)
+
+	result, err := s.UC.Update(ctx, req.Id, dto)
 	if err != nil {
 		return nil, err
 	}

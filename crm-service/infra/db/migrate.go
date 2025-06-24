@@ -9,7 +9,8 @@ import (
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
 		// &FriendEntity{},
-		&domain.ContactEntity{},
+		&domain.PipelineEntity{},
+		// &domain.ContactEntity{},
 		// &FollowEntity{},
 		// &BlockEntity{},
 		// &GroupEntity{},

@@ -91,6 +91,8 @@ func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.Stage
 	stage.Active = entity.Active
 	stage.RuleID = entity.RuleID
 	stage.PipelineID = entity.PipelineID
+	stage.Color = entity.Color
+	stage.ColorRGB = entity.ColorRGB
 
 	stage, err = u.stageRepo.Update(c, stage)
 	if err != nil {
