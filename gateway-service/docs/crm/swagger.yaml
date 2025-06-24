@@ -15,6 +15,8 @@ definitions:
     properties:
       avatar:
         type: string
+      birthday:
+        type: string
       blocked:
         type: boolean
       company:
@@ -274,6 +276,27 @@ definitions:
         type: integer
       pipelineName:
         type: string
+      stages:
+        items:
+          $ref: '#/definitions/crmpb.StageDTO'
+        type: array
+    type: object
+  crmpb.PipelineSaveRequest:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      pipelineName:
+        type: string
+      removeStageIds:
+        items:
+          type: integer
+        type: array
       stages:
         items:
           $ref: '#/definitions/crmpb.StageDTO'
@@ -2130,72 +2153,35 @@ paths:
       summary: Chi tiết khách hàng
       tags:
       - Khách hàng
-  /lead/list:
+  /lead/manage/{pipelineId}:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách
+      description: Lấy danh sách khách hàng hiển thị trên dashboard
       parameters:
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: chargePersonIds
-        type: array
-      - description: '[deprecated = true]; // EOwnerType (int32), deprecated'
-        in: query
-        name: chargeType
-        type: integer
       - in: query
-        name: fullName
+        name: lastUpdatedAt
         type: string
-      - in: query
-        name: ownerId
-        type: integer
-      - in: query
-        name: ownerType
-        type: integer
       - in: query
         name: page
         type: integer
       - in: query
-        name: phone
-        type: string
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: productCareIds
-        type: array
+        name: pipelineId
+        type: integer
       - in: query
         name: size
         type: integer
-      - collectionFormat: csv
-        description: ESourceLead (int32)
-        in: query
-        items:
-          type: integer
-        name: sources
-        type: array
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: stageIds
-        type: array
-      - collectionFormat: csv
-        description: EStep (int32)
-        in: query
-        items:
-          type: integer
-        name: steps
-        type: array
+      - description: ID của pipeline
+        in: path
+        name: pipelineId
+        required: true
+        type: integer
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách khách hàng
+      summary: Lấy danh sách khách hàng hiển thị trên dashboard
       tags:
       - Khách hàng
   /lead/note:
@@ -2236,6 +2222,88 @@ paths:
       security:
       - BearerAuth: []
       summary: Chuyển trạng thái khách hàng
+      tags:
+      - Khách hàng
+  /lead/total:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - description: Thời gian cập nhật gần nhất. Lưu lại thời điểm gọi api và các
+          lần sau gọi api này thì truyền thời gian gấn nhất đó vào để chỉ lấy các
+          bản ghi có thay đổi thôi đỡ phải gọi lại quá nhiều
+        in: query
+        name: lastUpdatedAt
+        type: string
+      - collectionFormat: csv
+        description: Danh sách ID của nhân viên phụ trách
+        in: query
+        items:
+          type: integer
+        name: chargePersonIds
+        type: array
+      - description: Loại nhân viên phụ trách
+        in: query
+        name: chargeType
+        type: integer
+      - description: Số điện thoại
+        in: query
+        name: phone
+        type: string
+      - description: Tên khách hàng
+        in: query
+        name: fullName
+        type: string
+      - collectionFormat: csv
+        description: Danh sách ID của bước
+        in: query
+        items:
+          type: integer
+        name: steps
+        type: array
+      - collectionFormat: csv
+        description: Danh sách ID của nguồn
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
+      - collectionFormat: csv
+        description: Danh sách ID của giai đoạn
+        in: query
+        items:
+          type: integer
+        name: stageIds
+        type: array
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng
+        in: query
+        name: size
+        type: integer
+      - collectionFormat: csv
+        description: Danh sách ID của danh mục sản phẩm quan tâm
+        in: query
+        items:
+          type: integer
+        name: productCategoryIds
+        type: array
+      - collectionFormat: csv
+        description: Danh sách enum nguồn
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách khách hàng
       tags:
       - Khách hàng
   /pipeline:
@@ -2282,17 +2350,17 @@ paths:
       - application/json
       description: Cập nhật quy trình
       parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
       - description: Pipeline entity
         in: body
         name: entity
         required: true
         schema:
-          $ref: '#/definitions/domain.PipelineEntity'
+          $ref: '#/definitions/crmpb.PipelineSaveRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses: {}
@@ -2378,6 +2446,19 @@ paths:
       security:
       - BearerAuth: []
       summary: Tìm kiếm quy trình
+      tags:
+      - Quy trình
+  /pipeline/with-stages:
+    get:
+      consumes:
+      - application/json
+      description: Lấy quy trình và stage
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy quy trình và stage
       tags:
       - Quy trình
   /rule:

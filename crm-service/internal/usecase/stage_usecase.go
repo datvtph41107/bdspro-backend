@@ -38,6 +38,12 @@ func (u *StageUsecase) CheckPermission(c context.Context, pipelineId uint64) (*d
 	if err != nil {
 		return nil, err
 	}
+	if !pipeline.IsCustom {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Giai đoạn của quy trình mặc định không thể thao tác",
+		}
+	}
 
 	if err := u.permissionUsecase.UserInOwner(c, pipeline.OwnerID, pipeline.OwnerType); err != nil {
 		return nil, err

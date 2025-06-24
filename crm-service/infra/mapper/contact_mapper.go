@@ -19,6 +19,7 @@ func ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
 		Avatar:        contact.Avatar,
 		Phone:         contact.Phone,
 		OwnerId:       contact.OwnerID,
+		Birthday:      _utils.FormatTimeToString(contact.Birthday),
 		OwnerType:     int32(contact.OwnerType),
 		ProfileId:     contact.ProfileID,
 		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),

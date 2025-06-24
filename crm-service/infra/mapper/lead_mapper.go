@@ -47,14 +47,17 @@ func LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDTO {
 
 func LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 	result := &crmpb.LeadDTO{
-		Id:         lead.ID,
-		Source:     int32(lead.Source),
-		AssignNote: lead.AssignNote,
-		PipelineId: lead.PipelineID,
-		StageId:    lead.StageID,
-		ChargeId:   lead.ChargePersonID,
-		ChargeType: int32(lead.ChargePersonType),
-		ContactId:  &lead.ContactID,
+		Id:           lead.ID,
+		Source:       int32(lead.Source),
+		AssignNote:   lead.AssignNote,
+		PipelineId:   lead.PipelineID,
+		StageId:      lead.StageID,
+		ChargeId:     lead.ChargePersonID,
+		ChargeType:   int32(lead.ChargePersonType),
+		ContactId:    &lead.ContactID,
+		Priority:     int32(lead.Priority),
+		PriorityName: enums.PriorityMap[lead.Priority],
+		UpdatedAt:    _utils.FormatTimeToString(lead.UpdatedAt),
 	}
 	if lead.Contact != nil {
 		result.Contact = ContactToPb(lead.Contact)
@@ -135,4 +138,25 @@ func LeadSaveToDomain(req *crmpb.LeadSaveRequest) *dto.LeadSaveDTO {
 		Documents:         documents,
 		RemoveDocumentIDs: req.RemoveDocumentIds,
 	}
+}
+
+func LeadManagerToPb(lead *domain.LeadEntity) *crmpb.LeadManagerItem {
+	result := &crmpb.LeadManagerItem{
+		Id:             lead.ID,
+		StageId:        lead.StageID,
+		PipelineId:     lead.PipelineID,
+		ContactId:      &lead.ContactID,
+		ChargePersonId: lead.ChargePersonID,
+		Priority:       uint64(lead.Priority),
+		CreatedAt:      _utils.FormatTimeToString(lead.CreatedAt),
+		UpdatedAt:      _utils.FormatTimeToString(lead.UpdatedAt),
+	}
+	if lead.Contact != nil {
+		result.LeadName = lead.Contact.FullName
+		result.LeadPhone = lead.Contact.Phone
+		result.LeadAvatar = lead.Contact.Avatar
+		result.ProfileId = lead.Contact.ProfileID
+	}
+
+	return result
 }

@@ -421,6 +421,9 @@
         },
         "note": {
           "type": "string"
+        },
+        "birthday": {
+          "type": "string"
         }
       }
     },

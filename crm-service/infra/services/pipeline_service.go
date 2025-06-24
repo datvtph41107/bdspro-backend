@@ -40,7 +40,7 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 			PipelineName: req.PipelineName,
 			Active:       req.Active,
 			Colors:       req.Colors,
-		})
+		}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,8 @@ func (s *PipelineService) Create(ctx context.Context, req *crmpb.PipelineDTO) (*
 // @Produce json
 // @Param entity body crmpb.PipelineSaveRequest true "Pipeline entity"
 // @Security BearerAuth
-// @Router /pipeline [put]
+// @Param id path int true "ID"
+// @Router /pipeline/{id} [put]
 func (s *PipelineService) Update(ctx context.Context, req *crmpb.PipelineSaveRequest) (*crmpb.PipelineDTO, error) {
 	dto := mapper.PipelineSavePbToDomain(req)
 
@@ -156,4 +157,34 @@ func (s *PipelineService) GetDefault(ctx context.Context, req *sharepb.Empty) (*
 		result.DefaultStage = mapper.StageDomainToPb(stage)
 	}
 	return result, nil
+}
+
+// @Summary Lấy quy trình và stage
+// @Description Lấy quy trình và stage
+// @Tags Quy trình
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /pipeline/with-stages [get]
+func (s *PipelineService) GetWithStages(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineListDTO, error) {
+	dto := dto.PipelineSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: 1,
+			Size: 1,
+		},
+	}
+	pipelines, total, err := s.UC.Search(ctx, dto, true)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*crmpb.PipelineDTO, len(pipelines))
+	for i, pipeline := range pipelines {
+		result[i] = mapper.PipelineDomainToPb(&pipeline)
+	}
+
+	return &crmpb.PipelineListDTO{
+		TotalElements: uint32(total),
+		Data:          result,
+	}, nil
 }

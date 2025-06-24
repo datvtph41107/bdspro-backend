@@ -5,7 +5,6 @@ import (
 	_utils "common/utils"
 	"crm/internal/dto"
 	"crm/internal/usecase"
-	"crm/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -39,13 +38,13 @@ func (r *LeadRouter) Search(c *gin.Context) {
 		return
 	}
 
-	ownerId, ownerType, err := utils.GetOwnerFromContext(c)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+	// ownerId, ownerType, err := utils.GetOwnerFromContext(c)
+	// if err != nil {
+	// 	_routes.RouteResult(c, nil, err)
+	// 	return
+	// }
 
-	result, total, err := r.UC.Search(c, ownerId, ownerType, dto)
+	result, total, err := r.UC.Search(c, dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

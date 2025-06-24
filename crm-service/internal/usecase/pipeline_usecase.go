@@ -38,7 +38,7 @@ func NewPipelineUsecase(
 	}
 }
 
-func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO) ([]domain.PipelineEntity, int64, error) {
+func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO, withStages bool) ([]domain.PipelineEntity, int64, error) {
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	if organizationId == 0 {
 		return nil, 0, &_routes.Except{
@@ -51,7 +51,7 @@ func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO)
 	// 	return nil, 0, err
 	// }
 	// ownerId
-	return u.pipelineRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto)
+	return u.pipelineRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto, withStages)
 }
 
 func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error) {
@@ -77,11 +77,13 @@ func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntit
 			return err
 		}
 
-		for _, stage := range entity.Stages {
-			stage.PipelineID = pipeline.ID
-			_, err = u.stageRepo.Create(c, stage)
-			if err != nil {
-				return err
+		if entity.Stages != nil {
+			for _, stage := range entity.Stages {
+				stage.PipelineID = pipeline.ID
+				_, err = u.stageRepo.Create(c, &stage)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -129,6 +131,8 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 		entity.PipelineName = dto.PipelineName
 		entity.Color = dto.Color
 		entity.Active = dto.Active
+		entity.OwnerID = organizationId
+		entity.OwnerType = enums.EOwnerTypeOrgnization
 		pipeline, err = u.pipelineRepo.Update(c, entity)
 		if err != nil {
 			return err
@@ -231,12 +235,24 @@ func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity,
 		return nil, nil, err
 	}
 
+	stages, err := u.stageRepo.GetByPipelineID(c, pipeline.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var stage *domain.StageEntity
 	if pipeline.StageDefaultID != 0 {
-		stage, _ = u.stageRepo.GetByID(c, pipeline.StageDefaultID)
+		for _, s := range stages {
+			if s.ID == pipeline.StageDefaultID {
+				stage = &s
+				break
+			}
+		}
 	} else {
-		stage, _ = u.stageRepo.GetOneStageDefault(c, pipeline.ID)
+		stage = &stages[0]
 	}
+
+	pipeline.Stages = stages
 
 	return pipeline, stage, nil
 }

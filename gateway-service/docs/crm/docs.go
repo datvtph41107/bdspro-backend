@@ -1722,14 +1722,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/lead/list": {
+        "/lead/manage/{pipelineId}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách",
+                "description": "Lấy danh sách khách hàng hiển thị trên dashboard",
                 "consumes": [
                     "application/json"
                 ],
@@ -1739,36 +1739,11 @@ const docTemplate = `{
                 "tags": [
                     "Khách hàng"
                 ],
-                "summary": "Lấy danh sách khách hàng",
+                "summary": "Lấy danh sách khách hàng hiển thị trên dashboard",
                 "parameters": [
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "chargePersonIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "[deprecated = true]; // EOwnerType (int32), deprecated",
-                        "name": "chargeType",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
-                        "name": "fullName",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "ownerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "ownerType",
+                        "name": "lastUpdatedAt",
                         "in": "query"
                     },
                     {
@@ -1777,17 +1752,8 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "name": "phone",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "productCareIds",
+                        "type": "integer",
+                        "name": "pipelineId",
                         "in": "query"
                     },
                     {
@@ -1796,33 +1762,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "ESourceLead (int32)",
-                        "name": "sources",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "stageIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "EStep (int32)",
-                        "name": "steps",
-                        "in": "query"
+                        "type": "integer",
+                        "description": "ID của pipeline",
+                        "name": "pipelineId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -1887,6 +1831,125 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/crmpb.LeadStageRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/lead/total": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Lấy danh sách khách hàng",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Thời gian cập nhật gần nhất. Lưu lại thời điểm gọi api và các lần sau gọi api này thì truyền thời gian gấn nhất đó vào để chỉ lấy các bản ghi có thay đổi thôi đỡ phải gọi lại quá nhiều",
+                        "name": "lastUpdatedAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách ID của nhân viên phụ trách",
+                        "name": "chargePersonIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại nhân viên phụ trách",
+                        "name": "chargeType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Số điện thoại",
+                        "name": "phone",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tên khách hàng",
+                        "name": "fullName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách ID của bước",
+                        "name": "steps",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách ID của nguồn",
+                        "name": "sources",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách ID của giai đoạn",
+                        "name": "stageIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách ID của danh mục sản phẩm quan tâm",
+                        "name": "productCategoryIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Danh sách enum nguồn",
+                        "name": "sources",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -2115,6 +2178,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/pipeline/with-stages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy quy trình và stage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy trình"
+                ],
+                "summary": "Lấy quy trình và stage",
+                "responses": {}
+            }
+        },
         "/pipeline/{id}": {
             "put": {
                 "security": [
@@ -2135,20 +2219,20 @@ const docTemplate = `{
                 "summary": "Cập nhật quy trình",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Pipeline entity",
                         "name": "entity",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.PipelineEntity"
+                            "$ref": "#/definitions/crmpb.PipelineSaveRequest"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -2672,6 +2756,9 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "birthday": {
+                    "type": "string"
+                },
                 "blocked": {
                     "type": "boolean"
                 },
@@ -3066,6 +3153,38 @@ const docTemplate = `{
                 },
                 "pipelineName": {
                     "type": "string"
+                },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crmpb.StageDTO"
+                    }
+                }
+            }
+        },
+        "crmpb.PipelineSaveRequest": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "color": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "pipelineName": {
+                    "type": "string"
+                },
+                "removeStageIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "stages": {
                     "type": "array",

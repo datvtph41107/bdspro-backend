@@ -106,10 +106,15 @@ func (c *UserClient) PbUserToContacts(ctx context.Context, contacts []*crmpb.Con
 	}
 }
 
-func (c *UserClient) PbChargePersonToLead(ctx context.Context, lead *crmpb.LeadDTO) {
+func (c *UserClient) PbChargePersonAndProfileToLeads(ctx context.Context, lead []*crmpb.LeadDTO) {
 	profileIDSet := make(map[uint64]struct{})
-	if lead.ChargeId != nil {
-		profileIDSet[*lead.ChargeId] = struct{}{}
+	for _, lead := range lead {
+		if lead.ChargeId != nil {
+			profileIDSet[*lead.ChargeId] = struct{}{}
+		}
+		if lead.Contact != nil && lead.Contact.ProfileId != nil {
+			profileIDSet[*lead.Contact.ProfileId] = struct{}{}
+		}
 	}
 
 	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
@@ -117,9 +122,53 @@ func (c *UserClient) PbChargePersonToLead(ctx context.Context, lead *crmpb.LeadD
 		return
 	}
 
-	if profile, ok := profileMap[*lead.ChargeId]; ok {
-		profile.Phone = ""
-		lead.ChargePerson = profile
+	for _, lead := range lead {
+		if lead.ChargeId != nil {
+			if profile, ok := profileMap[*lead.ChargeId]; ok {
+				profile.Phone = ""
+				lead.ChargePerson = profile
+			}
+		}
+		if lead.Contact != nil && lead.Contact.ProfileId != nil {
+			if profile, ok := profileMap[*lead.Contact.ProfileId]; ok {
+				lead.ProfileInfo = profile
+			}
+		}
+	}
+}
+
+func (c *UserClient) PbLeadToManager(ctx context.Context, lead []*crmpb.LeadManagerItem) {
+	profileIDSet := make(map[uint64]struct{})
+	for _, lead := range lead {
+		if lead.ChargePersonId != nil {
+			profileIDSet[*lead.ChargePersonId] = struct{}{}
+		}
+		if lead.ProfileId != nil {
+			profileIDSet[*lead.ProfileId] = struct{}{}
+		}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return
+	}
+
+	for _, lead := range lead {
+		if lead.ChargePersonId != nil {
+			if profile, ok := profileMap[*lead.ChargePersonId]; ok {
+				profile.Phone = ""
+				lead.ChargePersonName = profile.FullName
+				lead.ChargePersonPhone = profile.Phone
+				lead.ChargePersonAvatar = profile.Avatar
+			}
+		}
+		if lead.ProfileId != nil {
+			if profile, ok := profileMap[*lead.ProfileId]; ok {
+				lead.ProfileName = profile.FullName
+				lead.ProfilePhone = profile.Phone
+				lead.ProfileAvatar = profile.Avatar
+			}
+		}
 	}
 }
 

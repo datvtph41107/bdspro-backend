@@ -47,7 +47,7 @@ func (r *PipelineRouter) Search(c *gin.Context) {
 	// }
 	// ownerType := enums.EOwnerType(ownerTypeValue)
 
-	pipelines, total, err := r.UC.Search(c, dto)
+	pipelines, total, err := r.UC.Search(c, dto, false)
 	if err != nil {
 		_routes.RouteResult(c, nil, err)
 		return

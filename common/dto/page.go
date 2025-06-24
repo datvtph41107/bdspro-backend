@@ -31,5 +31,8 @@ func (p *Pagable) GetLimit() int {
 	if p.Size <= 0 {
 		return 20
 	}
+	if p.Size >= 100 {
+		return 100
+	}
 	return p.Size
 }

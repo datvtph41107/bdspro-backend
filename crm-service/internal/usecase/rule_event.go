@@ -117,7 +117,7 @@ func (u *RuleEventUsecase) CheckEventBirth(c context.Context, customer dto.Custo
 	if err != nil {
 		return err
 	}
-	if now.Day() == birthdayDate && now.Month() == birthdayMonth && customer.ChargeId != chargeId {
+	if now.Day() == birthdayDate && now.Month() == birthdayMonth && customer.ChargePersonId != chargeId {
 		u.TriggerEvent(c, customer)
 	}
 
@@ -175,7 +175,7 @@ func (u *RuleEventUsecase) TriggerReminder(c context.Context, customer dto.Custo
 		Title:     "Nhắc nhở",
 		Message:   fmt.Sprintf("Khách hàng %s đã quá %s ngày chưa tương tác", customer.FullName, customer.ConditionValue),
 		Type:      int(enums.HistoryRuleEvent),
-		UserID:    customer.ChargeId,
+		UserID:    customer.ChargePersonId,
 		VisibleAt: &customer.UpdatedAt,
 	})
 	return nil

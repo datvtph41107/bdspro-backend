@@ -26,6 +26,17 @@ func MapProductPb(product *domain.Product) *pb_bdspro.ProductResponse {
 		result.WardName = product.Ward.Name
 	}
 
+	if len(product.MediaList) > 0 {
+		result.MediaList = make([]*pb_bdspro.MediaItem, len(product.MediaList))
+		for i, media := range product.MediaList {
+			result.MediaList[i] = &pb_bdspro.MediaItem{
+				Id:        media.ID,
+				MediaUrl:  media.MediaURL,
+				MediaType: media.MediaType,
+			}
+		}
+	}
+
 	if product.Price != nil {
 		result.Price = &pb_bdspro.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,

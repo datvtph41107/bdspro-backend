@@ -59,6 +59,11 @@ service PipelineService {
             delete: "/v2/crm/pipeline/{id}"
         };
     };
+    rpc GetWithStages (PipelineDTO) returns (PipelineListDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/with-stages"
+        };
+    };
 }
 
 

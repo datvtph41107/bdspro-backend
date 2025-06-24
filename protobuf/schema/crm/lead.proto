@@ -11,9 +11,9 @@ import "crm/common.proto";
 import "bdspro/common.proto";
 
 service LeadService {
-  rpc Search (LeadSearchRequest) returns (LeadListDTO) {
+  rpc Search (LeadSearchRequest) returns (LeadTotalDTO) {
     option (google.api.http) = {
-      get: "/v2/crm/lead/list"
+      get: "/v2/crm/lead/total"
     };
   };
   rpc Detail (sharepb.IdRequest) returns (LeadDetailDTO) {
@@ -55,6 +55,11 @@ service LeadService {
       body: "*"
     };
   };
+  rpc Manager (LeadManagerRequest) returns (LeadManagerResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/manage/{pipelineId}"
+    };
+  };
 }
 
 message LeadSearchRequest {
@@ -78,11 +83,13 @@ message LeadSearchRequest {
 
   uint64 ownerId = 13;
   int32 ownerType = 14;
+
+  string lastUpdatedAt = 15;
 }
 
-message LeadListDTO {
+message LeadTotalDTO {
     repeated LeadDTO data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 message LeadAssignPersonRequest {
@@ -150,4 +157,38 @@ message LeadDetailDTO {
   string sourceName = 14;
   string priorityName = 15;
   optional sharepb.ProfileItem chargePerson = 21;
+}
+
+message LeadManagerRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string lastUpdatedAt = 3;
+  uint64 pipelineId = 4;
+}
+
+message LeadManagerItem {
+  uint64 id = 1;
+  optional uint64 stageId = 2;
+  optional uint64 pipelineId = 3;
+  optional uint64 contactId = 4;
+  uint64 priority = 5;
+  string createdAt = 6; 
+  string updatedAt = 7;
+
+  string leadName = 8;
+  string leadPhone = 9;
+  string leadAvatar = 10;
+  string chargePersonName = 11;
+  string chargePersonPhone = 12;
+  string chargePersonAvatar = 13;
+  string profileName = 14;
+  string profileAvatar = 15;
+  string profilePhone = 16;
+
+  optional uint64 profileId = 17;
+  optional uint64 chargePersonId = 18;
+}
+message LeadManagerResponse {
+  repeated LeadManagerItem data = 1;
+  uint32 total = 2;
 }

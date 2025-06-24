@@ -48,7 +48,7 @@ func (r *LeadPostgre) Search(c context.Context, ownerId uint64, ownerType enums.
 	}
 
 	if len(dto.ChargePersonIds) > 0 {
-		query.Where("charge_id in (?)", dto.ChargePersonIds)
+		query.Where("charge_person_id in (?)", dto.ChargePersonIds)
 	}
 
 	if dto.FromDate != nil {
@@ -59,16 +59,24 @@ func (r *LeadPostgre) Search(c context.Context, ownerId uint64, ownerType enums.
 		query.Where("created_at <= ?", dto.ToDate)
 	}
 
+	if dto.LastUpdatedAt != nil {
+		query.Where("updated_at >= ?", dto.LastUpdatedAt)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if dto.PipelineID != nil {
+		query.Where("pipeline_id = ?", dto.PipelineID)
+	}
+
 	if err := query.
-		Order("created_at desc").
+		Order("priority desc").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Find(&customers).
 		Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -140,7 +148,7 @@ func (r *LeadPostgre) Assign(c context.Context, id uint64, dto *dto.LeadDTO) (*d
 	err := r.db.WithContext(c).
 		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
-		Update("charge_id", dto.ChargePersonId).
+		Update("charge_person_id", dto.ChargePersonId).
 		Update("assign_note", dto.AssignNote).
 		Error
 	return &customer, err
@@ -188,7 +196,7 @@ func (r *LeadPostgre) GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRul
 		c.birthday,
 		c.pipeline_id,
 		c.stage_id,
-		c.charge_id,
+		c.charge_person_id,
 		c.updated_at,
 		c.owner_id,
 		c.owner_type,

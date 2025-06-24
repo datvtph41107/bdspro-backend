@@ -14,4 +14,5 @@ type StageRepo interface {
 	GetByID(ctx context.Context, id uint64) (*domain.StageEntity, error)
 	GetOneStageDefault(ctx context.Context, pipelineId uint64) (*domain.StageEntity, error)
 	BulkUpdate(ctx context.Context, removeIds []uint64, stages []domain.StageEntity) error
+	GetByPipelineID(ctx context.Context, pipelineId uint64) ([]domain.StageEntity, error)
 }

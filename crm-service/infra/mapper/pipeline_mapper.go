@@ -10,11 +10,12 @@ import (
 
 func PipelineSavePbToDomain(pb *crmpb.PipelineSaveRequest) *dto.PipelineSaveDTO {
 	result := &dto.PipelineSaveDTO{
-		ID:           pb.Id,
-		PipelineName: pb.PipelineName,
-		Active:       pb.Active,
-		Color:        pb.Color,
-		IsDefault:    pb.IsDefault,
+		ID:             pb.Id,
+		PipelineName:   pb.PipelineName,
+		Active:         pb.Active,
+		Color:          pb.Color,
+		IsDefault:      pb.IsDefault,
+		RemoveStageIds: pb.RemoveStageIds,
 	}
 
 	if pb.Stages != nil {
@@ -24,13 +25,7 @@ func PipelineSavePbToDomain(pb *crmpb.PipelineSaveRequest) *dto.PipelineSaveDTO 
 		}
 	}
 
-	return &dto.PipelineSaveDTO{
-		ID:           result.ID,
-		PipelineName: result.PipelineName,
-		Active:       result.Active,
-		Color:        result.Color,
-		IsDefault:    result.IsDefault,
-	}
+	return result
 }
 
 func PipelinePbToDomain(pb *crmpb.PipelineDTO) *domain.PipelineEntity {
@@ -48,9 +43,9 @@ func PipelinePbToDomain(pb *crmpb.PipelineDTO) *domain.PipelineEntity {
 	}
 
 	if pb.Stages != nil {
-		result.Stages = make([]*domain.StageEntity, len(pb.Stages))
+		result.Stages = make([]domain.StageEntity, len(pb.Stages))
 		for i, stage := range pb.Stages {
-			result.Stages[i] = StagePbToDomain(stage)
+			result.Stages[i] = *StagePbToDomain(stage)
 		}
 	}
 
@@ -72,7 +67,7 @@ func PipelineDomainToPb(domain *domain.PipelineEntity) *crmpb.PipelineDTO {
 	if domain.Stages != nil {
 		pbStages := make([]*crmpb.StageDTO, len(domain.Stages))
 		for i, stage := range domain.Stages {
-			pbStages[i] = StageDomainToPb(stage)
+			pbStages[i] = StageDomainToPb(&stage)
 		}
 		pb.Stages = pbStages
 	}

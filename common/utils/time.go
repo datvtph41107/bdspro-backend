@@ -31,6 +31,9 @@ func FormatTimeToString(t *time.Time) string {
 
 // ParseISOTime parses a string in ISO 8601 format (e.g., "1990-05-20T00:00:00Z") into time.Time
 func ParseStringToTime(value string) *time.Time {
+	if value == "" {
+		return nil
+	}
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {
 		return nil

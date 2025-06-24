@@ -8,7 +8,7 @@ import (
 )
 
 type PipelineRepo interface {
-	Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.PipelineSearchDTO) ([]domain.PipelineEntity, int64, error)
+	Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.PipelineSearchDTO, withStages bool) ([]domain.PipelineEntity, int64, error)
 	Create(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error)
 	Update(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error)
 	Delete(c context.Context, id uint64) error

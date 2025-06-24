@@ -35,9 +35,12 @@ message LeadDTO {
     repeated DocumentDTO documents = 27;
     repeated uint64 removeDocumentIds = 28;
     optional ContactDTO contact = 29;
-  }
+    string priorityName = 30;
+    optional sharepb.ProfileItem profileInfo = 31;
+    string updatedAt = 32;
+}
 
-  message PipelineDTO {
+message PipelineDTO {
     uint64 id = 1;
     string pipelineName = 2;
     uint32 color = 3;
@@ -91,4 +94,5 @@ message ContactDTO {
   string zalo = 17;
   string company = 18;
   string note = 19;
+  string birthday = 20;
 }

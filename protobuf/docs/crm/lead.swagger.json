@@ -174,14 +174,65 @@
         ]
       }
     },
-    "/v2/crm/lead/list": {
+    "/v2/crm/lead/manage/{pipelineId}": {
+      "get": {
+        "operationId": "LeadService_Manager",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadManagerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pipelineId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "lastUpdatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LeadService"
+        ]
+      }
+    },
+    "/v2/crm/lead/total": {
       "get": {
         "operationId": "LeadService_Search",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/crmpbLeadListDTO"
+              "$ref": "#/definitions/crmpbLeadTotalDTO"
             }
           },
           "default": {
@@ -310,6 +361,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "lastUpdatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -451,6 +508,9 @@
           "type": "string"
         },
         "note": {
+          "type": "string"
+        },
+        "birthday": {
           "type": "string"
         }
       }
@@ -629,6 +689,15 @@
         },
         "contact": {
           "$ref": "#/definitions/crmpbContactDTO"
+        },
+        "priorityName": {
+          "type": "string"
+        },
+        "profileInfo": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -703,17 +772,83 @@
         }
       }
     },
-    "crmpbLeadListDTO": {
+    "crmpbLeadManagerItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "stageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "pipelineId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "priority": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "leadName": {
+          "type": "string"
+        },
+        "leadPhone": {
+          "type": "string"
+        },
+        "leadAvatar": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonPhone": {
+          "type": "string"
+        },
+        "chargePersonAvatar": {
+          "type": "string"
+        },
+        "profileName": {
+          "type": "string"
+        },
+        "profileAvatar": {
+          "type": "string"
+        },
+        "profilePhone": {
+          "type": "string"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "crmpbLeadManagerResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/crmpbLeadDTO"
+            "$ref": "#/definitions/crmpbLeadManagerItem"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }
@@ -864,6 +999,22 @@
             "type": "string",
             "format": "uint64"
           }
+        }
+      }
+    },
+    "crmpbLeadTotalDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbLeadDTO"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

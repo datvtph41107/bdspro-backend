@@ -17,7 +17,9 @@ type LeadSearchDTO struct {
 	ChargeType      enums.EOwnerType    `form:"chargeType"` // deprecated
 	FromDate        *time.Time          `form:"fromDate"`
 	ToDate          *time.Time          `form:"toDate"`
+	LastUpdatedAt   *time.Time          `form:"lastUpdatedAt"`
 	ProductCareIDs  []uint64            `form:"productCareIds" parser:"uint64s"` // todo: add product care
+	PipelineID      *uint64             `form:"pipelineId"`
 	// OwnerID    uint64                  `form:"ownerId"`
 	// OwnerType  enums.EOwnerType        `form:"ownerType"`
 
@@ -52,7 +54,7 @@ type CustomerWithRuleDTO struct {
 	PipelineID     *uint64          `json:"pipelineId" db:"pipeline_id"`
 	StageID        *uint64          `json:"stageId" db:"stage_id"`
 	StageName      string           `json:"stageName" db:"stage_name"`
-	ChargeId       uint64           `json:"chargeId" db:"charge_id"`
+	ChargePersonId uint64           `json:"chargePersonId" db:"charge_person_id"`
 	RuleID         uint64           `json:"ruleId" db:"rule_id"`
 	RuleName       string           `json:"ruleName" db:"rule_name"`
 	Condition      enums.ECondition `json:"condition" db:"condition"`

@@ -19,13 +19,20 @@ func NewPostgrePipeline(db *gorm.DB) *PostgrePipeline {
 	return &PostgrePipeline{db: db}
 }
 
-func (r *PostgrePipeline) Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.PipelineSearchDTO) ([]domain.PipelineEntity, int64, error) {
+func (r *PostgrePipeline) Search(c context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.PipelineSearchDTO, withStages bool) ([]domain.PipelineEntity, int64, error) {
 	var entities []domain.PipelineEntity
 	query := r.db.WithContext(c).Model(&domain.PipelineEntity{})
 
 	query = query.Where("(owner_id = ? AND owner_type = ?) OR is_custom = ?", ownerId, ownerType, false)
 
-	if err := query.
+	querySearch := query
+	if withStages {
+		querySearch = querySearch.Preload("Stages", func(db *gorm.DB) *gorm.DB {
+			return db.Order("order_number ASC").Where("deleted_at is null")
+		})
+	}
+
+	if err := querySearch.
 		Preload("DefaultStage").
 		Find(&entities).
 		Order("order_number ASC").

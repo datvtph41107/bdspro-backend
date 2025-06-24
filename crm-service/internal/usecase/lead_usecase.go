@@ -52,13 +52,15 @@ func NewLeadUsecase(
 	return result
 }
 
-func (u *LeadUsecase) Search(ctx context.Context, ownerId uint64, ownerType enums.EOwnerType, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error) {
-	err := u.permissionUC.UserInOwner(ctx, ownerId, ownerType)
+func (u *LeadUsecase) Search(ctx context.Context, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+
+	err := u.permissionUC.UserInOwner(ctx, organizationId, enums.EOwnerTypeOrgnization)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return u.leadRepo.Search(ctx, ownerId, ownerType, dto)
+	return u.leadRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto)
 }
 
 func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain.LeadEntity, error) {

@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	_routes "common/routes"
 	"context"
 	"crm/infra/impl"
 	"crm/internal/domain"
@@ -94,46 +95,6 @@ func (r *PostgreStage) GetOneStageDefault(c context.Context, pipelineId uint64) 
 }
 
 func (r *PostgreStage) BulkUpdate(ctx context.Context, removeIds []uint64, stages []domain.StageEntity) error {
-	// 	if len(stages) == 0 {
-	// 		return nil
-	// 	}
-
-	// 	var values []string
-	// 	var args []interface{}
-	// 	var ids []string // dùng cho WHERE NOT IN (...)
-
-	// 	for _, s := range stages {
-	// 		// ép kiểu từng phần tử trực tiếp trong VALUES
-	// 		values = append(values, "(?::bigint, ?::text, ?::int, ?::text, ?::int)")
-	// 		args = append(args, s.ID, s.StageName, s.Color, s.ColorRGB, s.OrderNumber)
-	// 		ids = append(ids, fmt.Sprintf("%d", s.ID))
-	// 	}
-
-	// 	query := fmt.Sprintf(`
-	// 		UPDATE stage AS s SET
-	// 			stage_name = u.stage_name,
-	// 			color = u.color,
-	// 			color_rgb = u.color_rgb,
-	// 			order_number = u.order_number
-	// 		FROM (VALUES %s) AS u(id, stage_name, color, color_rgb, order_number)
-	// 		WHERE u.id = s.id
-	// 	`, strings.Join(values, ","))
-
-	// 	deleteQuery := fmt.Sprintf(`
-	// 	UPDATE stage SET deleted_at = NOW()
-	// 	WHERE owner_id = ? AND owner_type = ? AND id NOT IN (%s)
-	// `, strings.Join(ids, ","))
-
-	// 	err := impl.GetDB(ctx, r.db).Exec(query, args...).Error
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	err = impl.GetDB(ctx, r.db).Exec(deleteQuery, profileId, ownerType, strings.Join(ids, ",")).Error
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
 	// 	return nil
 	tx := impl.GetDB(ctx, r.db)
 
@@ -153,5 +114,29 @@ func (r *PostgreStage) BulkUpdate(ctx context.Context, removeIds []uint64, stage
 		}
 	}
 
+	var count int64
+	tx.Model(&domain.StageEntity{}).
+		Where("pipeline_id = ? and deleted_at is null", stages[0].PipelineID).
+		Count(&count)
+
+	if count > 20 {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Số lượng stage vượt quá 20",
+		}
+	}
+
 	return nil
+}
+
+func (r *PostgreStage) GetByPipelineID(c context.Context, pipelineId uint64) ([]domain.StageEntity, error) {
+	var entities []domain.StageEntity
+	if err := r.db.WithContext(c).
+		Model(&domain.StageEntity{}).
+		Where("pipeline_id = ? and deleted_at is null", pipelineId).
+		Order("order_number asc").
+		Find(&entities).Error; err != nil {
+		return nil, err
+	}
+	return entities, nil
 }

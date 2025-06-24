@@ -3,6 +3,7 @@ package grpc_service
 import (
 	_dto "common/dto"
 	_routes "common/routes"
+	_utils "common/utils"
 	"context"
 	"crm/infra/client"
 	"crm/infra/mapper"
@@ -40,9 +41,20 @@ func NewLeadService(uc *usecase.LeadUsecase,
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param query query crmpb.LeadSearchRequest false "Thông tin tìm kiếm"
-// @Router /lead/list [get]
-func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) (*crmpb.LeadListDTO, error) {
+// @Param lastUpdatedAt query string false "Thời gian cập nhật gần nhất. Lưu lại thời điểm gọi api và các lần sau gọi api này thì truyền thời gian gấn nhất đó vào để chỉ lấy các bản ghi có thay đổi thôi đỡ phải gọi lại quá nhiều"
+// @Param chargePersonIds query []int false "Danh sách ID của nhân viên phụ trách"
+// @Param chargeType query int false "Loại nhân viên phụ trách"
+// @Param phone query string false "Số điện thoại"
+// @Param fullName query string false "Tên khách hàng"
+// @Param steps query []int false "Danh sách ID của bước"
+// @Param sources query []int false "Danh sách ID của nguồn"
+// @Param stageIds query []int false "Danh sách ID của giai đoạn"
+// @Param page query int false "Trang"
+// @Param size query int false "Số lượng"
+// @Param productCategoryIds query []int false "Danh sách ID của danh mục sản phẩm quan tâm"
+// @Param sources query []int false "Danh sách enum nguồn"
+// @Router /lead/total [get]
+func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) (*crmpb.LeadTotalDTO, error) {
 	steps := make([]enums.EStep, len(req.Steps))
 	for i, step := range req.Steps {
 		steps[i] = enums.EStep(step)
@@ -63,18 +75,19 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 		Sources:         sources,
 		ChargePersonIds: req.ChargePersonIds,
 		ChargeType:      enums.EOwnerType(req.ChargeType),
+		LastUpdatedAt:   _utils.ParseStringToTime(req.LastUpdatedAt),
 	}
 
-	result, total, err := s.UC.Search(ctx, req.OwnerId, enums.EOwnerType(req.OwnerType), dto)
+	result, total, err := s.UC.Search(ctx, dto)
 
 	leads := make([]*crmpb.LeadDTO, len(result))
 	for i, lead := range result {
 		leads[i] = mapper.LeadToPb(&lead)
 	}
-	// s.UserClient.PbChargePersonToLead(ctx, leads)
-	return &crmpb.LeadListDTO{
-		Data:          leads,
-		TotalElements: uint32(total),
+	s.UserClient.PbChargePersonAndProfileToLeads(ctx, leads)
+	return &crmpb.LeadTotalDTO{
+		Data:  leads,
+		Total: uint32(total),
 	}, err
 }
 
@@ -111,7 +124,7 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 	}
 
 	leadPb := mapper.LeadToPb(result)
-	s.UserClient.PbChargePersonToLead(ctx, leadPb)
+	s.UserClient.PbChargePersonAndProfileToLeads(ctx, []*crmpb.LeadDTO{leadPb})
 
 	return leadPb, err
 }
@@ -230,4 +243,38 @@ func (s *LeadService) AssignCrm(ctx context.Context, req *crmpb.LeadAssignCrmReq
 		return nil, err
 	}
 	return mapper.LeadToPb(result), err
+}
+
+// @Summary Lấy danh sách khách hàng hiển thị trên dashboard
+// @Description Lấy danh sách khách hàng hiển thị trên dashboard
+// @Tags Khách hàng
+// @Accept json
+// @Produce json
+// @Param query query crmpb.LeadManagerRequest true "Lấy danh sách khách hàng hiển thị trên dashboard"
+// @Security BearerAuth
+// @Param pipelineId path int true "ID của pipeline"
+// @Router /lead/manage/{pipelineId} [get]
+func (s *LeadService) Manager(ctx context.Context, req *crmpb.LeadManagerRequest) (*crmpb.LeadManagerResponse, error) {
+	dto := dto.LeadSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		LastUpdatedAt: _utils.ParseStringToTime(req.LastUpdatedAt),
+		PipelineID:    &req.PipelineId,
+	}
+
+	result, total, err := s.UC.Search(ctx, dto)
+
+	managerItems := make([]*crmpb.LeadManagerItem, len(result))
+	for i, lead := range result {
+		managerItems[i] = mapper.LeadManagerToPb(&lead)
+	}
+
+	s.UserClient.PbLeadToManager(ctx, managerItems)
+
+	return &crmpb.LeadManagerResponse{
+		Data:  managerItems,
+		Total: uint32(total),
+	}, err
 }
