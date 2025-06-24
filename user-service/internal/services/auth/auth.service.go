@@ -145,6 +145,8 @@ func (s *AuthService) ResendOTP(c *gin.Context, otp dto.OtpRequest) (any, error)
 }
 
 func (s *AuthService) VerifyOtp(c *gin.Context, otp dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+
+
 	e, err := auth_model.AuthFindByPhone(otp.Phone)
 	if err != nil {
 		return nil, err

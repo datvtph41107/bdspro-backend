@@ -15,6 +15,7 @@ var (
 	UserAlreadyInOrganizationCode codes.Code = 3004
 	InternalServerErrorCode codes.Code = 3005
 	InvalidOrganizationIDCode codes.Code = 3006
+	UserOnlyOneOrganizationCode codes.Code = 3007
 )
 
 func InvalidRequest(details ...protoadapt.MessageV1 ) error {
@@ -47,4 +48,8 @@ func Forbidden(message string) error {
 
 func RecordNotFound(message string) error {
 	return NewError(int32(codes.NotFound), errors.New(message))
+}
+
+func UserOnlyOneOrganization() error {
+	return NewError(int32(UserOnlyOneOrganizationCode), errors.New("user only one organization"))
 }

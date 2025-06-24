@@ -7,6 +7,7 @@ import (
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type OrganizationUsecase interface {
@@ -43,6 +44,16 @@ func NewOrganizationUsecase(
 }
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	
+	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, currentUserId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(organizationByUserId) >= 1 {
+		return nil, nil, custom_error.UserOnlyOneOrganization()
+	}
+	
 	org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
 	if err != nil {
 		return nil, nil, err

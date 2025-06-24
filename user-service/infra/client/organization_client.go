@@ -7,6 +7,7 @@ import (
 
 	organizationpb "pb/types/organization"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -16,7 +17,7 @@ func NewOrganizationClient() organizationpb.OrganizationServiceClient {
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:50052", url), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to organization service: %v", err)
 	}
@@ -30,7 +31,7 @@ func NewOrganizationMemberClient() organizationpb.OrganizationMemberServiceClien
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:50052", url), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to organization service: %v", err)
 	}
@@ -43,7 +44,7 @@ func NewGroupClient() organizationpb.GroupServiceClient {
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:50052", url), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to group service: %v", err)
 	}

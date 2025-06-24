@@ -95,3 +95,5 @@ grpc:
     host: :50052
   group:
     host: :50052
+  payment:
+    host: :8205

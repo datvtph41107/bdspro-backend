@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/api/annotations.proto";
 package chatpb;
 
 option go_package = "pb/types/chat;chatpb";
@@ -12,10 +13,28 @@ enum ImageType {
     GIF = 3;
 }
 service BackgroundImageService {
-    rpc CreateBackgroundImage(CreateBackgroundImageRequest) returns (CreateBackgroundImageResponse);
-    rpc GetBackgroundImages(GetBackgroundImageRequest) returns (GetBackgroundImagesResponse);
-    rpc UpdateBackgroundImage(UpdateBackgroundImageRequest) returns (UpdateBackgroundImageResponse);
-    rpc DeleteBackgroundImage(DeleteBackgroundImageRequest) returns (DeleteBackgroundImageResponse);
+    rpc CreateBackgroundImage(CreateBackgroundImageRequest) returns (CreateBackgroundImageResponse){
+        option (google.api.http) = {
+            post: "/background"
+            body: "*"
+        };
+    };
+    rpc GetBackgroundImages(GetBackgroundImageRequest) returns (GetBackgroundImagesResponse){
+        option (google.api.http) = {
+            get: "/background"
+        };
+    };
+    rpc UpdateBackgroundImage(UpdateBackgroundImageRequest) returns (UpdateBackgroundImageResponse){
+        option (google.api.http) = {
+            put: "/background/{id}"
+            body: "*"
+        };
+    };
+    rpc DeleteBackgroundImage(DeleteBackgroundImageRequest) returns (DeleteBackgroundImageResponse){
+        option (google.api.http) = {
+            delete: "/background/delete/{id}"
+        };
+    };
 }
 
 

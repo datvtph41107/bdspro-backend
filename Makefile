@@ -21,6 +21,7 @@ init:
 	cd appointment-service && go mod tidy
 	cd payment-service && go mod tidy
 	cd notification-service && go mod tidy
+	cd go-chat-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
@@ -44,13 +45,11 @@ buf-organization:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path organization
 buf-appointment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path appointment
-buf-transaction:
-	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path transaction
 buf-payment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
 buf-chat:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path chat
-buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-transaction buf-payment buf-payment buf-crm
+buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat
 	echo "done"	
 	
 
@@ -88,6 +87,8 @@ chat-swagger:
 payment:
 	cd payment-service && go run main.go grpc-server
 
+chat-grpc:
+	cd go-chat-service && go run main.go grpc-serve
 
 start-all:
 	make buf-all

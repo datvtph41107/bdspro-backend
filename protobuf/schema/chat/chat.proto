@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
 package chatpb;
 option go_package = "pb/types/chat;chatpb";
@@ -7,37 +8,159 @@ option go_package = "pb/types/chat;chatpb";
 import "shared/common.proto";
 
 service ChatService {
-  rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse);
-  rpc GetConversations (GetConversationsRequest) returns (GetConversationsResponse);
-  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
-  rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse);
-  rpc ForwardMessage (ForwardMessageRequest) returns (ForwardMessageResponse);
-  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse);
-  rpc PinMessage (PinMessageRequest) returns (PinMessageResponse);
-  rpc RecallMessage (RecallMessageRequest) returns (RecallMessageResponse);
-  rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse);
-  rpc EditChannel (EditChannelRequest) returns (EditChannelResponse);
-  rpc CreateOrgChannel (CreateOrgChannelRequest) returns (CreateOrgChannelResponse);
-  rpc MuteConversation (MuteConversationRequest) returns (MuteConversationResponse);
-  rpc Search (SearchRequest) returns (SearchResponse);
+  rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse) {
+    option (google.api.http) = {
+      post: "/chat/conversations"
+      body: "*"
+    };
+  };
+  rpc GetConversations (GetConversationsRequest) returns (GetConversationsResponse) {
+    option (google.api.http) = {
+      get: "/chat/conversations"
+    };
+  };
+  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/chat/messages"
+      body: "*"
+    };
+  };
+  rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/chat/messages"
+    };
+  };
+  rpc ForwardMessage (ForwardMessageRequest) returns (ForwardMessageResponse) {
+    option (google.api.http) = {
+      post: "/chat/forward"
+      body: "*"
+    };
+  };
+  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse) {
+    option (google.api.http) = {
+      post: "/chat/read"
+      body: "*"
+    };
+  };
+  rpc PinMessage (PinMessageRequest) returns (PinMessageResponse) {
+    option (google.api.http) = {
+      post: "/chat/pin"
+      body: "*"
+    };
+  };
+  rpc RecallMessage (RecallMessageRequest) returns (RecallMessageResponse) {
+    option (google.api.http) = {
+      post: "/chat/recall"
+      body: "*"
+    };
+  };
+  rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse) {
+    option (google.api.http) = {
+      post: "/chat/removeUser"
+      body: "*"
+    };
+  };
+  rpc EditChannel (EditChannelRequest) returns (EditChannelResponse) {
+    option (google.api.http) = {
+      post: "/chat/editChannel"
+      body: "*"
+    };
+  };
+  rpc CreateOrgChannel (CreateOrgChannelRequest) returns (CreateOrgChannelResponse) {
+    option (google.api.http) = {
+      post: "/chat/createOrgChannel"
+      body: "*"
+    };
+  };
+  rpc MuteConversation (MuteConversationRequest) returns (MuteConversationResponse) {
+    option (google.api.http) = {
+      post: "/chat/mute"
+      body: "*"
+    };
+  };
+  rpc Search (SearchRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/chat/search"
+    };
+  };
 
-  rpc GetConversationById (GetConversationByIdRequest) returns (GetConversationByIdResponse);
-  rpc GetListParticipant (GetListParticipantRequest) returns (GetListParticipantResponse);
-  rpc GetReadReceipt (GetReadReceiptRequest) returns (GetReadReceiptResponse);
-  rpc GetPinnedMessages (GetMessagesRequest) returns (GetMessagesResponse);
+  rpc GetConversationById (GetConversationByIdRequest) returns (GetConversationByIdResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{conversationId}"
+    };
+  };
+  rpc GetListParticipant (GetListParticipantRequest) returns (GetListParticipantResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{conversationId}/members"
+    };
+  };
+  rpc GetReadReceipt (GetReadReceiptRequest) returns (GetReadReceiptResponse) {
+    option (google.api.http) = {
+      get: "/messages/{messageId}/readReceipt"
+    };
+  };
+  rpc GetPinnedMessages (GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/messages/{conversationId}/pinned"
+    };
+  };
 
-  rpc AddUser (AddUserRequest) returns (AddUserResponse);
-  rpc LeaveRoom (LeaveRoomRequest) returns (LeaveRoomResponse);
-  rpc EditMessage (EditMessageRequest) returns (EditMessageResponse);
-  rpc DeleteViolation (DeleteViolationRequest) returns (DeleteViolationResponse);
-  rpc DeleteRoom (DeleteRoomRequest) returns (DeleteRoomResponse);
+  rpc AddUser (AddUserRequest) returns (AddUserResponse) {
+    option (google.api.http) = {
+      post: "/conversation/add-user"
+      body: "*"
+    };
+  };
+  rpc LeaveRoom (LeaveRoomRequest) returns (LeaveRoomResponse) {
+    option (google.api.http) = {
+      post: "/conversation/leave"
+      body: "*"
+    };
+  };
+  rpc EditMessage (EditMessageRequest) returns (EditMessageResponse) {
+    option (google.api.http) = {
+      post: "/messages/edit/{messageId}"
+      body: "*"
+    };
+  };
+  rpc DeleteViolation (DeleteViolationRequest) returns (DeleteViolationResponse) {
+    option (google.api.http) = {
+      delete: "/messages/delete-violation/{messageId}"
+    };
+  };
+  rpc DeleteRoom (DeleteRoomRequest) returns (DeleteRoomResponse) {
+    option (google.api.http) = {
+      delete: "/conversation/delete-conversation/{conversationId}"
+    };
+  };
 
-  rpc GetSetting(GetSettingRequest) returns (GetSettingResponse);
-  rpc GetFiles(GetFilesRequest) returns (GetFilesResponse);
-  rpc GetImages (GetImagesRequest) returns (GetImagesResponse);
-  rpc GetLinks(GetLinksRequest) returns (GetLinksResponse);
+  rpc GetSetting(GetSettingRequest) returns (GetSettingResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{id}/setting"
+    };
+  };
+  rpc GetFiles(GetFilesRequest) returns (GetFilesResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{conversationId}/files"
+    };
+  };
+  rpc GetImages (GetImagesRequest) returns (GetImagesResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{conversationId}/images"
+    };
+  };
+  rpc GetLinks(GetLinksRequest) returns (GetLinksResponse) {
+    option (google.api.http) = {
+      get: "/conversation/{conversationId}/links"
+    };
+  };
 
-  rpc ReactionMessage(ReactionMessageRequest) returns (ReactionMessageResponse);
+  rpc ReactionMessage(ReactionMessageRequest) returns (ReactionMessageResponse) {
+    option (google.api.http) = {
+      post: "/message/reaction"
+      body: "*"
+    };
+  };
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
 }
 
