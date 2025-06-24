@@ -141,7 +141,6 @@ func NewOrganizationLogActivityRepository() repository.OrganizationLogActivityRe
 	switch appconfig.PRIMARY_DB_TYPE {
 	case appconfig.DBTypePostgres:
 		db := database.NewPostgresDB(appconfig.DB_DNS)
-
 		return postgres.NewOrganizationLogActivityPostgresRepository(db)
 	}
 	return nil

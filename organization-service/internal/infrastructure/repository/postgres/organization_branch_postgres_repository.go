@@ -10,18 +10,19 @@ import (
 )
 
 type OrganizationBranchModel struct {
-	Id             uint32    `gorm:"primaryKey;autoIncrement"`
-	OrganizationId uint32    `gorm:"not null;index:idx_org_branches_org_id"`
-	Name           string    `gorm:"index:idx_org_branches_name"`
+	Id             uint32 `gorm:"primaryKey;autoIncrement"`
+	OrganizationId uint32 `gorm:"not null;index:idx_org_branches_org_id"`
+	Name           string `gorm:"index:idx_org_branches_name"`
 	Address        string
 	Phone          string
 	Email          string
-	ManagerId      uint32    `gorm:"autoIncrement;index:idx_org_branches_manager_id"`
-	CreatedAt      time.Time `gorm:"autoCreateTime;index:idx_org_branches_created_at"`
-	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
-	CreatedBy      uint32    `gorm:"index:idx_org_branches_created_by"`
+	ManagerId      uint32     `gorm:"autoIncrement;index:idx_org_branches_manager_id"`
+	CreatedAt      time.Time  `gorm:"autoCreateTime;index:idx_org_branches_created_at"`
+	UpdatedAt      time.Time  `gorm:"autoUpdateTime"`
+	CreatedBy      uint32     `gorm:"index:idx_org_branches_created_by"`
 	DeletedAt      *time.Time `gorm:"index"`
 	IsDeleted      bool       `gorm:"default:false"`
+	IsActive       bool       `gorm:"default:true;column:is_active"`
 }
 
 func (m *OrganizationBranchModel) TableName() string {
@@ -40,6 +41,7 @@ func OrganizationBranchModelToEntity(m *OrganizationBranchModel) *entity.Organiz
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
 		CreatedBy:      m.CreatedBy,
+		IsActive:       m.IsActive,
 	}
 }
 
@@ -56,6 +58,7 @@ func OrganizationBranchEntityToModel(e *entity.OrganizationBranch) *Organization
 		UpdatedAt:      e.UpdatedAt,
 		CreatedBy:      e.CreatedBy,
 		IsDeleted:      false,
+		IsActive:       e.IsActive,
 	}
 }
 
@@ -90,7 +93,7 @@ func (r *organizationBranchRepository) DeleteOrganizationBranch(ctx context.Cont
 	return r.db.WithContext(ctx).Model(&OrganizationBranchModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
@@ -138,4 +141,12 @@ func (r *organizationBranchRepository) GetOrganizationBranchByOrganizationIdWith
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
+}
+
+func (r *organizationBranchRepository) UpdateIsActive(ctx context.Context, id uint32, isActive bool) error {
+	return r.db.WithContext(ctx).Model(&OrganizationBranchModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_active": isActive,
+		}).Error
 }

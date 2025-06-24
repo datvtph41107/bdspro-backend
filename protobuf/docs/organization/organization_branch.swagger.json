@@ -198,6 +198,45 @@
         ]
       }
     },
+    "/v2/org/organization/branch/{id}/is-active": {
+      "put": {
+        "operationId": "OrganizationBranchService_UpdateIsActive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateIsActiveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrganizationBranchServiceUpdateIsActiveBody"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationBranchService"
+        ]
+      }
+    },
     "/v2/org/organization/branch/{id}/members": {
       "get": {
         "operationId": "OrganizationBranchService_GetOrganizationBranchMembers",
@@ -289,6 +328,14 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "OrganizationBranchServiceUpdateIsActiveBody": {
+      "type": "object",
+      "properties": {
+        "isActive": {
+          "type": "boolean"
         }
       }
     },
@@ -410,6 +457,9 @@
         },
         "email": {
           "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
         }
       }
     },
@@ -432,6 +482,14 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbUpdateIsActiveResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
         }
       }
     },

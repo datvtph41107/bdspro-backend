@@ -48,6 +48,12 @@ service OrganizationBranchService {
             get: "/v2/org/organization/branch"
         };
     }
+    rpc UpdateIsActive(UpdateIsActiveRequest) returns (UpdateIsActiveResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/branch/{id}/is-active"
+            body: "*"
+        };
+    }
 }
 
 message CreateOrganizationBranchRequest {
@@ -129,6 +135,7 @@ message OrganizationBranch {
     string address = 3;
     string phone = 4;
     string email = 5;
+    bool isActive = 6;
 }
 
 message GetOrganizationBranchesResponse {
@@ -136,3 +143,12 @@ message GetOrganizationBranchesResponse {
     uint32 total = 2;
 }
 
+
+message UpdateIsActiveRequest {
+    uint32 id = 1;
+    bool isActive = 2;
+}
+
+message UpdateIsActiveResponse {
+    bool success = 1;
+}

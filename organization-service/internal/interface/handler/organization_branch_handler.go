@@ -199,15 +199,26 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 	branchesResponse := make([]*organizationpb.OrganizationBranch, len(branches))
 	for i, branch := range branches {
 		branchesResponse[i] = &organizationpb.OrganizationBranch{
-			Id:      branch.Id,
-			Name:    branch.Name,
-			Address: branch.Address,
-			Phone:   branch.Phone,
-			Email:   branch.Email,
+			Id:       branch.Id,
+			Name:     branch.Name,
+			Address:  branch.Address,
+			Phone:    branch.Phone,
+			Email:    branch.Email,
+			IsActive: branch.IsActive,
 		}
 	}
 	return &organizationpb.GetOrganizationBranchesResponse{
 		Branches: branchesResponse,
 		Total:    total,
+	}, nil
+}
+
+func (h *OrganizationBranchHandler) UpdateIsActive(ctx context.Context, req *organizationpb.UpdateIsActiveRequest) (*organizationpb.UpdateIsActiveResponse, error) {
+	err := h.usecase.UpdateIsActive(ctx, req.Id, req.IsActive)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.UpdateIsActiveResponse{
+		Success: true,
 	}, nil
 }

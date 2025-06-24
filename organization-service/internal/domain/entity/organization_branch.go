@@ -13,4 +13,5 @@ type OrganizationBranch struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	CreatedBy      uint32
+	IsActive       bool
 }

@@ -19,6 +19,7 @@ type OrganizationBranchUsecase interface {
 	RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error
 	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error)
 	GetOrganizationBranches(ctx context.Context, page, size int) ([]*entity.OrganizationBranch, uint32, error)
+	UpdateIsActive(ctx context.Context, id uint32, isActive bool) error
 }
 
 type organizationBranchUsecase struct {
@@ -198,4 +199,18 @@ func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context,
 		return nil, 0, custom_error.RecordNotFound("Organization not found")
 	}
 	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
+}
+
+
+func (u *organizationBranchUsecase) UpdateIsActive(ctx context.Context, id uint32, isActive bool) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
+		return err
+	}
+	if !hasRole {
+		return custom_error.Forbidden("You are not authorized to access this resource")
+	}
+	return u.organizationBranchRepository.UpdateIsActive(ctx, id, isActive)
 }
