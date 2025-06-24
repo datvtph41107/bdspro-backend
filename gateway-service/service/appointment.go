@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	pb_appointment "pb/types/appointment"
-	pb_transaction "pb/types/transaction"
+
+	// pb_transaction "pb/types/transaction"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/viper"
@@ -20,5 +21,5 @@ func RegisterAppointmentService(ctx context.Context, mux *runtime.ServeMux, env 
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_appointment.RegisterAppointmentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_transaction.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	// _ = pb_transaction.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

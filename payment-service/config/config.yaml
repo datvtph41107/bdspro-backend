@@ -1,8 +1,8 @@
 host: 0.0.0.0
-port: 50055
+port: 8205
 database:
   type: postgres
-  url: host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable
+  url: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_payment port=5432 sslmode=disable
 whitelist:
   - /pb_payment.PaymentService/GetWallet
   - /pb_payment.PaymentService/CreateWallet

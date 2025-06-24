@@ -1,16 +1,19 @@
-package postgres
+package postgre
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity/transaction"
-	"github.com/tuandq2112/appointment-service/internal/domain/repository"
+	"bdspro/internal/domain/transaction"
+
+	"bdspro/internal/repo"
+
 	"gorm.io/gorm"
 )
 
-type transactionPostgresRepository struct {
+// @bind: bdspro/internal/repo.TransactionRepository
+type TransactionPostgresRepository struct {
 	db *gorm.DB
 }
 
@@ -93,13 +96,13 @@ func EntityToTransactionModel(t *transaction.Transaction) *TransactionModel {
 	}
 }
 
-func NewTransactionPostgresRepository(db *gorm.DB) repository.TransactionRepository {
-	return &transactionPostgresRepository{
+func NewTransactionPostgresRepository(db *gorm.DB) *TransactionPostgresRepository {
+	return &TransactionPostgresRepository{
 		db: db,
 	}
 }
 
-func (r *transactionPostgresRepository) Create(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
+func (r *TransactionPostgresRepository) Create(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	model := EntityToTransactionModel(tx)
 	err := r.db.WithContext(ctx).Create(model).Error
 	if err != nil {
@@ -111,7 +114,7 @@ func (r *transactionPostgresRepository) Create(ctx context.Context, tx *transact
 	return entity, nil
 }
 
-func (r *transactionPostgresRepository) GetByID(ctx context.Context, id uint32) (*transaction.Transaction, error) {
+func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id uint32) (*transaction.Transaction, error) {
 	var model TransactionModel
 	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -122,7 +125,7 @@ func (r *transactionPostgresRepository) GetByID(ctx context.Context, id uint32) 
 	return TransactionModelToEntity(&model), nil
 }
 
-func (r *transactionPostgresRepository) Update(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
+func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
 	model := EntityToTransactionModel(tx)
 	result := r.db.WithContext(ctx).Model(&TransactionModel{}).Where("id = ?", tx.Id).Updates(model)
 	if result.Error != nil {
@@ -135,12 +138,12 @@ func (r *transactionPostgresRepository) Update(ctx context.Context, tx *transact
 	return entity, nil
 }
 
-func (r *transactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
+func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	result := r.db.WithContext(ctx).Model(&TransactionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
-			"deleted_at":  time.Now(),
+			"is_deleted": true,
+			"deleted_at": time.Now(),
 		})
 	if result.Error != nil {
 		return result.Error
@@ -151,7 +154,7 @@ func (r *transactionPostgresRepository) Delete(ctx context.Context, id uint32) e
 	return nil
 }
 
-func (r *transactionPostgresRepository) List(ctx context.Context, filters *repository.TransactionFilters) ([]*transaction.Transaction, int64, error) {
+func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.TransactionFilters) ([]*transaction.Transaction, int64, error) {
 	query := r.db.WithContext(ctx).Model(&TransactionModel{}).Where("is_deleted = false")
 
 	if filters.TransactionType != nil {
@@ -193,7 +196,7 @@ func (r *transactionPostgresRepository) List(ctx context.Context, filters *repos
 	return transactions, total, nil
 }
 
-func (r *transactionPostgresRepository) Approve(ctx context.Context, id uint32, approvedBy uint32) error {
+func (r *TransactionPostgresRepository) Approve(ctx context.Context, id uint32, approvedBy uint32) error {
 	result := r.db.WithContext(ctx).Model(&TransactionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -211,7 +214,7 @@ func (r *transactionPostgresRepository) Approve(ctx context.Context, id uint32, 
 	return nil
 }
 
-func (r *transactionPostgresRepository) Reject(ctx context.Context, id uint32) error {
+func (r *TransactionPostgresRepository) Reject(ctx context.Context, id uint32) error {
 	result := r.db.WithContext(ctx).Model(&TransactionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -227,7 +230,7 @@ func (r *transactionPostgresRepository) Reject(ctx context.Context, id uint32) e
 	return nil
 }
 
-func (r *transactionPostgresRepository) GetTransactionTypes(ctx context.Context) ([]string, error) {
+func (r *TransactionPostgresRepository) GetTransactionTypes(ctx context.Context) ([]string, error) {
 	var types []string
 	err := r.db.WithContext(ctx).Model(&TransactionModel{}).
 		Where("is_deleted = false").

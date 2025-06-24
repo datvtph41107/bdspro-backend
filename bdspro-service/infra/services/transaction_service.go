@@ -1,28 +1,28 @@
-package handler
+package service
 
 import (
+	"bdspro/infra/mapper"
+	"bdspro/infra/validator"
+	"bdspro/internal/repo"
+	"bdspro/internal/usecases"
 	"context"
-	pbTransaction "pb/types/transaction"
+	bdspropb "pb/types/bdspro"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/repository"
-	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
-	"github.com/tuandq2112/appointment-service/internal/interface/validator"
-	"github.com/tuandq2112/appointment-service/internal/usecase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type TransactionHandler struct {
-	pbTransaction.UnimplementedTransactionServiceServer
-	TransactionUsecase usecase.TransactionUsecase
-	Transformer        transformer.TransactionTransformer
+	bdspropb.UnimplementedTransactionServiceServer
+	TransactionUsecase usecases.TransactionUsecase
+	Transformer        mapper.TransactionTransformer
 	Validator          validator.TransactionValidator
 }
 
 func NewTransactionHandler(
-	transactionUsecase usecase.TransactionUsecase,
-	transformer transformer.TransactionTransformer,
+	transactionUsecase usecases.TransactionUsecase,
+	transformer mapper.TransactionTransformer,
 	validator validator.TransactionValidator,
 ) *TransactionHandler {
 	return &TransactionHandler{
@@ -32,11 +32,23 @@ func NewTransactionHandler(
 	}
 }
 
-func (h *TransactionHandler) ListTransactions(ctx context.Context, req *pbTransaction.ListTransactionsRequest) (*pbTransaction.ListTransactionsResponse, error) {
+// @Summary Lấy danh sách giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Param transactionType query string false "Loại giao dịch"
+// @Param approvalStatus query string false "Trạng thái phê duyệt"
+// @Param transactionStatus query string false "Trạng thái giao dịch"
+// @Param startDate query string false "Ngày bắt đầu"
+// @Param endDate query string false "Ngày kết thúc"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/list [get]
+func (h *TransactionHandler) ListTransactions(ctx context.Context, req *bdspropb.ListTransactionsRequest) (*bdspropb.ListTransactionsResponse, error) {
 	if err := h.Validator.ValidateListTransactionsRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	filters := &repository.TransactionFilters{
+	filters := &repo.TransactionFilters{
 		Page: 0,
 		Size: 10,
 	}
@@ -78,7 +90,13 @@ func (h *TransactionHandler) ListTransactions(ctx context.Context, req *pbTransa
 	return h.Transformer.EntityToListTransactionsResponse(transactions, int32(total)), nil
 }
 
-func (h *TransactionHandler) GetTransactionDetail(ctx context.Context, req *pbTransaction.GetTransactionDetailRequest) (*pbTransaction.Transaction, error) {
+// @Summary Lấy chi tiết giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param id path uint32 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/{id} [get]
+func (h *TransactionHandler) GetTransactionDetail(ctx context.Context, req *bdspropb.GetTransactionDetailRequest) (*bdspropb.Transaction, error) {
 	if err := h.Validator.ValidateGetTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -91,7 +109,13 @@ func (h *TransactionHandler) GetTransactionDetail(ctx context.Context, req *pbTr
 	return h.Transformer.EntityToTransactionResponse(transaction), nil
 }
 
-func (h *TransactionHandler) CreateTransaction(ctx context.Context, req *pbTransaction.CreateTransactionRequest) (*pbTransaction.Transaction, error) {
+// @Summary Tạo giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param transaction body bdspropb.CreateTransactionRequest true "Thông tin giao dịch"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction [post]
+func (h *TransactionHandler) CreateTransaction(ctx context.Context, req *bdspropb.CreateTransactionRequest) (*bdspropb.Transaction, error) {
 	if err := h.Validator.ValidateCreateTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -106,7 +130,14 @@ func (h *TransactionHandler) CreateTransaction(ctx context.Context, req *pbTrans
 	return h.Transformer.EntityToTransactionResponse(entity), nil
 }
 
-func (h *TransactionHandler) UpdateTransaction(ctx context.Context, req *pbTransaction.UpdateTransactionRequest) (*pbTransaction.Transaction, error) {
+// @Summary Cập nhật giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param id path uint32 true "ID"
+// @Param transaction body bdspropb.UpdateTransactionRequest true "Thông tin giao dịch"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/{id} [put]
+func (h *TransactionHandler) UpdateTransaction(ctx context.Context, req *bdspropb.UpdateTransactionRequest) (*bdspropb.Transaction, error) {
 	if err := h.Validator.ValidateUpdateTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -121,7 +152,13 @@ func (h *TransactionHandler) UpdateTransaction(ctx context.Context, req *pbTrans
 	return h.Transformer.EntityToTransactionResponse(entity), nil
 }
 
-func (h *TransactionHandler) DeleteTransaction(ctx context.Context, req *pbTransaction.DeleteTransactionRequest) (*pbTransaction.DeleteTransactionResponse, error) {
+// @Summary Xóa giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param id path uint32 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/{id} [delete]
+func (h *TransactionHandler) DeleteTransaction(ctx context.Context, req *bdspropb.DeleteTransactionRequest) (*bdspropb.DeleteTransactionResponse, error) {
 	if err := h.Validator.ValidateDeleteTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -130,12 +167,18 @@ func (h *TransactionHandler) DeleteTransaction(ctx context.Context, req *pbTrans
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pbTransaction.DeleteTransactionResponse{
+	return &bdspropb.DeleteTransactionResponse{
 		Id: req.Id,
 	}, nil
 }
 
-func (h *TransactionHandler) ApproveTransaction(ctx context.Context, req *pbTransaction.ApproveTransactionRequest) (*pbTransaction.Transaction, error) {
+// @Summary Phê duyệt giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param id path uint32 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/{id}/approve [put]
+func (h *TransactionHandler) ApproveTransaction(ctx context.Context, req *bdspropb.ApproveTransactionRequest) (*bdspropb.Transaction, error) {
 	if err := h.Validator.ValidateApproveTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -152,7 +195,13 @@ func (h *TransactionHandler) ApproveTransaction(ctx context.Context, req *pbTran
 	return h.Transformer.EntityToTransactionResponse(transaction), nil
 }
 
-func (h *TransactionHandler) RejectTransaction(ctx context.Context, req *pbTransaction.RejectTransactionRequest) (*pbTransaction.Transaction, error) {
+// @Summary Từ chối giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Param id path uint32 true "ID"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/{id}/reject [put]
+func (h *TransactionHandler) RejectTransaction(ctx context.Context, req *bdspropb.RejectTransactionRequest) (*bdspropb.Transaction, error) {
 	if err := h.Validator.ValidateRejectTransactionRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -169,7 +218,12 @@ func (h *TransactionHandler) RejectTransaction(ctx context.Context, req *pbTrans
 	return h.Transformer.EntityToTransactionResponse(transaction), nil
 }
 
-func (h *TransactionHandler) GetTransactionTypes(ctx context.Context, req *pbTransaction.GetTransactionTypesRequest) (*pbTransaction.GetTransactionTypesResponse, error) {
+// @Summary Lấy danh sách loại giao dịch
+// @Tags Giao dịch
+// @Produce json
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/types [get]
+func (h *TransactionHandler) GetTransactionTypes(ctx context.Context, req *bdspropb.GetTransactionTypesRequest) (*bdspropb.GetTransactionTypesResponse, error) {
 	if err := h.Validator.ValidateGetTransactionTypesRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

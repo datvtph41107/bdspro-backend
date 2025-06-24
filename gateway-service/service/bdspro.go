@@ -31,4 +31,5 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_bdspro.RegisterSharingAccessServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_bdspro.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

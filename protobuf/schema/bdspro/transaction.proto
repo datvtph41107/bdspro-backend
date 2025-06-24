@@ -1,59 +1,59 @@
 syntax = "proto3";
 
-package transaction;
+package pb_bdspro;
 
-option go_package = "github.com/tuandq2112/protobuf/schema/transaction";
+option go_package = "pb/types/bdspro;pb_bdspro";
 
 import "google/api/annotations.proto";
 
 service TransactionService {
   rpc ListTransactions(ListTransactionsRequest) returns (ListTransactionsResponse) {
     option (google.api.http) = {
-      get: "/v2/transaction/list"
+      get: "/v2/bdspro/v2/transaction/list"
     };
   }
 
   rpc GetTransactionDetail(GetTransactionDetailRequest) returns (Transaction) {
     option (google.api.http) = {
-      get: "/v2/transaction/detail/{id}"
+      get: "/v2/bdspro/v2/transaction/detail/{id}"
     };
   }
 
   rpc CreateTransaction(CreateTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      post: "/v2/transaction/create"
+      post: "/v2/bdspro/v2/transaction/create"
       body: "*"
     };
   }
 
   rpc UpdateTransaction(UpdateTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      put: "/v2/transaction/update/{id}"
+      put: "/v2/bdspro/v2/transaction/update/{id}"
       body: "*"
     };
   }
 
   rpc DeleteTransaction(DeleteTransactionRequest) returns (DeleteTransactionResponse) {
     option (google.api.http) = {
-      delete: "/v2/transaction/delete/{id}"
+      delete: "/v2/bdspro/v2/transaction/delete/{id}"
     };
   }
 
   rpc ApproveTransaction(ApproveTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      post: "/v2/transaction/approve/{id}"
+      post: "/v2/bdspro/v2/transaction/approve/{id}"
     };
   }
 
   rpc RejectTransaction(RejectTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      post: "/v2/transaction/reject/{id}"
+      post: "/v2/bdspro/v2/transaction/reject/{id}"
     };
   }
 
   rpc GetTransactionTypes(GetTransactionTypesRequest) returns (GetTransactionTypesResponse) {
     option (google.api.http) = {
-      get: "/v2/transaction/types"
+      get: "/v2/bdspro/v2/transaction/types"
     };
   }
 }

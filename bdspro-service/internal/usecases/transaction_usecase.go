@@ -1,14 +1,14 @@
-package usecase
+package usecases
 
 import (
+	_utils "common/utils"
 	"context"
 	"errors"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/appconfig"
-	"github.com/tuandq2112/appointment-service/internal/domain/entity/transaction"
-	"github.com/tuandq2112/appointment-service/internal/domain/repository"
-	utils "github.com/tuandq2112/appointment-service/pkg"
+	"bdspro/internal/domain/transaction"
+
+	"bdspro/internal/repo"
 )
 
 var (
@@ -21,17 +21,17 @@ type TransactionUsecase interface {
 	GetTransaction(ctx context.Context, id uint32) (*transaction.Transaction, error)
 	UpdateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uint32) error
-	ListTransactions(ctx context.Context, filters *repository.TransactionFilters) ([]*transaction.Transaction, int64, error)
+	ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*transaction.Transaction, int64, error)
 	ApproveTransaction(ctx context.Context, id uint32, approvedBy uint32) error
 	RejectTransaction(ctx context.Context, id uint32) error
 	GetTransactionTypes(ctx context.Context) ([]string, error)
 }
 
 type transactionUsecase struct {
-	transactionRepo repository.TransactionRepository
+	transactionRepo repo.TransactionRepository
 }
 
-func NewTransactionUsecase(transactionRepo repository.TransactionRepository) TransactionUsecase {
+func NewTransactionUsecase(transactionRepo repo.TransactionRepository) TransactionUsecase {
 	return &transactionUsecase{
 		transactionRepo: transactionRepo,
 	}
@@ -44,7 +44,7 @@ func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *transac
 	tx.IsDeleted = false
 	tx.CreatedAt = time.Now()
 	tx.UpdatedAt = time.Now()
-	tx.OwnerId = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	tx.OwnerId = uint32(_utils.GetProfileIdWithContext(ctx))
 	entity, err := uc.transactionRepo.Create(ctx, tx)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint32) 
 	return uc.transactionRepo.Delete(ctx, id)
 }
 
-func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repository.TransactionFilters) ([]*transaction.Transaction, int64, error) {
+func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*transaction.Transaction, int64, error) {
 	return uc.transactionRepo.List(ctx, filters)
 }
 

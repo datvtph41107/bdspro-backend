@@ -30,26 +30,21 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	appointmentReminderUsecase := usecase.NewAppointmentReminderUsecase(appointmentReminderRepository)
 	emailSender := emailsender.NewEmailSender()
 	appointmentReminderJob := appointmentreminder.NewAppointmentReminderJob(appointmentReminderUsecase, emailSender)
-	transactionRepository := repository.NewTransactionRepository()
-	transactionUsecase := usecase.NewTransactionUsecase(transactionRepository)
-	transactionTransformer := transformer.NewTransactionTransformer()
-	transactionValidator := validator.NewTransactionValidator()
-	transactionHandler := handler.NewTransactionHandler(transactionUsecase, transactionTransformer, transactionValidator)
-	grpcServer := grpc.NewGRPCServer(appointmentHandler, appointmentReminderJob, transactionHandler)
+	grpcServer := grpc.NewGRPCServer(appointmentHandler, appointmentReminderJob)
 	return grpcServer
 }
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewAppointmentRepository, repository.NewAppointmentReminderRepository, repository.NewTransactionRepository)
+var repositorySet = wire.NewSet(repository.NewAppointmentRepository, repository.NewAppointmentReminderRepository)
 
-var usecaseSet = wire.NewSet(usecase.NewAppointmentUsecase, usecase.NewAppointmentReminderUsecase, usecase.NewTransactionUsecase)
+var usecaseSet = wire.NewSet(usecase.NewAppointmentUsecase, usecase.NewAppointmentReminderUsecase)
 
-var transformerSet = wire.NewSet(transformer.NewAppointmentTransformer, transformer.NewTransactionTransformer)
+var transformerSet = wire.NewSet(transformer.NewAppointmentTransformer)
 
-var validatorSet = wire.NewSet(validator.NewAppointmentValidator, validator.NewTransactionValidator)
+var validatorSet = wire.NewSet(validator.NewAppointmentValidator)
 
-var handlerSet = wire.NewSet(handler.NewAppointmentHandler, handler.NewTransactionHandler)
+var handlerSet = wire.NewSet(handler.NewAppointmentHandler)
 
 var emailSenderSet = wire.NewSet(emailsender.NewEmailSender)
 

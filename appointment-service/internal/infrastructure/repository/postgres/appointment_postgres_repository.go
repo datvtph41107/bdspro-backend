@@ -185,7 +185,7 @@ func (r *appointmentPostgresRepository) Delete(ctx context.Context, id uint32) e
 	err := r.db.WithContext(ctx).Model(&AppointmentModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 	if err != nil {

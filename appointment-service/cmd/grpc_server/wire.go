@@ -9,37 +9,37 @@ import (
 	"github.com/tuandq2112/appointment-service/internal/interface/handler"
 	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
 	"github.com/tuandq2112/appointment-service/internal/interface/validator"
+	appointmentreminder "github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 	"github.com/tuandq2112/appointment-service/internal/server/grpc"
 	"github.com/tuandq2112/appointment-service/internal/usecase"
-	"github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 	emailsender "github.com/tuandq2112/appointment-service/pkg/email_sender"
 )
 
 var repositorySet = wire.NewSet(
 	repository.NewAppointmentRepository,
 	repository.NewAppointmentReminderRepository,
-	repository.NewTransactionRepository,
+	// repository.NewTransactionRepository,
 )
 
 var usecaseSet = wire.NewSet(
 	usecase.NewAppointmentUsecase,
 	usecase.NewAppointmentReminderUsecase,
-	usecase.NewTransactionUsecase,
+	// usecase.NewTransactionUsecase,
 )
 
 var transformerSet = wire.NewSet(
 	transformer.NewAppointmentTransformer,
-	transformer.NewTransactionTransformer,
+	// transformer.NewTransactionTransformer,
 )
 
 var validatorSet = wire.NewSet(
 	validator.NewAppointmentValidator,
-	validator.NewTransactionValidator,
+	// validator.NewTransactionValidator,
 )
 
 var handlerSet = wire.NewSet(
 	handler.NewAppointmentHandler,
-	handler.NewTransactionHandler,
+	// handler.NewTransactionHandler,
 )
 
 var emailSenderSet = wire.NewSet(

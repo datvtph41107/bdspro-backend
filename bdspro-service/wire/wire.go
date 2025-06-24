@@ -9,6 +9,7 @@ import (
 	"bdspro/config"
 	bdspro_config "bdspro/config"
 	bdspro_infra_client "bdspro/infra/client"
+	bdspro_infra_mapper "bdspro/infra/mapper"
 	bdspro_infra_postgre "bdspro/infra/postgre"
 	bdspro_infra_providers "bdspro/infra/providers"
 	bdspro_infra_router_group "bdspro/infra/router/group"
@@ -16,6 +17,7 @@ import (
 	bdspro_infra_router_public "bdspro/infra/router/public"
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_services "bdspro/infra/services"
+	bdspro_infra_validator "bdspro/infra/validator"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
@@ -42,6 +44,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.IncomeDocumentRepo), new(*bdspro_infra_postgre.GormIncomeDocumentRepo)),
 	wire.Bind(new(bdspro_internal_repo.UPostRepo), new(*bdspro_infra_postgre.GormPostRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductHistoryRepo), new(*bdspro_infra_postgre.PostgreHistoryRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductRepo), new(*bdspro_infra_postgre.GormUserProductRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPriceRepo), new(*bdspro_infra_postgre.GormProductPriceRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPrivateRepo), new(*bdspro_infra_postgre.GormProductPrivateRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProjectRepo), new(*bdspro_infra_postgre.PostgreProject)),
@@ -49,10 +52,10 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.RecordHistoryRepo), new(*bdspro_infra_postgre.PostgreReportHistory)),
 	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_infra_postgre.PostgreRegion)),
 	wire.Bind(new(bdspro_internal_repo.SharingAccessRepo), new(*bdspro_infra_postgre.SharingAccessPostgre)),
+	wire.Bind(new(bdspro_internal_repo.TransactionRepository), new(*bdspro_infra_postgre.TransactionPostgresRepository)),
 	wire.Bind(new(bdspro_internal_repo.UAssetHistoryRepo), new(*bdspro_infra_postgre.GormAssetHistoryRepo)),
 	wire.Bind(new(bdspro_internal_repo.AssetLegalRepo), new(*bdspro_infra_postgre.GormAssetLegalRepo)),
 	wire.Bind(new(bdspro_internal_repo.PostMediaRepo), new(*bdspro_infra_postgre.GormPostMediaRepo)),
-	wire.Bind(new(bdspro_internal_repo.ProductRepo), new(*bdspro_infra_postgre.GormUserProductRepo)),
 	wire.Bind(new(bdspro_internal_repo.UProductChildRepo), new(*bdspro_infra_postgre.PostgreProductChild)),
 	wire.Bind(new(bdspro_internal_repo.ProductMediaRepo), new(*bdspro_infra_postgre.GormProductMediaRepo)),
 	wire.Bind(new(bdspro_internal_usecases_interface.IPlanUC), new(*bdspro_infra_providers.MemberPlanProvider)),
@@ -141,6 +144,11 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases_shared.NewSharedPostUsecase,
 	bdspro_infra_postgre.NewSharingAccessPostgre,
 	bdspro_infra_services.NewSharingAccessService,
+	bdspro_infra_services.NewTransactionHandler,
+	bdspro_infra_postgre.NewTransactionPostgresRepository,
+	bdspro_infra_mapper.NewTransactionTransformer,
+	bdspro_internal_usecases.NewTransactionUsecase,
+	bdspro_infra_validator.NewTransactionValidator,
 	bdspro_infra_router_user.NewUAssetLegalRoute,
 	bdspro_internal_usecases.NewUPostMediaUsecase,
 	bdspro_infra_router_user.NewUProductAccessRouter,

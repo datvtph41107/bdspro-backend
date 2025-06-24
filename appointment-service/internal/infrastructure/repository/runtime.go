@@ -19,8 +19,8 @@ func NewAppointmentReminderRepository() repository.AppointmentReminderRepository
 	return postgres.NewAppointmentReminderPostgresRepository(db)
 }
 
-func NewTransactionRepository() repository.TransactionRepository {
-	db := database.NewPostgresDB(appconfig.DB_DNS)
-	db.AutoMigrate(&postgres.TransactionModel{})
-	return postgres.NewTransactionPostgresRepository(db)
-}
+// func NewTransactionRepository() repository.TransactionRepository {
+// 	db := database.NewPostgresDB(appconfig.DB_DNS)
+// 	db.AutoMigrate(&postgres.TransactionModel{})
+// 	return postgres.NewTransactionPostgresRepository(db)
+// }

@@ -256,6 +256,8 @@ definitions:
       createdBy:
         description: gorm.Model
         type: integer
+      description:
+        type: string
       id:
         type: integer
       isCustom:
@@ -756,34 +758,6 @@ definitions:
       wardId:
         type: integer
     type: object
-  domain.ProductAccess:
-    properties:
-      commission:
-        type: number
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      fields:
-        type: string
-      id:
-        type: integer
-      product:
-        $ref: '#/definitions/domain.ProductItem'
-      productId:
-        type: integer
-      targetId:
-        type: integer
-      targetType:
-        allOf:
-        - $ref: '#/definitions/enums.EOwnerType'
-        description: '1: cá nhân, 2: nhóm, 3: tổ chức'
-      updatedAt:
-        type: string
-      updatedBy:
-        type: integer
-    type: object
   domain.ProductHistory:
     properties:
       action:
@@ -825,15 +799,6 @@ definitions:
       id:
         type: integer
       lastPriceId:
-        type: integer
-      name:
-        type: string
-    type: object
-  domain.ProductItem:
-    properties:
-      code:
-        type: string
-      id:
         type: integer
       name:
         type: string
@@ -1274,17 +1239,6 @@ definitions:
       visibility:
         $ref: '#/definitions/enums.EVisibility'
     type: object
-  dto.ProductAccessSearch:
-    properties:
-      page:
-        type: integer
-      productId:
-        type: integer
-      size:
-        type: integer
-      sort:
-        type: string
-    type: object
   dto.ProductHistorySearch:
     properties:
       page:
@@ -1425,6 +1379,23 @@ definitions:
     - parentId
     - priceData
     type: object
+  dto.SharingAccessSearch:
+    properties:
+      domain:
+        $ref: '#/definitions/enums.EDomainAccess'
+      domainId:
+        type: integer
+      fromType:
+        $ref: '#/definitions/enums.EOwnerType'
+      page:
+        type: integer
+      size:
+        type: integer
+      sort:
+        type: string
+      toType:
+        $ref: '#/definitions/enums.EOwnerType'
+    type: object
   dto.StatusUpdate:
     properties:
       productId:
@@ -1482,6 +1453,17 @@ definitions:
     x-enum-varnames:
     - ECostTypeIn
     - ECostTypeOut
+  enums.EDomainAccess:
+    enum:
+    - 10
+    - 20
+    type: integer
+    x-enum-comments:
+      EDomainAsset: Asset
+      EDomainProduct: Product
+    x-enum-varnames:
+    - EDomainProduct
+    - EDomainAsset
   enums.EOwnerType:
     enum:
     - 10
@@ -1590,6 +1572,8 @@ definitions:
     type: object
   pb_bdspro.AssetCostTypeDTO:
     properties:
+      description:
+        type: string
       id:
         type: integer
       isCustom:
@@ -1693,6 +1677,33 @@ definitions:
       wardId:
         type: integer
     type: object
+  pb_bdspro.CreateTransactionRequest:
+    properties:
+      amount:
+        type: number
+      categoryId:
+        type: integer
+      currency:
+        type: string
+      description:
+        type: string
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      paymentMethodId:
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionType:
+        type: string
+    type: object
   pb_bdspro.HouseInfo:
     properties:
       furniture:
@@ -1718,6 +1729,10 @@ definitions:
     properties:
       id:
         type: integer
+      ids:
+        items:
+          type: integer
+        type: array
       ownerType:
         type: integer
       page:
@@ -1934,6 +1949,29 @@ definitions:
         type: string
       wardId:
         type: integer
+    type: object
+  pb_bdspro.UpdateTransactionRequest:
+    properties:
+      amount:
+        type: number
+      categoryId:
+        type: integer
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      paymentMethodId:
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
     type: object
   timestamppb.Timestamp:
     properties:
@@ -2376,7 +2414,7 @@ paths:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/domain.ProductAccess'
+            $ref: '#/definitions/domain.AssetShare'
         "400":
           description: Dữ liệu không hợp lệ
           schema:
@@ -2461,7 +2499,7 @@ paths:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/domain.ProductAccess'
+            $ref: '#/definitions/domain.AssetShare'
         "400":
           description: Dữ liệu không hợp lệ
           schema:
@@ -2766,60 +2804,6 @@ paths:
       summary: Tách tài sản
       tags:
       - 'Tổ chức: Tài sản'
-  /v1/bdspro/v2/org/assets/cost:
-    get:
-      parameters:
-      - description: |-
-          Page    int     `form:"page"`
-          Size    int     `form:"size"`
-        in: query
-        name: assetId
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: typeIds
-        type: array
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: types
-        type: array
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách loại chi phí
-      tags:
-      - Hợp đồng khai thác
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/domain.AssetCost'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo mới loại chi phí
-      tags:
-      - Hợp đồng khai thác
   /v1/bdspro/v2/org/assets/cost-type:
     get:
       parameters:
@@ -2838,17 +2822,14 @@ paths:
       - in: query
         name: text
         type: string
+      - in: query
+        name: type
+        type: integer
       - collectionFormat: csv
         in: query
         items:
           type: integer
         name: typeIds
-        type: array
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: types
         type: array
       produces:
       - application/json
@@ -2918,58 +2899,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.AssetCostType'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy theo ID loại chi phí
-      tags:
-      - Hợp đồng khai thác
-  /v1/bdspro/v2/org/assets/cost/{id}:
-    delete:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xóa loại chi phí
-      tags:
-      - Hợp đồng khai thác
-    get:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xem chi tiết loại chi phí
-      tags:
-      - Hợp đồng khai thác
-    put:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/domain.AssetCost'
       produces:
       - application/json
       responses: {}
@@ -3402,7 +3331,7 @@ paths:
         name: members
         required: true
         schema:
-          $ref: '#/definitions/dto.ProductAccessSearch'
+          $ref: '#/definitions/dto.SharingAccessSearch'
       produces:
       - application/json
       responses: {}
@@ -4316,17 +4245,14 @@ paths:
       - in: query
         name: text
         type: string
+      - in: query
+        name: type
+        type: integer
       - collectionFormat: csv
         in: query
         items:
           type: integer
         name: typeIds
-        type: array
-      - collectionFormat: csv
-        in: query
-        items:
-          type: integer
-        name: types
         type: array
       produces:
       - application/json
@@ -5261,7 +5187,23 @@ paths:
       summary: Cập nhật loại chi phí
       tags:
       - Hợp đồng & Thu chi & Loại chi phí
-  /v2/bdspro/v2/asset/cost-type/{id}/{ownerType}:
+  /v2/bdspro/v2/asset/cost-type/detail/{id}:
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết loại chi phí
+      tags:
+      - Hợp đồng & Thu chi & Loại chi phí
+  /v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType}:
     get:
       parameters:
       - description: ID
@@ -5283,15 +5225,33 @@ paths:
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách loại chi phí
+      summary: Lấy danh sách loại chi phí theo nhóm
       tags:
       - Hợp đồng & Thu chi & Loại chi phí
-  /v2/bdspro/v2/asset/cost-type/detail/{id}:
+  /v2/bdspro/v2/asset/cost-type/list/{assetId}/{ownerType}:
     get:
       parameters:
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: type
+        type: integer
       - description: ID
         in: path
-        name: id
+        name: assetId
+        required: true
+        type: integer
+      - description: Owner Type
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
         required: true
         type: integer
       produces:
@@ -5299,7 +5259,7 @@ paths:
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy chi tiết loại chi phí
+      summary: Lấy danh sách loại chi phí
       tags:
       - Hợp đồng & Thu chi & Loại chi phí
   /v2/bdspro/v2/asset/cost/{id}:
@@ -6455,6 +6415,156 @@ paths:
       summary: Gợi ý các trường thông tin
       tags:
       - 'User: Sản phẩm'
+  /v2/bdspro/v2/transaction:
+    post:
+      parameters:
+      - description: Thông tin giao dịch
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/pb_bdspro.CreateTransactionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo giao dịch
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa giao dịch
+      tags:
+      - Giao dịch
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết giao dịch
+      tags:
+      - Giao dịch
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin giao dịch
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/pb_bdspro.UpdateTransactionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật giao dịch
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/{id}/approve:
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Phê duyệt giao dịch
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/{id}/reject:
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Từ chối giao dịch
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/list:
+    get:
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Loại giao dịch
+        in: query
+        name: transactionType
+        type: string
+      - description: Trạng thái phê duyệt
+        in: query
+        name: approvalStatus
+        type: string
+      - description: Trạng thái giao dịch
+        in: query
+        name: transactionStatus
+        type: string
+      - description: Ngày bắt đầu
+        in: query
+        name: startDate
+        type: string
+      - description: Ngày kết thúc
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách giao dịch
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/types:
+    get:
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách loại giao dịch
+      tags:
+      - Giao dịch
 securityDefinitions:
   BearerAuth:
     in: header

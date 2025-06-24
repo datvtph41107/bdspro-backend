@@ -492,7 +492,7 @@
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/domain.ProductAccess"
+                            "$ref": "#/definitions/domain.AssetShare"
                         }
                     },
                     "400": {
@@ -549,7 +549,7 @@
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/domain.ProductAccess"
+                            "$ref": "#/definitions/domain.AssetShare"
                         }
                     },
                     "400": {
@@ -1119,90 +1119,6 @@
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/org/assets/cost": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng khai thác"
-                ],
-                "summary": "Lấy danh sách loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page    int     `form:\"page\"`\nSize    int     `form:\"size\"`",
-                        "name": "assetId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "typeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "types",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng khai thác"
-                ],
-                "summary": "Tạo mới loại chi phí",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.AssetCost"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/org/assets/cost-type": {
             "get": {
                 "security": [
@@ -1244,12 +1160,8 @@
                         "in": "query"
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "typeIds",
+                        "type": "integer",
+                        "name": "type",
                         "in": "query"
                     },
                     {
@@ -1258,7 +1170,7 @@
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
-                        "name": "types",
+                        "name": "typeIds",
                         "in": "query"
                     }
                 ],
@@ -1344,89 +1256,6 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/domain.AssetCostType"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng khai thác"
-                ],
-                "summary": "Xóa loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/assets/cost/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng khai thác"
-                ],
-                "summary": "Xem chi tiết loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng khai thác"
-                ],
-                "summary": "Lấy theo ID loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.AssetCost"
                         }
                     }
                 ],
@@ -2844,7 +2673,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ProductAccessSearch"
+                            "$ref": "#/definitions/dto.SharingAccessSearch"
                         }
                     }
                 ],
@@ -3603,12 +3432,8 @@
                         "in": "query"
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "typeIds",
+                        "type": "integer",
+                        "name": "type",
                         "in": "query"
                     },
                     {
@@ -3617,7 +3442,7 @@
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
-                        "name": "types",
+                        "name": "typeIds",
                         "in": "query"
                     }
                 ],
@@ -5072,6 +4897,97 @@
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy danh sách loại chi phí theo nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30
+                        ],
+                        "type": "integer",
+                        "description": "Owner Type",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/cost-type/list/{assetId}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
+                ],
+                "summary": "Lấy danh sách loại chi phí",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "assetId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            10,
+                            20,
+                            30
+                        ],
+                        "type": "integer",
+                        "description": "Owner Type",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/asset/cost-type/{id}": {
             "put": {
                 "produces": [
@@ -5119,44 +5035,6 @@
                         "type": "integer",
                         "description": "ID",
                         "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/asset/cost-type/{id}/{ownerType}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Hợp đồng \u0026 Thu chi \u0026 Loại chi phí"
-                ],
-                "summary": "Lấy danh sách loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30
-                        ],
-                        "type": "integer",
-                        "description": "Owner Type",
-                        "name": "ownerType",
                         "in": "path",
                         "required": true
                     }
@@ -7051,6 +6929,247 @@
                 ],
                 "responses": {}
             }
+        },
+        "/v2/bdspro/v2/transaction": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Tạo giao dịch",
+                "parameters": [
+                    {
+                        "description": "Thông tin giao dịch",
+                        "name": "transaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.CreateTransactionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Lấy danh sách giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại giao dịch",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trạng thái phê duyệt",
+                        "name": "approvalStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trạng thái giao dịch",
+                        "name": "transactionStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ngày bắt đầu",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ngày kết thúc",
+                        "name": "endDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/types": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Lấy danh sách loại giao dịch",
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Lấy chi tiết giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Cập nhật giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin giao dịch",
+                        "name": "transaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.UpdateTransactionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Xóa giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/{id}/approve": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Phê duyệt giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/{id}/reject": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Từ chối giao dịch",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {
@@ -7434,6 +7553,9 @@
                 "createdBy": {
                     "description": "gorm.Model",
                     "type": "integer"
+                },
+                "description": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -8187,50 +8309,6 @@
                 }
             }
         },
-        "domain.ProductAccess": {
-            "type": "object",
-            "properties": {
-                "commission": {
-                    "type": "number"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "fields": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "product": {
-                    "$ref": "#/definitions/domain.ProductItem"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
-                    "description": "1: cá nhân, 2: nhóm, 3: tổ chức",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/enums.EOwnerType"
-                        }
-                    ]
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
         "domain.ProductHistory": {
             "type": "object",
             "properties": {
@@ -8292,20 +8370,6 @@
                     "type": "integer"
                 },
                 "lastPriceId": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.ProductItem": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "integer"
                 },
                 "name": {
@@ -8966,23 +9030,6 @@
                 }
             }
         },
-        "dto.ProductAccessSearch": {
-            "type": "object",
-            "properties": {
-                "page": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.ProductHistorySearch": {
             "type": "object",
             "properties": {
@@ -9192,6 +9239,32 @@
                 }
             }
         },
+        "dto.SharingAccessSearch": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "$ref": "#/definitions/enums.EDomainAccess"
+                },
+                "domainId": {
+                    "type": "integer"
+                },
+                "fromType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "toType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                }
+            }
+        },
         "dto.StatusUpdate": {
             "type": "object",
             "required": [
@@ -9269,6 +9342,21 @@
             "x-enum-varnames": [
                 "ECostTypeIn",
                 "ECostTypeOut"
+            ]
+        },
+        "enums.EDomainAccess": {
+            "type": "integer",
+            "enum": [
+                10,
+                20
+            ],
+            "x-enum-comments": {
+                "EDomainAsset": "Asset",
+                "EDomainProduct": "Product"
+            },
+            "x-enum-varnames": [
+                "EDomainProduct",
+                "EDomainAsset"
             ]
         },
         "enums.EOwnerType": {
@@ -9417,6 +9505,9 @@
         "pb_bdspro.AssetCostTypeDTO": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -9573,6 +9664,47 @@
                 }
             }
         },
+        "pb_bdspro.CreateTransactionRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "string"
+                }
+            }
+        },
         "pb_bdspro.HouseInfo": {
             "type": "object",
             "properties": {
@@ -9610,6 +9742,12 @@
             "properties": {
                 "id": {
                     "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "ownerType": {
                     "type": "integer"
@@ -9937,6 +10075,41 @@
                 },
                 "wardId": {
                     "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.UpdateTransactionRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
                 }
             }
         },

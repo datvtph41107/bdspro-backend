@@ -1,14 +1,13 @@
-package repository
+package repo
 
 import (
+	"bdspro/internal/domain/transaction"
 	"context"
 	"time"
-
-	"github.com/tuandq2112/appointment-service/internal/domain/entity/transaction"
 )
 
 type TransactionRepository interface {
-	Create(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)	
+	Create(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
 
 	GetByID(ctx context.Context, id uint32) (*transaction.Transaction, error)
 
@@ -25,11 +24,11 @@ type TransactionRepository interface {
 	GetTransactionTypes(ctx context.Context) ([]string, error)
 }
 type TransactionFilters struct {
-	TransactionType  *string
-	ApprovalStatus   *string
+	TransactionType   *string
+	ApprovalStatus    *string
 	TransactionStatus *string
-	StartDate        *time.Time
-	EndDate          *time.Time
-	Page            int
-	Size            int
-} 
+	StartDate         *time.Time
+	EndDate           *time.Time
+	Page              int
+	Size              int
+}

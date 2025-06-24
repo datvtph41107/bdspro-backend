@@ -8,41 +8,40 @@ import (
 	"syscall"
 
 	pb "pb/types/appointment"
-	pbTransaction "pb/types/transaction"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
 	"github.com/tuandq2112/appointment-service/appconfig"
 	"github.com/tuandq2112/appointment-service/internal/interface/handler"
+	appointmentreminder "github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 	"github.com/tuandq2112/appointment-service/internal/server/grpc/interceptors"
 	"google.golang.org/grpc"
-	"github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
 )
 
 type GRPCServer struct {
-	appointmentHandler *handler.AppointmentHandler
-	logger            *flogging.FabricLogger
+	appointmentHandler     *handler.AppointmentHandler
+	logger                 *flogging.FabricLogger
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob
-	transactionHandler *handler.TransactionHandler
+	// transactionHandler *handler.TransactionHandler
 }
 
 func NewGRPCServer(
 	appointmentHandler *handler.AppointmentHandler,
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob,
-	transactionHandler *handler.TransactionHandler,
+	// transactionHandler *handler.TransactionHandler,
 ) *GRPCServer {
 	return &GRPCServer{
-		appointmentHandler: appointmentHandler,
-		logger:            flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		appointmentHandler:     appointmentHandler,
+		logger:                 flogging.MustGetLogger(appconfig.SERVICE_NAME),
 		appointmentReminderJob: appointmentReminderJob,
-		transactionHandler: transactionHandler,
+		// transactionHandler: transactionHandler,
 	}
 }
 
 func (s *GRPCServer) Start() {
 	g := &run.Group{}
 
-	start, stop := buildGRPCServer(s.logger, s.appointmentHandler, s.transactionHandler)
+	start, stop := buildGRPCServer(s.logger, s.appointmentHandler)
 	g.Add(start, stop)
 
 	signalStart, signalStop := buildSignalHandler(s.logger)
@@ -56,7 +55,7 @@ func (s *GRPCServer) Start() {
 
 func buildGRPCServer(logger *flogging.FabricLogger,
 	appointmentHandler *handler.AppointmentHandler,
-	transactionHandler *handler.TransactionHandler,
+	// transactionHandler *handler.TransactionHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -70,7 +69,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		func(s *grpc.Server) {
 			logger.Info("Registering AppointmentServiceServer")
 			pb.RegisterAppointmentServiceServer(s, appointmentHandler)
-			pbTransaction.RegisterTransactionServiceServer(s, transactionHandler)
+			// pbTransaction.RegisterTransactionServiceServer(s, transactionHandler)
 		},
 		unaryInts,
 		streamInts,
@@ -132,4 +131,4 @@ func BuildGRPCServer(
 	}
 
 	return server, start, stop, nil
-} 
+}
