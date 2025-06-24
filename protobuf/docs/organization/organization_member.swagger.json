@@ -17,6 +17,42 @@
   ],
   "paths": {
     "/v2/org/organization/member": {
+      "get": {
+        "operationId": "OrganizationMemberService_GetOrganizationMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationMemberService"
+        ]
+      },
       "post": {
         "operationId": "OrganizationMemberService_CreateOrganizationMember",
         "responses": {
@@ -116,9 +152,9 @@
         ]
       }
     },
-    "/v2/org/organization/member/{organizationId}": {
+    "/v2/org/organization/members/me": {
       "get": {
-        "operationId": "OrganizationMemberService_GetOrganizationMembers",
+        "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -133,42 +169,19 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
         "tags": [
           "OrganizationMemberService"
         ]
       }
     },
-    "/v2/org/organization/members/me": {
+    "/v2/organization/member/me": {
       "get": {
-        "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
+        "operationId": "OrganizationMemberService_GetCurrentOrganizationMemberRole",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbGetOrganizationMembersResponse"
+              "$ref": "#/definitions/organizationpbGetCurrentOrganizationMemberRoleResponse"
             }
           },
           "default": {
@@ -226,6 +239,21 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetCurrentOrganizationMemberRoleResponse": {
+      "type": "object",
+      "properties": {
+        "roleId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "joinDate": {
+          "type": "string"
+        },
+        "roleName": {
+          "type": "string"
         }
       }
     },

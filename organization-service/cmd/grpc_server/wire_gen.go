@@ -33,7 +33,7 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	organizationValidator := validator.NewOrganizationValidator()
 	organizationHandler := handler.NewOrganizationHandler(organizationUsecase, organizationTransformer, organizationValidator)
 	userClient := client.NewUserClient()
-	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationAuthUsecase, organizationLogWorker, userClient)
+	organizationMemberUsecase := usecase.NewOrganizationMemberUsecase(organizationMemberRepository, organizationRepository, organizationRoleRepository, organizationPermissionRepository, organizationAuthUsecase, organizationLogWorker, userClient)
 	organizationMemberTransformer := transformer.NewOrganizationMemberTransformer()
 	organizationMemberValidator := validator.NewOrganizationMemberValidator()
 	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator)

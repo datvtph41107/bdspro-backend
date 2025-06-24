@@ -49,10 +49,19 @@ func (t *organizationRoleTransformer) EntityToCreateRoleResponse(entity *entity.
 func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.OrganizationRole, total uint32) *organizationpb.GetRolesResponse {
 	rolesResponse := make([]*organizationpb.Role, len(roles))
 	for i, role := range roles {
+		permissions := make([]*organizationpb.Permission, len(role.Permissions))
+		for j, permission := range role.Permissions {
+			permissions[j] = &organizationpb.Permission{
+				Id: permission.Id,
+				Name: permission.Name,
+				Key: permission.Key,
+			}
+		}
 		rolesResponse[i] = &organizationpb.Role{
 			Id:   role.Id,
 			Name: role.Name,
 			Key:  role.Key,
+			Permissions: permissions,
 		}
 	}
 	return &organizationpb.GetRolesResponse{

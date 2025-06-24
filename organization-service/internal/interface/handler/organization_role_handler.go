@@ -1,7 +1,6 @@
 package handler
 
 import (
-	_utils "common/utils"
 	"context"
 	organizationpb "pb/types/organization"
 
@@ -95,14 +94,13 @@ func (h *OrganizationRoleHandler) DeleteRole(ctx context.Context, req *organizat
 // @Tags Vai trò
 // @Accept json
 // @Produce json
-// @Param organization_id query int true "ID của tổ chức"
 // @Param page query int false "Trang hiện tại"
 // @Param size query int false "Số lượng mục trên mỗi trang"
 // @Security BearerAuth
 // @Router /organization/role [get]
 func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizationpb.GetRolesRequest) (*organizationpb.GetRolesResponse, error) {
 	// Set default pagination values
-	page := 1
+	page := 0
 	size := 10
 
 	// Get pagination parameters from request
@@ -113,13 +111,25 @@ func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizatio
 		size = int(*req.Size)
 	}
 
-	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	// Get roles with pagination
-	roles, total, err := h.OrganizationRoleUsecase.GetRoles(ctx, uint32(organizationId), page, size)
+	roles, total, err := h.OrganizationRoleUsecase.GetRoles(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}
 
 	// Transform to response
 	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, total), nil
+}
+
+func (h *OrganizationRoleHandler) AddPermissionToRole(ctx context.Context, req *organizationpb.AddPermissionToRoleRequest) (*organizationpb.AddPermissionToRoleResponse, error) {
+	if err := h.OrganizationRoleValidator.ValidateAddPermissionToRoleRequest(req); err != nil {
+		return nil, err
+	}
+	err := h.OrganizationRoleUsecase.AddPermissionToRole(ctx, req.RoleId, req.PermissionId)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.AddPermissionToRoleResponse{
+		Id: req.RoleId,
+	}, nil
 }

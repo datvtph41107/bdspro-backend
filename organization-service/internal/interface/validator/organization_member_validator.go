@@ -23,10 +23,6 @@ func (o *organizationMemberValidator) ValidateCreateOrganizationMemberRequest(re
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
 
-	if request.OrganizationId == 0 {
-		return status.Errorf(codes.InvalidArgument, "organizationId is required")
-	}
-
 	if request.UserId == 0 {
 		return status.Errorf(codes.InvalidArgument, "userId is required")
 	}

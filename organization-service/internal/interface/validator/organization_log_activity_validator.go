@@ -40,16 +40,6 @@ func (v *organizationLogActivityValidator) ValidateGetOrganizationLogActivityByI
 
 func (v *organizationLogActivityValidator) ValidateGetOrganizationLogActivitiesByOrganizationIDRequest(request *organizationpb.GetOrganizationLogActivitiesByOrganizationIDRequest) error {
 	details := []protoadapt.MessageV1{}
-	if request.OrganizationId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "organization_id",
-					Description: "organization_id is required",
-				},
-			},
-		})
-	}
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}

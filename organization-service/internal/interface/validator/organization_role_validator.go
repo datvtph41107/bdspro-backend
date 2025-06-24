@@ -13,6 +13,7 @@ type OrganizationRoleValidator interface {
 	ValidateUpdateRoleRequest(req *organizationpb.UpdateRoleRequest) error
 	ValidateDeleteRoleRequest(req *organizationpb.DeleteRoleRequest) error
 	ValidateGetRolesRequest(req *organizationpb.GetRolesRequest) error
+	ValidateAddPermissionToRoleRequest(req *organizationpb.AddPermissionToRoleRequest) error
 }
 
 type organizationRoleValidator struct {
@@ -47,17 +48,9 @@ func (v *organizationRoleValidator) ValidateCreateRoleRequest(req *organizationp
 		})
 	}
 
-	if req.OrganizationId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "organizationId",
-					Description: "organizationId is required",
-				},
-			},
-		})
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
 	}
-
 
 	return nil
 }
@@ -117,19 +110,29 @@ func (v *organizationRoleValidator) ValidateDeleteRoleRequest(req *organizationp
 func (v *organizationRoleValidator) ValidateGetRolesRequest(req *organizationpb.GetRolesRequest) error {
 	details := []protoadapt.MessageV1{}
 
-	if req.OrganizationId == 0 {
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)	
+	}
+
+	return nil
+}
+
+func (v *organizationRoleValidator) ValidateAddPermissionToRoleRequest(req *organizationpb.AddPermissionToRoleRequest) error {
+	details := []protoadapt.MessageV1{}
+
+	if req.RoleId == 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "organizationId",	
-					Description: "organizationId is required",
+					Field:       "roleId",	
+					Description: "roleId is required",
 				},
 			},
 		})
 	}
 
 	if len(details) > 0 {
-		return custom_error.InvalidRequest(details...)	
+		return custom_error.InvalidRequest(details...)
 	}
 
 	return nil

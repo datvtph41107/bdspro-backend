@@ -32,7 +32,7 @@ service OrganizationMemberService {
 
     rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/org/organization/member/{organizationId}"
+            get: "/v2/org/organization/member"
         };
     }
 
@@ -45,6 +45,12 @@ service OrganizationMemberService {
     rpc GetCurrentOrganizationMembers(Empty) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/members/me"
+        };
+    }
+    
+    rpc GetCurrentOrganizationMemberRole(Empty) returns (GetCurrentOrganizationMemberRoleResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization/member/me"
         };
     }
 
@@ -93,7 +99,6 @@ message DeleteOrganizationMemberResponse {
 }
 
 message GetOrganizationMembersRequest {
-    uint32 organizationId = 1 [json_name = "organizationId"];
     optional uint32 page = 2 [json_name = "page"];
     optional uint32 size = 3 [json_name = "size"];
 }
@@ -109,4 +114,10 @@ message OrganizationMember {
 message GetOrganizationMembersResponse {
     repeated OrganizationMember data = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
+}
+
+message GetCurrentOrganizationMemberRoleResponse {
+    uint32 roleId = 1 [json_name = "roleId"];
+    string joinDate = 2 [json_name = "joinDate"];
+    string roleName = 3 [json_name = "roleName"];
 }

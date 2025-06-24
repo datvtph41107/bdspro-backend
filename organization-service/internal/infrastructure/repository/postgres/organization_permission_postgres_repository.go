@@ -153,6 +153,9 @@ func (r *organizationPermissionRepository) FindByOrganizationIdAndKey(ctx contex
 	var model OrganizationPermissionModel
 	err := r.db.Where("organization_id = ? AND key = ?", organizationId, key).First(&model).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return OrganizationPermissionModelToEntity(&model), nil

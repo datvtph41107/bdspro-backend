@@ -162,7 +162,7 @@ func (r *organizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Cont
 }
 
 func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
-	var roles []*entity.OrganizationRole
+	var models []*OrganizationRoleModel
 	var total int64
 
 	// Get total count
@@ -171,19 +171,20 @@ func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 		return nil, 0, err
 	}
 
-	// Get paginated data
-	offset := (page - 1) * size
-	err = r.db.
+	// Get paginated data with permissions
+	offset := page * size
+	err = r.db.WithContext(ctx).
 		Table("organization_roles").
+		Preload("Permissions").
 		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
 		Offset(offset).
 		Limit(size).
-		Scan(&roles).Error
+		Find(&models).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return roles, uint32(total), nil
+	return RoleModelsToEntities(models), uint32(total), nil
 }
 
 func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) error {
@@ -193,4 +194,11 @@ func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) 
 			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
+}
+
+func (r *organizationRoleRepository) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
+	return r.db.WithContext(ctx).Table("role_permissions").Create(&map[string]interface{}{
+		"organization_role_model_id": roleId,
+		"organization_permission_model_id": permissionId,
+	}).Error
 }

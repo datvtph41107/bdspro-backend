@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 
 	"github.com/tuandq2112/organization-service/appconfig"
@@ -8,8 +9,6 @@ import (
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
 	"github.com/tuandq2112/organization-service/pkg/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type OrganizationBranchUsecase interface {
@@ -19,7 +18,7 @@ type OrganizationBranchUsecase interface {
 	AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error)
 	RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error
 	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error)
-	GetOrganizationBranches(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error)
+	GetOrganizationBranches(ctx context.Context, page, size int) ([]*entity.OrganizationBranch, uint32, error)
 }
 
 type organizationBranchUsecase struct {
@@ -45,8 +44,8 @@ func NewOrganizationBranchUsecase(
 
 func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -54,18 +53,20 @@ func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	organizationBranch.CreatedBy = currentUserId
-	organization, err := u.organizationRepository.FindById(ctx, organizationBranch.OrganizationId)
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
+	organizationBranch.OrganizationId = uint32(organizationId)
 	return u.organizationBranchRepository.CreateOrganizationBranch(ctx, organizationBranch)
 }
 
 func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	branch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranch.Id)
 	if err != nil {
 		return nil, err
@@ -73,25 +74,27 @@ func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context
 	if branch == nil {
 		return nil, custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, branch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	organization, err := u.organizationRepository.FindById(ctx, branch.OrganizationId)
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
+	organizationBranch.OrganizationId = uint32(organizationId)
 	return u.organizationBranchRepository.UpdateOrganizationBranch(ctx, organizationBranch)
 }
 
 func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context, id uint32) error {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, id)
 	if err != nil {
 		return err
@@ -99,7 +102,7 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 	if organizationBranch == nil {
 		return custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return err
 	}
@@ -111,44 +114,31 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 
 func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
-
-	// todo: kiểm tra số lượng thành viên theo plan
 	if err != nil {
 		return nil, err
 	}
 	if organizationBranch == nil {
 		return nil, custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
-
 	if !hasRole && currentUserId != organizationBranch.ManagerId {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-
-	existedOrganizationBranchMember, err := u.organizationBranchMemberRepository.GetOrganizationBranchMemberByUserIdAndOrganizationBranchId(ctx, userId, organizationBranchId)
-	if err != nil {
-		return nil, err
-	}
-	if existedOrganizationBranchMember != nil {
-		return nil, status.Errorf(codes.AlreadyExists, "User is already a member of this organization branch")
-	}
-	organizationBranchMember, err := u.organizationBranchMemberRepository.CreateOrganizationBranchMember(ctx, &entity.OrganizationBranchMember{
+	organizationBranchMember := &entity.OrganizationBranchMember{
 		OrganizationBranchId: organizationBranchId,
-		UserId:               userId,
-		CreatedBy:            currentUserId,
-	})
-	if err != nil {
-		return nil, err
+		UserId:              userId,
 	}
-	return organizationBranchMember, nil
+	return u.organizationBranchMemberRepository.CreateOrganizationBranchMember(ctx, organizationBranchMember)
 }
 
 func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
 		return err
@@ -156,7 +146,7 @@ func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx conte
 	if organizationBranch == nil {
 		return custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return err
 	}
@@ -169,6 +159,7 @@ func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx conte
 
 func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, organizationBranchId)
 	if err != nil {
 		return nil, 0, err
@@ -177,7 +168,7 @@ func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Con
 		return nil, 0, custom_error.RecordNotFound("Organization branch not found")
 	}
 
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationBranch.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -185,24 +176,26 @@ func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Con
 	if !hasRole && currentUserId != organizationBranch.ManagerId {
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
+	
 	return u.organizationBranchMemberRepository.GetOrganizationBranchMemberByOrganizationBranchIdWithPagination(ctx, organizationBranchId, page, size)
 }
 
-func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
+func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	isMember, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, organizationId)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	isMember, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, uint32(organizationId))
 	if err != nil {
 		return nil, 0, err
 	}
 	if !isMember {
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	organization, err := u.organizationRepository.FindById(ctx, organizationId)
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, 0, err
 	}
 	if organization == nil {
 		return nil, 0, custom_error.RecordNotFound("Organization not found")
 	}
-	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
 }

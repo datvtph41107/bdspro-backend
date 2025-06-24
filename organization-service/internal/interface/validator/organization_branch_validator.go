@@ -47,17 +47,6 @@ func (v *organizationBranchValidator) ValidateCreateOrganizationBranch(request *
 		})
 	}
 
-	if request.OrganizationId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "organizationId",
-					Description: "organizationId is required",
-				},
-			},
-		})
-	}
-
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}

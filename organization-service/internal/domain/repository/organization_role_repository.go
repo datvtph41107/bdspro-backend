@@ -16,5 +16,5 @@ type OrganizationRoleRepository interface {
 	FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error)
 	FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error)
 	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error)
-
+	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
 }

@@ -30,7 +30,7 @@ func NewOrganizationMemberHandler(organizationMemberUsecase usecase.Organization
 }
 
 func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req *organizationpb.SwitchOrganizationRequest) (*organizationpb.SwitchOrganizationResponse, error) {
-	member, err := h.OrganizationMemberUsecase.FindByUserIdAndOrganizationIdWithRole(ctx, req.UserId, req.OrganizationId)
+	member, err := h.OrganizationMemberUsecase.FindByUserIdAndOrganizationIdWithRole(ctx, req.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +115,8 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 // @Param page query int false "Page number"
 // @Param size query int false "Page size"
 // @Param text query string false "Tên thành viên"
-// @Param organizationId path int true "ID của tổ chức"
 // @Security BearerAuth
-// @Router /organization/member/{organizationId} [get]
+// @Router /organization/member [get]
 func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	// Get pagination parameters
 	page := 0
@@ -130,7 +129,7 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 	}
 
 	// Get members with pagination
-	members, total, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, req.OrganizationId, page, size)
+	members, total, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -153,4 +152,13 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Co
 		return nil, err
 	}
 	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
+}
+
+
+func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetCurrentOrganizationMemberRoleResponse, error) {
+	roleId, joinDate, roleName, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMemberRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.GetCurrentOrganizationMemberRoleResponse{RoleId: roleId, JoinDate: joinDate, RoleName: roleName}, nil
 }

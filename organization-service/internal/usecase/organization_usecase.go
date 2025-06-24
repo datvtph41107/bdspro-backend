@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 
 	"github.com/tuandq2112/organization-service/appconfig"
@@ -12,15 +13,10 @@ import (
 
 type OrganizationUsecase interface {
 	CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error)
-
-	UpdateOrganization(ctx context.Context, currentUserId uint32, organization *entity.Organization) (*entity.Organization, error)
-
-	GetOrganizations(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error)
-
+	UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error)
+	GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
 	GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error)
-
-	CheckOrganizationIsExist(ctx context.Context, id uint32) (bool, error)
-
+	CheckOrganizationIsExist(ctx context.Context) (bool, error)
 	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)	
 }
 
@@ -79,8 +75,10 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 	return organization, member, nil
 }
 
-func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUserId uint32, organization *entity.Organization) (*entity.Organization, error) {
-	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, organization.ID, appconfig.ADMIN_ROLE_KEY)
+func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +86,7 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	org, err := o.OrganizationRepository.FindById(ctx, organization.ID)
+	org, err := o.OrganizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +104,14 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 		}
 	}
 
+	organization.ID = uint32(organizationId)
 	org, err = o.OrganizationRepository.UpdateOrganization(ctx, organization)
 	if err != nil {
 		return nil, err
 	}
 
 	o.logWorker.Push(OrganizationLogEvent{
-		OrganizationId: organization.ID,
+		OrganizationId: uint32(organizationId),
 		ActorId:        currentUserId,
 		LogType:        "UPDATE",
 		LogData:        "Updated organization details",
@@ -121,8 +120,9 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, currentUse
 	return org, nil
 }
 
-func (o *organizationUsecase) GetOrganizations(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error) {
-	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, userId, offset, limit)
+func (o *organizationUsecase) GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, currentUserId, offset, limit)
 }
 
 func (o *organizationUsecase) GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
@@ -133,8 +133,9 @@ func (o *organizationUsecase) GetOrganizationByUserId(ctx context.Context, userI
 	return organizations, nil
 }
 
-func (o *organizationUsecase) CheckOrganizationIsExist(ctx context.Context, id uint32) (bool, error) {
-	org, err := o.OrganizationRepository.FindById(ctx, id)
+func (o *organizationUsecase) CheckOrganizationIsExist(ctx context.Context) (bool, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	org, err := o.OrganizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return false, err
 	}

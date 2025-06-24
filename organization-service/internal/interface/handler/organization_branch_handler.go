@@ -1,7 +1,6 @@
 package handler
 
 import (
-	_utils "common/utils"
 	"context"
 	organizationpb "pb/types/organization"
 
@@ -193,8 +192,7 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 	if req.Size != nil {
 		size = int(*req.Size)
 	}
-	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	branches, total, err := h.usecase.GetOrganizationBranches(ctx, uint32(organizationId), page, size)
+	branches, total, err := h.usecase.GetOrganizationBranches(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}

@@ -74,7 +74,7 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 	organization := h.OrganizationTransformer.UpdateOrganizationRequestToEntity(req)
 	organization.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
 
-	organization, err := h.OrganizationUsecase.UpdateOrganization(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), organization)
+	organization, err := h.OrganizationUsecase.UpdateOrganization(ctx, organization)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organiz
 	offset := page * size
 
 	// Get organizations with pagination
-	organizations, total, err := h.OrganizationUsecase.GetOrganizations(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT), offset, size)
+	organizations, total, err := h.OrganizationUsecase.GetOrganizations(ctx, offset, size)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (h *OrganizationHandler) GetOrganizationByUserId(ctx context.Context, req *
 // @Security BearerAuth
 // @Router /organization/check/{id} [get]
 func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req *organizationpb.CheckOrganizationIsExistRequest) (*organizationpb.CheckOrganizationIsExistResponse, error) {
-	isExist, err := h.OrganizationUsecase.CheckOrganizationIsExist(ctx, req.Id)
+	isExist, err := h.OrganizationUsecase.CheckOrganizationIsExist(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -150,14 +150,14 @@ func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *org
 		return nil, err
 	}
 	return &organizationpb.GetOwnedOrganizationResponse{Organization: &organizationpb.Organization{
-		Id: organization.ID,
-		Name: organization.Name,
-		TaxCode: organization.TaxCode,
-		Address: organization.Address,
-		Phone: organization.Phone,
-		Email: organization.Email,
+		Id:                 organization.ID,
+		Name:               organization.Name,
+		TaxCode:            organization.TaxCode,
+		Address:            organization.Address,
+		Phone:              organization.Phone,
+		Email:              organization.Email,
 		BusinessLicenseUrl: organization.BusinessLicenseUrl,
-		Website: organization.Website,
-		LogoUrl: organization.LogoUrl,
+		Website:            organization.Website,
+		LogoUrl:            organization.LogoUrl,
 	}}, nil
 }

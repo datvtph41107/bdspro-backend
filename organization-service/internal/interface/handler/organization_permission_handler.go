@@ -37,10 +37,10 @@ func NewOrganizationPermissionHandler(
 // @Security BearerAuth
 // @Router /organization/permission [post]
 func (h *OrganizationPermissionHandler) CreatePermission(ctx context.Context, req *organizationpb.CreatePermissionRequest) (*organizationpb.CreatePermissionResponse, error) {
-	permission := h.OrganizationPermissionTransformer.CreatePermissionRequestToEntity(req)
 	if err := h.OrganizationPermissionValidator.ValidateCreatePermissionRequest(req); err != nil {
 		return nil, err
 	}
+	permission := h.OrganizationPermissionTransformer.CreatePermissionRequestToEntity(req)
 	permission, err := h.OrganizationPermissionUsecase.CreateNewPermission(ctx, permission)
 	if err != nil {
 		return nil, err
@@ -57,10 +57,10 @@ func (h *OrganizationPermissionHandler) CreatePermission(ctx context.Context, re
 // @Security BearerAuth
 // @Router /organization/permission/{id} [put]
 func (h *OrganizationPermissionHandler) UpdatePermission(ctx context.Context, req *organizationpb.UpdatePermissionRequest) (*organizationpb.UpdatePermissionResponse, error) {
-	permission := h.OrganizationPermissionTransformer.UpdatePermissionRequestToEntity(req)
 	if err := h.OrganizationPermissionValidator.ValidateUpdatePermissionRequest(req); err != nil {
 		return nil, err
 	}
+	permission := h.OrganizationPermissionTransformer.UpdatePermissionRequestToEntity(req)
 	permission, err := h.OrganizationPermissionUsecase.UpdatePermission(ctx, permission)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (h *OrganizationPermissionHandler) UpdatePermission(ctx context.Context, re
 // @Tags Quyền
 // @Accept json
 // @Produce json
-// @Param permission body organizationpb.DeletePermissionRequest true "Thông tin quyền"
+// @Param id path int true "ID của quyền"
 // @Security BearerAuth
 // @Router /organization/permission/{id} [delete]
 func (h *OrganizationPermissionHandler) DeletePermission(ctx context.Context, req *organizationpb.DeletePermissionRequest) (*organizationpb.DeletePermissionResponse, error) {
@@ -94,7 +94,6 @@ func (h *OrganizationPermissionHandler) DeletePermission(ctx context.Context, re
 // @Tags Quyền
 // @Accept json
 // @Produce json
-// @Param organizationId query int true "ID của tổ chức"
 // @Param page query int false "Trang hiện tại"
 // @Param size query int false "Số lượng mục trên mỗi trang"
 // @Security BearerAuth
@@ -112,7 +111,7 @@ func (h *OrganizationPermissionHandler) GetPermissions(ctx context.Context, req 
 	if req.Size != nil {
 		size = int(*req.Size)
 	}
-	permissions, total, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, req.OrganizationId, page, size)
+	permissions, total, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}

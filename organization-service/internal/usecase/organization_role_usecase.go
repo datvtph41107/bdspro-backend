@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 
 	"github.com/tuandq2112/organization-service/appconfig"
@@ -14,8 +15,9 @@ type OrganizationRoleUsecase interface {
 	CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	DeleteRole(ctx context.Context, roleId uint32) error
-	GetRoleByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error)
-	GetRoles(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error)
+	GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error)
+	GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error)
+	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
 }
 
 type organizationRoleUsecase struct {
@@ -44,28 +46,29 @@ func NewOrganizationRoleUsecase(
 
 func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, model.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	organization, err := u.organizationRepository.FindById(ctx, model.OrganizationId)
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
-	existRole, err := u.organizationRoleRepository.FindByOrganizationIdAndKey(ctx, model.OrganizationId, model.Key)
+	existRole, err := u.organizationRoleRepository.FindByOrganizationIdAndKey(ctx, uint32(organizationId), model.Key)
 	if err != nil {
 		return nil, err
 	}
 	if existRole != nil {
 		return nil, custom_error.RoleKeyAlreadyExists()
 	}
-	model.OrganizationId = organization.ID
+	model.OrganizationId = uint32(organizationId)
 
 	role, err := u.organizationRoleRepository.Create(ctx, model)
 	if err != nil {
@@ -74,7 +77,7 @@ func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *enti
 
 	// Log role creation
 	u.logWorker.Push(OrganizationLogEvent{
-		OrganizationId: model.OrganizationId,
+		OrganizationId: uint32(organizationId),
 		ActorId:        currentUserId,
 		LogType:        "ROLE_CREATE",
 		LogData:        "Created new role in organization",
@@ -83,16 +86,17 @@ func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *enti
 	return role, nil
 }
 
-func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	roles, err := u.organizationRoleRepository.FindByOrganizationId(ctx, organizationId)
+	roles, err := u.organizationRoleRepository.FindByOrganizationId(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +105,8 @@ func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context, o
 
 func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, model.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +114,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
+	model.OrganizationId = uint32(organizationId)
 	role, err := u.organizationRoleRepository.Update(ctx, model)
 	if err != nil {
 		return nil, err
@@ -116,7 +122,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.
 
 	// Log role update
 	u.logWorker.Push(OrganizationLogEvent{
-		OrganizationId: model.OrganizationId,
+		OrganizationId: uint32(organizationId),
 		ActorId:        currentUserId,
 		LogType:        "ROLE_UPDATE",
 		LogData:        "Updated role details",
@@ -127,6 +133,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.
 
 func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32) error {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	role, err := u.organizationRoleRepository.FindById(ctx, roleId)
 	if err != nil {
 		return err
@@ -135,7 +142,7 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32)
 		return custom_error.RecordNotFound("Role not found")
 	}
 
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, role.OrganizationId, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return err
 	}
@@ -150,7 +157,7 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32)
 
 	// Log role deletion
 	u.logWorker.Push(OrganizationLogEvent{
-		OrganizationId: role.OrganizationId,
+		OrganizationId: uint32(organizationId),
 		ActorId:        currentUserId,
 		LogType:        "ROLE_DELETE",
 		LogData:        "Deleted role from organization",
@@ -159,9 +166,10 @@ func (u *organizationRoleUsecase) DeleteRole(ctx context.Context, roleId uint32)
 	return nil
 }
 
-func (u *organizationRoleUsecase) GetRoles(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
+func (u *organizationRoleUsecase) GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, organizationId, appconfig.ADMIN_ROLE_KEY)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -169,10 +177,41 @@ func (u *organizationRoleUsecase) GetRoles(ctx context.Context, organizationId u
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, organizationId, page, size)
+	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	return roles, total, nil
+}
+func (u *organizationRoleUsecase) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
+	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	if err != nil {
+		return err
+	}
+	if !hasRole {
+		return custom_error.Forbidden("You are not authorized to access this resource")
+	}
+	role, err := u.organizationRoleRepository.FindById(ctx, roleId)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return custom_error.RecordNotFound("Role not found")
+	}
+	permission, err := u.organizationPermissionRepository.FindById(ctx, permissionId)
+	if err != nil {
+		return err
+	}
+	if permission == nil {
+		return custom_error.RecordNotFound("Permission not found")
+	}
+	role.Permissions = append(role.Permissions, permission)
+	err = u.organizationRoleRepository.AddPermissionToRole(ctx, roleId, permissionId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -45,16 +45,7 @@ func (v *organizationPermissionValidator) ValidateCreatePermissionRequest(req *o
 			},
 		})
 	}
-	if req.OrganizationId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "organizationId",
-					Description: "organizationId is required",
-				},
-			},
-		})
-	}
+	
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
@@ -118,16 +109,7 @@ func (v *organizationPermissionValidator) ValidateDeletePermissionRequest(req *o
 func (v *organizationPermissionValidator) ValidateGetPermissionsRequest(req *organizationpb.GetPermissionsRequest) error {
 	details := []protoadapt.MessageV1{}
 
-	if req.OrganizationId == 0 {		
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "organizationId",
-					Description: "organizationId is required",
-				},
-			},
-		})
-	}
+	
 
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)

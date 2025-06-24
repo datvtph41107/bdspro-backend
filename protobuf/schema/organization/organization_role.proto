@@ -4,6 +4,7 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
+import "organization/organization_permission.proto";
 
 option go_package = "types/organizationpb";
 
@@ -31,6 +32,13 @@ service OrganizationRoleService {
     rpc GetRoles(GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/role"
+        };
+    }
+
+    rpc AddPermissionToRole(AddPermissionToRoleRequest) returns (AddPermissionToRoleResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/role/add-permission"
+            body: "*"
         };
     }
     
@@ -75,6 +83,7 @@ message Role {
     uint32 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
+    repeated Permission permissions = 4 [json_name = "permissions"];
 }
 
 message GetRolesResponse {
@@ -82,3 +91,11 @@ message GetRolesResponse {
     uint32 total = 2 [json_name = "total"];
 }
 
+message AddPermissionToRoleRequest {
+    uint32 roleId = 1 [json_name = "roleId"];
+    uint32 permissionId = 2 [json_name = "permissionId"];
+}
+
+message AddPermissionToRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
