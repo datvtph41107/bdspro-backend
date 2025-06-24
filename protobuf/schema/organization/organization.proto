@@ -38,6 +38,13 @@ service OrganizationService {
             get: "/v2/org/organization/check-is-exist/{id}"
         };
     }   
+
+    rpc GetOwnedOrganization(GetOwnedOrganizationRequest) returns (GetOwnedOrganizationResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/owned"
+        };
+    }
+    
     
 }
 
@@ -110,4 +117,11 @@ message CheckOrganizationIsExistRequest {
 
 message CheckOrganizationIsExistResponse {
     bool isExist = 1 [json_name = "isExist"];
+}
+
+message GetOwnedOrganizationRequest {
+}
+
+message GetOwnedOrganizationResponse {
+    Organization organization = 1 [json_name = "organization"];
 }

@@ -20,6 +20,8 @@ type OrganizationUsecase interface {
 	GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error)
 
 	CheckOrganizationIsExist(ctx context.Context, id uint32) (bool, error)
+
+	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)	
 }
 
 type organizationUsecase struct {
@@ -137,4 +139,15 @@ func (o *organizationUsecase) CheckOrganizationIsExist(ctx context.Context, id u
 		return false, err
 	}
 	return org != nil, nil
+}
+
+func (o *organizationUsecase) GetOwnedOrganization(ctx context.Context) (*entity.Organization, error) {
+	organization, err := o.OrganizationRepository.FindByUserId(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT))
+	if err != nil {
+		return nil, err
+	}
+	if len(organization) == 0 {
+		return nil, custom_error.InvalidOrganizationID()
+	}
+	return organization[0], nil
 }

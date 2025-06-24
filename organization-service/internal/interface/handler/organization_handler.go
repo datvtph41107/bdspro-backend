@@ -143,3 +143,21 @@ func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req 
 	}
 	return &organizationpb.CheckOrganizationIsExistResponse{IsExist: isExist}, nil
 }
+
+func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *organizationpb.GetOwnedOrganizationRequest) (*organizationpb.GetOwnedOrganizationResponse, error) {
+	organization, err := h.OrganizationUsecase.GetOwnedOrganization(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.GetOwnedOrganizationResponse{Organization: &organizationpb.Organization{
+		Id: organization.ID,
+		Name: organization.Name,
+		TaxCode: organization.TaxCode,
+		Address: organization.Address,
+		Phone: organization.Phone,
+		Email: organization.Email,
+		BusinessLicenseUrl: organization.BusinessLicenseUrl,
+		Website: organization.Website,
+		LogoUrl: organization.LogoUrl,
+	}}, nil
+}

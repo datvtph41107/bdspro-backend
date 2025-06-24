@@ -124,6 +124,28 @@
         ]
       }
     },
+    "/v2/org/organization/owned": {
+      "get": {
+        "operationId": "OrganizationService_GetOwnedOrganization",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOwnedOrganizationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
     "/v2/org/organization/user/{userId}": {
       "get": {
         "operationId": "OrganizationService_GetOrganizationByUserId",
@@ -299,6 +321,14 @@
         "total": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetOwnedOrganizationResponse": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "$ref": "#/definitions/organizationpbOrganization"
         }
       }
     },
