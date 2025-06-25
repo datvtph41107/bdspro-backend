@@ -53,8 +53,6 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to create deal")
 	}
-	// deal.CreatedBy = currentUserId
-	// deal.UpdatedBy = currentUserId
 	var createdDeal *entity.Deal
 
 	// todo: nhớ check xem các member có nằm trong group không
@@ -76,7 +74,6 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			members := make([]entity.DealMember, len(deal.MemberIds))
 			for i, memberID := range deal.MemberIds {
 				members[i] = entity.DealMember{
-					DealID:     deal.ID,
 					MemberID:   memberID,
 					MemberType: enums.DealMemberTypeMember,
 				}
@@ -88,7 +85,6 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			customers := make([]entity.DealMember, len(deal.CustomerIds))
 			for i, customerID := range deal.CustomerIds {
 				customers[i] = entity.DealMember{
-					DealID:     deal.ID,
 					MemberID:   customerID,
 					MemberType: enums.DealMemberTypeCustomer,
 				}
@@ -100,18 +96,11 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			partners := make([]entity.DealMember, len(deal.PartnerIds))
 			for i, partnerID := range deal.PartnerIds {
 				partners[i] = entity.DealMember{
-					DealID:     deal.ID,
 					MemberID:   partnerID,
 					MemberType: enums.DealMemberTypePartner,
 				}
 			}
 			deal.Partners = partners
-		}
-
-		// tạo deal
-		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
-		if err != nil {
-			return err
 		}
 
 		// tạo mới sản phẩm liên quan nếu chưa tồn tại
@@ -126,23 +115,17 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			deal.Products = products
 		}
 
-		// tạo mới thành viên liên quan nếu chưa tồn tại
 		if len(deal.Documents) > 0 {
-			documents := make([]entity.AttachDocument, len(deal.Documents))
-			for i, document := range deal.Documents {
-				documents[i] = entity.AttachDocument{
-					OwnerId:  deal.ID,
-					DocOwner: enums.DocOwnerDeal,
-					DocName:  document.DocName,
-					DocPath:  document.DocPath,
-					DocType:  document.DocType,
-					DocSize:  document.DocSize,
-				}
+			for i := range deal.Documents {
+				deal.Documents[i].OwnerId = deal.ID
+				deal.Documents[i].DocOwner = enums.DocOwnerDeal
 			}
-			deal.Documents, err = u.documentRepository.CreateBatch(ctx, documents)
-			if err != nil {
-				return err
-			}
+		}
+
+		// tạo deal
+		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
+		if err != nil {
+			return err
 		}
 
 		return nil
