@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
 
 	"gorm.io/gorm"
 )
@@ -76,7 +77,7 @@ type OrganizationBranchRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationBranchPostgresRepository(db *gorm.DB) *OrganizationBranchRepository {
+func NewOrganizationBranchPostgresRepository(db *gorm.DB) repository.OrganizationBranchRepository {
 	return &OrganizationBranchRepository{db: db}
 }
 
@@ -159,4 +160,15 @@ func (r *OrganizationBranchRepository) UpdateIsActive(ctx context.Context, id ui
 		Updates(map[string]interface{}{
 			"is_active": isActive,
 		}).Error
+}
+
+func (r *OrganizationBranchRepository) CountBranchByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&OrganizationBranchModel{}).
+		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint32(count), nil
 }

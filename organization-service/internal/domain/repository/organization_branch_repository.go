@@ -14,4 +14,5 @@ type OrganizationBranchRepository interface {
 	GetOrganizationBranchByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error)
 	GetOrganizationBranchByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error)
 	UpdateIsActive(ctx context.Context, id uint32, isActive bool) error
+	CountBranchByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error)
 }

@@ -55,3 +55,11 @@ func CloneContext(ctx context.Context) context.Context {
 	cloneCtx = context.WithValue(cloneCtx, _constants.OrganizationIDKey, organizationId)
 	return cloneCtx
 }
+
+func GetPlanIdFromContext(ctx context.Context) uint64 {
+	planId := ctx.Value(_constants.PlanIDKey)
+	if planId == nil {
+		return 0
+	}
+	return planId.(uint64)
+}

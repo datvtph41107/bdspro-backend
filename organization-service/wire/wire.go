@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"organization/config"
 	organization_config "organization/config"
@@ -17,6 +16,8 @@ import (
 	organization_internal_interface_validator "organization/internal/interface/validator"
 	organization_internal_server_grpc "organization/internal/server/grpc"
 	organization_internal_usecase "organization/internal/usecase"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -35,12 +36,12 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.GroupRepository), new(*organization_internal_infrastructure_repository_postgres.GroupPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.GroupSettingRepository), new(*organization_internal_infrastructure_repository_postgres.GroupSettingPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationBranchMemberRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationBranchMemberRepository)),
-	wire.Bind(new(organization_internal_domain_repository.OrganizationBranchRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationBranchRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationLogActivityRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationLogActivityPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationMemberRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationMemberPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_internal_infrastructure_repository_postgres.OrganizationRoleRepository)),
+	wire.Bind(new(organization_internal_usecase.MembershipClient), new(*organization_internal_infrastructure_client.MembershipClient)),
 	organization_internal_interface_transformer.NewBankAccountMapper,
 	organization_internal_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_internal_infrastructure_client.NewBdsproClient,

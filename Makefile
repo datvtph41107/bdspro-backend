@@ -67,28 +67,24 @@ social:
 	cd social-service && go run main.go grpc
 appointment:
 	cd appointment-service && go run main.go grpc-server
-
 user-http:
 	cd user-service && go run main.go http
 chat:
 	cd go-chat-service && go run main.go grpc-serve
-
 swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
-
 chat-http:
 	cd go-chat-service && go run main.go http-serve
-
 chat-ws:
 	cd go-chat-service && go run main.go ws-serve
-
 chat-swagger:
 	cd go-chat-service && go run main.go swagger-serve
 payment:
 	cd payment-service && go run main.go grpc-server
-
 chat-grpc:
 	cd go-chat-service && go run main.go grpc-serve
+membership:
+	cd membership-service && go run main.go grpc-server
 
 start-all:
 	make buf-all

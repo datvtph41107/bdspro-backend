@@ -27,6 +27,7 @@ type organizationBranchUsecase struct {
 	organizationAuthUsecase            OrganizationAuthUsecase
 	organizationBranchMemberRepository repository.OrganizationBranchMemberRepository
 	organizationRepository             repository.OrganizationRepository
+	membershipClient                   MembershipClient
 }
 
 func NewOrganizationBranchUsecase(
@@ -34,18 +35,21 @@ func NewOrganizationBranchUsecase(
 	organizationAuthUsecase OrganizationAuthUsecase,
 	organizationBranchMemberRepository repository.OrganizationBranchMemberRepository,
 	organizationRepository repository.OrganizationRepository,
+	membershipClient MembershipClient,
 ) OrganizationBranchUsecase {
 	return &organizationBranchUsecase{
 		organizationBranchRepository:       organizationBranchRepository,
 		organizationAuthUsecase:            organizationAuthUsecase,
 		organizationBranchMemberRepository: organizationBranchMemberRepository,
 		organizationRepository:             organizationRepository,
+		membershipClient:                   membershipClient,
 	}
 }
 
 func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	planId := _utils.GetPlanIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
@@ -60,6 +64,19 @@ func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context
 	}
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
+	}
+
+	countBranch, err := u.organizationBranchRepository.CountBranchByOrganizationId(ctx, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	
+	plan, err := u.membershipClient.GetPlan(ctx, uint64(planId))
+	if err != nil {
+		return nil, err
+	}
+	if countBranch >= uint32(plan.MemberBranchLimit) {
+		return nil, custom_error.Forbidden("You have reached the maximum number of branches")
 	}
 	organizationBranch.OrganizationId = uint32(organizationId)
 	return u.organizationBranchRepository.CreateOrganizationBranch(ctx, organizationBranch)
