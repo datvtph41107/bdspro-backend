@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
@@ -62,15 +62,16 @@ func OrganizationBranchEntityToModel(e *entity.OrganizationBranch) *Organization
 	}
 }
 
-type organizationBranchRepository struct {
+// @bind: organization/internal/domain/repository.OrganizationBranchRepository
+type OrganizationBranchRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationBranchPostgresRepository(db *gorm.DB) repository.OrganizationBranchRepository {
-	return &organizationBranchRepository{db: db}
+func NewOrganizationBranchPostgresRepository(db *gorm.DB) *OrganizationBranchRepository {
+	return &OrganizationBranchRepository{db: db}
 }
 
-func (r *organizationBranchRepository) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+func (r *OrganizationBranchRepository) CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	model := OrganizationBranchEntityToModel(organizationBranch)
 	model.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(model).Error
@@ -80,7 +81,7 @@ func (r *organizationBranchRepository) CreateOrganizationBranch(ctx context.Cont
 	return OrganizationBranchModelToEntity(model), nil
 }
 
-func (r *organizationBranchRepository) UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
+func (r *OrganizationBranchRepository) UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error) {
 	model := OrganizationBranchEntityToModel(organizationBranch)
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", organizationBranch.Id, false).Updates(model).Error
 	if err != nil {
@@ -89,7 +90,7 @@ func (r *organizationBranchRepository) UpdateOrganizationBranch(ctx context.Cont
 	return OrganizationBranchModelToEntity(model), nil
 }
 
-func (r *organizationBranchRepository) DeleteOrganizationBranch(ctx context.Context, id uint32) error {
+func (r *OrganizationBranchRepository) DeleteOrganizationBranch(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationBranchModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -98,7 +99,7 @@ func (r *organizationBranchRepository) DeleteOrganizationBranch(ctx context.Cont
 		}).Error
 }
 
-func (r *organizationBranchRepository) GetOrganizationBranchById(ctx context.Context, id uint32) (*entity.OrganizationBranch, error) {
+func (r *OrganizationBranchRepository) GetOrganizationBranchById(ctx context.Context, id uint32) (*entity.OrganizationBranch, error) {
 	var model OrganizationBranchModel
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error
 	if err != nil {
@@ -107,7 +108,7 @@ func (r *organizationBranchRepository) GetOrganizationBranchById(ctx context.Con
 	return OrganizationBranchModelToEntity(&model), nil
 }
 
-func (r *organizationBranchRepository) GetOrganizationBranchByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error) {
+func (r *OrganizationBranchRepository) GetOrganizationBranchByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationBranch, error) {
 	var models []*OrganizationBranchModel
 	err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error
 	if err != nil {
@@ -120,7 +121,7 @@ func (r *organizationBranchRepository) GetOrganizationBranchByOrganizationId(ctx
 	return entities, nil
 }
 
-func (r *organizationBranchRepository) GetOrganizationBranchByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
+func (r *OrganizationBranchRepository) GetOrganizationBranchByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
 	var models []OrganizationBranchModel
 	if err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
@@ -143,7 +144,7 @@ func (r *organizationBranchRepository) GetOrganizationBranchByOrganizationIdWith
 	return entities, uint32(count), nil
 }
 
-func (r *organizationBranchRepository) UpdateIsActive(ctx context.Context, id uint32, isActive bool) error {
+func (r *OrganizationBranchRepository) UpdateIsActive(ctx context.Context, id uint32, isActive bool) error {
 	return r.db.WithContext(ctx).Model(&OrganizationBranchModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{

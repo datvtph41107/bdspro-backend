@@ -10,6 +10,7 @@ option go_package = "pb/types/bdspro;pb_bdspro";
 
 service ProductService {
   rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
+  rpc GetProductAttachmentByIds (IdRequest) returns (ProductAttachmentResponse);
   rpc ArchiveProduct (ArchivedRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/product/archived"
@@ -153,7 +154,9 @@ message ProductInternalResponse {
   repeated ProductResponse data = 1;
 }
 
-
+message ProductAttachmentResponse {
+  repeated ProductAttachment data = 1;
+}
 
 message StatusRequest {
   uint64 id = 1;

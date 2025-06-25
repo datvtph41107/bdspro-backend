@@ -7,13 +7,13 @@ import (
 
 	sharepb "pb/types/shared"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
-	"github.com/tuandq2112/organization-service/internal/interface/dto"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/internal/infrastructure/client"
+	"organization/internal/interface/dto"
+	"organization/pkg/utils"
 )
 
 type GroupMemberUsecase interface {
@@ -30,7 +30,7 @@ type groupMemberUsecase struct {
 	logWorker             *LogWorker
 	groupAuthUsecase      GroupAuthUsecase
 	groupChatUsecase      GroupChatUsecase
-	userGrpcClient        client.UserClient
+	userGrpcClient        client.IUserClient
 }
 
 func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
@@ -38,7 +38,7 @@ func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepositor
 	logWorker *LogWorker,
 	groupAuthUsecase GroupAuthUsecase,
 	groupChatUsecase GroupChatUsecase,
-	userGrpcClient client.UserClient,
+	userGrpcClient client.IUserClient,
 ) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,
@@ -86,7 +86,7 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 }
 
 func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 		return err
 	}
 
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsLeaderGroup(ctx, member.GroupId, currentUserId)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 }
 
 func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, currentUserId)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (u *groupMemberUsecase) GetGroupMemberByID(ctx context.Context, id uint32) 
 }
 
 func (u *groupMemberUsecase) GetGroupMembersByGroupID(ctx context.Context, groupID uint32) ([]*dto.GroupMemberWithProfile, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, groupID, currentUserId)
 	if err != nil {
 		return nil, err

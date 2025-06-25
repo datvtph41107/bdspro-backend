@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	pb_bdspro "pb/types/bdspro"
 )
 
@@ -58,6 +59,31 @@ func MapProductPbList(products []domain.Product) []*pb_bdspro.ProductResponse {
 	productList := make([]*pb_bdspro.ProductResponse, len(products))
 	for i, product := range products {
 		productList[i] = MapProductPb(&product)
+	}
+	return productList
+}
+
+func MapProductAttachmentPbList(products []domain.Product) []*pb_bdspro.ProductAttachment {
+	productList := make([]*pb_bdspro.ProductAttachment, len(products))
+	for i, product := range products {
+		productList[i] = &pb_bdspro.ProductAttachment{
+			Id:             product.ID,
+			Name:           product.Name,
+			Code:           product.Code,
+			Area:           product.Area,
+			AssetId:        product.AssetId,
+			DepositeId:     product.DepositeID,
+			RentStatus:     uint32(product.RentStatus),
+			SaleStatus:     uint32(product.SaleStatus),
+			SourceType:     int32(product.SourceType),
+			SourceTypeName: enums.SourceTypeMap[product.SourceType],
+		}
+		if product.Price != nil {
+			productList[i].Price = *product.Price.SalePrice
+		}
+		if product.MediaList != nil && len(product.MediaList) > 0 {
+			productList[i].Image = product.MediaList[0].MediaURL
+		}
 	}
 	return productList
 }

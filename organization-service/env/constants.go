@@ -1,6 +1,8 @@
-package appconfig
+package env
 
-const (
+type DBType string
+
+var (
 	USER_CONTEXT             = "user_id"
 	ADMIN_ROLE_KEY           = "admin"
 	ADMIN_ROLE_NAME          = "Admin"
@@ -18,4 +20,24 @@ const (
 	LOG_TYPE_PERMISSION_CREATE   = "PERMISSION_CREATE"
 	LOG_TYPE_PERMISSION_UPDATE   = "PERMISSION_UPDATE"
 	LOG_TYPE_PERMISSION_DELETE   = "PERMISSION_DELETE"
+	SERVICE_NAME                 = "organization-service"
+
+	DBTypePostgres DBType = "postgres"
+
+	DefaultDBDNS    = "host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable"
+	DefaultGRPCPort = "50052"
+)
+
+var (
+	GRPC_PORT                    = "50052"
+	LOG_WORKER_QUEUE_SIZE        = 1000
+	PRIMARY_DB_TYPE       DBType = ""
+	DB_DNS                       = ""
+
+	CHAT_SERVICE_HOST = "localhost"
+	CHAT_SERVICE_PORT = "50053"
+
+	USER_SERVICE_HOST = "localhost"
+	USER_SERVICE_PORT = "8201"
+	ENV_RUNTIME       = ""
 )

@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationBranchMemberRepository interface {

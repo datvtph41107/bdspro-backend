@@ -4,12 +4,12 @@ import (
 	_utils "common/utils"
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/enums"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/internal/enums"
+	"organization/pkg/utils"
 )
 
 type OrganizationPermissionUsecase interface {
@@ -44,9 +44,9 @@ func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context,
 	if err := u.organizationAuthUsecase.IsSystemAdmin(ctx); err != nil {
 		return nil, err
 	}
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, pe
 	if err := u.organizationAuthUsecase.IsSystemAdmin(ctx); err != nil {
 		return nil, err
 	}
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	existPermission, err := u.organizationPermissionRepository.FindById(ctx, permission.Id)
 	if err != nil {
@@ -92,7 +92,7 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, pe
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +105,9 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, pe
 }
 
 func (u *organizationPermissionUsecase) GetPermissionOrganization(ctx context.Context) ([]*entity.OrganizationPermission, error) {
-	// currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	// currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	// organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	// hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	// hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	// if err != nil {
 	// 	return nil, 0, err
 	// }
@@ -141,7 +141,7 @@ func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, pe
 	if err := u.organizationAuthUsecase.IsSystemAdmin(ctx); err != nil {
 		return err
 	}
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	_, err := u.organizationPermissionRepository.FindById(ctx, permissionId)
 	if err != nil {
@@ -154,7 +154,7 @@ func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, pe
 	if organization == nil {
 		return custom_error.RecordNotFound("Organization not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return err
 	}

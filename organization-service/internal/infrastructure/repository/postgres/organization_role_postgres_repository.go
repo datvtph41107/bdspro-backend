@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
@@ -65,15 +65,16 @@ func RoleModelsToEntities(models []*OrganizationRoleModel) []*entity.Organizatio
 	return entities
 }
 
-type organizationRoleRepository struct {
+// @bind: organization/internal/domain/repository.OrganizationRoleRepository
+type OrganizationRoleRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationRolePostgresRepository(db *gorm.DB) repository.OrganizationRoleRepository {
-	return &organizationRoleRepository{db: db}
+func NewOrganizationRolePostgresRepository(db *gorm.DB) *OrganizationRoleRepository {
+	return &OrganizationRoleRepository{db: db}
 }
 
-func (r *organizationRoleRepository) Create(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) Create(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := &OrganizationRoleModel{
 		Name:           role.Name,
 		Key:            role.Key,
@@ -88,7 +89,7 @@ func (r *organizationRoleRepository) Create(ctx context.Context, role *entity.Or
 	return RoleModelToEntity(model), nil
 }
 
-func (r *organizationRoleRepository) GetAll(ctx context.Context) ([]*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) GetAll(ctx context.Context) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
 	if err := r.db.WithContext(ctx).Where("is_deleted = ?", false).Find(&models).Error; err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (r *organizationRoleRepository) GetAll(ctx context.Context) ([]*entity.Orga
 	return RoleModelsToEntities(models), nil
 }
 
-func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
 	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -109,7 +110,7 @@ func (r *organizationRoleRepository) FindById(ctx context.Context, id uint32) (*
 	return RoleModelToEntity(&model), nil
 }
 
-func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error) {
 	model := RoleEntityToModel(role)
 	if err := r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).Where("id = ? AND is_deleted = ?", model.ID, false).Updates(model).Error; err != nil {
 		return nil, err
@@ -122,7 +123,7 @@ func (r *organizationRoleRepository) Update(ctx context.Context, role *entity.Or
 	return RoleModelToEntity(model), nil
 }
 
-func (r *organizationRoleRepository) Delete(ctx context.Context, id uint32) error {
+func (r *OrganizationRoleRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -131,7 +132,7 @@ func (r *organizationRoleRepository) Delete(ctx context.Context, id uint32) erro
 		}).Error
 }
 
-func (r *organizationRoleRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
 	if err := r.db.WithContext(ctx).Where("key = ?", key).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -142,7 +143,7 @@ func (r *organizationRoleRepository) GetByKey(ctx context.Context, key string) (
 	return RoleModelToEntity(&model), nil
 }
 
-func (r *organizationRoleRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
 	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error; err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func (r *organizationRoleRepository) FindByOrganizationId(ctx context.Context, o
 	return RoleModelsToEntities(models), nil
 }
 
-func (r *organizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error) {
+func (r *OrganizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
 	if err := r.db.WithContext(ctx).Where("organization_id = ? AND key = ? AND is_deleted = ?", organizationId, key, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -161,7 +162,7 @@ func (r *organizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Cont
 	return RoleModelToEntity(&model), nil
 }
 
-func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
+func (r *OrganizationRoleRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error) {
 	var models []*OrganizationRoleModel
 	var total int64
 
@@ -187,7 +188,7 @@ func (r *organizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 	return RoleModelsToEntities(models), uint32(total), nil
 }
 
-func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) error {
+func (r *OrganizationRoleRepository) DeleteRole(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationRoleModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -196,9 +197,9 @@ func (r *organizationRoleRepository) DeleteRole(ctx context.Context, id uint32) 
 		}).Error
 }
 
-func (r *organizationRoleRepository) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
+func (r *OrganizationRoleRepository) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
 	return r.db.WithContext(ctx).Table("role_permissions").Create(&map[string]interface{}{
-		"organization_role_model_id": roleId,
+		"organization_role_model_id":       roleId,
 		"organization_permission_model_id": permissionId,
 	}).Error
 }

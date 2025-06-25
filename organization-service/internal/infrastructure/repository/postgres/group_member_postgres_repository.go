@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
@@ -58,15 +58,16 @@ func GroupMemberEntityToModel(entity *entity.GroupMember) *GroupMemberModel {
 	}
 }
 
-type groupMemberPostgresRepository struct {
+// @bind: organization/internal/domain/repository.GroupMemberRepository
+type GroupMemberPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewGroupMemberPostgresRepository(db *gorm.DB) repository.GroupMemberRepository {
-	return &groupMemberPostgresRepository{db: db}
+func NewGroupMemberPostgresRepository(db *gorm.DB) *GroupMemberPostgresRepository {
+	return &GroupMemberPostgresRepository{db: db}
 }
 
-func (r *groupMemberPostgresRepository) Create(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) Create(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
 	model := GroupMemberEntityToModel(member)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -74,7 +75,7 @@ func (r *groupMemberPostgresRepository) Create(ctx context.Context, member *enti
 	return GroupMemberModelToEntity(model), nil
 }
 
-func (r *groupMemberPostgresRepository) Update(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) Update(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
 	model := GroupMemberEntityToModel(member)
 	if err := r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
 		return nil, err
@@ -82,7 +83,7 @@ func (r *groupMemberPostgresRepository) Update(ctx context.Context, member *enti
 	return GroupMemberModelToEntity(model), nil
 }
 
-func (r *groupMemberPostgresRepository) Delete(ctx context.Context, id uint32) error {
+func (r *GroupMemberPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -91,7 +92,7 @@ func (r *groupMemberPostgresRepository) Delete(ctx context.Context, id uint32) e
 		}).Error
 }
 
-func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupMember, error) {
 	var model *GroupMemberModel
 	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
@@ -99,7 +100,7 @@ func (r *groupMemberPostgresRepository) GetByID(ctx context.Context, id uint32) 
 	return GroupMemberModelToEntity(model), nil
 }
 
-func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error) {
 	var models []*GroupMemberModel
 	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, err
@@ -111,7 +112,7 @@ func (r *groupMemberPostgresRepository) GetByGroupID(ctx context.Context, groupI
 	return entities, nil
 }
 
-func (r *groupMemberPostgresRepository) GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error) {
 	var models []*GroupMemberModel
 	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_deleted = ?", userID, false).Find(&models).Error; err != nil {
 		return nil, err
@@ -123,15 +124,15 @@ func (r *groupMemberPostgresRepository) GetByUserID(ctx context.Context, userID 
 	return entities, nil
 }
 
-func (r *groupMemberPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.GroupMemberStatus) error {
+func (r *GroupMemberPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.GroupMemberStatus) error {
 	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
 }
 
-func (r *groupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint32, role entity.GroupMemberRole) error {
+func (r *GroupMemberPostgresRepository) UpdateRole(ctx context.Context, id uint32, role entity.GroupMemberRole) error {
 	return r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("role", role).Error
 }
 
-func (r *groupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error) {
+func (r *GroupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error) {
 	var model *GroupMemberModel
 	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id = ? AND is_deleted = ?", groupID, userID, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

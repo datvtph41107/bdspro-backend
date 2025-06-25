@@ -3,7 +3,7 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupSettingTransformer interface {

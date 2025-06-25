@@ -3,7 +3,7 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationLogActivityTransformer interface {
@@ -42,7 +42,7 @@ func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitie
 		return nil
 	}
 	response := &organizationpb.GetOrganizationLogActivitiesByOrganizationIDResponse{
-		Logs: make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
+		Logs:  make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
 		Total: total,
 	}
 	for _, log := range logs {
@@ -66,7 +66,7 @@ func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitie
 		return nil
 	}
 	response := &organizationpb.GetOrganizationLogActivitiesByActorIDResponse{
-		Logs: make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
+		Logs:  make([]*organizationpb.OrganizationLogActivity, 0, len(logs)),
 		Total: total,
 	}
 	for _, log := range logs {
@@ -83,4 +83,4 @@ func (t *organizationLogActivityTransformer) EntityToGetOrganizationLogActivitie
 		})
 	}
 	return response
-} 
+}

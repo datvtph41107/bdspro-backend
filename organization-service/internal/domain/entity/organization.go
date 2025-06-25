@@ -21,6 +21,7 @@ type Organization struct {
 	Website            *string
 	LogoUrl            *string
 	Status             string
+	ApproveInvestor    bool
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 	CreatedBy          uint32

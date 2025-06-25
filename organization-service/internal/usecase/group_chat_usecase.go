@@ -6,12 +6,12 @@ import (
 
 	chatpb "pb/types/chat"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/internal/infrastructure/client"
+	"organization/pkg/utils"
 )
 
 type GroupChatUsecase interface {
@@ -36,7 +36,7 @@ func NewGroupChatUsecase(groupChatRepository repository.GroupChatRepository, cha
 }
 
 func (u *groupChatUsecase) CreateGroupChat(ctx context.Context, groupID uint32, members []uint32, name string, avatarUrl string) (*entity.GroupChat, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	// Create conversation in chat service
 	conversation, err := u.chatServiceClient.CreateConversation(ctx, &chatpb.CreateConversationRequest{

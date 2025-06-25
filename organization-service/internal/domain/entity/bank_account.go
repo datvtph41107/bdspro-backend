@@ -1,0 +1,21 @@
+package entity
+
+import (
+	_models "common/models"
+	"organization/internal/enums"
+)
+
+type BankAccount struct {
+	_models.BaseEntity
+	OwnerID       uint64          `gorm:"not null"`
+	OwnerType     enums.OwnerType `gorm:"not null;default:10"`
+	BankName      string          `gorm:"not null"`
+	AccountNumber string          `gorm:"not null"`
+	AccountName   string          `gorm:"not null"`
+	AccountType   uint            // 1: tài khoản, 2: thẻ
+	AccountStatus bool            `gorm:"not null;default:true"`
+}
+
+func (BankAccount) TableName() string {
+	return "bank_accounts"
+}

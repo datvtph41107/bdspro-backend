@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/database"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/repository/postgres"
+	_db "common/db"
+	"organization/internal/domain/entity"
+	"organization/internal/infrastructure/repository/postgres"
 )
 
 func AutoMigrate() {
-	db := database.NewPostgresDB(appconfig.DB_DNS)
+	// db := database.NewPostgresDB(config.DB_DNS)
+	db := _db.DB
 	db.AutoMigrate(&postgres.GroupChatModel{})
 	db.AutoMigrate(&postgres.OrganizationLogActivityModel{})
 	db.AutoMigrate(&postgres.GroupDocumentModel{})
-	db.AutoMigrate(&postgres.GroupDealModel{})
 	db.AutoMigrate(&postgres.GroupNotificationModel{})
 	db.AutoMigrate(&postgres.GroupLogActivityModel{})
 	db.AutoMigrate(&postgres.GroupMemberModel{})
@@ -23,4 +23,9 @@ func AutoMigrate() {
 	db.AutoMigrate(&postgres.OrganizationRoleModel{})
 	db.AutoMigrate(&postgres.OrganizationMemberModel{})
 	db.AutoMigrate(&postgres.OrganizationModel{})
+	db.AutoMigrate(&entity.Deal{})
+	db.AutoMigrate(&entity.DealMember{})
+	db.AutoMigrate(&entity.DealProduct{})
+	db.AutoMigrate(&entity.AttachDocument{})
+	db.AutoMigrate(&entity.BankAccount{})
 }

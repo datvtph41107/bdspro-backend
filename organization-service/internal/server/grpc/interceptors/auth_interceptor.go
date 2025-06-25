@@ -3,9 +3,10 @@ package interceptors
 import (
 	"context"
 
+	"organization/env"
+	"organization/pkg/utils"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -38,7 +39,7 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterce
 			logger.Error("Invalid token", err)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		newCtx := context.WithValue(ctx, appconfig.USER_CONTEXT, claims)
+		newCtx := context.WithValue(ctx, env.USER_CONTEXT, claims)
 		return handler(newCtx, req)
 	}
 }

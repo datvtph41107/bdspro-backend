@@ -4,9 +4,9 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
 )
 
 type OrganizationRoleHandler struct {

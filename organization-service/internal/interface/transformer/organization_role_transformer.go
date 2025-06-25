@@ -3,7 +3,7 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationRoleTransformer interface {
@@ -25,17 +25,17 @@ func NewOrganizationRoleTransformer() OrganizationRoleTransformer {
 
 func (t *organizationRoleTransformer) CreateRoleRequestToEntity(req *organizationpb.CreateRoleRequest) *entity.OrganizationRole {
 	return &entity.OrganizationRole{
-		Name: req.Name,
-		Key:  req.Key,
+		Name:           req.Name,
+		Key:            req.Key,
 		OrganizationId: req.OrganizationId,
 	}
 }
 
 func (t *organizationRoleTransformer) UpdateRoleRequestToEntity(req *organizationpb.UpdateRoleRequest) *entity.OrganizationRole {
 	return &entity.OrganizationRole{
-		Id: req.Id,
-		Name: req.Name,
-		Key: req.Key,
+		Id:            req.Id,
+		Name:          req.Name,
+		Key:           req.Key,
 		PermissionIds: req.PermissionIds,
 	}
 }
@@ -52,15 +52,15 @@ func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.O
 		permissions := make([]*organizationpb.Permission, len(role.Permissions))
 		for j, permission := range role.Permissions {
 			permissions[j] = &organizationpb.Permission{
-				Id: permission.Id,
+				Id:   permission.Id,
 				Name: permission.Name,
-				Key: permission.Key,
+				Key:  permission.Key,
 			}
 		}
 		rolesResponse[i] = &organizationpb.Role{
-			Id:   role.Id,
-			Name: role.Name,
-			Key:  role.Key,
+			Id:          role.Id,
+			Name:        role.Name,
+			Key:         role.Key,
 			Permissions: permissions,
 		}
 	}
@@ -85,10 +85,10 @@ func (t *organizationRoleTransformer) EntityToDeleteRoleResponse(entity *entity.
 func (t *organizationRoleTransformer) EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRolesResponse {
 	roles := make([]*organizationpb.Role, 0)
 	roles = append(roles, &organizationpb.Role{
-		Id: entity.Id,
+		Id:   entity.Id,
 		Name: entity.Name,
-		Key: entity.Key,
-	})	
+		Key:  entity.Key,
+	})
 	return &organizationpb.GetRolesResponse{
 		Roles: roles,
 	}

@@ -68,6 +68,236 @@
                 "responses": {}
             }
         },
+        "/group-deal": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy danh sách thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetGroupDealsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Tạo thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin thương vụ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/group-deal/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy thông tin thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetGroupDealResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Cập nhật thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin thương vụ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Xóa thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DeleteGroupDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/group-deal/{id}/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật trạng thái thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Cập nhật trạng thái thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật trạng thái thương vụ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/group-member": {
             "post": {
                 "security": [
@@ -100,7 +330,7 @@
                 "responses": {}
             }
         },
-        "/group-member/list": {
+        "/group-member/list/{groupId}": {
             "get": {
                 "security": [
                     {
@@ -160,7 +390,7 @@
                 "responses": {}
             }
         },
-        "/group-member/{groupId}": {
+        "/group-member/{groupMemberId}": {
             "get": {
                 "security": [
                     {
@@ -178,6 +408,15 @@
                     "Thành viên"
                 ],
                 "summary": "Lấy thành viên nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thành viên",
+                        "name": "groupMemberId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {}
             }
         },
@@ -1444,7 +1683,100 @@
                 }
             }
         },
+        "organizationpb.BankAccountItem": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string"
+                },
+                "accountNumber": {
+                    "type": "string"
+                },
+                "bankName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "organizationpb.CheckOrganizationIsExistRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateGroupDealRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bankAccount": {
+                    "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "bankAccountId": {
+                    "type": "integer"
+                },
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "customerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "dealType": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "groupId": {
+                    "type": "integer"
+                },
+                "memberIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "partnerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "organizationpb.CreateGroupDealResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1603,6 +1935,14 @@
                 }
             }
         },
+        "organizationpb.DeleteGroupDealResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.DeleteGroupDocumentRequest": {
             "type": "object",
             "properties": {
@@ -1615,6 +1955,45 @@
             "type": "object",
             "properties": {
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DocumentItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.GetGroupDealResponse": {
+            "type": "object",
+            "properties": {
+                "deal": {
+                    "$ref": "#/definitions/organizationpb.GroupDeal"
+                }
+            }
+        },
+        "organizationpb.GetGroupDealsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.GroupDeal"
+                    }
+                },
+                "total": {
                     "type": "integer"
                 }
             }
@@ -1633,6 +2012,86 @@
                 }
             }
         },
+        "organizationpb.GroupDeal": {
+            "type": "object",
+            "properties": {
+                "bankAccount": {
+                    "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "customers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "dealType": {
+                    "type": "integer"
+                },
+                "dealTypeName": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "numMember": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "partners": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.ProductItem"
+                    }
+                },
+                "profitAmount": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
+                },
+                "totalAmount": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "organizationpb.RemoveMemberFromOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -1640,6 +2099,50 @@
                     "type": "integer"
                 },
                 "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealStatusResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -1789,6 +2292,58 @@
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "pb_bdspro.ProductItem": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "ownerUserId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.ProfileItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
                 }
             }
         }

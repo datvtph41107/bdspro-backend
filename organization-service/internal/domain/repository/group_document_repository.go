@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupDocumentRepository interface {
@@ -12,4 +12,4 @@ type GroupDocumentRepository interface {
 	Delete(ctx context.Context, id uint32) error
 	GetByID(ctx context.Context, id uint32) (*entity.GroupDocument, error)
 	GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupDocument, uint32, error)
-} 
+}

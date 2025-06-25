@@ -4,115 +4,148 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+	"organization/internal/enums"
+
 	"gorm.io/gorm"
 )
 
-type GroupDealModel struct {
-	Id        uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_deals_created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32    `gorm:"index:idx_group_deals_created_by"`
-	UpdatedBy uint32
+// type GroupDealModel struct {
+// 	Id        uint64    `gorm:"primaryKey;autoIncrement"`
+// 	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_deals_created_at"`
+// 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+// 	CreatedBy uint32    `gorm:"index:idx_group_deals_created_by"`
+// 	UpdatedBy uint32
 
-	GroupId uint32            `gorm:"not null;index:idx_group_deals_group_id"`
-	Name    string            `gorm:"not null;index:idx_group_deals_name"`
-	Amount  float64           `gorm:"not null"`
-	Status  entity.DealStatus `gorm:"not null;index:idx_group_deals_status"`
-	DeletedAt *time.Time `gorm:"index"`
-	IsDeleted bool `gorm:"default:false"`
-}
+// 	OwnerId   uint32            `gorm:"not null;index:idx_group_deals_owner_id"`
+// 	OwnerType enums.OwnerType   `gorm:"not null;index:idx_group_deals_owner_type"`
+// 	Name      string            `gorm:"not null;index:idx_group_deals_name"`
+// 	Amount    float64           `gorm:"not null"`
+// 	Status    entity.DealStatus `gorm:"not null;index:idx_group_deals_status"`
+// 	DealType  enums.DealType    `gorm:"not null;index:idx_group_deals_deal_type"`
+// 	DeletedAt *time.Time        `gorm:"index"`
+// 	IsDeleted bool              `gorm:"default:false"`
+// }
 
-func (GroupDealModel) TableName() string {
-	return "group_deals"
-}
+// func (GroupDealModel) TableName() string {
+// 	return "group_deals"
+// }
 
-func GroupDealModelToEntity(model *GroupDealModel) *entity.Deal {
-	return &entity.Deal{
-		Id:        model.Id,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
-		CreatedBy: model.CreatedBy,
-		UpdatedBy: model.UpdatedBy,
-		GroupId:   model.GroupId,
-		Name:      model.Name,
-		Amount:    model.Amount,
-		Status:    model.Status,
-	}
-}
+// func GroupDealModelToEntity(model *GroupDealModel) *entity.Deal {
+// 	return &entity.Deal{
+// 		// Id:        model.Id,
+// 		// CreatedAt: model.CreatedAt,
+// 		// UpdatedAt: model.UpdatedAt,
+// 		// CreatedBy: model.CreatedBy,
+// 		// UpdatedBy: model.UpdatedBy,
+// 		BaseEntity: _models.BaseEntity{
+// 			ID:        model.Id,
+// 			CreatedAt: &model.CreatedAt,
+// 			UpdatedAt: &model.UpdatedAt,
+// 			CreatedBy: &model.CreatedBy,
+// 			UpdatedBy: &model.UpdatedBy,
+// 		},
+// 		GroupId: model.GroupId,
+// 		Name:    model.Name,
+// 		Amount:  model.Amount,
+// 		Status:  model.Status,
+// 	}
+// }
 
-func GroupDealEntityToModel(entity *entity.Deal) *GroupDealModel {
-	return &GroupDealModel{
-		Id:        entity.Id,
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-		CreatedBy: entity.CreatedBy,
-		UpdatedBy: entity.UpdatedBy,
-		GroupId:   entity.GroupId,
-		Name:      entity.Name,
-		Amount:    entity.Amount,
-		Status:    entity.Status,
-	}
-}
+// func GroupDealEntityToModel(entity *entity.Deal) *GroupDealModel {
+// 	return &GroupDealModel{
+// 		Id:        entity.Id,
+// 		CreatedAt: entity.CreatedAt,
+// 		UpdatedAt: entity.UpdatedAt,
+// 		CreatedBy: entity.CreatedBy,
+// 		UpdatedBy: entity.UpdatedBy,
+// 		GroupId:   entity.GroupId,
+// 		Name:      entity.Name,
+// 		Amount:    entity.Amount,
+// 		Status:    entity.Status,
+// 	}
+// }
 
-type groupDealPostgresRepository struct {
+// @bind: organization/internal/domain/repository.GroupDealRepository
+type GroupDealPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewGroupDealPostgresRepository(db *gorm.DB) repository.GroupDealRepository {
-	return &groupDealPostgresRepository{db: db}
+func NewGroupDealPostgresRepository(db *gorm.DB) *GroupDealPostgresRepository {
+	return &GroupDealPostgresRepository{db: db}
 }
 
-func (r *groupDealPostgresRepository) Create(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
-	model := GroupDealEntityToModel(deal)
-	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+func (r *GroupDealPostgresRepository) Create(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
+	// model := GroupDealEntityToModel(deal)
+	deal.Products = make([]entity.DealProduct, len(deal.ProductIds))
+	for i, productID := range deal.ProductIds {
+		deal.Products[i] = entity.DealProduct{
+			DealID:    deal.ID,
+			ProductID: productID,
+		}
+	}
+	if err := r.db.WithContext(ctx).Create(deal).Error; err != nil {
 		return nil, err
 	}
-	return GroupDealModelToEntity(model), nil
+	return deal, nil
 }
 
-func (r *groupDealPostgresRepository) Update(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
-	model := GroupDealEntityToModel(deal)
-	if err := r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
+func (r *GroupDealPostgresRepository) Update(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
+	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).Where("id = ?", deal.ID).Updates(deal).Error; err != nil {
 		return nil, err
 	}
-	return GroupDealModelToEntity(model), nil
+	return deal, nil
 }
 
-func (r *groupDealPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Model(&GroupDealModel{}).
+func (r *GroupDealPostgresRepository) Delete(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).Model(&entity.Deal{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
 
-func (r *groupDealPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.Deal, error) {
-	var model GroupDealModel
+func (r *GroupDealPostgresRepository) GetByID(ctx context.Context, id uint64) (*entity.Deal, error) {
+	var model entity.Deal
 	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		return nil, err
 	}
-	return GroupDealModelToEntity(&model), nil
+	return &model, nil
 }
 
-func (r *groupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.Deal, uint32, error) {
-	var models []GroupDealModel
+func (r *GroupDealPostgresRepository) DetailByID(ctx context.Context, id uint64) (*entity.Deal, error) {
+	var model entity.Deal
+	if err := r.db.WithContext(ctx).
+		Preload("Products").
+		Preload("Members", "member_type = 30").
+		Preload("Customers", "member_type = 10").
+		Preload("Partners", "member_type = 20").
+		Preload("BankAccount", "deleted_at is null").
+		Preload("Documents", "deleted_at is null and doc_owner = 10").
+		Where("id = ? AND deleted_at is null", id).
+		First(&model).Error; err != nil {
+		return nil, err
+	}
+	return &model, nil
+}
+
+func (r *GroupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+	var models []entity.Deal
 	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.Deal, len(models))
 	for i, model := range models {
-		entities[i] = GroupDealModelToEntity(&model)
+		entities[i] = &model
 	}
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("group_id = ? AND is_deleted = ?", groupID, false).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).Where("group_id = ? AND is_deleted = ?", groupID, false).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil
 }
 
-func (r *groupDealPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status entity.DealStatus) error {
-	return r.db.WithContext(ctx).Model(&GroupDealModel{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
+func (r *GroupDealPostgresRepository) UpdateStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
+	return r.db.WithContext(ctx).Model(&entity.Deal{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
 }

@@ -4,9 +4,10 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -153,7 +154,6 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Co
 	}
 	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
 }
-
 
 func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetCurrentOrganizationMemberRoleResponse, error) {
 	roleId, joinDate, roleName, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMemberRole(ctx)

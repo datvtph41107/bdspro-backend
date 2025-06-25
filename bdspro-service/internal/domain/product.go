@@ -39,7 +39,7 @@ type Product struct {
 	Build           *ProjectBuild        `gorm:"-" json:"build,omitempty"`
 	Project         *Project             `gorm:"-" json:"project,omitempty"`
 	Developer       *Developer           `gorm:"-" json:"developer,omitempty"`
-	SourceType      int16                `json:"sourceType,omitempty"`
+	SourceType      enums.ESourceType    `json:"sourceType,omitempty"`
 	CustomerID      *uint64              `json:"customerId,omitempty"`
 	PrivateData     *ProductPrivate      `json:"privateInfo,omitempty"`
 	Note            string               `json:"note,omitempty"`

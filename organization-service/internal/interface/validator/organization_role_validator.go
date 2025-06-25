@@ -3,7 +3,8 @@ package validator
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
+	"organization/internal/custom_error"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -111,7 +112,7 @@ func (v *organizationRoleValidator) ValidateGetRolesRequest(req *organizationpb.
 	details := []protoadapt.MessageV1{}
 
 	if len(details) > 0 {
-		return custom_error.InvalidRequest(details...)	
+		return custom_error.InvalidRequest(details...)
 	}
 
 	return nil
@@ -124,7 +125,7 @@ func (v *organizationRoleValidator) ValidateAddPermissionToRoleRequest(req *orga
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "roleId",	
+					Field:       "roleId",
 					Description: "roleId is required",
 				},
 			},

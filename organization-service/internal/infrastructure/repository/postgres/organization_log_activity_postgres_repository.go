@@ -4,22 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
 type OrganizationLogActivityModel struct {
-	Id uint32 `gorm:"primaryKey;autoIncrement"`	
+	Id        uint32    `gorm:"primaryKey;autoIncrement"`
 	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_org_log_activities_created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32 `gorm:"not null;index:idx_org_log_activities_created_by"`
-	UpdatedBy uint32 `gorm:"not null"`
+	CreatedBy uint32    `gorm:"not null;index:idx_org_log_activities_created_by"`
+	UpdatedBy uint32    `gorm:"not null"`
 
 	OrganizationId uint32 `gorm:"not null;index:idx_org_log_activities_org_id"`
-	ActorId uint32 `gorm:"not null;index:idx_org_log_activities_actor_id"`
-	LogType string `gorm:"not null;index:idx_org_log_activities_type"`
-	LogData string `gorm:"not null"`
+	ActorId        uint32 `gorm:"not null;index:idx_org_log_activities_actor_id"`
+	LogType        string `gorm:"not null;index:idx_org_log_activities_type"`
+	LogData        string `gorm:"not null"`
 }
 
 func (OrganizationLogActivityModel) TableName() string {
@@ -28,41 +28,42 @@ func (OrganizationLogActivityModel) TableName() string {
 
 func OrganizationLogActivityModelToEntity(model *OrganizationLogActivityModel) *entity.OrganizationLogActivity {
 	return &entity.OrganizationLogActivity{
-		Id: model.Id,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
-		CreatedBy: model.CreatedBy,
-		UpdatedBy: model.UpdatedBy,
+		Id:             model.Id,
+		CreatedAt:      model.CreatedAt,
+		UpdatedAt:      model.UpdatedAt,
+		CreatedBy:      model.CreatedBy,
+		UpdatedBy:      model.UpdatedBy,
 		OrganizationId: model.OrganizationId,
-		ActorId: model.ActorId,
-		LogType: model.LogType,
-		LogData: model.LogData,
+		ActorId:        model.ActorId,
+		LogType:        model.LogType,
+		LogData:        model.LogData,
 	}
 }
 
 func OrganizationLogActivityEntityToModel(entity *entity.OrganizationLogActivity) *OrganizationLogActivityModel {
 	return &OrganizationLogActivityModel{
-		Id: entity.Id,
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-		CreatedBy: entity.CreatedBy,
-		UpdatedBy: entity.UpdatedBy,
+		Id:             entity.Id,
+		CreatedAt:      entity.CreatedAt,
+		UpdatedAt:      entity.UpdatedAt,
+		CreatedBy:      entity.CreatedBy,
+		UpdatedBy:      entity.UpdatedBy,
 		OrganizationId: entity.OrganizationId,
-		ActorId: entity.ActorId,
-		LogType: entity.LogType,
-		LogData: entity.LogData,
+		ActorId:        entity.ActorId,
+		LogType:        entity.LogType,
+		LogData:        entity.LogData,
 	}
 }
 
-type organizationLogActivityPostgresRepository struct {
+// @bind: organization/internal/domain/repository.OrganizationLogActivityRepository
+type OrganizationLogActivityPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationLogActivityPostgresRepository(db *gorm.DB) repository.OrganizationLogActivityRepository {
-	return &organizationLogActivityPostgresRepository{db: db}
+func NewOrganizationLogActivityPostgresRepository(db *gorm.DB) *OrganizationLogActivityPostgresRepository {
+	return &OrganizationLogActivityPostgresRepository{db: db}
 }
 
-func (r *organizationLogActivityPostgresRepository) Create(ctx context.Context, log *entity.OrganizationLogActivity) (*entity.OrganizationLogActivity, error) {
+func (r *OrganizationLogActivityPostgresRepository) Create(ctx context.Context, log *entity.OrganizationLogActivity) (*entity.OrganizationLogActivity, error) {
 	model := OrganizationLogActivityEntityToModel(log)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func (r *organizationLogActivityPostgresRepository) Create(ctx context.Context, 
 	return OrganizationLogActivityModelToEntity(model), nil
 }
 
-func (r *organizationLogActivityPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.OrganizationLogActivity, error) {
+func (r *OrganizationLogActivityPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.OrganizationLogActivity, error) {
 	var model OrganizationLogActivityModel
 	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (r *organizationLogActivityPostgresRepository) GetByID(ctx context.Context,
 	return OrganizationLogActivityModelToEntity(&model), nil
 }
 
-func (r *organizationLogActivityPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint32) ([]*entity.OrganizationLogActivity, error) {
+func (r *OrganizationLogActivityPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint32) ([]*entity.OrganizationLogActivity, error) {
 	var models []*OrganizationLogActivityModel
 	if err := r.db.WithContext(ctx).Where("organization_id = ?", organizationID).Find(&models).Error; err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (r *organizationLogActivityPostgresRepository) GetByOrganizationID(ctx cont
 	return entities, nil
 }
 
-func (r *organizationLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.OrganizationLogActivity, error) {
+func (r *OrganizationLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.OrganizationLogActivity, error) {
 	var models []*OrganizationLogActivityModel
 	if err := r.db.WithContext(ctx).Where("actor_id = ?", actorID).Find(&models).Error; err != nil {
 		return nil, err
@@ -102,7 +103,7 @@ func (r *organizationLogActivityPostgresRepository) GetByActorID(ctx context.Con
 	return entities, nil
 }
 
-func (r *organizationLogActivityPostgresRepository) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
+func (r *OrganizationLogActivityPostgresRepository) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
 	var models []*OrganizationLogActivityModel
 	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
@@ -118,7 +119,7 @@ func (r *organizationLogActivityPostgresRepository) GetByOrganizationIDWithPagin
 	return entities, uint32(total), nil
 }
 
-func (r *organizationLogActivityPostgresRepository) GetByActorIDWithPagination(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
+func (r *OrganizationLogActivityPostgresRepository) GetByActorIDWithPagination(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
 	var models []*OrganizationLogActivityModel
 	if err := r.db.WithContext(ctx).Where("actor_id = ? AND is_deleted = ?", actorID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err

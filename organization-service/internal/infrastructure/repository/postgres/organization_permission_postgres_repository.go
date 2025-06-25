@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/enums"
+	"organization/internal/domain/entity"
+	"organization/internal/enums"
+
 	"gorm.io/gorm"
 )
 
@@ -61,15 +61,16 @@ func OrganizationPermissionModelsToEntities(models []*OrganizationPermissionMode
 	return entities
 }
 
-type organizationPermissionRepository struct {
+// @bind: organization/internal/domain/repository.OrganizationPermissionRepository
+type OrganizationPermissionRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationPermissionPostgresRepository(db *gorm.DB) repository.OrganizationPermissionRepository {
-	return &organizationPermissionRepository{db: db}
+func NewOrganizationPermissionPostgresRepository(db *gorm.DB) *OrganizationPermissionRepository {
+	return &OrganizationPermissionRepository{db: db}
 }
 
-func (r *organizationPermissionRepository) Create(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) Create(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
 	model := OrganizationPermissionEntityToModel(permission)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func (r *organizationPermissionRepository) Create(ctx context.Context, permissio
 	return OrganizationPermissionModelToEntity(model), nil
 }
 
-func (r *organizationPermissionRepository) GetPermissionOrganization(ctx context.Context) ([]*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) GetPermissionOrganization(ctx context.Context) ([]*entity.OrganizationPermission, error) {
 	var models []*OrganizationPermissionModel
 	if err := r.db.WithContext(ctx).Where("permission_type = ? AND is_deleted = ?", enums.PermissionTypeOrganization, false).Find(&models).Error; err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func (r *organizationPermissionRepository) GetPermissionOrganization(ctx context
 	return OrganizationPermissionModelsToEntities(models), nil
 }
 
-func (r *organizationPermissionRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationPermission, error) {
 	var model OrganizationPermissionModel
 	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -96,7 +97,7 @@ func (r *organizationPermissionRepository) FindById(ctx context.Context, id uint
 	return OrganizationPermissionModelToEntity(&model), nil
 }
 
-func (r *organizationPermissionRepository) Update(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) Update(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
 	model := OrganizationPermissionEntityToModel(permission)
 	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", model.Id, false).
 		Updates(map[string]interface{}{
@@ -109,7 +110,7 @@ func (r *organizationPermissionRepository) Update(ctx context.Context, permissio
 	return OrganizationPermissionModelToEntity(model), nil
 }
 
-func (r *organizationPermissionRepository) Delete(ctx context.Context, id uint32) error {
+func (r *OrganizationPermissionRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationPermissionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
@@ -118,7 +119,7 @@ func (r *organizationPermissionRepository) Delete(ctx context.Context, id uint32
 		}).Error
 }
 
-func (r *organizationPermissionRepository) FindByKeyAndOrganizationId(ctx context.Context, key string, organizationId uint32) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) FindByKeyAndOrganizationId(ctx context.Context, key string, organizationId uint32) (*entity.OrganizationPermission, error) {
 	var model OrganizationPermissionModel
 	if err := r.db.WithContext(ctx).Where("key = ? AND organization_id = ? AND is_deleted = ?", key, organizationId, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -129,7 +130,7 @@ func (r *organizationPermissionRepository) FindByKeyAndOrganizationId(ctx contex
 	return OrganizationPermissionModelToEntity(&model), nil
 }
 
-func (r *organizationPermissionRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationPermission, error) {
 	var models []*OrganizationPermissionModel
 	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error; err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (r *organizationPermissionRepository) FindByOrganizationId(ctx context.Cont
 	return OrganizationPermissionModelsToEntities(models), nil
 }
 
-func (r *organizationPermissionRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationPermission, uint32, error) {
+func (r *OrganizationPermissionRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationPermission, uint32, error) {
 	var permissions []*entity.OrganizationPermission
 	var total int64
 
@@ -160,7 +161,7 @@ func (r *organizationPermissionRepository) FindByOrganizationIdWithPagination(ct
 	return permissions, uint32(total), nil
 }
 
-func (r *organizationPermissionRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationPermission, error) {
 	var model OrganizationPermissionModel
 	err := r.db.Where("organization_id = ? AND key = ?", organizationId, key).First(&model).Error
 	if err != nil {
@@ -172,7 +173,7 @@ func (r *organizationPermissionRepository) FindByOrganizationIdAndKey(ctx contex
 	return OrganizationPermissionModelToEntity(&model), nil
 }
 
-func (r *organizationPermissionRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationPermission, error) {
+func (r *OrganizationPermissionRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationPermission, error) {
 	var model OrganizationPermissionModel
 	err := r.db.Where("key = ?", key).First(&model).Error
 	if err != nil {
@@ -181,7 +182,7 @@ func (r *organizationPermissionRepository) GetByKey(ctx context.Context, key str
 	return OrganizationPermissionModelToEntity(&model), nil
 }
 
-func (r *organizationPermissionRepository) DeletePermission(ctx context.Context, id uint32) error {
+func (r *OrganizationPermissionRepository) DeletePermission(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationPermissionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{

@@ -1,6 +1,11 @@
-package appconfig
+package config
 
 import (
+	"bytes"
+	_ "embed"
+	"log"
+	"organization/env"
+	"organization/internal/server/grpc"
 	"os"
 	"path"
 
@@ -8,34 +13,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	SERVICE_NAME = "organization-service"
-)
+type ConfigApp struct {
+	GRPCServer *grpc.GRPCServer
+}
 
-type DBType string
+//go:embed config.yaml
+var ConfigFile []byte
 
-const (
-	DBTypePostgres DBType = "postgres"
-
-	DefaultDBDNS    = "host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable"
-	DefaultGRPCPort = "50052"
-)
+func NewConfigApp(grpcServer *grpc.GRPCServer) *ConfigApp {
+	return &ConfigApp{
+		GRPCServer: grpcServer,
+	}
+}
 
 var (
-	cfg             *viper.Viper
-	configLogger    = flogging.MustGetLogger("config")
-	PRIMARY_DB_TYPE = DBTypePostgres
-	DB_DNS          = DefaultDBDNS
-	GRPC_PORT       = DefaultGRPCPort
-
-	LOG_WORKER_QUEUE_SIZE = 1000
-
-	CHAT_SERVICE_HOST = "localhost"
-	CHAT_SERVICE_PORT = "50053"
-
-	USER_SERVICE_HOST = "localhost"
-	USER_SERVICE_PORT = "8201"
-	ENV_RUNTIME       = ""
+	cfg          *viper.Viper
+	configLogger = flogging.MustGetLogger("config")
 )
 
 func InitConfig() {
@@ -64,67 +57,76 @@ func loadConfig() {
 	if err := cfg.ReadInConfig(); err != nil {
 		configLogger.Fatalf("Error parsing config file: %s", err)
 	}
+
+	viper.SetConfigType("yaml") // 👈 cần thiết!
+	viper.AutomaticEnv()
+
+	// Đọc file config
+	err := viper.ReadConfig(bytes.NewReader(ConfigFile))
+	if err != nil {
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	}
 }
 
 func readConfig() error {
 	dbType := cfg.GetString("Database.PRIMARY_DB_TYPE")
-	PRIMARY_DB_TYPE = DBType(dbType)
-	if PRIMARY_DB_TYPE != DBTypePostgres {
+	env.PRIMARY_DB_TYPE = env.DBType(dbType)
+	if env.PRIMARY_DB_TYPE != env.DBTypePostgres {
 		configLogger.Warnf("Unsupported database type: %s, using default: postgres", dbType)
-		PRIMARY_DB_TYPE = DBTypePostgres
+		env.PRIMARY_DB_TYPE = env.DBTypePostgres
 	}
 
 	if dns := cfg.GetString("Database.DB_DNS"); dns != "" {
-		DB_DNS = dns
+		env.DB_DNS = dns
 	} else {
-		configLogger.Warnf("Database DNS not specified, using default: %s", DefaultDBDNS)
+		configLogger.Warnf("Database DNS not specified, using default: %s", env.DefaultDBDNS)
 	}
 
 	if port := cfg.GetString("GRPC.PORT"); port != "" {
-		GRPC_PORT = port
+		env.GRPC_PORT = port
 	} else {
-		configLogger.Warnf("GRPC port not specified, using default: %s", DefaultGRPCPort)
+		configLogger.Warnf("GRPC port not specified, using default: %s", env.DefaultGRPCPort)
 	}
 
 	if chatServiceHost := cfg.GetString("GRPC.CHAT_SERVICE_HOST"); chatServiceHost != "" {
-		CHAT_SERVICE_HOST = chatServiceHost
+		env.CHAT_SERVICE_HOST = chatServiceHost
 		configLogger.Infof("Chat service host specified: %s", chatServiceHost)
 	} else {
-		configLogger.Warnf("Chat service host not specified, using default: %s", CHAT_SERVICE_HOST)
+		configLogger.Warnf("Chat service host not specified, using default: %s", env.CHAT_SERVICE_HOST)
 	}
 	if chatServicePort := cfg.GetString("GRPC.CHAT_SERVICE_PORT"); chatServicePort != "" {
-		CHAT_SERVICE_PORT = chatServicePort
+		env.CHAT_SERVICE_PORT = chatServicePort
 		configLogger.Infof("Chat service port specified: %s", chatServicePort)
 	} else {
-		configLogger.Warnf("Chat service port not specified, using default: %s", CHAT_SERVICE_PORT)
+		configLogger.Warnf("Chat service port not specified, using default: %s", env.CHAT_SERVICE_PORT)
 	}
 
 	if workerQueueSize := cfg.GetInt("Queue.WORKER_QUEUE_SIZE"); workerQueueSize != 0 {
-		LOG_WORKER_QUEUE_SIZE = workerQueueSize
+		env.LOG_WORKER_QUEUE_SIZE = workerQueueSize
 		configLogger.Infof("Worker queue size specified: %d", workerQueueSize)
 	} else {
-		configLogger.Warnf("Worker queue size not specified, using default: %d", LOG_WORKER_QUEUE_SIZE)
+		configLogger.Warnf("Worker queue size not specified, using default: %d", env.LOG_WORKER_QUEUE_SIZE)
 	}
 
 	if userServiceHost := cfg.GetString("GRPC.USER_SERVICE_HOST"); userServiceHost != "" {
-		USER_SERVICE_HOST = userServiceHost
+		env.USER_SERVICE_HOST = userServiceHost
 		configLogger.Infof("User service host specified: %s", userServiceHost)
 	} else {
-		configLogger.Warnf("User service host not specified, using default: %s", USER_SERVICE_HOST)
+		configLogger.Warnf("User service host not specified, using default: %s", env.USER_SERVICE_HOST)
 	}
 
 	if userServicePort := cfg.GetString("GRPC.USER_SERVICE_PORT"); userServicePort != "" {
-		USER_SERVICE_PORT = userServicePort
+		env.USER_SERVICE_PORT = userServicePort
 		configLogger.Infof("User service port specified: %s", userServicePort)
 	} else {
-		configLogger.Warnf("User service port not specified, using default: %s", USER_SERVICE_PORT)
+		configLogger.Warnf("User service port not specified, using default: %s", env.USER_SERVICE_PORT)
 	}
 
 	if envRuntime := cfg.GetString("ENV_RUNTIME"); envRuntime != "" {
-		ENV_RUNTIME = envRuntime
+		env.ENV_RUNTIME = envRuntime
 		configLogger.Infof("Environment runtime specified: %s", envRuntime)
 	} else {
-		configLogger.Warnf("Environment runtime not specified, using default: %s", ENV_RUNTIME)
+		configLogger.Warnf("Environment runtime not specified, using default: %s", env.ENV_RUNTIME)
 	}
 
 	return nil

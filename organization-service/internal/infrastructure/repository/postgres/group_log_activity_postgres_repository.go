@@ -4,21 +4,21 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
 type GroupLogActivityModel struct {
-	Id        uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_log_activities_created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32    `gorm:"not null;index:idx_group_log_activities_created_by"`
-	UpdatedBy uint32    `gorm:"not null"`
-	GroupId   uint32    `gorm:"not null;index:idx_group_log_activities_group_id"`
-	ActorId   uint32    `gorm:"not null;index:idx_group_log_activities_actor_id"`
-	LogType   string    `gorm:"not null;index:idx_group_log_activities_type"`
-	LogData   string    `gorm:"not null"`
+	Id        uint32     `gorm:"primaryKey;autoIncrement"`
+	CreatedAt time.Time  `gorm:"autoCreateTime;index:idx_group_log_activities_created_at"`
+	UpdatedAt time.Time  `gorm:"autoUpdateTime"`
+	CreatedBy uint32     `gorm:"not null;index:idx_group_log_activities_created_by"`
+	UpdatedBy uint32     `gorm:"not null"`
+	GroupId   uint32     `gorm:"not null;index:idx_group_log_activities_group_id"`
+	ActorId   uint32     `gorm:"not null;index:idx_group_log_activities_actor_id"`
+	LogType   string     `gorm:"not null;index:idx_group_log_activities_type"`
+	LogData   string     `gorm:"not null"`
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
 }
@@ -56,15 +56,16 @@ func GroupLogActivityEntityToModel(entity *entity.GroupLogActivity) *GroupLogAct
 	}
 }
 
-type groupLogActivityPostgresRepository struct {
+// @bind: organization/internal/domain/repository.GroupLogActivityRepository
+type GroupLogActivityPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewGroupLogActivityPostgresRepository(db *gorm.DB) repository.GroupLogActivityRepository {
-	return &groupLogActivityPostgresRepository{db: db}
+func NewGroupLogActivityPostgresRepository(db *gorm.DB) *GroupLogActivityPostgresRepository {
+	return &GroupLogActivityPostgresRepository{db: db}
 }
 
-func (r *groupLogActivityPostgresRepository) Create(ctx context.Context, activity *entity.GroupLogActivity) (*entity.GroupLogActivity, error) {
+func (r *GroupLogActivityPostgresRepository) Create(ctx context.Context, activity *entity.GroupLogActivity) (*entity.GroupLogActivity, error) {
 	model := GroupLogActivityEntityToModel(activity)
 	model.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(model).Error
@@ -74,7 +75,7 @@ func (r *groupLogActivityPostgresRepository) Create(ctx context.Context, activit
 	return GroupLogActivityModelToEntity(model), nil
 }
 
-func (r *groupLogActivityPostgresRepository) Update(ctx context.Context, activity *entity.GroupLogActivity) (*entity.GroupLogActivity, error) {
+func (r *GroupLogActivityPostgresRepository) Update(ctx context.Context, activity *entity.GroupLogActivity) (*entity.GroupLogActivity, error) {
 	model := GroupLogActivityEntityToModel(activity)
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", activity.Id, false).Updates(model).Error
 	if err != nil {
@@ -83,16 +84,16 @@ func (r *groupLogActivityPostgresRepository) Update(ctx context.Context, activit
 	return GroupLogActivityModelToEntity(model), nil
 }
 
-func (r *groupLogActivityPostgresRepository) Delete(ctx context.Context, id uint32) error {
+func (r *GroupLogActivityPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&GroupLogActivityModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
 
-func (r *groupLogActivityPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupLogActivity, error) {
+func (r *GroupLogActivityPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupLogActivity, error) {
 	var model GroupLogActivityModel
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error
 	if err != nil {
@@ -101,7 +102,7 @@ func (r *groupLogActivityPostgresRepository) GetByID(ctx context.Context, id uin
 	return GroupLogActivityModelToEntity(&model), nil
 }
 
-func (r *groupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupLogActivity, uint32, error) {
+func (r *GroupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupLogActivity, uint32, error) {
 	var models []*GroupLogActivityModel
 	if err := r.db.WithContext(ctx).
 		Where("group_id = ? AND is_deleted = ?", groupID, false).
@@ -124,7 +125,7 @@ func (r *groupLogActivityPostgresRepository) GetByGroupID(ctx context.Context, g
 	return entities, uint32(count), nil
 }
 
-func (r *groupLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.GroupLogActivity, error) {
+func (r *GroupLogActivityPostgresRepository) GetByActorID(ctx context.Context, actorID uint32) ([]*entity.GroupLogActivity, error) {
 	var models []*GroupLogActivityModel
 	if err := r.db.WithContext(ctx).Where("actor_id = ?", actorID).Find(&models).Error; err != nil {
 		return nil, err

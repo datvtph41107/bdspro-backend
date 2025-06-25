@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
 )
 
 type OrganizationLogActivityUsecase interface {
@@ -38,4 +38,4 @@ func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByOrganizat
 
 func (u *organizationLogActivityUsecase) GetOrganizationLogActivitiesByActorID(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error) {
 	return u.organizationLogActivityRepository.GetByActorIDWithPagination(ctx, actorID, page, size)
-} 
+}

@@ -5,11 +5,11 @@ import (
 
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
+	"organization/pkg/utils"
 )
 
 type GroupMemberHandler struct {
@@ -46,7 +46,7 @@ func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *org
 
 	member := h.groupMemberTransformer.CreateGroupMemberRequestToEntity(request)
 
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	member.CreatedBy = currentUserId
 	member.UpdatedBy = currentUserId
 
@@ -72,7 +72,7 @@ func (h *GroupMemberHandler) UpdateGroupMember(ctx context.Context, request *org
 	}
 
 	member := h.groupMemberTransformer.UpdateGroupMemberRequestToEntity(request)
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	member.UpdatedBy = currentUserId
 	member.CreatedBy = currentUserId
 
@@ -112,7 +112,8 @@ func (h *GroupMemberHandler) DeleteGroupMember(ctx context.Context, request *org
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Router /group-member/{groupId} [get]
+// @Param groupMemberId path int true "ID của thành viên"
+// @Router /group-member/{groupMemberId} [get]
 func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *organizationpb.GetGroupMemberRequest) (*organizationpb.GetGroupMemberResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMemberRequest(request); err != nil {
 		return nil, err
@@ -133,7 +134,7 @@ func (h *GroupMemberHandler) GetGroupMember(ctx context.Context, request *organi
 // @Produce json
 // @Param groupId path int true "ID của nhóm"
 // @Security BearerAuth
-// @Router /group-member/list [get]
+// @Router /group-member/list/{groupId} [get]
 func (h *GroupMemberHandler) GetGroupMembers(ctx context.Context, request *organizationpb.GetGroupMembersRequest) (*organizationpb.GetGroupMembersResponse, error) {
 	if err := h.groupMemberValidator.ValidateGetGroupMembersRequest(request); err != nil {
 		return nil, err

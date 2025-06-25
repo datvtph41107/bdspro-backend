@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/env"
+	"organization/internal/domain/entity"
 )
 
 type LogEvent struct {
@@ -22,7 +22,7 @@ type LogWorker struct {
 func NewLogWorker(logUsecase GroupLogActivityUsecase) *LogWorker {
 	worker := &LogWorker{
 		logUsecase: logUsecase,
-		queue:      make(chan LogEvent, appconfig.LOG_WORKER_QUEUE_SIZE),
+		queue:      make(chan LogEvent, env.LOG_WORKER_QUEUE_SIZE),
 	}
 
 	go worker.start()
@@ -47,4 +47,4 @@ func (w *LogWorker) Push(event LogEvent) {
 	default:
 		// Queue full, drop or log error
 	}
-} 
+}

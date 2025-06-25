@@ -3,8 +3,8 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/interface/dto"
+	"organization/internal/domain/entity"
+	"organization/internal/interface/dto"
 )
 
 type OrganizationMemberTransformer interface {

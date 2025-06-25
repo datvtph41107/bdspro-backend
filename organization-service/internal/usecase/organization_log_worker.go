@@ -3,15 +3,15 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/env"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationLogEvent struct {
 	OrganizationId uint32
-	ActorId uint32
-	LogType string
-	LogData string
+	ActorId        uint32
+	LogType        string
+	LogData        string
 }
 
 type OrganizationLogWorker struct {
@@ -22,7 +22,7 @@ type OrganizationLogWorker struct {
 func NewOrganizationLogWorker(logUsecase OrganizationLogActivityUsecase) *OrganizationLogWorker {
 	worker := &OrganizationLogWorker{
 		logUsecase: logUsecase,
-		queue:      make(chan OrganizationLogEvent, appconfig.LOG_WORKER_QUEUE_SIZE),
+		queue:      make(chan OrganizationLogEvent, env.LOG_WORKER_QUEUE_SIZE),
 	}
 
 	go worker.start()
@@ -33,9 +33,9 @@ func (w *OrganizationLogWorker) start() {
 	for event := range w.queue {
 		log := &entity.OrganizationLogActivity{
 			OrganizationId: event.OrganizationId,
-			ActorId: event.ActorId,
-			LogType: event.LogType,
-			LogData: event.LogData,
+			ActorId:        event.ActorId,
+			LogType:        event.LogType,
+			LogData:        event.LogData,
 		}
 		_, _ = w.logUsecase.CreateOrganizationLogActivity(context.Background(), log)
 	}
@@ -47,4 +47,4 @@ func (w *OrganizationLogWorker) Push(event OrganizationLogEvent) {
 	default:
 		// Queue full, drop or log error
 	}
-} 
+}

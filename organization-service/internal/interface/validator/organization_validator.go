@@ -7,8 +7,9 @@ import (
 
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

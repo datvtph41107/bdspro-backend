@@ -7,7 +7,68 @@ definitions:
       userId:
         type: integer
     type: object
+  organizationpb.BankAccountItem:
+    properties:
+      accountName:
+        type: string
+      accountNumber:
+        type: string
+      bankName:
+        type: string
+      name:
+        type: string
+    type: object
   organizationpb.CheckOrganizationIsExistRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.CreateGroupDealRequest:
+    properties:
+      amount:
+        type: number
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankAccountId:
+        type: integer
+      chargePersonId:
+        type: integer
+      customerIds:
+        items:
+          type: integer
+        type: array
+      dealType:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      groupId:
+        type: integer
+      memberIds:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      ownerId:
+        type: integer
+      partnerIds:
+        items:
+          type: integer
+        type: array
+      productIds:
+        items:
+          type: integer
+        type: array
+      status:
+        type: integer
+      targetProfit:
+        type: number
+    type: object
+  organizationpb.CreateGroupDealResponse:
     properties:
       id:
         type: integer
@@ -110,6 +171,11 @@ definitions:
           type: integer
         type: array
     type: object
+  organizationpb.DeleteGroupDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
   organizationpb.DeleteGroupDocumentRequest:
     properties:
       id:
@@ -118,6 +184,31 @@ definitions:
   organizationpb.DeleteOrganizationBranchRequest:
     properties:
       id:
+        type: integer
+    type: object
+  organizationpb.DocumentItem:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      type:
+        type: string
+    type: object
+  organizationpb.GetGroupDealResponse:
+    properties:
+      deal:
+        $ref: '#/definitions/organizationpb.GroupDeal'
+    type: object
+  organizationpb.GetGroupDealsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.GroupDeal'
+        type: array
+      total:
         type: integer
     type: object
   organizationpb.GetOrganizationsRequest:
@@ -129,11 +220,92 @@ definitions:
       size:
         type: integer
     type: object
+  organizationpb.GroupDeal:
+    properties:
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      createdAt:
+        type: string
+      customers:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      dealType:
+        type: integer
+      dealTypeName:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      id:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      numMember:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      partners:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/pb_bdspro.ProductItem'
+        type: array
+      profitAmount:
+        type: number
+      status:
+        type: integer
+      targetProfit:
+        type: number
+      totalAmount:
+        type: number
+      updatedAt:
+        type: string
+    type: object
   organizationpb.RemoveMemberFromOrganizationBranchRequest:
     properties:
       id:
         type: integer
       userId:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealRequest:
+    properties:
+      amount:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusRequest:
+    properties:
+      id:
+        type: integer
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusResponse:
+    properties:
+      id:
         type: integer
     type: object
   organizationpb.UpdateGroupDocumentRequest:
@@ -232,6 +404,40 @@ definitions:
           type: integer
         type: array
     type: object
+  pb_bdspro.ProductItem:
+    properties:
+      area:
+        type: number
+      createdAt:
+        type: integer
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      ownerType:
+        type: integer
+      ownerUserId:
+        type: integer
+      price:
+        type: number
+      productId:
+        type: integer
+      updatedAt:
+        type: integer
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
 info:
   contact: {}
   description: Organization Service API
@@ -276,6 +482,148 @@ paths:
       summary: Tạo nhóm
       tags:
       - Nhóm
+  /group-deal:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ
+      parameters:
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetGroupDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ
+      tags:
+      - Thương vụ
+    post:
+      consumes:
+      - application/json
+      description: Tạo thương vụ
+      parameters:
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.CreateGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo thương vụ
+      tags:
+      - Thương vụ
+  /group-deal/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.DeleteGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa thương vụ
+      tags:
+      - Thương vụ
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin thương vụ
+      tags:
+      - Thương vụ
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thương vụ
+      parameters:
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thương vụ
+      tags:
+      - Thương vụ
+  /group-deal/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái thương vụ
+      parameters:
+      - description: Thông tin cập nhật trạng thái thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDealStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateGroupDealStatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái thương vụ
+      tags:
+      - Thương vụ
   /group-member:
     post:
       consumes:
@@ -296,11 +644,17 @@ paths:
       summary: Tạo thành viên nhóm
       tags:
       - Thành viên
-  /group-member/{groupId}:
+  /group-member/{groupMemberId}:
     get:
       consumes:
       - application/json
       description: Lấy thành viên nhóm
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: groupMemberId
+        required: true
+        type: integer
       produces:
       - application/json
       responses: {}
@@ -347,7 +701,7 @@ paths:
       summary: Cập nhật thành viên nhóm
       tags:
       - Thành viên
-  /group-member/list:
+  /group-member/list/{groupId}:
     get:
       consumes:
       - application/json

@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	grpcserver "organization/cmd/grpc"
+
 	"github.com/spf13/cobra"
-	grpcserver "github.com/tuandq2112/organization-service/cmd/grpc_server"
 )
 
 var RootCmd = &cobra.Command{

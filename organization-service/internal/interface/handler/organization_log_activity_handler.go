@@ -5,9 +5,9 @@ import (
 
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
 )
 
 type OrganizationLogActivityHandler struct {
@@ -52,8 +52,8 @@ func (h *OrganizationLogActivityHandler) GetOrganizationLogActivitiesByOrganizat
 	}
 	if req.Size != nil {
 		size = int(*req.Size)
-	}	
-	logs,total, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByOrganizationID(ctx, req.OrganizationId, page, size)
+	}
+	logs, total, err := h.OrganizationLogActivityUsecase.GetOrganizationLogActivitiesByOrganizationID(ctx, req.OrganizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -79,4 +79,4 @@ func (h *OrganizationLogActivityHandler) GetOrganizationLogActivitiesByActorID(c
 		return nil, err
 	}
 	return h.OrganizationLogActivityTransformer.EntityToGetOrganizationLogActivitiesByActorIDResponse(logs, total), nil
-} 
+}

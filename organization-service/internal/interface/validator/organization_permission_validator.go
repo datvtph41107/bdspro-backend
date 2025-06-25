@@ -1,8 +1,9 @@
 package validator
 
 import (
+	"organization/internal/custom_error"
 	organizationpb "pb/types/organization"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -45,7 +46,7 @@ func (v *organizationPermissionValidator) ValidateCreatePermissionRequest(req *o
 			},
 		})
 	}
-	
+
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
@@ -71,7 +72,7 @@ func (v *organizationPermissionValidator) ValidateUpdatePermissionRequest(req *o
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "key",		
+					Field:       "key",
 					Description: "key is required",
 				},
 			},
@@ -80,7 +81,7 @@ func (v *organizationPermissionValidator) ValidateUpdatePermissionRequest(req *o
 
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
-	}	
+	}
 
 	return nil
 }
@@ -108,8 +109,6 @@ func (v *organizationPermissionValidator) ValidateDeletePermissionRequest(req *o
 
 func (v *organizationPermissionValidator) ValidateGetPermissionsRequest(req *organizationpb.GetPermissionsRequest) error {
 	details := []protoadapt.MessageV1{}
-
-	
 
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)

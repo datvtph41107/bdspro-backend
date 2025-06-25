@@ -3,7 +3,7 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationTransformer interface {
@@ -42,15 +42,15 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 
 func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization {
 	return &entity.Organization{
-		ID: request.Id,
-		Name: request.Name,
-		TaxCode: request.TaxCode,
+		ID:                 request.Id,
+		Name:               request.Name,
+		TaxCode:            request.TaxCode,
 		BusinessLicenseUrl: request.BusinessLicenseUrl,
-		Address: request.Address,
-		Phone: request.Phone,	
-		Email: request.Email,
-		Website: request.Website,
-		LogoUrl: request.LogoUrl,
+		Address:            request.Address,
+		Phone:              request.Phone,
+		Email:              request.Email,
+		Website:            request.Website,
+		LogoUrl:            request.LogoUrl,
 	}
 }
 
@@ -64,7 +64,7 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
 		organizationsResponse[i] = &organizationpb.Organization{
-			Id:                  org.ID,
+			Id:                 org.ID,
 			Name:               org.Name,
 			TaxCode:            org.TaxCode,
 			BusinessLicenseUrl: org.BusinessLicenseUrl,
@@ -77,7 +77,7 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 	}
 	return &organizationpb.GetOrganizationsResponse{
 		Organizations: organizationsResponse,
-		Total:        total,
+		Total:         total,
 	}
 }
 
@@ -85,13 +85,13 @@ func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(orga
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
 		organizationsResponse[i] = &organizationpb.Organization{
-			Id: org.ID,
-			Name: org.Name,
-			TaxCode: org.TaxCode,
+			Id:                 org.ID,
+			Name:               org.Name,
+			TaxCode:            org.TaxCode,
 			BusinessLicenseUrl: org.BusinessLicenseUrl,
-			Address: org.Address,
-			Phone: org.Phone,
-			Email: org.Email,
+			Address:            org.Address,
+			Phone:              org.Phone,
+			Email:              org.Email,
 		}
 	}
 	return &organizationpb.GetOrganizationByUserIdResponse{

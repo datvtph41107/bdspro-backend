@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuandq2112/organization-service/cmd"
+	"organization/cmd"
 )
 
 // @title Organization Service

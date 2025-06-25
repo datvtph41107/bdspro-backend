@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 	"fmt"
+	"organization/env"
 	chatpb "pb/types/chat"
 
-	"github.com/tuandq2112/organization-service/appconfig"
 	"google.golang.org/grpc"
 )
 
@@ -19,7 +19,7 @@ type chatClient struct {
 }
 
 func NewChatClient() ChatClient {
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", appconfig.CHAT_SERVICE_HOST, appconfig.CHAT_SERVICE_PORT), grpc.WithInsecure())
+	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", env.CHAT_SERVICE_HOST, env.CHAT_SERVICE_PORT), grpc.WithInsecure())
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to chat service: %v", err))
 	}

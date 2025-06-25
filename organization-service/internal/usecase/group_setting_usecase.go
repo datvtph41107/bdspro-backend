@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/pkg/utils"
 )
 
 type GroupSettingUsecase interface {
@@ -33,7 +33,7 @@ func NewGroupSettingUsecase(groupSettingRepository repository.GroupSettingReposi
 }
 
 func (u *groupSettingUsecase) CreateGroupSetting(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsLeaderGroup(ctx, setting.GroupId, currentUserId)
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to create group setting")
@@ -57,8 +57,8 @@ func (u *groupSettingUsecase) CreateGroupSetting(ctx context.Context, setting *e
 }
 
 func (u *groupSettingUsecase) UpdateGroupSetting(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+
 	setting.UpdatedBy = currentUserId
 	existedSetting, err := u.groupSettingRepository.GetByID(ctx, setting.Id)
 	if err != nil {
@@ -89,7 +89,7 @@ func (u *groupSettingUsecase) UpdateGroupSetting(ctx context.Context, setting *e
 }
 
 func (u *groupSettingUsecase) DeleteGroupSetting(ctx context.Context, id uint32) error {
-	
+
 	setting, err := u.groupSettingRepository.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (u *groupSettingUsecase) DeleteGroupSetting(ctx context.Context, id uint32)
 	if setting == nil {
 		return custom_error.RecordNotFound("group setting not found")
 	}
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsLeaderGroup(ctx, setting.GroupId, currentUserId)
 	if err != nil {
 		return custom_error.Forbidden("you are not allowed to delete group setting")
@@ -119,7 +119,7 @@ func (u *groupSettingUsecase) DeleteGroupSetting(ctx context.Context, id uint32)
 }
 
 func (u *groupSettingUsecase) GetGroupSettingByID(ctx context.Context, id uint32) (*entity.GroupSetting, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	setting, err := u.groupSettingRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (u *groupSettingUsecase) GetGroupSettingByID(ctx context.Context, id uint32
 }
 
 func (u *groupSettingUsecase) GetGroupSettingsByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupSetting, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, groupID, currentUserId)
 	if err != nil {
 		return nil, 0, custom_error.Forbidden("you are not allowed to get group settings")

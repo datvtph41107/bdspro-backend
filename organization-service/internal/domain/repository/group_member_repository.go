@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupMemberRepository interface {
@@ -14,4 +14,4 @@ type GroupMemberRepository interface {
 	GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupMember, error)
 	GetByUserID(ctx context.Context, userID uint32) ([]*entity.GroupMember, error)
 	GetByGroupIDAndUserID(ctx context.Context, groupID uint32, userID uint32) (*entity.GroupMember, error)
-} 
+}

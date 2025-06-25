@@ -3,11 +3,12 @@ package usecase
 import (
 	"context"
 
+	"organization/env"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/pkg/utils"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/pkg/utils"
 )
 
 type GroupUsecase interface {
@@ -43,7 +44,7 @@ func NewGroupUsecase(
 }
 
 func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	group.CreatedBy = currentUserId
 	group.UpdatedBy = currentUserId
 
@@ -68,7 +69,7 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	err := u.groupAuthUsecase.IsLeaderGroup(ctx, group.Id, currentUserId)
 	if err != nil {
@@ -91,7 +92,7 @@ func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsLeaderGroup(ctx, id, currentUserId)
 	if err != nil {
 		return err
@@ -118,7 +119,7 @@ func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
 }
 
 func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, currentUserId)
 	if err != nil {
 		return nil, err
@@ -128,7 +129,7 @@ func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Gro
 }
 
 func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity.Group, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	return u.groupRepository.List(ctx, page, size, currentUserId)
 }

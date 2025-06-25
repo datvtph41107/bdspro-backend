@@ -1,9 +1,9 @@
 package validator
 
 import (
+	"organization/internal/custom_error"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -35,37 +35,37 @@ func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *organizatio
 			},
 		})
 	}
-	if request.Amount <= 0 {
+	if request.TargetProfit <= 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "amount",
-					Description: "amount must be greater than 0",
+					Field:       "targetProfit",
+					Description: "targetProfit must be greater than 0",
 				},
 			},
 		})
 	}
-	if request.Status == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "status",
-					Description: "status is required",
-				},
-			},
-		})
-	}
+	// if request.Status == 0 {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "status",
+	// 				Description: "status is required",
+	// 			},
+	// 		},
+	// 	})
+	// }
 
-	if request.GroupId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "group_id",
-					Description: "group_id is required",
-				},
-			},
-		})
-	}
+	// if request.GroupId == 0 {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "group_id",
+	// 				Description: "group_id is required",
+	// 			},
+	// 		},
+	// 	})
+	// }
 
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
@@ -105,7 +105,7 @@ func (v *groupDealValidator) ValidateUpdateGroupDealRequest(request *organizatio
 			},
 		})
 	}
-	if request.Status == "" {
+	if request.Status == 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
@@ -187,7 +187,7 @@ func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *organ
 			},
 		})
 	}
-	if request.Status == "" {
+	if request.Status == 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{

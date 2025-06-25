@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
@@ -69,26 +69,27 @@ func OrganizationMemberModelsToEntities(models []*OrganizationMemberModel) []*en
 	return entities
 }
 
+// @bind: organization/internal/domain/repository.OrganizationMemberRepository
 type OrganizationMemberPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewOrganizationMemberPostgresRepository(db *gorm.DB) repository.OrganizationMemberRepository {
+func NewOrganizationMemberPostgresRepository(db *gorm.DB) *OrganizationMemberPostgresRepository {
 	return &OrganizationMemberPostgresRepository{db: db}
 }
 
 func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error) {
 	var result struct {
-		ID             uint32 `gorm:"column:id"`
-		UserID         uint32 `gorm:"column:user_id"`
-		OrganizationID uint32 `gorm:"column:organization_id"`
-		RoleId         uint32 `gorm:"column:role"`
-		Status         uint32 `gorm:"column:status"`
-		JoinedAt       time.Time `gorm:"column:joined_at"`
+		ID             uint32     `gorm:"column:id"`
+		UserID         uint32     `gorm:"column:user_id"`
+		OrganizationID uint32     `gorm:"column:organization_id"`
+		RoleId         uint32     `gorm:"column:role"`
+		Status         uint32     `gorm:"column:status"`
+		JoinedAt       time.Time  `gorm:"column:joined_at"`
 		RemovedAt      *time.Time `gorm:"column:removed_at"`
-		RoleKey        string `gorm:"column:role_key"`
-		RoleName       string `gorm:"column:role_name"`
-		Permissions    string `gorm:"column:permissions"`
+		RoleKey        string     `gorm:"column:role_key"`
+		RoleName       string     `gorm:"column:role_name"`
+		Permissions    string     `gorm:"column:permissions"`
 	}
 
 	err := r.db.WithContext(ctx).
@@ -241,7 +242,7 @@ func (r *OrganizationMemberPostgresRepository) DeleteMember(ctx context.Context,
 	return r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 			"removed_at": time.Now(),
 		}).Error

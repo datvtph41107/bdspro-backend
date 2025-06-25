@@ -17,49 +17,6 @@
   ],
   "paths": {
     "/v2/org/group-member": {
-      "get": {
-        "operationId": "GroupMemberService_GetGroupMembers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupMembersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "GroupMemberService"
-        ]
-      },
       "post": {
         "operationId": "GroupMemberService_CreateGroupMember",
         "responses": {
@@ -84,6 +41,51 @@
             "schema": {
               "$ref": "#/definitions/organizationpbCreateGroupMemberRequest"
             }
+          }
+        ],
+        "tags": [
+          "GroupMemberService"
+        ]
+      }
+    },
+    "/v2/org/group-member/list/{groupId}": {
+      "get": {
+        "operationId": "GroupMemberService_GetGroupMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -243,7 +245,7 @@
     "organizationpbGetGroupMembersResponse": {
       "type": "object",
       "properties": {
-        "members": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

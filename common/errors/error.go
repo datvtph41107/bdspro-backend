@@ -13,3 +13,17 @@ func InvalidRequest(details ...protoadapt.MessageV1) error {
 	}
 	return st.Err()
 }
+
+func ThrowError(code int32, err error, details ...protoadapt.MessageV1) error {
+	st := status.New(codes.Code(code), err.Error())
+
+	if len(details) > 0 {
+		stWithDetails, errDetails := st.WithDetails(details...)
+		if errDetails != nil {
+			return st.Err()
+		}
+		return stWithDetails.Err()
+	}
+
+	return st.Err()
+}

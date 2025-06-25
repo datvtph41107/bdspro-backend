@@ -4,11 +4,11 @@ import (
 	_utils "common/utils"
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/pkg/utils"
 )
 
 type OrganizationUsecase interface {
@@ -42,7 +42,7 @@ func NewOrganizationUsecase(
 }
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, currentUserId)
 	if err != nil {
@@ -76,9 +76,9 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 }
 
 func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organizati
 }
 
 func (o *organizationUsecase) GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, currentUserId, offset, limit)
 }
 

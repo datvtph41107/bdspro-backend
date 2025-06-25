@@ -7,13 +7,14 @@ import (
 	sharepb "pb/types/shared"
 	"time"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/internal/infrastructure/client"
-	"github.com/tuandq2112/organization-service/internal/interface/dto"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/internal/infrastructure/client"
+	"organization/internal/interface/dto"
+	"organization/pkg/utils"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -38,7 +39,7 @@ type organizationMemberUsecase struct {
 	organizationAuthUsecase          OrganizationAuthUsecase
 	planLimit                        map[string]uint32
 	logWorker                        *OrganizationLogWorker
-	userGrpcClient                   client.UserClient
+	userGrpcClient                   client.IUserClient
 }
 
 func NewOrganizationMemberUsecase(
@@ -48,7 +49,7 @@ func NewOrganizationMemberUsecase(
 	organizationPermissionRepository repository.OrganizationPermissionRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
-	userGrpcClient client.UserClient,
+	userGrpcClient client.IUserClient,
 ) OrganizationMemberUsecase {
 	return &organizationMemberUsecase{
 		organizationMemberRepository:     organizationMemberRepository,
@@ -73,9 +74,9 @@ func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx co
 }
 
 func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	if count >= uint32(appconfig.MAX_ORGANIZATION_MEMBERS) {
+	if count >= uint32(env.MAX_ORGANIZATION_MEMBERS) {
 		return nil, custom_error.Forbidden("Organization has reached maximum number of members")
 	}
 	exist, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, organizationMember.UserID, uint32(organizationId))
@@ -125,9 +126,9 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 }
 
 func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 }
 
 func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	member, err := u.organizationMemberRepository.FindById(ctx, memberId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -175,7 +176,7 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 		return nil, custom_error.RecordNotFound("Organization member not found")
 	}
 
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, member.OrganizationID, appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, member.OrganizationID, env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -201,9 +202,9 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 
 // GetOrganizationMembers retrieves all members of an organization with pagination
 func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -241,7 +242,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, uint32(profileId), uint32(currentOrgId), appconfig.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, uint32(profileId), uint32(currentOrgId), env.ADMIN_ROLE_KEY)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -1,16 +1,18 @@
 package usecase
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/custom_error"
+	"organization/internal/domain/repository"
 )
 
 type GroupAuthUsecase interface {
 	IsLeaderGroup(ctx context.Context, groupId uint32, userId uint32) error
 	IsMemberGroup(ctx context.Context, groupId uint32, userId uint32) error
+	CanAccessGroup(ctx context.Context, groupId uint32) error
 }
 
 type groupAuthUsecase struct {
@@ -51,6 +53,20 @@ func (u *groupAuthUsecase) IsMemberGroup(ctx context.Context, groupId uint32, us
 		return err
 	}
 
+	if groupMember == nil {
+		return custom_error.RecordNotFound(fmt.Sprintf("user %d is not a member of group %d", userId, groupId))
+	}
+
+	return nil
+}
+
+func (u *groupAuthUsecase) CanAccessGroup(ctx context.Context, groupId uint32) error {
+	// organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	userId := _utils.GetProfileIdWithContext(ctx)
+	groupMember, err := u.groupMemberRepository.GetByGroupIDAndUserID(ctx, groupId, uint32(userId))
+	if err != nil {
+		return err
+	}
 	if groupMember == nil {
 		return custom_error.RecordNotFound(fmt.Sprintf("user %d is not a member of group %d", userId, groupId))
 	}

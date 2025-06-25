@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/group-deal": {
+    "/v2/org/group-deal": {
       "get": {
         "operationId": "GroupDealService_GetGroupDeals",
         "responses": {
@@ -59,48 +59,7 @@
         "tags": [
           "GroupDealService"
         ]
-      }
-    },
-    "/v2/group-deal/{id}/status": {
-      "put": {
-        "operationId": "GroupDealService_UpdateGroupDealStatus",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbUpdateGroupDealStatusResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusBody"
-            }
-          }
-        ],
-        "tags": [
-          "GroupDealService"
-        ]
-      }
-    },
-    "/v2/org/group-deal": {
+      },
       "post": {
         "operationId": "GroupDealService_CreateGroupDeal",
         "responses": {
@@ -228,6 +187,45 @@
           "GroupDealService"
         ]
       }
+    },
+    "/v2/org/group-deal/{id}/status": {
+      "put": {
+        "operationId": "GroupDealService_UpdateGroupDealStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupDealStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -242,7 +240,8 @@
           "format": "double"
         },
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -250,7 +249,8 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -265,7 +265,8 @@
           "format": "double"
         },
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "groupId": {
           "type": "integer",
@@ -302,7 +303,7 @@
     "organizationpbGetGroupDealsResponse": {
       "type": "object",
       "properties": {
-        "deals": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -330,6 +331,47 @@
           "format": "double"
         },
         "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductItem"
+          }
+        },
+        "dealTypeName": {
           "type": "string"
         }
       }
@@ -349,6 +391,47 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproProductItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

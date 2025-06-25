@@ -4,7 +4,7 @@ import (
 	organizationpb "pb/types/organization"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupNotificationTransformer interface {

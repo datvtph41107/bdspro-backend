@@ -3,8 +3,8 @@ package transformer
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/interface/dto"
+	"organization/internal/domain/entity"
+	"organization/internal/interface/dto"
 )
 
 type GroupMemberTransformer interface {
@@ -62,13 +62,13 @@ func (t *groupMemberTransformer) EntityToGetGroupMemberResponse(member *entity.G
 
 func (t *groupMemberTransformer) EntityToGetGroupMembersResponse(members []*dto.GroupMemberWithProfile) *organizationpb.GetGroupMembersResponse {
 	response := &organizationpb.GetGroupMembersResponse{
-		Members: make([]*organizationpb.GroupMember, 0, len(members)),
+		Data: make([]*organizationpb.GroupMember, 0, len(members)),
 	}
 
 	for _, member := range members {
 		profile := member.Profile
 		profile.Phone = ""
-		response.Members = append(response.Members, &organizationpb.GroupMember{
+		response.Data = append(response.Data, &organizationpb.GroupMember{
 			Id:      member.GroupMember.Id,
 			GroupId: member.GroupMember.GroupId,
 			UserId:  member.GroupMember.UserId,

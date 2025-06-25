@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupNotificationRepository interface {
@@ -12,4 +12,4 @@ type GroupNotificationRepository interface {
 	Delete(ctx context.Context, id uint32) error
 	GetByID(ctx context.Context, id uint32) (*entity.GroupNotification, error)
 	GetByGroupID(ctx context.Context, groupID uint32) ([]*entity.GroupNotification, error)
-} 
+}

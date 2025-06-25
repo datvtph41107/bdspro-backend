@@ -6,19 +6,18 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
 )
 
 type GroupSettingModel struct {
-	Id        uint32    `gorm:"primaryKey;autoIncrement"`
-	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_settings_created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	CreatedBy uint32    `gorm:"not null;index:idx_group_settings_created_by"`
-	UpdatedBy uint32    `gorm:"not null"`
-	GroupId     uint32 `gorm:"not null;index:idx_group_settings_group_id"`
-	ConfigKey   string `gorm:"not null;index:idx_group_settings_config_key"`
-	ConfigValue string `gorm:"not null"`
+	Id          uint32     `gorm:"primaryKey;autoIncrement"`
+	CreatedAt   time.Time  `gorm:"autoCreateTime;index:idx_group_settings_created_at"`
+	UpdatedAt   time.Time  `gorm:"autoUpdateTime"`
+	CreatedBy   uint32     `gorm:"not null;index:idx_group_settings_created_by"`
+	UpdatedBy   uint32     `gorm:"not null"`
+	GroupId     uint32     `gorm:"not null;index:idx_group_settings_group_id"`
+	ConfigKey   string     `gorm:"not null;index:idx_group_settings_config_key"`
+	ConfigValue string     `gorm:"not null"`
 	DeletedAt   *time.Time `gorm:"index"`
 	IsDeleted   bool       `gorm:"default:false"`
 }
@@ -54,15 +53,16 @@ func GroupSettingEntityToModel(entity *entity.GroupSetting) *GroupSettingModel {
 	}
 }
 
-type groupSettingPostgresRepository struct {
+// @bind: organization/internal/domain/repository.GroupSettingRepository
+type GroupSettingPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewGroupSettingPostgresRepository(db *gorm.DB) repository.GroupSettingRepository {
-	return &groupSettingPostgresRepository{db: db}
+func NewGroupSettingPostgresRepository(db *gorm.DB) *GroupSettingPostgresRepository {
+	return &GroupSettingPostgresRepository{db: db}
 }
 
-func (r *groupSettingPostgresRepository) Create(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
+func (r *GroupSettingPostgresRepository) Create(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
 	model := GroupSettingEntityToModel(setting)
 	model.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(model).Error
@@ -72,7 +72,7 @@ func (r *groupSettingPostgresRepository) Create(ctx context.Context, setting *en
 	return GroupSettingModelToEntity(model), nil
 }
 
-func (r *groupSettingPostgresRepository) Update(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
+func (r *GroupSettingPostgresRepository) Update(ctx context.Context, setting *entity.GroupSetting) (*entity.GroupSetting, error) {
 	model := GroupSettingEntityToModel(setting)
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", setting.Id, false).Updates(model).Error
 	if err != nil {
@@ -81,16 +81,16 @@ func (r *groupSettingPostgresRepository) Update(ctx context.Context, setting *en
 	return GroupSettingModelToEntity(model), nil
 }
 
-func (r *groupSettingPostgresRepository) Delete(ctx context.Context, id uint32) error {
+func (r *GroupSettingPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&GroupSettingModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
 
-func (r *groupSettingPostgresRepository) GetByConfigKey(ctx context.Context, configKey string) (*entity.GroupSetting, error) {
+func (r *GroupSettingPostgresRepository) GetByConfigKey(ctx context.Context, configKey string) (*entity.GroupSetting, error) {
 	var model *GroupSettingModel
 	if err := r.db.WithContext(ctx).Where("config_key = ? AND is_deleted = ?", configKey, false).First(&model).Error; err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (r *groupSettingPostgresRepository) GetByConfigKey(ctx context.Context, con
 	return GroupSettingModelToEntity(model), nil
 }
 
-func (r *groupSettingPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupSetting, error) {
+func (r *GroupSettingPostgresRepository) GetByID(ctx context.Context, id uint32) (*entity.GroupSetting, error) {
 	var model GroupSettingModel
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error
 	if err != nil {
@@ -107,7 +107,7 @@ func (r *groupSettingPostgresRepository) GetByID(ctx context.Context, id uint32)
 	return GroupSettingModelToEntity(&model), nil
 }
 
-func (r *groupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupSetting, uint32, error) {
+func (r *GroupSettingPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupSetting, uint32, error) {
 	var models []*GroupSettingModel
 	if err := r.db.WithContext(ctx).
 		Where("group_id = ? AND is_deleted = ?", groupID, false).

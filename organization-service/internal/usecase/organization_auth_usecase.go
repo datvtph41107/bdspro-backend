@@ -4,8 +4,9 @@ import (
 	_errors "common/errors"
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/custom_error"
+	"organization/internal/domain/repository"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 

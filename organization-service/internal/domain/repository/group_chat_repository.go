@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupChatRepository interface {
@@ -11,4 +11,4 @@ type GroupChatRepository interface {
 	GetByGroupID(ctx context.Context, groupID uint32) (*entity.GroupChat, error)
 	GetByConversationID(ctx context.Context, conversationID uint32) (*entity.GroupChat, error)
 	Delete(ctx context.Context, id uint32) error
-} 
+}

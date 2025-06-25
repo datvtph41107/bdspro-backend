@@ -3,7 +3,8 @@ package validator
 import (
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/internal/custom_error"
+	"organization/internal/custom_error"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -62,4 +63,4 @@ func (v *organizationLogActivityValidator) ValidateGetOrganizationLogActivitiesB
 		return custom_error.InvalidRequest(details...)
 	}
 	return nil
-} 
+}

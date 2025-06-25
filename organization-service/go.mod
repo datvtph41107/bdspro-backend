@@ -1,4 +1,4 @@
-module github.com/tuandq2112/organization-service
+module organization
 
 go 1.24.1
 

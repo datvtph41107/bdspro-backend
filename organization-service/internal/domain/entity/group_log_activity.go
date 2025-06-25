@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type GroupLogActivity struct {
-	Id uint32
+	Id        uint32
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	CreatedBy uint32

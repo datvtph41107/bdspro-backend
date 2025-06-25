@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/custom_error"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/custom_error"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
+	"organization/pkg/utils"
 )
 
 type GroupDocumentUsecase interface {
@@ -20,9 +20,9 @@ type GroupDocumentUsecase interface {
 
 type groupDocumentUsecase struct {
 	groupDocumentRepository repository.GroupDocumentRepository
-	logActivityUsecase     GroupLogActivityUsecase
-	groupAuthUsecase       GroupAuthUsecase
-	}
+	logActivityUsecase      GroupLogActivityUsecase
+	groupAuthUsecase        GroupAuthUsecase
+}
 
 func NewGroupDocumentUsecase(groupDocumentRepository repository.GroupDocumentRepository,
 	logActivityUsecase GroupLogActivityUsecase,
@@ -30,13 +30,13 @@ func NewGroupDocumentUsecase(groupDocumentRepository repository.GroupDocumentRep
 ) GroupDocumentUsecase {
 	return &groupDocumentUsecase{
 		groupDocumentRepository: groupDocumentRepository,
-		logActivityUsecase:     logActivityUsecase,
-		groupAuthUsecase:       groupAuthUsecase,
+		logActivityUsecase:      logActivityUsecase,
+		groupAuthUsecase:        groupAuthUsecase,
 	}
 }
 
 func (u *groupDocumentUsecase) CreateGroupDocument(ctx context.Context, document *entity.GroupDocument) (*entity.GroupDocument, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, document.GroupId, currentUserId)
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to create document")
@@ -55,7 +55,7 @@ func (u *groupDocumentUsecase) UpdateGroupDocument(ctx context.Context, document
 		return nil, custom_error.RecordNotFound("document not found")
 	}
 
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsMemberGroup(ctx, existedDocument.GroupId, currentUserId)
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to update this document")
@@ -76,7 +76,7 @@ func (u *groupDocumentUsecase) DeleteGroupDocument(ctx context.Context, id uint3
 		return custom_error.RecordNotFound("document not found")
 	}
 
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsMemberGroup(ctx, document.GroupId, currentUserId)
 	if err != nil {
 		return custom_error.Forbidden("you are not allowed to delete document")
@@ -95,7 +95,7 @@ func (u *groupDocumentUsecase) GetGroupDocumentByID(ctx context.Context, id uint
 		return nil, custom_error.RecordNotFound("document not found")
 	}
 
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err = u.groupAuthUsecase.IsMemberGroup(ctx, document.GroupId, currentUserId)
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to get document")
@@ -105,11 +105,11 @@ func (u *groupDocumentUsecase) GetGroupDocumentByID(ctx context.Context, id uint
 }
 
 func (u *groupDocumentUsecase) GetGroupDocumentsByGroupID(ctx context.Context, groupID uint32, page, size int) ([]*entity.GroupDocument, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	err := u.groupAuthUsecase.IsMemberGroup(ctx, groupID, currentUserId)
 	if err != nil {
 		return nil, 0, custom_error.Forbidden("you are not allowed to get documents")
 	}
 
 	return u.groupDocumentRepository.GetByGroupID(ctx, groupID, page, size)
-} 
+}

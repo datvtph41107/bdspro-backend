@@ -5,12 +5,12 @@ import (
 
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
+	"organization/env"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
 
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/pkg/utils"
 )
 
 type GroupDocumentHandler struct {
@@ -47,7 +47,7 @@ func (h *GroupDocumentHandler) CreateGroupDocument(ctx context.Context, req *org
 	}
 
 	document := h.GroupDocumentTransformer.CreateGroupDocumentRequestToEntity(req)
-	document.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	document.CreatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	document, err := h.GroupDocumentUsecase.CreateGroupDocument(ctx, document)
 	if err != nil {
@@ -72,7 +72,7 @@ func (h *GroupDocumentHandler) UpdateGroupDocument(ctx context.Context, req *org
 	}
 
 	document := h.GroupDocumentTransformer.UpdateGroupDocumentRequestToEntity(req)
-	document.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	document.UpdatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	document, err := h.GroupDocumentUsecase.UpdateGroupDocument(ctx, document)
 	if err != nil {

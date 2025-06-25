@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type OrganizationLogActivityRepository interface {
@@ -13,4 +13,4 @@ type OrganizationLogActivityRepository interface {
 	GetByActorID(ctx context.Context, actorID uint32) ([]*entity.OrganizationLogActivity, error)
 	GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error)
 	GetByActorIDWithPagination(ctx context.Context, actorID uint32, page, size int) ([]*entity.OrganizationLogActivity, uint32, error)
-} 
+}

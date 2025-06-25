@@ -5,12 +5,12 @@ import (
 	organizationpb "pb/types/organization"
 	"time"
 
-	"github.com/tuandq2112/organization-service/appconfig"
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/interface/transformer"
-	"github.com/tuandq2112/organization-service/internal/interface/validator"
-	"github.com/tuandq2112/organization-service/internal/usecase"
-	"github.com/tuandq2112/organization-service/pkg/utils"
+	"organization/env"
+	"organization/internal/domain/entity"
+	"organization/internal/interface/transformer"
+	"organization/internal/interface/validator"
+	"organization/internal/usecase"
+	"organization/pkg/utils"
 )
 
 type OrganizationHandler struct {
@@ -41,7 +41,7 @@ func NewOrganizationHandler(organizationUsecase usecase.OrganizationUsecase,
 // @Router /organization/new [post]
 func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organizationpb.CreateOrganizationRequest) (*organizationpb.CreateOrganizationResponse, error) {
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
-	organization.CreatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organization.CreatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	member := &entity.OrganizationMember{
 		UserID:   organization.CreatedBy,
@@ -72,7 +72,7 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 	}
 
 	organization := h.OrganizationTransformer.UpdateOrganizationRequestToEntity(req)
-	organization.UpdatedBy = utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	organization.UpdatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	organization, err := h.OrganizationUsecase.UpdateOrganization(ctx, organization)
 	if err != nil {

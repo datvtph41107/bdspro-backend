@@ -568,3 +568,14 @@ func (s *ProductService) GetDetailByIds(ctx context.Context, req *pb_bdspro.IdRe
 		Data: productResponse,
 	}, nil
 }
+
+func (s *ProductService) GetProductAttachmentByIds(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.ProductAttachmentResponse, error) {
+	products, err := s.ProductRepo.GetDetailByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	productResponse := mapper.MapProductAttachmentPbList(products)
+	return &pb_bdspro.ProductAttachmentResponse{
+		Data: productResponse,
+	}, nil
+}

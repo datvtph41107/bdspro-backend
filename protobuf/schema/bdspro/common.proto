@@ -160,6 +160,22 @@ message ProductResponse {
     string wardName = 54;
 }
 
+// dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
+message ProductAttachment {
+    uint64 id = 1;
+    string name = 2;
+    string code = 3;
+    double area = 4;
+    double price = 5;
+    string image = 6;
+    optional uint64 assetId = 7;
+    optional uint64 depositeId = 8;
+    uint32 rentStatus = 9;
+    uint32 saleStatus = 10;
+    int32 sourceType = 11;
+    string sourceTypeName = 12;
+}
+
 message Asset {
     uint64 id = 1;
     string name = 2;
@@ -207,4 +223,16 @@ message ProductInfo {
 	uint64 categoryId = 4;
 	double area = 5;
 	uint64 lastPriceId = 6;
+}
+
+message ProductItem {
+	uint64 id = 1;
+	uint64 productId = 2;
+	double area = 3;
+	double price = 4;
+	uint64 lastPriceId = 5;
+	uint64 ownerUserId = 6;
+	uint64 ownerType = 7;
+	uint64 createdAt = 8;
+	uint64 updatedAt = 9;
 }

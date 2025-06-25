@@ -4,18 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+
 	"gorm.io/gorm"
 )
 
 type GroupChatModel struct {
-	Id             uint32    `gorm:"primaryKey;autoIncrement"`
-	GroupId        uint32    `gorm:"not null;index:idx_group_chats_group_id"`
-	ConversationId uint32    `gorm:"not null;index:idx_group_chats_conversation_id"`
-	CreatedAt      time.Time `gorm:"autoCreateTime;index:idx_group_chats_created_at"`
-	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
-	CreatedBy      uint32    `gorm:"index:idx_group_chats_created_by"`
+	Id             uint32     `gorm:"primaryKey;autoIncrement"`
+	GroupId        uint32     `gorm:"not null;index:idx_group_chats_group_id"`
+	ConversationId uint32     `gorm:"not null;index:idx_group_chats_conversation_id"`
+	CreatedAt      time.Time  `gorm:"autoCreateTime;index:idx_group_chats_created_at"`
+	UpdatedAt      time.Time  `gorm:"autoUpdateTime"`
+	CreatedBy      uint32     `gorm:"index:idx_group_chats_created_by"`
 	DeletedAt      *time.Time `gorm:"index"`
 	IsDeleted      bool       `gorm:"default:false"`
 }
@@ -47,15 +47,16 @@ func GroupChatEntityToModel(entity *entity.GroupChat) *GroupChatModel {
 	}
 }
 
-type groupChatPostgresRepository struct {
+// @bind: organization/internal/domain/repository.GroupChatRepository
+type GroupChatPostgresRepository struct {
 	db *gorm.DB
 }
 
-func NewGroupChatPostgresRepository(db *gorm.DB) repository.GroupChatRepository {
-	return &groupChatPostgresRepository{db: db}
+func NewGroupChatPostgresRepository(db *gorm.DB) *GroupChatPostgresRepository {
+	return &GroupChatPostgresRepository{db: db}
 }
 
-func (r *groupChatPostgresRepository) Create(ctx context.Context, groupChat *entity.GroupChat) (*entity.GroupChat, error) {
+func (r *GroupChatPostgresRepository) Create(ctx context.Context, groupChat *entity.GroupChat) (*entity.GroupChat, error) {
 	model := GroupChatEntityToModel(groupChat)
 	model.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(model).Error
@@ -65,7 +66,7 @@ func (r *groupChatPostgresRepository) Create(ctx context.Context, groupChat *ent
 	return GroupChatModelToEntity(model), nil
 }
 
-func (r *groupChatPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) (*entity.GroupChat, error) {
+func (r *GroupChatPostgresRepository) GetByGroupID(ctx context.Context, groupID uint32) (*entity.GroupChat, error) {
 	var model *GroupChatModel
 	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).First(&model).Error; err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func (r *groupChatPostgresRepository) GetByGroupID(ctx context.Context, groupID 
 	return GroupChatModelToEntity(model), nil
 }
 
-func (r *groupChatPostgresRepository) GetByConversationID(ctx context.Context, conversationID uint32) (*entity.GroupChat, error) {
+func (r *GroupChatPostgresRepository) GetByConversationID(ctx context.Context, conversationID uint32) (*entity.GroupChat, error) {
 	var model *GroupChatModel
 	if err := r.db.WithContext(ctx).Where("conversation_id = ? AND is_deleted = ?", conversationID, false).First(&model).Error; err != nil {
 		return nil, err
@@ -81,11 +82,11 @@ func (r *groupChatPostgresRepository) GetByConversationID(ctx context.Context, c
 	return GroupChatModelToEntity(model), nil
 }
 
-func (r *groupChatPostgresRepository) Delete(ctx context.Context, id uint32) error {
+func (r *GroupChatPostgresRepository) Delete(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&GroupChatModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
-} 
+}

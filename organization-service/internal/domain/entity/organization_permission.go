@@ -1,6 +1,6 @@
 package entity
 
-import "github.com/tuandq2112/organization-service/internal/enums"
+import "organization/internal/enums"
 
 type OrganizationPermission struct {
 	Id             uint32

@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
-	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
 )
 
 type GroupLogActivityUsecase interface {

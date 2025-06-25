@@ -4,7 +4,7 @@ import (
 	organizationpb "pb/types/organization"
 	"time"
 
-	"github.com/tuandq2112/organization-service/internal/domain/entity"
+	"organization/internal/domain/entity"
 )
 
 type GroupLogActivityTransformer interface {
@@ -25,9 +25,9 @@ func (t *groupLogActivityTransformer) EntityToGetGroupLogActivitiesResponse(logA
 
 	for _, logActivity := range logActivities {
 		response.LogActivities = append(response.LogActivities, &organizationpb.GroupLogActivity{
-			Id:        logActivity.Id,
-			GroupId:   logActivity.GroupId,
-			ActorId:   logActivity.ActorId,
+			Id:      logActivity.Id,
+			GroupId: logActivity.GroupId,
+			// ActorId:   logActivity.ActorId,
 			LogType:   logActivity.LogType,
 			LogData:   logActivity.LogData,
 			CreatedAt: logActivity.CreatedAt.Format(time.RFC3339),
