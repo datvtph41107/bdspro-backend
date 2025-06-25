@@ -63,6 +63,7 @@ message CreateOrganizationBranchRequest {
     string email = 4;
     uint32 managerId = 5;
     uint32 organizationId = 6;
+    string type = 7; // branch, department, store
 }
 
 message CreateOrganizationBranchResponse {
@@ -75,6 +76,7 @@ message UpdateOrganizationBranchRequest {
     string address = 3;
     string phone = 4;
     string email = 5;
+    string type = 6; // branch, department, store
 }
 
 message UpdateOrganizationBranchResponse {
@@ -136,6 +138,10 @@ message OrganizationBranch {
     string phone = 4;
     string email = 5;
     bool isActive = 6;
+    string type = 7; // branch, department, store
+    uint32 totalMember = 8;
+    uint32 totalAsset = 9;
+    uint32 totalDeal = 10;
 }
 
 message GetOrganizationBranchesResponse {

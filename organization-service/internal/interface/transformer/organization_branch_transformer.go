@@ -25,6 +25,7 @@ func (t *organizationBranchTransformer) CreateOrganizationBranchRequestToEntity(
 		Email:          request.Email,
 		ManagerId:      request.ManagerId,
 		OrganizationId: request.OrganizationId,
+		Type:           entity.OrganizationBranchType(request.Type),
 	}
 }
 

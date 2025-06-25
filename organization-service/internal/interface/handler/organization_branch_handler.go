@@ -205,6 +205,10 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 			Phone:    branch.Phone,
 			Email:    branch.Email,
 			IsActive: branch.IsActive,
+			Type:     string(branch.Type),
+			TotalMember: branch.TotalMember,
+			TotalAsset:  branch.TotalAsset,
+			TotalDeal:   branch.TotalDeal,
 		}
 	}
 	return &organizationpb.GetOrganizationBranchesResponse{

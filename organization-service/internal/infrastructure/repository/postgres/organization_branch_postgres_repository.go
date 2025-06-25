@@ -23,6 +23,10 @@ type OrganizationBranchModel struct {
 	DeletedAt      *time.Time `gorm:"index"`
 	IsDeleted      bool       `gorm:"default:false"`
 	IsActive       bool       `gorm:"default:true;column:is_active"`
+	Type           string     `gorm:"column:type;index:idx_org_branches_type"`
+	TotalMember    uint32     `gorm:"-"`
+	TotalAsset     uint32     `gorm:"-"`
+	TotalDeal      uint32     `gorm:"-"`
 }
 
 func (m *OrganizationBranchModel) TableName() string {
@@ -42,6 +46,10 @@ func OrganizationBranchModelToEntity(m *OrganizationBranchModel) *entity.Organiz
 		UpdatedAt:      m.UpdatedAt,
 		CreatedBy:      m.CreatedBy,
 		IsActive:       m.IsActive,
+		Type:           entity.OrganizationBranchType(m.Type),
+		TotalMember:    m.TotalMember,
+		TotalAsset:     m.TotalAsset,
+		TotalDeal:      m.TotalDeal,
 	}
 }
 
@@ -59,6 +67,7 @@ func OrganizationBranchEntityToModel(e *entity.OrganizationBranch) *Organization
 		CreatedBy:      e.CreatedBy,
 		IsDeleted:      false,
 		IsActive:       e.IsActive,
+		Type:           string(e.Type),
 	}
 }
 

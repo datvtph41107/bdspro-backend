@@ -47,6 +47,33 @@ func (v *organizationBranchValidator) ValidateCreateOrganizationBranch(request *
 			},
 		})
 	}
+	if request.Type == "" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "type",
+					Description: "type is required",
+				},
+			},
+		})
+	} else {
+		// Validate type enum
+		validTypes := map[string]bool{
+			"branch":     true, // Chi nhánh
+			"department": true, // Phòng ban
+			"store":      true, // Cửa hàng
+		}
+		if !validTypes[request.Type] {
+			details = append(details, &errdetails.BadRequest{
+				FieldViolations: []*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "type",
+						Description: "type must be one of: branch, department, store",
+					},
+				},
+			})
+		}
+	}
 
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)

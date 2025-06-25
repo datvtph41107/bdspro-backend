@@ -353,6 +353,10 @@
         },
         "email": {
           "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "title": "branch, department, store"
         }
       }
     },
@@ -387,6 +391,10 @@
         "organizationId": {
           "type": "integer",
           "format": "int64"
+        },
+        "type": {
+          "type": "string",
+          "title": "branch, department, store"
         }
       }
     },
@@ -460,6 +468,22 @@
         },
         "isActive": {
           "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "title": "branch, department, store"
+        },
+        "totalMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalAsset": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalDeal": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
