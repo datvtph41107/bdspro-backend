@@ -14,4 +14,5 @@ type GroupDocument struct {
 	UpdatedBy   uint32
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Uploader    string
 } 

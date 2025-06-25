@@ -314,6 +314,9 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "uploader": {
+          "type": "string"
         }
       }
     },

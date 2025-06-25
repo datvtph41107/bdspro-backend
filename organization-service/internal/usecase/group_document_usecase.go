@@ -2,11 +2,12 @@ package usecase
 
 import (
 	"context"
-
 	"organization/env"
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
+	"organization/internal/infrastructure/client"
+	sharepb "pb/types/shared"
 	"organization/pkg/utils"
 )
 
@@ -22,16 +23,19 @@ type groupDocumentUsecase struct {
 	groupDocumentRepository repository.GroupDocumentRepository
 	logActivityUsecase      GroupLogActivityUsecase
 	groupAuthUsecase        GroupAuthUsecase
+	userGrpcClient          client.IUserClient
 }
 
 func NewGroupDocumentUsecase(groupDocumentRepository repository.GroupDocumentRepository,
 	logActivityUsecase GroupLogActivityUsecase,
 	groupAuthUsecase GroupAuthUsecase,
+	userGrpcClient client.IUserClient,
 ) GroupDocumentUsecase {
 	return &groupDocumentUsecase{
 		groupDocumentRepository: groupDocumentRepository,
 		logActivityUsecase:      logActivityUsecase,
 		groupAuthUsecase:        groupAuthUsecase,
+		userGrpcClient:          userGrpcClient,
 	}
 }
 
@@ -111,5 +115,27 @@ func (u *groupDocumentUsecase) GetGroupDocumentsByGroupID(ctx context.Context, g
 		return nil, 0, custom_error.Forbidden("you are not allowed to get documents")
 	}
 
-	return u.groupDocumentRepository.GetByGroupID(ctx, groupID, page, size)
+	documents, total, err := u.groupDocumentRepository.GetByGroupID(ctx, groupID, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	profileIds := make([]uint64, len(documents))
+	for i, document := range documents {
+		profileIds[i] = uint64(document.CreatedBy)
+	}
+	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: profileIds,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	profileMap := make(map[uint64]string)
+	for _, profile := range profiles.Profiles {
+		profileMap[profile.Id] = profile.FullName
+	}
+	for _, document := range documents {
+		document.Uploader = profileMap[uint64(document.CreatedBy)]
+	}
+
+	return documents, total, nil
 }

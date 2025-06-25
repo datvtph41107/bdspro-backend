@@ -86,6 +86,7 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents [
 			FileSize:    document.FileSize,
 			CreatedAt:   document.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:   document.UpdatedAt.Format(time.RFC3339),
+			Uploader:    document.Uploader,
 		}
 	}
 	return &organizationpb.GetGroupDocumentsResponse{

@@ -103,4 +103,5 @@ message GroupDocument {
     uint64 fileSize = 7;
     string createdAt = 8;
     string updatedAt = 9;
+    string uploader = 10;
 } 

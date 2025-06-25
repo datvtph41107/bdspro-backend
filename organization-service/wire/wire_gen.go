@@ -66,7 +66,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	groupPostgresRepository := postgres.NewGroupPostgresRepository(db)
 	groupMemberPostgresRepository := postgres.NewGroupMemberPostgresRepository(db)
 	groupAuthUsecase := usecase.NewGroupAuthUsecase(groupPostgresRepository, groupMemberPostgresRepository)
-	groupDocumentUsecase := usecase.NewGroupDocumentUsecase(groupDocumentPostgresRepository, groupLogActivityUsecase, groupAuthUsecase)
+	groupDocumentUsecase := usecase.NewGroupDocumentUsecase(groupDocumentPostgresRepository, groupLogActivityUsecase, groupAuthUsecase, userClient)
 	groupDocumentTransformer := transformer.NewGroupDocumentTransformer()
 	groupDocumentValidator := validator.NewGroupDocumentValidator()
 	groupDocumentHandler := handler.NewGroupDocumentHandler(groupDocumentUsecase, groupDocumentTransformer, groupDocumentValidator)

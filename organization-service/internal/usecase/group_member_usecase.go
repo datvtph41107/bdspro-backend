@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"time"
 
 	sharepb "pb/types/shared"
 
@@ -64,10 +65,14 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 	if existedMember != nil {
 		return nil, custom_error.RecordNotFound(fmt.Sprintf("user %d is already a member of group %d", member.UserId, member.GroupId))
 	}
-	err = u.groupChatUsecase.AddUserToGroupChat(ctx, member.GroupId, member.UserId)
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = u.groupChatUsecase.AddUserToGroupChat(newCtx, member.GroupId, member.UserId)
+		if err != nil {
+			fmt.Printf("error add user to group chat: %v", err)
+		}
+	}()
 	member.CreatedBy = uint32(currentUserId)
 	member.UpdatedBy = uint32(currentUserId)
 	createdMember, err := u.groupMemberRepository.Create(ctx, member)
@@ -119,11 +124,14 @@ func (u *groupMemberUsecase) DeleteGroupMember(ctx context.Context, id uint32) e
 	if err != nil {
 		return err
 	}
-
-	err = u.groupChatUsecase.RemoveUserFromGroupChat(ctx, member.GroupId, member.UserId)
-	if err != nil {
-		return err
-	}
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = u.groupChatUsecase.RemoveUserFromGroupChat(newCtx, member.GroupId, member.UserId)
+		if err != nil {
+			fmt.Printf("error remove user from group chat: %v", err)
+		}
+	}()
 
 	err = u.groupMemberRepository.Delete(ctx, id)
 	if err != nil {

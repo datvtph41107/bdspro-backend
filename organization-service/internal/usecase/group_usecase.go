@@ -3,10 +3,9 @@ package usecase
 import (
 	"context"
 
-	"organization/env"
+	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
-	"organization/pkg/utils"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -44,16 +43,16 @@ func NewGroupUsecase(
 }
 
 func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
-	group.CreatedBy = currentUserId
-	group.UpdatedBy = currentUserId
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	group.CreatedBy = uint32(currentUserId)
+	group.UpdatedBy = uint32(currentUserId)
 
 	createdGroup, err := u.groupRepository.Create(ctx, group)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = u.groupChatUsecase.CreateGroupChat(context.Background(), createdGroup.Id, []uint32{currentUserId}, group.Name, group.AvatarUrl)
+	_, err = u.groupChatUsecase.CreateGroupChat(context.Background(), createdGroup.Id, []uint32{uint32(currentUserId)}, group.Name, group.AvatarUrl)
 	if err != nil {
 		u.logger.Errorf("Failed to create group chat: %v", err)
 	}
@@ -69,13 +68,13 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
-	err := u.groupAuthUsecase.IsLeaderGroup(ctx, group.Id, currentUserId)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, group.Id, uint32(currentUserId))
 	if err != nil {
 		return nil, err
 	}
-	group.UpdatedBy = currentUserId
+	group.UpdatedBy = uint32(currentUserId)
 	updatedGroup, err := u.groupRepository.Update(ctx, group)
 	if err != nil {
 		return nil, err
@@ -92,8 +91,8 @@ func (u *groupUsecase) UpdateGroup(ctx context.Context, group *entity.Group) (*e
 }
 
 func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
-	err := u.groupAuthUsecase.IsLeaderGroup(ctx, id, currentUserId)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, id, uint32(currentUserId))
 	if err != nil {
 		return err
 	}
@@ -119,8 +118,8 @@ func (u *groupUsecase) DeleteGroup(ctx context.Context, id uint32) error {
 }
 
 func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
-	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, currentUserId)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.groupAuthUsecase.IsMemberGroup(ctx, id, uint32(currentUserId))
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +128,9 @@ func (u *groupUsecase) GetGroupByID(ctx context.Context, id uint32) (*entity.Gro
 }
 
 func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity.Group, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
-	return u.groupRepository.List(ctx, page, size, currentUserId)
+	return u.groupRepository.List(ctx, page, size, uint32(currentUserId))
 }
 
 func (u *groupUsecase) GetGroupByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error) {

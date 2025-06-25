@@ -37,7 +37,6 @@ type organizationMemberUsecase struct {
 	organizationRoleRepository       repository.OrganizationRoleRepository
 	organizationPermissionRepository repository.OrganizationPermissionRepository
 	organizationAuthUsecase          OrganizationAuthUsecase
-	planLimit                        map[string]uint32
 	logWorker                        *OrganizationLogWorker
 	userGrpcClient                   client.IUserClient
 }
