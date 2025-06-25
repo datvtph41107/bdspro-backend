@@ -17,7 +17,7 @@ type OrganizationUsecase interface {
 	GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
 	GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error)
 	CheckOrganizationIsExist(ctx context.Context) (bool, error)
-	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)	
+	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)
 }
 
 type organizationUsecase struct {
@@ -43,7 +43,7 @@ func NewOrganizationUsecase(
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
 	currentUserId := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	
+
 	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, currentUserId)
 	if err != nil {
 		return nil, nil, err
@@ -51,7 +51,7 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 	if len(organizationByUserId) >= 1 {
 		return nil, nil, custom_error.UserOnlyOneOrganization()
 	}
-	
+
 	org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
 	if err != nil {
 		return nil, nil, err
@@ -143,12 +143,13 @@ func (o *organizationUsecase) CheckOrganizationIsExist(ctx context.Context) (boo
 }
 
 func (o *organizationUsecase) GetOwnedOrganization(ctx context.Context) (*entity.Organization, error) {
-	organization, err := o.OrganizationRepository.FindByUserId(ctx, utils.GetUserID(ctx, appconfig.USER_CONTEXT))
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	organization, err := o.OrganizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
-	if len(organization) == 0 {
+	if organization == nil {
 		return nil, custom_error.InvalidOrganizationID()
 	}
-	return organization[0], nil
+	return organization, nil
 }

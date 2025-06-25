@@ -1,16 +1,19 @@
 package usecase
 
 import (
+	_errors "common/errors"
 	"context"
 
 	"github.com/tuandq2112/organization-service/internal/custom_error"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
 type OrganizationAuthUsecase interface {
 	HasPermission(ctx context.Context, userId uint32, organizationId uint32, permission string) (bool, error)
 	HasRole(ctx context.Context, userId uint32, organizationId uint32, role string) (bool, error)
 	IsMemberOrganization(ctx context.Context, userId uint32, organizationId uint32) (bool, error)
+	IsSystemAdmin(ctx context.Context) error
 }
 
 type organizationAuthUsecase struct {
@@ -19,10 +22,10 @@ type organizationAuthUsecase struct {
 }
 
 func NewOrganizationAuthUsecase(
-	organizationMemberRepository repository.OrganizationMemberRepository, 
+	organizationMemberRepository repository.OrganizationMemberRepository,
 	organizationRoleRepository repository.OrganizationRoleRepository,
 	organizationPermissionRepository repository.OrganizationPermissionRepository,
-	) OrganizationAuthUsecase {
+) OrganizationAuthUsecase {
 	return &organizationAuthUsecase{
 		organizationMemberRepository: organizationMemberRepository,
 		organizationRoleRepository:   organizationRoleRepository,
@@ -46,7 +49,7 @@ func (u *organizationAuthUsecase) HasPermission(ctx context.Context, userId uint
 			return true, nil
 		}
 	}
-	
+
 	return false, nil
 }
 
@@ -67,4 +70,13 @@ func (u *organizationAuthUsecase) IsMemberOrganization(ctx context.Context, user
 		return false, err
 	}
 	return organizationMember != nil, nil
+}
+
+// todo: Sửa lại check điều kiện admin hệ thống
+func (u *organizationAuthUsecase) IsSystemAdmin(ctx context.Context) error {
+	// details := []protoadapt.MessageV1{}
+
+	return _errors.InvalidRequest(&errdetails.ErrorInfo{
+		Reason: "Bạn không phải quản trị viên hệ thống",
+	})
 }

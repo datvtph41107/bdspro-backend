@@ -7,19 +7,22 @@ import (
 
 	"github.com/tuandq2112/organization-service/internal/domain/entity"
 	"github.com/tuandq2112/organization-service/internal/domain/repository"
+	"github.com/tuandq2112/organization-service/internal/enums"
 	"gorm.io/gorm"
 )
 
 type OrganizationPermissionModel struct {
-	Id          uint32    `gorm:"primaryKey;autoIncrement"`
-	Name        string    `gorm:"not null;index"`
-	Key         string    `gorm:"not null;index:idx_org_permissions_key"`
-	Description string    `gorm:"type:text"`
-	OrganizationId uint32 `gorm:"not null;index:idx_org_permissions_org_id"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-	DeletedAt   *time.Time `gorm:"index"`
-	IsDeleted   bool      `gorm:"default:false"`
+	Id          uint32 `gorm:"primaryKey;autoIncrement"`
+	Name        string `gorm:"not null;index"`
+	Key         string `gorm:"not null;index:idx_org_permissions_key"`
+	Description string `gorm:"type:text"`
+	// OrganizationId uint32               `gorm:"not null;index:idx_org_permissions_org_id"`
+	ParentId       uint32               `json:"parent_id"`
+	PermissionType enums.PermissionType `gorm:"not null;default:10" json:"permission_type"`
+	CreatedAt      time.Time            `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time            `gorm:"autoUpdateTime"`
+	DeletedAt      *time.Time           `gorm:"index"`
+	IsDeleted      bool                 `gorm:"default:false"`
 }
 
 func (OrganizationPermissionModel) TableName() string {
@@ -32,7 +35,9 @@ func OrganizationPermissionModelToEntity(model *OrganizationPermissionModel) *en
 		Name:        model.Name,
 		Key:         model.Key,
 		Description: model.Description,
-		OrganizationId: model.OrganizationId,
+		// OrganizationId: model.OrganizationId,
+		PermissionType: model.PermissionType,
+		ParentId:       model.ParentId,
 	}
 }
 
@@ -42,8 +47,9 @@ func OrganizationPermissionEntityToModel(entity *entity.OrganizationPermission) 
 		Name:        entity.Name,
 		Key:         entity.Key,
 		Description: entity.Description,
-		OrganizationId: entity.OrganizationId,
-		IsDeleted:   false,
+		// OrganizationId: entity.OrganizationId,
+		PermissionType: entity.PermissionType,
+		IsDeleted:      false,
 	}
 }
 
@@ -71,9 +77,9 @@ func (r *organizationPermissionRepository) Create(ctx context.Context, permissio
 	return OrganizationPermissionModelToEntity(model), nil
 }
 
-func (r *organizationPermissionRepository) GetAll(ctx context.Context) ([]*entity.OrganizationPermission, error) {
+func (r *organizationPermissionRepository) GetPermissionOrganization(ctx context.Context) ([]*entity.OrganizationPermission, error) {
 	var models []*OrganizationPermissionModel
-	if err := r.db.WithContext(ctx).Where("is_deleted = ?", false).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("permission_type = ? AND is_deleted = ?", enums.PermissionTypeOrganization, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	return OrganizationPermissionModelsToEntities(models), nil
@@ -92,7 +98,12 @@ func (r *organizationPermissionRepository) FindById(ctx context.Context, id uint
 
 func (r *organizationPermissionRepository) Update(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error) {
 	model := OrganizationPermissionEntityToModel(permission)
-	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", model.Id, false).Updates(model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", model.Id, false).
+		Updates(map[string]interface{}{
+			"name":        model.Name,
+			"key":         model.Key,
+			"description": model.Description,
+		}).Error; err != nil {
 		return nil, err
 	}
 	return OrganizationPermissionModelToEntity(model), nil
@@ -102,7 +113,7 @@ func (r *organizationPermissionRepository) Delete(ctx context.Context, id uint32
 	return r.db.WithContext(ctx).Model(&OrganizationPermissionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
@@ -174,7 +185,7 @@ func (r *organizationPermissionRepository) DeletePermission(ctx context.Context,
 	return r.db.WithContext(ctx).Model(&OrganizationPermissionModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }

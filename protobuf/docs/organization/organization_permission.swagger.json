@@ -208,7 +208,7 @@
     "organizationpbGetPermissionsResponse": {
       "type": "object",
       "properties": {
-        "permissions": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -233,6 +233,13 @@
         },
         "key": {
           "type": "string"
+        },
+        "childrens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbPermission"
+          }
         }
       }
     },

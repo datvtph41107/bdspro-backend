@@ -105,6 +105,10 @@ definitions:
         type: string
       organizationId:
         type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
     type: object
   organizationpb.DeleteGroupDocumentRequest:
     properties:
@@ -112,11 +116,6 @@ definitions:
         type: integer
     type: object
   organizationpb.DeleteOrganizationBranchRequest:
-    properties:
-      id:
-        type: integer
-    type: object
-  organizationpb.DeletePermissionRequest:
     properties:
       id:
         type: integer
@@ -822,6 +821,33 @@ paths:
       tags:
       - Tổ chức
   /organization/member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang
+        đăng nhập
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      - description: Tên thành viên
+        in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng
+        nhập
+      tags:
+      - Thành viên
     post:
       consumes:
       - application/json
@@ -879,39 +905,6 @@ paths:
       summary: Cập nhật thành viên tổ chức
       tags:
       - Thành viên
-  /organization/member/{organizationId}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang
-        đăng nhập
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: size
-        type: integer
-      - description: Tên thành viên
-        in: query
-        name: text
-        type: string
-      - description: ID của tổ chức
-        in: path
-        name: organizationId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng
-        nhập
-      tags:
-      - Thành viên
   /organization/members/me:
     get:
       consumes:
@@ -956,17 +949,25 @@ paths:
       summary: Tạo tổ chức mới
       tags:
       - Tổ chức
+  /organization/owned:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tổ chức của người dùng hiện tại
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổ chức của người dùng hiện tại
+      tags:
+      - Tổ chức
   /organization/permission:
     get:
       consumes:
       - application/json
       description: Lấy danh sách quyền
       parameters:
-      - description: ID của tổ chức
-        in: query
-        name: organizationId
-        required: true
-        type: integer
       - description: Trang hiện tại
         in: query
         name: page
@@ -1008,12 +1009,11 @@ paths:
       - application/json
       description: Xóa quyền
       parameters:
-      - description: Thông tin quyền
-        in: body
-        name: permission
+      - description: ID của quyền
+        in: path
+        name: id
         required: true
-        schema:
-          $ref: '#/definitions/organizationpb.DeletePermissionRequest'
+        type: integer
       produces:
       - application/json
       responses: {}
@@ -1047,11 +1047,6 @@ paths:
       - application/json
       description: Lấy danh sách vai trò
       parameters:
-      - description: ID của tổ chức
-        in: query
-        name: organization_id
-        required: true
-        type: integer
       - description: Trang hiện tại
         in: query
         name: page

@@ -10,6 +10,7 @@ var GrpcServerCmd = &cobra.Command{
 	Short: "Start the gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		appconfig.InitConfig()
+		// repository.AutoMigrate()
 		grpcServer := InitializeGRPCServer()
 		grpcServer.Start()
 	},

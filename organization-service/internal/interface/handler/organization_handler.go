@@ -144,6 +144,13 @@ func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req 
 	return &organizationpb.CheckOrganizationIsExistResponse{IsExist: isExist}, nil
 }
 
+// @Summary Lấy tổ chức của người dùng hiện tại
+// @Description Lấy tổ chức của người dùng hiện tại
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /organization/owned [get]
 func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *organizationpb.GetOwnedOrganizationRequest) (*organizationpb.GetOwnedOrganizationResponse, error) {
 	organization, err := h.OrganizationUsecase.GetOwnedOrganization(ctx)
 	if err != nil {

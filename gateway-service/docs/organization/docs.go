@@ -908,6 +908,45 @@ const docTemplate = `{
             }
         },
         "/organization/member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tên thành viên",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
             "post": {
                 "security": [
                     {
@@ -999,54 +1038,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/organization/member/{organizationId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Thành viên"
-                ],
-                "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Tên thành viên",
-                        "name": "text",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID của tổ chức",
-                        "name": "organizationId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/organization/members/me": {
             "get": {
                 "security": [
@@ -1114,6 +1105,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/organization/owned": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tổ chức của người dùng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy tổ chức của người dùng hiện tại",
+                "responses": {}
+            }
+        },
         "/organization/permission": {
             "get": {
                 "security": [
@@ -1133,13 +1145,6 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách quyền",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của tổ chức",
-                        "name": "organizationId",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "integer",
                         "description": "Trang hiện tại",
@@ -1236,13 +1241,11 @@ const docTemplate = `{
                 "summary": "Xóa quyền",
                 "parameters": [
                     {
-                        "description": "Thông tin quyền",
-                        "name": "permission",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DeletePermissionRequest"
-                        }
+                        "type": "integer",
+                        "description": "ID của quyền",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -1267,13 +1270,6 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách vai trò",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của tổ chức",
-                        "name": "organization_id",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "integer",
                         "description": "Trang hiện tại",
@@ -1605,6 +1601,12 @@ const docTemplate = `{
                 },
                 "organizationId": {
                     "type": "integer"
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -1617,14 +1619,6 @@ const docTemplate = `{
             }
         },
         "organizationpb.DeleteOrganizationBranchRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.DeletePermissionRequest": {
             "type": "object",
             "properties": {
                 "id": {

@@ -42,6 +42,7 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 		return nil, err
 	}
 	role, err := h.OrganizationRoleUsecase.CreateNewRole(ctx, role)
+
 	if err != nil {
 		return nil, err
 	}

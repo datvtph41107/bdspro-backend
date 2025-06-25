@@ -74,10 +74,11 @@ message Permission {
     uint32 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
+    repeated Permission childrens = 4 [json_name = "childrens"];
 }
 
 message GetPermissionsResponse {
-    repeated Permission permissions = 1 [json_name = "permissions"];
+    repeated Permission permissions = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
 }
 

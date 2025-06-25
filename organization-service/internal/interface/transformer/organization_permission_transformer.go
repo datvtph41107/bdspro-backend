@@ -25,15 +25,15 @@ func (t *organizationPermissionTransformer) CreatePermissionRequestToEntity(req 
 	return &entity.OrganizationPermission{
 		Name: req.Name,
 		Key:  req.Key,
-		OrganizationId: req.OrganizationId,
+		// OrganizationId: req.OrganizationId,
 	}
 }
 
 func (t *organizationPermissionTransformer) UpdatePermissionRequestToEntity(req *organizationpb.UpdatePermissionRequest) *entity.OrganizationPermission {
 	return &entity.OrganizationPermission{
-		Id: req.Id,
+		Id:   req.Id,
 		Name: req.Name,
-		Key: req.Key,
+		Key:  req.Key,
 	}
 }
 
@@ -55,20 +55,28 @@ func (t *organizationPermissionTransformer) EntityToDeletePermissionResponse(ent
 	}
 }
 
-
-
+func (t *organizationPermissionTransformer) EntityToPb(permission *entity.OrganizationPermission) *organizationpb.Permission {
+	permissionResponse := &organizationpb.Permission{
+		Id:   permission.Id,
+		Name: permission.Name,
+		Key:  permission.Key,
+	}
+	if len(permission.Childrens) > 0 {
+		childrens := make([]*organizationpb.Permission, len(permission.Childrens))
+		for i, child := range permission.Childrens {
+			childrens[i] = t.EntityToPb(child)
+		}
+		permissionResponse.Childrens = childrens
+	}
+	return permissionResponse
+}
 func (t *organizationPermissionTransformer) EntityToGetPermissionsResponse(permissions []*entity.OrganizationPermission, total uint32) *organizationpb.GetPermissionsResponse {
 	permissionsResponse := make([]*organizationpb.Permission, len(permissions))
 	for i, permission := range permissions {
-		permissionsResponse[i] = &organizationpb.Permission{
-			Id:   permission.Id,
-			Name: permission.Name,
-			Key:  permission.Key,
-		}
+		permissionsResponse[i] = t.EntityToPb(permission)
 	}
 	return &organizationpb.GetPermissionsResponse{
 		Permissions: permissionsResponse,
-		Total:      total,
+		Total:       total,
 	}
 }
-

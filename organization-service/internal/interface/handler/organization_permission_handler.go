@@ -103,17 +103,10 @@ func (h *OrganizationPermissionHandler) GetPermissions(ctx context.Context, req 
 		return nil, err
 	}
 
-	page := 0
-	size := 10
-	if req.Page != nil {
-		page = int(*req.Page)
-	}
-	if req.Size != nil {
-		size = int(*req.Size)
-	}
-	permissions, total, err := h.OrganizationPermissionUsecase.GetPermissionsByOrganizationId(ctx, page, size)
+	permissions, err := h.OrganizationPermissionUsecase.GetPermissionOrganization(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationPermissionTransformer.EntityToGetPermissionsResponse(permissions, total), nil
+	results, err := h.OrganizationPermissionTransformer.EntityToGetPermissionsResponse(permissions, 0), nil
+	return results, err
 }

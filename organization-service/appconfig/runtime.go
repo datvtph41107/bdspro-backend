@@ -35,7 +35,7 @@ var (
 
 	USER_SERVICE_HOST = "localhost"
 	USER_SERVICE_PORT = "8201"
-
+	ENV_RUNTIME       = ""
 )
 
 func InitConfig() {
@@ -106,7 +106,6 @@ func readConfig() error {
 		configLogger.Warnf("Worker queue size not specified, using default: %d", LOG_WORKER_QUEUE_SIZE)
 	}
 
-	
 	if userServiceHost := cfg.GetString("GRPC.USER_SERVICE_HOST"); userServiceHost != "" {
 		USER_SERVICE_HOST = userServiceHost
 		configLogger.Infof("User service host specified: %s", userServiceHost)
@@ -114,12 +113,18 @@ func readConfig() error {
 		configLogger.Warnf("User service host not specified, using default: %s", USER_SERVICE_HOST)
 	}
 
-
 	if userServicePort := cfg.GetString("GRPC.USER_SERVICE_PORT"); userServicePort != "" {
 		USER_SERVICE_PORT = userServicePort
 		configLogger.Infof("User service port specified: %s", userServicePort)
 	} else {
 		configLogger.Warnf("User service port not specified, using default: %s", USER_SERVICE_PORT)
+	}
+
+	if envRuntime := cfg.GetString("ENV_RUNTIME"); envRuntime != "" {
+		ENV_RUNTIME = envRuntime
+		configLogger.Infof("Environment runtime specified: %s", envRuntime)
+	} else {
+		configLogger.Warnf("Environment runtime not specified, using default: %s", ENV_RUNTIME)
 	}
 
 	return nil

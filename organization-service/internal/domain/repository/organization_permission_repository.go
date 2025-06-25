@@ -8,7 +8,7 @@ import (
 
 type OrganizationPermissionRepository interface {
 	Create(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
-	GetAll(ctx context.Context) ([]*entity.OrganizationPermission, error)
+	GetPermissionOrganization(ctx context.Context) ([]*entity.OrganizationPermission, error)
 	FindById(ctx context.Context, id uint32) (*entity.OrganizationPermission, error)
 	Update(ctx context.Context, permission *entity.OrganizationPermission) (*entity.OrganizationPermission, error)
 	Delete(ctx context.Context, id uint32) error

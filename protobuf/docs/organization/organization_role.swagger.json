@@ -245,6 +245,13 @@
         "organizationId": {
           "type": "integer",
           "format": "int64"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -294,6 +301,13 @@
         },
         "key": {
           "type": "string"
+        },
+        "childrens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbPermission"
+          }
         }
       }
     },

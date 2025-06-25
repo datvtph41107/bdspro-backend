@@ -31,14 +31,14 @@ type OrganizationMemberUsecase interface {
 }
 
 type organizationMemberUsecase struct {
-	organizationMemberRepository repository.OrganizationMemberRepository
-	organizationRepository       repository.OrganizationRepository
-	organizationRoleRepository   repository.OrganizationRoleRepository
+	organizationMemberRepository     repository.OrganizationMemberRepository
+	organizationRepository           repository.OrganizationRepository
+	organizationRoleRepository       repository.OrganizationRoleRepository
 	organizationPermissionRepository repository.OrganizationPermissionRepository
-	organizationAuthUsecase      OrganizationAuthUsecase
-	planLimit                    map[string]uint32
-	logWorker                    *OrganizationLogWorker
-	userGrpcClient               client.UserClient
+	organizationAuthUsecase          OrganizationAuthUsecase
+	planLimit                        map[string]uint32
+	logWorker                        *OrganizationLogWorker
+	userGrpcClient                   client.UserClient
 }
 
 func NewOrganizationMemberUsecase(
@@ -51,13 +51,13 @@ func NewOrganizationMemberUsecase(
 	userGrpcClient client.UserClient,
 ) OrganizationMemberUsecase {
 	return &organizationMemberUsecase{
-		organizationMemberRepository: organizationMemberRepository,
-		organizationRepository:       organizationRepository,
-		organizationRoleRepository:   organizationRoleRepository,
+		organizationMemberRepository:     organizationMemberRepository,
+		organizationRepository:           organizationRepository,
+		organizationRoleRepository:       organizationRoleRepository,
 		organizationPermissionRepository: organizationPermissionRepository,
-		organizationAuthUsecase:      organizationAuthUsecase,
-		logWorker:                    logWorker,
-		userGrpcClient:               userGrpcClient,
+		organizationAuthUsecase:          organizationAuthUsecase,
+		logWorker:                        logWorker,
+		userGrpcClient:                   userGrpcClient,
 	}
 }
 
@@ -101,7 +101,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
-		} 
+		}
 	}
 	if exist != nil {
 		return nil, status.Errorf(codes.AlreadyExists, "Organization member already exists")
@@ -210,7 +210,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 	if !hasRole {
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	
+
 	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
 	if err != nil {
 		return nil, 0, err
@@ -259,25 +259,27 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 		profileIds[i] = uint64(member.UserID)
 	}
 
-	profiles, err := u.userGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+	profiles, _ := u.userGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
 		Ids: profileIds,
 	})
-	if err != nil {
-		return nil, 0, err
-	}
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
 
 	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
 	for i, member := range members {
 		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
 			OrganizationMember: member,
-			Profile:            profiles[uint64(member.UserID)],
+		}
+		if profile, ok := profiles[uint64(member.UserID)]; ok {
+			membersWithProfiles[i].Profile = profile
 		}
 	}
 	return membersWithProfiles, total, nil
 }
 
 func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error) {
-	
+
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
 	member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, uint32(profileId), uint32(currentOrgId))
@@ -290,4 +292,3 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context
 	}
 	return role.Id, member.JoinedAt.Format(time.RFC3339), role.Name, nil
 }
-
