@@ -75,8 +75,8 @@ swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
 chat-http:
 	cd go-chat-service && go run main.go http-serve
-chat-ws:
-	cd go-chat-service && go run main.go ws-serve
+relay:
+	cd relay-service && go run main.go grpc-server
 chat-swagger:
 	cd go-chat-service && go run main.go swagger-serve
 payment:
