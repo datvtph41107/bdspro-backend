@@ -60,7 +60,7 @@ service GroupDealService {
         };
     }
 
-    rpc Members(sharepb.IdDTO) returns (GetGroupMembersResponse) {
+    rpc Members(sharepb.IdDTO) returns (GetDealMembersResponse) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}/members"
         };
@@ -203,7 +203,7 @@ message DealMember {
     
 }
 
-message GetGroupMembersResponse {
+message GetDealMembersResponse {
     repeated DealMember data = 1;
     uint32 total = 2;
 }

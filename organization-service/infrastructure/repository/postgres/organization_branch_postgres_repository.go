@@ -131,18 +131,31 @@ func (r *OrganizationBranchPostgres) GetOrganizationBranchByOrganizationId(ctx c
 }
 
 func (r *OrganizationBranchPostgres) GetOrganizationBranchByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationBranch, uint32, error) {
-	var models []OrganizationBranchModel
+	// Model mới để chứa kết quả từ query JOIN
+	type OrganizationBranchWithMemberCount struct {
+		OrganizationBranchModel
+		TotalMember uint32 `gorm:"column:total_member"`
+	}
+	
+	var models []OrganizationBranchWithMemberCount
 	if err := r.db.WithContext(ctx).
-		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
+		Select("organization_branches.*, COUNT(organization_branch_members.id) as total_member").
+		Joins("LEFT JOIN organization_branch_members ON organization_branches.id = organization_branch_members.organization_branch_id AND organization_branch_members.is_deleted = ?", false).
+		Where("organization_branches.organization_id = ? AND organization_branches.is_deleted = ?", organizationId, false).
+		Group("organization_branches.id").
 		Offset(page * size).
 		Limit(size).
 		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
+	
 	entities := make([]*entity.OrganizationBranch, len(models))
 	for i, model := range models {
-		entities[i] = OrganizationBranchModelToEntity(&model)
+		branch := OrganizationBranchModelToEntity(&model.OrganizationBranchModel)
+		branch.TotalMember = model.TotalMember
+		entities[i] = branch
 	}
+	
 	var count int64
 	if err := r.db.WithContext(ctx).
 		Model(&OrganizationBranchModel{}).

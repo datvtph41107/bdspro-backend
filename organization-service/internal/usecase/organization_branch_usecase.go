@@ -3,6 +3,7 @@ package usecase
 import (
 	_utils "common/utils"
 	"context"
+	"fmt"
 
 	"organization/env"
 	"organization/internal/custom_error"
@@ -215,6 +216,7 @@ func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context,
 	if organization == nil {
 		return nil, 0, custom_error.RecordNotFound("Organization not found")
 	}
+	fmt.Println("go1")
 	return u.organizationBranchRepository.GetOrganizationBranchByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
 }
 

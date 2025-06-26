@@ -25,5 +25,6 @@ type OrganizationBranch struct {
 	Type           OrganizationBranchType
 	TotalMember    uint32
 	TotalAsset     uint32
+
 	TotalDeal      uint32
 }

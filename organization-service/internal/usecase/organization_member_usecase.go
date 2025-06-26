@@ -21,7 +21,7 @@ import (
 )
 
 type OrganizationMemberUsecase interface {
-	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32) (*entity.OrganizationMember, error)
+	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
@@ -61,8 +61,8 @@ func NewOrganizationMemberUsecase(
 	}
 }
 
-func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32) (*entity.OrganizationMember, error) {
-	member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationIdWithRole(ctx, userId, uint32(userId))
+func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32, organizationId uint32) (*entity.OrganizationMember, error) {
+	member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationIdWithRole(ctx, userId, organizationId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

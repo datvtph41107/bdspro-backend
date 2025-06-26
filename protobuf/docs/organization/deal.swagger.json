@@ -250,6 +250,37 @@
         ]
       }
     },
+    "/v2/org/deal/{id}/members": {
+      "get": {
+        "operationId": "GroupDealService_Members",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetDealMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{id}/status": {
       "put": {
         "operationId": "GroupDealService_UpdateGroupDealStatus",
@@ -423,6 +454,40 @@
         }
       }
     },
+    "organizationpbDealMember": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "memberName": {
+          "type": "string",
+          "title": "profile"
+        },
+        "memberAvatar": {
+          "type": "string"
+        },
+        "memberPhone": {
+          "type": "string"
+        },
+        "memberVerified": {
+          "type": "boolean"
+        }
+      }
+    },
     "organizationpbDeleteGroupDealResponse": {
       "type": "object",
       "properties": {
@@ -446,6 +511,22 @@
         },
         "size": {
           "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetDealMembersResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDealMember"
+          }
+        },
+        "total": {
+          "type": "integer",
           "format": "int64"
         }
       }

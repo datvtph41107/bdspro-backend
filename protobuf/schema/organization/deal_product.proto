@@ -16,51 +16,51 @@ service DealProductService {
         };
     }
 
-    rpc UpdateGroupDeal(UpdateGroupDealRequest) returns (UpdateGroupDealResponse) {
+    rpc UpdateGroupDealProduct(UpdateGroupDealProductRequest) returns (UpdateGroupDealProductResponse) {
         option (google.api.http) = {
             put: "/v2/org/deal/{id}"
             body: "*"
         };
     }
 
-    rpc DeleteGroupDeal(DeleteGroupDealRequest) returns (DeleteGroupDealResponse) {
+    rpc DeleteGroupDealProduct(DeleteGroupDealProductRequest) returns (DeleteGroupDealProductResponse) {
         option (google.api.http) = {
             delete: "/v2/org/deal/{id}"
         };
     }
 
-    rpc GetGroupDeal(GetGroupDealRequest) returns (GroupDeal) {
+    rpc GetGroupDealProduct(GetGroupDealProductRequest) returns (GroupDealProduct) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}"
         };
     }
 
-    rpc GetGroupDeals(GetGroupDealsRequest) returns (GetGroupDealsResponse) {
+    rpc GetGroupDealProducts(GetGroupDealProductsRequest) returns (GetGroupDealProductsResponse) {
         option (google.api.http) = {
             get: "/v2/org/deal"
         };
     }
 
-    rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
+    rpc UpdateGroupDealProductStatus(UpdateGroupDealProductStatusRequest) returns (UpdateGroupDealProductStatusResponse) {
         option (google.api.http) = {
             put: "/v2/org/deal/{id}/status"
             body: "*"
         };
     }
 
-    rpc InfoInvestment(sharepb.IdDTO) returns (InfoInvestmentResponse) {
+    rpc InfoInvestmentProduct(sharepb.IdDTO) returns (InfoInvestmentProductResponse) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}/investment"
         };
     }
 
-    rpc AccountInvestment(sharepb.IdDTO) returns (BankAccountItem) {
+    rpc AccountInvestmentProduct(sharepb.IdDTO) returns (BankAccountProductItem) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}/bank-account"
         };
     }
 
-    rpc Members(sharepb.IdDTO) returns (GetGroupMembersResponse) {
+    rpc MembersProduct(sharepb.IdDTO) returns (GetDealMemberProductsResponse) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}/members"
         };
@@ -73,58 +73,58 @@ message AttachDealProductRequest {
     repeated uint64 removeIds = 2;
 }
 
-message CreateGroupDealResponse {
+message CreateGroupDealProductResponse {
     uint32 id = 1;
 }   
 
-message UpdateGroupDealRequest {
+message UpdateGroupDealProductRequest {
     uint32 id = 1;
     string name = 2;
     double amount = 3;
     uint32 status = 4;
 }
 
-message UpdateGroupDealResponse {
+message UpdateGroupDealProductResponse {
     uint32 id = 1;
 }
 
-message DeleteGroupDealRequest {
+message DeleteGroupDealProductRequest {
     uint32 id = 1;
 }
 
-message DeleteGroupDealResponse {
+message DeleteGroupDealProductResponse {
     uint32 id = 1;
 }
 
-message GetGroupDealRequest {
+message GetGroupDealProductRequest {
     uint32 id = 1;
 }
 
-message GetGroupDealResponse {
-    GroupDeal deal = 1;
+message GetGroupDealProductResponse {
+    GroupDealProduct deal = 1;
 }
 
-message GetGroupDealsRequest {
+message GetGroupDealProductsRequest {
     uint32 groupId = 1;
     optional uint32 page = 2;
     optional uint32 size = 3;
 }
 
-message GetGroupDealsResponse {
-    repeated GroupDeal data = 1 [json_name = "data"];
+message GetGroupDealProductsResponse {
+    repeated GroupDealProduct data = 1 [json_name = "data"];
     uint32 total = 2;
 }
 
-message UpdateGroupDealStatusRequest {
+message UpdateGroupDealProductStatusRequest {
     uint32 id = 1;
     uint32 status = 2;
 }
 
-message UpdateGroupDealStatusResponse {
+message UpdateGroupDealProductStatusResponse {
     uint32 id = 1;
 }
 
-message GroupDeal {
+message GroupDealProduct {
     uint32 id = 1;
     string name = 2;
     double targetProfit = 3;
@@ -140,28 +140,28 @@ message GroupDeal {
     repeated pb_bdspro.ProductAttachment products = 13;
     string dealTypeName = 14;
     string note = 15;
-    repeated DocumentItem documents = 16;
-    optional BankAccountItem bankAccount = 17;
+    repeated DocumentProductItem documents = 16;
+    optional BankAccountProductItem bankAccount = 17;
     repeated sharepb.ProfileItem customers = 18;
     repeated sharepb.ProfileItem partners = 19;
     repeated sharepb.ProfileItem members = 20;
 }
 
-message DocumentItem {
+message DocumentProductItem {
     string name = 1;
     string path = 2;
     string type = 3;
     int64 size = 4;
 }
 
-message BankAccountItem {
+message BankAccountProductItem {
     string name = 1;
     string bankName = 2;
     string accountNumber = 3;
     string accountName = 4;
 }
 
-message InfoInvestmentResponse {
+message InfoInvestmentProductResponse {
     uint32 totalInvestment = 1;
     double amountPending = 2;
     double amountApproved = 3;
@@ -176,7 +176,7 @@ message InfoInvestmentResponse {
     double amountRest = 12;
 }
 
-message DealMember {
+message DealProductMember {
     uint64 dealId = 1;
     uint64 memberId = 2;
     uint32 memberType = 3;
@@ -189,7 +189,7 @@ message DealMember {
     
 }
 
-message GetGroupMembersResponse {
-    repeated DealMember data = 1;
+message GetDealMemberProductsResponse {
+    repeated DealProductMember data = 1;
     uint32 total = 2;
 }

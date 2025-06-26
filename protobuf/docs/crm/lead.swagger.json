@@ -1664,6 +1664,13 @@
         },
         "message": {
           "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     }

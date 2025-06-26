@@ -64,6 +64,7 @@ message CreateOrganizationBranchRequest {
     uint32 managerId = 5;
     uint32 organizationId = 6;
     string type = 7; // branch, department, store
+
 }
 
 message CreateOrganizationBranchResponse {
