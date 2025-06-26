@@ -25,11 +25,11 @@ var (
 	DBTypePostgres DBType = "postgres"
 
 	DefaultDBDNS    = "host=localhost user=postgres password=postgres dbname=organization port=5432 sslmode=disable"
-	DefaultGRPCPort = "50052"
+	DefaultGRPCPort = "8207"
 )
 
 var (
-	GRPC_PORT                    = "50052"
+	GRPC_PORT                    = "8207"
 	LOG_WORKER_QUEUE_SIZE        = 1000
 	PRIMARY_DB_TYPE       DBType = ""
 	DB_DNS                       = ""

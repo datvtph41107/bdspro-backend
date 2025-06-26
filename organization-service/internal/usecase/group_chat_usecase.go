@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	chatpb "pb/types/chat"
-
 	"organization/env"
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
-	"organization/internal/infrastructure/client"
+	"organization/internal/dto"
+	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
 )
 
@@ -25,10 +24,10 @@ type GroupChatUsecase interface {
 
 type groupChatUsecase struct {
 	groupChatRepository repository.GroupChatRepository
-	chatServiceClient   client.ChatClient
+	chatServiceClient   iusecase.IChatClient
 }
 
-func NewGroupChatUsecase(groupChatRepository repository.GroupChatRepository, chatServiceClient client.ChatClient) GroupChatUsecase {
+func NewGroupChatUsecase(groupChatRepository repository.GroupChatRepository, chatServiceClient iusecase.IChatClient) GroupChatUsecase {
 	return &groupChatUsecase{
 		groupChatRepository: groupChatRepository,
 		chatServiceClient:   chatServiceClient,
@@ -39,9 +38,9 @@ func (u *groupChatUsecase) CreateGroupChat(ctx context.Context, groupID uint32, 
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	// Create conversation in chat service
-	conversation, err := u.chatServiceClient.CreateConversation(ctx, &chatpb.CreateConversationRequest{
+	conversationId, err := u.chatServiceClient.CreateConversation(ctx, &dto.CreateConversationRequest{
 		Name:            name,
-		Type:            chatpb.ConversationTypeEnum_ConversationTypeGroup,
+		Type:            20,
 		CreatedBy:       int32(currentUserId),
 		Members:         utils.Uint32SliceToInt32Slice(members),
 		IsBroadcast:     true,
@@ -56,7 +55,7 @@ func (u *groupChatUsecase) CreateGroupChat(ctx context.Context, groupID uint32, 
 	// Create group chat record
 	groupChat := &entity.GroupChat{
 		GroupId:        groupID,
-		ConversationId: uint32(conversation.ConversationId),
+		ConversationId: conversationId,
 		CreatedBy:      currentUserId,
 		UpdatedBy:      currentUserId,
 	}
@@ -84,9 +83,14 @@ func (u *groupChatUsecase) RemoveUserFromGroupChat(ctx context.Context, groupID 
 	if groupChat == nil {
 		return custom_error.RecordNotFound(fmt.Sprintf("group chat %d not found", groupID))
 	}
-	_, err = u.chatServiceClient.RemoveUserFromConversation(ctx, &chatpb.RemoveUserRequest{
-		ConversationId: int32(groupChat.ConversationId),
-		TargetUserId:   int32(userID),
+
+	conversationId := int64(0)
+	if groupChat.ConversationId != nil {
+		conversationId = int64(*groupChat.ConversationId)
+	}
+	err = u.chatServiceClient.RemoveUserFromConversation(ctx, &dto.RemoveUserRequest{
+		ConversationId: conversationId,
+		TargetUserId:   int64(userID),
 	})
 	if err != nil {
 		return err
@@ -101,9 +105,13 @@ func (u *groupChatUsecase) AddUserToGroupChat(ctx context.Context, groupID uint3
 	if groupChat == nil {
 		return custom_error.RecordNotFound(fmt.Sprintf("group chat %d not found", groupID))
 	}
-	_, err = u.chatServiceClient.AddUserToConversation(ctx, &chatpb.AddUserRequest{
-		ConversationId: int32(groupChat.ConversationId),
-		UserId:         int32(userID),
+	conversationId := int64(0)
+	if groupChat.ConversationId != nil {
+		conversationId = int64(*groupChat.ConversationId)
+	}
+	err = u.chatServiceClient.AddUserToConversation(ctx, &dto.AddUserRequest{
+		ConversationId: conversationId,
+		UserId:         int64(userID),
 	})
 	if err != nil {
 		return err

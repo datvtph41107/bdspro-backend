@@ -12,8 +12,8 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
-	"organization/internal/infrastructure/client"
-	"organization/internal/interface/dto"
+	"organization/internal/dto"
+	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
 )
 
@@ -31,7 +31,7 @@ type groupMemberUsecase struct {
 	logWorker             *LogWorker
 	groupAuthUsecase      GroupAuthUsecase
 	groupChatUsecase      GroupChatUsecase
-	userGrpcClient        client.IUserClient
+	userGrpcClient        iusecase.IUserClient
 }
 
 func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepository,
@@ -39,7 +39,7 @@ func NewGroupMemberUsecase(groupMemberRepository repository.GroupMemberRepositor
 	logWorker *LogWorker,
 	groupAuthUsecase GroupAuthUsecase,
 	groupChatUsecase GroupChatUsecase,
-	userGrpcClient client.IUserClient,
+	userGrpcClient iusecase.IUserClient,
 ) GroupMemberUsecase {
 	return &groupMemberUsecase{
 		groupMemberRepository: groupMemberRepository,

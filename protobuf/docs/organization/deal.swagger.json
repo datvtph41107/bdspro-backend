@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/group-deal": {
+    "/v2/org/deal": {
       "get": {
         "operationId": "GroupDealService_GetGroupDeals",
         "responses": {
@@ -91,7 +91,7 @@
         ]
       }
     },
-    "/v2/org/group-deal/{id}": {
+    "/v2/org/deal/{id}": {
       "get": {
         "operationId": "GroupDealService_GetGroupDeal",
         "responses": {
@@ -188,7 +188,38 @@
         ]
       }
     },
-    "/v2/org/group-deal/{id}/status": {
+    "/v2/org/deal/{id}/investment": {
+      "get": {
+        "operationId": "GroupDealService_InfoInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbInfoInvestmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/deal/{id}/status": {
       "put": {
         "operationId": "GroupDealService_UpdateGroupDealStatus",
         "responses": {
@@ -495,6 +526,59 @@
             "type": "object",
             "$ref": "#/definitions/sharepbProfileItem"
           }
+        }
+      }
+    },
+    "organizationpbInfoInvestmentResponse": {
+      "type": "object",
+      "properties": {
+        "totalInvestment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountPending": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountApproved": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRejected": {
+          "type": "number",
+          "format": "double"
+        },
+        "numPending": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numApproved": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numRejected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numInvestment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numMemberSubmit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountTarget": {
+          "type": "number",
+          "format": "double"
+        },
+        "percentDone": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRest": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

@@ -4,10 +4,11 @@ package pb_noti;
 option go_package = "types/pb_noti";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 service NotificationService {
-  rpc Create (NotiNewRequest) returns (NotificationDTO);
-  rpc SendBatch (NotiBatchRequest) returns (ListResponse);
+  rpc Create (sharepb.NotificationRequest) returns (NotificationDTO);
+  rpc SendBatch (NotiBatchRequest) returns (BatchResponse);
   rpc PushByToken (PushTokenRequest) returns (PushResponse);
   rpc PushByTopic (PushTopicRequest) returns (PushResponse);
 }
@@ -58,8 +59,12 @@ service GatewayNotificationService {
 }
 
 message NotiBatchRequest {
-    repeated NotiNewRequest datas = 1;
+    repeated sharepb.NotificationRequest datas = 1;
     bool sendToDevice = 2;
+}
+
+message BatchResponse {
+    repeated uint64 data = 1;
 }
 
 message PushTopicRequest {
@@ -111,19 +116,6 @@ message CountResponse {
     int32 count = 1;
 }
 
-message NotiNewRequest {
-    string link = 1;
-    string message = 2;
-    string title = 3;
-    int32 type = 4;
-    uint64 targetId = 5;
-    int32 targetType = 6;
-    google.protobuf.Timestamp visibleAt = 7;
-    bool sendToDevice = 8;
-    repeated string attachData = 9;
-    bool isMerge = 10;
-    uint64 ownerId = 11;
-}
 
 message GatewayNotiNewRequest {
     string title = 1;

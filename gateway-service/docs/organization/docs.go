@@ -15,67 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/group": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách nhóm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Lấy danh sách nhóm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của nhóm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo nhóm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Tạo nhóm",
-                "parameters": [
-                    {
-                        "description": "Thông tin nhóm",
-                        "name": "group",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CreateGroupRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/group-deal": {
+        "/deal": {
             "get": {
                 "security": [
                     {
@@ -157,7 +97,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/group-deal/{id}": {
+        "/deal/{id}": {
             "get": {
                 "security": [
                     {
@@ -266,7 +206,44 @@ const docTemplate = `{
                 }
             }
         },
-        "/group-deal/{id}/status": {
+        "/deal/{id}/investment": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin đầu tư thống kê khai báo thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy thông tin đầu tư thống kê khai báo thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.InfoInvestmentResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{id}/status": {
             "put": {
                 "security": [
                     {
@@ -286,6 +263,13 @@ const docTemplate = `{
                 "summary": "Cập nhật trạng thái thương vụ",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Thông tin cập nhật trạng thái thương vụ",
                         "name": "request",
                         "in": "body",
@@ -303,6 +287,66 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/group": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Lấy danh sách nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của nhóm",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Tạo nhóm",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhóm",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/group-member": {
@@ -850,6 +894,265 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/investment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "submit form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "submit form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "description": "Investment",
+                        "name": "investment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.SubmitInvestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investment/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "get form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "get form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Investment"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "update form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "update form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "description": "Investment",
+                        "name": "investment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.SubmitInvestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "delete form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "delete form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investment/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "approve form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "approve form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investment/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "reject form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "reject form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investments/{dealId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "get form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "get form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Deal ID",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Investment"
+                        }
+                    }
+                }
             }
         },
         "/organization": {
@@ -1679,6 +1982,133 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "entity.AttachDocument": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "docName": {
+                    "type": "string"
+                },
+                "docOwner": {
+                    "$ref": "#/definitions/enums.DocOwner"
+                },
+                "docPath": {
+                    "type": "string"
+                },
+                "docSize": {
+                    "type": "integer"
+                },
+                "docType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "description": "DealID or GroupID do DocOwner quyết định",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.Investment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "attachDocument": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.AttachDocument"
+                    }
+                },
+                "changedAt": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "dealID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "investType": {
+                    "$ref": "#/definitions/enums.DealMemberType"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.ApprovedStatus"
+                },
+                "transferTime": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "enums.ApprovedStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "ApprovedStatusPending",
+                "ApprovedStatusApproved",
+                "ApprovedStatusRejected"
+            ]
+        },
+        "enums.DealMemberType": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "DealMemberTypeCustomer",
+                "DealMemberTypePartner",
+                "DealMemberTypeMember"
+            ]
+        },
+        "enums.DocOwner": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "DocOwnerDeal",
+                "DocOwnerGroup",
+                "DocOwnerInvest"
+            ]
+        },
         "organizationpb.AddMemberToOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -1861,6 +2291,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "phone": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "branch, department, store",
                     "type": "string"
                 }
             }
@@ -2079,7 +2513,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductItem"
+                        "$ref": "#/definitions/pb_bdspro.ProductAttachment"
                     }
                 },
                 "profitAmount": {
@@ -2099,6 +2533,47 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.InfoInvestmentResponse": {
+            "type": "object",
+            "properties": {
+                "amountApproved": {
+                    "type": "number"
+                },
+                "amountPending": {
+                    "type": "number"
+                },
+                "amountRejected": {
+                    "type": "number"
+                },
+                "amountRest": {
+                    "type": "number"
+                },
+                "amountTarget": {
+                    "type": "number"
+                },
+                "numApproved": {
+                    "type": "integer"
+                },
+                "numInvestment": {
+                    "type": "integer"
+                },
+                "numMemberSubmit": {
+                    "type": "integer"
+                },
+                "numPending": {
+                    "type": "integer"
+                },
+                "numRejected": {
+                    "type": "integer"
+                },
+                "percentDone": {
+                    "type": "number"
+                },
+                "totalInvestment": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.RemoveMemberFromOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -2107,6 +2582,35 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "integer"
+                }
+            }
+        },
+        "organizationpb.SubmitInvestRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "investType": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "transferTime": {
+                    "type": "string"
                 }
             }
         },
@@ -2219,6 +2723,10 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
+                },
+                "type": {
+                    "description": "branch, department, store",
+                    "type": "string"
                 }
             }
         },
@@ -2302,35 +2810,44 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProductItem": {
+        "pb_bdspro.ProductAttachment": {
             "type": "object",
             "properties": {
                 "area": {
                     "type": "number"
                 },
-                "createdAt": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "depositeId": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "lastPriceId": {
-                    "type": "integer"
+                "image": {
+                    "type": "string"
                 },
-                "ownerType": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
+                "name": {
+                    "type": "string"
                 },
                 "price": {
                     "type": "number"
                 },
-                "productId": {
+                "rentStatus": {
                     "type": "integer"
                 },
-                "updatedAt": {
+                "saleStatus": {
                     "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "sourceTypeName": {
+                    "type": "string"
                 }
             }
         },

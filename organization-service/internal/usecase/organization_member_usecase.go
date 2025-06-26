@@ -11,8 +11,8 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
-	"organization/internal/infrastructure/client"
-	"organization/internal/interface/dto"
+	"organization/internal/dto"
+	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
 
 	"google.golang.org/grpc/codes"
@@ -38,7 +38,7 @@ type organizationMemberUsecase struct {
 	organizationPermissionRepository repository.OrganizationPermissionRepository
 	organizationAuthUsecase          OrganizationAuthUsecase
 	logWorker                        *OrganizationLogWorker
-	userGrpcClient                   client.IUserClient
+	userGrpcClient                   iusecase.IUserClient
 }
 
 func NewOrganizationMemberUsecase(
@@ -48,7 +48,7 @@ func NewOrganizationMemberUsecase(
 	organizationPermissionRepository repository.OrganizationPermissionRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
-	userGrpcClient client.IUserClient,
+	userGrpcClient iusecase.IUserClient,
 ) OrganizationMemberUsecase {
 	return &organizationMemberUsecase{
 		organizationMemberRepository:     organizationMemberRepository,

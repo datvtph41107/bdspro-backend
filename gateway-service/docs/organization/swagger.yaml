@@ -1,5 +1,94 @@
 basePath: /v2/org
 definitions:
+  entity.AttachDocument:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      docName:
+        type: string
+      docOwner:
+        $ref: '#/definitions/enums.DocOwner'
+      docPath:
+        type: string
+      docSize:
+        type: integer
+      docType:
+        type: string
+      id:
+        type: integer
+      ownerId:
+        description: DealID or GroupID do DocOwner quyết định
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  entity.Investment:
+    properties:
+      amount:
+        type: number
+      attachDocument:
+        items:
+          $ref: '#/definitions/entity.AttachDocument'
+        type: array
+      changedAt:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      dealID:
+        type: integer
+      id:
+        type: integer
+      investType:
+        $ref: '#/definitions/enums.DealMemberType'
+      note:
+        type: string
+      status:
+        $ref: '#/definitions/enums.ApprovedStatus'
+      transferTime:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  enums.ApprovedStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ApprovedStatusPending
+    - ApprovedStatusApproved
+    - ApprovedStatusRejected
+  enums.DealMemberType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - DealMemberTypeCustomer
+    - DealMemberTypePartner
+    - DealMemberTypeMember
+  enums.DocOwner:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - DocOwnerDeal
+    - DocOwnerGroup
+    - DocOwnerInvest
   organizationpb.AddMemberToOrganizationBranchRequest:
     properties:
       id:
@@ -119,6 +208,9 @@ definitions:
       organizationId:
         type: integer
       phone:
+        type: string
+      type:
+        description: branch, department, store
         type: string
     type: object
   organizationpb.CreateOrganizationMemberRequest:
@@ -260,7 +352,7 @@ definitions:
         type: array
       products:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductItem'
+          $ref: '#/definitions/pb_bdspro.ProductAttachment'
         type: array
       profitAmount:
         type: number
@@ -273,12 +365,58 @@ definitions:
       updatedAt:
         type: string
     type: object
+  organizationpb.InfoInvestmentResponse:
+    properties:
+      amountApproved:
+        type: number
+      amountPending:
+        type: number
+      amountRejected:
+        type: number
+      amountRest:
+        type: number
+      amountTarget:
+        type: number
+      numApproved:
+        type: integer
+      numInvestment:
+        type: integer
+      numMemberSubmit:
+        type: integer
+      numPending:
+        type: integer
+      numRejected:
+        type: integer
+      percentDone:
+        type: number
+      totalInvestment:
+        type: integer
+    type: object
   organizationpb.RemoveMemberFromOrganizationBranchRequest:
     properties:
       id:
         type: integer
       userId:
         type: integer
+    type: object
+  organizationpb.SubmitInvestRequest:
+    properties:
+      amount:
+        type: number
+      dealId:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      id:
+        type: integer
+      investType:
+        type: integer
+      note:
+        type: string
+      transferTime:
+        type: string
     type: object
   organizationpb.UpdateGroupDealRequest:
     properties:
@@ -351,6 +489,9 @@ definitions:
         type: string
       phone:
         type: string
+      type:
+        description: branch, department, store
+        type: string
     type: object
   organizationpb.UpdateOrganizationMemberRequest:
     properties:
@@ -404,26 +545,32 @@ definitions:
           type: integer
         type: array
     type: object
-  pb_bdspro.ProductItem:
+  pb_bdspro.ProductAttachment:
     properties:
       area:
         type: number
-      createdAt:
+      assetId:
+        type: integer
+      code:
+        type: string
+      depositeId:
         type: integer
       id:
         type: integer
-      lastPriceId:
-        type: integer
-      ownerType:
-        type: integer
-      ownerUserId:
-        type: integer
+      image:
+        type: string
+      name:
+        type: string
       price:
         type: number
-      productId:
+      rentStatus:
         type: integer
-      updatedAt:
+      saleStatus:
         type: integer
+      sourceType:
+        type: integer
+      sourceTypeName:
+        type: string
     type: object
   sharepb.ProfileItem:
     properties:
@@ -444,45 +591,7 @@ info:
   title: Organization Service
   version: "1.0"
 paths:
-  /group:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách nhóm
-      parameters:
-      - description: ID của nhóm
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách nhóm
-      tags:
-      - Nhóm
-    post:
-      consumes:
-      - application/json
-      description: Tạo nhóm
-      parameters:
-      - description: Thông tin nhóm
-        in: body
-        name: group
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.CreateGroupRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo nhóm
-      tags:
-      - Nhóm
-  /group-deal:
+  /deal:
     get:
       consumes:
       - application/json
@@ -532,7 +641,7 @@ paths:
       summary: Tạo thương vụ
       tags:
       - Thương vụ
-  /group-deal/{id}:
+  /deal/{id}:
     delete:
       consumes:
       - application/json
@@ -600,12 +709,40 @@ paths:
       summary: Cập nhật thương vụ
       tags:
       - Thương vụ
-  /group-deal/{id}/status:
+  /deal/{id}/investment:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin đầu tư thống kê khai báo thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.InfoInvestmentResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin đầu tư thống kê khai báo thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/status:
     put:
       consumes:
       - application/json
       description: Cập nhật trạng thái thương vụ
       parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Thông tin cập nhật trạng thái thương vụ
         in: body
         name: request
@@ -624,6 +761,44 @@ paths:
       summary: Cập nhật trạng thái thương vụ
       tags:
       - Thương vụ
+  /group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nhóm
+      tags:
+      - Nhóm
   /group-member:
     post:
       consumes:
@@ -971,6 +1146,167 @@ paths:
       summary: Lấy tổ chức của người dùng hiện tại
       tags:
       - Tổ chức
+  /investment:
+    post:
+      consumes:
+      - application/json
+      description: submit form khai báo góp vốn
+      parameters:
+      - description: Investment
+        in: body
+        name: investment
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.SubmitInvestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: submit form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: delete form khai báo góp vốn
+      tags:
+      - Investment
+    get:
+      consumes:
+      - application/json
+      description: get form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Investment'
+      security:
+      - BearerAuth: []
+      summary: get form khai báo góp vốn
+      tags:
+      - Investment
+    put:
+      consumes:
+      - application/json
+      description: update form khai báo góp vốn
+      parameters:
+      - description: Investment
+        in: body
+        name: investment
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.SubmitInvestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: update form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: approve form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: approve form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: reject form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: reject form khai báo góp vốn
+      tags:
+      - Investment
+  /investments/{dealId}:
+    get:
+      consumes:
+      - application/json
+      description: get form khai báo góp vốn
+      parameters:
+      - description: Deal ID
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Investment'
+      security:
+      - BearerAuth: []
+      summary: get form khai báo góp vốn
+      tags:
+      - Investment
   /organization:
     get:
       consumes:

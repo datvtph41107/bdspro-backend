@@ -160,8 +160,8 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 	notification := domain.NotificationEntity{
 		TargetID:  dto.TargetID,
 		OwnerType: int32(dto.OwnerType),
-		Title:     dto.Title,
-		OwnerID:   dto.OwnerID,
+		// Title:     dto.Title,
+		OwnerID: dto.OwnerID,
 		// PrefixMessage: prefixMessage,
 		Message:    message,
 		AttachData: string(str),
@@ -188,8 +188,22 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 	return &notification, nil
 }
 
-func (s *NotificationUsecase) SendBatch(c context.Context, dto *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
-	return nil, nil
+func (s *NotificationUsecase) SendBatch(c context.Context, notifications []*dto.NotiNewRequest) ([]uint64, error) {
+	existedUserIds := map[uint64]bool{}
+	notificationIds := make([]uint64, 0)
+	for _, notification := range notifications {
+		if existedUserIds[notification.OwnerID] {
+			continue
+		}
+		noti, err := s.Create(c, notification)
+		if err != nil {
+			return nil, err
+		}
+		notificationIds = append(notificationIds, noti.ID)
+		existedUserIds[notification.OwnerID] = true
+	}
+
+	return notificationIds, nil
 }
 
 func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenRequest) (*pb_noti.PushResponse, error) {
@@ -198,47 +212,4 @@ func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenR
 
 func (s *NotificationUsecase) PushByTopic(c context.Context, dto *dto.PushTopicRequest) (*pb_noti.PushResponse, error) {
 	return nil, nil
-}
-
-func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.TypeEnum, attachData []string) []string {
-	if typeMessage == enums.ShareNewsFeed {
-		return []string{"", attachData[0], " đã chia sẻ bài viết của bạn: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.CommentNewsFeed {
-		return []string{"", attachData[0], " đã bình luận bài viết của bạn: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.CommentChildren {
-		return []string{"", attachData[0], " đã trả lời bình luận của bạn: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.LikeNewsFeed {
-		return []string{"", attachData[0], " thích bài viết của bạn: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.LikeComment {
-		return []string{"", attachData[0], " thích bình luận của bạn: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.Follow {
-		return []string{"", attachData[0], " đã theo dõi bạn"}
-	}
-	if typeMessage == enums.FriendRequest {
-		return []string{"", attachData[0], " đã gửi lời mời kết bạn cho bạn"}
-	}
-	if typeMessage == enums.FriendRequest {
-		return []string{"", attachData[0], " đã đồng ý kết bạn"}
-	}
-	if typeMessage == enums.JoinGroup {
-		return []string{"", attachData[0], " đã thêm bạn vào nhóm: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.JoinOrganization {
-		return []string{"", "Quản trị viên đã thêm bạn vào tổ chức: \"" + attachData[1] + "\""}
-	}
-	if typeMessage == enums.Deposit {
-		return []string{"", attachData[0], " đã nạp tiền vào tài khoản của bạn"}
-	}
-	if typeMessage == enums.Withdraw {
-		return []string{"", attachData[0], " đã rút tiền từ tài khoản của bạn"}
-	}
-	if typeMessage == enums.Payment {
-		return []string{"", attachData[0], " đã thanh toán cho bạn"}
-	}	
-	return []string{}
 }

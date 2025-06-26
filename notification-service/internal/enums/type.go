@@ -1,7 +1,7 @@
 package enums
 
 // TypeEnum định nghĩa các loại thông báo
-type TypeEnum int8
+type TypeEnum int16
 
 const (
 	FriendRequest    TypeEnum = 10  //"FRIEND_REQUEST"
@@ -18,6 +18,13 @@ const (
 	Deposit          TypeEnum = 110 //"DEPOSIT"
 	Withdraw         TypeEnum = 111 //"WITHDRAW"
 	Payment          TypeEnum = 112 //"PAYMENT"
+
+	MemberJoinDeal     TypeEnum = 7001 //"MEMBER_JOIN_DEAL"
+	CustomerJoinDeal   TypeEnum = 7002 //"CUSTOMER_JOIN_DEAL"
+	PartnerJoinDeal    TypeEnum = 7003 //"PARTNER_JOIN_DEAL"
+	DealUpdateStatus   TypeEnum = 7004 //"DEAL_UPDATE_STATUS"
+	InvestmentApproved TypeEnum = 7005 //"INVESTMENT_APPROVED"
+	InvestmentRejected TypeEnum = 7006 //"INVESTMENT_REJECTED"
 )
 
 var TypeEnumMap = map[TypeEnum]string{
@@ -34,6 +41,14 @@ var TypeEnumMap = map[TypeEnum]string{
 	Deposit:          "Nạp tiền",
 	Withdraw:         "Rút tiền",
 	Payment:          "Thanh toán",
+
+	// Tổ chức
+	MemberJoinDeal:     "Thêm thành viên vào thương vụ",
+	CustomerJoinDeal:   "Thêm khách hàng vào thương vụ",
+	PartnerJoinDeal:    "Thêm đối tác vào thương vụ",
+	DealUpdateStatus:   "Cập nhật trạng thái thương vụ",
+	InvestmentApproved: "Khai báo góp vốn đã được phê duyệt",
+	InvestmentRejected: "Khai báo góp vốn đã bị từ chối",
 }
 
 // IsValid kiểm tra xem giá trị có hợp lệ không

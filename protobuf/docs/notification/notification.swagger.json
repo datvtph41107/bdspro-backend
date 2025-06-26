@@ -273,6 +273,18 @@
     }
   },
   "definitions": {
+    "pb_notiBatchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "pb_notiCountResponse": {
       "type": "object",
       "properties": {
@@ -317,52 +329,6 @@
         "total": {
           "type": "integer",
           "format": "int32"
-        }
-      }
-    },
-    "pb_notiNotiNewRequest": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "type": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "targetType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "visibleAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "sendToDevice": {
-          "type": "boolean"
-        },
-        "attachData": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "isMerge": {
-          "type": "boolean"
-        },
-        "ownerId": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },
@@ -480,6 +446,52 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbNotificationRequest": {
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "visibleAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sendToDevice": {
+          "type": "boolean"
+        },
+        "attachData": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isMerge": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     }

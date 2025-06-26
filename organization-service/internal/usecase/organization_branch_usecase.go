@@ -27,7 +27,7 @@ type organizationBranchUsecase struct {
 	organizationAuthUsecase            OrganizationAuthUsecase
 	organizationBranchMemberRepository repository.OrganizationBranchMemberRepository
 	organizationRepository             repository.OrganizationRepository
-	membershipClient                   MembershipClient
+	membershipClient                   IMembershipClient
 }
 
 func NewOrganizationBranchUsecase(
@@ -35,7 +35,7 @@ func NewOrganizationBranchUsecase(
 	organizationAuthUsecase OrganizationAuthUsecase,
 	organizationBranchMemberRepository repository.OrganizationBranchMemberRepository,
 	organizationRepository repository.OrganizationRepository,
-	membershipClient MembershipClient,
+	membershipClient IMembershipClient,
 ) OrganizationBranchUsecase {
 	return &organizationBranchUsecase{
 		organizationBranchRepository:       organizationBranchRepository,
@@ -70,7 +70,7 @@ func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	
+
 	plan, err := u.membershipClient.GetPlan(ctx, uint64(planId))
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	pb_notification "pb/types/notification"
+	sharepb "pb/types/shared"
 	"social/env"
 	"time"
 
@@ -55,7 +56,7 @@ func (s *NotificationClient) NotifyToUser(
 	targetID uint64,
 	isMerge bool,
 ) error {
-	_, err := s.client.Create(ctx, &pb_notification.NotiNewRequest{
+	_, err := s.client.Create(ctx, &sharepb.NotificationRequest{
 		AttachData: attachData,
 		Link:       fmt.Sprintf("/news-feed/%d", targetID),
 		Type:       typeNoti,

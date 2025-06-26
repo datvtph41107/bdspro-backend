@@ -21,7 +21,7 @@ type Deal struct {
 	ChargePersonID *uint64
 	Products       []DealProduct    `gorm:"foreignKey:DealID;references:ID"`
 	ProductIds     []uint64         `gorm:"-"`
-	Documents      []AttachDocument `gorm:"foreignKey:OwnerId;references:ID"`
+	Documents      []AttachDocument `gorm:"foreignKey:OwnerId;references:ID;-:migration"`
 	BankAccountID  *uint64
 	BankAccount    *BankAccount `gorm:"foreignKey:BankAccountID;references:ID"`
 	Members        []DealMember `gorm:"foreignKey:DealID;references:ID"`

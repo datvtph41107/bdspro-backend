@@ -7,43 +7,51 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
+	"organization/internal/dto"
 	"organization/internal/enums"
 	iusecase "organization/internal/interface"
 )
 
-type GroupDealUsecase interface {
+type DealUsecase interface {
 	CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	DeleteGroupDeal(ctx context.Context, id uint64) error
 	GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error)
 	GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
+	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
 }
 
 type groupDealUsecase struct {
 	groupDealRepository   repository.GroupDealRepository
+	investmentRepository  repository.InvestmentRepository
 	bankAccountRepository repository.BankAccountRepository
 	documentRepository    repository.DocumentRepository
 	groupAuthUsecase      GroupAuthUsecase
 	logWorker             *LogWorker
 	transaction           iusecase.ITransaction
+	notiClient            iusecase.INotiClient
 }
 
 func NewGroupDealUsecase(
 	groupDealRepository repository.GroupDealRepository,
+	investmentRepository repository.InvestmentRepository,
 	bankAccountRepository repository.BankAccountRepository,
 	documentRepository repository.DocumentRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 	transaction iusecase.ITransaction,
-) GroupDealUsecase {
+	notiClient iusecase.INotiClient,
+) DealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository:   groupDealRepository,
+		investmentRepository:  investmentRepository,
 		bankAccountRepository: bankAccountRepository,
 		documentRepository:    documentRepository,
 		groupAuthUsecase:      groupAuthUsecase,
 		logWorker:             logWorker,
 		transaction:           transaction,
+		notiClient:            notiClient,
 	}
 }
 
@@ -138,6 +146,11 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 		LogData: "Created new deal",
 	})
 
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		u.SendNotification(cloneCtx, createdDeal, enums.NotiDealCreate)
+	}()
+
 	return createdDeal, nil
 }
 
@@ -165,6 +178,12 @@ func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Dea
 		LogType: "UPDATE_DEAL",
 		LogData: "Updated deal information",
 	})
+
+	// todo: gửi thông báo cho các member của group nếu cần
+	go func() {
+		// cloneCtx := _utils.CloneContext(ctx)
+		// u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
+	}()
 
 	return updatedDeal, nil
 }
@@ -229,7 +248,7 @@ func (u *groupDealUsecase) GetGroupDealsByGroupID(ctx context.Context, groupID u
 }
 
 func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
+	deal, err := u.groupDealRepository.DetailByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -253,8 +272,103 @@ func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64,
 		GroupId: uint32(deal.OwnerId),
 		// ActorId: uint32(*deal.CreatedBy),
 		LogType: "UPDATE_DEAL_STATUS",
-		LogData: "Updated deal status to " + string(status),
+		LogData: "Updated deal status to " + enums.DealStatusMap[enums.DealStatus(status)],
 	})
 
+	// todo: gửi thông báo cho các member của group
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		deal.Status = status
+		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
+	}()
+	return nil
+}
+
+func (u *groupDealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error) {
+	deal, err := u.groupDealRepository.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := u.investmentRepository.CountDashboard(ctx, &dto.InvestmentDTO{
+		DealID: id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	percentDone := 0.0
+	if deal.TargetProfit > 0 {
+		percentDone = float64(info.AmountApproved) / float64(deal.TargetProfit)
+	}
+
+	amountRest := 0.0
+	if deal.TargetProfit > info.AmountApproved {
+		amountRest = deal.TargetProfit - info.AmountApproved
+	}
+
+	return &dto.InfoInvestmentDTO{
+		AmountPending:   info.AmountPending,
+		AmountApproved:  info.AmountApproved,
+		AmountRejected:  info.AmountRejected,
+		NumPending:      info.NumPending,
+		NumApproved:     info.NumApproved,
+		NumRejected:     info.NumRejected,
+		NumInvestment:   info.NumInvestment,
+		NumMemberSubmit: info.NumMemberSubmit,
+		AmountTarget:    deal.TargetProfit,
+		PercentDone:     percentDone,
+		AmountRest:      amountRest,
+	}, nil
+}
+
+func (u *groupDealUsecase) SendNotification(ctx context.Context, deal *entity.Deal, typeNoti enums.NotificationType) error {
+	notifications := make([]*dto.NotificationDTO, 0)
+
+	typeMember := typeNoti
+	typeCustomer := typeNoti
+	typePartner := typeNoti
+	attachData := []string{deal.Name}
+
+	// nếu tạo mới thì gán riêng
+	if typeNoti == enums.NotiDealCreate {
+		typeMember = enums.NotiMemberJoinDeal
+		typeCustomer = enums.NotiCustomerJoinDeal
+		typePartner = enums.NotiPartnerJoinDeal
+		attachData = []string{deal.Name}
+	}
+	if typeNoti == enums.NotiDealUpdateStatus {
+		attachData = []string{deal.Name, enums.DealStatusMap[enums.DealStatus(deal.Status)]}
+	}
+
+	for _, member := range deal.Members {
+		notifications = append(notifications, &dto.NotificationDTO{
+			Type:       typeMember,
+			UserId:     &member.MemberID,
+			AttachData: attachData,
+			TargetID:   deal.ID,
+			IsMerge:    false,
+		})
+	}
+	for _, customer := range deal.Customers {
+		notifications = append(notifications, &dto.NotificationDTO{
+			Type:       typeCustomer,
+			UserId:     &customer.MemberID,
+			AttachData: attachData,
+			TargetID:   deal.ID,
+			IsMerge:    false,
+		})
+	}
+	for _, partner := range deal.Partners {
+		notifications = append(notifications, &dto.NotificationDTO{
+			Type:       typePartner,
+			UserId:     &partner.MemberID,
+			AttachData: attachData,
+			TargetID:   deal.ID,
+			IsMerge:    false,
+		})
+	}
+	u.notiClient.SendBatchNotification(ctx, notifications)
 	return nil
 }

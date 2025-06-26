@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"log"
 	"organization/env"
-	"organization/internal/server/grpc"
+	"organization/infrastructure/server/grpc"
 	"os"
 	"path"
 

@@ -8,7 +8,7 @@ service:
     notification: 8004
     payment: 8205
     bdspro: 8202
-    organization: 50052
+    organization: 8207
     crm: 8206
     social: 8209
     appointment: 50054

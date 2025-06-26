@@ -6,9 +6,9 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
-	"organization/internal/infrastructure/client"
-	sharepb "pb/types/shared"
+	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
+	sharepb "pb/types/shared"
 )
 
 type GroupDocumentUsecase interface {
@@ -23,13 +23,13 @@ type groupDocumentUsecase struct {
 	groupDocumentRepository repository.GroupDocumentRepository
 	logActivityUsecase      GroupLogActivityUsecase
 	groupAuthUsecase        GroupAuthUsecase
-	userGrpcClient          client.IUserClient
+	userGrpcClient          iusecase.IUserClient
 }
 
 func NewGroupDocumentUsecase(groupDocumentRepository repository.GroupDocumentRepository,
 	logActivityUsecase GroupLogActivityUsecase,
 	groupAuthUsecase GroupAuthUsecase,
-	userGrpcClient client.IUserClient,
+	userGrpcClient iusecase.IUserClient,
 ) GroupDocumentUsecase {
 	return &groupDocumentUsecase{
 		groupDocumentRepository: groupDocumentRepository,

@@ -8,6 +8,7 @@ import (
 	"noti/internal/enums"
 	"noti/internal/usecase"
 	pb_noti "pb/types/notification"
+	sharepb "pb/types/shared"
 )
 
 type InternalNotiService struct {
@@ -19,7 +20,7 @@ func NewInternalNotiService(uc *usecase.NotificationUsecase) *InternalNotiServic
 	return &InternalNotiService{Usecase: uc}
 }
 
-func (s *InternalNotiService) Create(ctx context.Context, req *pb_noti.NotiNewRequest) (*pb_noti.NotificationDTO, error) {
+func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.NotificationRequest) (*pb_noti.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:        req.Title,
 		Message:      []string{req.Message},
@@ -42,8 +43,28 @@ func (s *InternalNotiService) Create(ctx context.Context, req *pb_noti.NotiNewRe
 	return response, nil
 }
 
-func (s *InternalNotiService) SendBatch(ctx context.Context, req *pb_noti.NotiBatchRequest) (*pb_noti.ListResponse, error) {
-	return nil, nil
+func (s *InternalNotiService) SendBatch(ctx context.Context, req *pb_noti.NotiBatchRequest) (*pb_noti.BatchResponse, error) {
+	notifications := make([]*dto.NotiNewRequest, 0)
+	for _, noti := range req.Datas {
+		notifications = append(notifications, &dto.NotiNewRequest{
+			Title:        noti.Title,
+			Message:      []string{noti.Message},
+			Type:         enums.TypeEnum(noti.Type),
+			AttachData:   noti.AttachData,
+			TargetID:     noti.TargetId,
+			OwnerID:      noti.OwnerId,
+			OwnerType:    enums.OwnerType(noti.TargetType),
+			SendToDevice: noti.SendToDevice,
+			IsMerge:      noti.IsMerge,
+		})
+	}
+	notificationIds, err := s.Usecase.SendBatch(ctx, notifications)
+	if err != nil {
+		return nil, err
+	}
+	return &pb_noti.BatchResponse{
+		Data: notificationIds,
+	}, nil
 }
 
 func (s *InternalNotiService) PushByToken(ctx context.Context, req *pb_noti.PushTokenRequest) (*pb_noti.PushResponse, error) {

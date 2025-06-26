@@ -9,6 +9,6 @@ type GroupChat struct {
 	CreatedBy uint32
 	UpdatedBy uint32
 
-	GroupId         uint32
-	ConversationId  uint32
-} 
+	GroupId        uint32
+	ConversationId *uint64
+}

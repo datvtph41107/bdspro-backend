@@ -1,0 +1,477 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "organization/investment.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "InvestmentService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/org/investment": {
+      "post": {
+        "operationId": "InvestmentService_CreateInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbSubmitInvestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
+    "/v2/org/investment/{id}": {
+      "get": {
+        "operationId": "InvestmentService_DetailInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbInvestment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      },
+      "delete": {
+        "operationId": "InvestmentService_DeleteInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      },
+      "put": {
+        "operationId": "InvestmentService_UpdateInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InvestmentServiceUpdateInvestmentBody"
+            }
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
+    "/v2/org/investment/{id}/approve": {
+      "post": {
+        "operationId": "InvestmentService_ApproveInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
+    "/v2/org/investment/{id}/reject": {
+      "post": {
+        "operationId": "InvestmentService_RejectInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
+    "/v2/org/investments/{dealId}": {
+      "get": {
+        "operationId": "InvestmentService_GetInvestments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbListInvestment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "investType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "transferTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "InvestmentServiceUpdateInvestmentBody": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "investType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "transferTime": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        }
+      }
+    },
+    "organizationpbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbInvestment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "investType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "transferTime": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "changedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "statusName": {
+          "type": "string"
+        }
+      }
+    },
+    "organizationpbListInvestment": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbInvestment"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbSubmitInvestRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "investType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "transferTime": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbIdDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

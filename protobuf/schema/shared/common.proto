@@ -3,12 +3,18 @@ syntax = "proto3";
 package sharepb;
 option go_package = "pb/types/shared;sharepb";
 
+import "google/protobuf/timestamp.proto";
+
 message ArchivedRequest {
   uint64 id = 1;
   bool archived = 2;
 }
 
 message IdRequest {
+  uint64 id = 1;
+}
+
+message IdDTO {
   uint64 id = 1;
 }
 
@@ -40,4 +46,18 @@ message GetProfileByIdsRequest {
 
 message GetProfileByIdsResponse {
   repeated ProfileItem profiles = 1;
+}
+
+message NotificationRequest {
+  string link = 1;
+  string message = 2;
+  string title = 3;
+  int32 type = 4;
+  uint64 targetId = 5;
+  int32 targetType = 6;
+  google.protobuf.Timestamp visibleAt = 7;
+  bool sendToDevice = 8;
+  repeated string attachData = 9;
+  bool isMerge = 10;
+  uint64 ownerId = 11;
 }

@@ -5,6 +5,6 @@ import (
 	"organization/internal/domain/entity"
 )
 
-type MembershipClient interface {
+type IMembershipClient interface {
 	GetPlan(ctx context.Context, id uint64) (*entity.PlanEntity, error)
 }

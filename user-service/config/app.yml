@@ -92,8 +92,8 @@ otp:
 
 grpc:
   organization:
-    host: :50052
+    host: :8207
   group:
-    host: :50052
+    host: :8207
   payment:
     host: :8205

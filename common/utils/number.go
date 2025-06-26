@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -35,4 +36,32 @@ func ValidatePhoneNumber(phone string) bool {
 
 func IsParsableToInt(s string) (int, error) {
 	return strconv.Atoi(s)
+}
+
+func FormatVND(amount float64) string {
+	intPart := int64(amount)
+	s := fmt.Sprintf("%d", intPart)
+
+	// Chèn dấu chấm từ phải sang trái
+	n := len(s)
+	if n <= 3 {
+		return s + " ₫"
+	}
+
+	var b strings.Builder
+	pre := n % 3
+	if pre > 0 {
+		b.WriteString(s[:pre])
+		if n > pre {
+			b.WriteString(".")
+		}
+	}
+	for i := pre; i < n; i += 3 {
+		b.WriteString(s[i : i+3])
+		if i+3 < n {
+			b.WriteString(".")
+		}
+	}
+
+	return b.String() + " ₫"
 }
