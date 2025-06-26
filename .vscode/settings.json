@@ -1,0 +1,124 @@
+{
+  "files.associations": {
+    "server.h": "c"
+  },
+  "protoc": {
+    "path": "${workspaceRoot}/protobuf",
+    "compile_on_save": false,
+    "options": [
+      "--proto_path=protos/v3",
+      "--proto_path=protos/v2",
+      "--proto_path=${workspaceRoot}/proto",
+      "--proto_path=${env.GOPATH}/src",
+      "--java_out=gen/java"
+    ]
+  },
+  "material-icon-theme.folders.customClones": [
+    {
+      "name": "crm",
+      "base": "admin",
+      "color": "light-green-500",
+      "lightColor": "light-green-700",
+      "folderNames": ["crm-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "social",
+      "base": "public",
+      "color": "blue-400",
+      "folderNames": ["social-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "organization",
+      "base": "policy",
+      "color": "green-400",
+      "folderNames": ["organization-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "bdspro",
+      "base": "home",
+      "color": "yellow-900",
+      "folderNames": ["bdspro-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "file",
+      "base": "aws",
+      "color": "red-500",
+      "folderNames": ["file-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "payment",
+      "base": "cart",
+      "color": "yellow-700",
+      "folderNames": ["payment-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "relay",
+      "base": "server",
+      "color": "purple-400",
+      "folderNames": ["relay-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "notification",
+      "base": "event",
+      "color": "red-400",
+      "folderNames": ["notification-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "user",
+      "base": "admin",
+      "color": "red-600",
+      "folderNames": ["user-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "gateway",
+      "base": "context",
+      "color": "green-600",
+      "folderNames": ["gateway-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "membership",
+      "base": "changesets",
+      "color": "blue-900",
+      "folderNames": ["membership-service"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "infra",
+      "base": "plugin",
+      "color": "blue-800",
+      "folderNames": ["infra","infrastructure"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "internal",
+      "base": "secure",
+      "color": "red-600",
+      "folderNames": ["internal"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "usecase",
+      "base": "template",
+      "color": "orange-700",
+      "folderNames": ["usecase"],
+      "rootFolderNames": []
+    },
+    {
+      "name": "chat",
+      "base": "other",
+      "color": "blue-600",
+      "folderNames": ["chat-service","go-chat-service"],
+      "rootFolderNames": []
+    }
+  ]
+}

@@ -709,6 +709,29 @@ paths:
       summary: Cập nhật thương vụ
       tags:
       - Thương vụ
+  /deal/{id}/bank-account:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin tài khoản đầu tư
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.BankAccountItem'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin tài khoản đầu tư
+      tags:
+      - Thương vụ
   /deal/{id}/investment:
     get:
       consumes:

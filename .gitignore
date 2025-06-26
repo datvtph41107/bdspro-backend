@@ -1,7 +1,11 @@
-.vscode
+
 __debug_bin**
 .DS_Store
 **/main
 /research
 /protobuf/googleapis
 /protobuf/types
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json

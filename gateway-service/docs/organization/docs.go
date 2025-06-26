@@ -206,6 +206,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/deal/{id}/bank-account": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin tài khoản đầu tư",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy thông tin tài khoản đầu tư",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.BankAccountItem"
+                        }
+                    }
+                }
+            }
+        },
         "/deal/{id}/investment": {
             "get": {
                 "security": [

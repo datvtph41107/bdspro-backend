@@ -188,6 +188,37 @@
         ]
       }
     },
+    "/v2/org/deal/{id}/bank-account": {
+      "get": {
+        "operationId": "GroupDealService_AccountInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbBankAccountItem"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{id}/investment": {
       "get": {
         "operationId": "GroupDealService_InfoInvestment",

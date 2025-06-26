@@ -1,0 +1,236 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🔌 Gateway HTTP (8000)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "gateway"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "👤 User HTTP (8001)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "user-http"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "👤 User gRPC (8201)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "user"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "🏘 BDSPro HTTP (8102)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "bdspro-http"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "🏘 BDSPro gRPC (8202)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "bdspro"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "📁 File ",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "file"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "💬 Chat gRPC (50053)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "chat"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🗺️ Map",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "map"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🔔 Notification gRPC (8004)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "noti"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "💳 Payment gRPC (8205)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "payment"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🧩 CRM gRPC (8206)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "crm"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🎟 Membership",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "membership"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🏢 Organization gRPC (8207)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "organization"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "📡 Relay WS (8204)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "relay"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "📅 Appointment gRPC (50054)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "appointment"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🌐 Social gRPC (8209)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "social"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

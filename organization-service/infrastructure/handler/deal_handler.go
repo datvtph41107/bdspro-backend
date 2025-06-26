@@ -14,7 +14,7 @@ import (
 
 type GroupDealHandler struct {
 	organizationpb.UnimplementedGroupDealServiceServer
-	GroupDealUsecase     usecase.DealUsecase
+	DealUsecase          usecase.DealUsecase
 	GroupDealTransformer transformer.GroupDealTransformer
 	GroupDealValidator   validator.GroupDealValidator
 	BdsproClient         *client.BdsproClient
@@ -29,7 +29,7 @@ func NewGroupDealHandler(
 	userClient *client.UserClient,
 ) *GroupDealHandler {
 	return &GroupDealHandler{
-		GroupDealUsecase:     groupDealUsecase,
+		DealUsecase:          groupDealUsecase,
 		GroupDealTransformer: groupDealTransformer,
 		GroupDealValidator:   groupDealValidator,
 		BdsproClient:         bdsproClient,
@@ -53,7 +53,7 @@ func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *organizatio
 
 	deal := h.GroupDealTransformer.CreateGroupDealRequestToEntity(req)
 
-	deal, err := h.GroupDealUsecase.CreateDeal(ctx, deal)
+	deal, err := h.DealUsecase.CreateDeal(ctx, deal)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *organizatio
 
 	deal := h.GroupDealTransformer.UpdateGroupDealRequestToEntity(req)
 
-	deal, err := h.GroupDealUsecase.UpdateGroupDeal(ctx, deal)
+	deal, err := h.DealUsecase.UpdateGroupDeal(ctx, deal)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *organizatio
 		return nil, err
 	}
 
-	err := h.GroupDealUsecase.DeleteGroupDeal(ctx, uint64(req.Id))
+	err := h.DealUsecase.DeleteGroupDeal(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 		return nil, err
 	}
 
-	deal, err := h.GroupDealUsecase.GetGroupDealByID(ctx, uint64(req.Id))
+	deal, err := h.DealUsecase.GetGroupDealByID(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *organizationp
 	if req.Size != nil {
 		size = int(*req.Size)
 	}
-	deals, total, err := h.GroupDealUsecase.GetGroupDealsByGroupID(ctx, uint64(req.GroupId), page, size)
+	deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, uint64(req.GroupId), page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *organ
 		return nil, err
 	}
 
-	err := h.GroupDealUsecase.UpdateGroupDealStatus(ctx, uint64(req.Id), enums.DealStatus(req.Status))
+	err := h.DealUsecase.UpdateGroupDealStatus(ctx, uint64(req.Id), enums.DealStatus(req.Status))
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *organ
 // @Success 200 {object} organizationpb.InfoInvestmentResponse "Thành công"
 // @Router /deal/{id}/investment [get]
 func (h *GroupDealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.InfoInvestmentResponse, error) {
-	info, err := h.GroupDealUsecase.InfoInvestment(ctx, req.Id)
+	info, err := h.DealUsecase.InfoInvestment(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -212,5 +212,28 @@ func (h *GroupDealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDT
 		NumMemberSubmit: info.NumMemberSubmit,
 		AmountTarget:    info.AmountTarget,
 		PercentDone:     info.PercentDone,
+	}, nil
+}
+
+// @Summary Lấy thông tin tài khoản đầu tư
+// @Description Lấy thông tin tài khoản đầu tư
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.BankAccountItem "Thành công"
+// @Router /deal/{id}/bank-account [get]
+func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.BankAccountItem, error) {
+	account, err := h.DealUsecase.AccountInvestment(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.BankAccountItem{
+		// Name:          account.AccountName,
+		BankName:      account.BankName,
+		AccountNumber: account.AccountNumber,
+		AccountName:   account.AccountName,
 	}, nil
 }

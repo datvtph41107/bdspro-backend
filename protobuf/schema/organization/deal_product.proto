@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+
+option go_package = "types/organizationpb";
+
+service DealProductService {
+    rpc AttachDealProduct(AttachDealProductRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/deal/product/attach"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroupDeal(UpdateGroupDealRequest) returns (UpdateGroupDealResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroupDeal(DeleteGroupDealRequest) returns (DeleteGroupDealResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/deal/{id}"
+        };
+    }
+
+    rpc GetGroupDeal(GetGroupDealRequest) returns (GroupDeal) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}"
+        };
+    }
+
+    rpc GetGroupDeals(GetGroupDealsRequest) returns (GetGroupDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal"
+        };
+    }
+
+    rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/{id}/status"
+            body: "*"
+        };
+    }
+
+    rpc InfoInvestment(sharepb.IdDTO) returns (InfoInvestmentResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/investment"
+        };
+    }
+
+    rpc AccountInvestment(sharepb.IdDTO) returns (BankAccountItem) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/bank-account"
+        };
+    }
+
+    rpc Members(sharepb.IdDTO) returns (GetGroupMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/members"
+        };
+    }
+}
+
+
+message AttachDealProductRequest {
+    repeated uint64 productIds = 1;
+    repeated uint64 removeIds = 2;
+}
+
+message CreateGroupDealResponse {
+    uint32 id = 1;
+}   
+
+message UpdateGroupDealRequest {
+    uint32 id = 1;
+    string name = 2;
+    double amount = 3;
+    uint32 status = 4;
+}
+
+message UpdateGroupDealResponse {
+    uint32 id = 1;
+}
+
+message DeleteGroupDealRequest {
+    uint32 id = 1;
+}
+
+message DeleteGroupDealResponse {
+    uint32 id = 1;
+}
+
+message GetGroupDealRequest {
+    uint32 id = 1;
+}
+
+message GetGroupDealResponse {
+    GroupDeal deal = 1;
+}
+
+message GetGroupDealsRequest {
+    uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetGroupDealsResponse {
+    repeated GroupDeal data = 1 [json_name = "data"];
+    uint32 total = 2;
+}
+
+message UpdateGroupDealStatusRequest {
+    uint32 id = 1;
+    uint32 status = 2;
+}
+
+message UpdateGroupDealStatusResponse {
+    uint32 id = 1;
+}
+
+message GroupDeal {
+    uint32 id = 1;
+    string name = 2;
+    double targetProfit = 3;
+    uint32 status = 4;
+    uint32 dealType = 5;
+    uint32 ownerId = 6;
+    uint32 ownerType = 7;
+    string createdAt = 8;
+    string updatedAt = 9;
+    double totalAmount = 10;
+    double profitAmount = 11;
+    uint32 numMember = 12;
+    repeated pb_bdspro.ProductAttachment products = 13;
+    string dealTypeName = 14;
+    string note = 15;
+    repeated DocumentItem documents = 16;
+    optional BankAccountItem bankAccount = 17;
+    repeated sharepb.ProfileItem customers = 18;
+    repeated sharepb.ProfileItem partners = 19;
+    repeated sharepb.ProfileItem members = 20;
+}
+
+message DocumentItem {
+    string name = 1;
+    string path = 2;
+    string type = 3;
+    int64 size = 4;
+}
+
+message BankAccountItem {
+    string name = 1;
+    string bankName = 2;
+    string accountNumber = 3;
+    string accountName = 4;
+}
+
+message InfoInvestmentResponse {
+    uint32 totalInvestment = 1;
+    double amountPending = 2;
+    double amountApproved = 3;
+    double amountRejected = 4;
+    uint32 numPending = 5;
+    uint32 numApproved = 6;
+    uint32 numRejected = 7;
+    uint32 numInvestment = 8;
+    uint32 numMemberSubmit = 9;
+    double amountTarget = 10;
+    double percentDone = 11;
+    double amountRest = 12;
+}
+
+message DealMember {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
+    uint32 memberType = 3;
+    double amountCommit = 4;
+    // profile
+    string memberName = 5;
+    string memberAvatar = 6;
+    string memberPhone = 7;
+    bool memberVerified = 8;
+    
+}
+
+message GetGroupMembersResponse {
+    repeated DealMember data = 1;
+    uint32 total = 2;
+}

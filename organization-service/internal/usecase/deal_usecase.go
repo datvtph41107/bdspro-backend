@@ -20,6 +20,7 @@ type DealUsecase interface {
 	GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
 	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
+	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
 }
 
 type groupDealUsecase struct {
@@ -64,6 +65,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 	var createdDeal *entity.Deal
 
 	// todo: nhớ check xem các member có nằm trong group không
+	// todo: xử lý user có thể vừa là khách, đối tác, thành viên
 	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		// tạo mới tài khoản nếu chưa tồn tại
 		bankAccount := deal.BankAccount
@@ -371,4 +373,32 @@ func (u *groupDealUsecase) SendNotification(ctx context.Context, deal *entity.De
 	}
 	u.notiClient.SendBatchNotification(ctx, notifications)
 	return nil
+}
+
+func (u *groupDealUsecase) AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error) {
+	deal, err := u.groupDealRepository.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err = u.groupAuthUsecase.IsMemberGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+	if err != nil {
+		return nil, custom_error.Forbidden("you are not allowed to get account investment")
+	}
+
+	if deal.BankAccountID == nil {
+		return nil, custom_error.RecordNotFound("bank account not found")
+	}
+
+	bankAccount, err := u.bankAccountRepository.GetByID(ctx, deal.BankAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if bankAccount == nil {
+		return nil, custom_error.RecordNotFound("bank account not found")
+	}
+
+	return bankAccount, nil
 }

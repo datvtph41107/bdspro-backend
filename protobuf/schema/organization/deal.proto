@@ -53,6 +53,18 @@ service GroupDealService {
             get: "/v2/org/deal/{id}/investment"
         };
     }
+
+    rpc AccountInvestment(sharepb.IdDTO) returns (BankAccountItem) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/bank-account"
+        };
+    }
+
+    rpc Members(sharepb.IdDTO) returns (GetGroupMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/members"
+        };
+    }
 }
 
 
@@ -176,4 +188,22 @@ message InfoInvestmentResponse {
     double amountTarget = 10;
     double percentDone = 11;
     double amountRest = 12;
+}
+
+message DealMember {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
+    uint32 memberType = 3;
+    double amountCommit = 4;
+    // profile
+    string memberName = 5;
+    string memberAvatar = 6;
+    string memberPhone = 7;
+    bool memberVerified = 8;
+    
+}
+
+message GetGroupMembersResponse {
+    repeated DealMember data = 1;
+    uint32 total = 2;
 }

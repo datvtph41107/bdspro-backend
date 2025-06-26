@@ -23,6 +23,7 @@ message Empty {}
 message SubmitResponse {
   uint64 id = 1;
   string message = 2;
+  repeated uint64 ids = 3;
 }
 
 message FriendItem {

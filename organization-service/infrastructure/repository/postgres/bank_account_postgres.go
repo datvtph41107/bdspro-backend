@@ -22,3 +22,13 @@ func (r *BankAccountPostgresRepository) Create(ctx context.Context, bankAccount 
 	}
 	return bankAccount, nil
 }
+
+func (r *BankAccountPostgresRepository) GetByID(ctx context.Context, id *uint64) (*entity.BankAccount, error) {
+	var bankAccount entity.BankAccount
+	if err := r.db.WithContext(ctx).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&bankAccount).Error; err != nil {
+		return nil, err
+	}
+	return &bankAccount, nil
+}
