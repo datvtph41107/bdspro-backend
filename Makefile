@@ -21,7 +21,7 @@ init:
 	cd appointment-service && go mod tidy
 	cd payment-service && go mod tidy
 	cd notification-service && go mod tidy
-	cd go-chat-service && go mod tidy
+	cd chat-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
@@ -70,19 +70,19 @@ appointment:
 user-http:
 	cd user-service && go run main.go http
 chat:
-	cd go-chat-service && go run main.go grpc-serve
+	cd chat-service && go run main.go grpc-serve
 swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
 chat-http:
-	cd go-chat-service && go run main.go http-serve
+	cd chat-service && go run main.go http-serve
 relay:
 	cd relay-service && go run main.go grpc-server
 chat-swagger:
-	cd go-chat-service && go run main.go swagger-serve
+	cd chat-service && go run main.go swagger-serve
 payment:
 	cd payment-service && go run main.go grpc-server
 chat-grpc:
-	cd go-chat-service && go run main.go grpc-serve
+	cd chat-service && go run main.go grpc-serve
 membership:
 	cd membership-service && go run main.go grpc-server
 

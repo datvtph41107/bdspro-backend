@@ -66,5 +66,15 @@ func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.Ty
 		return []string{"Bạn đã bị từ chối khai báo góp vốn cho thương vụ: \"", attachData[0], "\" với số tiền: ", attachData[1]}
 	}
 
+	if typeMessage == enums.TransactionDeposit {
+		return []string{"Bạn đã nạp tiền vào tài khoản của bạn: ", attachData[0]}
+	}
+	if typeMessage == enums.TransactionWithdraw {
+		return []string{"Bạn đã rút tiền từ tài khoản của bạn: ", attachData[0]}
+	}
+	if typeMessage == enums.TransactionPayment {
+		return []string{"Bạn đã thanh toán: ", attachData[0]}
+	}
+
 	return []string{}
 }

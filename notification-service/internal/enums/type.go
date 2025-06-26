@@ -25,6 +25,10 @@ const (
 	DealUpdateStatus   TypeEnum = 7004 //"DEAL_UPDATE_STATUS"
 	InvestmentApproved TypeEnum = 7005 //"INVESTMENT_APPROVED"
 	InvestmentRejected TypeEnum = 7006 //"INVESTMENT_REJECTED"
+
+	TransactionDeposit  TypeEnum = 5001 //"TRANSACTION_DEPOSIT"
+	TransactionWithdraw TypeEnum = 5002 //"TRANSACTION_WITHDRAW"
+	TransactionPayment  TypeEnum = 5003 //"TRANSACTION_PAYMENT"
 )
 
 var TypeEnumMap = map[TypeEnum]string{

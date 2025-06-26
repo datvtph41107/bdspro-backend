@@ -6,7 +6,7 @@ replace pb => ../protobuf
 
 replace common => ../common
 
-replace chatservice => ../go-chat-service
+replace chatservice => ../chat-service
 
 require (
 	common v0.0.0-00010101000000-000000000000

@@ -5,7 +5,7 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "go-chat-service",
+	Use:   "chat-service",
 	Short: "Go Chat Service is a gRPC based chat service",
 	Long:  `Go Chat Service is a gRPC based chat service that allows users to communicate in real-time.`,
 }

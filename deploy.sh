@@ -79,7 +79,7 @@ case "$1" in
     payload_build=bdspro-grpc
     ;;
   "chathttp")
-    service_path=go-chat-service
+    service_path=chat-service
     path_jar=main
     payload_build=http-server
     ;;
@@ -89,7 +89,7 @@ case "$1" in
     payload_build=relay
     ;;
   "swagger-chat")
-    service_path=go-chat-service
+    service_path=chat-service
     path_jar=main
     payload_build=swagger-chat
     ;;

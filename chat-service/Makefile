@@ -1,7 +1,7 @@
 IMAGE_NAME=go_chat_service
 
 SHELL := /bin/bash
-PROJECT_NAME = go-chat-service
+PROJECT_NAME = chat-service
 BUILD_FOLDER = ./dist
 BINARY_PATH = $(BUILD_FOLDER)/$(PROJECT_NAME)
 

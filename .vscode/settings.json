@@ -117,7 +117,7 @@
       "name": "chat",
       "base": "other",
       "color": "blue-600",
-      "folderNames": ["chat-service","go-chat-service"],
+      "folderNames": ["chat-service","chat-service"],
       "rootFolderNames": []
     }
   ]

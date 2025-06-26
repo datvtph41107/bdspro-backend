@@ -159,7 +159,7 @@ services:
 
   http-server:
     build: 
-      context: ./go-chat-service
+      context: ./chat-service
     container_name: http-server
     ports:
       - "8106:8081"
@@ -185,7 +185,7 @@ services:
       - internal
   
   swagger-chat:
-    build: ./go-chat-service
+    build: ./chat-service
     container_name: swagger-chat
     ports:
       - "8107:3001"
