@@ -2,37 +2,35 @@ package client
 
 import (
 	"context"
-	"fmt"
 
+	clients "pb/clients"
 	pb_noti "pb/types/notification"
-
-	"github.com/tuandq2112/payment-service/appconfig"
-	"google.golang.org/grpc"
+	sharepb "pb/types/shared"
 )
 
 type NotificationClient interface {
-	Create(ctx context.Context, req *pb_noti.NotiNewRequest) (*pb_noti.NotificationDTO, error)
-	SendBatch(ctx context.Context, req *pb_noti.NotiBatchRequest) (*pb_noti.ListResponse, error)
+	Create(ctx context.Context, req *sharepb.NotificationRequest) (*pb_noti.NotificationDTO, error)
+	SendBatch(ctx context.Context, req []*sharepb.NotificationRequest) (*pb_noti.BatchResponse, error)
 }
 
 type notificationClient struct {
-	client pb_noti.NotificationServiceClient
+	client *clients.NotificationClient
 }
 
 func NewNotificationClient() NotificationClient {
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", appconfig.NOTIFICATION_SERVICE_HOST, appconfig.NOTIFICATION_SERVICE_PORT), grpc.WithInsecure())
-	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to notification service: %v", err))
+	result := &notificationClient{
+		client: clients.MakeNotificationClient("release"),
 	}
-	return &notificationClient{
-		client: pb_noti.NewNotificationServiceClient(conn),
-	}
+
+	return result
 }
 
-func (c *notificationClient) Create(ctx context.Context, req *pb_noti.NotiNewRequest) (*pb_noti.NotificationDTO, error) {
-	return c.client.Create(ctx, req)
+func (c *notificationClient) Create(ctx context.Context, req *sharepb.NotificationRequest) (*pb_noti.NotificationDTO, error) {
+	err := c.client.NotifyToUser(ctx, int32(req.Type), &req.OwnerId, []string{req.Message}, req.TargetId, req.IsMerge)
+	return nil, err
 }
 
-func (c *notificationClient) SendBatch(ctx context.Context, req *pb_noti.NotiBatchRequest) (*pb_noti.ListResponse, error) {
-	return c.client.SendBatch(ctx, req)
+func (c *notificationClient) SendBatch(ctx context.Context, req []*sharepb.NotificationRequest) (*pb_noti.BatchResponse, error) {
+	err := c.client.SendBatch(ctx, req)
+	return nil, err
 }

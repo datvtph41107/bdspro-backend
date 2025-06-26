@@ -3,9 +3,12 @@ package usecase
 import (
 	"context"
 	"fmt"
-	pb_noti "pb/types/notification"
+
+	_utils "common/utils"
+	sharepb "pb/types/shared"
 
 	"github.com/tuandq2112/payment-service/internal/domain/entity"
+	"github.com/tuandq2112/payment-service/internal/enums"
 	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
 )
 
@@ -39,16 +42,16 @@ func (w *notificationWorker) PushToQueue(ctx context.Context, transaction *entit
 func (w *notificationWorker) sendToNotificationService(ctx context.Context, transaction *entity.WalletTransaction, message string) error {
 	var notificationType int32
 	if transaction.Type == entity.TransactionTypeDeposit {
-		notificationType = 110
+		notificationType = int32(enums.NotificationTypeDeposit)
 	} else if transaction.Type == entity.TransactionTypeWithdrawal {
-		notificationType = 111
+		notificationType = int32(enums.NotificationTypeWithdraw)
 	} else if transaction.Type == entity.TransactionTypePayment {
-		notificationType = 112
+		notificationType = int32(enums.NotificationTypePayment)
 	} else {
 		return fmt.Errorf("invalid transaction type")
 	}
-	notification := &pb_noti.NotiNewRequest{
-		AttachData: []string{fmt.Sprintf("%f", transaction.Amount)},
+	notification := &sharepb.NotificationRequest{
+		AttachData: []string{_utils.FormatVND(transaction.Amount)},
 		Type:       notificationType,
 		Title:      "Thông báo thanh toán",
 		Message:    message,
