@@ -15,7 +15,7 @@ const (
 
 var (
 	DB_DNS    = "host=localhost user=postgres password=postgres dbname=appointment port=5432 sslmode=disable"
-	GRPC_PORT = "50054"
+	GRPC_PORT = "8213"
 )
 
 var (

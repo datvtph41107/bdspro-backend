@@ -35,7 +35,7 @@ var (
 	DB_DNS                       = ""
 
 	CHAT_SERVICE_HOST = "localhost"
-	CHAT_SERVICE_PORT = "50053"
+	CHAT_SERVICE_PORT = "8208"
 
 	USER_SERVICE_HOST = "localhost"
 	USER_SERVICE_PORT = "8201"

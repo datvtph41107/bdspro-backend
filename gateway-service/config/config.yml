@@ -5,14 +5,19 @@ server:
 service:
   domain: localhost
   port:
-    notification: 8004
-    payment: 8205
-    bdspro: 8202
-    organization: 8207
-    crm: 8206
-    social: 8209
-    appointment: 50054
     user: 8201
+    bdspro: 8202
+    file: 8203
+    notification: 8204
+    payment: 8205
+    crm: 8206
+    organization: 8207
+    chat: 8208
+    social: 8209
+    map: 8210
+    search: 8211
+    membership: 8212
+    appointment: 8213
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer

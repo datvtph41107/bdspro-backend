@@ -14,7 +14,7 @@ func init() {
 	serveCmd.Flags().String("httpPort", "8080", "httpPort")
 	RootCmd.AddCommand(serveCmd)
 
-	grpcServeCmd.Flags().String("grpcPort", "50053", "grpcPort")
+	grpcServeCmd.Flags().String("grpcPort", "8208", "grpcPort")
 	RootCmd.AddCommand(grpcServeCmd)
 
 	wsCmd.Flags().String("wsPort", "3003", "wsPort")

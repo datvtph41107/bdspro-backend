@@ -1,5 +1,5 @@
 server:
-  port: 8204
+  port: 8308
 
 # database:
 #   dsn: host=14.225.210.29 user=chat password=chat123 dbname=db_chat port=5432 sslmode=disable

@@ -25,7 +25,7 @@ func MakeNotificationClient(env_runtime string) *NotificationClient {
 			url = name
 		}
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8004", url),
+		conn, err := grpc.Dial(fmt.Sprintf("%s:8204", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),

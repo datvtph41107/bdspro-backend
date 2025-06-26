@@ -26,7 +26,7 @@ func NewChatClient() *ChatClient {
 			url = name
 		}
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
+		conn, err := grpc.Dial(fmt.Sprintf("%s:8208", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),

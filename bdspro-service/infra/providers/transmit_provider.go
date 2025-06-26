@@ -13,7 +13,7 @@ type TransmitProvider struct {
 }
 
 func NewNotiService() *TransmitProvider {
-	conn, err := grpc.Dial("localhost:8004", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:8204", grpc.WithInsecure())
 	if err != nil {
 		return &TransmitProvider{}
 	}

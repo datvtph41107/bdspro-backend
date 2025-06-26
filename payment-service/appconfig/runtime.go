@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	cfg             *viper.Viper
-	Host            string
-	Port            string
-	DB_URL          string
-	Whitelist       []string
-	SepayAPIKey     string
+	cfg                       *viper.Viper
+	Host                      string
+	Port                      string
+	DB_URL                    string
+	Whitelist                 []string
+	SepayAPIKey               string
 	NOTIFICATION_SERVICE_HOST string
 	NOTIFICATION_SERVICE_PORT string
 )
@@ -63,6 +63,6 @@ func ReadConfig() {
 		NOTIFICATION_SERVICE_HOST = "localhost"
 	}
 	if NOTIFICATION_SERVICE_PORT = cfg.GetString("notification.port"); NOTIFICATION_SERVICE_PORT == "" {
-		NOTIFICATION_SERVICE_PORT = "8004"
+		NOTIFICATION_SERVICE_PORT = "8204"
 	}
 }

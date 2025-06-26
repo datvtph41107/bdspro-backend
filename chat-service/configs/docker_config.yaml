@@ -14,7 +14,8 @@ redis:
 
 app:
   port: 8081
-  ws_port: 3003
+  # ws_port: 3003
+  ws_port: 8208
 
 worker:
   number: 10

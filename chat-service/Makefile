@@ -30,7 +30,7 @@ http-serve: build
 .PHONY: grpc-serve
 grpc-serve: build
 	echo "Starting $(PROJECT_NAME) server..."
-	$(BINARY_PATH) grpc-serve --grpcPort=50053
+	$(BINARY_PATH) grpc-serve --grpcPort=8208
 
 .PHONY: ws-serve
 ws-serve: build

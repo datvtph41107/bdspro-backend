@@ -12,4 +12,4 @@ sepay:
 grpc:
   notification:
     host: localhost
-    port: 8004
+    port: 8204

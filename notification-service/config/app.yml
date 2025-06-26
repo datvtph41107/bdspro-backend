@@ -1,5 +1,5 @@
 server:
-  tcp_port: 8004
+  tcp_port: 8204
 
 eureka:
   url: localhost

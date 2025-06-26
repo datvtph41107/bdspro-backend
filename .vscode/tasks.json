@@ -96,7 +96,7 @@
       }
     },
     {
-      "label": "💬 Chat gRPC (50053)",
+      "label": "💬 Chat gRPC (8208)",
       "type": "shell",
       "command": "make",
       "args": [
@@ -124,7 +124,7 @@
       }
     },
     {
-      "label": "🔔 Notification gRPC (8004)",
+      "label": "🔔 Notification gRPC (8204)",
       "type": "shell",
       "command": "make",
       "args": [
@@ -191,7 +191,7 @@
       }
     },
     {
-      "label": "📡 Relay WS (8204)",
+      "label": "📡 Relay WS (8308)",
       "type": "shell",
       "command": "make",
       "args": [
@@ -205,7 +205,7 @@
       }
     },
     {
-      "label": "📅 Appointment gRPC (50054)",
+      "label": "📅 Appointment gRPC (8213)",
       "type": "shell",
       "command": "make",
       "args": [

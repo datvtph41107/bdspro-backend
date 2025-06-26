@@ -1,6 +1,6 @@
 server:
   port: 8008
-  tcp_port: 8208
+  tcp_port: 8211
 
 elastic:
   search:
