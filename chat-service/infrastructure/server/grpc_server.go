@@ -1,6 +1,7 @@
 package server
 
 import (
+	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"net"
@@ -10,8 +11,10 @@ import (
 	"time"
 
 	"chat/configs"
+	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
-	"chat/internal/delivery/handlers"
+	"chat/infrastructure/handlers"
+	"chat/infrastructure/mapper"
 	"chat/internal/repository"
 	"chat/internal/usecases"
 
@@ -36,17 +39,31 @@ func NewGRPCServer(port string) *GRPCServer {
 		grpcLogger.Fatalf("Failed to connect to database: %v", err)
 	}
 	pRepository := repository.NewRepository(db)
+	userClient := client.NewUserClient()
+	// conversationMapper := mapper.NewConversationMapper()
 
-	converstationUsecase := usecases.NewConversationUsecases(pRepository)
+	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	messageUsecase := usecases.NewMessageUsecases(pRepository)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
 	backgroundImageUsecase := usecases.NewBackgroundImageUsecases(pRepository)
+	conversationMapper := mapper.NewConversationMapper()
 
-	delivery := handlers.NewDelivery(converstationUsecase, messageUsecase, readReceptUsecase, participantUsecase, messageReactionUsecase, backgroundImageUsecase)
+	delivery := handlers.NewDelivery(
+		converstationUsecase,
+		messageUsecase,
+		readReceptUsecase,
+		participantUsecase,
+		messageReactionUsecase,
+		backgroundImageUsecase,
+		userClient,
+		conversationMapper,
+	)
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+	)
 	delivery.RegisterGRPCServer(server)
 
 	return &GRPCServer{

@@ -69,3 +69,7 @@ func NotMessageOwner() error {
 func ConversationAlreadyExists(details ...protoadapt.MessageV1) error {
 	return NewError(int32(ConversationAlreadyExistsCode), errors.New("Conversation đã tồn tại."), details...)
 }
+
+func Unauthorized() error {
+	return NewError(int32(401), errors.New("Unauthorized"))
+}

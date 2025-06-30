@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"chat/internal/server"
+	"chat/infrastructure/server"
 
 	"github.com/spf13/cobra"
 )
 
 var grpcServeCmd = &cobra.Command{
-	Use:   "grpc-serve",
+	Use:   "grpc",
 	Short: "Start the gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		grpcPort, err := cmd.Flags().GetString("grpcPort")

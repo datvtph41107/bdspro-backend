@@ -66,3 +66,16 @@ func (r *gormRepository) DeleteBackgroundImage(ctx context.Context, id uint64) e
 	}
 	return nil
 }
+
+func (r *gormRepository) GetRoomMemberIDs(ctx context.Context, conversationId uint64) ([]uint64, error) {
+	var ids []uint64
+	err := r.db.WithContext(ctx).
+		Model(&models.ParticipantModel{}).
+		Where("conversation_id = ?", conversationId).
+		Select("user_id").
+		Pluck("user_id", &ids).Error
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}

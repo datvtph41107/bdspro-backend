@@ -22,6 +22,7 @@ type WebSocketHandler struct {
 	redisClient redisClient
 	clients     map[string]*websocket.Conn          // Conn -> userID
 	rooms       map[string]map[*websocket.Conn]bool // roomID -> list of connections
+	roomMembers map[string][]uint64                 // roomID -> list of userIDs
 	mu          sync.Mutex
 	chatClient  ChatClient
 }
@@ -43,6 +44,7 @@ func NewWebSocketHandler(chatClient ChatClient) *WebSocketHandler {
 		redisClient: redis.NewRedisClient(),
 		clients:     make(map[string]*websocket.Conn),
 		rooms:       make(map[string]map[*websocket.Conn]bool),
+		roomMembers: make(map[string][]uint64),
 		chatClient:  chatClient,
 	}
 }
@@ -114,6 +116,55 @@ func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Re
 	h.mu.Unlock()
 
 	wsLogger.Infof("User %s joined room %s", userIdStr, roomID)
+
+	go h.handleDisconnect(conn, userIdStr)
+}
+
+func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request) {
+	conn, err := h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+		return
+	}
+
+	userId := utils.GetCurrentUserID(r.Context())
+
+	if userId == 0 {
+		conn.Close()
+		wsLogger.Error("Missing user_id")
+		return
+	}
+	userIdStr := strconv.FormatUint(userId, 10)
+
+	// roomID := r.URL.Query().Get("room_id")
+
+	// if roomID == "" {
+	// 	conn.Close()
+	// 	wsLogger.Error("Missing  room_id")
+	// 	return
+	// }
+	// roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
+	// if err != nil {
+	// 	conn.Close()
+	// 	wsLogger.Error("Invalid room_id format")
+	// 	return
+	// }
+	// err = h.chatClient.ValidateConversationAndCurrentUser(r.Context(), roomIDUint)
+	// if err != nil {
+	// 	conn.Close()
+	// 	wsLogger.Error("Invalid room_id")
+	// 	return
+	// }
+	h.mu.Lock()
+	// if h.rooms[roomID] == nil {
+	// 	h.rooms[roomID] = make(map[*websocket.Conn]bool)
+	// }
+	// h.rooms[roomID][conn] = true
+	h.clients[userIdStr] = conn
+
+	h.mu.Unlock()
+
+	wsLogger.Infof("User %s connected", userIdStr)
 
 	go h.handleDisconnect(conn, userIdStr)
 }
@@ -190,7 +241,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 	case constants.JOIN_ROOM_TYPE:
 		if roomID, ok := m["room_id"].(string); ok {
 			if userID, ok := m["user_id"].(string); ok {
-				h.sendToRoom(roomID, data)
+				h.sendToRoom2(roomID, data)
 
 				h.addUserToRoom(roomID, userID)
 			}
@@ -243,7 +294,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 
 		// Truyền tin nhắn đến phòng theo loại sự kiện
 		if roomID, ok := m["room_id"].(string); ok {
-			h.sendToRoom(roomID, data)
+			h.sendToRoom2(roomID, data)
 		}
 
 	default:
@@ -292,6 +343,44 @@ func (h *WebSocketHandler) sendToUser(members []string, data []byte) {
 			if err != nil {
 				wsLogger.Errorf("Failed to send message to user %s: %v", userId, err)
 			}
+		}
+	}
+}
+
+func (h *WebSocketHandler) loadMemberOfRoom(roomID string) {
+	roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
+	if err != nil {
+		wsLogger.Errorf("Invalid room_id format: %v", err)
+		return
+	}
+	members, err := h.chatClient.GetRoomMembers(context.Background(), roomIDUint)
+	if err != nil {
+		wsLogger.Errorf("Failed to get room members: %v", err)
+		return
+	}
+	h.roomMembers[roomID] = members
+}
+
+func (h *WebSocketHandler) sendToRoom2(roomID string, data []byte) {
+	_, ok := h.roomMembers[roomID]
+	wsLogger.Infof("Room %s not found, message not delivered", roomID)
+	if !ok {
+		h.loadMemberOfRoom(roomID)
+	}
+	members, ok := h.roomMembers[roomID]
+	if !ok {
+		wsLogger.Warnf("Room %s not found, message not delivered", roomID)
+		return
+	}
+
+	for _, clientId := range members {
+		conn := h.clients[strconv.FormatUint(clientId, 10)]
+		if conn == nil {
+			continue
+		}
+		err := conn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			wsLogger.Errorf("Failed to send message to all users: %v", err)
 		}
 	}
 }

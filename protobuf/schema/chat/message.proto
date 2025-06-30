@@ -26,6 +26,8 @@ message CreateRoom {
 message JoinRoomData {
   string room_id = 1;
   string user_id = 2;
+  optional string fullName = 3;
+  optional string avatar = 4;
 }
 
 message JoinRoom {
@@ -47,6 +49,8 @@ message ReadMessageData {
   repeated string message_ids = 1;
   string user_id = 2;
   string room_id = 3;
+  optional string fullName = 4;
+  optional string avatar = 5;
 }
 
 message ReadMessage {
@@ -79,6 +83,8 @@ message EditMessage {
 message PinMessageData {
   string room_id = 1;
   string message_id = 2;
+  optional string fullName = 3;
+  optional string avatar = 4;
 }
 
 message PinMessage {

@@ -12,4 +12,5 @@ type redisClient interface {
 
 type ChatClient interface {
 	ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error
+	GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error)
 }

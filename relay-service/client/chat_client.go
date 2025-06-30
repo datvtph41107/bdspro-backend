@@ -53,3 +53,14 @@ func (c *ChatClient) ValidateConversationAndCurrentUser(ctx context.Context, con
 	_, err := c.Client.ValidConversationAndCurrentUser(ctx, request)
 	return err
 }
+
+func (c *ChatClient) GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error) {
+	request := &sharepb.IdRequest{
+		Id: conversationId,
+	}
+	response, err := c.Client.GetRoomMembers(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return response.ProfileIds, err
+}

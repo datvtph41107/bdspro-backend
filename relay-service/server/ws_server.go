@@ -61,6 +61,7 @@ func setupHandlers(mux *http.ServeMux, wsHandler *wshandler.WebSocketHandler) ht
 
 	mux.HandleFunc("/ws", wsHandler.HandleWebSocket)
 	mux.HandleFunc("/ws/room", wsHandler.HandleRoomWebSocket)
+	mux.HandleFunc("/connect", wsHandler.HandleConnect)
 
 	return handler
 }

@@ -7,6 +7,15 @@ import (
 	"chat/cmd"
 )
 
+// @title Chat Service API
+// @version 1.0
+// @description API for chat service
+// @BasePath /v2/chat
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 func main() {
 	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
 

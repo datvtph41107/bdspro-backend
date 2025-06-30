@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 
+	"chat/infrastructure/client"
+	"chat/infrastructure/mapper"
 	chatpb "pb/types/chat"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -20,10 +22,11 @@ func NewDelivery(
 	readReceptUsecases readReceptUsecases,
 	participantUsecases participantUsecases,
 	messageReactionUsecases messageReactionUsecases,
-
 	backgroundImageUsecases backgroundImageUsecases,
+	userClient *client.UserClient,
+	conversationMapper *mapper.ConversationMapper,
 ) *Delivery {
-	chatHandler := NewChatHandler(conversationUsecases, messageUsecases, readReceptUsecases, participantUsecases, messageReactionUsecases)
+	chatHandler := NewChatHandler(conversationUsecases, messageUsecases, readReceptUsecases, participantUsecases, messageReactionUsecases, userClient, conversationMapper)
 	go chatHandler.Start()
 
 	externalHandler := NewExternalHandler(backgroundImageUsecases)

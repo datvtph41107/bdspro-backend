@@ -9,9 +9,11 @@ import (
 	sharepb "pb/types/shared"
 
 	"chat/configs"
+	"chat/infrastructure/client"
+	"chat/infrastructure/delivery/errors"
+	"chat/infrastructure/mapper"
 	"chat/infrastructure/redis"
 	"chat/internal/constants"
-	"chat/internal/delivery/errors"
 	"chat/models"
 	"chat/utils"
 
@@ -30,6 +32,8 @@ type chatHandler struct {
 	numberOfWorker          int
 	maxParticipant          int
 	redisClient             redisClient
+	userClient              *client.UserClient
+	conversationMapper      *mapper.ConversationMapper
 }
 
 func NewChatHandler(
@@ -38,6 +42,8 @@ func NewChatHandler(
 	readReceptUsecases readReceptUsecases,
 	participantUsecases participantUsecases,
 	messageReactionUsecases messageReactionUsecases,
+	userClient *client.UserClient,
+	conversationMapper *mapper.ConversationMapper,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -50,9 +56,20 @@ func NewChatHandler(
 		maxParticipant:          configs.MAX_PARTICIPANT,
 		redisClient:             redis.NewRedisClient(),
 		eventChannel:            make(chan any),
+		userClient:              userClient,
+		conversationMapper:      conversationMapper,
 	}
 }
 
+// @Summary Tạo đoạn hội thoại
+// @Description Tạo đoạn hội thoại với các thành viên được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param conversation body chatpb.CreateConversationRequest true "Đoạn hội thoại cần tạo"
+// @Success 200 {object} chatpb.CreateConversationResponse
+// @Router /conversations [post]
 func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.CreateConversationRequest) (*chatpb.CreateConversationResponse, error) {
 	if len(req.Members) > s.maxParticipant {
 		return nil, errors.MaxParticipantsReached()
@@ -62,7 +79,7 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 		return nil, errors.NotParticipant()
 	}
 
-	model, err := s.conversationUsecases.CreateConversation(ctx, &models.ConversationModel{
+	conversation := &models.ConversationModel{
 		Name:            &req.Name,
 		Type:            models.ConversationTypeEnum(req.Type),
 		CreatedBy:       uint64(req.CreatedBy),
@@ -70,7 +87,8 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 		ForbidForward:   req.ForbidForward,
 		Avatar:          req.Avatar,
 		BackgroundImage: req.BackgroundImage,
-	}, utils.Int32SliceToUint64Slice(req.Members))
+	}
+	model, err := s.conversationUsecases.CreateConversation(ctx, conversation, utils.Int32SliceToUint64Slice(req.Members))
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +105,15 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 	}, nil
 }
 
+// @Summary Lấy danh sách đoạn hội thoại
+// @Description Lấy danh sách đoạn hội thoại theo các tiêu chí được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param conversation query chatpb.GetConversationsRequest true "Tiêu chí lấy danh sách đoạn hội thoại"
+// @Success 200 {object} chatpb.GetConversationsResponse
+// @Router /conversations [get]
 func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConversationsRequest) (*chatpb.GetConversationsResponse, error) {
 	var limit, offset int64
 	if req.Limit != nil {
@@ -101,49 +128,28 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConve
 		offset = 0
 	}
 
-	conversations, err := s.conversationUsecases.GetConversations(ctx, limit, offset, models.ConversationTypeEnum(*req.Type), req.Keyword)
+	conversations, err := s.conversationUsecases.GetConversations(ctx, limit, offset, req.Type, req.Keyword)
 	if err != nil {
 		return nil, err
 	}
 
-	var pbConversations []*chatpb.Conversation
-	for _, conv := range conversations {
-		if conv.LatestMessage.ID == 0 {
-			pbConversations = append(pbConversations, &chatpb.Conversation{
-				ConversationId:  int32(conv.ID),
-				Name:            *conv.Name,
-				Type:            chatpb.ConversationTypeEnum(conv.Type),
-				UpdatedAt:       conv.UpdatedAt.Local().Format(time.RFC3339),
-				Avatar:          conv.Avatar,
-				UnreadCount:     int32(conv.UnreadCount),
-				BackgroundImage: conv.BackgroundImage,
-			})
-		} else {
-			pbConversations = append(pbConversations, &chatpb.Conversation{
-				ConversationId: int32(conv.ID),
-				Name:           *conv.Name,
-				Type:           chatpb.ConversationTypeEnum(conv.Type),
-				UpdatedAt:      conv.UpdatedAt.Format(time.DateTime),
-				Avatar:         conv.Avatar,
-				UnreadCount:    int32(conv.UnreadCount),
-				LastMessage: &chatpb.Message{
-					MessageId:   int32(conv.LatestMessage.ID),
-					SenderId:    int32(conv.LatestMessage.SenderID),
-					Content:     conv.LatestMessage.Content,
-					ContentType: string(conv.LatestMessage.ContentType),
-					FileUrl:     conv.LatestMessage.FileURL,
-					CreatedAt:   conv.LatestMessage.CreatedAt.Local().Format(time.RFC3339),
-				},
-				BackgroundImage: conv.BackgroundImage,
-			})
-		}
-	}
+	pbConversations := s.conversationMapper.ConversationsToPb(conversations)
+	s.userClient.MapUserProfile(ctx, pbConversations)
 
 	return &chatpb.GetConversationsResponse{
 		Conversations: pbConversations,
 	}, nil
 }
 
+// @Summary Gửi tin nhắn
+// @Description Gửi tin nhắn đến đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.SendMessageRequest true "Tin nhắn cần gửi"
+// @Success 200 {object} chatpb.SendMessageResponse
+// @Router /messages [post]
 func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
 	message, err := s.messageUsecases.SendMessage(ctx, &models.MessageModel{
 		ConversationID: uint64(req.ConversationId),
@@ -182,6 +188,13 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 			IsRecall:    message.ReplyMessage.Recall,
 		}
 	}
+
+	user, _ := s.userClient.GetUserById(ctx, message.SenderID)
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
+
 	s.eventChannel <- event
 
 	updateRoomEvent := &chatpb.UpdateRoomMessage{
@@ -197,6 +210,15 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 	}, nil
 }
 
+// @Summary Lấy danh sách tin nhắn
+// @Description Lấy danh sách tin nhắn theo các tiêu chí được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetMessagesRequest true "Tiêu chí lấy danh sách tin nhắn"
+// @Success 200 {object} chatpb.GetMessagesResponse
+// @Router /messages [get]
 func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
 	var limit, offset int64
 	var sort string
@@ -278,6 +300,15 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 	}, nil
 }
 
+// @Summary Chuyển tiếp tin nhắn
+// @Description Chuyển tiếp tin nhắn đến đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.ForwardMessageRequest true "Tin nhắn cần chuyển tiếp"
+// @Success 200 {object} chatpb.ForwardMessageResponse
+// @Router /messages/forward [post]
 func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMessageRequest) (*chatpb.ForwardMessageResponse, error) {
 	message, err := s.messageUsecases.ForwardMessage(ctx, uint64(req.MessageId), uint64(req.TargetConversationId))
 	if err != nil {
@@ -295,12 +326,26 @@ func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMes
 			CreatedAt:   message.CreatedAt.Local().Format(time.RFC3339),
 		},
 	}
+	user, _ := s.userClient.GetUserById(ctx, message.SenderID)
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
 	s.eventChannel <- event
 	return &chatpb.ForwardMessageResponse{
 		MessageId: int32(message.ID),
 	}, nil
 }
 
+// @Summary Đánh dấu tin nhắn đã đọc
+// @Description Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.MarkAsReadRequest true "Đoạn hội thoại và tin nhắn cần đánh dấu"
+// @Success 200 {object} chatpb.MarkAsReadResponse
+// @Router /messages/read [post]
 func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequest) (*chatpb.MarkAsReadResponse, error) {
 	err := s.readReceptUsecases.MarkAsRead(ctx, uint64(req.ConversationId), utils.Int32SliceToUint64Slice(req.MessageIds))
 	if err != nil {
@@ -316,12 +361,27 @@ func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequ
 		},
 	}
 
+	user, _ := s.userClient.GetUserById(ctx, utils.GetCurrentUserID(ctx))
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
+
 	s.eventChannel <- event
 	return &chatpb.MarkAsReadResponse{
 		Success: true,
 	}, nil
 }
 
+// @Summary Đánh dấu tin nhắn đã đọc
+// @Description Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.PinMessageRequest true "Đoạn hội thoại và tin nhắn cần đánh dấu"
+// @Success 200 {object} chatpb.PinMessageResponse
+// @Router /messages/pin [post]
 func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequest) (*chatpb.PinMessageResponse, error) {
 	_, err := s.messageUsecases.PinMessage(ctx, uint64(req.MessageId), uint64(req.ConversationId), req.DoPin)
 	if err != nil {
@@ -335,6 +395,13 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 			MessageId: strconv.Itoa(int(req.MessageId)),
 		},
 	}
+
+	user, _ := s.userClient.GetUserById(ctx, utils.GetCurrentUserID(ctx))
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
+
 	s.eventChannel <- event
 
 	return &chatpb.PinMessageResponse{
@@ -342,6 +409,15 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 	}, nil
 }
 
+// @Summary Gỡ tin nhắn
+// @Description Gỡ tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.RecallMessageRequest true "Đoạn hội thoại và tin nhắn cần gỡ"
+// @Success 200 {object} chatpb.RecallMessageResponse
+// @Router /messages/recall [post]
 func (s *chatHandler) RecallMessage(ctx context.Context, req *chatpb.RecallMessageRequest) (*chatpb.RecallMessageResponse, error) {
 	message, err := s.messageUsecases.RecallMessage(ctx, uint64(req.MessageId))
 	if err != nil {
@@ -361,6 +437,15 @@ func (s *chatHandler) RecallMessage(ctx context.Context, req *chatpb.RecallMessa
 	}, nil
 }
 
+// @Summary Xóa thành viên
+// @Description Xóa thành viên khỏi đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.RemoveUserRequest true "Đoạn hội thoại và thành viên cần xóa"
+// @Success 200 {object} chatpb.RemoveUserResponse
+// @Router /conversation/remove-member [post]
 func (s *chatHandler) RemoveUser(ctx context.Context, req *chatpb.RemoveUserRequest) (*chatpb.RemoveUserResponse, error) {
 	err := s.participantUsecases.RemoveUser(ctx, uint64(req.ConversationId), uint64(req.TargetUserId))
 	if err != nil {
@@ -379,6 +464,15 @@ func (s *chatHandler) RemoveUser(ctx context.Context, req *chatpb.RemoveUserRequ
 	}, nil
 }
 
+// @Summary Chỉnh sửa đoạn hội thoại
+// @Description Chỉnh sửa đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.EditChannelRequest true "Đoạn hội thoại cần chỉnh sửa"
+// @Success 200 {object} chatpb.EditChannelResponse
+// @Router /conversation/edit [post]
 func (s *chatHandler) EditChannel(ctx context.Context, req *chatpb.EditChannelRequest) (*chatpb.EditChannelResponse, error) {
 	err := s.conversationUsecases.EditChannel(ctx, uint64(req.ConversationId), req.IsBroadcast, req.ForbidForward, req.Name, req.BackgroundImage)
 	if err != nil {
@@ -389,6 +483,15 @@ func (s *chatHandler) EditChannel(ctx context.Context, req *chatpb.EditChannelRe
 	}, nil
 }
 
+// @Summary Tạo đoạn hội thoại tổ chức
+// @Description Tạo đoạn hội thoại tổ chức
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.CreateOrgChannelRequest true "Đoạn hội thoại tổ chức cần tạo"
+// @Success 200 {object} chatpb.CreateOrgChannelResponse
+// @Router /conversation/create-org [post]
 func (s *chatHandler) CreateOrgChannel(ctx context.Context, req *chatpb.CreateOrgChannelRequest) (*chatpb.CreateOrgChannelResponse, error) {
 	channel, err := s.conversationUsecases.CreateOrgChannel(ctx, &models.ConversationModel{})
 	if err != nil {
@@ -400,6 +503,15 @@ func (s *chatHandler) CreateOrgChannel(ctx context.Context, req *chatpb.CreateOr
 	}, nil
 }
 
+// @Summary Ngưng thông báo
+// @Description Ngưng thông báo trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.MuteConversationRequest true "Đoạn hội thoại và thông báo cần ngưng"
+// @Success 200 {object} chatpb.MuteConversationResponse
+// @Router /conversation/mute [post]
 func (s *chatHandler) MuteConversation(ctx context.Context, req *chatpb.MuteConversationRequest) (*chatpb.MuteConversationResponse, error) {
 	err := s.participantUsecases.MuteConversation(ctx, uint64(req.ConversationId), req.Mute)
 	if err != nil {
@@ -411,6 +523,15 @@ func (s *chatHandler) MuteConversation(ctx context.Context, req *chatpb.MuteConv
 	}, nil
 }
 
+// @Summary Tìm kiếm
+// @Description Tìm kiếm tin nhắn và đoạn hội thoại theo các tiêu chí được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.SearchRequest true "Tiêu chí tìm kiếm"
+// @Success 200 {object} chatpb.SearchResponse
+// @Router /search [get]
 func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*chatpb.SearchResponse, error) {
 	var searchType, limit, offset int
 	if req.Type != nil {
@@ -456,7 +577,17 @@ func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*c
 	}, nil
 }
 
+// @Summary Lấy đoạn hội thoại theo ID
+// @Description Lấy đoạn hội thoại theo ID
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetConversationByIdRequest true "ID đoạn hội thoại cần lấy"
+// @Success 200 {object} chatpb.GetConversationByIdResponse
+// @Router /conversation/{id} [get]
 func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetConversationByIdRequest) (*chatpb.GetConversationByIdResponse, error) {
+	req.IncludeMembers = true
 	conversation, err := s.conversationUsecases.GetConversationById(ctx, uint64(req.ConversationId), req.IncludeMembers)
 	if err != nil {
 		return nil, err
@@ -473,7 +604,7 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 		}
 	}
 
-	return &chatpb.GetConversationByIdResponse{
+	result := &chatpb.GetConversationByIdResponse{
 		ConversationId:  int32(conversation.ID),
 		Name:            *conversation.Name,
 		Type:            chatpb.ConversationTypeEnum(conversation.Type),
@@ -485,9 +616,38 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 		Participants:    participants,
 		BackgroundImage: conversation.BackgroundImage,
 		Avatar:          conversation.Avatar,
-	}, nil
+	}
+
+	if len(conversation.ParticipantIDs) > 0 {
+		avatars, _ := s.userClient.GetAvatars(ctx, conversation.ParticipantIDs)
+		result.Avatars = avatars
+	}
+
+	return result, nil
+	// return &chatpb.GetConversationByIdResponse{
+	// 	ConversationId:  int32(conversation.ID),
+	// 	Name:            *conversation.Name,
+	// 	Type:            chatpb.ConversationTypeEnum(conversation.Type),
+	// 	CreatedBy:       int32(conversation.CreatedBy),
+	// 	IsBroadcast:     conversation.IsBroadcast,
+	// 	ForbidForward:   conversation.ForbidForward,
+	// 	CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
+	// 	UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
+	// 	Participants:    participants,
+	// 	BackgroundImage: conversation.BackgroundImage,
+	// 	Avatar:          conversation.Avatar,
+	// }, nil
 }
 
+// @Summary Lấy danh sách thành viên
+// @Description Lấy danh sách thành viên trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetListParticipantRequest true "Đoạn hội thoại cần lấy danh sách thành viên"
+// @Success 200 {object} chatpb.GetListParticipantResponse
+// @Router /conversation/members [get]
 func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetListParticipantRequest) (*chatpb.GetListParticipantResponse, error) {
 	participants, total, err := s.participantUsecases.GetListParticipant(ctx, req.ConversationId)
 	if err != nil {
@@ -508,6 +668,15 @@ func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetLis
 	}, nil
 }
 
+// @Summary Lấy danh sách đọc tin nhắn
+// @Description Lấy danh sách đọc tin nhắn trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetReadReceiptRequest true "Đoạn hội thoại và tin nhắn cần lấy danh sách đọc"
+// @Success 200 {object} chatpb.GetReadReceiptResponse
+// @Router /messages/read-receipt [get]
 func (s *chatHandler) GetReadReceipt(ctx context.Context, req *chatpb.GetReadReceiptRequest) (*chatpb.GetReadReceiptResponse, error) {
 	messages, total, err := s.readReceptUsecases.GetReadReceipt(ctx, req.Page, req.Size, req.MessageId)
 	if err != nil {
@@ -526,6 +695,15 @@ func (s *chatHandler) GetReadReceipt(ctx context.Context, req *chatpb.GetReadRec
 	}, nil
 }
 
+// @Summary Lấy danh sách tin nhắn được đánh dấu
+// @Description Lấy danh sách tin nhắn được đánh dấu trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetMessagesRequest true "Đoạn hội thoại cần lấy danh sách tin nhắn được đánh dấu"
+// @Success 200 {object} chatpb.GetMessagesResponse
+// @Router /messages/pinned [get]
 func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
 	messages, err := s.messageUsecases.GetPinnedMessages(ctx, uint64(req.ConversationId))
 	if err != nil {
@@ -551,6 +729,15 @@ func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMess
 	}, nil
 }
 
+// @Summary Thêm thành viên
+// @Description Thêm thành viên vào đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.AddUserRequest true "Đoạn hội thoại và thành viên cần thêm"
+// @Success 200 {object} chatpb.AddUserResponse
+// @Router /conversation/add-user [post]
 func (s *chatHandler) AddUser(ctx context.Context, req *chatpb.AddUserRequest) (*chatpb.AddUserResponse, error) {
 	err := s.participantUsecases.AddUser(ctx, uint64(req.ConversationId), uint64(req.UserId))
 	if err != nil {
@@ -563,12 +750,24 @@ func (s *chatHandler) AddUser(ctx context.Context, req *chatpb.AddUserRequest) (
 			UserId: strconv.Itoa(int(req.UserId)),
 		},
 	}
+	user, _ := s.userClient.GetUserById(ctx, uint64(req.UserId))
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
 	s.eventChannel <- event
 	return &chatpb.AddUserResponse{
 		Success: true,
 	}, nil
 }
 
+// @Summary Rời đoạn hội thoại
+// @Description Rời đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.LeaveRoomRequest true "Đoạn hội thoại cần rời"
 func (s *chatHandler) LeaveRoom(ctx context.Context, req *chatpb.LeaveRoomRequest) (*chatpb.LeaveRoomResponse, error) {
 	err := s.conversationUsecases.LeaveRoom(ctx, uint64(req.ConversationId))
 	if err != nil {
@@ -586,6 +785,15 @@ func (s *chatHandler) LeaveRoom(ctx context.Context, req *chatpb.LeaveRoomReques
 	}, nil
 }
 
+// @Summary Chỉnh sửa tin nhắn
+// @Description Chỉnh sửa tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.EditMessageRequest true "Đoạn hội thoại và tin nhắn cần chỉnh sửa"
+// @Success 200 {object} chatpb.EditMessageResponse
+// @Router /messages/edit [post]
 func (s *chatHandler) EditMessage(ctx context.Context, req *chatpb.EditMessageRequest) (*chatpb.EditMessageResponse, error) {
 	message, err := s.messageUsecases.EditMessage(ctx, uint64(req.MessageId), req.Content)
 	if err != nil {
@@ -605,6 +813,15 @@ func (s *chatHandler) EditMessage(ctx context.Context, req *chatpb.EditMessageRe
 	}, nil
 }
 
+// @Summary Xóa vi phạm
+// @Description Xóa vi phạm tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.DeleteViolationRequest true "Đoạn hội thoại và tin nhắn cần xóa vi phạm"
+// @Success 200 {object} chatpb.DeleteViolationResponse
+// @Router /messages/delete-violation [post]
 func (s *chatHandler) DeleteViolation(ctx context.Context, req *chatpb.DeleteViolationRequest) (*chatpb.DeleteViolationResponse, error) {
 	err := s.messageUsecases.DeleteViolation(ctx, uint64(req.MessageId))
 	if err != nil {
@@ -622,6 +839,15 @@ func (s *chatHandler) DeleteViolation(ctx context.Context, req *chatpb.DeleteVio
 	}, nil
 }
 
+// @Summary Xóa đoạn hội thoại
+// @Description Xóa đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.DeleteRoomRequest true "Đoạn hội thoại cần xóa"
+// @Success 200 {object} chatpb.DeleteRoomResponse
+// @Router /conversation/delete [post]
 func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequest) (*chatpb.DeleteRoomResponse, error) {
 	err := s.conversationUsecases.DeleteRoom(ctx, uint64(req.ConversationId))
 	if err != nil {
@@ -639,6 +865,15 @@ func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequ
 	}, nil
 }
 
+// @Summary Lấy cài đặt đoạn hội thoại
+// @Description Lấy cài đặt đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetSettingRequest true "Đoạn hội thoại cần lấy cài đặt"
+// @Success 200 {object} chatpb.GetSettingResponse
+// @Router /conversation/setting [get]
 func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequest) (*chatpb.GetSettingResponse, error) {
 	conversation, participant, err := s.conversationUsecases.GetSetting(ctx, uint64(req.Id))
 	if err != nil {
@@ -656,6 +891,15 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequ
 	}, nil
 }
 
+// @Summary Lấy danh sách tệp tin
+// @Description Lấy danh sách tệp tin trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetFilesRequest true "Đoạn hội thoại cần lấy danh sách tệp tin"
+// @Success 200 {object} chatpb.GetFilesResponse
+// @Router /messages/files [get]
 func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest) (*chatpb.GetFilesResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"FILE", "video", "audio", "pdf"})
 	if err != nil {
@@ -682,6 +926,15 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest)
 	}, nil
 }
 
+// @Summary Lấy danh sách hình ảnh
+// @Description Lấy danh sách hình ảnh trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetImagesRequest true "Đoạn hội thoại cần lấy danh sách hình ảnh"
+// @Success 200 {object} chatpb.GetImagesResponse
+// @Router /messages/images [get]
 func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesRequest) (*chatpb.GetImagesResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"IMAGE"})
 	if err != nil {
@@ -708,6 +961,15 @@ func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesReques
 	}, nil
 }
 
+// @Summary Lấy danh sách liên kết
+// @Description Lấy danh sách liên kết trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message query chatpb.GetLinksRequest true "Đoạn hội thoại cần lấy danh sách liên kết"
+// @Success 200 {object} chatpb.GetLinksResponse
+// @Router /messages/links [get]
 func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest) (*chatpb.GetLinksResponse, error) {
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"LINK"})
 	if err != nil {
@@ -734,6 +996,15 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest)
 	}, nil
 }
 
+// @Summary Thêm phản hồi
+// @Description Thêm phản hồi vào tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.ReactionMessageRequest true "Đoạn hội thoại và tin nhắn cần thêm phản hồi"
+// @Success 200 {object} chatpb.ReactionMessageResponse
+// @Router /messages/reaction [post]
 func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionMessageRequest) (*chatpb.ReactionMessageResponse, error) {
 	model, err := s.messageReactionUsecases.CreateMessageReaction(ctx, uint64(req.MessageId), req.Reaction)
 	if err != nil {
@@ -749,6 +1020,11 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 			Id:        uint64(model.ID),
 			RoomId:    strconv.FormatUint(model.ConversationId, 10),
 		},
+	}
+	user, _ := s.userClient.GetUserById(ctx, model.UserID)
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
 	}
 	s.eventChannel <- event
 	return &chatpb.ReactionMessageResponse{
@@ -769,4 +1045,14 @@ func (s *chatHandler) ValidConversationAndCurrentUser(ctx context.Context, req *
 		return nil, err
 	}
 	return &sharepb.Empty{}, nil
+}
+
+func (s *chatHandler) GetRoomMembers(ctx context.Context, req *sharepb.IdRequest) (*chatpb.GetRoomMemberIdResponse, error) {
+	members, err := s.conversationUsecases.GetRoomMembers(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &chatpb.GetRoomMemberIdResponse{
+		ProfileIds: members,
+	}, nil
 }

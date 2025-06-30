@@ -70,7 +70,7 @@ appointment:
 user-http:
 	cd user-service && go run main.go http
 chat:
-	cd chat-service && go run main.go grpc-serve
+	cd chat-service && go run main.go grpc
 swag-merge:
 	cd code/script/merge_swagger && go run runtime.go
 chat-http:

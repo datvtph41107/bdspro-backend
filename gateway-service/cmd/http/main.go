@@ -184,6 +184,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
 		service.RegisterUserService(ctx, mux, env, opts)
+		service.RegisterChatService(ctx, mux, env, opts)
 
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 

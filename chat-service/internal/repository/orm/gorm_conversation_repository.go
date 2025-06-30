@@ -2,6 +2,8 @@ package orm
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"chat/models"
@@ -22,7 +24,8 @@ SELECT
 	m.is_deleted      AS latest_message_is_deleted,
 	m.pined           AS latest_message_pined,
 	m.recall          AS latest_message_recall,
-	COALESCE(unread.unread_count, 0) AS unread_count
+	COALESCE(unread.unread_count, 0) AS unread_count,
+	COALESCE(participant_ids.ids, ARRAY[]::BIGINT[]) AS participant_ids
 FROM conversations c
 LEFT JOIN LATERAL (
 	SELECT *
@@ -32,6 +35,14 @@ LEFT JOIN LATERAL (
 	LIMIT 1
 ) m ON true
 LEFT JOIN participants p ON p.conversation_id = c.id
+LEFT JOIN LATERAL (
+	SELECT 
+		conversation_id, 
+		array_agg(user_id) AS ids
+	FROM participants
+	WHERE conversation_id = c.id
+	GROUP BY conversation_id
+) participant_ids ON true
 LEFT JOIN (
 	SELECT 
 		m.conversation_id,
@@ -41,9 +52,9 @@ LEFT JOIN (
 	WHERE m.is_deleted = FALSE AND rr.message_id IS NULL
 	GROUP BY m.conversation_id
 ) unread ON unread.conversation_id = c.id
-WHERE c.type = $2 AND p.user_id = $3 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($4))) || '%' AND c.is_deleted = FALSE
+WHERE ?? p.user_id = $2 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($3))) || '%' AND c.is_deleted = FALSE
 ORDER BY c.created_at DESC
-LIMIT $5 OFFSET $6
+LIMIT $4 OFFSET $5
 `
 
 func (r *gormRepository) CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
@@ -51,9 +62,17 @@ func (r *gormRepository) CreateConversation(ctx context.Context, conversation *m
 	return conversation, r.db.WithContext(ctx).Create(conversation).Error
 }
 
-func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, userId uint64, keyword string) ([]*models.ConversationModel, error) {
+func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, userId uint64, keyword string) ([]*models.ConversationModel, error) {
 	var results []models.ConversationWithMessage
-	err := r.db.WithContext(ctx).Raw(GET_CONVERSATIONS_QUERY, userId, conversationType, userId, keyword, limit, offset).Scan(&results).Error
+
+	typeQuery := ""
+	query := GET_CONVERSATIONS_QUERY
+	if conversationType != nil {
+		typeQuery = fmt.Sprintf("c.type = %d AND", *conversationType)
+	}
+	query = strings.ReplaceAll(query, "??", typeQuery)
+
+	err := r.db.WithContext(ctx).Raw(query, userId, userId, keyword, limit, offset).Scan(&results).Error
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +95,12 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 				Recall:      res.LatestMessageRecall,
 			}
 		}
+
+		var result []uint64
+		for _, id := range res.ParticipantIDs {
+			result = append(result, uint64(id))
+		}
+		conv.ParticipantIDs = result
 		conversations = append(conversations, &conv)
 	}
 
@@ -122,6 +147,10 @@ func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conv
 	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", conversationID, false).Preload("Participants").First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
+	}
+	conversation.ParticipantIDs = make([]uint64, len(conversation.Participants))
+	for i, participant := range conversation.Participants {
+		conversation.ParticipantIDs[i] = participant.UserID
 	}
 	return &conversation, err
 }

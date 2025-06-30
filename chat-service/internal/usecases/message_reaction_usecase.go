@@ -3,7 +3,7 @@ package usecases
 import (
 	"context"
 
-	"chat/internal/delivery/errors"
+	"chat/infrastructure/delivery/errors"
 	"chat/models"
 	"chat/utils"
 )

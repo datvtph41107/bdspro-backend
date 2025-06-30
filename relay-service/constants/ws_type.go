@@ -1,6 +1,7 @@
 package constants
 
 const (
+	// chat
 	MESSAGE_TYPE                  = "message"
 	CREATE_ROOM_TYPE              = "create_room"
 	JOIN_ROOM_TYPE                = "join_room"  // unimplemented
@@ -17,4 +18,7 @@ const (
 	DELETE_VIOLATION_MESSAGE_TYPE = "delete_violation_message"
 	UPDATE_ROOM_TYPE              = "update_room"
 	REACT_MESSAGE                 = "react_message" // unimplemented
+
+	// notification
+	NOTIFICATION_TYPE = "notification"
 )

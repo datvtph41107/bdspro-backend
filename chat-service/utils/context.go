@@ -4,12 +4,19 @@ import (
 	"context"
 
 	"chat/internal/constants"
+	_utils "common/utils"
 )
 
 func GetCurrentUserID(ctx context.Context) uint64 {
 	if ctx == nil {
 		return 0
 	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId != 0 {
+		return profileId
+	}
+
 	claims := ctx.Value(constants.CONTEXT_USER_KEY)
 	ok := claims != nil
 	if !ok {

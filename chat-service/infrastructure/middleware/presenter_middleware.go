@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"chat/internal/delivery/errors"
+	"chat/infrastructure/delivery/errors"
 )
 
 type responseRecorder struct {

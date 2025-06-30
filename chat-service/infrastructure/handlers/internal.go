@@ -12,7 +12,7 @@ type redisClient interface {
 }
 type conversationUsecases interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error)
-	GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, keyword string) ([]*models.ConversationModel, error)
+	GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*models.ConversationModel, error)
 
 	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImage *string) error
 	CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)
@@ -23,6 +23,7 @@ type conversationUsecases interface {
 	DeleteRoom(ctx context.Context, conversationId uint64) error
 	GetSetting(ctx context.Context, conversationId uint64) (*models.ConversationModel, *models.ParticipantModel, error)
 	ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error
+	GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error)
 }
 
 type messageUsecases interface {

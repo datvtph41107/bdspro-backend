@@ -17,8 +17,8 @@ func init() {
 	grpcServeCmd.Flags().String("grpcPort", "8208", "grpcPort")
 	RootCmd.AddCommand(grpcServeCmd)
 
-	wsCmd.Flags().String("wsPort", "3003", "wsPort")
-	RootCmd.AddCommand(wsCmd)
+	// wsCmd.Flags().String("wsPort", "3003", "wsPort")
+	// RootCmd.AddCommand(wsCmd)
 	RootCmd.AddCommand(swaggerCMD)
 	RootCmd.AddCommand(prepareSwaggerCMD)
 }

@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"chat/configs"
+	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
-	"chat/internal/delivery/handlers"
-	middlewares "chat/internal/delivery/middleware"
+	"chat/infrastructure/handlers"
+	"chat/infrastructure/mapper"
+	middlewares "chat/infrastructure/middleware"
 	"chat/internal/repository"
 	"chat/internal/usecases"
 
@@ -37,15 +39,25 @@ func NewHTTPServer(port string) *HTTPServer {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 	pRepository := repository.NewRepository(db)
-
-	converstationUsecase := usecases.NewConversationUsecases(pRepository)
+	userClient := client.NewUserClient()
+	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	messageUsecase := usecases.NewMessageUsecases(pRepository)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
 	backgroundImageUsecase := usecases.NewBackgroundImageUsecases(pRepository)
+	conversationMapper := mapper.NewConversationMapper()
 
-	delivery := handlers.NewDelivery(converstationUsecase, messageUsecase, readReceptUsecase, participantUsecase, messageReactionUsecase, backgroundImageUsecase)
+	delivery := handlers.NewDelivery(
+		converstationUsecase,
+		messageUsecase,
+		readReceptUsecase,
+		participantUsecase,
+		messageReactionUsecase,
+		backgroundImageUsecase,
+		userClient,
+		conversationMapper,
+	)
 	mux := runtime.NewServeMux()
 
 	delivery.RegisterHTTPServer(ctx, mux)

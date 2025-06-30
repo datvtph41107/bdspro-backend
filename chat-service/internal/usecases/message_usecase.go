@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"chat/internal/delivery/errors"
+	"chat/infrastructure/delivery/errors"
 	"context"
 	"time"
 

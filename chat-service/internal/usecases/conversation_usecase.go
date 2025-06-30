@@ -2,26 +2,51 @@ package usecases
 
 import (
 	"context"
+	"strings"
 	"time"
 
-	"chat/internal/delivery/errors"
+	"chat/infrastructure/delivery/errors"
+	iusecase "chat/internal/interface"
 	"chat/models"
 	"chat/utils"
 	chatpb "pb/types/chat"
 )
 
 type conversationUsecases struct {
-	repo repository
+	repo       repository
+	userClient iusecase.IUserClient
 }
 
-func NewConversationUsecases(repo repository) *conversationUsecases {
+func NewConversationUsecases(repo repository, userClient iusecase.IUserClient) *conversationUsecases {
 	return &conversationUsecases{
-		repo: repo,
+		repo:       repo,
+		userClient: userClient,
 	}
+}
+
+func (c *conversationUsecases) GetFullNamesJoined(ctx context.Context, ids []uint64) (string, error) {
+	users, err := c.userClient.GetUserByIds(ctx, ids)
+	if err != nil {
+		return "", err
+	}
+
+	var names []string
+	for _, user := range users {
+		if user.FullName != "" {
+			names = append(names, user.FullName)
+		}
+	}
+
+	return strings.Join(names, ", "), nil
 }
 
 func (c *conversationUsecases) CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error) {
 	conversation.CreatedBy = utils.GetCurrentUserID(ctx)
+	if conversation.Name == nil || *conversation.Name == "" {
+		fullNames, _ := c.GetFullNamesJoined(ctx, members)
+		conversation.Name = &fullNames
+	}
+
 	now := time.Now()
 	currentUserId := utils.GetCurrentUserID(ctx)
 	var participants []models.ParticipantModel
@@ -54,8 +79,11 @@ func (c *conversationUsecases) CreateConversation(ctx context.Context, conversat
 	return c.repo.CreateConversation(ctx, conversation)
 }
 
-func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offset int64, conversationType models.ConversationTypeEnum, keyword string) ([]*models.ConversationModel, error) {
+func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*models.ConversationModel, error) {
 	userId := utils.GetCurrentUserID(ctx)
+	if userId == 0 {
+		return nil, errors.Unauthorized()
+	}
 	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
@@ -179,4 +207,8 @@ func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Co
 		return errors.NotParticipant()
 	}
 	return nil
+}
+
+func (c *conversationUsecases) GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error) {
+	return c.repo.GetRoomMemberIDs(ctx, conversationId)
 }

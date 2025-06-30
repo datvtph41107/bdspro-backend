@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"chat/internal/server"
+	"chat/infrastructure/server"
 
 	"github.com/spf13/cobra"
 )

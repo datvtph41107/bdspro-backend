@@ -1,7 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
 
+	"github.com/lib/pq"
+)
 
 type ConversationTypeEnum int
 
@@ -27,6 +30,7 @@ type ConversationModel struct {
 	BackgroundImage string             `gorm:"size:255"`
 	UnreadCount     int                `gorm:"-"`
 	LatestMessage   MessageModel       `gorm:"-"`
+	ParticipantIDs  []uint64           `gorm:"-"`
 }
 
 func (ConversationModel) TableName() string {
@@ -36,15 +40,16 @@ func (ConversationModel) TableName() string {
 type ConversationWithMessage struct {
 	ConversationModel
 
-	LatestMessageID          uint64    `gorm:"column:latest_message_id"`
-	LatestMessageContent     string    `gorm:"column:latest_message_content"`
-	LatestMessageContentType string    `gorm:"column:latest_message_content_type"`
-	LatestMessageFileURL     *string   `gorm:"column:latest_message_file_url"`
-	LatestMessageForwardFrom *uint64   `gorm:"column:latest_message_forward_from"`
-	LatestMessageSenderID    uint64    `gorm:"column:latest_message_sender_id"`
-	LatestMessageCreatedAt   time.Time `gorm:"column:latest_message_created_at"`
-	LatestMessageIsDeleted   bool      `gorm:"column:latest_message_is_deleted"`
-	LatestMessagePined       bool      `gorm:"column:latest_message_pined"`
-	LatestMessageRecall      bool      `gorm:"column:latest_message_recall"`
-	UnreadCount              int       `gorm:"column:unread_count"`
+	LatestMessageID          uint64        `gorm:"column:latest_message_id"`
+	LatestMessageContent     string        `gorm:"column:latest_message_content"`
+	LatestMessageContentType string        `gorm:"column:latest_message_content_type"`
+	LatestMessageFileURL     *string       `gorm:"column:latest_message_file_url"`
+	LatestMessageForwardFrom *uint64       `gorm:"column:latest_message_forward_from"`
+	LatestMessageSenderID    uint64        `gorm:"column:latest_message_sender_id"`
+	LatestMessageCreatedAt   time.Time     `gorm:"column:latest_message_created_at"`
+	LatestMessageIsDeleted   bool          `gorm:"column:latest_message_is_deleted"`
+	LatestMessagePined       bool          `gorm:"column:latest_message_pined"`
+	LatestMessageRecall      bool          `gorm:"column:latest_message_recall"`
+	UnreadCount              int           `gorm:"column:unread_count"`
+	ParticipantIDs           pq.Int64Array `gorm:"type:bigint[];column:participant_ids"`
 }

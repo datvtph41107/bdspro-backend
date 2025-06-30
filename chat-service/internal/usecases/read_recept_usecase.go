@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"chat/internal/delivery/errors"
+	"chat/infrastructure/delivery/errors"
 	"chat/models"
 	"chat/utils"
 
