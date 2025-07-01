@@ -6,8 +6,10 @@ import (
 	"context"
 	"errors"
 	pb_social "pb/types/social"
+	"social/infra/mapper"
 	"social/internal/domain"
 	"social/internal/dto"
+	"social/internal/enums"
 	"social/internal/usecase"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,15 +18,16 @@ import (
 type ReportService struct {
 	reportReasonUsecase *usecase.ReportReasonUsecase
 	reportUsecase       *usecase.ReportUsecase
+	reportMapper        *mapper.ReportMapper
 	pb_social.UnimplementedReportServiceServer
 }
 
 func NewReportService(reportReasonUsecase *usecase.ReportReasonUsecase, reportUsecase *usecase.ReportUsecase) *ReportService {
-	return &ReportService{reportReasonUsecase: reportReasonUsecase, reportUsecase: reportUsecase}
+	return &ReportService{reportReasonUsecase: reportReasonUsecase, reportUsecase: reportUsecase, reportMapper: mapper.NewReportMapper()}
 }
 
 func (s *ReportService) CreateReportReason(ctx context.Context, req *pb_social.ReportReason) (*pb_social.ReportReason, error) {
-	reportReason := s.PbReportReasonToDomain(req)
+	reportReason := s.reportMapper.PbReportReasonToDomain(req)
 	if reportReason.ReasonName == "" {
 		return nil, errors.New("name is required")
 	}
@@ -32,11 +35,11 @@ func (s *ReportService) CreateReportReason(ctx context.Context, req *pb_social.R
 	if err != nil {
 		return nil, err
 	}
-	return s.DomainReportReasonToPb(reportReason), nil
+	return s.reportMapper.DomainReportReasonToPb(reportReason), nil
 }
 
 func (s *ReportService) UpdateReportReason(ctx context.Context, req *pb_social.ReportReason) (*pb_social.ReportReason, error) {
-	reportReason := s.PbReportReasonToDomain(req)
+	reportReason := s.reportMapper.PbReportReasonToDomain(req)
 	if reportReason.ReasonName == "" {
 		return nil, errors.New("name is required")
 	}
@@ -44,7 +47,7 @@ func (s *ReportService) UpdateReportReason(ctx context.Context, req *pb_social.R
 	if err != nil {
 		return nil, err
 	}
-	return s.DomainReportReasonToPb(reportReason), nil
+	return s.reportMapper.DomainReportReasonToPb(reportReason), nil
 }
 
 func (s *ReportService) DeleteReportReason(ctx context.Context, req *pb_social.ReportReason) (*pb_social.ReportReason, error) {
@@ -71,7 +74,7 @@ func (s *ReportService) GetReportReason(ctx context.Context, req *pb_social.Repo
 
 	results := make([]*pb_social.ReportReason, 0)
 	for _, reportReason := range reportReasons {
-		results = append(results, s.DomainReportReasonToPb(&reportReason))
+		results = append(results, s.reportMapper.DomainReportReasonToPb(&reportReason))
 	}
 	return &pb_social.ReportReasonResponse{
 		Data:  results,
@@ -93,7 +96,7 @@ func (s *ReportService) GetAllReportReason(ctx context.Context, req *emptypb.Emp
 	}
 	results := make([]*pb_social.ReportReason, 0)
 	for _, reportReason := range reportReasons {
-		results = append(results, s.DomainReportReasonToPb(&reportReason))
+		results = append(results, s.reportMapper.DomainReportReasonToPb(&reportReason))
 	}
 	return &pb_social.ReportReasonResponse{
 		Data:  results,
@@ -111,13 +114,13 @@ func (s *ReportService) GetAllReportReason(ctx context.Context, req *emptypb.Emp
 // @Success 200 {object} pb_social.ReportResponse
 // @Router /report/submit [post]
 func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportRequest) (*pb_social.ReportResponse, error) {
-	if req.NewsFeedId == 0 || req.ReasonId == 0 {
-		return nil, errors.New("newsFeedId, reasonId are required")
+	if req.TargetId == 0 || req.ReasonId == 0 {
+		return nil, errors.New("targetId, reasonId are required")
 	}
 	report := &domain.Report{
-		Content:    req.Content,
-		NewsFeedID: req.NewsFeedId,
-		ReasonID:   req.ReasonId,
+		Content:  req.Content,
+		TargetID: req.TargetId,
+		ReasonID: req.ReasonId,
 	}
 	report, err := s.reportUsecase.CreateReport(ctx, report)
 	if err != nil {
@@ -126,24 +129,55 @@ func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportR
 	return &pb_social.ReportResponse{
 		Id:         report.ID,
 		ReasonId:   report.ReasonID,
-		NewsFeedId: report.NewsFeedID,
+		TargetId:   report.TargetID,
+		TargetType: uint32(report.TargetType),
 		CreatedAt:  _utils.FormatTimeToString(report.CreatedAt),
 	}, nil
 }
 
-// -- mapping --
-
-func (s *ReportService) PbReportReasonToDomain(pbReportReason *pb_social.ReportReason) *domain.ReportReason {
-	return &domain.ReportReason{
-		ReasonName: pbReportReason.ReasonName,
-		Active:     pbReportReason.Active,
+// @Summary Lấy danh sách báo cáo của tôi
+// @Description Lấy danh sách báo cáo của tôi
+// @Tags Report
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param report query pb_social.ReportMessageRequest true "ReportMessageRequest"
+// @Success 200 {object} pb_social.ReportMessageResponse
+// @Router /report/me [get]
+func (s *ReportService) GetReportMe(ctx context.Context, req *pb_social.ReportMessageRequest) (*pb_social.ReportMessageResponse, error) {
+	dto := &dto.ReportReasonRequest{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
 	}
+	reports, total, err := s.reportUsecase.GetReportMe(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*pb_social.ReportMessage, 0)
+	for _, report := range reports {
+		results = append(results, s.reportMapper.DomainReportToPb(&report))
+	}
+	return &pb_social.ReportMessageResponse{
+		Data:  results,
+		Total: uint64(total),
+	}, nil
 }
 
-func (s *ReportService) DomainReportReasonToPb(reportReason *domain.ReportReason) *pb_social.ReportReason {
-	return &pb_social.ReportReason{
-		Id:         reportReason.ID,
-		ReasonName: reportReason.ReasonName,
-		Active:     reportReason.Active,
+// @Summary Cập nhật trạng thái báo cáo
+// @Description Cập nhật trạng thái báo cáo
+// @Tags Report
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param report body pb_social.ReportStatusRequest true "ReportStatusRequest"
+// @Param id path uint64 true "ID"
+// @Router /report/status/{id} [put]
+func (s *ReportService) UpdateReportStatus(ctx context.Context, req *pb_social.ReportStatusRequest) (*emptypb.Empty, error) {
+	err := s.reportUsecase.UpdateReportStatus(ctx, req.Id, enums.ReportStatus(req.Status))
+	if err != nil {
+		return nil, err
 	}
+	return &emptypb.Empty{}, nil
 }

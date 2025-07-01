@@ -197,6 +197,9 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "color": {
+          "type": "string"
         }
       }
     },

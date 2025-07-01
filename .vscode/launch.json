@@ -46,7 +46,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/chat-service",
-      "args": ["grpc"],
+      "args": ["grpc"]
     },
     {
       "name": "🧪 Debug Gateway",
@@ -99,9 +99,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/organization-service",
       "args": ["grpc-server"],
-      "env": {
-        
-      }
+      "env": {}
     },
     {
       "name": "🧪 Debug HTTP Server",

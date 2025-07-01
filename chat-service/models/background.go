@@ -14,15 +14,16 @@ const (
 )
 
 type BackgroundImageModel struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	ImageURL    string    `gorm:"type:varchar(255);not null" json:"image_url"`
-	Title       string    `gorm:"type:varchar(255);not null" json:"title"`
-	ImageType   ImageType `gorm:"type:int;not null" json:"image_type"`
-	Description string    `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP;onupdate:CURRENT_TIMESTAMP"`
+	ID          uint64     `gorm:"primaryKey;autoIncrement"`
+	ImageURL    string     `gorm:"type:varchar(255);not null" json:"image_url"`
+	Title       string     `gorm:"type:varchar(255);not null" json:"title"`
+	Color       string     `gorm:"type:varchar(20)" json:"color"`
+	ImageType   ImageType  `gorm:"type:int;not null" json:"image_type"`
+	Description string     `gorm:"type:text" json:"description"`
+	CreatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP;onupdate:CURRENT_TIMESTAMP"`
 	DeletedAt   *time.Time `gorm:"index" json:"-"`
-	IsDeleted   bool      `gorm:"default:false" json:"is_deleted"`
+	IsDeleted   bool       `gorm:"default:false" json:"is_deleted"`
 }
 
 func (b *BackgroundImageModel) TableName() string {

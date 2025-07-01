@@ -113,6 +113,7 @@ var publicRoutes = []string{
 	"/v2/user/profile/info/",
 	"/v2/crm/contact/relation-ship/",
 	"/v2/payment/sepay/webhook",
+	"/v2/user/rate/list",
 	// "/v1/search/plan/list",
 }
 

@@ -496,36 +496,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa news feed",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "News Feed"
-                ],
-                "summary": "Xóa news feed",
-                "parameters": [
-                    {
-                        "description": "NewsFeed",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pb_social.NewsFeed"
-                        }
-                    }
-                ],
-                "responses": {}
             }
         },
         "/news-feed/detail/{newsFeedId}": {
@@ -716,6 +686,34 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Xóa news feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "NewsFeedId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/news-feed/{newsFeedId}/share": {
@@ -803,6 +801,56 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/report/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách báo cáo của tôi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Lấy danh sách báo cáo của tôi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "message",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.ReportMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/report/reasons": {
             "get": {
                 "description": "Danh sách lý do báo cáo",
@@ -824,6 +872,45 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/report/status/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật trạng thái báo cáo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Cập nhật trạng thái báo cáo",
+                "parameters": [
+                    {
+                        "description": "ReportStatusRequest",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.ReportStatusRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/report/submit": {
@@ -1026,6 +1113,9 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "createdAt": {
+                    "type": "string"
+                },
                 "createdBy": {
                     "type": "integer"
                 },
@@ -1159,7 +1249,7 @@ const docTemplate = `{
                 "isReel": {
                     "type": "boolean"
                 },
-                "likeAt": {
+                "likedAt": {
                     "type": "string"
                 },
                 "link": {
@@ -1217,6 +1307,55 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_social.ReportMessage": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "reasonId": {
+                    "type": "integer"
+                },
+                "reasonName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetName": {
+                    "type": "string"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_social.ReportMessageResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_social.ReportMessage"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "pb_social.ReportReason": {
             "type": "object",
             "properties": {
@@ -1254,10 +1393,13 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "newsFeedId": {
+                "reasonId": {
                     "type": "integer"
                 },
-                "reasonId": {
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
                     "type": "integer"
                 }
             }
@@ -1271,10 +1413,24 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "newsFeedId": {
+                "reasonId": {
                     "type": "integer"
                 },
-                "reasonId": {
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_social.ReportStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 }
             }

@@ -12,6 +12,25 @@ definitions:
       success:
         type: boolean
     type: object
+  chatpb.BackgroundImage:
+    properties:
+      color:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      imageType:
+        $ref: '#/definitions/chatpb.ImageType'
+      imageUrl:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   chatpb.Conversation:
     properties:
       avatar:
@@ -20,8 +39,8 @@ definitions:
         items:
           type: string
         type: array
-      background_image:
-        type: string
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
       conversationId:
         type: integer
       lastMessage:
@@ -53,8 +72,8 @@ definitions:
     properties:
       avatar:
         type: string
-      background_image:
-        type: string
+      backgroundImageId:
+        type: integer
       created_by:
         type: integer
       forbid_forward:
@@ -113,7 +132,7 @@ definitions:
     type: object
   chatpb.EditChannelRequest:
     properties:
-      background_image:
+      backgroundImage:
         type: string
       conversationId:
         type: integer
@@ -165,8 +184,8 @@ definitions:
         items:
           type: string
         type: array
-      background_image:
-        type: string
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
       conversationId:
         type: integer
       createdAt:
@@ -251,8 +270,8 @@ definitions:
     type: object
   chatpb.GetSettingResponse:
     properties:
-      background_image:
-        type: string
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
       forbid_forward:
         type: boolean
       id:
@@ -268,6 +287,18 @@ definitions:
       type:
         $ref: '#/definitions/chatpb.ConversationTypeEnum'
     type: object
+  chatpb.ImageType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - ImageType_IMAGE_TYPE_UNSPECIFIED
+    - ImageType_JPEG
+    - ImageType_PNG
+    - ImageType_GIF
   chatpb.LeaveRoomRequest:
     properties:
       conversationId:
@@ -496,6 +527,35 @@ info:
   title: Chat Service API
   version: "1.0"
 paths:
+  /conversation/{conversationId}/edit:
+    put:
+      consumes:
+      - application/json
+      description: Chỉnh sửa đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại cần chỉnh sửa
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.EditChannelRequest'
+      - description: ID đoạn hội thoại
+        in: path
+        name: conversationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.EditChannelResponse'
+      security:
+      - BearerAuth: []
+      summary: Chỉnh sửa đoạn hội thoại
+      tags:
+      - Chat
   /conversation/{id}:
     get:
       consumes:
@@ -508,6 +568,11 @@ paths:
       - in: query
         name: include_members
         type: boolean
+      - description: ID đoạn hội thoại
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -518,6 +583,29 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy đoạn hội thoại theo ID
+      tags:
+      - Chat
+  /conversation/{id}/setting:
+    get:
+      consumes:
+      - application/json
+      description: Lấy cài đặt đoạn hội thoại được chỉ định
+      parameters:
+      - description: ID đoạn hội thoại
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetSettingResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy cài đặt đoạn hội thoại
       tags:
       - Chat
   /conversation/add-user:
@@ -590,30 +678,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Xóa đoạn hội thoại
-      tags:
-      - Chat
-  /conversation/edit:
-    post:
-      consumes:
-      - application/json
-      description: Chỉnh sửa đoạn hội thoại được chỉ định
-      parameters:
-      - description: Đoạn hội thoại cần chỉnh sửa
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/chatpb.EditChannelRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/chatpb.EditChannelResponse'
-      security:
-      - BearerAuth: []
-      summary: Chỉnh sửa đoạn hội thoại
       tags:
       - Chat
   /conversation/members:
@@ -689,27 +753,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Xóa thành viên
-      tags:
-      - Chat
-  /conversation/setting:
-    get:
-      consumes:
-      - application/json
-      description: Lấy cài đặt đoạn hội thoại được chỉ định
-      parameters:
-      - in: query
-        name: id
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/chatpb.GetSettingResponse'
-      security:
-      - BearerAuth: []
-      summary: Lấy cài đặt đoạn hội thoại
       tags:
       - Chat
   /conversations:

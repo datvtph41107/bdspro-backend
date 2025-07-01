@@ -39,15 +39,15 @@ service BackgroundImageService {
 
 
 message CreateBackgroundImageRequest {
-    string image_url = 1;  
+    string imageUrl = 1;  
     string title = 2;      
-    ImageType image_type = 3;  
+    ImageType imageType = 3;  
     string description = 4;  
 }
 
 
 message CreateBackgroundImageResponse {
-    BackgroundImage background_image = 1;  
+    BackgroundImage backgroundImage = 1;  
 }
 
 
@@ -65,9 +65,9 @@ message GetBackgroundImagesResponse {
 
 message UpdateBackgroundImageRequest {
     uint64 id = 1;  
-    string image_url = 2;  
+    string imageUrl = 2;  
     string title = 3;      
-    ImageType image_type = 4;  
+    ImageType imageType = 4;  
     string description = 5;  
 }
 
@@ -89,12 +89,13 @@ message DeleteBackgroundImageResponse {
 
 message BackgroundImage {
     uint64 id = 1;  
-    string image_url = 2;  
+    string imageUrl = 2;  
     string title = 3;  
-    ImageType image_type = 4;  
+    ImageType imageType = 4;  
     string description = 5;  
-    string created_at = 6;  
-    string updated_at = 7;  
+    string createdAt = 6;  
+    string updatedAt = 7;  
+    string color = 8;
 }
 
 

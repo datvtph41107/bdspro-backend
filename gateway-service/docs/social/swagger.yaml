@@ -106,6 +106,8 @@ definitions:
         $ref: '#/definitions/sharepb.ProfileItem'
       content:
         type: string
+      createdAt:
+        type: string
       createdBy:
         type: integer
       dislike:
@@ -193,7 +195,7 @@ definitions:
         type: string
       isReel:
         type: boolean
-      likeAt:
+      likedAt:
         type: string
       link:
         type: string
@@ -231,6 +233,38 @@ definitions:
       url:
         type: string
     type: object
+  pb_social.ReportMessage:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      reasonId:
+        type: integer
+      reasonName:
+        type: string
+      status:
+        type: integer
+      statusName:
+        type: string
+      targetId:
+        type: integer
+      targetName:
+        type: string
+      targetType:
+        type: integer
+    type: object
+  pb_social.ReportMessageResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.ReportMessage'
+        type: array
+      total:
+        type: integer
+    type: object
   pb_social.ReportReason:
     properties:
       active:
@@ -255,9 +289,11 @@ definitions:
         type: string
       id:
         type: integer
-      newsFeedId:
-        type: integer
       reasonId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
         type: integer
     type: object
   pb_social.ReportResponse:
@@ -266,9 +302,18 @@ definitions:
         type: string
       id:
         type: integer
-      newsFeedId:
-        type: integer
       reasonId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+    type: object
+  pb_social.ReportStatusRequest:
+    properties:
+      id:
+        type: integer
+      status:
         type: integer
     type: object
   pb_social.ShareRequest:
@@ -584,25 +629,6 @@ paths:
       tags:
       - Like
   /news-feed:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa news feed
-      parameters:
-      - description: NewsFeed
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/pb_social.NewsFeed'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xóa news feed
-      tags:
-      - News Feed
     post:
       consumes:
       - application/json
@@ -627,6 +653,24 @@ paths:
       tags:
       - News Feed
   /news-feed/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa news feed
+      tags:
+      - News Feed
     put:
       consumes:
       - application/json
@@ -797,6 +841,36 @@ paths:
       summary: Lấy danh sách news feed theo userID
       tags:
       - News Feed
+  /report/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách báo cáo của tôi
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: message
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ReportMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách báo cáo của tôi
+      tags:
+      - Report
   /report/reasons:
     get:
       consumes:
@@ -810,6 +884,31 @@ paths:
           schema:
             $ref: '#/definitions/pb_social.ReportReasonResponse'
       summary: Danh sách lý do báo cáo
+      tags:
+      - Report
+  /report/status/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái báo cáo
+      parameters:
+      - description: ReportStatusRequest
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.ReportStatusRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái báo cáo
       tags:
       - Report
   /report/submit:

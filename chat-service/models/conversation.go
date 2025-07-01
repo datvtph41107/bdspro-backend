@@ -20,17 +20,19 @@ type ConversationModel struct {
 	Name      *string              `gorm:"size:255"`
 	CreatedBy uint64               `gorm:"not null;column:created_by"`
 
-	IsBroadcast     bool               `gorm:"default:false;column:is_broadcast"`
-	ForbidForward   bool               `gorm:"default:false;column:forbid_forward"`
-	CreatedAt       time.Time          `gorm:"autoCreateTime;column:created_at;index:idx_type_created"`
-	UpdatedAt       time.Time          `gorm:"autoUpdateTime;column:updated_at"`
-	Participants    []ParticipantModel `gorm:"foreignKey:ConversationID;references:ID"`
-	IsDeleted       bool               `json:"is_deleted" gorm:"default:false"`
-	Avatar          string             `gorm:"size:255"`
-	BackgroundImage string             `gorm:"size:255"`
-	UnreadCount     int                `gorm:"-"`
-	LatestMessage   MessageModel       `gorm:"-"`
-	ParticipantIDs  []uint64           `gorm:"-"`
+	IsBroadcast       bool                  `gorm:"default:false;column:is_broadcast"`
+	ForbidForward     bool                  `gorm:"default:false;column:forbid_forward"`
+	CreatedAt         time.Time             `gorm:"autoCreateTime;column:created_at;index:idx_type_created"`
+	UpdatedAt         time.Time             `gorm:"autoUpdateTime;column:updated_at"`
+	Participants      []ParticipantModel    `gorm:"foreignKey:ConversationID;references:ID"`
+	IsDeleted         bool                  `json:"is_deleted" gorm:"default:false"`
+	Avatar            string                `gorm:"size:255"`
+	BackgroundImage   *BackgroundImageModel `gorm:"foreignKey:BackgroundImageID;references:ID"`
+	BackgroundImageID *uint64               `gorm:"column:background_image_id"`
+	// Color           string             `gorm:"size:255"`
+	UnreadCount    int          `gorm:"-"`
+	LatestMessage  MessageModel `gorm:"-"`
+	ParticipantIDs []uint64     `gorm:"-"`
 }
 
 func (ConversationModel) TableName() string {

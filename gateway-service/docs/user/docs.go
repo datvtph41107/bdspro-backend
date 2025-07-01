@@ -1767,6 +1767,310 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v2/user/rate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Tạo đánh giá",
+                "parameters": [
+                    {
+                        "description": "Rate",
+                        "name": "rate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Rate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Rate"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/rate/hidden/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật ẩn đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Cập nhật ẩn đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Hidden",
+                        "name": "hidden",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateHiddenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/rate/history/{rateId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Lấy danh sách đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Rate ID",
+                        "name": "rateId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.RateList"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/rate/list/{targetId}/{targetType}": {
+            "get": {
+                "description": "Lấy danh sách đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Lấy danh sách đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target ID",
+                        "name": "targetId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Target Type",
+                        "name": "targetType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "createdAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "createdBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "updatedAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "updatedBy",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.RateList"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/rate/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Cập nhật đánh giá",
+                "parameters": [
+                    {
+                        "description": "Rate",
+                        "name": "rate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Rate"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Rate"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Xóa đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2352,6 +2656,9 @@ const docTemplate = `{
                 "VerifyRejected"
             ]
         },
+        "sharepb.Empty": {
+            "type": "object"
+        },
         "sharepb.FriendItem": {
             "type": "object",
             "properties": {
@@ -2365,6 +2672,46 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.ProfileItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "user_model.AttachEntity": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageType": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "rate": {
+                    "$ref": "#/definitions/user_model.Rate"
+                },
+                "rateId": {
                     "type": "integer"
                 }
             }
@@ -2479,6 +2826,12 @@ const docTemplate = `{
                 "anonymous": {
                     "type": "boolean"
                 },
+                "attachs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user_model.AttachEntity"
+                    }
+                },
                 "comment": {
                     "type": "string"
                 },
@@ -2489,13 +2842,16 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
-                "createdUser": {
-                    "$ref": "#/definitions/user_model.UserItem"
+                "hidden": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "parentId": {
+                    "type": "integer"
+                },
+                "rootId": {
                     "type": "integer"
                 },
                 "score": {
@@ -2544,20 +2900,6 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.UserItem": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "fullName": {
-                    "type": "string"
-                },
-                "profileId": {
-                    "type": "integer"
-                }
-            }
-        },
         "userpb.AccountInfo": {
             "type": "object",
             "properties": {
@@ -2579,6 +2921,9 @@ const docTemplate = `{
                 "organizationId": {
                     "type": "integer"
                 },
+                "ownerType": {
+                    "type": "integer"
+                },
                 "phone": {
                     "type": "string"
                 },
@@ -2598,6 +2943,20 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "userpb.Attach": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageType": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
                 }
             }
         },
@@ -2742,6 +3101,64 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.Rate": {
+            "type": "object",
+            "properties": {
+                "anonymous": {
+                    "type": "boolean"
+                },
+                "attachs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.Attach"
+                    }
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.RateList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.Rate"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "userpb.RateStats": {
             "type": "object",
             "properties": {
@@ -2777,7 +3194,21 @@ const docTemplate = `{
                 "organizationId": {
                     "type": "integer"
                 },
+                "ownerType": {
+                    "type": "integer"
+                },
                 "profileId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.UpdateHiddenRequest": {
+            "type": "object",
+            "properties": {
+                "hidden": {
+                    "type": "boolean"
+                },
+                "id": {
                     "type": "integer"
                 }
             }

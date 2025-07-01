@@ -404,6 +404,8 @@ definitions:
     - VerifyPending
     - VerifyVerified
     - VerifyRejected
+  sharepb.Empty:
+    type: object
   sharepb.FriendItem:
     properties:
       createdBy:
@@ -413,6 +415,32 @@ definitions:
       receiverId:
         type: integer
       status:
+        type: integer
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+  user_model.AttachEntity:
+    properties:
+      id:
+        type: integer
+      imageType:
+        type: string
+      imageUrl:
+        type: string
+      rate:
+        $ref: '#/definitions/user_model.Rate'
+      rateId:
         type: integer
     type: object
   user_model.CertificationItem:
@@ -482,6 +510,10 @@ definitions:
     properties:
       anonymous:
         type: boolean
+      attachs:
+        items:
+          $ref: '#/definitions/user_model.AttachEntity'
+        type: array
       comment:
         type: string
       createdAt:
@@ -489,11 +521,13 @@ definitions:
       createdBy:
         description: gorm.Model
         type: integer
-      createdUser:
-        $ref: '#/definitions/user_model.UserItem'
+      hidden:
+        type: boolean
       id:
         type: integer
       parentId:
+        type: integer
+      rootId:
         type: integer
       score:
         maximum: 5
@@ -531,15 +565,6 @@ definitions:
       totalReviews:
         type: integer
     type: object
-  user_model.UserItem:
-    properties:
-      avatar:
-        type: string
-      fullName:
-        type: string
-      profileId:
-        type: integer
-    type: object
   userpb.AccountInfo:
     properties:
       avatar:
@@ -554,6 +579,8 @@ definitions:
         type: integer
       organizationId:
         type: integer
+      ownerType:
+        type: integer
       phone:
         type: string
       profileId:
@@ -567,6 +594,15 @@ definitions:
         type: array
       total:
         type: integer
+    type: object
+  userpb.Attach:
+    properties:
+      id:
+        type: integer
+      imageType:
+        type: string
+      imageUrl:
+        type: string
     type: object
   userpb.CertificationItem:
     properties:
@@ -661,6 +697,44 @@ definitions:
       youtube:
         type: string
     type: object
+  userpb.Rate:
+    properties:
+      anonymous:
+        type: boolean
+      attachs:
+        items:
+          $ref: '#/definitions/userpb.Attach'
+        type: array
+      comment:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      id:
+        type: integer
+      parentId:
+        type: integer
+      score:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  userpb.RateList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.Rate'
+        type: array
+      total:
+        type: integer
+    type: object
   userpb.RateStats:
     properties:
       averageScore:
@@ -684,7 +758,16 @@ definitions:
         type: integer
       organizationId:
         type: integer
+      ownerType:
+        type: integer
       profileId:
+        type: integer
+    type: object
+  userpb.UpdateHiddenRequest:
+    properties:
+      hidden:
+        type: boolean
+      id:
         type: integer
     type: object
 info:
@@ -1812,6 +1895,197 @@ paths:
       summary: Lấy thông tin công khai của người dùng
       tags:
       - Profile
+  /v2/user/rate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo đánh giá
+      parameters:
+      - description: Rate
+        in: body
+        name: rate
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Rate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.Rate'
+      security:
+      - BearerAuth: []
+      summary: Tạo đánh giá
+      tags:
+      - Rate
+  /v2/user/rate/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa đánh giá
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Xóa đánh giá
+      tags:
+      - Rate
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật đánh giá
+      parameters:
+      - description: Rate
+        in: body
+        name: rate
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Rate'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.Rate'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật đánh giá
+      tags:
+      - Rate
+  /v2/user/rate/hidden/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật ẩn đánh giá
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Hidden
+        in: body
+        name: hidden
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdateHiddenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật ẩn đánh giá
+      tags:
+      - Rate
+  /v2/user/rate/history/{rateId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đánh giá
+      parameters:
+      - description: Rate ID
+        in: path
+        name: rateId
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.RateList'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách đánh giá
+      tags:
+      - Rate
+  /v2/user/rate/list/{targetId}/{targetType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đánh giá
+      parameters:
+      - description: Target ID
+        in: path
+        name: targetId
+        required: true
+        type: integer
+      - description: Target Type
+        in: path
+        name: targetType
+        required: true
+        type: integer
+      - in: query
+        name: createdAt
+        type: string
+      - in: query
+        name: createdBy
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: updatedAt
+        type: string
+      - in: query
+        name: updatedBy
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.RateList'
+      summary: Lấy danh sách đánh giá
+      tags:
+      - Rate
 securityDefinitions:
   BearerAuth:
     in: header

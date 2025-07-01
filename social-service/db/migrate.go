@@ -7,7 +7,8 @@ import (
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
-		&domain.NewsFeed{},
+		// &domain.NewsFeed{},
+		&domain.Report{},
 	// &domain.FriendTag{},
 	// &domain.NewsFeedMedia{},
 	// &domain.ReportReason{},

@@ -2,6 +2,7 @@ package user_service
 
 import (
 	_jwt "common/jwt"
+	"errors"
 	user_repo "user/infra/repo"
 	"user/internal/dto"
 	user_model "user/internal/models/user"
@@ -43,6 +44,13 @@ func (s *RateService) List(c *gin.Context, targetID uint64, targetType uint8, dt
 }
 
 func (s *RateService) Update(c *gin.Context, id uint64, rate *user_model.Rate) (*user_model.Rate, error) {
+	profileId := _jwt.GetProfileId(c)
+	rate.UpdatedBy = &profileId
+
+	if rate.CreatedBy != nil && *rate.CreatedBy != profileId {
+		return nil, errors.New("you are not allowed to update this rate")
+	}
+
 	if err := s.RateRepo.Update(c, id, rate); err != nil {
 		return nil, err
 	}

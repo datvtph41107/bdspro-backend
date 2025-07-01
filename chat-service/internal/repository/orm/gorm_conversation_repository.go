@@ -109,7 +109,10 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 
 func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
-	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", conversationID, false).First(&conversation).Error
+	err := r.db.WithContext(ctx).
+		Where("id = ? AND is_deleted = ?", conversationID, false).
+		Preload("BackgroundImage").
+		First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
@@ -144,7 +147,11 @@ func (r *gormRepository) GetMessageOrConversation(ctx context.Context, keyword s
 
 func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
-	err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", conversationID, false).Preload("Participants").First(&conversation).Error
+	err := r.db.WithContext(ctx).
+		Where("id = ? AND is_deleted = ?", conversationID, false).
+		Preload("Participants").
+		Preload("BackgroundImage").
+		First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}

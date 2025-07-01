@@ -71,9 +71,10 @@ func (UserProfileEntity) TableName() string {
 }
 
 type UserItem struct {
-	ProfileID uint64 `gorm:"primaryKey;column:profile_id" copier:"-" json:"profileId"`
-	FullName  string `gorm:"size:255" json:"fullName"`
-	Avatar    string `gorm:"size:255" json:"avatar"`
+	ProfileID    uint64 `gorm:"primaryKey;column:profile_id" copier:"-" json:"profileId"`
+	FullName     string `gorm:"size:255" json:"fullName"`
+	Avatar       string `gorm:"size:255" json:"avatar"`
+	TickVerified bool   `gorm:"column:tick_verified" json:"tickVerified"`
 }
 
 func (UserItem) TableName() string {

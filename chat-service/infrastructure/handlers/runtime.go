@@ -25,8 +25,17 @@ func NewDelivery(
 	backgroundImageUsecases backgroundImageUsecases,
 	userClient *client.UserClient,
 	conversationMapper *mapper.ConversationMapper,
+	backgroundMapper *mapper.BackgroundMapper,
 ) *Delivery {
-	chatHandler := NewChatHandler(conversationUsecases, messageUsecases, readReceptUsecases, participantUsecases, messageReactionUsecases, userClient, conversationMapper)
+	chatHandler := NewChatHandler(conversationUsecases,
+		messageUsecases,
+		readReceptUsecases,
+		participantUsecases,
+		messageReactionUsecases,
+		userClient,
+		conversationMapper,
+		backgroundMapper,
+	)
 	go chatHandler.Start()
 
 	externalHandler := NewExternalHandler(backgroundImageUsecases)

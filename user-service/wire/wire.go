@@ -9,20 +9,28 @@ import (
 	"user/config"
 	user_config "user/config"
 	user_infra_client "user/infra/client"
+	user_infra_mapper "user/infra/mapper"
+	user_infra_postgres "user/infra/postgres"
 	user_infra_repo "user/infra/repo"
 	user_infra_routes "user/infra/routes"
 	user_infra_services "user/infra/services"
 	user_internal_dto "user/internal/dto"
+	user_internal_interface "user/internal/interface"
 	user_internal_models_auth "user/internal/models/auth"
 	user_internal_models_user "user/internal/models/user"
+	user_internal_repo "user/internal/repo"
 	user_internal_services_auth "user/internal/services/auth"
 	user_internal_services_user "user/internal/services/user"
+	user_internal_usecases "user/internal/usecases"
 	user_validator "user/validator"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	wire.Bind(new(user_internal_repo.RateRepo), new(*user_infra_postgres.RatePostgres)),
+	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
+	user_infra_postgres.NewAttachPostgres,
 	user_infra_routes.NewAuthRoutes,
 	user_internal_services_auth.NewAuthService,
 	user_validator.NewAuthValidator,
@@ -48,24 +56,29 @@ var wireSet = wire.NewSet(
 	user_internal_services_user.NewGroupService,
 	user_infra_services.NewGrpcAuthService,
 	user_infra_services.NewGrpcProfileService,
+	user_infra_services.NewGrpcRateService,
 	user_internal_services_auth.NewHttpClient,
 	user_infra_routes.NewOAuthRouter,
 	user_internal_services_auth.NewOAuthService,
-	user_infra_client.NewPaymentClient,
 	user_infra_client.NewOrganizationClient,
 	user_infra_client.NewOrganizationMemberClient,
+	user_infra_client.NewPaymentClient,
 	user_infra_repo.NewProfessionRepo,
 	user_infra_routes.NewProfessionRouter,
 	user_internal_services_user.NewProfessionService,
 	user_infra_repo.NewProfileRepo,
 	user_infra_routes.NewProfileRouter,
 	user_internal_services_user.NewProfileService,
+	user_infra_mapper.NewRateMapper,
+	user_infra_postgres.NewRatePostgres,
 	user_infra_repo.NewRateRepo,
 	user_infra_routes.NewRateRouter,
 	user_internal_services_user.NewRateService,
+	user_internal_usecases.NewRateUsecase,
 	user_internal_services_auth.NewRedisService,
 	user_internal_dto.NewRefreshResponse,
 	user_internal_dto.NewRequestLoginResponse,
+	user_infra_postgres.NewTransactionGorm,
 	user_internal_models_auth.NewUserOTPRepository,
 	user_internal_models_user.NewUserProfileEntityWithRequest,
 	user_internal_services_auth.NewZaloAuthService,

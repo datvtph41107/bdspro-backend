@@ -148,6 +148,45 @@
         ]
       }
     },
+    "/v2/chat/conversation/{conversationId}/edit": {
+      "put": {
+        "operationId": "ChatService_EditChannel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatpbEditChannelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ChatServiceEditChannelBody"
+            }
+          }
+        ],
+        "tags": [
+          "ChatService"
+        ]
+      }
+    },
     "/v2/chat/conversation/{conversationId}/files": {
       "get": {
         "operationId": "ChatService_GetFiles",
@@ -471,38 +510,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/chatpbCreateOrgChannelRequest"
-            }
-          }
-        ],
-        "tags": [
-          "ChatService"
-        ]
-      }
-    },
-    "/v2/chat/editChannel": {
-      "post": {
-        "operationId": "ChatService_EditChannel",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/chatpbEditChannelResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/chatpbEditChannelRequest"
             }
           }
         ],
@@ -1067,6 +1074,23 @@
     }
   },
   "definitions": {
+    "ChatServiceEditChannelBody": {
+      "type": "object",
+      "properties": {
+        "isBroadcast": {
+          "type": "boolean"
+        },
+        "forbidForward": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        }
+      }
+    },
     "chatpbAddUserRequest": {
       "type": "object",
       "properties": {
@@ -1085,6 +1109,36 @@
       "properties": {
         "success": {
           "type": "boolean"
+        }
+      }
+    },
+    "chatpbBackgroundImage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "imageType": {
+          "$ref": "#/definitions/chatpbImageType"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
         }
       }
     },
@@ -1126,7 +1180,7 @@
           "type": "string"
         },
         "backgroundImage": {
-          "type": "string"
+          "$ref": "#/definitions/chatpbBackgroundImage"
         },
         "avatars": {
           "type": "array",
@@ -1181,8 +1235,9 @@
         "avatar": {
           "type": "string"
         },
-        "backgroundImage": {
-          "type": "string"
+        "backgroundImageId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1236,27 +1291,6 @@
       "properties": {
         "success": {
           "type": "boolean"
-        }
-      }
-    },
-    "chatpbEditChannelRequest": {
-      "type": "object",
-      "properties": {
-        "conversationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "isBroadcast": {
-          "type": "boolean"
-        },
-        "forbidForward": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "backgroundImage": {
-          "type": "string"
         }
       }
     },
@@ -1339,7 +1373,7 @@
           }
         },
         "backgroundImage": {
-          "type": "string"
+          "$ref": "#/definitions/chatpbBackgroundImage"
         },
         "avatar": {
           "type": "string"
@@ -1498,9 +1532,19 @@
           "type": "boolean"
         },
         "backgroundImage": {
-          "type": "string"
+          "$ref": "#/definitions/chatpbBackgroundImage"
         }
       }
+    },
+    "chatpbImageType": {
+      "type": "string",
+      "enum": [
+        "IMAGE_TYPE_UNSPECIFIED",
+        "JPEG",
+        "PNG",
+        "GIF"
+      ],
+      "default": "IMAGE_TYPE_UNSPECIFIED"
     },
     "chatpbLeaveRoomRequest": {
       "type": "object",

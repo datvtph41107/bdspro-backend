@@ -10,6 +10,7 @@ import (
 	social_config "social/config"
 	social_infra_client "social/infra/client"
 	social_infra_impl "social/infra/impl"
+	social_infra_mapper "social/infra/mapper"
 	social_infra_postgre "social/infra/postgre"
 	social_infra_service "social/infra/service"
 	social_internal_interface "social/internal/interface"
@@ -28,8 +29,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(social_internal_repo.CommentRepo), new(*social_infra_postgre.PostgreComment)),
 	wire.Bind(new(social_internal_repo.FriendTagRepo), new(*social_infra_postgre.PostgreFriendTag)),
 	wire.Bind(new(social_internal_repo.LikeRepo), new(*social_infra_postgre.PostgreLike)),
-	wire.Bind(new(social_internal_repo.NewsFeedRepo), new(*social_infra_postgre.PostgreNewsFeed)),
 	wire.Bind(new(social_internal_repo.NewsFeedMediaRepo), new(*social_infra_postgre.PostgreNewsFeedMedia)),
+	wire.Bind(new(social_internal_repo.NewsFeedRepo), new(*social_infra_postgre.PostgreNewsFeed)),
 	wire.Bind(new(social_internal_repo.NewsFeedShareRepo), new(*social_infra_postgre.PostgreNewsFeedShare)),
 	wire.Bind(new(social_internal_repo.ReportRepo), new(*social_infra_postgre.PostgreReport)),
 	wire.Bind(new(social_internal_repo.ReportReasonRepo), new(*social_infra_postgre.PostgreReportReason)),
@@ -57,6 +58,7 @@ var wireSet = wire.NewSet(
 	social_infra_postgre.NewPostgreReport,
 	social_infra_postgre.NewPostgreReportReason,
 	social_infra_postgre.NewPostgreTransaction,
+	social_infra_mapper.NewReportMapper,
 	social_internal_usecase.NewReportReasonUsecase,
 	social_infra_service.NewReportService,
 	social_internal_usecase.NewReportUsecase,

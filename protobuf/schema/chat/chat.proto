@@ -5,6 +5,7 @@ import "google/api/annotations.proto";
 package chatpb;
 option go_package = "pb/types/chat;chatpb";
 
+import "chat/background.proto";
 import "shared/common.proto";
 
 service ChatService {
@@ -62,7 +63,7 @@ service ChatService {
   };
   rpc EditChannel (EditChannelRequest) returns (EditChannelResponse) {
     option (google.api.http) = {
-      post: "/v2/chat/editChannel"
+      put: "/v2/chat/conversation/{conversationId}/edit"
       body: "*"
     };
   };
@@ -179,7 +180,7 @@ message CreateConversationRequest {
   bool forbid_forward = 5;
   int32 created_by = 6;
   string avatar = 7;
-  string background_image = 8;
+  optional uint64 backgroundImageId = 8;
 }
 
 message CreateConversationResponse {
@@ -206,7 +207,7 @@ message Conversation {
   string updatedAt = 5;
   int32 unreadCount = 6;
   string avatar = 7;
-  string background_image = 8;
+  optional BackgroundImage backgroundImage = 8;
   repeated string avatars = 9;
   repeated uint64 participantIds = 10;
 }
@@ -308,7 +309,7 @@ message EditChannelRequest {
   optional bool is_broadcast = 2;
   optional bool forbid_forward = 3;
   optional string name = 4;
-  optional string background_image = 5;
+  optional string backgroundImage = 5;
 }
 
 message EditChannelResponse {
@@ -368,7 +369,7 @@ message GetConversationByIdResponse {
   string createdAt = 7;
   string updatedAt = 8;
   repeated Participant participants = 9;
-  string background_image = 10;
+  optional BackgroundImage backgroundImage = 10;
   string avatar = 11;
   repeated string avatars = 12;
 }
@@ -469,7 +470,7 @@ message GetSettingResponse {
   bool forbid_forward = 5;
   bool is_deleted = 6;
   bool mute_notif = 7;
-  string background_image = 8;
+  optional BackgroundImage backgroundImage = 8;
 }
 
 message GetFilesRequest {

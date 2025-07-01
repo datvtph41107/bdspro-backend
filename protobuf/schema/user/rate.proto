@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package userpb;
+option go_package = "pb/types/user;userpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service RateService {
+  rpc CreateRate(Rate) returns (Rate) {
+    option (google.api.http) = {
+      post: "/v2/user/rate"
+      body: "*"
+    };
+  };
+  rpc GetRateList(GetRateListRequest) returns (RateList) {
+    option (google.api.http) = {
+      get: "/v2/user/rate/list/{targetId}/{targetType}"
+    };
+  };
+  rpc UpdateRate(Rate) returns (Rate) {
+    option (google.api.http) = {
+      put: "/v2/user/rate/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteRate(sharepb.IdRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/user/rate/{id}"
+    };
+  };
+  rpc GetHistoryRate(GetHistoryRateRequest) returns (RateList) {
+    option (google.api.http) = {
+      get: "/v2/user/rate/history/{rateId}"
+    };
+  };
+  rpc UpdateHidden(UpdateHiddenRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      put: "/v2/user/rate/hidden/{id}"
+      body: "*"
+    };
+  };
+}
+
+message Rate {
+  uint64 id = 1;
+  uint64 targetId = 2;
+  uint32 targetType = 3;
+  uint64 score = 4;
+  string comment = 5;
+  optional uint64 parentId = 6;
+  repeated Attach attachs = 7;
+  bool anonymous = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  sharepb.ProfileItem createdUser = 11;
+  optional uint64 createdBy = 12;
+}
+
+message GetRateListRequest {
+  uint64 targetId = 1;
+  uint32 targetType = 2;
+  optional uint64 parentId = 3;
+  uint64 createdBy = 4;
+  uint64 updatedBy = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message RateList {
+  repeated Rate data = 1;
+  uint64 total = 2;
+}
+
+message Attach {
+  uint64 id = 1;
+  string imageUrl = 2;
+  string imageType = 3;
+}
+
+message GetHistoryRateRequest {
+  uint64 rateId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message UpdateHiddenRequest {
+  uint64 id = 1;
+  bool hidden = 2;
+}

@@ -132,45 +132,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/conversation/edit": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Chỉnh sửa đoạn hội thoại được chỉ định",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat"
-                ],
-                "summary": "Chỉnh sửa đoạn hội thoại",
-                "parameters": [
-                    {
-                        "description": "Đoạn hội thoại cần chỉnh sửa",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/chatpb.EditChannelRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/chatpb.EditChannelResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/conversation/members": {
             "get": {
                 "security": [
@@ -294,14 +255,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/conversation/setting": {
-            "get": {
+        "/conversation/{conversationId}/edit": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy cài đặt đoạn hội thoại được chỉ định",
+                "description": "Chỉnh sửa đoạn hội thoại được chỉ định",
                 "consumes": [
                     "application/json"
                 ],
@@ -311,19 +272,30 @@ const docTemplate = `{
                 "tags": [
                     "Chat"
                 ],
-                "summary": "Lấy cài đặt đoạn hội thoại",
+                "summary": "Chỉnh sửa đoạn hội thoại",
                 "parameters": [
                     {
+                        "description": "Đoạn hội thoại cần chỉnh sửa",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.EditChannelRequest"
+                        }
+                    },
+                    {
                         "type": "integer",
-                        "name": "id",
-                        "in": "query"
+                        "description": "ID đoạn hội thoại",
+                        "name": "conversationId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/chatpb.GetSettingResponse"
+                            "$ref": "#/definitions/chatpb.EditChannelResponse"
                         }
                     }
                 }
@@ -357,6 +329,13 @@ const docTemplate = `{
                         "type": "boolean",
                         "name": "include_members",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID đoạn hội thoại",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -364,6 +343,43 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/chatpb.GetConversationByIdResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/{id}/setting": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy cài đặt đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy cài đặt đoạn hội thoại",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID đoạn hội thoại",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetSettingResponse"
                         }
                     }
                 }
@@ -1130,6 +1146,35 @@ const docTemplate = `{
                 }
             }
         },
+        "chatpb.BackgroundImage": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imageType": {
+                    "$ref": "#/definitions/chatpb.ImageType"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "chatpb.Conversation": {
             "type": "object",
             "properties": {
@@ -1142,8 +1187,8 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "background_image": {
-                    "type": "string"
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
                 },
                 "conversationId": {
                     "type": "integer"
@@ -1190,8 +1235,8 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
-                "background_image": {
-                    "type": "string"
+                "backgroundImageId": {
+                    "type": "integer"
                 },
                 "created_by": {
                     "type": "integer"
@@ -1284,7 +1329,7 @@ const docTemplate = `{
         "chatpb.EditChannelRequest": {
             "type": "object",
             "properties": {
-                "background_image": {
+                "backgroundImage": {
                     "type": "string"
                 },
                 "conversationId": {
@@ -1365,8 +1410,8 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "background_image": {
-                    "type": "string"
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
                 },
                 "conversationId": {
                     "type": "integer"
@@ -1498,8 +1543,8 @@ const docTemplate = `{
         "chatpb.GetSettingResponse": {
             "type": "object",
             "properties": {
-                "background_image": {
-                    "type": "string"
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
                 },
                 "forbid_forward": {
                     "type": "boolean"
@@ -1523,6 +1568,21 @@ const docTemplate = `{
                     "$ref": "#/definitions/chatpb.ConversationTypeEnum"
                 }
             }
+        },
+        "chatpb.ImageType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "ImageType_IMAGE_TYPE_UNSPECIFIED",
+                "ImageType_JPEG",
+                "ImageType_PNG",
+                "ImageType_GIF"
+            ]
         },
         "chatpb.LeaveRoomRequest": {
             "type": "object",

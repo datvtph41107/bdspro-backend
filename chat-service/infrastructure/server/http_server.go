@@ -46,7 +46,8 @@ func NewHTTPServer(port string) *HTTPServer {
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
 	backgroundImageUsecase := usecases.NewBackgroundImageUsecases(pRepository)
-	conversationMapper := mapper.NewConversationMapper()
+	backgroundMapper := mapper.NewBackgroundMapper()
+	conversationMapper := mapper.NewConversationMapper(backgroundMapper)
 
 	delivery := handlers.NewDelivery(
 		converstationUsecase,
@@ -57,6 +58,7 @@ func NewHTTPServer(port string) *HTTPServer {
 		backgroundImageUsecase,
 		userClient,
 		conversationMapper,
+		backgroundMapper,
 	)
 	mux := runtime.NewServeMux()
 

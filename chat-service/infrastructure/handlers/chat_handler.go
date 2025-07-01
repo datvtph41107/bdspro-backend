@@ -34,6 +34,7 @@ type chatHandler struct {
 	redisClient             redisClient
 	userClient              *client.UserClient
 	conversationMapper      *mapper.ConversationMapper
+	backgroundMapper        *mapper.BackgroundMapper
 }
 
 func NewChatHandler(
@@ -44,6 +45,7 @@ func NewChatHandler(
 	messageReactionUsecases messageReactionUsecases,
 	userClient *client.UserClient,
 	conversationMapper *mapper.ConversationMapper,
+	backgroundMapper *mapper.BackgroundMapper,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -58,6 +60,7 @@ func NewChatHandler(
 		eventChannel:            make(chan any),
 		userClient:              userClient,
 		conversationMapper:      conversationMapper,
+		backgroundMapper:        backgroundMapper,
 	}
 }
 
@@ -80,13 +83,13 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 	}
 
 	conversation := &models.ConversationModel{
-		Name:            &req.Name,
-		Type:            models.ConversationTypeEnum(req.Type),
-		CreatedBy:       uint64(req.CreatedBy),
-		IsBroadcast:     req.IsBroadcast,
-		ForbidForward:   req.ForbidForward,
-		Avatar:          req.Avatar,
-		BackgroundImage: req.BackgroundImage,
+		Name:              &req.Name,
+		Type:              models.ConversationTypeEnum(req.Type),
+		CreatedBy:         uint64(req.CreatedBy),
+		IsBroadcast:       req.IsBroadcast,
+		ForbidForward:     req.ForbidForward,
+		Avatar:            req.Avatar,
+		BackgroundImageID: req.BackgroundImageId,
 	}
 	model, err := s.conversationUsecases.CreateConversation(ctx, conversation, utils.Int32SliceToUint64Slice(req.Members))
 	if err != nil {
@@ -472,7 +475,8 @@ func (s *chatHandler) RemoveUser(ctx context.Context, req *chatpb.RemoveUserRequ
 // @Security BearerAuth
 // @Param message body chatpb.EditChannelRequest true "Đoạn hội thoại cần chỉnh sửa"
 // @Success 200 {object} chatpb.EditChannelResponse
-// @Router /conversation/edit [post]
+// @Param conversationId path int true "ID đoạn hội thoại"
+// @Router /conversation/{conversationId}/edit [put]
 func (s *chatHandler) EditChannel(ctx context.Context, req *chatpb.EditChannelRequest) (*chatpb.EditChannelResponse, error) {
 	err := s.conversationUsecases.EditChannel(ctx, uint64(req.ConversationId), req.IsBroadcast, req.ForbidForward, req.Name, req.BackgroundImage)
 	if err != nil {
@@ -585,6 +589,7 @@ func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*c
 // @Security BearerAuth
 // @Param message query chatpb.GetConversationByIdRequest true "ID đoạn hội thoại cần lấy"
 // @Success 200 {object} chatpb.GetConversationByIdResponse
+// @Param id path int true "ID đoạn hội thoại"
 // @Router /conversation/{id} [get]
 func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetConversationByIdRequest) (*chatpb.GetConversationByIdResponse, error) {
 	req.IncludeMembers = true
@@ -614,7 +619,7 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 		CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
 		UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
 		Participants:    participants,
-		BackgroundImage: conversation.BackgroundImage,
+		BackgroundImage: s.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
 		Avatar:          conversation.Avatar,
 	}
 
@@ -871,9 +876,9 @@ func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequ
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param message query chatpb.GetSettingRequest true "Đoạn hội thoại cần lấy cài đặt"
+// @Param id path int true "ID đoạn hội thoại"
 // @Success 200 {object} chatpb.GetSettingResponse
-// @Router /conversation/setting [get]
+// @Router /conversation/{id}/setting [get]
 func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequest) (*chatpb.GetSettingResponse, error) {
 	conversation, participant, err := s.conversationUsecases.GetSetting(ctx, uint64(req.Id))
 	if err != nil {
@@ -887,7 +892,7 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequ
 		ForbidForward:   conversation.ForbidForward,
 		IsDeleted:       conversation.IsDeleted,
 		MuteNotif:       participant.MuteNotif,
-		BackgroundImage: conversation.BackgroundImage,
+		BackgroundImage: s.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
 	}, nil
 }
 

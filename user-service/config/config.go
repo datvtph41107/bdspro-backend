@@ -24,6 +24,7 @@ type ConfigApp struct {
 	RateRouter     *routes.RateRouter
 	ProfileService *services.GrpcProfileService
 	AuthService    *services.GrpcAuthService
+	RateService    *services.RateService
 	// GroupRouter   *routes.GroupRouter
 }
 
@@ -37,6 +38,7 @@ func NewConfigApp(authService *routes.AuthRouter,
 	rate *routes.RateRouter,
 	profileService *services.GrpcProfileService,
 	grpcAuthService *services.GrpcAuthService,
+	rateService *services.RateService,
 ) *ConfigApp {
 	return &ConfigApp{
 		Auth:           authService,
@@ -49,6 +51,7 @@ func NewConfigApp(authService *routes.AuthRouter,
 		RateRouter:     rate,
 		ProfileService: profileService,
 		AuthService:    grpcAuthService,
+		RateService:    rateService,
 	}
 }
 
