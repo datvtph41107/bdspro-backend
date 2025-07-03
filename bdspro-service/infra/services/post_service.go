@@ -13,14 +13,19 @@ import (
 
 type PostService struct {
 	pb_bdspro.UnimplementedPostServiceServer
-	postRepo repo.UPostRepo
-	UC       *shared_usecase.PostUsecase
+	postRepo   repo.UPostRepo
+	UC         *shared_usecase.PostUsecase
+	PostMapper *mapper.PostMapper
 }
 
-func NewGrpcPostService(postRepo repo.UPostRepo, uc *shared_usecase.PostUsecase) *PostService {
+func NewGrpcPostService(postRepo repo.UPostRepo,
+	uc *shared_usecase.PostUsecase,
+	postMapper *mapper.PostMapper,
+) *PostService {
 	return &PostService{
-		postRepo: postRepo,
-		UC:       uc,
+		postRepo:   postRepo,
+		UC:         uc,
+		PostMapper: postMapper,
 	}
 }
 
@@ -64,7 +69,7 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostBy
 	if err != nil {
 		return nil, err
 	}
-	postList := mapper.PostToPbList(posts)
+	postList := s.PostMapper.PostToPbList(posts)
 	return &pb_bdspro.GetPostByIDsResponse{Posts: postList}, nil
 }
 

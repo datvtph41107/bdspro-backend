@@ -39,14 +39,14 @@ func (u *groupChatUsecase) CreateGroupChat(ctx context.Context, groupID uint32, 
 
 	// Create conversation in chat service
 	conversationId, err := u.chatServiceClient.CreateConversation(ctx, &dto.CreateConversationRequest{
-		Name:            name,
-		Type:            20,
-		CreatedBy:       int32(currentUserId),
-		Members:         utils.Uint32SliceToInt32Slice(members),
-		IsBroadcast:     true,
-		ForbidForward:   true,
-		Avatar:          avatarUrl,
-		BackgroundImage: "",
+		Name:              name,
+		Type:              20,
+		CreatedBy:         int32(currentUserId),
+		Members:           utils.Uint32SliceToInt32Slice(members),
+		IsBroadcast:       true,
+		ForbidForward:     true,
+		Avatar:            avatarUrl,
+		BackgroundImageId: nil,
 	})
 	if err != nil {
 		return nil, err

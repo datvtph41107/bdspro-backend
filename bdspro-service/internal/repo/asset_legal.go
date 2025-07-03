@@ -12,5 +12,5 @@ type AssetLegalRepo interface {
 	Delete(c context.Context, id uint64) error
 	GetData(c context.Context, dto dto.AssetLegalGetDTO) ([]domain.AssetLegal, int64, error)
 	GetByID(c context.Context, id uint64) (*domain.AssetLegal, error)
-	UpdateLegalItems(c context.Context, assetID uint64, items []domain.LegalItem) error
+	UpdateLegalItems(c context.Context, assetID uint64, items []domain.AssetLegal) error
 }

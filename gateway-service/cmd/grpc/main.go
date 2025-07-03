@@ -7,7 +7,7 @@ import (
 	"gateway/config"
 	"log"
 	"net/http"
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -71,7 +71,7 @@ var GrpcCmd = &cobra.Command{
 		)
 		ctx := context.Background()
 		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-		_ = pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notification_endpoint, opts)
+		_ = notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notification_endpoint, opts)
 
 		// gRPC Gateway qua Gin
 		r.Any("/v2/*any", gin.WrapH(mux))

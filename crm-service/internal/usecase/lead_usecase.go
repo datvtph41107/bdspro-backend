@@ -9,25 +9,26 @@ import (
 	"crm/internal/enums"
 	iusecase "crm/internal/interface"
 	"crm/internal/repo"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 )
 
 type LeadUsecase struct {
-	leadRepo        repo.LeadRepo
-	permissionUC    PermissionUsecase
-	historyRepo     repo.HistoryRepo
-	contactRepo     repo.ContactRepo
-	contactUsecase  *ContactUsecase
-	stageRepo       repo.StageRepo
-	pipelineRepo    repo.PipelineRepo
-	documentRepo    repo.DocumentRepo
-	productCareRepo repo.ProductCareRepo
-	transaction     iusecase.ITransaction
+	leadRepo           repo.LeadRepo
+	permissionUC       PermissionUsecase
+	contactRepo        repo.ContactRepo
+	contactUsecase     *ContactUsecase
+	stageRepo          repo.StageRepo
+	pipelineRepo       repo.PipelineRepo
+	documentRepo       repo.DocumentRepo
+	productCareRepo    repo.ProductCareRepo
+	transaction        iusecase.ITransaction
+	notificationClient iusecase.INotificationClient
 }
 
 func NewLeadUsecase(
 	customerRepo repo.LeadRepo,
 	permissionUsecase PermissionUsecase,
-	historyUsecase repo.HistoryRepo,
 	contactRepo repo.ContactRepo,
 	contactUsecase *ContactUsecase,
 	stageRepo repo.StageRepo,
@@ -35,18 +36,19 @@ func NewLeadUsecase(
 	documentRepo repo.DocumentRepo,
 	productCareRepo repo.ProductCareRepo,
 	transaction iusecase.ITransaction,
+	notificationClient iusecase.INotificationClient,
 ) *LeadUsecase {
 	result := &LeadUsecase{
-		leadRepo:        customerRepo,
-		permissionUC:    permissionUsecase,
-		historyRepo:     historyUsecase,
-		contactRepo:     contactRepo,
-		contactUsecase:  contactUsecase,
-		stageRepo:       stageRepo,
-		pipelineRepo:    pipelineRepo,
-		documentRepo:    documentRepo,
-		productCareRepo: productCareRepo,
-		transaction:     transaction,
+		leadRepo:           customerRepo,
+		permissionUC:       permissionUsecase,
+		contactRepo:        contactRepo,
+		contactUsecase:     contactUsecase,
+		stageRepo:          stageRepo,
+		pipelineRepo:       pipelineRepo,
+		documentRepo:       documentRepo,
+		productCareRepo:    productCareRepo,
+		transaction:        transaction,
+		notificationClient: notificationClient,
 	}
 	contactUsecase.leadUsecase = result
 	return result
@@ -116,11 +118,11 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 			}
 		}
 
-		u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
-			Note:       "Tạo khách hàng " + contact.FullName,
+		u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
+			Note:       []string{"Tạo khách hàng ", contact.FullName},
 			TargetId:   lead.ID,
-			TargetType: enums.TargetHistoryLead,
-			ActionType: enums.HistoryContactCreate,
+			TargetType: shared_enum.TargetHistoryLead,
+			ActionType: shared_enum.HistoryContactCreate,
 			OwnerID:    lead.OwnerID,
 			OwnerType:  lead.OwnerType,
 			// AfterStage: ,
@@ -205,11 +207,11 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 		}
 
 		// update history
-		u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
-			Note:       "Cập nhật khách hàng " + dto.FullName,
+		u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
+			Note:       []string{"Cập nhật khách hàng ", dto.FullName},
 			TargetId:   lead.ID,
-			TargetType: enums.TargetHistoryLead,
-			ActionType: enums.HistoryContactUpdate,
+			TargetType: shared_enum.TargetHistoryLead,
+			ActionType: shared_enum.HistoryContactUpdate,
 			OwnerID:    lead.OwnerID,
 			OwnerType:  lead.OwnerType,
 		})
@@ -235,11 +237,11 @@ func (u *LeadUsecase) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 
-	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
 		// Note:       "Xóa khách hàng " + customer.FullName,
 		TargetId:   customer.ID,
-		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryContactDelete,
+		TargetType: shared_enum.TargetHistoryLead,
+		ActionType: shared_enum.HistoryContactDelete,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -263,11 +265,11 @@ func (u *LeadUsecase) UpdateNote(ctx context.Context, id uint64, dto *dto.LeadDT
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
 		// Note:       "Ghi chú cho khách hàng " + customer.FullName + " nội dung:\n\"" + dto.Note + "\"",
 		TargetId:   customer.ID,
-		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryUpdateNote,
+		TargetType: shared_enum.TargetHistoryLead,
+		ActionType: shared_enum.HistoryUpdateNote,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -291,11 +293,11 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
 		// Note:       "Phân công khách hàng " + customer.FullName + " cho " + dto.FullName,
 		TargetId:   customer.ID,
-		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryContactAssign,
+		TargetType: shared_enum.TargetHistoryLead,
+		ActionType: shared_enum.HistoryContactAssign,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -320,11 +322,11 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
+	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
 		// Note:       "Chuyển trạng thái khách hàng " + customer.FullName,
 		TargetId:   customer.ID,
-		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistorySwitchStage,
+		TargetType: shared_enum.TargetHistoryLead,
+		ActionType: shared_enum.HistorySwitchStage,
 		OwnerID:    customer.OwnerID,
 		OwnerType:  customer.OwnerType,
 	})
@@ -430,11 +432,11 @@ func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personCha
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(ctx, &domain.HistoryEntity{
-		Note:       "Tạo Lead từ liên hệ " + contact.FullName,
+	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
+		Note:       []string{"Tạo Lead từ liên hệ ", contact.FullName},
 		TargetId:   lead.ID,
-		TargetType: enums.TargetHistoryLead,
-		ActionType: enums.HistoryContactCreate,
+		TargetType: shared_enum.TargetHistoryLead,
+		ActionType: shared_enum.HistoryContactCreate,
 		OwnerID:    lead.OwnerID,
 		OwnerType:  lead.OwnerType,
 	})

@@ -5,27 +5,30 @@ import (
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 )
 
 type RuleUsecase struct {
-	ruleRepo          repo.RuleRepo
-	permissionUsecase PermissionUsecase
-	historyRepo       repo.HistoryRepo
-	customerRepo      repo.LeadRepo
+	ruleRepo           repo.RuleRepo
+	permissionUsecase  PermissionUsecase
+	notificationClient iusecase.INotificationClient
+	customerRepo       repo.LeadRepo
 }
 
 func NewRuleUsecase(
 	ruleRepo repo.RuleRepo,
 	permissionUsecase PermissionUsecase,
-	historyRepo repo.HistoryRepo,
+	notificationClient iusecase.INotificationClient,
 	customerRepo repo.LeadRepo,
 ) *RuleUsecase {
 	return &RuleUsecase{
-		ruleRepo:          ruleRepo,
-		permissionUsecase: permissionUsecase,
-		historyRepo:       historyRepo,
-		customerRepo:      customerRepo,
+		ruleRepo:           ruleRepo,
+		permissionUsecase:  permissionUsecase,
+		notificationClient: notificationClient,
+		customerRepo:       customerRepo,
 	}
 }
 
@@ -41,11 +44,12 @@ func (u *RuleUsecase) Create(c context.Context, entity *domain.RuleEntity) (*dom
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Tạo quy tắc " + entity.RuleName,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Tạo quy tắc thành công",
+		Note:       []string{"Tạo quy tắc", entity.RuleName},
 		TargetId:   entity.ID,
-		TargetType: enums.TargetHistoryRule,
-		ActionType: enums.HistoryRuleCreate,
+		TargetType: shared_enum.TargetHistoryRule,
+		ActionType: shared_enum.HistoryRuleCreate,
 		OwnerID:    &entity.OwnerID,
 		OwnerType:  entity.OwnerType,
 	})
@@ -63,11 +67,12 @@ func (u *RuleUsecase) Update(c context.Context, id uint64, entity *domain.RuleEn
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Cập nhật quy tắc " + entity.RuleName + " - " + entity.Note,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Cập nhật quy tắc thành công",
+		Note:       []string{"Cập nhật quy tắc", entity.RuleName, " - ", entity.Note},
 		TargetId:   entity.ID,
-		TargetType: enums.TargetHistoryRule,
-		ActionType: enums.HistoryRuleUpdate,
+		TargetType: shared_enum.TargetHistoryRule,
+		ActionType: shared_enum.HistoryRuleUpdate,
 		OwnerID:    &entity.OwnerID,
 		OwnerType:  entity.OwnerType,
 	})
@@ -89,11 +94,12 @@ func (u *RuleUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Xóa quy tắc " + entity.RuleName,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Xóa quy tắc thành công",
+		Note:       []string{"Xóa quy tắc", entity.RuleName},
 		TargetId:   entity.ID,
-		TargetType: enums.TargetHistoryRule,
-		ActionType: enums.HistoryRuleDelete,
+		TargetType: shared_enum.TargetHistoryRule,
+		ActionType: shared_enum.HistoryRuleDelete,
 		OwnerID:    &entity.OwnerID,
 		OwnerType:  entity.OwnerType,
 	})

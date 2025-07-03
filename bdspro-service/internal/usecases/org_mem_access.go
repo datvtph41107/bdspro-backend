@@ -93,9 +93,9 @@ package usecases
 // 		}
 // 	}
 
-// 	data := []*pb_noti.NotiNewRequest{}
+// 	data := []*notificationpb.NotiNewRequest{}
 // 	for i := 0; i < len(entities); i++ {
-// 		data = append(data, &pb_noti.NotiNewRequest{
+// 		data = append(data, &notificationpb.NotiNewRequest{
 // 			Title:   "Chia sẻ sản phẩm",
 // 			Message: "Bạn nhận được chia sẻ sản phẩm ",
 // 			Type:    1,
@@ -104,7 +104,7 @@ package usecases
 // 		// entities[i].ProductID = id
 // 	}
 
-// 	s.NotiService.NotiClient.SendBatch(c, &pb_noti.NotiBatchRequest{
+// 	s.NotiService.NotiClient.SendBatch(c, &notificationpb.NotiBatchRequest{
 // 		Datas: data,
 // 	})
 

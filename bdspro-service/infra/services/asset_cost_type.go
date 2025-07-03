@@ -2,7 +2,7 @@ package service
 
 import (
 	"bdspro/infra/mapper"
-	"bdspro/internal/domain"
+	"bdspro/infra/validator"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	shared_usecase "bdspro/internal/usecases/shared"
@@ -14,12 +14,20 @@ import (
 
 type AssetCostTypeService struct {
 	pb_bdspro.UnimplementedAssetCostTypeServiceServer
-	UC *shared_usecase.AssetCostTypeUsecase
+	Usecase   *shared_usecase.AssetCostTypeUsecase
+	Validator *validator.CostTypeValidator
+	Mapper    *mapper.CostTypeMapper
 }
 
-func NewAssetCostTypeServer(AssetCostTypeUc *shared_usecase.AssetCostTypeUsecase) *AssetCostTypeService {
+func NewAssetCostTypeServer(
+	AssetCostTypeUc *shared_usecase.AssetCostTypeUsecase,
+	validator *validator.CostTypeValidator,
+	mapper *mapper.CostTypeMapper,
+) *AssetCostTypeService {
 	return &AssetCostTypeService{
-		UC: AssetCostTypeUc,
+		Usecase:   AssetCostTypeUc,
+		Validator: validator,
+		Mapper:    mapper,
 	}
 }
 
@@ -36,7 +44,7 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeR
 		Type: req.Type,
 	}
 	copier.Copy(&searchDTO, &req)
-	result, total, err := s.UC.Search(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	result, total, err := s.Usecase.Search(c, enums.EOwnerType(req.OwnerType), searchDTO)
 
 	pbdatas := []*pb_bdspro.AssetCostTypeDTO{}
 	copier.Copy(&pbdatas, &result)
@@ -56,10 +64,10 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeR
 // @Router /v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType} [get]
 func (s AssetCostTypeService) SearchGroup(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.GroupType, error) {
 	searchDTO := &dto.AssetCostTypeSearchDTO{}
-	incomes, spends, err := s.UC.SearchGroup(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	incomes, spends, err := s.Usecase.SearchGroup(c, enums.EOwnerType(req.OwnerType), searchDTO)
 
-	pbincomes := mapper.CostTypeToPbList(incomes)
-	pbspends := mapper.CostTypeToPbList(spends)
+	pbincomes := s.Mapper.CostTypeToPbList(incomes)
+	pbspends := s.Mapper.CostTypeToPbList(spends)
 
 	return &pb_bdspro.GroupType{
 		Incomes: pbincomes,
@@ -74,10 +82,9 @@ func (s AssetCostTypeService) SearchGroup(c context.Context, req *pb_bdspro.IdRe
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost-type/detail/{id} [get]
 func (s AssetCostTypeService) Detail(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostTypeDTO, error) {
-	r, err := s.UC.GetByID(c, req.Id)
+	r, err := s.Usecase.GetByID(c, req.Id)
 
-	pbdata := &pb_bdspro.AssetCostTypeDTO{}
-	copier.Copy(&pbdata, &r)
+	pbdata := s.Mapper.CostTypeToPb(r)
 
 	return pbdata, err
 }
@@ -89,13 +96,14 @@ func (s AssetCostTypeService) Detail(c context.Context, req *pb_bdspro.IdRequest
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost-type [post]
 func (s AssetCostTypeService) Create(c context.Context, req *pb_bdspro.AssetCostTypeDTO) (*pb_bdspro.AssetCostTypeDTO, error) {
-	dto := &domain.AssetCostType{}
-	copier.Copy(&dto, &req)
+	dto := s.Mapper.CostTypePbToDomain(req)
+	err := s.Validator.ValidateSaveCostType(req)
+	if err != nil {
+		return nil, err
+	}
+	err = s.Usecase.Create(c, dto)
 
-	err := s.UC.Create(c, dto)
-
-	pbdata := &pb_bdspro.AssetCostTypeDTO{}
-	copier.Copy(&pbdata, &dto)
+	pbdata := s.Mapper.CostTypeToPb(dto)
 	return pbdata, err
 }
 
@@ -106,10 +114,14 @@ func (s AssetCostTypeService) Create(c context.Context, req *pb_bdspro.AssetCost
 // @Param body body pb_bdspro.AssetCostTypeDTO true "Body"
 // @Router /v2/bdspro/v2/asset/cost-type/{id} [put]
 func (s AssetCostTypeService) Update(c context.Context, req *pb_bdspro.AssetCostTypeDTO) (*pb_bdspro.AssetCostTypeDTO, error) {
-	dto := &domain.AssetCostType{}
-	copier.Copy(&dto, &req)
+	dto := s.Mapper.CostTypePbToDomain(req)
 
-	err := s.UC.Update(c, req.Id, dto)
+	err := s.Validator.ValidateSaveCostType(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.Usecase.Update(c, req.Id, dto)
 
 	pbdata := &pb_bdspro.AssetCostTypeDTO{}
 	copier.Copy(&pbdata, &dto)
@@ -123,7 +135,7 @@ func (s AssetCostTypeService) Update(c context.Context, req *pb_bdspro.AssetCost
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost-type/{id} [delete]
 func (s AssetCostTypeService) Delete(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
-	err := s.UC.Delete(c, req.Id)
+	err := s.Usecase.Delete(c, req.Id)
 	return &pb_bdspro.Response{
 		Message: "success",
 		Id:      req.Id,

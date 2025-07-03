@@ -11,16 +11,18 @@ import (
 	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 	"errors"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 )
 
 type FriendUsecase struct {
-	repo         repo.FriendRepo
-	contact      repo.ContactRepo
-	blockRepo    repo.BlockRepo
-	followRepo   repo.FollowRepo
-	blockService *BlockUsecase
-	historyRepo  repo.HistoryRepo
-	userClient   iusecase.UserClient
+	repo               repo.FriendRepo
+	contact            repo.ContactRepo
+	blockRepo          repo.BlockRepo
+	followRepo         repo.FollowRepo
+	blockService       *BlockUsecase
+	notificationClient iusecase.INotificationClient
+	userClient         iusecase.UserClient
 }
 
 func NewFriendUsecase(repo repo.FriendRepo,
@@ -28,17 +30,17 @@ func NewFriendUsecase(repo repo.FriendRepo,
 	followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
-	historyRepo repo.HistoryRepo,
+	notificationClient iusecase.INotificationClient,
 	userClient iusecase.UserClient,
 ) *FriendUsecase {
 	return &FriendUsecase{
-		repo:         repo,
-		contact:      contact,
-		blockRepo:    blockRepo,
-		blockService: blockService,
-		followRepo:   followRepo,
-		historyRepo:  historyRepo,
-		userClient:   userClient,
+		repo:               repo,
+		contact:            contact,
+		blockRepo:          blockRepo,
+		blockService:       blockService,
+		followRepo:         followRepo,
+		notificationClient: notificationClient,
+		userClient:         userClient,
 	}
 }
 
@@ -88,28 +90,28 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 	}
 	_db.SaveWithContext(c, &e)
 
-	newCtx := _utils.CloneContext(c)
+	ctxClone := _utils.CloneContext(c)
 	go func() {
-		profileId := _utils.GetProfileIdWithContext(newCtx)
-		currentUser, _ := s.userClient.GetProfileById(newCtx, profileId)
+		profileId := _utils.GetProfileIdWithContext(ctxClone)
+		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
 		fullName := ""
 		if currentUser != nil {
 			fullName = currentUser.FullName
 		}
 
-		contact, err := s.contact.GetByProfileID(newCtx, receiverId, profileId, enums.EOwnerTypeOrgnization)
+		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, enums.EOwnerTypeOrgnization)
 		if err != nil {
 			return
 		}
 
-		s.historyRepo.CreateHistory(newCtx, &domain.HistoryEntity{
+		s.notificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
 			Title:      fullName + " đã gửi lời mời kết bạn",
-			Note:       fullName + " đã gửi lời mời kết bạn tới " + contact.FullName,
+			Note:       []string{"", fullName, " đã gửi lời mời kết bạn tới ", contact.FullName},
 			TargetId:   contact.ID,
-			TargetType: enums.TargetHistoryContact,
-			ActionType: enums.HistoryContactFriend,
+			TargetType: shared_enum.TargetHistoryContact,
+			ActionType: shared_enum.HistoryContactFriend,
 			OwnerID:    &profileId,
-			OwnerType:  enums.EOwnerTypeMember,
+			OwnerType:  shared_enum.EOwnerTypeMember,
 		})
 	}()
 

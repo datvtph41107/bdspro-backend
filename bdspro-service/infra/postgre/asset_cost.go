@@ -43,8 +43,8 @@ func (r *GormAssetCostRepo) QuerySearch(c context.Context, profileId uint64, own
 	return query, nil
 }
 
-func (r *GormAssetCostRepo) Find(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto *dto.AssetCostSearchDTO) ([]domain.AssetCostQuery, int64, error) {
-	var entities []domain.AssetCostQuery
+func (r *GormAssetCostRepo) Find(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto *dto.AssetCostSearchDTO) ([]domain.AssetCost, int64, error) {
+	var entities []domain.AssetCost
 	var total int64
 
 	query, err := r.QuerySearch(c, profileId, ownerType, dto)
@@ -53,9 +53,11 @@ func (r *GormAssetCostRepo) Find(c context.Context, profileId uint64, ownerType 
 	}
 
 	if err := query.
+		Debug().
+		Preload("CostType").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
-		Scan(&entities).Error; err != nil {
+		Find(&entities).Error; err != nil {
 		return nil, 0, nil
 	}
 	query, _ = r.QuerySearch(c, profileId, ownerType, dto)

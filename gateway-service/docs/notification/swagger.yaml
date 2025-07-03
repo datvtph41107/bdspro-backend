@@ -1,6 +1,6 @@
 basePath: /v2/notification
 definitions:
-  pb_noti.GatewayNotiNewRequest:
+  notificationpb.GatewayNotiNewRequest:
     properties:
       link:
         type: string
@@ -13,7 +13,7 @@ definitions:
       type:
         type: integer
     type: object
-  pb_noti.NotificationDTO:
+  notificationpb.NotificationDTO:
     properties:
       avatar:
         type: string
@@ -88,7 +88,7 @@ paths:
           description: Danh sách thông báo
           schema:
             items:
-              $ref: '#/definitions/pb_noti.NotificationDTO'
+              $ref: '#/definitions/notificationpb.NotificationDTO'
             type: array
         "500":
           description: error
@@ -113,7 +113,7 @@ paths:
         name: notification
         required: true
         schema:
-          $ref: '#/definitions/pb_noti.GatewayNotiNewRequest'
+          $ref: '#/definitions/notificationpb.GatewayNotiNewRequest'
       produces:
       - application/json
       responses:

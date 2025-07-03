@@ -1,6 +1,6 @@
 package enums
 
-type EOwnerType = int
+type EOwnerType = uint32
 
 const (
 	EOwnerTypeMember      EOwnerType = 10

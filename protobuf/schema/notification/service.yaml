@@ -3,22 +3,22 @@
 
 # http:
 #   rules:
-#     - selector: pb_noti.NotificationService.Count
+#     - selector: notificationpb.NotificationService.Count
 #       get: /v2/notification/count
-#     - selector: pb_noti.NotificationService.Send
+#     - selector: notificationpb.NotificationService.Send
 #       post: /v2/notification/new
 #       body: "*"
-#     - selector: pb_noti.NotificationService.Read
+#     - selector: notificationpb.NotificationService.Read
 #       put: /v2/notification/read/{id}
 #       body: "*"
-#     - selector: pb_noti.NotificationService.Remove
+#     - selector: notificationpb.NotificationService.Remove
 #       delete: /v2/notification/remove/{id}
-#     - selector: pb_noti.NotificationService.List
+#     - selector: notificationpb.NotificationService.List
 #       get: /v2/notification
 #       query: "*"
-#     - selector: pb_noti.NotificationService.PushByToken
+#     - selector: notificationpb.NotificationService.PushByToken
 #       post: /v2/app/push/token
 #       body: "*"
-#     - selector: pb_noti.NotificationService.PushByTopic
+#     - selector: notificationpb.NotificationService.PushByTopic
 #       post: /v2/app/push/topic
 #       body: "*"

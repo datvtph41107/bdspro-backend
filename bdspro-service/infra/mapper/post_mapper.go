@@ -5,7 +5,13 @@ import (
 	pb_bdspro "pb/types/bdspro"
 )
 
-func MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMedia {
+type PostMapper struct{}
+
+func NewPostMapper() *PostMapper {
+	return &PostMapper{}
+}
+
+func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMedia {
 	return &pb_bdspro.PostMedia{
 		Id:        media.ID,
 		MediaUrl:  media.MediaURL,
@@ -15,18 +21,18 @@ func MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMedia {
 	}
 }
 
-func PostToPbList(posts []*domain.Post) []*pb_bdspro.Post {
+func (m *PostMapper) PostToPbList(posts []*domain.Post) []*pb_bdspro.Post {
 	postList := make([]*pb_bdspro.Post, len(posts))
 	for i, post := range posts {
-		postList[i] = PostToPb(post)
+		postList[i] = m.PostToPb(post)
 	}
 	return postList
 }
 
-func PostToPb(post *domain.Post) *pb_bdspro.Post {
+func (m *PostMapper) PostToPb(post *domain.Post) *pb_bdspro.Post {
 	mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
 	for i, media := range post.MediaList {
-		mediaList[i] = MapPostMedia(&media)
+		mediaList[i] = m.MapPostMedia(&media)
 	}
 	return &pb_bdspro.Post{
 		Id:             post.ID,

@@ -5,19 +5,20 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	iusecase "crm/internal/interface"
 	"crm/internal/repo"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 )
 
 type InvitationInstallUsecase struct {
-	repo        repo.InvitationInstallRepo
-	historyRepo repo.HistoryRepo
-	userClient  iusecase.UserClient
+	repo               repo.InvitationInstallRepo
+	notificationClient iusecase.INotificationClient
+	userClient         iusecase.UserClient
 }
 
-func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo, historyRepo repo.HistoryRepo, userClient iusecase.UserClient) *InvitationInstallUsecase {
-	return &InvitationInstallUsecase{repo: repo, historyRepo: historyRepo, userClient: userClient}
+func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo, notificationClient iusecase.INotificationClient, userClient iusecase.UserClient) *InvitationInstallUsecase {
+	return &InvitationInstallUsecase{repo: repo, notificationClient: notificationClient, userClient: userClient}
 }
 
 func (u *InvitationInstallUsecase) SendInvitation(ctx context.Context, ids []uint64, req *domain.AppInvitedEntity) ([]*domain.AppInvitedEntity, error) {
@@ -44,14 +45,14 @@ func (u *InvitationInstallUsecase) SendInvitation(ctx context.Context, ids []uin
 			fullName = currentUser.FullName
 		}
 		for _, entity := range entities {
-			u.historyRepo.CreateHistory(newCtx, &domain.HistoryEntity{
+			u.notificationClient.CreateHistory(newCtx, &shared_dto.HistoryDTO{
 				Title:      fullName + " đã mời bạn cài app",
-				Note:       fullName + " đã gửi lời mời bạn cài app BDSPro \"" + entity.Content + "\"",
+				Note:       []string{"", fullName, " đã gửi lời mời bạn cài app BDSPro \"" + entity.Content + "\""},
 				TargetId:   entity.ContactID,
-				TargetType: enums.TargetHistoryContact,
-				ActionType: enums.HistoryContactInstall,
+				TargetType: shared_enum.TargetHistoryContact,
+				ActionType: shared_enum.HistoryContactInstall,
 				OwnerID:    &profileId,
-				OwnerType:  enums.EOwnerTypeMember,
+				OwnerType:  shared_enum.EOwnerTypeMember,
 				// AfterStage: ,
 			})
 		}

@@ -5,31 +5,33 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	"crm/internal/enums"
+	iusecase "crm/internal/interface"
 	"crm/internal/repo"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 )
 
 type StageUsecase struct {
-	stageRepo         repo.StageRepo
-	permissionUsecase PermissionUsecase
-	pipelineRepo      repo.PipelineRepo
-	historyRepo       repo.HistoryRepo
-	customerRepo      repo.LeadRepo
+	stageRepo          repo.StageRepo
+	permissionUsecase  PermissionUsecase
+	pipelineRepo       repo.PipelineRepo
+	notificationClient iusecase.INotificationClient
+	customerRepo       repo.LeadRepo
 }
 
 func NewStageUsecase(
 	stageRepo repo.StageRepo,
 	permissionUsecase PermissionUsecase,
 	pipelineRepo repo.PipelineRepo,
-	historyRepo repo.HistoryRepo,
+	notificationClient iusecase.INotificationClient,
 	customerRepo repo.LeadRepo,
 ) *StageUsecase {
 	return &StageUsecase{
-		stageRepo:         stageRepo,
-		permissionUsecase: permissionUsecase,
-		pipelineRepo:      pipelineRepo,
-		historyRepo:       historyRepo,
-		customerRepo:      customerRepo,
+		stageRepo:          stageRepo,
+		permissionUsecase:  permissionUsecase,
+		pipelineRepo:       pipelineRepo,
+		notificationClient: notificationClient,
+		customerRepo:       customerRepo,
 	}
 }
 
@@ -69,11 +71,12 @@ func (u *StageUsecase) Create(c context.Context, entity *domain.StageEntity) (*d
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Tạo giai đoạn " + stage.StageName,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Tạo giai đoạn thành công",
+		Note:       []string{"Tạo giai đoạn", stage.StageName},
 		TargetId:   stage.ID,
-		TargetType: enums.TargetHistoryStage,
-		ActionType: enums.HistoryStageCreate,
+		TargetType: shared_enum.TargetHistoryStage,
+		ActionType: shared_enum.HistoryStageCreate,
 		OwnerID:    &pipeline.OwnerID,
 		OwnerType:  pipeline.OwnerType,
 	})
@@ -105,11 +108,12 @@ func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.Stage
 		return nil, err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Cập nhật giai đoạn " + stage.StageName,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Cập nhật giai đoạn thành công",
+		Note:       []string{"Cập nhật giai đoạn", stage.StageName},
 		TargetId:   stage.ID,
-		TargetType: enums.TargetHistoryStage,
-		ActionType: enums.HistoryStageUpdate,
+		TargetType: shared_enum.TargetHistoryStage,
+		ActionType: shared_enum.HistoryStageUpdate,
 		OwnerID:    &pipeline.OwnerID,
 		OwnerType:  pipeline.OwnerType,
 	})
@@ -144,11 +148,12 @@ func (u *StageUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	u.historyRepo.CreateHistory(c, &domain.HistoryEntity{
-		Note:       "Xóa giai đoạn " + stage.StageName,
+	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+		Title:      "Xóa giai đoạn thành công",
+		Note:       []string{"Xóa giai đoạn", stage.StageName},
 		TargetId:   stage.ID,
-		TargetType: enums.TargetHistoryStage,
-		ActionType: enums.HistoryStageDelete,
+		TargetType: shared_enum.TargetHistoryStage,
+		ActionType: shared_enum.HistoryStageDelete,
 		OwnerID:    &pipeline.OwnerID,
 		OwnerType:  pipeline.OwnerType,
 	})

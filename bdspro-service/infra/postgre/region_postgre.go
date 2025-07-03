@@ -47,6 +47,7 @@ func (r *PostgreRegion) Search(c context.Context, dto *dto.RegionRequest) ([]dom
 	query.Count(&total)
 
 	err := query.
+		Debug().
 		Offset(dto.GetOffset()).
 		Limit(dto.GetSize()).
 		Find(&regions).Error

@@ -1,14 +1,14 @@
 package providers
 
 import (
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 	pb_task "pb/types/task"
 
 	"google.golang.org/grpc"
 )
 
 type TransmitProvider struct {
-	NotiClient pb_noti.NotificationServiceClient
+	NotiClient notificationpb.NotificationServiceClient
 	TaskClient pb_task.TaskServiceClient
 }
 
@@ -17,7 +17,7 @@ func NewNotiService() *TransmitProvider {
 	if err != nil {
 		return &TransmitProvider{}
 	}
-	client := pb_noti.NewNotificationServiceClient(conn)
+	client := notificationpb.NewNotificationServiceClient(conn)
 
 	connTask, err := grpc.Dial("localhost:8008", grpc.WithInsecure())
 	if err != nil {

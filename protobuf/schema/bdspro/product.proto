@@ -23,11 +23,11 @@ service ProductService {
       body: "*"
     };
   };
-  rpc ChildHistories (IdRequest) returns (HistoryResponse) {
-    option (google.api.http) = {
-      get: "/v2/bdspro/v2/product/child/history/{id}"
-    };
-  };
+  // rpc ChildHistories (IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/product/child/history/{id}"
+  //   };
+  // };
   rpc ChildMergeProduct (MergeChildRequest) returns (Response) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/product/child/merge"
@@ -110,11 +110,11 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/detail"
     };
   };
-  rpc GetHistories (IdRequest) returns (HistoryResponse) {
-    option (google.api.http) = {
-      get: "/v2/bdspro/v2/product/{id}/histories"
-    };
-  };
+  // rpc GetHistories (IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/product/{id}/histories"
+  //   };
+  // };
   rpc GetMembers (IdRequest) returns (MemberResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/members"

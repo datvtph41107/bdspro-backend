@@ -32,13 +32,11 @@ type Asset struct {
 	ProvinceID       *uint64            `json:"provinceId,omitempty"`
 	Province         *Region            `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	ProductID        *uint64            `json:"productId"`
-	OwnerUserID      *uint64            `json:"ownerUserId"`
-	OwnerOrgID       *uint64            `json:"ownerOrgId"`
 	ParentAssetID    *uint64            `json:"parentAssetId"`
 	SplitMergeStatus string             `json:"splitMergeStatus"`
 	PurchasePrice    float64            `json:"purchasePrice,omitempty" binding:"required"`
 	PurchaseDate     *time.Time         `json:"purchaseDate,omitempty"`
-	LegalStatus      uint               `gorm:"default:10" json:"legalStatus,omitempty"`
+	LegalStatus      enums.EDocType     `gorm:"default:10" json:"legalStatus,omitempty"`
 	Archived         bool               `gorm:"default:false" json:"archived"`
 	RentStatus       enums.EAssetStatus `gorm:"default:10" json:"rentStatus,omitempty"`
 	Address          string             `json:"address,omitempty"`
@@ -47,7 +45,11 @@ type Asset struct {
 	PropertyTypeId   *uint64            `json:"propertyTypeId"`
 	PropertyType     *PropertyTypeItem  `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	Product          *Product           `gorm:"foreignKey:ProductID;references:ID" json:"product,omitempty"`
-	LegalItems       *[]LegalItem       `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
+	LegalItems       *[]AssetLegal      `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
+	OwnerID          *uint64            `json:"ownerId"`
+	OwnerType        enums.EOwnerType   `json:"ownerType"`
+	// OwnerUserID      *uint64            `json:"ownerUserId"`
+	// OwnerOrgID       *uint64            `json:"ownerOrgId"`
 }
 
 type AssetList struct {

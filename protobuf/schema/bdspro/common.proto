@@ -48,25 +48,25 @@ message Response {
     string message = 2;
 }
 
-message History {
-    uint64 id = 1;
-    uint64 action = 2;
-    uint64 parentId = 3;
-    uint64 productId = 4;
-    repeated uint64 childIds = 5;
-    uint64 createdUserId = 6;
-    userpb.ProfileItem createdUser = 7;
-    repeated ProductInfo childs = 8;
-    // ProductInfo parent = 4;
-    // ProductInfo product = 6;
-    // repeated double areas = 10;
-    // repeated ProductInfo childs = 11;
-}
+// message History {
+//     uint64 id = 1;
+//     uint64 action = 2;
+//     uint64 parentId = 3;
+//     uint64 productId = 4;
+//     repeated uint64 childIds = 5;
+//     uint64 createdUserId = 6;
+//     sharepb.ProfileItem createdUser = 7;
+//     repeated ProductInfo childs = 8;
+//     // ProductInfo parent = 4;
+//     // ProductInfo product = 6;
+//     // repeated double areas = 10;
+//     // repeated ProductInfo childs = 11;
+// }
 
-message HistoryResponse {
-    repeated History data = 1;
-    uint64 total = 2;
-}
+// message HistoryResponse {
+//     repeated History data = 1;
+//     uint64 total = 2;
+// }
 
 message HouseInfo {
     uint64 id = 1;
@@ -96,10 +96,10 @@ message HouseInfo {
       string currency = 3;
       optional double priceOwner = 4;
       optional double salePrice = 5;
-      optional uint64 saleCommission = 6;
+      optional double saleCommission = 6; // 1000000 -> 10%
       optional double deposite = 7;
       optional double rentPrice = 8;
-      optional double rentCommission = 9;
+      optional double rentCommission = 9; // 1000000 -> 10%
       optional uint32 rentPaymentCycle = 10;
   }
 
@@ -179,41 +179,43 @@ message ProductAttachment {
 message Asset {
     uint64 id = 1;
     string name = 2;
-    uint64 wardId = 3;
-    uint64 districtId = 4;
-    uint64 provinceId = 5;
+    optional uint64 wardId = 3;
+    optional uint64 districtId = 4;
+    optional uint64 provinceId = 5;
     double price = 6;
     google.protobuf.Timestamp buyedDate = 7;
-    uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+    uint32 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
     optional uint64 productId = 9;
-    optional uint64 ownerUserId = 10;
-    optional uint64 ownerOrgId = 11;
+    optional uint64 ownerId = 10;
+    optional uint32 ownerType = 11;
     optional uint64 parentAssetId = 12;
     string splitMergeStatus = 13;
     double purchasePrice = 14;
-    google.protobuf.Timestamp purchaseDate = 15;
-    string legalStatus = 16;
+    string purchaseDate = 15;
+    uint32 legalStatus = 16;
     bool archived = 17;
     uint32 rentStatus = 18;
     double area = 19;
     string address = 20;
     string description = 21;
-    repeated LegalItem mediaList = 22;
+    repeated LegalItem legalItems = 22;
     string propertyTypeName = 23;
     string provinceName = 24;
     string districtName = 25;
     string wardName = 26;
-	
+    optional uint64 propertyTypeId = 27;
+    optional pb_bdspro.ProductResponse product = 28;
 }
 
 message LegalItem {
 	uint64 id = 1;
 	uint64 assetId = 2;
-	string documentName = 3;
-	string documentUrl = 4;
-	string issuedDate = 5;
-	string expiryDate = 6;
-	string description = 7;
+	string documentType = 3;
+	string documentName = 4;
+	string documentUrl = 5;
+	string issuedDate = 6;
+	string expiryDate = 7;
+	string description = 8;
 }
 
 message ProductInfo {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package pb_noti;
-option go_package = "types/pb_noti";
+package notificationpb;
+option go_package = "types/notificationpb";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";

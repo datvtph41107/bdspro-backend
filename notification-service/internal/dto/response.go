@@ -25,7 +25,7 @@ type SendNotiResponse struct {
 }
 
 // NewSendNotiResponse tạo một `SendNotiResponse` từ `HistoryEntity`
-func NewSendNotiResponse(e domain.HistoryEntity) SendNotiResponse {
+func NewSendNotiResponse(e domain.HistoryFcmEntity) SendNotiResponse {
 	return SendNotiResponse{
 		Response: e.Response,
 		Error:    e.Error,

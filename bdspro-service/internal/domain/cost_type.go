@@ -14,3 +14,7 @@ type AssetCostType struct {
 	IsCustom    bool             `gorm:"column:is_custom" json:"isCustom"`
 	Description string           `gorm:"column:description" json:"description"`
 }
+
+func (AssetCostType) TableName() string {
+	return "asset_cost_types"
+}

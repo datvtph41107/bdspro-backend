@@ -2,11 +2,10 @@ package service
 
 import (
 	"bdspro/infra/mapper"
-	"bdspro/internal/domain"
+	"bdspro/infra/validator"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	shared_usecase "bdspro/internal/usecases/shared"
-	_routes "common/routes"
 	"context"
 	pb_bdspro "pb/types/bdspro"
 
@@ -15,12 +14,20 @@ import (
 
 type AssetCostService struct {
 	pb_bdspro.UnimplementedAssetCostServiceServer
-	UC *shared_usecase.AssetCostUsecase
+	Ussecase  *shared_usecase.AssetCostUsecase
+	Validator *validator.AssetCostValidator
+	Mapper    *mapper.AssetCostMapper
 }
 
-func NewAssetCostService(AssetCostUc *shared_usecase.AssetCostUsecase) *AssetCostService {
+func NewAssetCostService(
+	AssetCostUc *shared_usecase.AssetCostUsecase,
+	validator *validator.AssetCostValidator,
+	mapper *mapper.AssetCostMapper,
+) *AssetCostService {
 	return &AssetCostService{
-		UC: AssetCostUc,
+		Ussecase:  AssetCostUc,
+		Validator: validator,
+		Mapper:    mapper,
 	}
 }
 
@@ -33,9 +40,9 @@ func NewAssetCostService(AssetCostUc *shared_usecase.AssetCostUsecase) *AssetCos
 // @Router /v2/bdspro/v2/asset/cost/{id}/{ownerType} [get]
 func (s AssetCostService) Search(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostListDTO, error) {
 	searchDTO := &dto.AssetCostSearchDTO{}
-	result, total, err := s.UC.Find(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	result, total, err := s.Ussecase.Find(c, enums.EOwnerType(req.OwnerType), searchDTO)
 
-	pbdatas := mapper.AssetCostToPbList(result)
+	pbdatas := s.Mapper.AssetCostToPbList(result)
 
 	return &pb_bdspro.AssetCostListDTO{
 		Data:          pbdatas,
@@ -50,7 +57,7 @@ func (s AssetCostService) Search(c context.Context, req *pb_bdspro.IdRequest) (*
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost/detail/{id} [get]
 func (s AssetCostService) Detail(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostDTO, error) {
-	r, err := s.UC.GetByID(c, req.Id)
+	r, err := s.Ussecase.GetByID(c, req.Id)
 
 	pbdata := &pb_bdspro.AssetCostDTO{}
 	copier.Copy(&pbdata, &r)
@@ -65,20 +72,16 @@ func (s AssetCostService) Detail(c context.Context, req *pb_bdspro.IdRequest) (*
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost [post]
 func (s AssetCostService) Create(c context.Context, req *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-	dto := &domain.AssetCost{}
-
-	if dto.OwnerType == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "ownerType is required",
-		}
+	err := s.Validator.ValidateSaveAssetCost(req)
+	if err != nil {
+		return nil, err
 	}
-	copier.Copy(&dto, &req)
 
-	err := s.UC.Create(c, dto)
+	dto := s.Mapper.AssetCostPbToDomain(req)
 
-	pbdata := &pb_bdspro.AssetCostDTO{}
-	copier.Copy(&pbdata, &dto)
+	err = s.Ussecase.Create(c, dto)
+
+	pbdata := s.Mapper.AssetCostToPb(dto)
 	return pbdata, err
 }
 
@@ -90,10 +93,12 @@ func (s AssetCostService) Create(c context.Context, req *pb_bdspro.AssetCostDTO)
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost/{id} [put]
 func (s AssetCostService) Update(c context.Context, req *pb_bdspro.AssetCostDTO) (*pb_bdspro.AssetCostDTO, error) {
-	dto := &domain.AssetCost{}
-	copier.Copy(&dto, &req)
+	if err := s.Validator.ValidateSaveAssetCost(req); err != nil {
+		return nil, err
+	}
+	dto := s.Mapper.AssetCostPbToDomain(req)
 
-	err := s.UC.Update(c, req.Id, dto)
+	err := s.Ussecase.Update(c, req.Id, dto)
 
 	pbdata := &pb_bdspro.AssetCostDTO{}
 	copier.Copy(&pbdata, &dto)
@@ -107,7 +112,7 @@ func (s AssetCostService) Update(c context.Context, req *pb_bdspro.AssetCostDTO)
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost/{id} [delete]
 func (s AssetCostService) Delete(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
-	err := s.UC.Delete(c, req.Id)
+	err := s.Ussecase.Delete(c, req.Id)
 	return &pb_bdspro.Response{
 		Message: "success",
 		Id:      req.Id,

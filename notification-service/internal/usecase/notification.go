@@ -12,7 +12,7 @@ import (
 	"noti/internal/dto"
 	"noti/internal/enums"
 	"noti/internal/repo"
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 	"time"
 )
 
@@ -59,7 +59,7 @@ func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto
 	return &notification, nil
 }
 
-func (s *NotificationUsecase) CreateBatch(c context.Context, dto *pb_noti.NotiBatchRequest) (*pb_noti.ListResponse, error) {
+func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb.NotiBatchRequest) (*notificationpb.ListResponse, error) {
 	metadata := _jwt.MetadataFromContext(c)
 	if metadata == nil {
 		return nil, &_routes.Except{
@@ -92,7 +92,7 @@ func (s *NotificationUsecase) CreateBatch(c context.Context, dto *pb_noti.NotiBa
 	}
 
 	// response := s.mapToDTO(notification)
-	return &pb_noti.ListResponse{
+	return &notificationpb.ListResponse{
 		Data: nil,
 	}, nil
 }
@@ -206,10 +206,10 @@ func (s *NotificationUsecase) SendBatch(c context.Context, notifications []*dto.
 	return notificationIds, nil
 }
 
-func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenRequest) (*pb_noti.PushResponse, error) {
+func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
 }
 
-func (s *NotificationUsecase) PushByTopic(c context.Context, dto *dto.PushTopicRequest) (*pb_noti.PushResponse, error) {
+func (s *NotificationUsecase) PushByTopic(c context.Context, dto *dto.PushTopicRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
 }

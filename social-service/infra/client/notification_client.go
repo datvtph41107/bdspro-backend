@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	pb_notification "pb/types/notification"
+	notificationpbfication "pb/types/notification"
 	sharepb "pb/types/shared"
 	"social/env"
 	"time"
@@ -15,7 +15,7 @@ import (
 
 // @bind: social/internal/interface.NotiClient
 type NotificationClient struct {
-	client pb_notification.NotificationServiceClient
+	client notificationpbfication.NotificationServiceClient
 }
 
 func NewNotificationClient() *NotificationClient {
@@ -41,7 +41,7 @@ func NewNotificationClient() *NotificationClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := pb_notification.NewNotificationServiceClient(conn)
+		client := notificationpbfication.NewNotificationServiceClient(conn)
 		notiClient.client = client
 	}()
 

@@ -5,7 +5,7 @@ import "strings"
 type AssetShare struct {
 	AssetID     uint64 `json:"assetId" binding:"required"`
 	TargetID    uint64 `json:"targetId" binding:"required"`
-	TypeShare   int    `json:"typeShare" binding:"required"`
+	TypeShare   uint32 `json:"typeShare" binding:"required"`
 	Permissions string `json:"permissions"`
 }
 

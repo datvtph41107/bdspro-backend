@@ -1,6 +1,6 @@
 package enums
 
-type EDocType uint
+type EDocType uint32
 
 const (
 	ERedBook         EDocType = 10 // sổ đỏ

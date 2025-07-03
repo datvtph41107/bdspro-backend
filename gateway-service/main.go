@@ -71,7 +71,7 @@ func main() {
 // 	)
 
 // 	// Đăng ký gRPC service vào HTTP proxy
-// 	err := pb_noti.RegisterNotificationServiceHandlerFromEndpoint(ctx, muxGateway, "localhost:8004", []grpc.DialOption{grpc.WithInsecure()})
+// 	err := notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, muxGateway, "localhost:8004", []grpc.DialOption{grpc.WithInsecure()})
 // 	if err != nil {
 // 		log.Fatalf("Failed to register gRPC service: %v", err)
 // 	}

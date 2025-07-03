@@ -82,7 +82,7 @@ func ExtractPayload(tokenString string) (map[string]any, error) {
 
 func writeErrorResponse(w http.ResponseWriter, code int, message string) {
 	response := &sharepb.ErrorResponse{
-		Code:    int32(code),
+		Code:    401,
 		Message: message,
 		Data:    &anypb.Any{},
 	}

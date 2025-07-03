@@ -30,7 +30,7 @@ func NewFirebaseService(firebaseConfig *config.FirebaseConfig) *FirebaseProvider
 
 // SendToTopic gửi thông báo đến một topic
 func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
-	var entity domain.HistoryEntity
+	var entity domain.HistoryFcmEntity
 	copier.Copy(&entity, &request)
 	ctx := context.Background()
 
@@ -57,7 +57,7 @@ func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequ
 
 // SendToToken gửi thông báo đến một thiết bị dựa vào token
 func (s *FirebaseProvider) SendToToken(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
-	var entity domain.HistoryEntity
+	var entity domain.HistoryFcmEntity
 	copier.Copy(&entity, &request)
 	ctx := context.Background()
 

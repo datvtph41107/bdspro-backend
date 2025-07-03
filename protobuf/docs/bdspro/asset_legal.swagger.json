@@ -15,7 +15,286 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v2/bdspro/v2/asset-legal": {
+      "get": {
+        "operationId": "AssetLegalService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetLegalListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "documentName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "documentUrl",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "issuedDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "expiryDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "assetId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "relatedSplitMergeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "AssetLegalService"
+        ]
+      },
+      "post": {
+        "operationId": "AssetLegalService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+            }
+          }
+        ],
+        "tags": [
+          "AssetLegalService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/asset-legal/{id}": {
+      "get": {
+        "operationId": "AssetLegalService_Detail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AssetLegalService"
+        ]
+      },
+      "delete": {
+        "operationId": "AssetLegalService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AssetLegalService"
+        ]
+      },
+      "put": {
+        "operationId": "AssetLegalService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "documentName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "documentUrl",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "issuedDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "expiryDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "assetId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "relatedSplitMergeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "AssetLegalService"
+        ]
+      }
+    }
+  },
   "definitions": {
     "pb_bdsproAssetLegalDTO": {
       "type": "object",
@@ -26,6 +305,29 @@
         },
         "archived": {
           "type": "boolean"
+        },
+        "documentName": {
+          "type": "string"
+        },
+        "documentUrl": {
+          "type": "string"
+        },
+        "issuedDate": {
+          "type": "string"
+        },
+        "expiryDate": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "relatedSplitMergeId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -72,6 +374,9 @@
           }
         }
       }
+    },
+    "sharepbEmpty": {
+      "type": "object"
     }
   }
 }

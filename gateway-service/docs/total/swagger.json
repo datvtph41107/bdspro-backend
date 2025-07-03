@@ -7627,7 +7627,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiCountResponse"
+              "$ref": "#/definitions/notificationpbCountResponse"
             }
           },
           "default": {
@@ -7677,7 +7677,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiListResponse"
+              "$ref": "#/definitions/notificationpbListResponse"
             }
           },
           "default": {
@@ -7701,7 +7701,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiGatewayNotiNewRequest"
+              "$ref": "#/definitions/notificationpbGatewayNotiNewRequest"
             }
           }
         ],
@@ -7709,7 +7709,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiNotificationDTO"
+              "$ref": "#/definitions/notificationpbNotificationDTO"
             }
           },
           "default": {
@@ -7733,7 +7733,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiPushTokenRequest"
+              "$ref": "#/definitions/notificationpbPushTokenRequest"
             }
           }
         ],
@@ -7741,7 +7741,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
+              "$ref": "#/definitions/notificationpbPushResponse"
             }
           },
           "default": {
@@ -7765,7 +7765,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiPushTopicRequest"
+              "$ref": "#/definitions/notificationpbPushTopicRequest"
             }
           }
         ],
@@ -7773,7 +7773,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
+              "$ref": "#/definitions/notificationpbPushResponse"
             }
           },
           "default": {
@@ -7795,7 +7795,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {
@@ -7826,7 +7826,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {
@@ -7857,7 +7857,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {

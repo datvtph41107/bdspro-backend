@@ -63,6 +63,7 @@ type ConfigApp struct {
 	AssetCostService         *service.AssetCostService
 	AssetCostTypeService     *service.AssetCostTypeService
 	SharingAccessService     *service.SharingAccessService
+	AssetLegalService        *service.AssetLegalService
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
 	// IncomeDocumentServer    *service.IncomeDocumentServer
@@ -98,6 +99,7 @@ func NewConfigApp(
 	// AssetCostServer *service.AssetCostServer,
 	// AssetLegalServer *service.AssetLegalServer,
 	// AssetSplitHistoryServer *service.AssetSplitHistoryServer,
+	assetLegalService *service.AssetLegalService,
 ) *ConfigApp {
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
@@ -114,6 +116,7 @@ func NewConfigApp(
 		AssetCostService:         assetCostService,
 		AssetCostTypeService:     assetCostTypeService,
 		SharingAccessService:     sharingAccessService,
+		AssetLegalService:        assetLegalService,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

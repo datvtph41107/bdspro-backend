@@ -23,11 +23,11 @@ func NewUserProductChildRouter(product *shared_usecase.ProductUsecase) *UserProd
 func (route *UserProductChildRouter) RegisterRoutes(r *gin.RouterGroup, path string) {
 	api := r.Group(path)
 	// api.GET("", route.CreateChild)
-	api.POST("/split", route.CreateChild)
+	// api.POST("/split", route.CreateChild)
 	api.POST("/merge", route.MergeChild)
 	api.POST("/merge-all/:productId", route.MergeAll)
 	api.POST("/devide", route.DevideChild)
-	api.GET("/history-child/:id", route.History)
+	// api.GET("/history-child/:id", route.History)
 	api.GET("/area-info/:id", route.InfoArea)
 
 }
@@ -43,26 +43,26 @@ func (route *UserProductChildRouter) RegisterRoutes(r *gin.RouterGroup, path str
 // 	_routes.RouteResult(c, result, err)
 // }
 
-// .
-// // @Summary Tạo sản phẩm con
-// // @Description API
-// // @Tags User: Sản phẩm
-// // @Accept json
-// // @Produce json
-// // @Param productId path int false "Product ID"
-// // @Security BearerAuth
-// // @Param body body dto.SaveProductChildRequest true "Thông tin sản phẩm con"
-// // @Router /v1/bdspro/v2/user/product/child/split [post]
-func (route *UserProductChildRouter) CreateChild(c *gin.Context) {
-	_body := dto.SaveProductChildRequest{}
+// // .
+// // // @Summary Tạo sản phẩm con
+// // // @Description API
+// // // @Tags User: Sản phẩm
+// // // @Accept json
+// // // @Produce json
+// // // @Param productId path int false "Product ID"
+// // // @Security BearerAuth
+// // // @Param body body dto.SaveProductChildRequest true "Thông tin sản phẩm con"
+// // // @Router /v1/bdspro/v2/user/product/child/split [post]
+// func (route *UserProductChildRouter) CreateChild(c *gin.Context) {
+// 	_body := dto.SaveProductChildRequest{}
 
-	if err := _utils.ParseBodyWithValidator(c, &_body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	result, err := route.productService.CreateChild(c, &_body)
-	_routes.RouteResult(c, result, err)
-}
+// 	if err := _utils.ParseBodyWithValidator(c, &_body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
+// 	result, err := route.productService.CreateChild(c, &_body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 // .
 // // @Summary Tạo sản phẩm con
@@ -146,34 +146,34 @@ func (route *UserProductChildRouter) DevideChild(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// .
-// // @Summary Gộp toàn bộ sản phẩm con
-// // @Description API
-// // @Tags User: Sản phẩm
-// // @Accept json
-// // @Produce json
-// // @Security BearerAuth
-// // @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
-// // @Router /v1/bdspro/v2/user/product/child/history-child/:id [get]
-func (route *UserProductChildRouter) History(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
-		return
-	}
+// // .
+// // // @Summary Gộp toàn bộ sản phẩm con
+// // // @Description API
+// // // @Tags User: Sản phẩm
+// // // @Accept json
+// // // @Produce json
+// // // @Security BearerAuth
+// // // @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
+// // // @Router /v1/bdspro/v2/user/product/child/history-child/:id [get]
+// func (route *UserProductChildRouter) History(c *gin.Context) {
+// 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+// 	if err != nil {
+// 		_routes.RouteResult(c, nil, &_routes.Except{
+// 			Code:    400,
+// 			Message: "ID không hợp lệ",
+// 		})
+// 		return
+// 	}
 
-	_body := dto.ProductHistorySearch{}
-	if err := _utils.ParseQuery2(c, &_body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	result, total, err := route.productService.ChildHistory(c, id, &_body)
-	_routes.RouteResult(c, _routes.ResponseDTO{
-		Code:          0,
-		Data:          result,
-		TotalElements: &total,
-	}, err)
-}
+// 	_body := dto.ProductHistorySearch{}
+// 	if err := _utils.ParseQuery2(c, &_body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
+// 	result, total, err := route.productService.ChildHistory(c, id, &_body)
+// 	_routes.RouteResult(c, _routes.ResponseDTO{
+// 		Code:          0,
+// 		Data:          result,
+// 		TotalElements: &total,
+// 	}, err)
+// }

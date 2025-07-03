@@ -27,14 +27,14 @@ func NewChatClient() *ChatClient {
 
 func (c *ChatClient) CreateConversation(ctx context.Context, in *dto.CreateConversationRequest) (*uint64, error) {
 	request := &chatpb.CreateConversationRequest{
-		Name:            in.Name,
-		Type:            chatpb.ConversationTypeEnum(in.Type),
-		CreatedBy:       in.CreatedBy,
-		Members:         in.Members,
-		IsBroadcast:     in.IsBroadcast,
-		ForbidForward:   in.ForbidForward,
-		Avatar:          in.Avatar,
-		BackgroundImage: in.BackgroundImage,
+		Name:              in.Name,
+		Type:              chatpb.ConversationTypeEnum(in.Type),
+		CreatedBy:         in.CreatedBy,
+		Members:           in.Members,
+		IsBroadcast:       in.IsBroadcast,
+		ForbidForward:     in.ForbidForward,
+		Avatar:            in.Avatar,
+		BackgroundImageId: in.BackgroundImageId,
 	}
 	response, err := c.client.CreateConversation(ctx, request)
 	if err != nil {

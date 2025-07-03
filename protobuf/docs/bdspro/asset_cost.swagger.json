@@ -350,6 +350,10 @@
         },
         "costTypeName": {
           "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -403,6 +407,10 @@
         },
         "costTypeName": {
           "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

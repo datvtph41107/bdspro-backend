@@ -20,8 +20,8 @@ import (
 
 type UserPostUC struct {
 	*shared_usecase.PostUsecase
-	ClientUC iusecase.IClientUC
-	PlanUC   iusecase.IPlanUC
+	ClientUC iusecase.INotificationClient
+	PlanUC   iusecase.IPlanClient
 }
 
 func NewUserPostUsecase(repo repo.UPostRepo,
@@ -31,8 +31,8 @@ func NewUserPostUsecase(repo repo.UPostRepo,
 	productRepo repo.ProductRepo,
 	postMediaRepo repo.PostMediaRepo,
 	assetRepo repo.AssetRepo,
-	planUsecase iusecase.IPlanUC,
-	clientUsecase iusecase.IClientUC,
+	planUsecase iusecase.IPlanClient,
+	clientUsecase iusecase.INotificationClient,
 	// serviceManager *manager.ServiceManager,
 ) *UserPostUC {
 	uc := &UserPostUC{

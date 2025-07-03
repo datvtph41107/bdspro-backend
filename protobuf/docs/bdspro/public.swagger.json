@@ -53,6 +53,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -97,6 +104,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -141,6 +155,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -185,6 +206,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -229,6 +257,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [

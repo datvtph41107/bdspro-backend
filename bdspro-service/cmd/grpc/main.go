@@ -4,7 +4,7 @@ import (
 	"bdspro/config"
 	"bdspro/db"
 	"bdspro/wire"
-	"common"
+	_middleware "common/middleware"
 	"fmt"
 	"log"
 	"net"
@@ -36,7 +36,8 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to listen: %v", err)
 		}
 		s := grpc.NewServer(
-			grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
 		)
 		pb_bdspro.RegisterPostServiceServer(s, app.PostService)
 		pb_bdspro.RegisterProductServiceServer(s, app.ProductService)
@@ -46,6 +47,7 @@ var GrpcCmd = &cobra.Command{
 		pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostService)
 		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeService)
 		pb_bdspro.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
+		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalService)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server

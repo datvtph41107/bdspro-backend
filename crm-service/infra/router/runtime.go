@@ -5,7 +5,6 @@ import (
 )
 
 type RuntimeRouter struct {
-	historyRouter  *HistoryRouter
 	stageRouter    *StageRouter
 	pipelineRouter *PipelineRouter
 	ruleRouter     *RuleRouter
@@ -13,14 +12,12 @@ type RuntimeRouter struct {
 }
 
 func NewRuntimeRouter(
-	historyRouter *HistoryRouter,
 	stageRouter *StageRouter,
 	pipelineRouter *PipelineRouter,
 	ruleRouter *RuleRouter,
 	leadRouter *LeadRouter,
 ) *RuntimeRouter {
 	return &RuntimeRouter{
-		historyRouter:  historyRouter,
 		stageRouter:    stageRouter,
 		pipelineRouter: pipelineRouter,
 		ruleRouter:     ruleRouter,
@@ -38,7 +35,6 @@ func NewRuntimeRouter(
 func (r *RuntimeRouter) RuntimeRoutes(engine *gin.Engine) {
 	group := engine.Group("/crm")
 
-	r.historyRouter.HistoryRoutes(group)
 	r.stageRouter.StageRoutes(group)
 	r.pipelineRouter.PipelineRoutes(group)
 	r.ruleRouter.RuleRoutes(group)

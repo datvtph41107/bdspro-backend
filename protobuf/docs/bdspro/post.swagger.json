@@ -695,21 +695,21 @@
           "format": "date-time"
         },
         "docStatus": {
-          "type": "string",
-          "format": "uint64",
+          "type": "integer",
+          "format": "int64",
           "title": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ"
         },
         "productId": {
           "type": "string",
           "format": "uint64"
         },
-        "ownerUserId": {
+        "ownerId": {
           "type": "string",
           "format": "uint64"
         },
-        "ownerOrgId": {
-          "type": "string",
-          "format": "uint64"
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         },
         "parentAssetId": {
           "type": "string",
@@ -723,11 +723,11 @@
           "format": "double"
         },
         "purchaseDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "legalStatus": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "archived": {
           "type": "boolean"
@@ -746,7 +746,7 @@
         "description": {
           "type": "string"
         },
-        "mediaList": {
+        "legalItems": {
           "type": "array",
           "items": {
             "type": "object",
@@ -764,6 +764,13 @@
         },
         "wardName": {
           "type": "string"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/pb_bdsproProductResponse"
         }
       }
     },
@@ -881,6 +888,9 @@
         "assetId": {
           "type": "string",
           "format": "uint64"
+        },
+        "documentType": {
+          "type": "string"
         },
         "documentName": {
           "type": "string"
@@ -1181,8 +1191,9 @@
           "format": "double"
         },
         "saleCommission": {
-          "type": "string",
-          "format": "uint64"
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
         },
         "deposite": {
           "type": "number",
@@ -1194,7 +1205,8 @@
         },
         "rentCommission": {
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
         },
         "rentPaymentCycle": {
           "type": "integer",

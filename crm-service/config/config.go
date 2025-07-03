@@ -38,7 +38,6 @@ type ConfigApp struct {
 	ContactService           *services.ContactService
 	LeadService              *services.LeadService
 	StageService             *services.StageService
-	HistoryService           *services.HistoryService
 	RuleService              *services.RuleService
 	FollowService            *services.FollowService
 	BlockService             *services.BlockService
@@ -57,7 +56,6 @@ func NewConfigApp(
 	contactService *services.ContactService,
 	customerService *services.LeadService,
 	stageService *services.StageService,
-	historyService *services.HistoryService,
 	ruleService *services.RuleService,
 	followService *services.FollowService,
 	blockService *services.BlockService,
@@ -74,7 +72,6 @@ func NewConfigApp(
 		ContactService:           contactService,
 		LeadService:              customerService,
 		StageService:             stageService,
-		HistoryService:           historyService,
 		RuleService:              ruleService,
 		FollowService:            followService,
 		BlockService:             blockService,

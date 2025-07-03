@@ -11,7 +11,8 @@ import (
 	"github.com/google/wire"
 	"noti/config"
 	"noti/infra/firebase"
-	"noti/infra/postgre"
+	"noti/infra/mapper"
+	"noti/infra/postgres"
 	"noti/infra/service"
 	"noti/internal/dto"
 	"noti/internal/repo"
@@ -25,15 +26,19 @@ func InitializeApp() (*config.ConfigApp, error) {
 	if err != nil {
 		return nil, err
 	}
-	postgreNotification := postgre.NewPostgreNotification(db)
+	postgreNotification := postgres.NewPostgreNotification(db)
 	notificationUsecase := usecase.NewNotificationService(postgreNotification)
-	internalNotiService := service.NewInternalNotiService(notificationUsecase)
+	notificationMapper := mapper.NewNotificationMapper()
+	internalNotiService := service.NewInternalNotiService(notificationUsecase, notificationMapper)
 	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase)
-	configApp := config.NewConfigApp(internalNotiService, gatewayNotiService)
+	historyRepo := postgres.NewHistoryRepo(db)
+	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
+	historyService := service.NewHistoryService(historyUsecase)
+	configApp := config.NewConfigApp(internalNotiService, gatewayNotiService, historyService)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.NotificationRepo), new(*postgre.PostgreNotification)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, postgre.NewHistoryRepository, service.NewInternalNotiService, usecase.NewNotificationService, postgre.NewPostgreNotification, dto.NewSendNotiResponse)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)

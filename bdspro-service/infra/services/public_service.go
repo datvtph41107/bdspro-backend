@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
@@ -14,11 +15,13 @@ type BdsproPublicService struct {
 	pb_bdspro.UnimplementedBdsproPublicServiceServer
 	UC     *shared_usecase.ProductUsecase
 	ListUC *usecases.ListUsecase
+	Mapper *mapper.PublicMapper
 }
 
 func NewBdsproPublicService(
 	uc *shared_usecase.ProductUsecase,
-	listUC *usecases.ListUsecase) *BdsproPublicService {
+	listUC *usecases.ListUsecase,
+	mapper *mapper.PublicMapper) *BdsproPublicService {
 	return &BdsproPublicService{
 		UC:     uc,
 		ListUC: listUC,
@@ -82,11 +85,8 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *pb_bdspr
 // @Param req query pb_bdspro.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/region [get]
 func (s *BdsproPublicService) GetRegion(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
-	query := dto.RegionRequest{}
-	if err := copier.Copy(&query, req); err != nil {
-		return nil, err
-	}
-	result, total, err := s.ListUC.ListRegion(ctx, &query)
+	query := s.Mapper.PbToRegionRequest(req)
+	result, total, err := s.ListUC.ListRegion(ctx, query)
 	if err != nil {
 		return nil, err
 	}

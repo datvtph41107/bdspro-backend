@@ -1,7 +1,7 @@
 package user_router
 
 import (
-	"bdspro/internal/dto"
+	"bdspro/internal/domain"
 	user_dto "bdspro/internal/dto/user"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
@@ -27,15 +27,15 @@ func (r *UserAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
 		assetGroup.GET("/split", r.SearchSplit)
 		assetGroup.PUT("/archived", r.Archived)
 		assetGroup.POST("", r.CreateAsset)
-		assetGroup.POST("/from-product", r.CreateAssetFromProduct)
+		// assetGroup.POST("/from-product", r.CreateAssetFromProduct)
 
 		assetGroup.PUT(":id", r.UpdateAsset)
 		assetGroup.DELETE(":id", r.DeleteAsset)
 		assetGroup.GET("/:id/detail", r.GetDetail)
 		assetGroup.POST("/merge", r.Merge)
 		assetGroup.POST("/split", r.Split)
-		assetGroup.GET("/history/:id", r.History)
-		assetGroup.GET("/history-owner", r.HistoryOwner)
+		// assetGroup.GET("/history/:id", r.History)
+		// assetGroup.GET("/history-owner", r.HistoryOwner)
 		assetGroup.GET("/publish/:profileId", r.GetPublish)
 		// assetGroup.GET(":id/share", r.BaseRouter.GetByID)
 	}
@@ -48,7 +48,7 @@ func (r *UserAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/user/asset [post]
 func (r *UserAssetRouter) CreateAsset(c *gin.Context) {
-	body := user_dto.AssetSaveRequest{}
+	body := domain.Asset{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -58,22 +58,22 @@ func (r *UserAssetRouter) CreateAsset(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Tạo từ sản phẩm
-// @Tags User: Tài sản
-// @Produce json
-// @Param body body user_dto.AssetSaveRequest true "Body"
-// @Security BearerAuth
-// @Router /v1/bdspro/v2/user/asset/from-product [post]
-func (r *UserAssetRouter) CreateAssetFromProduct(c *gin.Context) {
-	body := user_dto.AssetSaveRequest{}
-	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // @Summary Tạo từ sản phẩm
+// // @Tags User: Tài sản
+// // @Produce json
+// // @Param body body user_dto.AssetSaveRequest true "Body"
+// // @Security BearerAuth
+// // @Router /v1/bdspro/v2/user/asset/from-product [post]
+// func (r *UserAssetRouter) CreateAssetFromProduct(c *gin.Context) {
+// 	body := user_dto.AssetSaveRequest{}
+// 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	result, err := r.UC.CreateAssetFromProduct(c, &body)
-	_routes.RouteResult(c, result, err)
-}
+// 	result, err := r.UC.CreateAssetFromProduct(c, &body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 // @Summary Lấy danh sách tài sản của người dùng
 // @Tags User: Tài sản
@@ -184,53 +184,58 @@ func (r *UserAssetRouter) Split(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// @Summary Lịch sử tách gộp tài sản danh cho tài sản
-// @Tags User: Tài sản
-// @Produce json
-// @Param body query dto.AssetHistoryDTO true "body"
-// @Param id path uint64 true "ID"
-// @Security BearerAuth
-// @Router /v1/bdspro/v2/user/asset/history/:id [get]
-func (r *UserAssetRouter) History(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+// // @Summary Lịch sử tách gộp tài sản danh cho tài sản
+// // @Tags User: Tài sản
+// // @Produce json
+// // @Param body query dto.AssetHistoryDTO true "body"
+// // @Param id path uint64 true "ID"
+// // @Security BearerAuth
+// // @Router /v1/bdspro/v2/user/asset/history/:id [get]
+// func (r *UserAssetRouter) History(c *gin.Context) {
+// 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
-	body := dto.AssetHistoryDTO{}
-	if err := _utils.ParseQuery2(c, &body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// 	body := dto.AssetHistoryDTO{}
+// 	if err := _utils.ParseQuery2(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	result, err := r.UC.History(c, id, body)
-	_routes.RouteResult(c, result, err)
-}
+// 	result, err := r.UC.History(c, id, body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
-// @Summary Lịch sử tách gộp tài sản dành cho user
-// @Tags User: Tài sản
-// @Produce json
-// @Param body query dto.AssetHistoryDTO true "body"
-// @Security BearerAuth
-// @Router /v1/bdspro/v2/user/asset/history-owner [get]
-func (r *UserAssetRouter) HistoryOwner(c *gin.Context) {
-	body := dto.AssetHistoryDTO{}
-	if err := _utils.ParseQuery2(c, &body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // @Summary Lịch sử tách gộp tài sản dành cho user
+// // @Tags User: Tài sản
+// // @Produce json
+// // @Param body query dto.AssetHistoryDTO true "body"
+// // @Security BearerAuth
+// // @Router /v1/bdspro/v2/user/asset/history-owner [get]
+// func (r *UserAssetRouter) HistoryOwner(c *gin.Context) {
+// 	body := dto.AssetHistoryDTO{}
+// 	if err := _utils.ParseQuery2(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	result, err := r.UC.HistoryOwner(c, body)
-	_routes.RouteResult(c, result, err)
-}
+// 	result, err := r.UC.HistoryOwner(c, body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 func (r *UserAssetRouter) UpdateAsset(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	body := user_dto.AssetSaveRequest{}
+	body := domain.Asset{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
 	result, err := r.UC.UpdateAsset(c, id, &body)
+	if err != nil {
+		_routes.RouteResult(c, nil, err)
+		return
+	}
+
 	_routes.RouteResult(c, result, err)
 }
 

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	shared_dto "pb/dto"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 	"time"
@@ -13,7 +14,8 @@ import (
 )
 
 type NotificationClient struct {
-	client notificationpb.NotificationServiceClient
+	client        notificationpb.NotificationServiceClient
+	historyClient notificationpb.HistoryServiceClient
 }
 
 func MakeNotificationClient(env_runtime string) *NotificationClient {
@@ -40,7 +42,9 @@ func MakeNotificationClient(env_runtime string) *NotificationClient {
 		go _middleware.MonitorConnection(ctx, name, conn)
 
 		client := notificationpb.NewNotificationServiceClient(conn)
+		historyClient := notificationpb.NewHistoryServiceClient(conn)
 		notificationClient.client = client
+		notificationClient.historyClient = historyClient
 	}()
 	return notificationClient
 }
@@ -72,6 +76,17 @@ func (s *NotificationClient) SendBatch(
 	_, err := s.client.SendBatch(ctx, &notificationpb.NotiBatchRequest{
 		Datas:        notifications,
 		SendToDevice: false,
+	})
+	return err
+}
+
+func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_dto.HistoryDTO) error {
+	_, err := s.historyClient.Create(ctx, &notificationpb.HistoryDTO{
+		ActionType: int32(history.ActionType),
+		TargetId:   history.TargetId,
+		OwnerId:    history.OwnerID,
+		Note:       history.Note,
+		Title:      history.Title,
 	})
 	return err
 }

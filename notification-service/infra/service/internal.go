@@ -3,24 +3,31 @@ package service
 import (
 	"context"
 	"log"
-	"noti/internal/domain"
+	"noti/infra/mapper"
 	"noti/internal/dto"
 	"noti/internal/enums"
 	"noti/internal/usecase"
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 )
 
 type InternalNotiService struct {
 	Usecase *usecase.NotificationUsecase
-	pb_noti.UnimplementedNotificationServiceServer
+	Mapper  *mapper.NotificationMapper
+	notificationpb.UnimplementedNotificationServiceServer
 }
 
-func NewInternalNotiService(uc *usecase.NotificationUsecase) *InternalNotiService {
-	return &InternalNotiService{Usecase: uc}
+func NewInternalNotiService(
+	uc *usecase.NotificationUsecase,
+	mapper *mapper.NotificationMapper,
+) *InternalNotiService {
+	return &InternalNotiService{
+		Usecase: uc,
+		Mapper:  mapper,
+	}
 }
 
-func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.NotificationRequest) (*pb_noti.NotificationDTO, error) {
+func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:        req.Title,
 		Message:      []string{req.Message},
@@ -39,11 +46,11 @@ func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.Notificat
 		return nil, err
 	}
 
-	response := s.mapToPB(notification)
+	response := s.Mapper.MapToPB(notification)
 	return response, nil
 }
 
-func (s *InternalNotiService) SendBatch(ctx context.Context, req *pb_noti.NotiBatchRequest) (*pb_noti.BatchResponse, error) {
+func (s *InternalNotiService) SendBatch(ctx context.Context, req *notificationpb.NotiBatchRequest) (*notificationpb.BatchResponse, error) {
 	notifications := make([]*dto.NotiNewRequest, 0)
 	for _, noti := range req.Datas {
 		notifications = append(notifications, &dto.NotiNewRequest{
@@ -62,26 +69,15 @@ func (s *InternalNotiService) SendBatch(ctx context.Context, req *pb_noti.NotiBa
 	if err != nil {
 		return nil, err
 	}
-	return &pb_noti.BatchResponse{
+	return &notificationpb.BatchResponse{
 		Data: notificationIds,
 	}, nil
 }
 
-func (s *InternalNotiService) PushByToken(ctx context.Context, req *pb_noti.PushTokenRequest) (*pb_noti.PushResponse, error) {
+func (s *InternalNotiService) PushByToken(ctx context.Context, req *notificationpb.PushTokenRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
 }
 
-func (s *InternalNotiService) PushByTopic(ctx context.Context, req *pb_noti.PushTopicRequest) (*pb_noti.PushResponse, error) {
+func (s *InternalNotiService) PushByTopic(ctx context.Context, req *notificationpb.PushTopicRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
-}
-
-// -- mapping ---
-func (s *InternalNotiService) mapToPB(noti *domain.NotificationEntity) *pb_noti.NotificationDTO {
-	return &pb_noti.NotificationDTO{
-		Id:      noti.ID,
-		Title:   noti.Title,
-		Message: noti.Message,
-		Link:    noti.Link,
-		Type:    int32(noti.Type),
-	}
 }

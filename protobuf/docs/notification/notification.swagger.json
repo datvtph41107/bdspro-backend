@@ -26,7 +26,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiCountResponse"
+              "$ref": "#/definitions/notificationpbCountResponse"
             }
           },
           "default": {
@@ -48,7 +48,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiListResponse"
+              "$ref": "#/definitions/notificationpbListResponse"
             }
           },
           "default": {
@@ -98,7 +98,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiNotificationDTO"
+              "$ref": "#/definitions/notificationpbNotificationDTO"
             }
           },
           "default": {
@@ -114,7 +114,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiGatewayNotiNewRequest"
+              "$ref": "#/definitions/notificationpbGatewayNotiNewRequest"
             }
           }
         ],
@@ -130,7 +130,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
+              "$ref": "#/definitions/notificationpbPushResponse"
             }
           },
           "default": {
@@ -146,7 +146,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiPushTokenRequest"
+              "$ref": "#/definitions/notificationpbPushTokenRequest"
             }
           }
         ],
@@ -162,7 +162,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiPushResponse"
+              "$ref": "#/definitions/notificationpbPushResponse"
             }
           },
           "default": {
@@ -178,7 +178,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_notiPushTopicRequest"
+              "$ref": "#/definitions/notificationpbPushTopicRequest"
             }
           }
         ],
@@ -194,7 +194,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {
@@ -216,7 +216,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {
@@ -247,7 +247,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_notiStatusResponse"
+              "$ref": "#/definitions/notificationpbStatusResponse"
             }
           },
           "default": {
@@ -273,7 +273,7 @@
     }
   },
   "definitions": {
-    "pb_notiBatchResponse": {
+    "notificationpbBatchResponse": {
       "type": "object",
       "properties": {
         "data": {
@@ -285,7 +285,7 @@
         }
       }
     },
-    "pb_notiCountResponse": {
+    "notificationpbCountResponse": {
       "type": "object",
       "properties": {
         "count": {
@@ -294,7 +294,7 @@
         }
       }
     },
-    "pb_notiGatewayNotiNewRequest": {
+    "notificationpbGatewayNotiNewRequest": {
       "type": "object",
       "properties": {
         "title": {
@@ -316,14 +316,14 @@
         }
       }
     },
-    "pb_notiListResponse": {
+    "notificationpbListResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_notiNotificationDTO"
+            "$ref": "#/definitions/notificationpbNotificationDTO"
           }
         },
         "total": {
@@ -332,7 +332,7 @@
         }
       }
     },
-    "pb_notiNotificationDTO": {
+    "notificationpbNotificationDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -374,7 +374,7 @@
         }
       }
     },
-    "pb_notiPushResponse": {
+    "notificationpbPushResponse": {
       "type": "object",
       "properties": {
         "messageId": {
@@ -382,7 +382,7 @@
         }
       }
     },
-    "pb_notiPushTokenRequest": {
+    "notificationpbPushTokenRequest": {
       "type": "object",
       "properties": {
         "token": {
@@ -396,7 +396,7 @@
         }
       }
     },
-    "pb_notiPushTopicRequest": {
+    "notificationpbPushTopicRequest": {
       "type": "object",
       "properties": {
         "topic": {
@@ -410,7 +410,7 @@
         }
       }
     },
-    "pb_notiStatusResponse": {
+    "notificationpbStatusResponse": {
       "type": "object",
       "properties": {
         "status": {

@@ -7,12 +7,17 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
+	iusecase "bdspro/internal/usecases/interface"
 	"bdspro/internal/utils"
 	_db "common/db"
 	_dto "common/dto"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"fmt"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
+	"strings"
 
 	"github.com/jinzhu/copier"
 )
@@ -45,6 +50,7 @@ type ProductUsecase struct {
 	DepositeRepo       repo.DepositeRepo
 	OwnerType          enums.EOwnerType
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
+	NotificationClient iusecase.INotificationClient
 }
 
 func NewProductUsecase(
@@ -65,6 +71,7 @@ func NewProductUsecase(
 	// UAssetUsecase *UAssetUsecase,
 	depositeRepo repo.DepositeRepo,
 	productChildRepo repo.UProductChildRepo,
+	notificationClient iusecase.INotificationClient,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -85,6 +92,7 @@ func NewProductUsecase(
 		DepositeRepo:       depositeRepo,
 		ProductChildRepo:   productChildRepo,
 		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
+		NotificationClient: notificationClient,
 		// OwnerType:    ownerType,
 	}
 
@@ -239,7 +247,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			WardID:         entity.WardID,
 			PurchasePrice:  assetInfo.PurchasePrice,
 			PurchaseDate:   assetInfo.PurchaseDate,
-			LegalStatus:    assetInfo.LegalStatus,
+			LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
 			RentStatus:     assetInfo.RentStatus,
 			// Description:    assetInfo.Description,
 		}
@@ -503,13 +511,13 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 			continue
 		}
 	}
-	if ward != nil && (district == nil || district.ID != ward.ParentID) {
-		district, _ = s.Region.GetByID(c, ward.ParentID)
-		province, _ = s.Region.GetByID(c, district.ParentID)
+	if ward != nil && ward.ParentID != nil && (district == nil || district.ID != *ward.ParentID) {
+		district, _ = s.Region.GetByID(c, *ward.ParentID)
+		province, _ = s.Region.GetByID(c, *district.ParentID)
 	}
 
-	if district != nil && (province == nil || province.ID != district.ParentID) {
-		province, _ = s.Region.GetByID(c, district.ParentID)
+	if district != nil && district.ParentID != nil && (province == nil || province.ID != *district.ParentID) {
+		province, _ = s.Region.GetByID(c, *district.ParentID)
 	}
 	// ---- xong ----
 
@@ -755,7 +763,7 @@ func (s *ProductUsecase) InfoArea(c context.Context, id *uint64) (*dto.InfoAreaR
 	return result, err
 }
 
-func (s *ProductUsecase) CreateChild(c context.Context, body *dto.SaveProductChildRequest) (*dto.CreateResponse, error) {
+func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
 	parent, err := s.RequiredBeforeSave(c, *body.ParentID)
 	if err != nil {
 		return nil, err
@@ -768,15 +776,33 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.SaveProductChi
 		}
 	}
 
-	body.ProductSaveRequest.ParentID = body.ParentID
-	body.ProductSaveRequest.OwnerType = parent.OwnerType
-	result, err := s.CreateProduct(c, &body.ProductSaveRequest)
-	s.ProductChildRepo.CreateHistory(c, enums.EProductHistory_NewChild,
-		body.ParentID,
-		*body.ParentID,
-		[]uint64{result.Product.ID},
-		[]float64{result.Product.Area},
-	)
+	body.ParentID = &parent.ID
+	body.OwnerType = parent.OwnerType
+	result, err := s.CreateProduct(c, body)
+
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		profileId := _utils.GetProfileIdWithContext(ctxClone)
+		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+			ActionType: shared_enum.HistoryProductChildCreate,
+			TargetId:   *body.ParentID,
+			OwnerID:    &profileId,
+			Title:      "Tạo sản phẩm con thành công",
+			Note: []string{"Tạo sản phẩm",
+				utils.ConvertToBDS(result.Product.ID),
+				"thành công với diện tích",
+				fmt.Sprintf("%.2f", result.Product.Area),
+				"m2",
+			},
+		})
+	}()
+
+	// s.ProductChildRepo.CreateHistory(c, enums.EProductHistory_NewChild,
+	// 	body.ParentID,
+	// 	*body.ParentID,
+	// 	[]uint64{result.Product.ID},
+	// 	[]float64{result.Product.Area},
+	// )
 	return result, err
 }
 
@@ -794,13 +820,28 @@ func (s *ProductUsecase) MergeProductChild(c context.Context, body *dto.MergePro
 		}
 	}
 
-	s.ProductChildRepo.CreateHistory(c,
-		enums.EProductHistory_Merge,
-		nil,
-		*body.ParentID,
-		*body.ChildIDs,
-		[]float64{},
-	)
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		profileId := _utils.GetProfileIdWithContext(ctxClone)
+		var arr []string
+		for _, r := range *body.ChildIDs {
+			arr = append(arr, utils.ConvertToBDS(r))
+		}
+		childCodes := strings.Join(arr, ", ")
+		parentId := uint64(0)
+		if body.ParentID != nil {
+			parentId = *body.ParentID
+		}
+
+		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+			ActionType: shared_enum.HistoryProductMerge,
+			TargetId:   parentId,
+			OwnerID:    &profileId,
+			Title:      "Gộp sản phẩm đã chọn thành công",
+			Note:       []string{"Gộp sản phẩm", childCodes, " về sản phẩm cha", utils.ConvertToBDS(parentId)},
+		})
+	}()
+
 	// body.ProductSaveRequest.ParentID = body.ParentID
 	return nil, s.ProductChildRepo.MergeChilds(*body.ChildIDs)
 }
@@ -826,12 +867,25 @@ func (s *ProductUsecase) MergeAllProductChild(c context.Context, parentID *uint6
 	}
 	// body.ProductSaveRequest.ParentID = body.ParentID
 
-	s.ProductChildRepo.CreateHistory(c,
-		enums.EProductHistory_MergeAll,
-		nil,
-		*parentID, ids,
-		[]float64{},
-	)
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		profileId := _utils.GetProfileIdWithContext(ctxClone)
+
+		var arr []string
+		for _, r := range ids {
+			arr = append(arr, utils.ConvertToBDS(r))
+		}
+		childCodes := strings.Join(arr, ", ")
+
+		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+			ActionType: shared_enum.HistoryProductMergeAll,
+			TargetId:   *parentID,
+			OwnerID:    &profileId,
+			Title:      "Gộp toàn bộ sản phẩm thành công",
+			Note:       []string{"Gộp toàn bộ sản phẩm", childCodes, " về sản phẩm cha", utils.ConvertToBDS(*parentID)},
+		})
+	}()
+
 	return nil, nil
 }
 
@@ -881,30 +935,46 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 		results = append(results, *result.Product)
 	}
 
-	var ids []uint64
-	var areas []float64
+	// var ids []uint64
+	// var areas []float64
 
-	for _, r := range results {
-		ids = append(ids, r.ID)
-		areas = append(areas, r.Area)
-	}
-	s.ProductChildRepo.CreateHistory(c, enums.EProductHistory_Devide,
-		&child.ID,
-		*child.ParentId,
-		ids,
-		areas,
-	)
+	// for _, r := range results {
+	// 	ids = append(ids, r.ID)
+	// 	areas = append(areas, r.Area)
+	// }
+
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		var arr []string
+		for i := 0; i < len(results); i++ {
+			arr = append(arr, fmt.Sprintf("%s(%.2f m2)", utils.ConvertToBDS(results[i].ID), results[i].Area))
+		}
+
+		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+			Title: "Tách sản phẩm thành công",
+			Note: []string{
+				"Tách sản phẩm",
+				utils.ConvertToBDS(*child.ParentId),
+				fmt.Sprintf("(%.2f m2) thành sản phẩm: ", child.Area),
+				strings.Join(arr, ", "),
+			},
+			TargetId:   *child.ParentId,
+			ActionType: shared_enum.HistoryProductDevide,
+			// TargetType: shared_enum.EOwnerType_Product,
+		})
+	}()
+
 	return &results, nil
 }
 
-func (s *ProductUsecase) ChildHistory(c context.Context, id uint64, dto *dto.ProductHistorySearch) (*[]domain.ProductHistory, int64, error) {
-	profileId := _utils.GetProfileIdWithContext(c)
-	result, total, err := s.ProductChildRepo.History(c, profileId, id, dto)
-	if err != nil {
-		return nil, 0, err
-	}
-	return result, total, nil
-}
+// func (s *ProductUsecase) ChildHistory(c context.Context, id uint64, dto *dto.ProductHistorySearch) (*[]domain.ProductHistory, int64, error) {
+// 	profileId := _utils.GetProfileIdWithContext(c)
+// 	result, total, err := s.ProductChildRepo.History(c, profileId, id, dto)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+// 	return result, total, nil
+// }
 
 func (s *ProductUsecase) QueryProductMarket(c context.Context, dto *dto.ProductSearchRequest) ([]domain.ProductMarket, int64, error) {
 	var results []domain.ProductMarket

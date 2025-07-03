@@ -2,6 +2,7 @@ package service
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/infra/validator"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
@@ -16,14 +17,22 @@ import (
 
 type ProductService struct {
 	pb_bdspro.UnimplementedProductServiceServer
-	UC          *shared_usecase.ProductUsecase
-	ProductRepo repo.ProductRepo
+	UC               *shared_usecase.ProductUsecase
+	ProductRepo      repo.ProductRepo
+	ProductMapper    *mapper.ProductMapper
+	ProductValidator *validator.ProductValidator
 }
 
-func NewProductService(uc *shared_usecase.ProductUsecase, productRepo repo.ProductRepo) *ProductService {
+func NewProductService(uc *shared_usecase.ProductUsecase,
+	productRepo repo.ProductRepo,
+	productMapper *mapper.ProductMapper,
+	productValidator *validator.ProductValidator,
+) *ProductService {
 	return &ProductService{
-		UC:          uc,
-		ProductRepo: productRepo,
+		UC:               uc,
+		ProductRepo:      productRepo,
+		ProductMapper:    productMapper,
+		ProductValidator: productValidator,
 	}
 }
 
@@ -60,12 +69,12 @@ func (s *ProductService) ArchiveProduct(c context.Context, req *pb_bdspro.Archiv
 // @Param body body pb_bdspro.SaveChildRequest true "Thông tin sản phẩm con"
 // @Router /v2/bdspro/v2/product/child/devide [post]
 func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.DevideChildRequest) (*pb_bdspro.Response, error) {
-	body := &dto.DevideChildRequest{}
-	if err := copier.Copy(body, req); err != nil {
+	dto := s.ProductMapper.MapDevideChildRequest(req)
+	if err := s.ProductValidator.ValidateDevideChildRequest(dto); err != nil {
 		return nil, err
 	}
 
-	_, err := s.UC.DevideProductChild(ctx, body)
+	_, err := s.UC.DevideProductChild(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -74,34 +83,34 @@ func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.
 	}, nil
 }
 
-// @Summary Lấy lịch sử sản phẩm con
-// @Description API
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "Product ID"
-// @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
-// @Router /v2/bdspro/v2/product/child/history/{id} [get]
-func (s *ProductService) ChildHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
-	id := req.Id
+// // @Summary Lấy lịch sử sản phẩm con
+// // @Description API
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "Product ID"
+// // @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
+// // @Router /v2/bdspro/v2/product/child/history/{id} [get]
+// func (s *ProductService) ChildHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// 	id := req.Id
 
-	_body := dto.ProductHistorySearch{}
-	if err := copier.Copy(&_body, req); err != nil {
-		return nil, err
-	}
+// 	_body := dto.ProductHistorySearch{}
+// 	if err := copier.Copy(&_body, req); err != nil {
+// 		return nil, err
+// 	}
 
-	result, total, err := s.UC.ChildHistory(ctx, id, &_body)
-	if err != nil {
-		return nil, err
-	}
-	histories := make([]*pb_bdspro.History, 0)
-	copier.Copy(&histories, &result)
-	return &pb_bdspro.HistoryResponse{
-		Data:  histories,
-		Total: uint64(total),
-	}, nil
-}
+// 	result, total, err := s.UC.ChildHistory(ctx, id, &_body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	histories := make([]*pb_bdspro.History, 0)
+// 	copier.Copy(&histories, &result)
+// 	return &pb_bdspro.GetHistoryResponse{
+// 		Data:  histories,
+// 		Total: uint64(total),
+// 	}, nil
+// }
 
 // @Summary Gộp sản phẩm con
 // @Description API
@@ -151,13 +160,11 @@ func (s *ProductService) ChildMergeAll(ctx context.Context, req *pb_bdspro.IdReq
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/product/child/split [post]
 func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChildRequest) (*pb_bdspro.Response, error) {
-	body := &dto.SaveProductChildRequest{}
-	if err := copier.Copy(body, req); err != nil {
+	dto := s.ProductMapper.SaveProductToEntity(req)
+	if err := s.ProductValidator.ValidateSaveProductChild(dto); err != nil {
 		return nil, err
 	}
-
-	_, err := s.UC.CreateChild(ctx, body)
-
+	_, err := s.UC.CreateChild(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -414,31 +421,31 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 	return productResponse, nil
 }
 
-// @Summary Lấy danh sách lịch sử của sản phẩm
-// @Description Returns a list of history of a product
-// @Tags User: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "Product ID"
-// @Router /v2/bdspro/v2/product/{id}/histories [get]
-func (s *ProductService) GetHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
-	query := dto.ProductHistorySearch{}
-	if err := copier.Copy(&query, req); err != nil {
-		return nil, err
-	}
+// // @Summary Lấy danh sách lịch sử của sản phẩm
+// // @Description Returns a list of history of a product
+// // @Tags User: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param id path int true "Product ID"
+// // @Router /v2/bdspro/v2/product/{id}/histories [get]
+// func (s *ProductService) GetHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// 	query := dto.ProductHistorySearch{}
+// 	if err := copier.Copy(&query, req); err != nil {
+// 		return nil, err
+// 	}
 
-	histories, total, err := s.UC.History(ctx, req.Id, query)
-	if err != nil {
-		return nil, err
-	}
-	historyResponse := make([]*pb_bdspro.History, 0)
-	copier.Copy(&historyResponse, &histories)
-	return &pb_bdspro.HistoryResponse{
-		Data:  historyResponse,
-		Total: uint64(total),
-	}, nil
-}
+// 	histories, total, err := s.UC.History(ctx, req.Id, query)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	historyResponse := make([]*pb_bdspro.History, 0)
+// 	copier.Copy(&historyResponse, &histories)
+// 	return &pb_bdspro.HistoryResponse{
+// 		Data:  historyResponse,
+// 		Total: uint64(total),
+// 	}, nil
+// }
 
 // @Summary Lấy danh sách thành viên của sản phẩm
 // @Description Returns a list of members of a product
@@ -563,7 +570,7 @@ func (s *ProductService) GetDetailByIds(ctx context.Context, req *pb_bdspro.IdRe
 	if err != nil {
 		return nil, err
 	}
-	productResponse := mapper.MapProductPbList(products)
+	productResponse := s.ProductMapper.MapProductPbList(products)
 	return &pb_bdspro.ProductInternalResponse{
 		Data: productResponse,
 	}, nil

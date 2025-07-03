@@ -7,22 +7,27 @@ type AssetLegal struct {
 	AssetID             uint64  `json:"assetId"`
 	DocumentName        string  `json:"documentName"`
 	DocumentURL         string  `json:"documentUrl"`
+	DocumentType        string  `json:"documentType"`
 	IssuedDate          string  `json:"issuedDate"`
 	ExpiryDate          string  `json:"expiryDate"`
 	Description         string  `json:"description"`
 	RelatedSplitMergeID *uint64 `json:"relatedSplitMergeId"`
 }
 
-type LegalItem struct {
-	ID           uint64 `json:"id"`
-	AssetID      uint64 `json:"assetId"`
-	DocumentName string `json:"documentName"`
-	DocumentURL  string `json:"documentUrl"`
-	IssuedDate   string `json:"issuedDate"`
-	ExpiryDate   string `json:"expiryDate"`
-	Description  string `json:"description"`
-}
-
-func (LegalItem) TableName() string {
+func (AssetLegal) TableName() string {
 	return "asset_legals"
 }
+
+// type LegalItem struct {
+// 	ID           uint64 `json:"id"`
+// 	AssetID      uint64 `json:"assetId"`
+// 	DocumentName string `json:"documentName"`
+// 	DocumentURL  string `json:"documentUrl"`
+// 	IssuedDate   string `json:"issuedDate"`
+// 	ExpiryDate   string `json:"expiryDate"`
+// 	Description  string `json:"description"`
+// }
+
+// func (LegalItem) TableName() string {
+// 	return "asset_legals"
+// }

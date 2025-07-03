@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_dto "common/dto"
+	shared_enum "pb/enums"
 )
 
 type NotiNewRequest struct {
@@ -85,4 +86,14 @@ type PushTokenRequest struct {
 
 type PushTopicRequest struct {
 	Topic string `json:"topic" binding:"required"`
+}
+
+type HistorySearchDTO struct {
+	_dto.Pagable
+	UserID     uint64                      `form:"userId"`
+	FromDate   *time.Time                  `form:"fromDate"`
+	ToDate     *time.Time                  `form:"toDate"`
+	ActionType *shared_enum.EHistory       `form:"actionType"`
+	TargetType *shared_enum.ETargetHistory `form:"targetType"`
+	TargetId   *uint64                     `form:"targetId"`
 }

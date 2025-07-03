@@ -171,7 +171,7 @@ definitions:
           $ref: '#/definitions/domain.LegalItem'
         type: array
       legalStatus:
-        type: integer
+        $ref: '#/definitions/enums.EDocType'
       name:
         type: string
       ownerOrgId:
@@ -740,7 +740,7 @@ definitions:
         - $ref: '#/definitions/enums.EVisibility'
         description: 1=Riêng tư, 2=Nội bộ, 3=Công khai
       sourceType:
-        type: integer
+        $ref: '#/definitions/enums.ESourceType'
       transactionType:
         type: integer
       updatedAt:
@@ -1453,6 +1453,20 @@ definitions:
     x-enum-varnames:
     - ECostTypeIn
     - ECostTypeOut
+  enums.EDocType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      ENotarizedRecord: vi bằng
+      EPinkBook: sổ hồng
+      ERedBook: sổ đỏ
+    x-enum-varnames:
+    - ERedBook
+    - EPinkBook
+    - ENotarizedRecord
   enums.EDomainAccess:
     enum:
     - 10
@@ -1520,6 +1534,18 @@ definitions:
     - EProductNotRent
     - EProductRenting
     - EProductRented
+  enums.ESourceType:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    type: integer
+    x-enum-varnames:
+    - SourceTypeOwner
+    - SourceTypeBroker
+    - SourceTypeFloor
+    - SourceTypeOther
   enums.EVisibility:
     enum:
     - 10
@@ -1631,6 +1657,36 @@ definitions:
       typeName:
         type: string
     type: object
+  pb_bdspro.AssetLegalDTO:
+    properties:
+      archived:
+        type: boolean
+      assetId:
+        type: integer
+      description:
+        type: string
+      documentName:
+        type: string
+      documentUrl:
+        type: string
+      expiryDate:
+        type: string
+      id:
+        type: integer
+      issuedDate:
+        type: string
+      relatedSplitMergeId:
+        type: integer
+    type: object
+  pb_bdspro.AssetLegalListDTO:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+        type: array
+      totalElements:
+        type: integer
+    type: object
   pb_bdspro.CreateAssetRequest:
     properties:
       address:
@@ -1650,8 +1706,6 @@ definitions:
         type: integer
       id:
         type: integer
-      legalStatus:
-        type: string
       name:
         type: string
       ownerOrgId:
@@ -1664,10 +1718,12 @@ definitions:
         type: number
       productId:
         type: integer
+      propertyTypeId:
+        type: integer
       provinceId:
         type: integer
       purchaseDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       purchasePrice:
         type: number
       rentStatus:
@@ -1924,7 +1980,7 @@ definitions:
       id:
         type: integer
       legalStatus:
-        type: string
+        type: integer
       name:
         type: string
       ownerOrgId:
@@ -1937,10 +1993,12 @@ definitions:
         type: number
       productId:
         type: integer
+      propertyTypeId:
+        type: integer
       provinceId:
         type: integer
       purchaseDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       purchasePrice:
         type: number
       rentStatus:
@@ -1972,6 +2030,8 @@ definitions:
         type: string
       transactionName:
         type: string
+    type: object
+  sharepb.Empty:
     type: object
   timestamppb.Timestamp:
     properties:
@@ -2040,7 +2100,7 @@ definitions:
           $ref: '#/definitions/domain.LegalItem'
         type: array
       legalStatus:
-        type: integer
+        $ref: '#/definitions/enums.EDocType'
       name:
         type: string
       ownerOrgId:
@@ -5065,6 +5125,126 @@ paths:
       summary: Cập nhật
       tags:
       - 'User: Tài sản'
+  /v2/bdspro/v2/asset-legal:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách giấy tờ
+      parameters:
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.AssetLegalListDTO'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách giấy tờ
+      tags:
+      - AssetLegal
+    post:
+      consumes:
+      - application/json
+      description: Tạo giấy tờ
+      parameters:
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      security:
+      - BearerAuth: []
+      summary: Tạo giấy tờ
+      tags:
+      - AssetLegal
+  /v2/bdspro/v2/asset-legal/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa giấy tờ
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Xóa giấy tờ
+      tags:
+      - AssetLegal
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết giấy tờ
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết giấy tờ
+      tags:
+      - AssetLegal
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật giấy tờ
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.AssetLegalDTO'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật giấy tờ
+      tags:
+      - AssetLegal
   /v2/bdspro/v2/asset/{id}:
     delete:
       parameters:
@@ -5079,21 +5259,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Xóa
-      tags:
-      - 'User: Tài sản'
-    get:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xem chi tiết
       tags:
       - 'User: Tài sản'
   /v2/bdspro/v2/asset/archived/{id}:
@@ -5340,6 +5505,22 @@ paths:
       summary: Lấy chi tiết chi phí
       tags:
       - Hợp đồng & Thu chi & Loại chi phí
+  /v2/bdspro/v2/asset/detail/{id}:
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xem chi tiết
+      tags:
+      - 'User: Tài sản'
   /v2/bdspro/v2/asset/exploitation:
     post:
       parameters:

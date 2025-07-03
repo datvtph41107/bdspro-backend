@@ -23,7 +23,7 @@ type IPostUsecase interface {
 
 type PostUsecase struct {
 	This           IPostUsecase
-	ClientUC       iusecase.IClientUC
+	ClientUC       iusecase.INotificationClient
 	ProductUsecase *ProductUsecase // forward reference
 	ProductRepo    repo.ProductRepo
 	Repo           repo.UPostRepo
@@ -38,7 +38,7 @@ func NewSharedPostUsecase(repo repo.UPostRepo,
 	postMediaRepo repo.PostMediaRepo,
 	assetRepo repo.AssetRepo,
 	planUsecase usecases.PlanUsecase,
-	clientUsecase iusecase.IClientUC,
+	clientUsecase iusecase.INotificationClient,
 	// serviceManager *manager.ServiceManager,
 ) *PostUsecase {
 	return &PostUsecase{

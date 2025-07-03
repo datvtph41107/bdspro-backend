@@ -4,7 +4,7 @@ import _dto "common/dto"
 
 type RegionRequest struct {
 	_dto.Pagable
-	Text     string `form:"text"`
-	Level    *int   `form:"level"`
-	ParentID *uint  `form:"parentId"`
+	Text     string  `form:"text"`
+	Level    *int    `form:"level"`
+	ParentID *uint64 `form:"parentId"`
 }

@@ -72,7 +72,7 @@ func (r *GormAssetLegalRepo) GetByID(c context.Context, id uint64) (*domain.Asse
 	return &entity, nil
 }
 
-func (r *GormAssetLegalRepo) UpdateLegalItems(c context.Context, assetID uint64, items []domain.LegalItem) error {
+func (r *GormAssetLegalRepo) UpdateLegalItems(c context.Context, assetID uint64, items []domain.AssetLegal) error {
 	// Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
 	tx := r.DB.WithContext(c).Begin()
 

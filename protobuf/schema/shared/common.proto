@@ -12,6 +12,8 @@ message ArchivedRequest {
 
 message IdRequest {
   uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
 }
 
 message IdDTO {

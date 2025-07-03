@@ -4788,6 +4788,198 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/asset-legal": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách giấy tờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Lấy danh sách giấy tờ",
+                "parameters": [
+                    {
+                        "description": "Data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalListDTO"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo giấy tờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Tạo giấy tờ",
+                "parameters": [
+                    {
+                        "description": "Data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/v2/asset-legal/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy chi tiết giấy tờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Lấy chi tiết giấy tờ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật giấy tờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Cập nhật giấy tờ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa giấy tờ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AssetLegal"
+                ],
+                "summary": "Xóa giấy tờ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/asset/archived/{id}": {
             "put": {
                 "security": [
@@ -5166,6 +5358,32 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Owner Type",
                         "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Tài sản"
+                ],
+                "summary": "Xem chi tiết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -5741,30 +5959,6 @@ const docTemplate = `{
             }
         },
         "/v2/bdspro/v2/asset/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Xem chi tiết",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
             "delete": {
                 "security": [
                     {
@@ -7439,7 +7633,7 @@ const docTemplate = `{
                     }
                 },
                 "legalStatus": {
-                    "type": "integer"
+                    "$ref": "#/definitions/enums.EDocType"
                 },
                 "name": {
                     "type": "string"
@@ -8287,7 +8481,7 @@ const docTemplate = `{
                     ]
                 },
                 "sourceType": {
-                    "type": "integer"
+                    "$ref": "#/definitions/enums.ESourceType"
                 },
                 "transactionType": {
                     "type": "integer"
@@ -9352,6 +9546,24 @@ const docTemplate = `{
                 "ECostTypeOut"
             ]
         },
+        "enums.EDocType": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "ENotarizedRecord": "vi bằng",
+                "EPinkBook": "sổ hồng",
+                "ERedBook": "sổ đỏ"
+            },
+            "x-enum-varnames": [
+                "ERedBook",
+                "EPinkBook",
+                "ENotarizedRecord"
+            ]
+        },
         "enums.EDomainAccess": {
             "type": "integer",
             "enum": [
@@ -9434,6 +9646,21 @@ const docTemplate = `{
                 "EProductNotRent",
                 "EProductRenting",
                 "EProductRented"
+            ]
+        },
+        "enums.ESourceType": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40
+            ],
+            "x-enum-varnames": [
+                "SourceTypeOwner",
+                "SourceTypeBroker",
+                "SourceTypeFloor",
+                "SourceTypeOther"
             ]
         },
         "enums.EVisibility": {
@@ -9603,6 +9830,52 @@ const docTemplate = `{
                 }
             }
         },
+        "pb_bdspro.AssetLegalDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                },
+                "relatedSplitMergeId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.AssetLegalListDTO": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                    }
+                },
+                "totalElements": {
+                    "type": "integer"
+                }
+            }
+        },
         "pb_bdspro.CreateAssetRequest": {
             "type": "object",
             "properties": {
@@ -9631,9 +9904,6 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "legalStatus": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -9652,11 +9922,14 @@ const docTemplate = `{
                 "productId": {
                     "type": "integer"
                 },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
                 "provinceId": {
                     "type": "integer"
                 },
                 "purchaseDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                    "type": "string"
                 },
                 "purchasePrice": {
                     "type": "number"
@@ -10046,7 +10319,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "legalStatus": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -10066,11 +10339,14 @@ const docTemplate = `{
                 "productId": {
                     "type": "integer"
                 },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
                 "provinceId": {
                     "type": "integer"
                 },
                 "purchaseDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                    "type": "string"
                 },
                 "purchasePrice": {
                     "type": "number"
@@ -10120,6 +10396,9 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "sharepb.Empty": {
+            "type": "object"
         },
         "timestamppb.Timestamp": {
             "type": "object",
@@ -10216,7 +10495,7 @@ const docTemplate = `{
                     }
                 },
                 "legalStatus": {
-                    "type": "integer"
+                    "$ref": "#/definitions/enums.EDocType"
                 },
                 "name": {
                     "type": "string"

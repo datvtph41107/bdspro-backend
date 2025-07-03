@@ -10,7 +10,7 @@ import (
 	_ "noti/docs"
 	"noti/wire"
 	"os"
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 	"time"
 
 	"github.com/spf13/viper"
@@ -46,8 +46,9 @@ func main() {
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 	)
-	pb_noti.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
-	pb_noti.RegisterNotificationServiceServer(s, app.InternalNotiService)
+	notificationpb.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
+	notificationpb.RegisterNotificationServiceServer(s, app.InternalNotiService)
+	notificationpb.RegisterHistoryServiceServer(s, app.HistoryService)
 
 	log.Printf("GRPC Listen: %v", port)
 
@@ -66,7 +67,7 @@ func main() {
 	// }
 
 	// s := grpc.NewServer()
-	// pb_noti.RegisterNotificationServiceServer(s, &server.ServerHttp{})
+	// notificationpb.RegisterNotificationServiceServer(s, &server.ServerHttp{})
 
 	// // log.Fatalf("Server TCP listen on::  %v", port)
 	// log.Printf("Server TCP listen on::  %v", port)
@@ -103,7 +104,7 @@ func main() {
 	// common.SetupGRPCServer(parameters, func(s *grpc.Server) {
 	// 	app, _ := InitializeApp()
 	// 	db.AutoMigrate()
-	// 	pb_noti.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
+	// 	notificationpb.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
 	// })
 
 	// common.SetupRestfulAPI(parameters, func() {
@@ -126,7 +127,7 @@ func main() {
 	// }
 
 	// s := grpc.NewServer()
-	// pb_noti.RegisterNotificationServiceServer(s, &server.ServerHttp{})
+	// notificationpb.RegisterNotificationServiceServer(s, &server.ServerHttp{})
 
 	// log.Fatalf("Server TCP listen on %v", port)
 

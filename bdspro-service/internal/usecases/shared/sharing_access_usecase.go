@@ -21,13 +21,13 @@ import (
 type SharingAccessUsecase struct {
 	Repo           repo.SharingAccessRepo
 	ProductUsecase *ProductUsecase
-	Client         iusecase.IClientUC
+	Client         iusecase.INotificationClient
 }
 
 func NewShareAccessUsecase(
 	repo repo.SharingAccessRepo,
 	ProductUc *ProductUsecase,
-	Client iusecase.IClientUC,
+	Client iusecase.INotificationClient,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{
 		Repo:           repo,

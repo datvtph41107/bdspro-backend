@@ -86,7 +86,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/pb_noti.NotificationDTO"
+                                "$ref": "#/definitions/notificationpb.NotificationDTO"
                             }
                         }
                     },
@@ -127,7 +127,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_noti.GatewayNotiNewRequest"
+                            "$ref": "#/definitions/notificationpb.GatewayNotiNewRequest"
                         }
                     }
                 ],
@@ -274,7 +274,7 @@
         }
     },
     "definitions": {
-        "pb_noti.GatewayNotiNewRequest": {
+        "notificationpb.GatewayNotiNewRequest": {
             "type": "object",
             "properties": {
                 "link": {
@@ -294,7 +294,7 @@
                 }
             }
         },
-        "pb_noti.NotificationDTO": {
+        "notificationpb.NotificationDTO": {
             "type": "object",
             "properties": {
                 "avatar": {

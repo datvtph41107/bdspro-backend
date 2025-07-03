@@ -93,7 +93,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/pb_noti.NotificationDTO"
+                                "$ref": "#/definitions/notificationpb.NotificationDTO"
                             }
                         }
                     },
@@ -134,7 +134,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_noti.GatewayNotiNewRequest"
+                            "$ref": "#/definitions/notificationpb.GatewayNotiNewRequest"
                         }
                     }
                 ],
@@ -281,7 +281,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "pb_noti.GatewayNotiNewRequest": {
+        "notificationpb.GatewayNotiNewRequest": {
             "type": "object",
             "properties": {
                 "link": {
@@ -301,7 +301,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_noti.NotificationDTO": {
+        "notificationpb.NotificationDTO": {
             "type": "object",
             "properties": {
                 "avatar": {

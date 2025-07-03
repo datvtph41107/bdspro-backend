@@ -5,6 +5,7 @@ option go_package = "pb/types/bdspro;pb_bdspro";
 import "google/protobuf/timestamp.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 service AssetService {
   rpc SearchInternal(AssetSearchRequest) returns (AssetSearchResponse) {
@@ -27,13 +28,13 @@ service AssetService {
       put: "/v2/bdspro/v2/asset/archived"
     };
   };
-  rpc CreateAsset(CreateAssetRequest) returns (Response){
+  rpc CreateAsset(SaveAssetRequest) returns (Response){
     option (google.api.http) = {
       post: "/v2/bdspro/v2/asset"
       body: "*"
     };
   };
-  rpc UpdateAsset(UpdateAssetRequest) returns (Response) {
+  rpc UpdateAsset(SaveAssetRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/asset/{id}"
       body: "*"
@@ -44,7 +45,7 @@ service AssetService {
       delete: "/v2/bdspro/v2/asset/{id}"
     };
   };
-  rpc GetDetail(GetAssetRequest) returns (Asset){
+  rpc GetDetail(sharepb.IdRequest) returns (Asset){
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/detail/{id}"
     };
@@ -61,16 +62,16 @@ service AssetService {
       body: "*"
     };
   };
-  rpc History(IdRequest) returns (HistoryResponse) {
-    option (google.api.http) = {
-      get: "/v2/bdspro/v2/asset/history/{id}"
-    };
-  };
-  rpc HistoryOwner(IdRequest) returns (HistoryResponse) {
-    option (google.api.http) = {
-      get: "/v2/bdspro/v2/asset/history/owner"
-    };
-  };
+  // rpc History(IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/asset/history/{id}"
+  //   };
+  // };
+  // rpc HistoryOwner(IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/asset/history/owner"
+  //   };
+  // };
   rpc GetPublish(IdRequest) returns (AssetSearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/asset/publish/{id}" // profileId
@@ -82,60 +83,53 @@ message AssetList {
   repeated Asset data = 1;
 }
 
-message GetAssetRequest {
-  uint64 id = 1;
-}
-
 message DeleteAssetRequest {
   uint64 id = 1;
 }
 
-message CreateAssetRequest {
-  uint64 id = 1;
-  string name = 2;
-  uint64 wardId = 3;
-  uint64 districtId = 4;
-  uint64 provinceId = 5;
-  double price = 6;
-  google.protobuf.Timestamp buyedDate = 7;
-  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
-  optional uint64 productId = 9;
-  optional uint64 ownerUserId = 10;
-  optional uint64 ownerOrgId = 11;
-  optional uint64 parentAssetId = 12;
-  string splitMergeStatus = 13;
-  double purchasePrice = 14;
-  google.protobuf.Timestamp purchaseDate = 15;
-  string legalStatus = 16;
-  bool archived = 17;
-  uint32 rentStatus = 18;
-  double area = 19;
-  string address = 20;
-  string description = 21;
-}
+// message CreateAssetRequest {
+//   uint64 id = 1;
+//   string name = 2;
+//   uint64 wardId = 3;
+//   uint64 districtId = 4;
+//   uint64 provinceId = 5;
+//   double price = 6;
+//   uint64 docStatus = 7; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+//   optional uint64 productId = 8;
+//   optional uint64 ownerUserId = 9;
+//   optional uint64 ownerOrgId = 10;
+//   optional uint64 parentAssetId = 11;
+//   string splitMergeStatus = 12;
+//   double purchasePrice = 13;
+//   string purchaseDate = 14;
+//   bool archived = 15;
+//   uint32 rentStatus = 16;
+//   double area = 17;
+//   string address = 18;
+//   string description = 19;
+//   optional uint64 propertyTypeId = 20;
+// }
 
-message UpdateAssetRequest {
+message SaveAssetRequest {
   uint64 id = 1;
   string name = 2;
-  uint64 wardId = 3;
-  uint64 districtId = 4;
-  uint64 provinceId = 5;
-  double price = 6;
-  google.protobuf.Timestamp buyedDate = 7;
-  uint64 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
-  optional uint64 productId = 9;
-  optional uint64 ownerUserId = 10;
-  optional uint64 ownerOrgId = 11;
-  optional uint64 parentAssetId = 12;
-  string splitMergeStatus = 13;
-  double purchasePrice = 14;
-  google.protobuf.Timestamp purchaseDate = 15;
-  string legalStatus = 16;
-  bool archived = 17;
-  uint32 rentStatus = 18;
-  double area = 19;
-  string address = 20;
-  string description = 21;
+  double area = 3;
+  optional uint64 wardId = 4;
+  optional uint64 districtId = 5;
+  optional uint64 provinceId = 6;
+  optional uint64 productId = 7;
+  optional uint64 parentAssetId = 8;
+  string splitMergeStatus = 9;
+  double purchasePrice = 10;
+  string purchaseDate = 11;
+  uint32 legalStatus = 12; // 10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ
+  bool archived = 13;
+  uint32 rentStatus = 14;
+  string address = 15;
+  string description = 16;
+  optional uint64 propertyTypeId = 18;
+  repeated LegalItem legalItems = 19;
+  uint32 ownerType = 20;
 }
 
 

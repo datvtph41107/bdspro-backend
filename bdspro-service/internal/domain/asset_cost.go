@@ -16,23 +16,24 @@ type AssetCost struct {
 	Amount      float64          `json:"amount" binding:"required"`
 	Date        *time.Time       `json:"date"` // ngày chi
 	Description string           `json:"description"`
+	CostType    *AssetCostType   `gorm:"foreignKey:CostTypeID;references:ID" json:"costType"`
 }
 
 func (AssetCost) TableName() string {
 	return "asset_costs"
 }
 
-type AssetCostQuery struct {
-	_models.BaseEntity
-	AssetID      uint64          `json:"assetId"`
-	Type         enums.ECostType `json:"type"`
-	CostTypeID   uint64          `json:"costTypeId"`
-	CostTypeName string          `gorm:"column:type_name" json:"costTypeName"`
-	Amount       float64         `json:"amount"`
-	Date         *time.Time      `json:"date"`
-	Description  string          `json:"description"`
-}
+// type AssetCostQuery struct {
+// 	_models.BaseEntity
+// 	AssetID      uint64          `json:"assetId"`
+// 	Type         enums.ECostType `json:"type"`
+// 	CostTypeID   uint64          `json:"costTypeId"`
+// 	CostTypeName string          `gorm:"column:type_name" json:"costTypeName"`
+// 	Amount       float64         `json:"amount"`
+// 	Date         *time.Time      `json:"date"`
+// 	Description  string          `json:"description"`
+// }
 
-func (AssetCostQuery) TableName() string {
-	return "asset_costs"
-}
+// func (AssetCostQuery) TableName() string {
+// 	return "asset_costs"
+// }

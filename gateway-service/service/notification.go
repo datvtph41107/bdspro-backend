@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	pb_noti "pb/types/notification"
+	notificationpb "pb/types/notification"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/viper"
@@ -18,5 +18,6 @@ func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, env
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	fmt.Println("url", url, "endpoint", endpoint)
-	_ = pb_noti.RegisterGatewayNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = notificationpb.RegisterGatewayNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = notificationpb.RegisterHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

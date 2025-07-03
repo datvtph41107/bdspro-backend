@@ -1,7 +1,7 @@
 package cmd
 
-import pb_noti "pb/types/notification"
+import notificationpb "pb/types/notification"
 
 type ServerGrpc struct {
-	pb_noti.UnimplementedNotificationServiceServer
+	notificationpb.UnimplementedNotificationServiceServer
 }
