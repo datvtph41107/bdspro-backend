@@ -16,6 +16,72 @@
     "application/json"
   ],
   "paths": {
+    "/v2/bdspro/v2/sharing-access/asset": {
+      "get": {
+        "operationId": "SharingAccessService_SearchAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "domainId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "fromType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "toType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SharingAccessService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/sharing-access/bulk": {
       "post": {
         "operationId": "SharingAccessService_BulkSave",
@@ -48,7 +114,39 @@
         ]
       }
     },
-    "/v2/bdspro/v2/sharing-access/search": {
+    "/v2/bdspro/v2/sharing-access/commission": {
+      "put": {
+        "operationId": "SharingAccessService_SetCommission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSharingAccessByDomainRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SharingAccessService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/sharing-access/product": {
       "get": {
         "operationId": "SharingAccessService_SearchProduct",
         "responses": {
@@ -89,6 +187,65 @@
           },
           {
             "name": "toType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SharingAccessService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/sharing-access/product/{id}": {
+      "delete": {
+        "operationId": "SharingAccessService_ProductDelete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -179,6 +336,39 @@
         "fromType": {
           "type": "integer",
           "format": "int64"
+        },
+        "domainType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproSharingAccessByDomainRequest": {
+      "type": "object",
+      "properties": {
+        "domainId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "domain": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fromType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "toType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -222,6 +412,25 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
           }
         }
       }

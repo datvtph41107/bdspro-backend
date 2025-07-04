@@ -41,7 +41,7 @@ service GroupService {
 
     rpc GetGroupByUserId(GetGroupByUserIdRequest) returns (GetGroupsResponse) {
         option (google.api.http) = {
-            get: "/v2/org/group/user/{userId}"
+            get: "/v2/org/group/by-member"
         };
     }
 }

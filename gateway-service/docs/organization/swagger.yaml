@@ -788,19 +788,22 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách nhóm
+      description: Lấy danh sách nhóm của user hiện tại
       parameters:
-      - description: ID của nhóm
-        in: path
-        name: id
-        required: true
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
         type: integer
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách nhóm
+      summary: Lấy danh sách nhóm của user hiện tại
       tags:
       - Nhóm
     post:
@@ -993,6 +996,28 @@ paths:
       summary: Cập nhật nhóm
       tags:
       - Nhóm
+  /group/by-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm của user hiện tại
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm của user hiện tại
+      tags:
+      - Nhóm
   /group/document:
     post:
       consumes:
@@ -1150,25 +1175,6 @@ paths:
       summary: Lấy danh sách hoạt động của nhóm
       tags:
       - Hoạt động
-  /group/user/{userId}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy tổ chức của người dùng hiện tại
-      parameters:
-      - description: ID của người dùng
-        in: path
-        name: userId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy tổ chức của người dùng hiện tại
-      tags:
-      - Tổ chức
   /investment:
     post:
       consumes:
@@ -1330,26 +1336,6 @@ paths:
       summary: get form khai báo góp vốn
       tags:
       - Investment
-  /organization:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách tổ chức
-      parameters:
-      - description: Thông tin tổ chức
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.GetOrganizationsRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách tổ chức
-      tags:
-      - Tổ chức
   /organization/{id}:
     put:
       consumes:
@@ -1513,6 +1499,19 @@ paths:
       summary: Xóa thành viên khỏi chi nhánh
       tags:
       - Chi nhánh
+  /organization/by-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tổ chức của người dùng hiện tại
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổ chức của người dùng hiện tại
+      tags:
+      - Tổ chức
   /organization/check/{id}:
     get:
       consumes:
@@ -1833,25 +1832,6 @@ paths:
       summary: Cập nhật vai trò
       tags:
       - Vai trò
-  /organization/user/{userId}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy tổ chức của người dùng hiện tại
-      parameters:
-      - description: ID của người dùng
-        in: path
-        name: userId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy tổ chức của người dùng hiện tại
-      tags:
-      - Tổ chức
 securityDefinitions:
   BearerAuth:
     in: header

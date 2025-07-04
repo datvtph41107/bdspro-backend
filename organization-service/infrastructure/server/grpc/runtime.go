@@ -37,6 +37,7 @@ type GRPCServer struct {
 	investmentHandler        *handler.InvestmentHandler
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler
+	internalOrganizationHandler    *handler.InternalOrganizationHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -57,6 +58,7 @@ func NewGRPCServer(
 	investmentHandler *handler.InvestmentHandler,
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
+	internalOrganizationHandler *handler.InternalOrganizationHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -76,6 +78,7 @@ func NewGRPCServer(
 		investmentHandler:        investmentHandler,
 
 		organizationLogActivityHandler: organizationLogActivityHandler,
+		internalOrganizationHandler:    internalOrganizationHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 	}
 }
@@ -98,6 +101,7 @@ func (s *GRPCServer) Start() {
 		s.groupMemberHandler,
 		s.investmentHandler,
 		s.organizationLogActivityHandler,
+		s.internalOrganizationHandler,
 	)
 
 	g.Add(start, stop)
@@ -127,6 +131,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	investmentHandler *handler.InvestmentHandler,
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
+	internalOrganizationHandler *handler.InternalOrganizationHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -157,6 +162,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 
 			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
 			organizationpb.RegisterInvestmentServiceServer(s, investmentHandler)
+
+			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
 		},
 		unaryInts,
 		streamInts,

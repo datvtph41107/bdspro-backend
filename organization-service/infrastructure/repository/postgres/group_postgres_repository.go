@@ -133,3 +133,11 @@ func GroupModelsToEntities(models []*GroupModel) []*entity.Group {
 	}
 	return entities
 }
+
+func (r *GroupPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.Group, error) {
+	var models []*GroupModel
+	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	return GroupModelsToEntities(models), nil
+}

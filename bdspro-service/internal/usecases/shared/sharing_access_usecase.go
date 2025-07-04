@@ -22,17 +22,20 @@ type SharingAccessUsecase struct {
 	Repo           repo.SharingAccessRepo
 	ProductUsecase *ProductUsecase
 	Client         iusecase.INotificationClient
+	AssetRepo      repo.AssetRepo
 }
 
 func NewShareAccessUsecase(
 	repo repo.SharingAccessRepo,
 	ProductUc *ProductUsecase,
 	Client iusecase.INotificationClient,
+	assetRepo repo.AssetRepo,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{
 		Repo:           repo,
 		ProductUsecase: ProductUc,
 		Client:         Client,
+		AssetRepo:      assetRepo,
 	}
 }
 
@@ -79,28 +82,55 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 	return &entities, err
 }
 
-func (s *SharingAccessUsecase) BulkSave(c context.Context, id uint64, ownerType enums.EOwnerType, dto dto.SharingAccessBulk) (*[]domain.SharingAccess, error) {
-	var entities []domain.SharingAccess
-	product, err := s.ProductUsecase.RequiredOwner(c, id)
+func (s *SharingAccessUsecase) CanAccessAsset(c context.Context, assetId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(c)
+	asset, err := s.AssetRepo.GetByID(assetId)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	if asset.CreatedBy == nil || *asset.CreatedBy != profileId {
+		return &_routes.Except{
+			Code:    401,
+			Message: "Bạn không có quyền truy cập",
+		}
 	}
 
-	// đổi trạng thái sang nội bộ nếu riêng tư
-	if product.SaleVisibility == enums.EVisiblePrivate {
-		product.SaleVisibility = enums.EVisibleInternal
-		_db.SaveWithContext(c, product)
+	return nil
+}
+
+func (s *SharingAccessUsecase) BulkSave(c context.Context,
+	id uint64,
+	ownerType enums.EOwnerType,
+	dto *dto.SharingAccessBulk) (*[]domain.SharingAccess, error) {
+	var entities []domain.SharingAccess
+	var err error
+	if dto.Domain == enums.EDomainProduct {
+		product, err := s.ProductUsecase.RequiredOwner(c, id)
+		if err != nil {
+			return nil, err
+		}
+		// đổi trạng thái sang nội bộ nếu riêng tư
+		if product.SaleVisibility == enums.EVisiblePrivate {
+			product.SaleVisibility = enums.EVisibleInternal
+			_db.SaveWithContext(c, product)
+		}
+	} else {
+		err = s.CanAccessAsset(c, id)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if len(dto.Datas) > 0 {
 		copier.Copy(&entities, &dto.Datas)
 		for i := 0; i < len(entities); i++ {
 			entities[i].DomainID = id
-			entities[i].Domain = enums.EDomainAccess(ownerType)
+			entities[i].Domain = enums.EDomainAccess(dto.Domain)
 			entities[i].DeletedAt = nil
 		}
 
 		assignments := append(
-			clause.AssignmentColumns([]string{"fields", "commission"}),
+			clause.AssignmentColumns([]string{"fields", "commission", "permissions"}),
 			clause.Assignment{
 				Column: clause.Column{Name: "deleted_at"},
 				Value:  gorm.Expr("NULL"),
@@ -124,14 +154,14 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context, id uint64, ownerType 
 	}
 
 	if len(dto.Deletes) > 0 {
-		query := _db.DB.Model(&domain.SharingAccess{})
+		query := _db.DB.Debug().Model(&domain.SharingAccess{})
 		for i, cond := range dto.Deletes {
 			if i == 0 {
 				query = query.Where("domain_id = ? AND domain = ? AND to_id = ? AND to_type = ?",
-					id, ownerType, cond.ToID, cond.ToType)
+					id, dto.Domain, cond.ToId, cond.ToType)
 			} else {
 				query = query.Or("domain_id = ? AND domain = ? AND to_id = ? AND to_type = ?",
-					id, ownerType, cond.ToID, cond.ToType)
+					id, dto.Domain, cond.ToId, cond.ToType)
 			}
 		}
 		err = query.Update("deleted_at", time.Now()).Error
@@ -158,20 +188,37 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context, id uint64, ownerType 
 	return &entities, err
 }
 
-func (s *SharingAccessUsecase) SearchForProduct(c context.Context, ownerType enums.EOwnerType, dto dto.SharingAccessSearch) (*[]domain.ProductAccessQuery, error) {
-	// var entities []domain.ProductAccess
-	// productId := *dto.ProductID
-	// if dto.ProductID
+func (s *SharingAccessUsecase) SearchForProduct(c context.Context, ownerType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
 	_, err := s.ProductUsecase.RequiredOwner(c, dto.DomainID)
 	if err != nil {
 		return nil, err
 	}
-	results, err := s.Repo.OwnerSearchProduct(c, dto.DomainID, ownerType, &dto)
+	dto.Domain = enums.EDomainProduct
+	results, err := s.Repo.OwnerSearchProduct(c, dto.DomainID, ownerType, dto)
 
 	return results, err
 }
 
-func (s *SharingAccessUsecase) UpdateCommission(c context.Context, dto dto.ProductAccessUpdate) error {
+func (s *SharingAccessUsecase) SearchForAsset(ctx context.Context,
+	ownerType enums.EOwnerType,
+	dto *dto.SharingAccessSearch,
+) (*[]domain.SharingAccess, error) {
+
+	err := s.CanAccessAsset(ctx, dto.DomainID)
+	if err != nil {
+		return nil, err
+	}
+	// results, err := s.Repo.OwnerSearchAsset(ctx, dto.DomainID, ownerType, &dto)
+
+	// todo: kiếm tra xem có quyền chia sẻ không
+
+	dto.Domain = enums.EDomainAsset
+	results, err := s.Repo.OwnerSearchAsset(ctx, dto.DomainID, ownerType, dto)
+
+	return results, err
+}
+
+func (s *SharingAccessUsecase) UpdateCommission(c context.Context, dto dto.CommissionUpdate) error {
 	// var entities []domain.ProductAccess
 	// productId := *dto.ProductID
 	// if dto.ProductID
@@ -203,10 +250,7 @@ func (s *SharingAccessUsecase) RequiredOwner(c context.Context, id uint64) (*dom
 	return asset, nil
 }
 
-func (s *SharingAccessUsecase) Delete(c context.Context, id uint64) error {
-	// var entities []domain.ProductAccess
-	// productId := *dto.ProductID
-	// if dto.ProductID
+func (s *SharingAccessUsecase) ProductDelete(c context.Context, id uint64) error {
 	_, err := s.RequiredOwner(c, id)
 	if err != nil {
 		return err

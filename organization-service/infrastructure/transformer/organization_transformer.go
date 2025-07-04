@@ -76,8 +76,8 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 		}
 	}
 	return &organizationpb.GetOrganizationsResponse{
-		Organizations: organizationsResponse,
-		Total:         total,
+		Data:  organizationsResponse,
+		Total: total,
 	}
 }
 
@@ -95,6 +95,6 @@ func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(orga
 		}
 	}
 	return &organizationpb.GetOrganizationByUserIdResponse{
-		Organizations: organizationsResponse,
+		Data: organizationsResponse,
 	}
 }

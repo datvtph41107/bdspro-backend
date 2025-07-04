@@ -4,6 +4,7 @@ import (
 	"bdspro/env"
 	"context"
 	clients "pb/clients"
+	pb_bdspro "pb/types/bdspro"
 	notificationpb "pb/types/notification"
 )
 
@@ -35,6 +36,24 @@ func (c *UserClient) MapProfileToHistory(ctx context.Context, history []*notific
 			// if profile, ok := profiles[*h.OwnerId]; ok {
 			// 	h.OwnerId = profile.Id
 			// }
+		}
+	}
+}
+
+func (c *UserClient) MapUserToSharingAccess(ctx context.Context, dtos []*pb_bdspro.SharingAccess) {
+	ids := make(map[uint64]struct{})
+	for _, dto := range dtos {
+		ids[dto.ToId] = struct{}{}
+	}
+	profiles, err := c.Client.GetMapByIDs(ctx, ids)
+	if err != nil {
+		return
+	}
+
+	for i, dto := range dtos {
+		if profile, ok := profiles[dto.ToId]; ok {
+			dtos[i].ToName = profile.FullName
+			dtos[i].Avatar = profile.Avatar
 		}
 	}
 }

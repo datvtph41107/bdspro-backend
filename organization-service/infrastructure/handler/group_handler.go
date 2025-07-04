@@ -115,14 +115,15 @@ func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGrou
 	return h.GroupTransformer.EntityToGetGroupResponse(group), nil
 }
 
-// @Summary Lấy danh sách nhóm
-// @Description Lấy danh sách nhóm
+// @Summary Lấy danh sách nhóm của user hiện tại
+// @Description Lấy danh sách nhóm của user hiện tại
 // @Tags Nhóm
 // @Accept json
 // @Produce json
-// @Param id path int true "ID của nhóm"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
 // @Security BearerAuth
-// @Router /group [get]
+// @Router /group/by-member [get]
 func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGroupsRequest) (*organizationpb.GetGroupsResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupsRequest(req); err != nil {
 		return nil, err
@@ -145,16 +146,17 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGro
 	return h.GroupTransformer.EntityToGetGroupsResponse(groups, total), nil
 }
 
-// @Summary Lấy tổ chức của người dùng hiện tại
-// @Description Lấy tổ chức của người dùng hiện tại
-// @Tags Tổ chức
+// @Summary Lấy danh sách nhóm của user hiện tại
+// @Description Lấy danh sách nhóm của user hiện tại
+// @Tags Nhóm
 // @Accept json
 // @Produce json
-// @Param userId path int true "ID của người dùng"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
 // @Security BearerAuth
-// @Router /group/user/{userId} [get]
+// @Router /group [get]
 func (h *GroupHandler) GetGroupByUserId(ctx context.Context, req *organizationpb.GetGroupByUserIdRequest) (*organizationpb.GetGroupsResponse, error) {
-	groups, err := h.GroupUsecase.GetGroupByUserId(ctx, req.UserId)
+	groups, err := h.GroupUsecase.GetGroupByUserId(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -84,7 +84,7 @@
         ]
       }
     },
-    "/v2/org/group/user/{userId}": {
+    "/v2/org/group/by-member": {
       "get": {
         "operationId": "GroupService_GetGroupByUserId",
         "responses": {
@@ -104,8 +104,8 @@
         "parameters": [
           {
             "name": "userId",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "type": "integer",
             "format": "int64"
           }

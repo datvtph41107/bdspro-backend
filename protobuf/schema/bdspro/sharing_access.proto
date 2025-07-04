@@ -4,6 +4,7 @@ package pb_bdspro;
 
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/bdspro;pb_bdspro";
 
@@ -16,7 +17,24 @@ service SharingAccessService {
     };
     rpc SearchProduct(SharingAccessRequest) returns (SharingAccessResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/sharing-access/search"
+            get: "/v2/bdspro/v2/sharing-access/product"
+        };
+    };
+    rpc SearchAsset(SharingAccessRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/sharing-access/asset"
+        };
+    };
+
+    rpc SetCommission(SharingAccessByDomainRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/bdspro/v2/sharing-access/commission"
+            body: "*"
+        };
+    };
+    rpc ProductDelete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/bdspro/v2/sharing-access/product/{id}"
         };
     };
 }
@@ -48,6 +66,8 @@ message SharingAccessRequest {
     uint32 domain = 2;
     uint32 fromType = 3;
     uint32 toType = 4;
+    uint32 page = 5;
+    uint32 size = 6;
 }
 
 message SharingAccessResponse {
@@ -61,4 +81,26 @@ message SharingAccessBulkRequest {
     uint64 domainId = 3;
     double commission = 4;
     uint32 fromType = 5;
+    uint32 domainType = 6;
+}
+
+message SharingAccessByDomainRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    uint32 toType = 4;
+    uint64 toId = 5;
+    double commission = 6;
+}
+
+message ToOwner {
+    uint64 toId = 1;
+    uint32 toType = 2;
+}
+
+message SharingAccessDeletedRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    repeated ToOwner owners = 4;
 }

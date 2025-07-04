@@ -61,6 +61,37 @@
         ]
       }
     },
+    "/v2/org/organization/by-member": {
+      "get": {
+        "operationId": "OrganizationService_GetOrganizationByUserId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationByUserIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
     "/v2/org/organization/check-is-exist/{id}": {
       "get": {
         "operationId": "OrganizationService_CheckOrganizationIsExist",
@@ -141,37 +172,6 @@
             }
           }
         },
-        "tags": [
-          "OrganizationService"
-        ]
-      }
-    },
-    "/v2/org/organization/user/{userId}": {
-      "get": {
-        "operationId": "OrganizationService_GetOrganizationByUserId",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetOrganizationByUserIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
         "tags": [
           "OrganizationService"
         ]
@@ -299,19 +299,23 @@
     "organizationpbGetOrganizationByUserIdResponse": {
       "type": "object",
       "properties": {
-        "organizations": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/organizationpbOrganization"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
     "organizationpbGetOrganizationsResponse": {
       "type": "object",
       "properties": {
-        "organizations": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

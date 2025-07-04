@@ -2,6 +2,7 @@ package _utils
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -64,4 +65,9 @@ func FormatVND(amount float64) string {
 	}
 
 	return b.String() + " ₫"
+}
+
+func RoundToMaxDecimals(val float64, decimals int) float64 {
+	multiplier := math.Pow10(decimals)
+	return math.Round(val*multiplier) / multiplier
 }

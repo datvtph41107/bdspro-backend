@@ -700,7 +700,7 @@ func (uc *ProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSe
 	return nil, nil
 }
 
-func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingAccessSearch) (*[]domain.ProductAccessQuery, error) {
+func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
 	// _, err := s.RequiredOwnerProduct(c, id)
 	// if err != nil {
 	// 	return nil, err

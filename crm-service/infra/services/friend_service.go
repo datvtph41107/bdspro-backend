@@ -45,10 +45,7 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 		return nil, err
 	}
 	pbs := mapper.ListFriendToPb(result)
-	userPbs, err := s.userClient.FriendToUserPbs(ctx, pbs)
-	if err != nil {
-		return nil, err
-	}
+	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
 
 	return &crmpb.FriendProfileListResponse{
 		Data:  userPbs,

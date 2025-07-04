@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package organizationpb;
+
+option go_package = "types/organizationpb";
+
+service InternalOrganizationService {
+    rpc GetOrganizationByIds(GetOrganizationByIdsRequest) returns (GetOrganizationByIdsResponse);
+    rpc GetGroupByIds(GetGroupByIdsRequest) returns (GetGroupByIdsResponse);
+}
+
+message GetOrganizationByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetOrganizationByIdsResponse {
+    repeated OrganizationItem organizations = 1;
+}
+
+message GetGroupByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetGroupByIdsResponse {
+    repeated GroupItem groups = 1;
+}
+
+message GroupItem {
+    uint64 id = 1;
+    string name = 2;
+    string avatar = 3;
+}
+
+message OrganizationItem {
+    uint64 id = 1;
+    string name = 2;
+    string avatar = 3;
+}

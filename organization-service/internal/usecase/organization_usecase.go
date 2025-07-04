@@ -15,7 +15,7 @@ type OrganizationUsecase interface {
 	CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error)
 	UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error)
 	GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
-	GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error)
+	GetOrganizationByUserId(ctx context.Context) ([]*entity.Organization, error)
 	CheckOrganizationIsExist(ctx context.Context) (bool, error)
 	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)
 }
@@ -120,13 +120,14 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organizati
 	return org, nil
 }
 
-func (o *organizationUsecase) GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
+func (o *organizationUsecase) GetOrganizations(ctx context.Context, page, size int) ([]*entity.Organization, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
-	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, currentUserId, offset, limit)
+	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, currentUserId, page, size)
 }
 
-func (o *organizationUsecase) GetOrganizationByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
-	organizations, err := o.OrganizationRepository.FindByUserId(ctx, userId)
+func (o *organizationUsecase) GetOrganizationByUserId(ctx context.Context) ([]*entity.Organization, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	organizations, err := o.OrganizationRepository.FindByUserId(ctx, uint32(currentUserId))
 	if err != nil {
 		return nil, err
 	}

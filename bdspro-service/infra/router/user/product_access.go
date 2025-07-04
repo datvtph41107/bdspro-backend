@@ -13,15 +13,15 @@ import (
 
 type UserProductAccessRouter struct {
 	// crud2.BaseRouter[domain.ProductAccess, *usecases.ProductAccessUsecase]
-	UC *shared_usecase.SharingAccessUsecase
+	Usecase *shared_usecase.SharingAccessUsecase
 }
 
-func NewUProductAccessRouter(UC *shared_usecase.SharingAccessUsecase) *UserProductAccessRouter {
+func NewUProductAccessRouter(Usecase *shared_usecase.SharingAccessUsecase) *UserProductAccessRouter {
 	return &UserProductAccessRouter{
 		// BaseRouter: crud2.BaseRouter[domain.ProductAccess, *ProductAccessService]{
 		// 	Service: service,
 		// },
-		UC: UC,
+		Usecase: Usecase,
 	}
 }
 
@@ -29,9 +29,9 @@ func (r *UserProductAccessRouter) RegisterRoutes(router *gin.RouterGroup, path s
 	group := router.Group(path)
 	{
 		group.POST("/:productId/bulk", r.BulkSave)
-		group.POST("/:productId/batch", r.CreateBatch)
+		// group.POST("/:productId/batch", r.CreateBatch)
 		group.PUT("/commission", r.UpdateCommission)
-		group.DELETE(":id", r.Delete)
+		// group.DELETE(":id", r.Delete)
 		group.GET("", r.Search)
 		group.GET("/private-fields", r.GetFields)
 		// group.PUT(":id", r.BaseRouter.Update)
@@ -63,38 +63,38 @@ func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.BulkSave(c, id, enums.EOwnerTypeMember, body)
+	result, err := r.Usecase.BulkSave(c, id, enums.EOwnerTypeMember, &body)
 	_routes.RouteResult(c, result, err)
 }
 
-// .
-// // @Summary Tạo chia sẻ mới sản phẩm cho người dùng
-// // @Description Thêm một sản phẩm mới vào hệ thống
-// // @Tags User: Sản phẩm
-// // @Accept json
-// // @Produce json
-// // @Security BearerAuth
-// // @Param productId path int true "Thông tin sản phẩm"
-// // @Success 201 {object} domain.ProductAccess
-// // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
-// // @Router /v1/bdspro/v2/user/product/access/{productId}/batch [post]
-func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // .
+// // // @Summary Tạo chia sẻ mới sản phẩm cho người dùng
+// // // @Description Thêm một sản phẩm mới vào hệ thống
+// // // @Tags User: Sản phẩm
+// // // @Accept json
+// // // @Produce json
+// // // @Security BearerAuth
+// // // @Param productId path int true "Thông tin sản phẩm"
+// // // @Success 201 {object} domain.ProductAccess
+// // // @Failure 400 {object} map[string]string "Dữ liệu không hợp lệ"
+// // // @Failure 500 {object} map[string]string "Không thể tạo dữ liệu"
+// // // @Router /v1/bdspro/v2/user/product/access/{productId}/batch [post]
+// func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
+// 	id, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+// 	if err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	body := []dto.SharingAccessRequest{}
-	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// 	body := []dto.SharingAccessRequest{}
+// 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	result, err := r.UC.CreateBatch(c, id, enums.EOwnerTypeMember, body)
-	_routes.RouteResult(c, result, err)
-}
+// 	result, err := r.UC.CreateBatch(c, id, enums.EOwnerTypeMember, body)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 // .
 // // @Summary Cập nhật hoa hồng
@@ -108,13 +108,13 @@ func (r *UserProductAccessRouter) CreateBatch(c *gin.Context) {
 // // @Router /v1/bdspro/v2/user/product/access/commission [put]
 func (r *UserProductAccessRouter) UpdateCommission(c *gin.Context) {
 
-	body := dto.ProductAccessUpdate{}
+	body := dto.CommissionUpdate{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
 
-	err := r.UC.UpdateCommission(c, body)
+	err := r.Usecase.UpdateCommission(c, body)
 	_routes.RouteResult(c, nil, err)
 }
 
@@ -132,28 +132,30 @@ func (r *UserProductAccessRouter) UpdateCommission(c *gin.Context) {
 // // @Router /v1/bdspro/v2/user/product-access/{id} [put]
 // func (r *UserProductAccessRoute) Update(c *gin.Context) {}
 
-// .
-// // @Summary Xóa sản phẩm
-// // @Description Xóa sản phẩm theo ID (soft delete)
-// // @Tags User: Sản phẩm
-// // @Accept json
-// // @Produce json
-// // @Security BearerAuth
-// // @Param id path int true "ID của sản phẩm"
-// // @Success 200 {object} map[string]bool "Trạng thái xóa"
-// // @Failure 400 {object} map[string]string "ID không hợp lệ"
-// // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
-// // @Router /v1/bdspro/v2/user/product/access/{id} [delete]
-func (r *UserProductAccessRouter) Delete(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
+// // .
+// // // @Summary Xóa sản phẩm
+// // // @Description Xóa sản phẩm theo ID (soft delete)
+// // // @Tags User: Sản phẩm
+// // // @Accept json
+// // // @Produce json
+// // // @Security BearerAuth
+// // // @Param id path int true "ID của sản phẩm"
+// // // @Success 200 {object} map[string]bool "Trạng thái xóa"
+// // // @Failure 400 {object} map[string]string "ID không hợp lệ"
+// // // @Failure 500 {object} map[string]string "Không thể xóa dữ liệu"
+// // // @Router /v1/bdspro/v2/user/product/access/{id} [delete]
+// func (r *UserProductAccessRouter) Delete(c *gin.Context) {
+// 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+// 	if err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
 
-	err = r.UC.Delete(c, id)
-	_routes.RouteResult(c, nil, err)
-}
+// 	err = r.UC.ProductDelete(c, dto.SharingAccessDeleted{
+// 		DomainID: id,
+// 	})
+// 	_routes.RouteResult(c, nil, err)
+// }
 
 // // @Summary Lấy thông tin Dự án theo ID
 // // @Description Trả về thông tin chi tiết của một Dự án
@@ -185,7 +187,7 @@ func (r *UserProductAccessRouter) Search(c *gin.Context) {
 		return
 	}
 
-	results, err := r.UC.SearchForProduct(c, enums.EOwnerTypeMember, dto)
+	results, err := r.Usecase.SearchForProduct(c, enums.EOwnerTypeMember, &dto)
 	_routes.RouteResult(c, results, err)
 }
 

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/enums"
 	_dto "common/dto"
 )
@@ -25,13 +26,22 @@ type SharingAccessRequest struct {
 }
 
 type SharingAccessBulk struct {
-	Datas   []SharingAccessRequest `json:"datas"`
-	Deletes []SharingAccessRequest `json:"deletes"`
+	DomainID uint64                  `json:"domainId"`
+	Domain   enums.EDomainAccess     `json:"domain"`
+	Datas    []*domain.SharingAccess `json:"datas"`
+	Deletes  []*domain.SharingAccess `json:"deletes"`
 }
 
-type ProductAccessUpdate struct {
-	TargetID   uint64  `json:"targetId" binding:"required"`
-	TargetType uint64  `json:"targetType" binding:"required"`
+type CommissionUpdate struct {
+	ToID       uint64  `json:"targetId" binding:"required"`
+	ToType     uint64  `json:"targetType" binding:"required"`
 	ProductID  uint64  `json:"productId" binding:"required"`
+	FromType   uint64  `json:"fromType" binding:"required"`
 	Commission float64 `json:"commission" binding:"required"`
+}
+
+type SharingAccessDeleted struct {
+	DomainID uint64 `json:"domainId" binding:"required"`
+	FromType uint64 `json:"fromType" binding:"required"`
+	// Owners   []ToOwner `json:"owners" binding:"required"`
 }

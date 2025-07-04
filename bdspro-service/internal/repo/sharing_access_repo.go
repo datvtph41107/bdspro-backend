@@ -12,10 +12,11 @@ type SharingAccessRepo interface {
 	GetByUserAndProduct(userId, productId uint64) (*domain.SharingAccess, error)
 	GetByTargetAndProduct(userId, target, productId uint64) (*domain.SharingAccess, error)
 	GetAll() ([]domain.SharingAccess, error)
-	OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.ProductAccessQuery, error)
+	OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error)
+	OwnerSearchAsset(c context.Context, assetId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error)
 	UpdateCommission(c context.Context,
 		profileId uint64,
-		dto dto.ProductAccessUpdate,
+		dto dto.CommissionUpdate,
 	) error
 	GetProductAccessByOrgID(ctx context.Context, orgID int64, dto dto.SharingAccessSearch) ([]*domain.SharingAccess, error)
 	BulkSave(c context.Context, id uint64, dto dto.SharingAccessBulk) (*[]domain.SharingAccess, error)

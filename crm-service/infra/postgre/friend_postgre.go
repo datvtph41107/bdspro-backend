@@ -79,20 +79,23 @@ func (repo *FriendPostgre) SearchFriend(ctx context.Context, currentId uint64, d
 
 	query := repo.DB.
 		Model(&domain.FriendEntity{}).
+		Debug().
 		Preload("GroupUser").
 		Preload("GroupReceiver").
-		Joins(`LEFT JOIN friend fr ON (
-			(fr.created_by = tb_contact.profile_id and fr.receiver_id = ?) 
-			OR (fr.receiver_id = tb_contact.profile_id and fr.created_by = ?)) 
-			and fr.deleted_at is null`,
-			currentId, currentId).
+		// Joins(`LEFT JOIN friend fr ON (
+		// 	(fr.created_by = tb_contact.profile_id and fr.receiver_id = ?)
+		// 	OR (fr.receiver_id = tb_contact.profile_id and fr.created_by = ?))
+		// 	and fr.deleted_at is null`,
+		// 	currentId, currentId).
 		// Joins("LEFT JOIN profile_transfer ON (friend.created_by = profile_transfer.profile_id OR friend.receiver_id = profile_transfer.profile_id) "+
 		// 	"						AND profile_transfer.profile_id <> ? ", currentId).
-		Where("friend.status = 20 and friend.deleted_at is null")
+		Where("status = 20 and deleted_at is null").
+		Where(`((created_by = ? and receiver_id <> ?)
+		 	OR (receiver_id = ? and created_by <> ?))`, currentId, currentId, currentId, currentId)
 
-	if dto.Text != "" {
-		query = query.Where("lower(full_name) LIKE ? OR phone LIKE ?", "%"+dto.Text+"%", "%"+dto.Text+"%")
-	}
+	// if dto.Text != "" {
+	// 	query = query.Where("lower(full_name) LIKE ? OR phone LIKE ?", "%"+dto.Text+"%", "%"+dto.Text+"%")
+	// }
 
 	var total int64
 	err := query.Count(&total).Error

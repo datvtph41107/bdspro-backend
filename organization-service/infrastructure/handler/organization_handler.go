@@ -81,14 +81,14 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 	return h.OrganizationTransformer.EntityToUpdateOrganizationResponse(organization), nil
 }
 
-// @Summary Lấy danh sách tổ chức
-// @Description Lấy danh sách tổ chức
+// @Summary Lấy danh sách tổ chức của người dùng hiện tại
+// @Description Lấy danh sách tổ chức của người dùng hiện tại
 // @Tags Tổ chức
 // @Accept json
 // @Produce json
 // @Param request body organizationpb.GetOrganizationsRequest true "Thông tin tổ chức"
 // @Security BearerAuth
-// @Router /organization [get]
+// @Router /organization/by-member [get]
 func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organizationpb.GetOrganizationsRequest) (*organizationpb.GetOrganizationsResponse, error) {
 	// Get pagination parameters
 	page := 0
@@ -117,11 +117,10 @@ func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organiz
 // @Tags Tổ chức
 // @Accept json
 // @Produce json
-// @Param userId path int true "ID của người dùng"
 // @Security BearerAuth
-// @Router /organization/user/{userId} [get]
+// @Router /organization/by-member [get]
 func (h *OrganizationHandler) GetOrganizationByUserId(ctx context.Context, req *organizationpb.GetOrganizationByUserIdRequest) (*organizationpb.GetOrganizationByUserIdResponse, error) {
-	organizations, err := h.OrganizationUsecase.GetOrganizationByUserId(ctx, req.UserId)
+	organizations, err := h.OrganizationUsecase.GetOrganizationByUserId(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -211,3 +211,11 @@ func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context,
 			"deleted_at": time.Now(),
 		}).Error
 }
+
+func (r *OrganizationPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.Organization, error) {
+	var models []*OrganizationModel
+	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	return OrganizationModelsToEntities(models), nil
+}

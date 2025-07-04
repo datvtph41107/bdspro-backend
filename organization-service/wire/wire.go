@@ -91,6 +91,8 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewGroupTransformer,
 	organization_internal_usecase.NewGroupUsecase,
 	organization_infrastructure_validator.NewGroupValidator,
+	organization_infrastructure_handler.NewInternalOrganizationHandler,
+	organization_infrastructure_transformer.NewInternalOrganizationMapper,
 	organization_infrastructure_handler.NewInvestmentHandler,
 	organization_infrastructure_transformer.NewInvestmentMapper,
 	organization_infrastructure_repository_postgres.NewInvestmentPostgres,

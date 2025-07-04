@@ -82,33 +82,77 @@ func (r *SharingAccessPostgre) GetAll() ([]domain.SharingAccess, error) {
 // 	return &
 // }
 
-func (r *SharingAccessPostgre) OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.ProductAccessQuery, error) {
-	var entities *[]domain.ProductAccessQuery
-	err := r.DB.
-		Table("sharing_access").
-		Select("sharing_access.*, pf.full_name as target_name, pf.avatar as avatar").
-		Joins("left join profile_transfer pf on sharing_access.to_id = pf.profile_id and sharing_access.to_type = 10").
-		Where(`deleted_at IS NULL 
-		and sharing_access.domain_id = ? 
-		and sharing_access.domain = ? 
-		and sharing_access.from_type = ?
-		and sharing_access.to_type = ?`,
-			productId, enums.EDomainProduct, fromType, dto.ToType).
+func (r *SharingAccessPostgre) OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
+	var entities *[]domain.SharingAccess
+	query := r.QueryList(r.DB, productId, fromType, dto)
+	if err := query.
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
-		Scan(&entities).Error
+		Find(&entities).Error; err != nil {
+		return nil, err
+	}
+	// err := r.DB.
+	// 	Table("sharing_access").
+	// 	Select("sharing_access.*, pf.full_name as target_name, pf.avatar as avatar").
+	// 	Joins("left join profile_transfer pf on sharing_access.to_id = pf.profile_id and sharing_access.to_type = 10").
+	// 	Where(`deleted_at IS NULL
+	// 	and sharing_access.domain_id = ?
+	// 	and sharing_access.domain = ?
+	// 	and sharing_access.from_type = ?
+	// 	and sharing_access.to_type = ?`,
+	// 		productId, enums.EDomainProduct, fromType, dto.ToType).
+	// 	Offset(dto.GetOffset()).
+	// 	Limit(dto.GetLimit()).
+	// 	Scan(&entities).Error
+	return entities, nil
+}
+
+func (r *SharingAccessPostgre) QueryList(txt *gorm.DB,
+	assetId uint64,
+	fromType enums.EOwnerType,
+	dto *dto.SharingAccessSearch,
+) *gorm.DB {
+	query := txt.
+		Where("deleted_at IS NULL")
+	if dto.DomainID != 0 {
+		query = query.Where("domain_id = ?", dto.DomainID)
+	}
+	if dto.Domain != 0 {
+		query = query.Where("domain = ?", dto.Domain)
+	}
+	if dto.FromType != 0 {
+		query = query.Where("from_type = ?", dto.FromType)
+	}
+	if dto.ToType != 0 {
+		query = query.Where("to_type = ?", dto.ToType)
+	}
+	return query
+}
+
+func (r *SharingAccessPostgre) OwnerSearchAsset(c context.Context, assetId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
+	var entities *[]domain.SharingAccess
+	query := r.DB.
+		Model(&domain.SharingAccess{}).
+		Where(`deleted_at IS NULL`)
+
+	query = r.QueryList(query, assetId, fromType, dto)
+
+	query = query.Offset(dto.GetOffset()).
+		Limit(dto.GetLimit())
+
+	err := query.Scan(&entities).Error
 	return entities, err
 }
 
 func (r *SharingAccessPostgre) UpdateCommission(c context.Context,
 	profileId uint64,
-	dto dto.ProductAccessUpdate,
+	dto dto.CommissionUpdate,
 ) error {
 	err := r.DB.WithContext(c).
 		Debug().
 		Model(&domain.SharingAccess{}).
-		Where("deleted_at is null and to_id = ? and to_type = ? and product_id = ?",
-			dto.TargetID, dto.TargetType, dto.ProductID).
+		Where("deleted_at is null and to_id = ? and to_type = ? and domain_id = ? and domain = ?",
+			dto.ToID, dto.ToType, dto.ProductID, enums.EDomainProduct).
 		Update("commission", dto.Commission).Error
 
 	return err

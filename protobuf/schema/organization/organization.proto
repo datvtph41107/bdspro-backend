@@ -29,7 +29,7 @@ service OrganizationService {
 
     rpc GetOrganizationByUserId(GetOrganizationByUserIdRequest) returns (GetOrganizationByUserIdResponse) {
         option (google.api.http) = {
-            get: "/v2/org/organization/user/{userId}"
+            get: "/v2/org/organization/by-member"
         };
     }
 
@@ -99,7 +99,7 @@ message Organization {
 }
 
 message GetOrganizationsResponse {
-    repeated Organization organizations = 1 [json_name = "organizations"];
+    repeated Organization data = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
 }
 
@@ -108,7 +108,8 @@ message GetOrganizationByUserIdRequest {
 }
 
 message GetOrganizationByUserIdResponse {
-    repeated Organization organizations = 1 [json_name = "organizations"];
+    repeated Organization data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
 }
 
 message CheckOrganizationIsExistRequest {

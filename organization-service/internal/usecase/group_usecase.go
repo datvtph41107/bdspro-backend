@@ -16,7 +16,7 @@ type GroupUsecase interface {
 	DeleteGroup(ctx context.Context, id uint32) error
 	GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error)
 	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, uint32, error)
-	GetGroupByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error)
+	GetGroupByUserId(ctx context.Context) ([]*entity.Group, error)
 }
 
 type groupUsecase struct {
@@ -133,6 +133,7 @@ func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity
 	return u.groupRepository.List(ctx, page, size, uint32(currentUserId))
 }
 
-func (u *groupUsecase) GetGroupByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error) {
-	return u.groupRepository.FindByUserId(ctx, userId)
+func (u *groupUsecase) GetGroupByUserId(ctx context.Context) ([]*entity.Group, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	return u.groupRepository.FindByUserId(ctx, uint32(currentUserId))
 }

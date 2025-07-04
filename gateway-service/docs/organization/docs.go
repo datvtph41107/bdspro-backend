@@ -333,7 +333,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách nhóm",
+                "description": "Lấy danh sách nhóm của user hiện tại",
                 "consumes": [
                     "application/json"
                 ],
@@ -343,14 +343,19 @@ const docTemplate = `{
                 "tags": [
                     "Nhóm"
                 ],
-                "summary": "Lấy danh sách nhóm",
+                "summary": "Lấy danh sách nhóm của user hiện tại",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID của nhóm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -563,6 +568,41 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/group/by-member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nhóm của user hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nhóm"
+                ],
+                "summary": "Lấy danh sách nhóm của user hiện tại",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -808,36 +848,6 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ID của nhóm",
                         "name": "groupId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/group/user/{userId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy tổ chức của người dùng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức"
-                ],
-                "summary": "Lấy tổ chức của người dùng hiện tại",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của người dùng",
-                        "name": "userId",
                         "in": "path",
                         "required": true
                     }
@@ -1192,38 +1202,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/organization": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách tổ chức",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức"
-                ],
-                "summary": "Lấy danh sách tổ chức",
-                "parameters": [
-                    {
-                        "description": "Thông tin tổ chức",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.GetOrganizationsRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/organization/branch": {
             "get": {
                 "security": [
@@ -1451,6 +1429,27 @@ const docTemplate = `{
                         }
                     }
                 ],
+                "responses": {}
+            }
+        },
+        "/organization/by-member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tổ chức của người dùng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy tổ chức của người dùng hiện tại",
                 "responses": {}
             }
         },
@@ -1948,36 +1947,6 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ID của vai trò",
                         "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/organization/user/{userId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy tổ chức của người dùng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức"
-                ],
-                "summary": "Lấy tổ chức của người dùng hiện tại",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của người dùng",
-                        "name": "userId",
                         "in": "path",
                         "required": true
                     }
