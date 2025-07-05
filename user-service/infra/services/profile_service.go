@@ -159,8 +159,8 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		OwnerType: &ownerType,
 	})
 
-	if orgs != nil && len(orgs.Organizations) > 0 {
-		for _, org := range orgs.Organizations {
+	if orgs != nil && len(orgs.Data) > 0 {
+		for _, org := range orgs.Data {
 			ownerType := uint32(10)
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
 				// Id:              uint64(org.Id),

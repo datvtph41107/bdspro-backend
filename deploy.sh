@@ -98,6 +98,11 @@ case "$1" in
     path_jar=main
     payload_build=social
     ;;
+  "appointment")
+    service_path=appointment-service
+    path_jar=main
+    payload_build=appointment
+    ;;
   "org")
     service_path=organization-service
     path_jar=main
@@ -148,6 +153,9 @@ if [ "$1" = "relay" ]; then
   scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ "$1" = "org" ]; then
+  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
+if [ "$1" = "appointment" ]; then
   scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 

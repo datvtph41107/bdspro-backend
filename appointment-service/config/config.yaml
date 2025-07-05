@@ -12,3 +12,5 @@ Email:
   PASSWORD: tuandq2112
   FROM: tuandq2112@gmail.com
   NAME: Tuấn Đặng
+
+ENV_RUNTIME: release

@@ -157,6 +157,20 @@ services:
     networks:
       - internal
 
+  appointment:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    container_name: appointment
+    volumes:
+      - ${PWD}/config:/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
+      - ENV_RUNTIME=release
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
   http-server:
     build: 
       context: ./chat-service

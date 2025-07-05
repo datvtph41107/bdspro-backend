@@ -136,6 +136,20 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -167,6 +181,20 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -398,6 +426,20 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1280,8 +1322,9 @@
           "format": "double"
         },
         "saleCommission": {
-          "type": "string",
-          "format": "uint64"
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
         },
         "deposite": {
           "type": "number",
@@ -1293,7 +1336,8 @@
         },
         "rentCommission": {
           "type": "number",
-          "format": "double"
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
         },
         "rentPaymentCycle": {
           "type": "integer",
