@@ -15,10 +15,11 @@ const (
 )
 
 type ConversationModel struct {
-	ID        uint64               `gorm:"primaryKey;autoIncrement"`
-	Type      ConversationTypeEnum `gorm:"not null;index:idx_type_created"`
-	Name      *string              `gorm:"size:255"`
-	CreatedBy uint64               `gorm:"not null;column:created_by"`
+	ID         uint64               `gorm:"primaryKey;autoIncrement"`
+	Type       ConversationTypeEnum `gorm:"not null;index:idx_type_created"`
+	Name       *string              `gorm:"size:255"`
+	CreatedBy  uint64               `gorm:"not null;column:created_by"`
+	ReceiverId *uint64              `gorm:"column:receiver_id"`
 
 	IsBroadcast       bool                  `gorm:"default:false;column:is_broadcast"`
 	ForbidForward     bool                  `gorm:"default:false;column:forbid_forward"`

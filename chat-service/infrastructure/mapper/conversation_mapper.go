@@ -24,10 +24,12 @@ func (m *ConversationMapper) ConversationToPb(conv *models.ConversationModel) *c
 		ConversationId: int32(conv.ID),
 		Name:           *conv.Name,
 		Type:           chatpb.ConversationTypeEnum(conv.Type),
-		UpdatedAt:      conv.UpdatedAt.Format(time.DateTime),
+		UpdatedAt:      _utils.FormatTimeToString(&conv.UpdatedAt),
 		Avatar:         conv.Avatar,
 		UnreadCount:    int32(conv.UnreadCount),
 		ParticipantIds: conv.ParticipantIDs,
+		ReceiverId:     conv.ReceiverId,
+		CreatedBy:      conv.CreatedBy,
 	}
 
 	if conv.BackgroundImage != nil {
@@ -43,6 +45,7 @@ func (m *ConversationMapper) ConversationToPb(conv *models.ConversationModel) *c
 			FileUrl:     conv.LatestMessage.FileURL,
 			CreatedAt:   conv.LatestMessage.CreatedAt.Local().Format(time.RFC3339),
 		}
+		result.UpdatedAt = _utils.FormatTimeToString(&conv.LatestMessage.CreatedAt)
 	}
 
 	return result
@@ -56,21 +59,35 @@ func (m *ConversationMapper) ConversationsToPb(convs []*models.ConversationModel
 	return result
 }
 
-func (m *ConversationMapper) ConversationToPbGetConversationById(conv *models.ConversationModel) *chatpb.GetConversationByIdResponse {
+func (m *ConversationMapper) ConversationToPbGetConversationById(conversation *models.ConversationModel, includeMembers bool) *chatpb.GetConversationByIdResponse {
+	var participants []*chatpb.Participant
+	if includeMembers {
+		for _, participant := range conversation.Participants {
+			participants = append(participants, &chatpb.Participant{
+				UserId:    (participant.UserID),
+				Role:      chatpb.ParticipantRoleEnum(participant.Role),
+				JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
+				MuteNotif: participant.MuteNotif,
+			})
+		}
+	}
 	result := &chatpb.GetConversationByIdResponse{
-		ConversationId: int32(conv.ID),
-		Name:           *conv.Name,
-		Type:           chatpb.ConversationTypeEnum(conv.Type),
-		UpdatedAt:      conv.UpdatedAt.Format(time.DateTime),
-		Avatar:         conv.Avatar,
-		CreatedBy:      int32(conv.CreatedBy),
-		IsBroadcast:    conv.IsBroadcast,
-		ForbidForward:  conv.ForbidForward,
-		CreatedAt:      _utils.FormatTimeToString(&conv.CreatedAt),
+		ConversationId:  int32(conversation.ID),
+		Name:            *conversation.Name,
+		Type:            chatpb.ConversationTypeEnum(conversation.Type),
+		CreatedBy:       int32(conversation.CreatedBy),
+		IsBroadcast:     conversation.IsBroadcast,
+		ForbidForward:   conversation.ForbidForward,
+		CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
+		UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
+		Participants:    participants,
+		BackgroundImage: m.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
+		Avatar:          conversation.Avatar,
+		ReceiverId:      conversation.ReceiverId,
 	}
 
-	if conv.BackgroundImage != nil {
-		result.BackgroundImage = m.backgroundMapper.BackgroundImageToPb(conv.BackgroundImage)
+	if conversation.BackgroundImage != nil {
+		result.BackgroundImage = m.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage)
 	}
 
 	return result

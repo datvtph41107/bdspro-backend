@@ -50,17 +50,17 @@ func (r *gormRepository) AddParticipant(ctx context.Context, participant *models
 	return r.db.WithContext(ctx).Create(participant).Error
 }
 
-func (r *gormRepository) HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (uint64, error) {
-	var conversationID uint64
+func (r *gormRepository) HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (*models.ConversationModel, error) {
+	var conversation models.ConversationModel
 	err := r.db.WithContext(ctx).
 		Model(&models.ParticipantModel{}).
-		Select("conversation_id").
+		// Select("conversation_id").
 		Group("conversation_id").
 		Having("COUNT(*) = ? AND COUNT(CASE WHEN user_id IN ? THEN 1 END) = ?", len(userIDs), userIDs, len(userIDs)).
 		Limit(1).
-		Scan(&conversationID).Error
+		Scan(&conversation).Error
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return conversationID, nil
+	return &conversation, nil
 }

@@ -32,7 +32,8 @@ type repository interface {
 	UpdateMuteNotification(ctx context.Context, conversationID uint64, userID uint64, isMute bool) error
 	GetListParticipant(ctx context.Context, conversationId uint64) ([]*models.ParticipantModel, int64, error)
 	AddParticipant(ctx context.Context, participant *models.ParticipantModel) error
-	HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (uint64, error)
+	HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (*models.ConversationModel, error)
+	HasExactConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error)
 
 	CreateBatchRead(ctx context.Context, models []*models.ReadReceptModel) error
 	GetReadReceipts(ctx context.Context, limit, offset int64, messageID uint64) ([]*models.ReadReceptModel, int64, error)

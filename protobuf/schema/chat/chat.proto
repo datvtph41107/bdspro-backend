@@ -181,6 +181,7 @@ message CreateConversationRequest {
   int32 created_by = 6;
   string avatar = 7;
   optional uint64 backgroundImageId = 8;
+  optional uint64 receiverId = 9;
 }
 
 message CreateConversationResponse {
@@ -210,6 +211,8 @@ message Conversation {
   optional BackgroundImage backgroundImage = 8;
   repeated string avatars = 9;
   repeated uint64 participantIds = 10;
+  optional uint64 receiverId = 11;
+  uint64 createdBy = 12;
 }
 
 message SendMessageRequest {
@@ -372,6 +375,7 @@ message GetConversationByIdResponse {
   optional BackgroundImage backgroundImage = 10;
   string avatar = 11;
   repeated string avatars = 12;
+  optional uint64 receiverId = 13;
 }
 
 message Participant {

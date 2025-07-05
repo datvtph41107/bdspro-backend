@@ -3,8 +3,9 @@ package client
 import (
 	"chat/env"
 	"chat/internal/dto"
+	_utils "common/utils"
 	"context"
-
+	"fmt"
 	"pb/clients"
 	chatpb "pb/types/chat"
 )
@@ -58,9 +59,21 @@ func (c *UserClient) GetUserByIds(ctx context.Context, ids []uint64) ([]*dto.Use
 }
 
 func (c *UserClient) MapUserProfile(ctx context.Context, pbConversations []*chatpb.Conversation) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
 	userIds := make(map[uint64]struct{}, len(pbConversations))
 	for _, conv := range pbConversations {
+		if conv.ReceiverId != nil {
+			fmt.Println("conv.ReceiverId", *conv.ReceiverId, currentUserId, conv.CreatedBy)
+			if *conv.ReceiverId == currentUserId {
+				userIds[conv.CreatedBy] = struct{}{}
+			} else {
+				userIds[*conv.ReceiverId] = struct{}{}
+			}
+		}
 		for _, id := range conv.ParticipantIds {
+			if id == currentUserId {
+				continue
+			}
 			userIds[id] = struct{}{}
 		}
 	}
@@ -71,6 +84,19 @@ func (c *UserClient) MapUserProfile(ctx context.Context, pbConversations []*chat
 	}
 
 	for _, conv := range pbConversations {
+		if conv.ReceiverId != nil {
+			if *conv.ReceiverId == currentUserId {
+				if user, ok := users[conv.CreatedBy]; ok {
+					conv.Avatar = user.Avatar
+					conv.Name = user.FullName
+				}
+			} else {
+				if user, ok := users[*conv.ReceiverId]; ok {
+					conv.Avatar = user.Avatar
+					conv.Name = user.FullName
+				}
+			}
+		}
 		avatars := make([]string, 0)
 		for _, id := range conv.ParticipantIds {
 			if user, ok := users[id]; ok {
@@ -99,4 +125,25 @@ func (c *UserClient) GetAvatars(ctx context.Context, ids []uint64) ([]string, er
 	}
 
 	return avatars, nil
+}
+
+func (c *UserClient) MapAvatarAndNameToPb(ctx context.Context, conversation *chatpb.GetConversationByIdResponse) {
+	if conversation.ReceiverId != nil {
+		if *conversation.ReceiverId != uint64(conversation.CreatedBy) {
+			user, _ := c.GetUserById(ctx, *conversation.ReceiverId)
+			conversation.Avatar = user.Avatar
+			conversation.Name = user.FullName
+		} else {
+			user, _ := c.GetUserById(ctx, uint64(conversation.CreatedBy))
+			conversation.Avatar = user.Avatar
+			conversation.Name = user.FullName
+		}
+	} else if len(conversation.Participants) > 0 {
+		userIds := make([]uint64, 0)
+		for _, participant := range conversation.Participants {
+			userIds = append(userIds, participant.UserId)
+		}
+		avatars, _ := c.GetAvatars(ctx, userIds)
+		conversation.Avatars = avatars
+	}
 }

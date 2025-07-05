@@ -2,6 +2,7 @@ package repo
 
 import (
 	_dto "common/dto"
+	_utils "common/utils"
 	"context"
 	"user/internal/dto"
 	user_model "user/internal/models/user"
@@ -22,11 +23,12 @@ func NewProfileRepo(db *gorm.DB) *ProfileRepo {
 func (r *ProfileRepo) GlobalSearchProfile(c context.Context, text string, pageable _dto.Pagable) (*[]user_model.UserProfileSearch, int64, error) {
 	var profiles []user_model.UserProfileSearch
 	var total int64
+	currentUserId := _utils.GetProfileIdWithContext(c)
 
 	query := r.DB.WithContext(c).
 		Model(&user_model.UserProfileEntity{}).
 		Select("profile_id, full_name, avatar, email").
-		Where("deleted_at is null")
+		Where("deleted_at is null AND profile_id != ?", currentUserId)
 
 	if text != "" {
 		query = query.Where("LOWER(full_name) LIKE ? OR email LIKE ?", "%"+text+"%", "%"+text+"%")
@@ -35,6 +37,7 @@ func (r *ProfileRepo) GlobalSearchProfile(c context.Context, text string, pageab
 	err := query.Debug().
 		Offset(pageable.GetOffset()).
 		Limit(pageable.GetLimit()).
+		Order("updated_at DESC").
 		Find(&profiles).
 		Error
 	if err != nil {

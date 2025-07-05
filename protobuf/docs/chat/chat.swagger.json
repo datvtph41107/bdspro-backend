@@ -1194,6 +1194,14 @@
             "type": "string",
             "format": "uint64"
           }
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1236,6 +1244,10 @@
           "type": "string"
         },
         "backgroundImageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
           "type": "string",
           "format": "uint64"
         }
@@ -1383,6 +1395,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

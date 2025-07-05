@@ -9,7 +9,6 @@ import (
 	iusecase "chat/internal/interface"
 	"chat/models"
 	"chat/utils"
-	chatpb "pb/types/chat"
 )
 
 type conversationUsecases struct {
@@ -51,21 +50,35 @@ func (c *conversationUsecases) CreateConversation(ctx context.Context, conversat
 	currentUserId := utils.GetCurrentUserID(ctx)
 	var participants []models.ParticipantModel
 	allMember := append(members, currentUserId)
-	existedConversationId, err := c.repo.HasExactConversationWithUserIDs(ctx, allMember)
+	var existedConversation *models.ConversationModel
+	var err error
+	if conversation.ReceiverId != nil {
+		existedConversation, err = c.repo.HasExactConversationWithReceiverID(ctx, currentUserId, *conversation.ReceiverId)
+	} else if len(members) > 1 {
+		existedConversation, err = c.repo.HasExactConversationWithUserIDs(ctx, allMember)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if existedConversationId != 0 {
-		return nil, errors.ConversationAlreadyExists(
-			&chatpb.ExistedConversationResponse{
-				ConversationId: int32(existedConversationId),
-			},
-		)
+	if existedConversation != nil {
+		return existedConversation, nil
+		// return nil, errors.ConversationAlreadyExists(
+		// 	&chatpb.ExistedConversationResponse{
+		// 		ConversationId: int32(existedConversation.ID),
+		// 	},
+		// )
 	}
 
 	for _, member := range members {
 		participants = append(participants, models.ParticipantModel{
 			UserID:   member,
+			Role:     models.ParticipantRoleMember,
+			JoinedAt: now,
+		})
+	}
+	if conversation.ReceiverId != nil {
+		participants = append(participants, models.ParticipantModel{
+			UserID:   *conversation.ReceiverId,
 			Role:     models.ParticipantRoleMember,
 			JoinedAt: now,
 		})

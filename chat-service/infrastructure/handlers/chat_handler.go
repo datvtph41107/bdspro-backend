@@ -78,7 +78,7 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 		return nil, errors.MaxParticipantsReached()
 	}
 
-	if len(req.Members) == 0 {
+	if len(req.Members) == 0 && req.ReceiverId == nil {
 		return nil, errors.NotParticipant()
 	}
 
@@ -90,6 +90,7 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 		ForbidForward:     req.ForbidForward,
 		Avatar:            req.Avatar,
 		BackgroundImageID: req.BackgroundImageId,
+		ReceiverId:        req.ReceiverId,
 	}
 	model, err := s.conversationUsecases.CreateConversation(ctx, conversation, utils.Int32SliceToUint64Slice(req.Members))
 	if err != nil {
@@ -597,51 +598,12 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 	if err != nil {
 		return nil, err
 	}
-	var participants []*chatpb.Participant
-	if req.IncludeMembers {
-		for _, participant := range conversation.Participants {
-			participants = append(participants, &chatpb.Participant{
-				UserId:    (participant.UserID),
-				Role:      chatpb.ParticipantRoleEnum(participant.Role),
-				JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
-				MuteNotif: participant.MuteNotif,
-			})
-		}
-	}
 
-	result := &chatpb.GetConversationByIdResponse{
-		ConversationId:  int32(conversation.ID),
-		Name:            *conversation.Name,
-		Type:            chatpb.ConversationTypeEnum(conversation.Type),
-		CreatedBy:       int32(conversation.CreatedBy),
-		IsBroadcast:     conversation.IsBroadcast,
-		ForbidForward:   conversation.ForbidForward,
-		CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
-		UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
-		Participants:    participants,
-		BackgroundImage: s.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
-		Avatar:          conversation.Avatar,
-	}
+	result := s.conversationMapper.ConversationToPbGetConversationById(conversation, req.IncludeMembers)
 
-	if len(conversation.ParticipantIDs) > 0 {
-		avatars, _ := s.userClient.GetAvatars(ctx, conversation.ParticipantIDs)
-		result.Avatars = avatars
-	}
+	s.userClient.MapAvatarAndNameToPb(ctx, result)
 
 	return result, nil
-	// return &chatpb.GetConversationByIdResponse{
-	// 	ConversationId:  int32(conversation.ID),
-	// 	Name:            *conversation.Name,
-	// 	Type:            chatpb.ConversationTypeEnum(conversation.Type),
-	// 	CreatedBy:       int32(conversation.CreatedBy),
-	// 	IsBroadcast:     conversation.IsBroadcast,
-	// 	ForbidForward:   conversation.ForbidForward,
-	// 	CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
-	// 	UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
-	// 	Participants:    participants,
-	// 	BackgroundImage: conversation.BackgroundImage,
-	// 	Avatar:          conversation.Avatar,
-	// }, nil
 }
 
 // @Summary Lấy danh sách thành viên

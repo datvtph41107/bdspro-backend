@@ -53,7 +53,7 @@ LEFT JOIN (
 	GROUP BY m.conversation_id
 ) unread ON unread.conversation_id = c.id
 WHERE ?? p.user_id = $2 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($3))) || '%' AND c.is_deleted = FALSE
-ORDER BY c.created_at DESC
+ORDER BY COALESCE(m.created_at,c.created_at) DESC
 LIMIT $4 OFFSET $5
 `
 
@@ -168,4 +168,18 @@ func (r *gormRepository) DeleteConversation(ctx context.Context, conversationID 
 		"is_deleted": true,
 		"deleted_at": time.Now(),
 	}).Error
+}
+
+func (r *gormRepository) HasExactConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error) {
+	var conversation models.ConversationModel
+	err := r.db.WithContext(ctx).
+		Model(&models.ConversationModel{}).
+		Select("id").
+		Where("(receiver_id = ? AND created_by = ?) OR (receiver_id = ? AND created_by = ?)",
+			receiverID, currentUserId, currentUserId, receiverID).
+		First(&conversation).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return &conversation, err
 }
