@@ -8,7 +8,15 @@ import (
 	crmpb "pb/types/crm"
 )
 
-func LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDTO {
+type LeadMapper struct {
+	ContactMapper *ContactMapper
+}
+
+func NewLeadMapper(contactMapper *ContactMapper) *LeadMapper {
+	return &LeadMapper{ContactMapper: contactMapper}
+}
+
+func (m *LeadMapper) LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDTO {
 	result := &crmpb.LeadDetailDTO{
 		Id:             lead.ID,
 		Source:         uint32(lead.Source),
@@ -39,13 +47,13 @@ func LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDTO {
 		}
 	}
 	if lead.Contact != nil {
-		result.Contact = ContactToPb(lead.Contact)
+		result.Contact = m.ContactMapper.ContactToPb(lead.Contact)
 	}
 
 	return result
 }
 
-func LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
+func (m *LeadMapper) LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 	result := &crmpb.LeadDTO{
 		Id:           lead.ID,
 		Source:       int32(lead.Source),
@@ -60,7 +68,7 @@ func LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 		UpdatedAt:    _utils.FormatTimeToString(lead.UpdatedAt),
 	}
 	if lead.Contact != nil {
-		result.Contact = ContactToPb(lead.Contact)
+		result.Contact = m.ContactMapper.ContactToPb(lead.Contact)
 	}
 	if lead.Stage != nil {
 		result.Stage = StageDomainToPb(lead.Stage)
@@ -107,7 +115,7 @@ func LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 // 	}
 // }
 
-func LeadSaveToDomain(req *crmpb.LeadSaveRequest) *dto.LeadSaveDTO {
+func (m *LeadMapper) LeadSaveToDomain(req *crmpb.LeadSaveRequest) *dto.LeadSaveDTO {
 	documents := make([]dto.DocumentDTO, len(req.Documents))
 	for i, doc := range req.Documents {
 		documents[i] = dto.DocumentDTO{
@@ -140,7 +148,7 @@ func LeadSaveToDomain(req *crmpb.LeadSaveRequest) *dto.LeadSaveDTO {
 	}
 }
 
-func LeadManagerToPb(lead *domain.LeadEntity) *crmpb.LeadManagerItem {
+func (m *LeadMapper) LeadManagerToPb(lead *domain.LeadEntity) *crmpb.LeadManagerItem {
 	result := &crmpb.LeadManagerItem{
 		Id:             lead.ID,
 		StageId:        lead.StageID,

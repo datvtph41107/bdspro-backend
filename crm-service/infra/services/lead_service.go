@@ -22,16 +22,19 @@ type LeadService struct {
 	UC           *usecase.LeadUsecase
 	UserClient   *client.UserClient
 	BdsproClient *client.BdsproClient
+	LeadMapper   *mapper.LeadMapper
 }
 
 func NewLeadService(uc *usecase.LeadUsecase,
 	userClient *client.UserClient,
 	bdsproClient *client.BdsproClient,
+	leadMapper *mapper.LeadMapper,
 ) *LeadService {
 	return &LeadService{
 		UC:           uc,
 		UserClient:   userClient,
 		BdsproClient: bdsproClient,
+		LeadMapper:   leadMapper,
 	}
 }
 
@@ -82,7 +85,7 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 
 	leads := make([]*crmpb.LeadDTO, len(result))
 	for i, lead := range result {
-		leads[i] = mapper.LeadToPb(&lead)
+		leads[i] = s.LeadMapper.LeadToPb(&lead)
 	}
 	s.UserClient.PbChargePersonAndProfileToLeads(ctx, leads)
 	return &crmpb.LeadTotalDTO{
@@ -103,7 +106,7 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 // @Router /lead/detail/{id} [get]
 func (s *LeadService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDetailDTO, error) {
 	result, err := s.UC.GetByID(ctx, req.Id)
-	leadPb := mapper.LeadDetailToPb(result)
+	leadPb := s.LeadMapper.LeadDetailToPb(result)
 	s.BdsproClient.MapProductPbByIds(ctx, leadPb)
 	s.UserClient.PbChargePersonToLeadDetail(ctx, leadPb)
 	return leadPb, err
@@ -123,7 +126,7 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 		return nil, status.Errorf(codes.NotFound, "Lead not found")
 	}
 
-	leadPb := mapper.LeadToPb(result)
+	leadPb := s.LeadMapper.LeadToPb(result)
 	s.UserClient.PbChargePersonAndProfileToLeads(ctx, []*crmpb.LeadDTO{leadPb})
 
 	return leadPb, err
@@ -138,10 +141,10 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 // @Security BearerAuth
 // @Router /lead [post]
 func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
-	dto := mapper.LeadSaveToDomain(req)
+	dto := s.LeadMapper.LeadSaveToDomain(req)
 
 	result, err := s.UC.Create(ctx, dto)
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Cập nhật khách hàng
@@ -154,7 +157,7 @@ func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*
 // @Security BearerAuth
 // @Router /lead/{id} [put]
 func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
-	dto := mapper.LeadSaveToDomain(req)
+	dto := s.LeadMapper.LeadSaveToDomain(req)
 	if req.Id == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -163,7 +166,7 @@ func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadSaveRequest) (*
 	}
 
 	result, err := s.UC.Update(ctx, req.Id, dto)
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Xóa khách hàng
@@ -198,7 +201,7 @@ func (s *LeadService) AssignPerson(ctx context.Context, req *crmpb.LeadAssignPer
 		ChargeType:     enums.EOwnerType(req.ChargePersonType),
 		AssignNote:     req.NoteAssign,
 	})
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Ghi chú khách hàng
@@ -213,7 +216,7 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 	result, err := s.UC.UpdateNote(ctx, req.LeadId, &dto.LeadDTO{
 		Note: req.Note,
 	})
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Chuyển trạng thái khách hàng
@@ -226,7 +229,7 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 // @Router /lead/stage [post]
 func (s *LeadService) Stage(ctx context.Context, req *crmpb.LeadStageRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId)
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Gán liên hệ vào CRM
@@ -242,7 +245,7 @@ func (s *LeadService) AssignCrm(ctx context.Context, req *crmpb.LeadAssignCrmReq
 	if err != nil {
 		return nil, err
 	}
-	return mapper.LeadToPb(result), err
+	return s.LeadMapper.LeadToPb(result), err
 }
 
 // @Summary Lấy danh sách khách hàng hiển thị trên dashboard
@@ -268,7 +271,7 @@ func (s *LeadService) Manager(ctx context.Context, req *crmpb.LeadManagerRequest
 
 	managerItems := make([]*crmpb.LeadManagerItem, len(result))
 	for i, lead := range result {
-		managerItems[i] = mapper.LeadManagerToPb(&lead)
+		managerItems[i] = s.LeadMapper.LeadManagerToPb(&lead)
 	}
 
 	s.UserClient.PbLeadToManager(ctx, managerItems)

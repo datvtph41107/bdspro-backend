@@ -191,19 +191,19 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 
 	return entity, nil
 }
-func (r *GormUserProductRepo) UpdateProductAmenityIds(productID uint64, amenityIDs []uint64) error {
+func (r *GormUserProductRepo) UpdateProductAmenityIds(ctx context.Context, productID uint64, amenityIDs []uint64) error {
 	// Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
-	tx := r.DB.Begin()
+	tx := GetDB(ctx, r.DB)
 
 	// Xóa các bản ghi cũ trong bảng nối
 	if err := tx.Where("product_id = ?", productID).Delete(&domain.ProductAmenity{}).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Nếu danh sách amenityIDs rỗng -> không cần thêm mới, chỉ cần xóa là đủ
 	if len(amenityIDs) == 0 {
-		tx.Commit()
+		// tx.Commit()
 		return nil
 	}
 
@@ -218,12 +218,12 @@ func (r *GormUserProductRepo) UpdateProductAmenityIds(productID uint64, amenityI
 
 	// Chèn danh sách mới vào bảng nối
 	if err := tx.Create(&productAmenities).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Commit transaction
-	tx.Commit()
+	// tx.Commit()
 	return nil
 }
 
@@ -714,4 +714,8 @@ func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) 
 		return nil, err
 	}
 	return products, nil
+}
+
+func (r *GormUserProductRepo) Create(c context.Context, entity *domain.Product) error {
+	return GetDB(c, r.DB).Create(entity).Error
 }

@@ -1,11 +1,11 @@
 package repo
 
 import (
+	_dto "common/dto"
 	"context"
 	"user/internal/dto"
 	user_model "user/internal/models/user"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -19,8 +19,34 @@ func NewProfileRepo(db *gorm.DB) *ProfileRepo {
 	}
 }
 
-func (r *ProfileRepo) GlobalSearchProfile() {
+func (r *ProfileRepo) GlobalSearchProfile(c context.Context, text string, pageable _dto.Pagable) (*[]user_model.UserProfileSearch, int64, error) {
+	var profiles []user_model.UserProfileSearch
+	var total int64
 
+	query := r.DB.WithContext(c).
+		Model(&user_model.UserProfileEntity{}).
+		Select("profile_id, full_name, avatar, email").
+		Where("deleted_at is null")
+
+	if text != "" {
+		query = query.Where("LOWER(full_name) LIKE ? OR email LIKE ?", "%"+text+"%", "%"+text+"%")
+	}
+
+	err := query.Debug().
+		Offset(pageable.GetOffset()).
+		Limit(pageable.GetLimit()).
+		Find(&profiles).
+		Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return &profiles, total, nil
 }
 
 func (r *ProfileRepo) FriendSearchProfile(c context.Context, profileId uint64, dto dto.ProfileSearch) (*[]user_model.UserProfileSearch, int64, error) {
@@ -48,7 +74,7 @@ func (r *ProfileRepo) FriendSearchProfile(c context.Context, profileId uint64, d
 	return &friends, total, err
 }
 
-func (r *ProfileRepo) UpdateProfile(c *gin.Context, profileId uint64, dto *dto.UserInfoRequest) error {
+func (r *ProfileRepo) UpdateProfile(c context.Context, profileId uint64, dto *dto.UserInfoRequest) error {
 	// Chỉ cập nhật các trường cụ thể
 	return r.DB.WithContext(c).
 		Model(&user_model.UserProfileEntity{}).

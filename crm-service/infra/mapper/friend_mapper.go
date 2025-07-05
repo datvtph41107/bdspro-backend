@@ -9,7 +9,14 @@ import (
 	sharepb "pb/types/shared"
 )
 
-func FriendItemToPb(friend *domain.FriendItem) *sharepb.FriendItem {
+type FriendMapper struct {
+}
+
+func NewFriendMapper() *FriendMapper {
+	return &FriendMapper{}
+}
+
+func (m *FriendMapper) FriendItemToPb(friend *domain.FriendItem) *sharepb.FriendItem {
 	if friend == nil || friend.ID == 0 {
 		return nil
 	}
@@ -21,7 +28,7 @@ func FriendItemToPb(friend *domain.FriendItem) *sharepb.FriendItem {
 	}
 }
 
-func FriendToPb(friend *domain.FriendEntity) *crmpb.Friend {
+func (m *FriendMapper) FriendToPb(friend *domain.FriendEntity) *crmpb.Friend {
 	return &crmpb.Friend{
 		Id:              friend.ID,
 		CreatedBy:       *friend.CreatedBy,
@@ -34,16 +41,24 @@ func FriendToPb(friend *domain.FriendEntity) *crmpb.Friend {
 	}
 }
 
-func ListFriendToPb(friends []domain.FriendEntity) []*crmpb.Friend {
+func (m *FriendMapper) ListFriendToPb(friends []domain.FriendEntity) []*crmpb.Friend {
 	pbs := make([]*crmpb.Friend, len(friends))
 	for i, friend := range friends {
-		pbs[i] = FriendToPb(&friend)
+		pbs[i] = m.FriendToPb(&friend)
 	}
 	return pbs
 }
 
-func FriendRequestPbToDomain(req *crmpb.FriendRequestDTO) *data.FriendDTO {
+func (m *FriendMapper) FriendRequestPbToDomain(req *crmpb.FriendRequestDTO) *data.FriendDTO {
 	return &data.FriendDTO{
 		ReceiverID: req.ReceiverId,
 	}
+}
+
+func (m *FriendMapper) FriendItemToPbs(friends []domain.FriendItem) []*sharepb.FriendItem {
+	pbs := make([]*sharepb.FriendItem, len(friends))
+	for i, friend := range friends {
+		pbs[i] = m.FriendItemToPb(&friend)
+	}
+	return pbs
 }

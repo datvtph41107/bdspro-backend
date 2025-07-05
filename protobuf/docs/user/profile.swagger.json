@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/user/profile/accounts/me": {
+    "/v2/user/profile/info/me": {
       "get": {
-        "operationId": "ProfileService_ListAccountMe",
+        "operationId": "ProfileService_GetProfileInfoMe",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/userpbAccountInfoResponse"
+              "$ref": "#/definitions/userpbProfilePublicInfo"
             }
           },
           "default": {
@@ -68,6 +68,104 @@
           "ProfileService"
         ]
       }
+    },
+    "/v2/user/profile/me": {
+      "get": {
+        "operationId": "ProfileService_ListAccountMe",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAccountInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/profile/search/public": {
+      "get": {
+        "operationId": "ProfileService_SearchProfilePublic",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbSearchProfilePublicResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/profile/set-info": {
+      "put": {
+        "operationId": "ProfileService_SetInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbSetInfoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -98,6 +196,9 @@
           }
         }
       }
+    },
+    "sharepbEmpty": {
+      "type": "object"
     },
     "sharepbFriendItem": {
       "type": "object",
@@ -212,15 +313,23 @@
           "type": "string",
           "format": "uint64"
         },
-        "title": {
+        "name": {
+          "type": "string"
+        },
+        "issuer": {
           "type": "string"
         },
         "fileUrl": {
           "type": "string"
         },
-        "verifiedStatus": {
-          "type": "integer",
-          "format": "int64"
+        "fileType": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "issueDate": {
+          "type": "string"
         }
       }
     },
@@ -232,6 +341,12 @@
           "format": "uint64"
         },
         "name": {
+          "type": "string"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "issueDate": {
           "type": "string"
         },
         "verifiedStatus": {
@@ -354,6 +469,14 @@
         "tabDefault": {
           "type": "integer",
           "format": "int64"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -387,6 +510,160 @@
         "star5Count": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "userpbSearchProfilePublicResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbUserSearchItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "userpbSetInfoRequest": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "phone2": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "taxCode": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string"
+        },
+        "departmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "frontIdentify": {
+          "type": "string"
+        },
+        "backIdentify": {
+          "type": "string"
+        },
+        "slogan": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "facebook": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tabDefault": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleRealEstate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbCertificationItem"
+          }
+        },
+        "certificationRemoveIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "professions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbProfessionItem"
+          }
+        },
+        "professionRemoveIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "userpbUserSearchItem": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/sharepbFriendItem"
         }
       }
     }

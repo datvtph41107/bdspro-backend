@@ -140,11 +140,11 @@ type PublicUserInfo struct {
 	TabDefault      enums.ESettingTab     `json:"tabDefault,omitempty"`
 
 	// transient
-	Certifications []user_model.CertificationItem `json:"certifications,omitempty"`
-	Professions    []user_model.ProfessionItem    `json:"professions,omitempty"`
-	RateStats      user_model.RateStats           `json:"rateStats,omitempty"`
-	FriendStatus   *user_model.FriendItem         `json:"relationShip,omitempty"`
-	Following      bool                           `json:"following,omitempty"`
+	Certifications []user_model.CertificationEntity `json:"certifications,omitempty"`
+	Professions    []user_model.ProfessionEntity    `json:"professions,omitempty"`
+	RateStats      user_model.RateStats             `json:"rateStats,omitempty"`
+	FriendStatus   *user_model.FriendItem           `json:"relationShip,omitempty"`
+	Following      bool                             `json:"following,omitempty"`
 }
 
 type RelationShip struct {

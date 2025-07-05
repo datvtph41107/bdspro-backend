@@ -10,6 +10,7 @@ import (
 	crm_config "crm/config"
 	crm_infra_client "crm/infra/client"
 	crm_infra_impl "crm/infra/impl"
+	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
 	crm_infra_router "crm/infra/router"
 	crm_infra_services "crm/infra/services"
@@ -43,16 +44,19 @@ var wireSet = wire.NewSet(
 	crm_infra_services.NewBlockService,
 	crm_internal_usecase.NewBlockUsecase,
 	crm_config.NewConfigApp,
+	crm_infra_mapper.NewContactMapper,
 	crm_infra_postgre.NewContactRepo,
 	crm_infra_router.NewContactRouter,
 	crm_infra_services.NewContactService,
 	crm_internal_usecase.NewContactUsecase,
+	crm_infra_services.NewCrmInternalService,
 	crm_infra_postgre.NewDocumentPostgre,
 	crm_infra_postgre.NewFollowPostgre,
 	crm_infra_services.NewFollowService,
 	crm_internal_usecase.NewFollowUsecase,
 	crm_infra_services.NewFriendGroupService,
 	crm_internal_usecase.NewFriendGroupUsecase,
+	crm_infra_mapper.NewFriendMapper,
 	crm_infra_postgre.NewFriendRepo,
 	crm_infra_services.NewFriendService,
 	crm_internal_usecase.NewFriendUsecase,
@@ -60,6 +64,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewInvitationInstallPostgre,
 	crm_infra_services.NewInvitationInstallService,
 	crm_internal_usecase.NewInvitationInstallUsecase,
+	crm_infra_mapper.NewLeadMapper,
 	crm_infra_router.NewLeadRouter,
 	crm_infra_services.NewLeadService,
 	crm_internal_usecase.NewLeadUsecase,

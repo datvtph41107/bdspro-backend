@@ -106,3 +106,10 @@ func (m *RateMapper) PbToEntityRateSearch(req *userpb.GetRateListRequest) *dto.R
 		UpdatedBy:  req.UpdatedBy,
 	}
 }
+
+func (m *RateMapper) EntityToPbRateStats(stats *user_model.RateStats) *userpb.RateStats {
+	return &userpb.RateStats{
+		TotalReviews: uint64(stats.TotalReviews),
+		AverageScore: float32(stats.AverageScore),
+	}
+}

@@ -35,7 +35,7 @@ type ProductRepo interface {
 	GetByID2(ctx context.Context, productID uint64) (*domain.Product, error)
 
 	// Cập nhật danh sách tiện ích của sản phẩm
-	UpdateProductAmenityIds(productID uint64, amenityIDs []uint64) error
+	UpdateProductAmenityIds(ctx context.Context, productID uint64, amenityIDs []uint64) error
 
 	// Tìm kiếm sản phẩm theo chủ sở hữu
 	SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)

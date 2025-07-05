@@ -14,14 +14,16 @@ import (
 
 type FriendService struct {
 	crmpb.UnimplementedFriendServiceServer
-	UC         *usecase.FriendUsecase
-	userClient *client.UserClient
+	UC           *usecase.FriendUsecase
+	userClient   *client.UserClient
+	FriendMapper *mapper.FriendMapper
 }
 
-func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient) *FriendService {
+func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient, friendMapper *mapper.FriendMapper) *FriendService {
 	return &FriendService{
-		UC:         uc,
-		userClient: userClient,
+		UC:           uc,
+		userClient:   userClient,
+		FriendMapper: friendMapper,
 	}
 }
 
@@ -44,7 +46,7 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 	if err != nil {
 		return nil, err
 	}
-	pbs := mapper.ListFriendToPb(result)
+	pbs := s.FriendMapper.ListFriendToPb(result)
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
 
 	return &crmpb.FriendProfileListResponse{
@@ -65,13 +67,13 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 // @Failure 404 {string} string "Không tìm thấy người nhận"
 // @Router /friend/request/{receiverId} [post]
 func (s *FriendService) FriendRequest(ctx context.Context, req *crmpb.FriendRequestDTO) (*crmpb.FriendRequestResponse, error) {
-	dto := mapper.FriendRequestPbToDomain(req)
+	dto := s.FriendMapper.FriendRequestPbToDomain(req)
 
 	result, err := s.UC.Request(ctx, dto.ReceiverID)
 	if err != nil {
 		return nil, err
 	}
-	pb := mapper.FriendToPb(result)
+	pb := s.FriendMapper.FriendToPb(result)
 
 	return &crmpb.FriendRequestResponse{
 		Data:   pb,
@@ -155,7 +157,7 @@ func (s *FriendService) FriendSent(ctx context.Context, req *crmpb.FriendListReq
 		Text: &req.Text,
 	}
 	result, err := s.UC.RequestSent(ctx, query)
-	pbs := mapper.ListFriendToPb(result)
+	pbs := s.FriendMapper.ListFriendToPb(result)
 	s.userClient.PbUserToFriends(ctx, pbs, false)
 
 	return &crmpb.FriendListResponse{
@@ -179,7 +181,7 @@ func (s *FriendService) FriendReceived(ctx context.Context, req *crmpb.FriendLis
 		Text: &req.Text,
 	}
 	result, err := s.UC.RequestReceived(ctx, query)
-	pbs := mapper.ListFriendToPb(result)
+	pbs := s.FriendMapper.ListFriendToPb(result)
 	s.userClient.PbUserToFriends(ctx, pbs, true)
 
 	return &crmpb.FriendListResponse{

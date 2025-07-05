@@ -5,7 +5,6 @@ import (
 	"time"
 	user_model "user/internal/models/user"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -19,19 +18,20 @@ func NewProfessionRepo(db *gorm.DB) *ProfessionRepo {
 	}
 }
 
-func (r *ProfessionRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.ProfessionItem, error) {
-	var professions []user_model.ProfessionItem
+func (r *ProfessionRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.ProfessionEntity, error) {
+	var professions []user_model.ProfessionEntity
 
 	err := r.DB.WithContext(c).
+		Model(&user_model.ProfessionEntity{}).
 		Where("created_by = ? and deleted_at is null", profileID).
-		Select("id, name, verified_status").
+		// Select("id, name, verified_status").
 		Find(&professions).Error
 
 	return professions, err
 }
 
 func (r *ProfessionRepo) BatchSave(
-	c *gin.Context,
+	c context.Context,
 	professions *[]user_model.ProfessionEntity,
 	deletedIds []uint64,
 ) error {

@@ -41,5 +41,5 @@ func (r *GormHouseInfoRepo) UpdateHouseInfo(ctx context.Context, houseInfo *doma
 	// tx := r.DB.Begin()
 
 	// houseInfo.ProductID = productID
-	return r.DB.WithContext(ctx).Save(&houseInfo).Error
+	return GetDB(ctx, r.DB).Save(&houseInfo).Error
 }

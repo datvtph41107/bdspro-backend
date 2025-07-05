@@ -21,7 +21,7 @@ service FriendService {
     };
     rpc CancelFriendRequest(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
         option (google.api.http) = {
-            delete: "/v2/crm/friend/request/cancel/{id}"
+            delete: "/v2/crm/friend/cancel/{id}"
         };
     };
     rpc FriendAccept(sharepb.IdRequest) returns (sharepb.SubmitResponse) {

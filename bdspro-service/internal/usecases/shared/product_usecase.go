@@ -51,6 +51,7 @@ type ProductUsecase struct {
 	OwnerType          enums.EOwnerType
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 	NotificationClient iusecase.INotificationClient
+	Transaction        iusecase.ITransaction
 }
 
 func NewProductUsecase(
@@ -72,6 +73,7 @@ func NewProductUsecase(
 	depositeRepo repo.DepositeRepo,
 	productChildRepo repo.UProductChildRepo,
 	notificationClient iusecase.INotificationClient,
+	transaction iusecase.ITransaction,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -93,6 +95,7 @@ func NewProductUsecase(
 		ProductChildRepo:   productChildRepo,
 		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 		NotificationClient: notificationClient,
+		Transaction:        transaction,
 		// OwnerType:    ownerType,
 	}
 
@@ -179,87 +182,94 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	houseInfoEntity := &domain.HouseInfo{}
 	copier.Copy(&entity, &product)
 	copier.Copy(&houseInfoEntity, &product.HouseInfo)
-
-	if err := s.UpdatePrice(c, 0, product.PriceData); err != nil {
-		return nil, err
-	}
-	if product.PriceData != nil {
-		entity.LastPriceID = &product.PriceData.ID
-	}
-
-	entity.OwnerUserID = &ownerId
-	entity.OwnerType = product.OwnerType
-	_db.SaveWithContext(c, entity)
-	// err := s.productRepo.UpdateProduct(c, entity.ID, entity)
-	// err := s.UpdateReference(c, entity, product)
-
-	if product.PriceData != nil {
-		if err := s.PriceRepo.UpdateProductID(c, &entity.ID, &product.PriceData.ID); err != nil {
-			return nil, err
-		}
-	}
-	if err := s.UpdateAmenity(entity.ID, product.AmenityIds); err != nil {
-		return nil, err
-	}
-	if err := s.UpdateMediaItems(entity.ID, product.MediaItems); err != nil {
-		return nil, err
-	}
-	if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
-		return nil, err
-	}
-	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateData); err != nil {
-		return nil, err
-	}
-
-	postInfo := product.PostCreate
 	var postEntity *domain.Post
-	if postInfo != nil && s.PostUsecase != nil {
-		postInfo.ProductID = entity.ID
-		postInfo.Content = entity.Description
-		postInfo.TransactionType = entity.TransactionType
-		if entity.TransactionType == 10 {
-			postInfo.Price = *product.PriceData.SalePrice
-		} else {
-			postInfo.Price = *product.PriceData.RentPrice
-		}
-
-		dto := dto.PostSaveRequest{}
-		copier.Copy(&dto, &postInfo)
-
-		postEntity, err = s.PostUsecase.CreatePost(c, &dto)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	assetInfo := product.AssetCreate
 	var assetEntity *domain.Asset
-	if assetInfo != nil {
-		// copier.Copy(&assetEntity, &assetInfo)
-		assetEntity = &domain.Asset{
-			ProductID:      &entity.ID,
-			Name:           entity.Name,
-			Area:           entity.Area,
-			PropertyTypeId: entity.PropertyTypeId,
-			Description:    entity.Description,
-			ProvinceID:     entity.ProvinceID,
-			DistrictID:     entity.DistrictID,
-			WardID:         entity.WardID,
-			PurchasePrice:  assetInfo.PurchasePrice,
-			PurchaseDate:   assetInfo.PurchaseDate,
-			LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
-			RentStatus:     assetInfo.RentStatus,
-			// Description:    assetInfo.Description,
+
+	s.Transaction.WithTransaction(c, func(c context.Context) error {
+		if err := s.UpdatePrice(c, 0, product.PriceData); err != nil {
+			return err
+		}
+		if product.PriceData != nil {
+			entity.LastPriceID = &product.PriceData.ID
 		}
 
-		// assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
-		// 	Asset:      *assetEntity,
-		// 	LegalItems: assetInfo.LegalItems,
-		// })
-		if err != nil {
-			return nil, err
+		entity.OwnerUserID = &ownerId
+		entity.OwnerType = product.OwnerType
+		// _db.SaveWithContext(c, entity)
+		if err := s.ProductRepo.Create(c, entity); err != nil {
+			return err
 		}
-	}
+		// err := s.productRepo.UpdateProduct(c, entity.ID, entity)
+		// err := s.UpdateReference(c, entity, product)
+
+		if product.PriceData != nil {
+			if err := s.PriceRepo.UpdateProductID(c, &entity.ID, &product.PriceData.ID); err != nil {
+				return err
+			}
+		}
+		if err := s.UpdateAmenity(c, entity.ID, product.AmenityIds); err != nil {
+			return err
+		}
+		if err := s.UpdateMediaItems(c, entity.ID, product.MediaItems); err != nil {
+			return err
+		}
+		if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
+			return err
+		}
+		if err := s.UpdatePrivateData(c, entity.ID, product.PrivateData); err != nil {
+			return err
+		}
+
+		postInfo := product.PostCreate
+		if postInfo != nil && s.PostUsecase != nil {
+			postInfo.ProductID = entity.ID
+			postInfo.Content = entity.Description
+			postInfo.TransactionType = entity.TransactionType
+			if entity.TransactionType == 10 {
+				postInfo.Price = *product.PriceData.SalePrice
+			} else {
+				postInfo.Price = *product.PriceData.RentPrice
+			}
+
+			dto := dto.PostSaveRequest{}
+			copier.Copy(&dto, &postInfo)
+
+			postEntity, err = s.PostUsecase.CreatePost(c, &dto)
+			if err != nil {
+				return err
+			}
+		}
+
+		assetInfo := product.AssetCreate
+		if assetInfo != nil {
+			// copier.Copy(&assetEntity, &assetInfo)
+			assetEntity = &domain.Asset{
+				ProductID:      &entity.ID,
+				Name:           entity.Name,
+				Area:           entity.Area,
+				PropertyTypeId: entity.PropertyTypeId,
+				Description:    entity.Description,
+				ProvinceID:     entity.ProvinceID,
+				DistrictID:     entity.DistrictID,
+				WardID:         entity.WardID,
+				PurchasePrice:  assetInfo.PurchasePrice,
+				PurchaseDate:   assetInfo.PurchaseDate,
+				LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
+				RentStatus:     assetInfo.RentStatus,
+				// Description:    assetInfo.Description,
+			}
+
+			// assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
+			// 	Asset:      *assetEntity,
+			// 	LegalItems: assetInfo.LegalItems,
+			// })
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	return &dto.CreateResponse{
 		Product: entity,
@@ -297,10 +307,10 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 	if err := s.UpdatePrice(c, *entity.LastPriceID, product.PriceData); err != nil {
 		return nil, err
 	}
-	if err := s.UpdateAmenity(entity.ID, product.AmenityIds); err != nil {
+	if err := s.UpdateAmenity(c, entity.ID, product.AmenityIds); err != nil {
 		return nil, err
 	}
-	if err := s.UpdateMediaItems(entity.ID, product.MediaItems); err != nil {
+	if err := s.UpdateMediaItems(c, entity.ID, product.MediaItems); err != nil {
 		return nil, err
 	}
 
@@ -433,28 +443,28 @@ func (s *ProductUsecase) UpdatePrice(c context.Context, priceID uint64, entity *
 	return s.PriceRepo.UpdatePrice(c, priceID, entity)
 }
 
-func (s *ProductUsecase) UpdateAmenity(productID uint64, ids []uint64) error {
+func (s *ProductUsecase) UpdateAmenity(ctx context.Context, productID uint64, ids []uint64) error {
 	if len(ids) > 0 {
-		return s.ProductRepo.UpdateProductAmenityIds(productID, ids)
+		return s.ProductRepo.UpdateProductAmenityIds(ctx, productID, ids)
 	}
 	return nil
 }
 
-func (s *ProductUsecase) UpdateMediaItems(productID uint64, items []dto.MediaItem) error {
-	return s.MediaRepo.UpdateProductMediaItems(productID, items)
+func (s *ProductUsecase) UpdateMediaItems(ctx context.Context, productID uint64, items []dto.MediaItem) error {
+	return s.MediaRepo.UpdateProductMediaItems(ctx, productID, items)
 }
 
-func (s *ProductUsecase) UpdateHouseInfo(c context.Context, productId uint64, houseInfo *domain.HouseInfo) error {
+func (s *ProductUsecase) UpdateHouseInfo(ctx context.Context, productId uint64, houseInfo *domain.HouseInfo) error {
 	if houseInfo != nil {
 		// copier.Copy(&houseInfo, &dto.HouseInfo)
 		houseInfo.ProductID = productId
-		return s.HouseInfoRepo.UpdateHouseInfo(c, houseInfo)
+		return s.HouseInfoRepo.UpdateHouseInfo(ctx, houseInfo)
 	}
 	return nil
 }
 
-func (s *ProductUsecase) UpdatePrivateData(c context.Context, productID uint64, privateInfo *domain.ProductPrivate) error {
-	return s.ProductPrivate.UpdateInfo(c, productID, privateInfo)
+func (s *ProductUsecase) UpdatePrivateData(ctx context.Context, productID uint64, privateInfo *domain.ProductPrivate) error {
+	return s.ProductPrivate.UpdateInfo(ctx, productID, privateInfo)
 }
 
 // func (s *ProductUsecase) InferenceString(text string) string {

@@ -11,6 +11,7 @@ import (
 	"crm/config"
 	"crm/infra/client"
 	"crm/infra/impl"
+	"crm/infra/mapper"
 	"crm/infra/postgre"
 	"crm/infra/router"
 	"crm/infra/services"
@@ -52,9 +53,12 @@ func InitializeApp() (*config.ConfigApp, error) {
 	runtimeRouter := router.NewRuntimeRouter(stageRouter, pipelineRouter, ruleRouter, leadRouter)
 	ruleEventUsecase := usecase.NewRuleEventUsecase(postgreRule, leadPostgre, notificationClient)
 	pipelineService := grpc_service.NewPipelineService(pipelineUsecase)
-	contactService := grpc_service.NewContactService(contactUsecase, userClient)
+	contactMapper := mapper.NewContactMapper()
+	friendMapper := mapper.NewFriendMapper()
+	contactService := grpc_service.NewContactService(contactUsecase, userClient, contactMapper, friendMapper)
 	bdsproClient := client.NewBdsproClient()
-	leadService := grpc_service.NewLeadService(leadUsecase, userClient, bdsproClient)
+	leadMapper := mapper.NewLeadMapper(contactMapper)
+	leadService := grpc_service.NewLeadService(leadUsecase, userClient, bdsproClient, leadMapper)
 	stageService := grpc_service.NewStageService(stageUsecase)
 	ruleService := grpc_service.NewRuleService(ruleUsecase)
 	blockRepo := postgre.NewBlockRepo(db)
@@ -66,18 +70,19 @@ func InitializeApp() (*config.ConfigApp, error) {
 	friendGroupUsecase := usecase.NewFriendGroupUsecase(friendGroupRepo)
 	friendGroupService := grpc_service.NewFriendGroupService(friendGroupUsecase)
 	friendUsecase := usecase.NewFriendUsecase(friendPostgre, postgreContact, followPostgre, blockRepo, blockUsecase, notificationClient, userClient)
-	friendService := grpc_service.NewFriendService(friendUsecase, userClient)
+	friendService := grpc_service.NewFriendService(friendUsecase, userClient, friendMapper)
 	sharingAccessPostgre := postgre.NewSharingAccessPostgre(db)
 	sharingAccessUsecase := usecase.NewSharingAccessUsecase(sharingAccessPostgre, postgreContact, userClient)
 	sharingAccessService := grpc_service.NewSharingAccessService(sharingAccessUsecase)
 	invitationInstallPostgre := postgre.NewInvitationInstallPostgre(db)
 	invitationInstallUsecase := usecase.NewInvitationInstallUsecase(invitationInstallPostgre, notificationClient, userClient)
-	invitationInstallService := grpc_service.NewInvitationInstallService(invitationInstallUsecase)
-	configApp := config.NewConfigApp(runtimeRouter, ruleUsecase, ruleEventUsecase, pipelineService, contactService, leadService, stageService, ruleService, followService, blockService, friendGroupService, friendService, sharingAccessService, invitationInstallService)
+	invitationInstallService := grpc_service.NewInvitationInstallService(invitationInstallUsecase, contactMapper)
+	crmInternalService := grpc_service.NewCrmInternalService(friendPostgre, friendMapper)
+	configApp := config.NewConfigApp(runtimeRouter, ruleUsecase, ruleEventUsecase, pipelineService, contactService, leadService, stageService, ruleService, followService, blockService, friendGroupService, friendService, sharingAccessService, invitationInstallService, crmInternalService)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.INotificationClient), new(*client.NotificationClient)), wire.Bind(new(usecase.PermissionUsecase), new(*client.PermissionUsecase)), wire.Bind(new(iusecase.UserClient), new(*client.UserClient)), wire.Bind(new(iusecase.ITransaction), new(*impl.TransactionGorm)), wire.Bind(new(repo.BlockRepo), new(*postgre.BlockRepo)), wire.Bind(new(repo.ContactRepo), new(*postgre.PostgreContact)), wire.Bind(new(repo.DocumentRepo), new(*postgre.DocumentPostgre)), wire.Bind(new(repo.FollowRepo), new(*postgre.FollowPostgre)), wire.Bind(new(repo.FriendGroupRepo), new(*postgre.FriendGroupRepo)), wire.Bind(new(repo.FriendRepo), new(*postgre.FriendPostgre)), wire.Bind(new(repo.InvitationInstallRepo), new(*postgre.InvitationInstallPostgre)), wire.Bind(new(repo.LeadRepo), new(*postgre.LeadPostgre)), wire.Bind(new(repo.PipelineRepo), new(*postgre.PostgrePipeline)), wire.Bind(new(repo.ProductCareRepo), new(*postgre.ProductCarePostgre)), wire.Bind(new(repo.RuleRepo), new(*postgre.PostgreRule)), wire.Bind(new(repo.SharingAccessRepo), new(*postgre.SharingAccessPostgre)), wire.Bind(new(repo.StageRepo), new(*postgre.PostgreStage)), client.NewBdsproClient, postgre.NewBlockRepo, grpc_service.NewBlockService, usecase.NewBlockUsecase, config.NewConfigApp, postgre.NewContactRepo, router.NewContactRouter, grpc_service.NewContactService, usecase.NewContactUsecase, postgre.NewDocumentPostgre, postgre.NewFollowPostgre, grpc_service.NewFollowService, usecase.NewFollowUsecase, grpc_service.NewFriendGroupService, usecase.NewFriendGroupUsecase, postgre.NewFriendRepo, grpc_service.NewFriendService, usecase.NewFriendUsecase, postgre.NewGroupRepo, postgre.NewInvitationInstallPostgre, grpc_service.NewInvitationInstallService, usecase.NewInvitationInstallUsecase, router.NewLeadRouter, grpc_service.NewLeadService, usecase.NewLeadUsecase, client.NewNotificationClient, router.NewPermissionRouter, client.NewPermissionUsecase, router.NewPipelineRouter, grpc_service.NewPipelineService, usecase.NewPipelineUsecase, postgre.NewPostgreCustomer, postgre.NewPostgrePipeline, postgre.NewPostgreRule, postgre.NewPostgreStage, postgre.NewProductCarePostgre, usecase.NewRuleEventUsecase, router.NewRuleRouter, grpc_service.NewRuleService, usecase.NewRuleUsecase, router.NewRuntimeRouter, postgre.NewSharingAccessPostgre, grpc_service.NewSharingAccessService, usecase.NewSharingAccessUsecase, router.NewStageRouter, grpc_service.NewStageService, usecase.NewStageUsecase, impl.NewTransactionGorm, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.INotificationClient), new(*client.NotificationClient)), wire.Bind(new(usecase.PermissionUsecase), new(*client.PermissionUsecase)), wire.Bind(new(iusecase.UserClient), new(*client.UserClient)), wire.Bind(new(iusecase.ITransaction), new(*impl.TransactionGorm)), wire.Bind(new(repo.BlockRepo), new(*postgre.BlockRepo)), wire.Bind(new(repo.ContactRepo), new(*postgre.PostgreContact)), wire.Bind(new(repo.DocumentRepo), new(*postgre.DocumentPostgre)), wire.Bind(new(repo.FollowRepo), new(*postgre.FollowPostgre)), wire.Bind(new(repo.FriendGroupRepo), new(*postgre.FriendGroupRepo)), wire.Bind(new(repo.FriendRepo), new(*postgre.FriendPostgre)), wire.Bind(new(repo.InvitationInstallRepo), new(*postgre.InvitationInstallPostgre)), wire.Bind(new(repo.LeadRepo), new(*postgre.LeadPostgre)), wire.Bind(new(repo.PipelineRepo), new(*postgre.PostgrePipeline)), wire.Bind(new(repo.ProductCareRepo), new(*postgre.ProductCarePostgre)), wire.Bind(new(repo.RuleRepo), new(*postgre.PostgreRule)), wire.Bind(new(repo.SharingAccessRepo), new(*postgre.SharingAccessPostgre)), wire.Bind(new(repo.StageRepo), new(*postgre.PostgreStage)), client.NewBdsproClient, postgre.NewBlockRepo, grpc_service.NewBlockService, usecase.NewBlockUsecase, config.NewConfigApp, mapper.NewContactMapper, postgre.NewContactRepo, router.NewContactRouter, grpc_service.NewContactService, usecase.NewContactUsecase, grpc_service.NewCrmInternalService, postgre.NewDocumentPostgre, postgre.NewFollowPostgre, grpc_service.NewFollowService, usecase.NewFollowUsecase, grpc_service.NewFriendGroupService, usecase.NewFriendGroupUsecase, mapper.NewFriendMapper, postgre.NewFriendRepo, grpc_service.NewFriendService, usecase.NewFriendUsecase, postgre.NewGroupRepo, postgre.NewInvitationInstallPostgre, grpc_service.NewInvitationInstallService, usecase.NewInvitationInstallUsecase, mapper.NewLeadMapper, router.NewLeadRouter, grpc_service.NewLeadService, usecase.NewLeadUsecase, client.NewNotificationClient, router.NewPermissionRouter, client.NewPermissionUsecase, router.NewPipelineRouter, grpc_service.NewPipelineService, usecase.NewPipelineUsecase, postgre.NewPostgreCustomer, postgre.NewPostgrePipeline, postgre.NewPostgreRule, postgre.NewPostgreStage, postgre.NewProductCarePostgre, usecase.NewRuleEventUsecase, router.NewRuleRouter, grpc_service.NewRuleService, usecase.NewRuleUsecase, router.NewRuntimeRouter, postgre.NewSharingAccessPostgre, grpc_service.NewSharingAccessService, usecase.NewSharingAccessUsecase, router.NewStageRouter, grpc_service.NewStageService, usecase.NewStageUsecase, impl.NewTransactionGorm, client.NewUserClient)

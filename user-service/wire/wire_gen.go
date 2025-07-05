@@ -68,13 +68,15 @@ func InitializeApp() (*config.ConfigApp, error) {
 	rateRouter := routes.NewRateRouter(rateService)
 	organizationServiceClient := client.NewOrganizationClient()
 	groupServiceClient := client.NewGroupClient()
-	grpcProfileService := services.NewGrpcProfileService(profileRepo, profileService, organizationServiceClient, groupServiceClient)
+	rateMapper := mapper.NewRateMapper()
+	profileMapper := mapper.NewProfileMapper(rateMapper)
+	crmClient := client.NewCrmClient()
+	grpcProfileService := services.NewGrpcProfileService(profileRepo, profileService, organizationServiceClient, groupServiceClient, profileMapper, crmClient)
 	grpcAuthService := services.NewGrpcAuthService(authService, profileRepo, organizationMemberServiceClient)
 	attachPostgres := postgres.NewAttachPostgres(db)
 	ratePostgres := postgres.NewRatePostgres(db, attachPostgres)
 	transactionGorm := postgres.NewTransactionGorm(db)
 	rateUsecase := usecases.NewRateUsecase(ratePostgres, transactionGorm)
-	rateMapper := mapper.NewRateMapper()
 	servicesRateService := services.NewGrpcRateService(rateUsecase, rateMapper)
 	configApp := config.NewConfigApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, rateRouter, grpcProfileService, grpcAuthService, servicesRateService)
 	return configApp, nil
@@ -83,4 +85,4 @@ func InitializeApp() (*config.ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo2.RateRepo), new(*postgres.RatePostgres)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), postgres.NewAttachPostgres, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, repo.NewCertificationRepo, user_service.NewCertificationService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, client.NewGroupClient, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, services.NewGrpcAuthService, services.NewGrpcProfileService, services.NewGrpcRateService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, mapper.NewRateMapper, postgres.NewRatePostgres, repo.NewRateRepo, routes.NewRateRouter, user_service.NewRateService, usecases.NewRateUsecase, auth_service.NewRedisService, dto.NewRefreshResponse, dto.NewRequestLoginResponse, postgres.NewTransactionGorm, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo2.RateRepo), new(*postgres.RatePostgres)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), postgres.NewAttachPostgres, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, repo.NewCertificationRepo, user_service.NewCertificationService, config.NewConfigApp, repo.NewContactRepo, auth_service.NewCookieService, client.NewCrmClient, auth_service.NewFacebookAuthService, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, client.NewGroupClient, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, services.NewGrpcAuthService, services.NewGrpcProfileService, services.NewGrpcRateService, auth_service.NewHttpClient, routes.NewOAuthRouter, auth_service.NewOAuthService, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, mapper.NewProfileMapper, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, mapper.NewRateMapper, postgres.NewRatePostgres, repo.NewRateRepo, routes.NewRateRouter, user_service.NewRateService, usecases.NewRateUsecase, auth_service.NewRedisService, dto.NewRefreshResponse, dto.NewRequestLoginResponse, postgres.NewTransactionGorm, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)

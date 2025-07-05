@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+
+service CrmInternalService {
+    rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
+}
+
+message FriendStatusByProfileIdsRequest {
+    repeated uint64 profileIds = 1;
+    uint64 currentProfileId = 2;
+}
+
+message FriendStatusByProfileIdsResponse {
+    repeated sharepb.FriendItem friendStatus = 1;
+}

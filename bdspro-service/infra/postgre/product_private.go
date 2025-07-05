@@ -126,5 +126,5 @@ func (r *GormProductPrivateRepo) UpdateInfo(c context.Context, productId uint64,
 	}
 	entity.ProductId = productId
 
-	return r.DB.WithContext(c).Save(&entity).Error
+	return GetDB(c, r.DB).Save(&entity).Error
 }

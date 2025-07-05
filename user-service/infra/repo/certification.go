@@ -27,12 +27,13 @@ func (r *CertificationRepo) CreateBatchCertification(c *gin.Context, certificati
 	return r.DB.WithContext(c).Create(&certifications).Error
 }
 
-func (r *CertificationRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.CertificationItem, error) {
-	var certifications []user_model.CertificationItem
+func (r *CertificationRepo) ListItemByProfileID(c context.Context, profileID uint64) ([]user_model.CertificationEntity, error) {
+	var certifications []user_model.CertificationEntity
 
 	err := r.DB.WithContext(c).
+		Model(&user_model.CertificationEntity{}).
 		Where("created_by = ? and deleted_at is null", profileID).
-		Select("id, name, file_name, file_type, file_url, verified_status").
+		// Select("id, name, file_name, file_type, file_url, verified_status, issue_date").
 		Find(&certifications).Error
 
 	return certifications, err
@@ -62,7 +63,7 @@ func (r *CertificationRepo) DeleteCertification(c *gin.Context, id uint64) error
 }
 
 func (r *CertificationRepo) BatchSave(
-	c *gin.Context,
+	c context.Context,
 	certifications *[]user_model.CertificationEntity,
 	deletedIds []uint64,
 ) error {

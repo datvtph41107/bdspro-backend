@@ -28,8 +28,8 @@ func ProfileRoutes(r *gin.Engine, router *ProfileRouter) {
 		profileGroup.GET("/chat/find", router.FindOnChat)
 		profileGroup.GET("/find/ids", router.FindByIds)
 
-		profileGroup.GET("/me", router.ProfileMe)
-		profileGroup.PUT("/set-info", router.SetInfo)
+		// profileGroup.GET("/me", router.ProfileMe)
+		// profileGroup.PUT("/set-info", router.SetInfo)
 		profileGroup.GET("/info/:profileId", router.PublicInfo)
 
 		// tìm kiếm user
@@ -230,42 +230,42 @@ func (p *ProfileRouter) Find(c *gin.Context) {
 	_routes.RouteResult(c, result, err)
 }
 
-// ProfileMe godoc
-// @Summary Lấy thông tin cá nhân của user
-// @Description API này trả về thông tin của user hiện tại
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} dto.UserInfoResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /v1/user/profile/me [get]
-func (p *ProfileRouter) ProfileMe(c *gin.Context) {
-	result, err := p.Profile.GetInfoMe(c)
+// // ProfileMe godoc
+// // @Summary Lấy thông tin cá nhân của user
+// // @Description API này trả về thông tin của user hiện tại
+// // @Tags Profile
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Success 200 {object} dto.UserInfoResponse
+// // @Failure 400 {object} map[string]string
+// // @Failure 500 {object} map[string]string
+// // @Router /v1/user/profile/me [get]
+// func (p *ProfileRouter) ProfileMe(c *gin.Context) {
+// 	result, err := p.Profile.GetInfoMe(c)
 
-	_routes.RouteResult(c, result, err)
-}
+// 	_routes.RouteResult(c, result, err)
+// }
 
-// UpdateUserInfo cập nhật thông tin hồ sơ
-// @Summary Cập nhật thông tin hồ sơ
-// @Description API này cho phép người dùng cập nhật thông tin hồ sơ
-// @Tags Profile
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body dto.UserInfoRequest true "Thông tin cập nhật"
-// @Success 200 {object} dto.UserInfoResponse "Cập nhật thành công"
-// @Router /v1/user/profile/set-info [put]
-func (p *ProfileRouter) SetInfo(c *gin.Context) {
-	var dto dto.UserInfoRequest
-	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	result, err := p.Profile.UpdateUserInfo(c, dto)
-	_routes.RouteResult(c, result, err)
-}
+// // UpdateUserInfo cập nhật thông tin hồ sơ
+// // @Summary Cập nhật thông tin hồ sơ
+// // @Description API này cho phép người dùng cập nhật thông tin hồ sơ
+// // @Tags Profile
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param request body dto.UserInfoRequest true "Thông tin cập nhật"
+// // @Success 200 {object} dto.UserInfoResponse "Cập nhật thành công"
+// // @Router /v1/user/profile/set-info [put]
+// func (p *ProfileRouter) SetInfo(c *gin.Context) {
+// 	var dto dto.UserInfoRequest
+// 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
+// 	result, err := p.Profile.UpdateUserInfo(c, &dto)
+// 	_routes.RouteResult(c, result, err)
+// }
 
 // UpdateUserInfo Thông tin hồ sơ
 // @Summary Xem thông tin public của người dùng
@@ -279,6 +279,6 @@ func (p *ProfileRouter) SetInfo(c *gin.Context) {
 // @Router /v1/user/profile/info/{profileId} [get]
 func (p *ProfileRouter) PublicInfo(c *gin.Context) {
 	profileId, _ := strconv.ParseUint(c.Param("profileId"), 10, 64)
-	result, err := p.Profile.PublicUserInfo(c, profileId)
+	result, err := p.Profile.PublicUserInfo(c, profileId, false)
 	_routes.RouteResult(c, result, err)
 }

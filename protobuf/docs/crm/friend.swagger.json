@@ -55,6 +55,51 @@
         ]
       }
     },
+    "/v2/crm/friend/cancel/{id}": {
+      "delete": {
+        "operationId": "FriendService_CancelFriendRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "FriendService"
+        ]
+      }
+    },
     "/v2/crm/friend/group/{requestId}/{groupId}": {
       "put": {
         "operationId": "FriendService_FriendUpdateGroup",
@@ -170,51 +215,6 @@
     "/v2/crm/friend/reject/{id}": {
       "delete": {
         "operationId": "FriendService_FriendReject",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/sharepbSubmitResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "FriendService"
-        ]
-      }
-    },
-    "/v2/crm/friend/request/cancel/{id}": {
-      "delete": {
-        "operationId": "FriendService_CancelFriendRequest",
         "responses": {
           "200": {
             "description": "A successful response.",

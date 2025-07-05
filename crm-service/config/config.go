@@ -45,6 +45,7 @@ type ConfigApp struct {
 	FriendService            *services.FriendService
 	SharingAccessService     *services.SharingAccessService
 	InvitationInstallService *services.InvitationInstallService
+	CrmInternalService       *services.CrmInternalService
 	Logger                   *flogging.FabricLogger
 }
 
@@ -63,6 +64,7 @@ func NewConfigApp(
 	friendService *services.FriendService,
 	sharingAccessService *services.SharingAccessService,
 	invitationInstallService *services.InvitationInstallService,
+	crmInternalService *services.CrmInternalService,
 ) *ConfigApp {
 	return &ConfigApp{
 		RuntimeRouter:            runtimeRouter,
@@ -79,6 +81,7 @@ func NewConfigApp(
 		FriendService:            friendService,
 		SharingAccessService:     sharingAccessService,
 		InvitationInstallService: invitationInstallService,
+		CrmInternalService:       crmInternalService,
 		Logger:                   flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

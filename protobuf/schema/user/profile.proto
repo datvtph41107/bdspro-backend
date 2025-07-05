@@ -14,9 +14,25 @@ service ProfileService {
             get: "/v2/user/profile/info/{id}"
         };
     }
+    rpc GetProfileInfoMe(sharepb.Empty) returns (ProfilePublicInfo) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/info/me"
+        };
+    }
     rpc ListAccountMe(sharepb.Empty) returns (AccountInfoResponse) {
         option (google.api.http) = {
-            get: "/v2/user/profile/accounts/me"
+            get: "/v2/user/profile/me"
+        };
+    }
+    rpc SetInfo(SetInfoRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/set-info"
+            body: "*"
+        };
+    }
+    rpc SearchProfilePublic(SearchProfilePublicRequest) returns (SearchProfilePublicResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/search/public"
         };
     }
 }
@@ -75,19 +91,8 @@ message ProfilePublicInfo {
     sharepb.FriendItem friendStatus = 32;
     bool following = 33;
     uint32 tabDefault = 34;
-}
-
-message CertificationItem {
-	uint64 id = 1;
-	string title = 2;
-	string fileUrl = 3;
-	uint32 verifiedStatus = 4;
-}
-
-message ProfessionItem {
-	uint64 id = 1;
-	string name = 2;
-	uint32 verifiedStatus = 3;
+    uint32 visibility = 35;
+    uint32 profileVisibility = 36;
 }
 
 message RateStats {
@@ -123,4 +128,75 @@ message AccountInfo {
     optional uint32 organizationId = 9;
     optional uint32 groupId = 10;
     optional uint32 ownerType = 11;
+}
+
+message SetInfoRequest {
+    string phone = 1;
+    string phone2 = 2;
+    string email = 3;
+    string taxCode = 4;
+    string fullName = 5;
+    string address = 6;
+    string avatar = 7;
+    string backgroundImage = 8;
+    string position = 9;
+    uint64 departmentId = 10;
+    string birth = 11;
+    string startDate = 12;
+    string frontIdentify = 13;
+    string backIdentify = 14;
+    string slogan = 15;
+    string website = 16;
+    string facebook = 17;
+    string instagram = 18;
+    string twitter = 19;
+    string linkedin = 20;
+    string youtube = 21;
+    string introduction = 22;
+    uint32 visibility = 23;
+    uint32 profileVisibility = 24;
+    uint32 statusOnline = 25;
+    uint32 tabDefault = 26;
+    uint32 roleRealEstate = 27;
+
+    repeated CertificationItem certifications = 28;
+    repeated uint64 certificationRemoveIds = 29;
+    repeated ProfessionItem professions = 30;
+    repeated uint64 professionRemoveIds = 31;
+}
+
+message CertificationItem {
+    uint64 id = 1;
+    string name = 2;
+    string issuer = 3;
+    string fileUrl = 4;
+    string fileType = 5;
+    string fileName = 6;
+    string issueDate = 7;
+}
+
+message ProfessionItem {
+    uint64 id = 1;
+    string name = 2;
+    string issuer = 3;
+    string issueDate = 4;
+    uint32 verifiedStatus = 5;
+}
+
+message UserSearchItem {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string avatar = 3;
+    optional sharepb.FriendItem friendStatus = 4;
+}
+
+message SearchProfilePublicRequest {
+    string text = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+}
+
+message SearchProfilePublicResponse {
+    repeated UserSearchItem data = 1;
+    uint64 total = 2;
 }

@@ -17,12 +17,24 @@ import (
 
 type ContactService struct {
 	crmpb.UnimplementedContactServiceServer
-	UC         *usecase.ContactUsecase
-	UserClient *client.UserClient
+	UC            *usecase.ContactUsecase
+	UserClient    *client.UserClient
+	ContactMapper *mapper.ContactMapper
+	FriendMapper  *mapper.FriendMapper
 }
 
-func NewContactService(uc *usecase.ContactUsecase, userClient *client.UserClient) *ContactService {
-	return &ContactService{UC: uc, UserClient: userClient}
+func NewContactService(
+	uc *usecase.ContactUsecase,
+	userClient *client.UserClient,
+	contactMapper *mapper.ContactMapper,
+	friendMapper *mapper.FriendMapper,
+) *ContactService {
+	return &ContactService{
+		UC:            uc,
+		UserClient:    userClient,
+		ContactMapper: contactMapper,
+		FriendMapper:  friendMapper,
+	}
 }
 
 // @Summary Lấy danh sách liên hệ
@@ -61,7 +73,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 		return nil, err
 	}
 
-	contactsPb := mapper.ListContactItemToPb(contacts)
+	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 
 	return &crmpb.ContactListDTO{
@@ -84,7 +96,7 @@ func (s *ContactService) Detail(ctx context.Context, req *sharepb.IdRequest) (*c
 		return nil, err
 	}
 
-	contactPb := mapper.ContactToPb(contact)
+	contactPb := s.ContactMapper.ContactToPb(contact)
 	s.UserClient.PbUserToContact(ctx, contactPb)
 
 	return contactPb, nil
@@ -101,7 +113,7 @@ func (s *ContactService) Detail(ctx context.Context, req *sharepb.IdRequest) (*c
 // @Failure 409 {string} string "Liên hệ đã tồn tại"
 // @Router /contact [post]
 func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactSaveDTO) (*crmpb.ContactDTO, error) {
-	domain := mapper.PbToContactSave(req)
+	domain := s.ContactMapper.PbToContactSave(req)
 	if domain.FullName == "" || domain.Phone == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "FullName and Phone are required")
 	}
@@ -109,7 +121,7 @@ func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
-	return mapper.ContactToPb(result), nil
+	return s.ContactMapper.ContactToPb(result), nil
 }
 
 // @Summary Cập nhật thông tin liên hệ
@@ -122,7 +134,7 @@ func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactSaveDTO) 
 // @Security BearerAuth
 // @Router /contact/{id} [put]
 func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) (*crmpb.ContactDTO, error) {
-	domain := mapper.PbToContactSave(req)
+	domain := s.ContactMapper.PbToContactSave(req)
 	if domain.FullName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "FullName and Phone are required")
 	}
@@ -130,7 +142,7 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
-	return mapper.ContactToPb(result), nil
+	return s.ContactMapper.ContactToPb(result), nil
 }
 
 // @Summary Xóa liên hệ
@@ -161,13 +173,13 @@ func (s *ContactService) Delete(ctx context.Context, req *sharepb.IdRequest) (*s
 // @Security BearerAuth
 // @Router /contact/sync [post]
 func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest) (*crmpb.ContactSyncResponse, error) {
-	domains := mapper.ListContactToDomain(req.Contacts)
+	domains := s.ContactMapper.ListContactToDomain(req.Contacts)
 	result, err := s.UC.Sync(ctx, enums.EOwnerType(req.OwnerType), domains)
 	if err != nil {
 		return nil, err
 	}
 	return &crmpb.ContactSyncResponse{
-		Data:  mapper.ListContactToPb(result),
+		Data:  s.ContactMapper.ListContactToPb(result),
 		Total: uint32(len(result)),
 	}, nil
 }
@@ -184,7 +196,7 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdRequest) (*crmpb.RelationShipResponse, error) {
 	result := s.UC.RelationShip(ctx, req.Id)
 	return &crmpb.RelationShipResponse{
-		FriendStatus: mapper.FriendItemToPb(result.FriendStatus),
+		FriendStatus: s.FriendMapper.FriendItemToPb(result.FriendStatus),
 		Following:    result.Following,
 		NumFollower:  result.NumFollower,
 		NumFollowing: result.NumFollowing,

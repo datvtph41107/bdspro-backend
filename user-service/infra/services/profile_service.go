@@ -1,6 +1,7 @@
 package services
 
 import (
+	_dto "common/dto"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -9,10 +10,11 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
+	"user/infra/client"
+	"user/infra/mapper"
 	user_repo "user/infra/repo"
 	user_service "user/internal/services/user"
 
-	"github.com/jinzhu/copier"
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,11 +22,13 @@ import (
 
 type GrpcProfileService struct {
 	userpb.UnimplementedProfileServiceServer
-	ProfileRepo *user_repo.ProfileRepo
-	Profile     *user_service.ProfileService
-	cache       *cache.Cache
-	OrgClient   orgpb.OrganizationServiceClient
-	GroupClient organizationpb.GroupServiceClient
+	ProfileRepo   *user_repo.ProfileRepo
+	Profile       *user_service.ProfileService
+	cache         *cache.Cache
+	OrgClient     orgpb.OrganizationServiceClient
+	GroupClient   organizationpb.GroupServiceClient
+	ProfileMapper *mapper.ProfileMapper
+	CrmClient     *client.CrmClient
 }
 
 func NewGrpcProfileService(
@@ -32,13 +36,17 @@ func NewGrpcProfileService(
 	profileService *user_service.ProfileService,
 	orgClient orgpb.OrganizationServiceClient,
 	groupClient organizationpb.GroupServiceClient,
+	profileMapper *mapper.ProfileMapper,
+	crmClient *client.CrmClient,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
-		ProfileRepo: profileRepo,
-		Profile:     profileService,
-		cache:       cache.New(5*time.Minute, 10*time.Minute),
-		OrgClient:   orgClient,
-		GroupClient: groupClient,
+		ProfileRepo:   profileRepo,
+		Profile:       profileService,
+		cache:         cache.New(5*time.Minute, 10*time.Minute),
+		OrgClient:     orgClient,
+		GroupClient:   groupClient,
+		ProfileMapper: profileMapper,
+		CrmClient:     crmClient,
 	}
 }
 
@@ -113,14 +121,28 @@ func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *userpb
 // @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/{id} [get]
 func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdRequest) (*userpb.ProfilePublicInfo, error) {
-	result, err := s.Profile.PublicUserInfo(ctx, req.Id)
+	result, err := s.Profile.PublicUserInfo(ctx, req.Id, false)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	dto := &userpb.ProfilePublicInfo{}
-	copier.Copy(dto, result)
-	return dto, nil
+	return s.ProfileMapper.PublicUserInfoToPb(result), nil
+}
+
+// @Summary Lấy thông tin công khai của người dùng request
+// @Description Lấy thông tin công khai của người dùng request me
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
+// @Router /v2/user/profile/info/me [get]
+func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*userpb.ProfilePublicInfo, error) {
+	result, err := s.Profile.PublicUserInfoMe(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
+	}
+	return s.ProfileMapper.PublicUserInfoToPb(result), nil
 }
 
 // @Summary Lấy danh sách tài khoản của người dùng
@@ -189,5 +211,33 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 	return &userpb.AccountInfoResponse{
 		Data:  accountInfos,
 		Total: uint64(len(accountInfos)),
+	}, nil
+}
+
+func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoRequest) (*sharepb.Empty, error) {
+	dto := s.ProfileMapper.SetProfileToDTO(req)
+
+	s.Profile.UpdateUserInfo(ctx, dto)
+
+	return &sharepb.Empty{}, nil
+}
+
+func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userpb.SearchProfilePublicRequest) (*userpb.SearchProfilePublicResponse, error) {
+	pageable := _dto.Pagable{
+		Page: int(req.Page),
+		Size: int(req.Size),
+	}
+	results, total, err := s.Profile.SearchProfilePublic(ctx, req, pageable)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to search profile: %v", err)
+	}
+
+	infos := s.ProfileMapper.UserSearchItemToPbs(results)
+
+	s.CrmClient.MapFriendStatusToSearchItemPb(ctx, infos)
+
+	return &userpb.SearchProfilePublicResponse{
+		Data:  infos,
+		Total: uint64(total),
 	}, nil
 }

@@ -45,7 +45,7 @@ func (r *GormProductPriceRepo) FindByProductId(productId *uint64) *domain.Produc
 // Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
 func (r *GormProductPriceRepo) GetByID(c context.Context, id uint64) (*domain.ProductPrice, error) {
 	var entity domain.ProductPrice
-	err := r.DB.Where("id = ? AND deleted_at IS NULL", id).First(&entity).Error
+	err := GetDB(c, r.DB).Where("id = ? AND deleted_at IS NULL", id).First(&entity).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,11 @@ func (r *GormProductPriceRepo) GetByID(c context.Context, id uint64) (*domain.Pr
 
 func (r *GormProductPriceRepo) UpdateProductID(c context.Context, productId *uint64, priceId *uint64) error {
 	price, _ := r.GetByID(c, *priceId)
+	if price == nil {
+		return nil
+	}
 	price.ProductID = productId
-	return r.DB.WithContext(c).Save(&price).Error
+	return GetDB(c, r.DB).Save(price).Error
 }
 func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, entity *domain.ProductPrice) error {
 	if entity == nil {
@@ -80,7 +83,7 @@ func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, en
 		}
 	}
 
-	return _db.SaveWithContext(c, entity)
+	return GetDB(c, r.DB).Save(entity).Error
 	// return _db.SaveWithAudit(c, &domain.ProductPrice{
 	// 	ProductID:      productId,
 	// 	Currency:       entity.Currency,

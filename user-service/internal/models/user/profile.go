@@ -56,9 +56,12 @@ type UserProfileEntity struct {
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 
 	// transient
-	Certification []CertificationItem `gorm:"-" json:"certifications"`
-	Profession    []ProfessionItem    `gorm:"-" json:"professions"`
-	RateStats     *RateStats          `gorm:"-" json:"rateStats"`
+	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
+	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
+	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
+
+	FriendStatus *FriendItem `gorm:"-" json:"friendStatus"`
+	Following    bool        `gorm:"-" json:"following"`
 
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`

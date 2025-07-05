@@ -19,6 +19,7 @@ type FriendRepo interface {
 	FindBySenderIdAndReceiverId(ctx context.Context, sender uint64, receiver uint64) (*domain.FriendEntity, error)
 	Search(ctx context.Context, dto data.FriendDTO, createdBy *uint64, page int, pageSize int) ([]domain.FriendEntity, error)
 	SearchFriend(ctx context.Context, currentId uint64, dto data.FriendRequest) ([]domain.FriendEntity, int64, error)
+	GetFriendStatusByProfileIds(ctx context.Context, currentId uint64, profileIds []uint64) ([]domain.FriendItem, error)
 	ExistsByCreatedByAndReceiverId(ctx context.Context, createdBy uint64, receiverId uint64) (bool, error)
 	FindFriendRequest(ctx context.Context, user1 uint, user2 uint) (*domain.FriendEntity, error)
 	GetSumFriend(ctx context.Context, userId uint) (int64, error)

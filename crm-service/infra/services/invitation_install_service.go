@@ -12,11 +12,15 @@ import (
 
 type InvitationInstallService struct {
 	crmpb.UnimplementedInvitationInstallServiceServer
-	uc *usecase.InvitationInstallUsecase
+	uc            *usecase.InvitationInstallUsecase
+	ContactMapper *mapper.ContactMapper
 }
 
-func NewInvitationInstallService(uc *usecase.InvitationInstallUsecase) *InvitationInstallService {
-	return &InvitationInstallService{uc: uc}
+func NewInvitationInstallService(
+	uc *usecase.InvitationInstallUsecase,
+	contactMapper *mapper.ContactMapper,
+) *InvitationInstallService {
+	return &InvitationInstallService{uc: uc, ContactMapper: contactMapper}
 }
 
 // @Summary Gửi lời mời
@@ -79,7 +83,7 @@ func (s *InvitationInstallService) ListInvitation(ctx context.Context, req *crmp
 			Link:      entity.Link,
 			Channel:   entity.Channel,
 			ContactId: entity.ContactID,
-			Contact:   mapper.ContactToPb(entity.Contact),
+			Contact:   s.ContactMapper.ContactToPb(entity.Contact),
 		}
 	}
 	return &crmpb.ListInvitationResponse{

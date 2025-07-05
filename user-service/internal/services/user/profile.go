@@ -1,11 +1,13 @@
 package user_service
 
 import (
+	_dto "common/dto"
 	_jwt "common/jwt"
 	_models "common/models"
 	_utils "common/utils"
 	"context"
 	"errors"
+	userpb "pb/types/user"
 	"user/enums"
 	user_repo "user/infra/repo"
 	"user/internal/dto"
@@ -46,14 +48,14 @@ func NewProfileService(ProfileRepo *user_repo.ProfileRepo,
 	}
 }
 
-func (s *ProfileService) GetInfoMe(c *gin.Context) (*user_model.UserProfileEntity, error) {
-	id := _jwt.GetProfileId(c)
+func (s *ProfileService) GetInfoMe(c context.Context) (*user_model.UserProfileEntity, error) {
+	id := _utils.GetProfileIdWithContext(c)
 	userInfo, _ := s.ProfileRepo.GetByProfileID(id)
 
 	professions, _ := s.ProfessionRepo.ListItemByProfileID(c, id)
-	userInfo.Profession = professions
+	userInfo.Professions = professions
 	certifications, _ := s.CertificationRepo.ListItemByProfileID(c, id)
-	userInfo.Certification = certifications
+	userInfo.Certifications = certifications
 
 	stats, err := s.RateRepo.CountInfo(c, id, 10)
 	if err != nil {
@@ -64,8 +66,8 @@ func (s *ProfileService) GetInfoMe(c *gin.Context) (*user_model.UserProfileEntit
 	return userInfo, nil
 }
 
-func (s *ProfileService) UpdateUserInfo(c *gin.Context, info dto.UserInfoRequest) (*user_model.UserProfileEntity, error) {
-	profileId := _jwt.GetProfileId(c)
+func (s *ProfileService) UpdateUserInfo(c context.Context, info *dto.UserInfoRequest) (*user_model.UserProfileEntity, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
 
 	// Lấy thông tin user từ DB
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
@@ -75,7 +77,7 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info dto.UserInfoRequest
 		}
 	}
 	// Cập nhật thông tin
-	if err := s.ProfileRepo.UpdateProfile(c, profileId, &info); err != nil {
+	if err := s.ProfileRepo.UpdateProfile(c, profileId, info); err != nil {
 		return nil, err
 	}
 
@@ -123,9 +125,17 @@ func (s *ProfileService) UpdateUserInfo(c *gin.Context, info dto.UserInfoRequest
 	return infoEntity, nil
 }
 
-func (s *ProfileService) PublicUserInfo(c context.Context, profileId uint64) (*dto.PublicUserInfo, error) {
+func (s *ProfileService) PublicUserInfoMe(c context.Context) (*user_model.UserProfileEntity, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	return s.PublicUserInfo(c, profileId, true)
+}
+
+func (s *ProfileService) PublicUserInfo(c context.Context, profileId uint64, isMe bool) (*user_model.UserProfileEntity, error) {
 	// var infoEntity models.UserProfileEntity
-	// profileId := _utils.GetProfileIdWithContext(c)
+	currentUserId := _utils.GetProfileIdWithContext(c)
+	if currentUserId == profileId {
+		isMe = true
+	}
 
 	// Lấy thông tin user từ DB
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
@@ -136,33 +146,33 @@ func (s *ProfileService) PublicUserInfo(c context.Context, profileId uint64) (*d
 		}
 	}
 
-	var result dto.PublicUserInfo
-	if infoEntity.Visibility == 10 {
-		copier.Copy(&result, &infoEntity)
+	// var result dto.PublicUserInfo
+	if infoEntity.Visibility != 10 && !isMe {
+		// copier.Copy(&result, &infoEntity)
+		infoEntity = &user_model.UserProfileEntity{}
 	}
-	if infoEntity.ProfileVisibility == 10 {
+	if infoEntity.ProfileVisibility == 10 || isMe {
 		professions, _ := s.ProfessionRepo.ListItemByProfileID(c, profileId)
-		result.Professions = professions
+		infoEntity.Professions = professions
 		certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
-		result.Certifications = certifications
+		infoEntity.Certifications = certifications
 	}
 
 	stats, err := s.RateRepo.CountInfo(c, profileId, 10)
 	if err != nil {
 		return nil, err
 	}
-	result.RateStats = stats
+	infoEntity.RateStats = &stats
 
-	currentUserId := _utils.GetProfileIdWithContext(c)
 	var relationShip *user_model.FriendItem
 	if profileId != 0 {
 		relationShip, _ = s.FriendRepo.GetRelationShip(profileId, currentUserId)
 	}
 	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
-	result.FriendStatus = relationShip
-	result.Following = following
+	infoEntity.FriendStatus = relationShip
+	infoEntity.Following = following
 
-	return &result, nil
+	return infoEntity, nil
 }
 
 func (s *ProfileService) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo, error) {
@@ -231,6 +241,12 @@ func (s *ProfileService) ProfileFindByIds(c *gin.Context) (*[]dto.PublicUserInfo
 	copier.Copy(&info, &infoEntity)
 
 	return &info, nil
+}
+
+func (s *ProfileService) SearchProfilePublic(c context.Context, req *userpb.SearchProfilePublicRequest, pageable _dto.Pagable) (*[]user_model.UserProfileSearch, int64, error) {
+	results, total, _ := s.ProfileRepo.GlobalSearchProfile(c, req.Text, pageable)
+
+	return results, total, nil
 }
 
 // func (s *ProfileService) ListAccountMe(c context.Context) (*userpb.AccountInfoResponse, error) {

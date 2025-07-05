@@ -95,25 +95,25 @@ type UserInfoRequest struct {
 }
 
 type ProfessionBatchSave struct {
-	Name      string    `json:"name,omitempty"`
-	Issuer    string    `json:"issuer,omitempty"`
-	IssueDate time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
-	ID        uint64    `json:"id,omitempty"`
-	FileName  string    `json:"fileName,omitempty"`
-	FileURL   string    `json:"fileUrl,omitempty"`
-	FileType  string    `json:"fileType,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Issuer    string     `json:"issuer,omitempty"`
+	IssueDate *time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
+	ID        uint64     `json:"id,omitempty"`
+	FileName  string     `json:"fileName,omitempty"`
+	FileURL   string     `json:"fileUrl,omitempty"`
+	FileType  string     `json:"fileType,omitempty"`
 }
 
 type CertificationBatchSave struct {
 	// Title     string    `json:"title,omitempty"`
 	// Type      uint8     `json:"type,omitempty"`
-	Name      string    `json:"name,omitempty"`
-	Issuer    string    `json:"issuer,omitempty"`
-	FileURL   string    `json:"fileUrl,omitempty"`
-	FileType  string    `json:"fileType,omitempty"`
-	FileName  string    `json:"fileName,omitempty"`
-	IssueDate time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
-	ID        uint64    `json:"id,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Issuer    string     `json:"issuer,omitempty"`
+	FileURL   string     `json:"fileUrl,omitempty"`
+	FileType  string     `json:"fileType,omitempty"`
+	FileName  string     `json:"fileName,omitempty"`
+	IssueDate *time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
+	ID        uint64     `json:"id,omitempty"`
 }
 
 // Hàm validate để kiểm tra dữ liệu đầu vào

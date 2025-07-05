@@ -3,6 +3,7 @@ package postgre
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"context"
 
 	"gorm.io/gorm"
 )
@@ -36,19 +37,19 @@ func (repo *GormProductMediaRepo) Create(access *domain.ProductMedia) error {
 	return repo.DB.Create(&access).Error
 }
 
-func (r *GormProductMediaRepo) UpdateProductMediaItems(productID uint64, mediaItems []dto.MediaItem) error {
+func (r *GormProductMediaRepo) UpdateProductMediaItems(ctx context.Context, productID uint64, mediaItems []dto.MediaItem) error {
 	// Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
-	tx := r.DB.Begin()
+	tx := GetDB(ctx, r.DB)
 
 	// Xóa các bản ghi cũ trong bảng
 	if err := tx.Where("product_id = ?", productID).Delete(&domain.ProductMedia{}).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Nếu danh sách amenityIDs rỗng -> không cần thêm mới, chỉ cần xóa là đủ
 	if len(mediaItems) == 0 {
-		tx.Commit()
+		// tx.Commit()
 		return nil
 	}
 
@@ -66,11 +67,11 @@ func (r *GormProductMediaRepo) UpdateProductMediaItems(productID uint64, mediaIt
 
 	// Chèn danh sách mới vào bảng nối
 	if err := tx.Create(&productAmenities).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Commit transaction
-	tx.Commit()
+	// tx.Commit()
 	return nil
 }

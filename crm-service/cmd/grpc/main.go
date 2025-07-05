@@ -59,6 +59,7 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterFriendServiceServer(s, app.FriendService)
 		crmpb.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
 		crmpb.RegisterInvitationInstallServiceServer(s, app.InvitationInstallService)
+		crmpb.RegisterCrmInternalServiceServer(s, app.CrmInternalService)
 
 		log.Printf("Listen: %v", port)
 

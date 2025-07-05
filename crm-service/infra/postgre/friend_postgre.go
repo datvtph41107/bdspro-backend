@@ -107,6 +107,20 @@ func (repo *FriendPostgre) SearchFriend(ctx context.Context, currentId uint64, d
 	return friends, total, err
 }
 
+func (repo *FriendPostgre) GetFriendStatusByProfileIds(ctx context.Context, currentId uint64, profileIds []uint64) ([]domain.FriendItem, error) {
+	var friends []domain.FriendItem
+
+	query := repo.DB.
+		Debug().
+		Model(&domain.FriendEntity{}).
+		Where("deleted_at is null").
+		Where(`((created_by = ? and receiver_id in (?))
+		 	OR (receiver_id = ? and created_by in (?)))`, currentId, profileIds, currentId, profileIds)
+
+	err := query.Select("id, status, created_by, receiver_id").Find(&friends).Error
+	return friends, err
+}
+
 func (repo *FriendPostgre) ExistsByCreatedByAndReceiverId(ctx context.Context, createdBy uint64, receiverId uint64) (bool, error) {
 	var count int64
 	err := repo.DB.Model(&domain.FriendEntity{}).
