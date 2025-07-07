@@ -22,6 +22,7 @@ type SharingAccessUsecase struct {
 	Repo           repo.SharingAccessRepo
 	ProductUsecase *ProductUsecase
 	Client         iusecase.INotificationClient
+	ChatClient     iusecase.IChatClient
 	AssetRepo      repo.AssetRepo
 }
 
@@ -29,12 +30,14 @@ func NewShareAccessUsecase(
 	repo repo.SharingAccessRepo,
 	ProductUc *ProductUsecase,
 	Client iusecase.INotificationClient,
+	chatClient iusecase.IChatClient,
 	assetRepo repo.AssetRepo,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{
 		Repo:           repo,
 		ProductUsecase: ProductUc,
 		Client:         Client,
+		ChatClient:     chatClient,
 		AssetRepo:      assetRepo,
 	}
 }
@@ -75,9 +78,20 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 		// entities[i].ProductID = id
 	}
 
-	s.Client.SendBatch(c, &delivery_dto.NotiBatchDTO{
-		Datas: data,
-	})
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		s.Client.SendBatch(ctxClone, &delivery_dto.NotiBatchDTO{
+			Datas: data,
+		})
+
+		for _, entity := range entities {
+			s.ChatClient.SendProductToReceiver(ctxClone,
+				product.ID,
+				"",
+				&entity.ToId,
+			)
+		}
+	}()
 
 	return &entities, err
 }
@@ -181,9 +195,22 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 		// entities[i].ProductID = id
 	}
 
-	s.Client.SendBatch(c, &delivery_dto.NotiBatchDTO{
-		Datas: data,
-	})
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		s.Client.SendBatch(ctxClone, &delivery_dto.NotiBatchDTO{
+			Datas: data,
+		})
+
+		if dto.Domain == enums.EDomainProduct {
+			for _, entity := range entities {
+				s.ChatClient.SendProductToReceiver(ctxClone,
+					entity.DomainID,
+					"",
+					&entity.ToId,
+				)
+			}
+		}
+	}()
 
 	return &entities, err
 }

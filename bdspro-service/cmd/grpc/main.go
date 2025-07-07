@@ -5,6 +5,7 @@ import (
 	"bdspro/db"
 	"bdspro/wire"
 	_middleware "common/middleware"
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -12,6 +13,7 @@ import (
 	pb_bdspro "pb/types/bdspro"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -48,6 +50,8 @@ var GrpcCmd = &cobra.Command{
 		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeService)
 		pb_bdspro.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
 		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalService)
+
+		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server
@@ -66,4 +70,20 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to serve: %v", err)
 		}
 	},
+}
+
+func startScheduler(app *config.ConfigApp) {
+	log.Printf("startScheduler")
+	now := time.Now()
+	nextHour := now.Truncate(time.Minute).Add(30 * time.Minute) // 30p
+	wait := time.Until(nextHour)
+	app.ProductUsecase.SyncProduct(context.Background())
+
+	time.AfterFunc(wait, func() {
+		s := gocron.NewScheduler(time.Local)
+		s.Every(1).Hour().Do(func() {
+			app.ProductUsecase.SyncProduct(context.Background())
+		})
+		s.StartAsync()
+	})
 }

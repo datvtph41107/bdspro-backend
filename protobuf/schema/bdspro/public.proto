@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package pb_bdspro;
 
+import "bdspro/product.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 import "google/api/annotations.proto";
@@ -39,8 +40,16 @@ service BdsproPublicService {
   };
 }
 
+message ProductTotalRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string text = 3;
+}
+
+
+
 message ProductMarketRequest {
-    uint32 page = 1;
+  uint32 page = 1;
   uint32 size = 2;
   string sort = 3;
   string text = 4;
@@ -72,10 +81,10 @@ message ProductMarket {
     string updatedAt = 3;
     string name = 4;
     string code = 5;
-    int64 categoryId = 6;
-    double area = 7;
+    optional int64 categoryId = 6;
+    optional double area = 7;
     string description = 8;
-    int32 transactionType = 9;
+    optional int32 transactionType = 9;
     int32 saleStatus = 10;
     int32 saleVisibility = 11;
     int32 rentStatus = 12;
@@ -110,19 +119,19 @@ message ProductMarket {
 	string mainImage = 37;
 
 	// Region Names
-	string provinceName = 38;
-	string districtName = 39;
-	string wardName = 40;
+	optional string provinceName = 38;
+	optional string districtName = 39;
+	optional string wardName = 40;
 
 	// DocType and PropertyType Name
-	string docTypeName = 41;
-	string propertyTypeName = 42;
+	optional string docTypeName = 41;
+	optional string propertyTypeName = 42;
 
 	// Latest Product Price Info
 	string currency = 43;
-	int64 priceOwner = 44;
-	double salePrice = 45;
-	int64 saleCommission = 46;
+	optional int64 priceOwner = 44;
+	optional double salePrice = 45;
+	optional int64 saleCommission = 46;
 	int64 saleCommissionType = 47;
 	double rentPrice = 48;
 	double rentCommission = 49;

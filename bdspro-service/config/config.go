@@ -6,6 +6,7 @@ import (
 	public_router "bdspro/infra/router/public"
 	user_router "bdspro/infra/router/user"
 	service "bdspro/infra/services"
+	shared_usecase "bdspro/internal/usecases/shared"
 	"bytes"
 	_ "embed"
 	"log"
@@ -64,6 +65,7 @@ type ConfigApp struct {
 	AssetCostTypeService     *service.AssetCostTypeService
 	SharingAccessService     *service.SharingAccessService
 	AssetLegalService        *service.AssetLegalService
+	ProductUsecase           *shared_usecase.ProductUsecase
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
 	// IncomeDocumentServer    *service.IncomeDocumentServer
@@ -89,6 +91,7 @@ func NewConfigApp(
 	assetCostService *service.AssetCostService,
 	assetCostTypeService *service.AssetCostTypeService,
 	sharingAccessService *service.SharingAccessService,
+	productUsecase *shared_usecase.ProductUsecase,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
 	// CostDocumentServer *service.CostDocumentServer,
@@ -117,6 +120,7 @@ func NewConfigApp(
 		AssetCostTypeService:     assetCostTypeService,
 		SharingAccessService:     sharingAccessService,
 		AssetLegalService:        assetLegalService,
+		ProductUsecase:           productUsecase,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

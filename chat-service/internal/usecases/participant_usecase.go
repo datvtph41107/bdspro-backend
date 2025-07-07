@@ -11,10 +11,10 @@ import (
 )
 
 type participantUsecases struct {
-	repo repository
+	repo Repository
 }
 
-func NewParticipantUsecases(repository repository) *participantUsecases {
+func NewParticipantUsecases(repository Repository) *participantUsecases {
 	return &participantUsecases{
 		repo: repository,
 	}

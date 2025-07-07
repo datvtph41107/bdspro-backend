@@ -7,10 +7,10 @@ import (
 )
 
 type backgroundImageUsecases struct {
-	repository repository
+	repository Repository
 }
 
-func NewBackgroundImageUsecases(repository repository) *backgroundImageUsecases {
+func NewBackgroundImageUsecases(repository Repository) *backgroundImageUsecases {
 	return &backgroundImageUsecases{
 		repository: repository,
 	}

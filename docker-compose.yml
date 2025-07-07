@@ -69,10 +69,13 @@ services:
       context: ./chat-service
       dockerfile: Dockerfile
     container_name: chat
+    volumes:
+      - ${PWD}/configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+    command: ["/app/main", "grpc"]
     networks:
       - internal
-    ports:
-      - "8104:8104"
   # openai:
   #   build:
   #     context: ./openai-service

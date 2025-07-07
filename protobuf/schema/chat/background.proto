@@ -15,24 +15,24 @@ enum ImageType {
 service BackgroundImageService {
     rpc CreateBackgroundImage(CreateBackgroundImageRequest) returns (CreateBackgroundImageResponse){
         option (google.api.http) = {
-            post: "/background"
+            post: "/v2/chat/background"
             body: "*"
         };
     };
     rpc GetBackgroundImages(GetBackgroundImageRequest) returns (GetBackgroundImagesResponse){
         option (google.api.http) = {
-            get: "/background"
+            get: "/v2/chat/background"
         };
     };
     rpc UpdateBackgroundImage(UpdateBackgroundImageRequest) returns (UpdateBackgroundImageResponse){
         option (google.api.http) = {
-            put: "/background/{id}"
+            put: "/v2/chat/background/{id}"
             body: "*"
         };
     };
     rpc DeleteBackgroundImage(DeleteBackgroundImageRequest) returns (DeleteBackgroundImageResponse){
         option (google.api.http) = {
-            delete: "/background/delete/{id}"
+            delete: "/v2/chat/background/delete/{id}"
         };
     };
 }

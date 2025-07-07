@@ -59,7 +59,11 @@ LIMIT $4 OFFSET $5
 
 func (r *gormRepository) CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
 	conversation.IsDeleted = false
-	return conversation, r.db.WithContext(ctx).Create(conversation).Error
+	err := r.db.WithContext(ctx).Create(conversation).Error
+	if err != nil {
+		return nil, err
+	}
+	return conversation, nil
 }
 
 func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, userId uint64, keyword string) ([]*models.ConversationModel, error) {
@@ -119,12 +123,24 @@ func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID
 	return &conversation, err
 }
 
-func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImage string) error {
+func (r *gormRepository) GetConversationsByIDs(ctx context.Context, conversationIDs []uint64) ([]*models.ConversationModel, error) {
+	var conversations []*models.ConversationModel
+	err := r.db.WithContext(ctx).
+		Where("id IN (?) AND is_deleted = ?", conversationIDs, false).
+		Preload("BackgroundImage").
+		Find(&conversations).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return conversations, err
+}
+
+func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImageId *uint64) error {
 	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", id, false).Updates(map[string]any{
-		"is_broadcast":     isBoardCast,
-		"forbid_forward":   forbidForward,
-		"name":             name,
-		"background_image": backgroundImage,
+		"is_broadcast":        isBoardCast,
+		"forbid_forward":      forbidForward,
+		"name":                name,
+		"background_image_id": backgroundImageId,
 	}).Error
 }
 
@@ -170,7 +186,7 @@ func (r *gormRepository) DeleteConversation(ctx context.Context, conversationID 
 	}).Error
 }
 
-func (r *gormRepository) HasExactConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error) {
+func (r *gormRepository) GetConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
 	err := r.db.WithContext(ctx).
 		Model(&models.ConversationModel{}).
@@ -182,4 +198,10 @@ func (r *gormRepository) HasExactConversationWithReceiverID(ctx context.Context,
 		return nil, nil
 	}
 	return &conversation, err
+}
+
+func (r *gormRepository) SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) error {
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", conversationId, false).Updates(map[string]any{
+		"background_image_id": backgroundImageId,
+	}).Error
 }

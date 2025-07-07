@@ -9,8 +9,8 @@ type ApartmentAttribute struct {
 	_models.BaseEntity
 	BuildID      uint64   `gorm:"type:int8" json:"buildId"` // Diện tích
 	Area         *float64 `gorm:"type:float" json:"area"`   // Diện tích
-	NumBedroom   *uint    `json:"numBedroom,omitempty"`     // Số phòng ngủ (optional)
-	NumBathroom  *uint    `json:"numBathroom,omitempty"`    // Số WC (optional)
+	NumBedroom   *uint32  `json:"numBedroom,omitempty"`     // Số phòng ngủ (optional)
+	NumBathroom  *uint32  `json:"numBathroom,omitempty"`    // Số WC (optional)
 	Furniture    string   `json:"furniture,omitempty"`      // Nội thất
 	BlueprintUrl string   `json:"blueprintUrl,omitempty"`   // Link bản vẽ
 	Price        float64  `json:"price,omitempty"`

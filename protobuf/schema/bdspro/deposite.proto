@@ -8,4 +8,7 @@ message Deposite {
   uint64 id = 1;
   uint64 productId = 2;
   double amount = 3;
+  string customerName = 4;
+  string customerPhone = 5;
+  string note = 6;
 }

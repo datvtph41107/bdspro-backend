@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/background": {
+    "/v2/chat/background": {
       "get": {
         "operationId": "BackgroundImageService_GetBackgroundImages",
         "responses": {
@@ -84,7 +84,7 @@
         ]
       }
     },
-    "/background/delete/{id}": {
+    "/v2/chat/background/delete/{id}": {
       "delete": {
         "operationId": "BackgroundImageService_DeleteBackgroundImage",
         "responses": {
@@ -115,7 +115,7 @@
         ]
       }
     },
-    "/background/{id}": {
+    "/v2/chat/background/{id}": {
       "put": {
         "operationId": "BackgroundImageService_UpdateBackgroundImage",
         "responses": {

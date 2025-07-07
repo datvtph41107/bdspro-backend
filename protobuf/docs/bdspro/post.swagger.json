@@ -649,6 +649,33 @@
         },
         "name": {
           "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "floor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ordinal": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "buildId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "archived": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "apartmentAttrId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -661,6 +688,28 @@
         },
         "name": {
           "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "blueprintUrl": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -800,6 +849,15 @@
         "amount": {
           "type": "number",
           "format": "double"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "customerPhone": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },
@@ -812,6 +870,37 @@
         },
         "name": {
           "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string"
+        },
+        "backgroundUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "foundedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1458,7 +1547,8 @@
           "format": "uint64"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "title": "Developer developer = 3;\n string description = 4;\n repeated ProjectBuild builds = 5;"
         }
       }
     },
@@ -1471,6 +1561,35 @@
         },
         "name": {
           "type": "string"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numApartment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproApartment"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+          }
         }
       }
     },

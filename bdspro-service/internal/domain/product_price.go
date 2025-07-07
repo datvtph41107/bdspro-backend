@@ -6,7 +6,7 @@ type ProductPrice struct {
 	_models.BaseEntity
 	ProductID        *uint64  `json:"productId,omitempty"`
 	Currency         string   `json:"currency,omitempty"`
-	PriceOwner       *float64 `json:"priceOwner,omitempty"`
+	PriceOwner       *float64 `json:"priceOwner,omitempty"` // deprecated
 	SalePrice        *float64 `gorm:"type:DECIMAL(15,0)" json:"salePrice,omitempty"`
 	SaleCommission   *float64 `gorm:"type:DECIMAL(15,0)" json:"saleCommission,omitempty"`
 	Deposite         *float64 `gorm:"type:DECIMAL(15,0)" json:"deposite,omitempty"`

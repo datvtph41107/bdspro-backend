@@ -12,11 +12,11 @@ import (
 )
 
 type readReceptUsecases struct {
-	repo   repository
+	repo   Repository
 	logger *flogging.FabricLogger
 }
 
-func NewReadReceptUsecases(repository repository) *readReceptUsecases {
+func NewReadReceptUsecases(repository Repository) *readReceptUsecases {
 	return &readReceptUsecases{
 		repo:   repository,
 		logger: flogging.MustGetLogger("read_recept_usecases"),

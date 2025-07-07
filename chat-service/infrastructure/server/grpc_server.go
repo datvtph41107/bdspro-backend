@@ -40,10 +40,11 @@ func NewGRPCServer(port string) *GRPCServer {
 	}
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
+	bdsproClient := client.NewBdsproClient()
 	// conversationMapper := mapper.NewConversationMapper()
 
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
-	messageUsecase := usecases.NewMessageUsecases(pRepository)
+	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
@@ -59,6 +60,7 @@ func NewGRPCServer(port string) *GRPCServer {
 		messageReactionUsecase,
 		backgroundImageUsecase,
 		userClient,
+		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
 	)

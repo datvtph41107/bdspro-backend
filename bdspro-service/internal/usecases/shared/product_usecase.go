@@ -15,6 +15,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"log"
 	shared_dto "pb/dto"
 	shared_enum "pb/enums"
 	"strings"
@@ -996,6 +997,10 @@ func (s *ProductUsecase) SearchProductMarket(c context.Context, dto *dto.Product
 	// var results []u_product_dto.ProductMarket
 	// var total int64
 	// var err error
+	if dto.Text != "" {
+		results, total, err := s.QueryProductMarket(c, dto)
+		return results, total, err
+	}
 	results, total, err := s.CacheProductMarket.GetDataWithCache(c, dto, s.QueryProductMarket)
 	// if len(productCache) > 0 {
 	// 	results = productCache
@@ -1007,4 +1012,14 @@ func (s *ProductUsecase) SearchProductMarket(c context.Context, dto *dto.Product
 	// }
 
 	return results, total, err
+}
+
+func (s *ProductUsecase) SyncProduct(c context.Context) error {
+	err := s.ProductRepo.SyncData(c)
+	if err != nil {
+		log.Printf("SyncNewsFeed error: %v", err)
+		return err
+	}
+	log.Printf("SyncProduct success")
+	return nil
 }

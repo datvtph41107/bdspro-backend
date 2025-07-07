@@ -24,6 +24,7 @@ func NewDelivery(
 	messageReactionUsecases messageReactionUsecases,
 	backgroundImageUsecases backgroundImageUsecases,
 	userClient *client.UserClient,
+	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	backgroundMapper *mapper.BackgroundMapper,
 ) *Delivery {
@@ -33,6 +34,7 @@ func NewDelivery(
 		participantUsecases,
 		messageReactionUsecases,
 		userClient,
+		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
 	)

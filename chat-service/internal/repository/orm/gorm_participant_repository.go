@@ -15,6 +15,15 @@ func (r *gormRepository) ExistParticipant(ctx context.Context, conversationID ui
 	return count > 0, nil
 }
 
+func (r *gormRepository) ExistParticipants(ctx context.Context, conversationIDs []uint64, userID uint64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&models.ParticipantModel{}).Where("conversation_id IN (?) AND user_id = ?", conversationIDs, userID).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count == int64(len(conversationIDs)), nil
+}
+
 func (r *gormRepository) FindParticipant(ctx context.Context, conversationID uint64, userID uint64) (*models.ParticipantModel, error) {
 	var participant models.ParticipantModel
 	err := r.db.WithContext(ctx).Where("conversation_id = ? AND user_id = ?", conversationID, userID).First(&participant).Error

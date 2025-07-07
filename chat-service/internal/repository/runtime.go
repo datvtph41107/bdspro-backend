@@ -3,6 +3,7 @@ package repository
 import (
 	"chat/configs"
 	"chat/internal/repository/orm"
+	"chat/internal/usecases"
 	"chat/models"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -11,7 +12,7 @@ import (
 
 var repoLogger = flogging.MustGetLogger("repository")
 
-func NewRepository(db *gorm.DB) repository {
+func NewRepository(db *gorm.DB) usecases.Repository {
 	switch configs.DB_TYPE {
 	case "POSTGRES":
 		err := db.AutoMigrate(&models.ConversationModel{},

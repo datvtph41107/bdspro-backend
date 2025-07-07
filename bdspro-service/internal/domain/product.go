@@ -119,7 +119,7 @@ type ProductMarket struct {
 	CategoryID       *int64     `gorm:"column:category_id" json:"categoryId"`
 	Area             *float64   `gorm:"column:area" json:"area"`
 	Description      *string    `gorm:"column:description" json:"description"`
-	TransactionType  *int16     `gorm:"column:transaction_type" json:"transactionType"`
+	TransactionType  *int32     `gorm:"column:transaction_type" json:"transactionType"`
 	SaleStatus       int16      `gorm:"column:sale_status" json:"saleStatus"`
 	SaleVisibility   int16      `gorm:"column:sale_visibility" json:"saleVisibility"`
 	RentStatus       int16      `gorm:"column:rent_status" json:"rentStatus"`

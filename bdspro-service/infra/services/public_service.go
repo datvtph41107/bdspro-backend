@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
+	_dto "common/dto"
 	"context"
 	pb_bdspro "pb/types/bdspro"
 
@@ -13,18 +14,22 @@ import (
 
 type BdsproPublicService struct {
 	pb_bdspro.UnimplementedBdsproPublicServiceServer
-	UC     *shared_usecase.ProductUsecase
-	ListUC *usecases.ListUsecase
-	Mapper *mapper.PublicMapper
+	UC            *shared_usecase.ProductUsecase
+	ListUC        *usecases.ListUsecase
+	Mapper        *mapper.PublicMapper
+	ProductMapper *mapper.ProductMapper
 }
 
 func NewBdsproPublicService(
 	uc *shared_usecase.ProductUsecase,
 	listUC *usecases.ListUsecase,
-	mapper *mapper.PublicMapper) *BdsproPublicService {
+	mapper *mapper.PublicMapper,
+	productMapper *mapper.ProductMapper) *BdsproPublicService {
 	return &BdsproPublicService{
-		UC:     uc,
-		ListUC: listUC,
+		UC:            uc,
+		ListUC:        listUC,
+		Mapper:        mapper,
+		ProductMapper: productMapper,
 	}
 }
 
@@ -36,17 +41,13 @@ func NewBdsproPublicService(
 // @Param req query pb_bdspro.ProductMarketRequest true "Request"
 // @Router /v2/bdspro/v2/product/market [get]
 func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdspro.ProductMarketRequest) (*pb_bdspro.ProductMarketResponse, error) {
-	query := dto.ProductSearchRequest{}
-	if err := copier.Copy(&query, req); err != nil {
-		return nil, err
-	}
-	// body, _ := _utils.ParseQueryToStruct[dto.ProductSearchRequest](c.Request.URL.Query())
-	result, total, err := s.UC.SearchProductMarket(ctx, &query)
+	query := s.ProductMapper.MapMarketProductToDTO(req)
+
+	result, total, err := s.UC.SearchProductMarket(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	products := make([]*pb_bdspro.ProductMarket, 0)
-	copier.Copy(&products, &result)
+	products := s.ProductMapper.MapProductMarketPbList(result)
 	return &pb_bdspro.ProductMarketResponse{
 		Data:          products,
 		TotalElements: uint32(total),
@@ -166,5 +167,32 @@ func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.Sea
 	return &pb_bdspro.ListItemResponse{
 		Data:          items,
 		TotalElements: uint32(len(result)),
+	}, nil
+}
+
+// @Summary Lấy tổng số lượng sản phẩm
+// @Description Lấy tổng số lượng sản phẩm
+// @Tags Sản phẩm
+// @Accept json
+// @Produce json
+// @Param req query pb_bdspro.ProductTotalRequest true "Request"
+// @Router /v2/bdspro/v2/product/total [get]
+func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspro.ProductTotalRequest) (*pb_bdspro.SearchResponse, error) {
+	query := dto.TextSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		Text: req.Text,
+	}
+	result, total, err := s.UC.SmartSearch(ctx, req.Text, &query)
+	if err != nil {
+		return nil, err
+	}
+	products := s.ProductMapper.MapProductPbList(result)
+
+	return &pb_bdspro.SearchResponse{
+		Data:          products,
+		TotalElements: uint32(total),
 	}, nil
 }

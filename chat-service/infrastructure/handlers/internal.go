@@ -14,7 +14,7 @@ type conversationUsecases interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*models.ConversationModel, error)
 
-	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImage *string) error
+	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error
 	CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)
 	Search(ctx context.Context, keyword string, searchType int, limit, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error)
 
@@ -24,12 +24,14 @@ type conversationUsecases interface {
 	GetSetting(ctx context.Context, conversationId uint64) (*models.ConversationModel, *models.ParticipantModel, error)
 	ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error
 	GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error)
+	SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*models.ConversationModel, error)
 }
 
 type messageUsecases interface {
 	SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
+	SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error)
 	GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
-	ForwardMessage(ctx context.Context, messageId uint64, targetConversationId uint64) (*models.MessageModel, error)
+	ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error)
 	PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error)
 	RecallMessage(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*models.MessageModel, error)

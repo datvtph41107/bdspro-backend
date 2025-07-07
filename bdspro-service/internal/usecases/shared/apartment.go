@@ -126,8 +126,8 @@ func (s *ApartmentUsecase) ImportApartments(c *gin.Context) (*[]domain.Apartment
 		column := idxOrdinal + 2
 		attribute := domain.ApartmentAttribute{
 			Area:        new(float64),
-			NumBathroom: new(uint),
-			NumBedroom:  new(uint),
+			NumBathroom: new(uint32),
+			NumBedroom:  new(uint32),
 		}
 		fmt.Sscanf(rows[1][column], "%d", attribute.Area)
 		fmt.Sscanf(rows[2][column], "%d", attribute.NumBedroom)

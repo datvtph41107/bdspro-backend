@@ -146,7 +146,7 @@ scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 if [ "$1" = "notification" ]; then
   scp config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
 fi
-if [ "$1" = "chathttp" ]; then
+if [ "$1" = "chat" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ "$1" = "relay" ]; then

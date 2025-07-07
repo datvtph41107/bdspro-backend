@@ -84,6 +84,42 @@ func ParseGrpcMetadataContextMiddleware(
 	return handler(ctx, req)
 }
 
+func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
+	md := metadata.MD{}
+
+	appendUint64IfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+		if val, ok := ctx.Value(ctxKey).(uint64); ok {
+			md.Append(mdKey, strconv.FormatUint(val, 10))
+		}
+	}
+
+	appendStringIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+		if val, ok := ctx.Value(ctxKey).(string); ok && val != "" {
+			md.Append(mdKey, val)
+		}
+	}
+
+	appendTimeIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+		if val, ok := ctx.Value(ctxKey).(time.Time); ok && !val.IsZero() {
+			md.Append(mdKey, val.Format(time.RFC3339))
+		}
+	}
+
+	// Các key giống với middleware ở server
+	appendUint64IfExists(_constants.ProfileIDKey, "profileId")
+	appendUint64IfExists(_constants.OrganizationIDKey, "organizationId")
+	appendUint64IfExists(_constants.AuthIDKey, "authId")
+	appendUint64IfExists(_constants.SessionKey, "session")
+	appendUint64IfExists(_constants.PlanIDKey, "planId")
+
+	appendStringIfExists(_constants.RoleKey, "role")
+	appendStringIfExists(_constants.TypeKey, "type")
+
+	appendTimeIfExists(_constants.PlanFromKey, "planFrom")
+
+	return md
+}
+
 // PrincipalFromContext đọc toàn bộ metadata và sinh ra struct Principal.
 func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	md, ok := metadata.FromIncomingContext(ctx)

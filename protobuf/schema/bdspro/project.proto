@@ -7,4 +7,7 @@ option go_package = "pb/types/bdspro;pb_bdspro";
 message Project {
   uint64 id = 1;
   string name = 2;
+  // Developer developer = 3;
+  // string description = 4;
+  // repeated ProjectBuild builds = 5;
 }

@@ -9,10 +9,10 @@ import (
 )
 
 type messageReactionUsecases struct {
-	repo repository
+	repo Repository
 }
 
-func NewMessageReactionUsecases(repo repository) *messageReactionUsecases {
+func NewMessageReactionUsecases(repo Repository) *messageReactionUsecases {
 	return &messageReactionUsecases{
 		repo: repo,
 	}

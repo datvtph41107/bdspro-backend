@@ -416,10 +416,17 @@ func (r *GormUserProductRepo) SearchProductMarket(profileId uint64, dto dto.Prod
 	if dto.Timestamp != nil {
 		query = query.Where("products.created_at > ?", dto.Timestamp)
 	}
-	if trimmed := strings.TrimSpace(dto.Name); trimmed != "" {
+	if trimmed := strings.TrimSpace(dto.Text); trimmed != "" {
 		pattern := "%" + strings.ToLower(trimmed) + "%"
-		query = query.Where("LOWER(products.name) LIKE ? OR LOWER(products.code) LIKE ?", pattern, pattern)
+		query = query.Where(`LOWER(name) LIKE ? 
+		OR LOWER(province_name) LIKE ?
+		OR LOWER(district_name) LIKE ?
+		OR LOWER(ward_name) LIKE ?`, pattern, pattern, pattern, pattern)
 	}
+	// if trimmed := strings.TrimSpace(dto.Name); trimmed != "" {
+	// 	pattern := "%" + strings.ToLower(trimmed) + "%"
+	// 	query = query.Where("LOWER(products.name) LIKE ? OR LOWER(products.code) LIKE ?", pattern, pattern)
+	// }
 
 	err := query.
 		Order("created_at desc").
@@ -718,4 +725,8 @@ func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) 
 
 func (r *GormUserProductRepo) Create(c context.Context, entity *domain.Product) error {
 	return GetDB(c, r.DB).Create(entity).Error
+}
+
+func (r *GormUserProductRepo) SyncData(ctx context.Context) error {
+	return r.DB.Exec(`REFRESH MATERIALIZED VIEW public.product_market`).Error
 }

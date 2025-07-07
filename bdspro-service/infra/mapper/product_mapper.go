@@ -4,28 +4,156 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	_dto "common/dto"
+	_utils "common/utils"
 	pb_bdspro "pb/types/bdspro"
 )
 
 type ProductMapper struct {
-	PostMapper *PostMapper
+	PostMapper               *PostMapper
+	ApartmentMapper          *ApartmentMapper
+	ApartmentAttributeMapper *ApartmentAttributeMapper
+	BuildMapper              *BuildMapper
+	ProjectMapper            *ProjectMapper
+	DeveloperMapper          *DeveloperMapper
 }
 
-func NewProductMapper(postMapper *PostMapper) *ProductMapper {
+func NewProductMapper(postMapper *PostMapper,
+	apartmentMapper *ApartmentMapper,
+	apartmentAttributeMapper *ApartmentAttributeMapper,
+	buildMapper *BuildMapper,
+	projectMapper *ProjectMapper,
+	developerMapper *DeveloperMapper,
+) *ProductMapper {
 	return &ProductMapper{
-		PostMapper: postMapper,
+		PostMapper:               postMapper,
+		ApartmentMapper:          apartmentMapper,
+		ApartmentAttributeMapper: apartmentAttributeMapper,
+		BuildMapper:              buildMapper,
+		ProjectMapper:            projectMapper,
+		DeveloperMapper:          developerMapper,
 	}
+}
+
+func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.ProductResponse {
+	result := m.MapProductPb(product)
+	result.Id = product.ID
+	result.ParentId = *product.ParentId
+	result.DepositeId = product.DepositeID
+	// result.Deposite           = product.Deposite
+	result.AssetId = product.AssetId
+	result.PropertyTypeId = product.PropertyTypeId
+	// result.PropertyType       = product.PropertyType
+	result.DocTypeId = product.DocTypeId
+	// result.DocType            = product.DocType
+	// result.Amenities          = product.AmenityIDs
+	result.Visibility = uint32(product.Visibility)
+	result.Code = product.Code
+	result.CategoryId = product.CategoryID
+	result.PositionUrl = product.PositionUrl
+	result.Description = product.Description
+	// result.OrganizationId     = product.OrganizationID
+	// result.OrgStatus          = product.OrgStatus
+	result.LastPriceId = product.LastPriceID
+	// result.Price              = product.Price
+	result.ApartmentId = product.ApartmentID
+	// result.Apartment          = product.Apartment
+	// result.ApartmentAttribute = product.ApartmentAttribute
+	// result.Build              = product.Build
+	// result.Project            = product.Project
+	// result.Developer          = product.Developer
+	result.SourceType = int32(product.SourceType)
+	result.CustomerId = product.CustomerID
+	// result.PrivateData        = product.PrivateData
+	result.Note = product.Note
+	result.TransactionType = int32(product.TransactionType)
+	result.SaleVisibility = uint32(product.SaleVisibility)
+	result.RentVisibility = uint32(product.RentVisibility)
+	// result.OwnerUserId        = product.OwnerUserID
+	result.OwnerType = uint32(product.OwnerType)
+	result.Address = product.Address
+	result.GoogleMapLink = product.GoogleMapLink
+	// result.Attributes         = product.Attributes
+	// result.MediaList          = product.MediaList
+	// result.HouseInfo          = product.HouseInfo
+	result.Archived = product.Archived
+	// result.PriceSuggest       = product.PriceSuggest
+
+	if product.Deposite != nil {
+		result.Deposite = &pb_bdspro.Deposite{
+			Id:            product.Deposite.ID,
+			ProductId:     product.ID,
+			Amount:        float64(product.Deposite.Amount),
+			CustomerName:  product.Deposite.CustomerName,
+			CustomerPhone: product.Deposite.CustomerPhone,
+			Note:          product.Deposite.Note,
+		}
+	}
+
+	if product.PropertyType != nil {
+		result.PropertyType = &pb_bdspro.PropertyType{
+			Id:   product.PropertyType.ID,
+			Name: product.PropertyType.Name,
+			// Active:    product.PropertyType.Ac,
+		}
+	}
+
+	if product.DocType != nil {
+		result.DocType = &pb_bdspro.DocType{
+			Id:   product.DocType.ID,
+			Name: product.DocType.Name,
+		}
+	}
+
+	// todo: map thêm category
+	// if product.Category != nil {
+	// 	result.Category = &pb_bdspro.Category{
+	// 		Id:   product.Category.ID,
+	// 		Name: product.Category.Name,
+	// 	}
+	// }
+
+	if product.Apartment != nil {
+		result.Apartment = m.ApartmentMapper.MapApartmentPb(product.Apartment)
+	}
+
+	if product.ApartmentAttr != nil {
+		result.ApartmentAttribute = m.ApartmentAttributeMapper.MapApartmentAttributePb(product.ApartmentAttr)
+	}
+
+	if product.Build != nil {
+		result.Build = m.BuildMapper.MapBuildPbItem(product.Build)
+	}
+
+	if product.Project != nil {
+		result.Project = m.ProjectMapper.MapProjectPbItem(product.Project)
+	}
+
+	if product.Developer != nil {
+		result.Developer = m.DeveloperMapper.MapDeveloperPbItem(product.Developer)
+	}
+
+	if product.Attributes != nil {
+		result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
+		for i, attribute := range product.Attributes {
+			result.Attributes[i] = &pb_bdspro.AttributeProduct{
+				Id:   attribute.ID,
+				Name: attribute.Name,
+			}
+		}
+	}
+
+	return result
 }
 
 func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.ProductResponse {
 	result := &pb_bdspro.ProductResponse{
-		Id:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Area:        product.Area,
-		Address:     product.Address,
-		SaleStatus:  uint32(product.SaleStatus),
-		RentStatus:  uint32(product.RentStatus),
+		Id:         product.ID,
+		Name:       product.Name,
+		Area:       product.Area,
+		Address:    product.Address,
+		SaleStatus: uint32(product.SaleStatus),
+		RentStatus: uint32(product.RentStatus),
 	}
 
 	if product.District != nil {
@@ -52,13 +180,14 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 	if product.Price != nil {
 		result.Price = &pb_bdspro.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,
-			Id:             product.Price.ID,
-			Currency:       product.Price.Currency,
-			SalePrice:      product.Price.SalePrice,
-			SaleCommission: product.Price.SaleCommission,
-			RentPrice:      product.Price.RentPrice,
-			RentCommission: product.Price.RentCommission,
-			Deposite:       product.Price.Deposite,
+			Id:               product.Price.ID,
+			Currency:         product.Price.Currency,
+			SalePrice:        product.Price.SalePrice,
+			SaleCommission:   product.Price.SaleCommission,
+			RentPrice:        product.Price.RentPrice,
+			RentCommission:   product.Price.RentCommission,
+			Deposite:         product.Price.Deposite,
+			RentPaymentCycle: product.Price.RentPaymentCycle,
 		}
 
 	}
@@ -211,4 +340,97 @@ func (m *ProductMapper) MapDevideChildRequest(req *pb_bdspro.DevideChildRequest)
 		ParentID: &req.ParentId,
 		Childs:   childs,
 	}
+}
+
+func (m *ProductMapper) MapMarketProductToDTO(req *pb_bdspro.ProductMarketRequest) *dto.ProductSearchRequest {
+	return &dto.ProductSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		Text: req.Text,
+		// ProvinceIds:      []uint64{req.ProvinceId},
+		// DistrictIds:      []uint64{req.DistrictId},
+		// WardIds:          []uint64{req.WardId},
+		// SourceTypeIds:    []uint{req.SourceType},
+		// TransactionTypes: []uint{req.TransactionType},
+		// SaleStatus:       []uint{req.SaleStatus},
+		// RentStatus:       []uint{req.RentStatus},
+	}
+}
+
+func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *pb_bdspro.ProductMarket {
+	result := &pb_bdspro.ProductMarket{
+		Id:         product.ID,
+		CreatedAt:  _utils.FormatTimeToString(&product.CreatedAt),
+		UpdatedAt:  _utils.FormatTimeToString(&product.UpdatedAt),
+		Name:       product.Name,
+		Code:       product.Code,
+		CategoryId: product.CategoryID,
+		Area:       product.Area,
+		// Description:        product.Description,
+		TransactionType: product.TransactionType,
+		SaleStatus:      int32(product.SaleStatus),
+		SaleVisibility:  int32(product.SaleVisibility),
+		RentStatus:      int32(product.RentStatus),
+		RentVisibility:  int32(product.RentVisibility),
+		// OwnerUserId:        product.OwnerUserID,
+		// OwnerOrgId:         product.OrganizationID,
+		// PropertyTypeId:     product.PropertyTypeID,
+		// DocTypeId:          product.DocTypeID,
+		// PositionUrl:        product.PositionUrl,
+		// Address:            product.Address,
+		// GoogleMapLink:      product.GoogleMapLink,
+		// AssetId:            product.AssetId,
+		// ApartmentId:        product.ApartmentID,
+		// LastPriceId:        product.LastPriceID,
+		// TransactionPrice:   product.TransactionPrice,
+		// Archived:           product.Archived,
+		// NumBedroom:         product.NumBedroom,
+		// NumBathroom:        product.NumBathroom,
+		// NumFloor:           product.NumFloor,
+		// Furniture:          product.Furniture,
+		// Orientation:        product.Orientation,
+		// NumFront:           product.NumFront,
+		// NumCarPark:         product.NumCarPark,
+		// NumToilet:          product.NumToilet,
+		// AmenityIds:         product.AmenityIDs,
+		// MediaUrls:          product.MediaList,
+		// MediaTypes:         product.MediaList,
+		// MainImage:          product.MediaList[0].MediaURL,
+		ProvinceName:     product.ProvinceName,
+		DistrictName:     product.DistrictName,
+		WardName:         product.WardName,
+		DocTypeName:      product.DocTypeName,
+		PropertyTypeName: product.PropertyTypeName,
+		SalePrice:        product.SalePrice,
+		// Currency:           product.Price.Currency,
+		// PriceOwner:         product.Price.PriceOwner,
+		// SalePrice:          product.Price.SalePrice,
+		// SaleCommission:     product.Price.SaleCommission,
+		// SaleCommissionType: product.Price.SaleCommissionType,
+		// RentPrice:          product.Price.RentPrice,
+		// RentCommission:     product.Price.RentCommission,
+		// RentCommissionType: product.Price.RentCommissionType,
+		// RentPaymentCycle:   product.Price.RentPaymentCycle,
+		// ImportPrice:        product.PrivateData.ImportPrice,
+		// OperatingCost:      product.PrivateData.OperatingCost,
+		// InternalNote:       product.PrivateData.InternalNote,
+		// TargetProfit:       product.PrivateData.TargetProfit,
+		// PrivateDocs:        product.PrivateData.PrivateDocs,
+		// Deposite:           product.Price.Deposite,
+	}
+	if product.MediaURLs != nil {
+		result.MediaUrls = product.MediaURLs
+		result.MediaTypes = product.MediaTypes
+	}
+	return result
+}
+
+func (m *ProductMapper) MapProductMarketPbList(products []domain.ProductMarket) []*pb_bdspro.ProductMarket {
+	productList := make([]*pb_bdspro.ProductMarket, len(products))
+	for i, product := range products {
+		productList[i] = m.MapProductMarketToPb(&product)
+	}
+	return productList
 }

@@ -128,8 +128,9 @@ func (c *UserClient) GetAvatars(ctx context.Context, ids []uint64) ([]string, er
 }
 
 func (c *UserClient) MapAvatarAndNameToPb(ctx context.Context, conversation *chatpb.GetConversationByIdResponse) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
 	if conversation.ReceiverId != nil {
-		if *conversation.ReceiverId != uint64(conversation.CreatedBy) {
+		if *conversation.ReceiverId != currentUserId {
 			user, _ := c.GetUserById(ctx, *conversation.ReceiverId)
 			conversation.Avatar = user.Avatar
 			conversation.Name = user.FullName
@@ -145,5 +146,19 @@ func (c *UserClient) MapAvatarAndNameToPb(ctx context.Context, conversation *cha
 		}
 		avatars, _ := c.GetAvatars(ctx, userIds)
 		conversation.Avatars = avatars
+	}
+}
+
+func (c *UserClient) MapAvatarAndNameToMessagePbList(ctx context.Context, messages []*chatpb.Message) {
+	userIds := make(map[uint64]struct{}, len(messages))
+	for _, message := range messages {
+		userIds[uint64(message.SenderId)] = struct{}{}
+	}
+	users, _ := c.Client.GetMapByIDs(ctx, userIds)
+	for _, message := range messages {
+		if user, ok := users[uint64(message.SenderId)]; ok {
+			message.Avatar = &user.Avatar
+			message.FullName = &user.FullName
+		}
 	}
 }

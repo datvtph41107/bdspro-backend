@@ -416,8 +416,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 	if err != nil {
 		return nil, err
 	}
-	productResponse := &pb_bdspro.ProductResponse{}
-	copier.Copy(productResponse, product)
+	productResponse := s.ProductMapper.MapProductPb(product)
 	return productResponse, nil
 }
 

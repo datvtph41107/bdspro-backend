@@ -14,6 +14,10 @@ func (r *gormRepository) CreateMessage(ctx context.Context, message *models.Mess
 	return message, r.db.WithContext(ctx).Create(message).Error
 }
 
+func (r *gormRepository) CreateMessages(ctx context.Context, messages []*models.MessageModel) ([]*models.MessageModel, error) {
+	return messages, r.db.WithContext(ctx).Create(messages).Error
+}
+
 func (r *gormRepository) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	err := r.db.WithContext(ctx).

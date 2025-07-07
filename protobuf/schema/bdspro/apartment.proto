@@ -7,4 +7,11 @@ option go_package = "pb/types/bdspro;pb_bdspro";
 message Apartment {
   uint64 id = 1;
   string name = 2;
+  string note = 3;
+  int32 floor = 4;
+  int32 ordinal = 5;
+  uint64 buildId = 6;
+  int32 status = 7;
+  int32 archived = 8;
+  uint64 apartmentAttrId = 9;
 }

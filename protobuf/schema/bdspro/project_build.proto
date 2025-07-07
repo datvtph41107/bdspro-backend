@@ -2,9 +2,18 @@ syntax = "proto3";
 
 package pb_bdspro;
 
+import "bdspro/apartment.proto";
+import "bdspro/apartment_attribute.proto";
+
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 message ProjectBuild {
   uint64 id = 1;
   string name = 2;
+  uint32 numFloor = 3;
+  uint32 numApartment = 4;
+  string note = 5;
+  uint64 projectId = 6;
+  repeated Apartment apartments = 7;
+  repeated ApartmentAttribute attributes = 8;
 }

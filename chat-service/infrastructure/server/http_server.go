@@ -40,8 +40,9 @@ func NewHTTPServer(port string) *HTTPServer {
 	}
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
+	bdsproClient := client.NewBdsproClient()
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
-	messageUsecase := usecases.NewMessageUsecases(pRepository)
+	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
@@ -57,6 +58,7 @@ func NewHTTPServer(port string) *HTTPServer {
 		messageReactionUsecase,
 		backgroundImageUsecase,
 		userClient,
+		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
 	)

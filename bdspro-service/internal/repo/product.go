@@ -73,4 +73,5 @@ type ProductRepo interface {
 	GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error)
 	SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error)
+	SyncData(ctx context.Context) error
 }

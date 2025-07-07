@@ -7,6 +7,7 @@ option go_package = "pb/types/chat;chatpb";
 
 import "chat/background.proto";
 import "shared/common.proto";
+import "bdspro/common.proto";
 
 service ChatService {
   rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse) {
@@ -23,6 +24,12 @@ service ChatService {
   rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {
     option (google.api.http) = {
       post: "/v2/chat/messages"
+      body: "*"
+    };
+  };
+  rpc SendToReceiver (SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/to-receiver"
       body: "*"
     };
   };
@@ -162,8 +169,23 @@ service ChatService {
       body: "*"
     };
   };
+  rpc SetBackgroundImage(SetBackgroundImageRequest) returns (SetBackgroundImageResponse) {
+    option (google.api.http) = {
+      put: "/v2/chat/conversation/background"
+      body: "*"
+    };
+  };
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
   rpc GetRoomMembers(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
+}
+
+message SetBackgroundImageRequest {
+  int32 conversationId = 1;
+  uint64 backgroundImageId = 2;
+}
+
+message SetBackgroundImageResponse {
+  bool success = 1;
 }
 
 enum ConversationTypeEnum {
@@ -176,9 +198,9 @@ message CreateConversationRequest {
   ConversationTypeEnum type = 1;
   string name = 2;
   repeated int32 members = 3;
-  bool is_broadcast = 4;
-  bool forbid_forward = 5;
-  int32 created_by = 6;
+  bool isBroadcast = 4;
+  bool forbidForward = 5;
+  int32 createdBy = 6;
   string avatar = 7;
   optional uint64 backgroundImageId = 8;
   optional uint64 receiverId = 9;
@@ -219,9 +241,11 @@ message SendMessageRequest {
   int32 conversationId = 1;
   int32 senderId = 2;
   string content = 3;
-  string content_type = 4;
-  optional string file_url = 5;
-  optional uint64 reply_id  = 6;
+  string contentType = 4;
+  optional string fileUrl = 5;
+  optional uint64 replyId  = 6;
+  optional uint64 extraId = 7;
+  optional uint64 receiverId = 8;
 }
 
 message SendMessageResponse {
@@ -234,8 +258,8 @@ message GetMessagesRequest {
   optional int32 limit = 2;
   optional int32 offset = 3;
   optional string sort = 4;
-  optional google.protobuf.Timestamp from_date = 5;
-  optional google.protobuf.Timestamp to_date = 6;
+  optional string fromDate = 5;
+  optional string toDate = 6;
 }
 
 message GetMessagesResponse {
@@ -247,25 +271,27 @@ message Message {
   int32 messageId = 1;
   int32 senderId = 2;
   string content = 3;
-  string content_type = 4;
-  optional string file_url = 5;
-  string room_id = 6;
+  string contentType = 4;
+  optional string fileUrl = 5;
+  string roomId = 6;
   string createdAt = 7;
   bool isRecall = 8;
   optional Message replyMessage = 9;
   repeated MessageReaction reactions = 10;
   optional string fullName = 11;
   optional string avatar = 12;
+  optional uint64 extraId = 13;
+  optional pb_bdspro.ProductAttachment product = 14;
 }
 
 message ForwardMessageRequest {
   int32 messageId = 1;
-  int32 targetConversationId = 2;
+  repeated uint64 conversationIds = 2;
   int32 senderId = 3;
 }
 
 message ForwardMessageResponse {
-  int32 messageId = 1;
+  repeated uint64 messageIds = 1;
 }
 
 message MarkAsReadRequest {
@@ -309,10 +335,10 @@ message RemoveUserResponse {
 
 message EditChannelRequest {
   int32 conversationId = 1;
-  optional bool is_broadcast = 2;
-  optional bool forbid_forward = 3;
+  optional bool isBroadcast = 2;
+  optional bool forbidForward = 3;
   optional string name = 4;
-  optional string backgroundImage = 5;
+  optional uint64 backgroundImageId = 5;
 }
 
 message EditChannelResponse {
@@ -322,8 +348,8 @@ message EditChannelResponse {
 message CreateOrgChannelRequest {
   int32 orgId = 1;
   int32 departmentId = 2;
-  optional bool is_broadcast = 3;
-  optional bool forbid_forward = 4;
+  optional bool isBroadcast = 3;
+  optional bool forbidForward = 4;
 }
 
 message CreateOrgChannelResponse {
@@ -359,7 +385,7 @@ message SearchResponse {
 
 message GetConversationByIdRequest {
   int32 conversationId = 1;
-  bool include_members = 2;
+  bool includeMembers = 2;
 }
 
 message GetConversationByIdResponse {
@@ -367,8 +393,8 @@ message GetConversationByIdResponse {
   ConversationTypeEnum type = 2;
   string name = 3;
   int32 createdBy = 4;
-  bool is_broadcast = 5;
-  bool forbid_forward = 6;
+  bool isBroadcast = 5;
+  bool forbidForward = 6;
   string createdAt = 7;
   string updatedAt = 8;
   repeated Participant participants = 9;
@@ -470,10 +496,10 @@ message GetSettingResponse {
   uint64 id = 1;
   ConversationTypeEnum type = 2;
   optional string name = 3;
-  bool is_broadcast = 4;
-  bool forbid_forward = 5;
-  bool is_deleted = 6;
-  bool mute_notif = 7;
+  bool isBroadcast = 4;
+  bool forbidForward = 5;
+  bool isDeleted = 6;
+  bool muteNotif = 7;
   optional BackgroundImage backgroundImage = 8;
 }
 
@@ -518,7 +544,7 @@ message MessageReaction {
   int32 userId = 3;
   string createdAt = 4;
   uint64 id = 5;
-  string room_id = 6;
+  string roomId = 6;
   optional string fullName = 7;
   optional string avatar = 8;
 }

@@ -48,6 +48,38 @@
         ]
       }
     },
+    "/v2/chat/conversation/background": {
+      "put": {
+        "operationId": "ChatService_SetBackgroundImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatpbSetBackgroundImageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/chatpbSetBackgroundImageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChatService"
+        ]
+      }
+    },
     "/v2/chat/conversation/delete-conversation/{conversationId}": {
       "delete": {
         "operationId": "ChatService_DeleteRoom",
@@ -567,15 +599,13 @@
             "name": "fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         ],
         "tags": [
@@ -779,6 +809,38 @@
         ]
       }
     },
+    "/v2/chat/messages/to-receiver": {
+      "post": {
+        "operationId": "ChatService_SendToReceiver",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatpbSendMessageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/chatpbSendMessageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChatService"
+        ]
+      }
+    },
     "/v2/chat/messages/{conversationId}/pinned": {
       "get": {
         "operationId": "ChatService_GetPinnedMessages",
@@ -828,15 +890,13 @@
             "name": "fromDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           {
             "name": "toDate",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         ],
         "tags": [
@@ -1086,8 +1146,9 @@
         "name": {
           "type": "string"
         },
-        "backgroundImage": {
-          "type": "string"
+        "backgroundImageId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1329,9 +1390,12 @@
           "type": "integer",
           "format": "int32"
         },
-        "targetConversationId": {
-          "type": "integer",
-          "format": "int32"
+        "conversationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         },
         "senderId": {
           "type": "integer",
@@ -1342,9 +1406,12 @@
     "chatpbForwardMessageResponse": {
       "type": "object",
       "properties": {
-        "messageId": {
-          "type": "integer",
-          "format": "int32"
+        "messageIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -1651,6 +1718,13 @@
         },
         "avatar": {
           "type": "string"
+        },
+        "extraId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/pb_bdsproProductAttachment"
         }
       }
     },
@@ -1892,6 +1966,14 @@
         "replyId": {
           "type": "string",
           "format": "uint64"
+        },
+        "extraId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1906,6 +1988,77 @@
           "type": "string"
         }
       }
+    },
+    "chatpbSetBackgroundImageRequest": {
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "backgroundImageId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "chatpbSetBackgroundImageResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pb_bdsproProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
     "protobufAny": {
       "type": "object",

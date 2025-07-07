@@ -12,11 +12,11 @@ import (
 )
 
 type conversationUsecases struct {
-	repo       repository
+	repo       Repository
 	userClient iusecase.IUserClient
 }
 
-func NewConversationUsecases(repo repository, userClient iusecase.IUserClient) *conversationUsecases {
+func NewConversationUsecases(repo Repository, userClient iusecase.IUserClient) *conversationUsecases {
 	return &conversationUsecases{
 		repo:       repo,
 		userClient: userClient,
@@ -53,7 +53,7 @@ func (c *conversationUsecases) CreateConversation(ctx context.Context, conversat
 	var existedConversation *models.ConversationModel
 	var err error
 	if conversation.ReceiverId != nil {
-		existedConversation, err = c.repo.HasExactConversationWithReceiverID(ctx, currentUserId, *conversation.ReceiverId)
+		existedConversation, err = c.repo.GetConversationWithReceiverID(ctx, currentUserId, *conversation.ReceiverId)
 	} else if len(members) > 1 {
 		existedConversation, err = c.repo.HasExactConversationWithUserIDs(ctx, allMember)
 	}
@@ -100,14 +100,7 @@ func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offs
 	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
-func (c *conversationUsecases) EditChannel(
-	ctx context.Context,
-	conversationId uint64,
-	isBroadcast *bool,
-	forbidForward *bool,
-	name *string,
-	backgroundImage *string,
-) error {
+func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
@@ -136,11 +129,11 @@ func (c *conversationUsecases) EditChannel(
 		nameVal = ""
 	}
 
-	var bgImageVal string
-	if backgroundImage != nil {
-		bgImageVal = *backgroundImage
+	var bgImageVal *uint64
+	if backgroundImageId != nil {
+		bgImageVal = backgroundImageId
 	} else {
-		bgImageVal = ""
+		bgImageVal = nil
 	}
 
 	return c.repo.UpdateConversation(ctx, conversationId, broadcastVal, forbidForwardVal, nameVal, bgImageVal)
@@ -223,5 +216,36 @@ func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Co
 }
 
 func (c *conversationUsecases) GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error) {
-	return c.repo.GetRoomMemberIDs(ctx, conversationId)
+	// currentUserId := utils.GetCurrentUserID(ctx)
+
+	participants, _, err := c.repo.GetListParticipant(ctx, conversationId)
+	if err != nil {
+		return nil, err
+	}
+	var memberIds []uint64
+	for _, participant := range participants {
+		memberIds = append(memberIds, participant.UserID)
+	}
+	return memberIds, nil
+}
+
+func (c *conversationUsecases) SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*models.ConversationModel, error) {
+	currentUserId := utils.GetCurrentUserID(ctx)
+
+	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+	if participant == nil {
+		return nil, errors.NotParticipant()
+	}
+	err = c.repo.SetBackgroundImage(ctx, conversationId, backgroundImageId)
+	if err != nil {
+		return nil, err
+	}
+	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return nil, err
+	}
+	return conversation, nil
 }

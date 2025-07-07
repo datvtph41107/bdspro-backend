@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"chat/infrastructure/delivery/errors"
+	_utils "common/utils"
 	"context"
 	"time"
 
@@ -10,13 +11,44 @@ import (
 )
 
 type messageUsecases struct {
-	repo repository
+	repo                 Repository
+	conversationUsecases *conversationUsecases
 }
 
-func NewMessageUsecases(repository repository) *messageUsecases {
+func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases) *messageUsecases {
 	return &messageUsecases{
-		repo: repository,
+		repo:                 repository,
+		conversationUsecases: conversationUsecases,
 	}
+}
+
+func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error) {
+	conversation, err := c.repo.GetConversationWithReceiverID(ctx, message.SenderID, *receiverID)
+	if err != nil {
+		return nil, err
+	}
+	if conversation == nil {
+		conversation, err = c.conversationUsecases.CreateConversation(ctx, &models.ConversationModel{
+			ReceiverId: receiverID,
+		}, []uint64{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	message.ConversationID = conversation.ID
+
+	data, err := c.repo.CreateMessage(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	if message.ReplyId != nil {
+		replyMessage, err := c.repo.FindMessageByID(ctx, *message.ReplyId)
+		if err != nil {
+			return nil, err
+		}
+		data.ReplyMessage = replyMessage
+	}
+	return data, nil
 }
 
 func (c *messageUsecases) SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error) {
@@ -48,10 +80,22 @@ func (c *messageUsecases) GetMessages(ctx context.Context, limit, offset int64, 
 	return c.repo.GetMessages(ctx, limit, offset, conversationId, sort, fromDate, toDate)
 }
 
-func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, targetConversationId uint64) (*models.MessageModel, error) {
-	err := c.validateConversationAndCurrentUser(ctx, targetConversationId)
+func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error) {
+	conversations, err := c.repo.GetConversationsByIDs(ctx, conversationIds)
 	if err != nil {
 		return nil, err
+	}
+	if len(conversations) == 0 {
+		return nil, errors.ConversationNotFound()
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	existParticipant, err := c.repo.ExistParticipants(ctx, conversationIds, currentUserId)
+	if err != nil {
+		return nil, err
+	}
+	if !existParticipant {
+		return nil, errors.NotParticipant()
 	}
 
 	existMessage, err := c.repo.FindMessageByID(ctx, messageId)
@@ -62,14 +106,18 @@ func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, 
 		return nil, errors.MessageNotFound()
 	}
 
-	model := *existMessage
-	model.ID = 0
-	model.ForwardFrom = &messageId
-	model.ConversationID = targetConversationId
-	model.CreatedAt = time.Now()
-	model.SenderID = utils.GetCurrentUserID(ctx)
+	messages := make([]*models.MessageModel, 0)
+	for _, conversation := range conversations {
+		model := *existMessage
+		model.ID = 0
+		model.ForwardFrom = &messageId
+		model.ConversationID = conversation.ID
+		model.CreatedAt = time.Now()
+		model.SenderID = utils.GetCurrentUserID(ctx)
+		messages = append(messages, &model)
+	}
 
-	return c.repo.CreateMessage(ctx, &model)
+	return c.repo.CreateMessages(ctx, messages)
 }
 
 func (c *messageUsecases) PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error) {
