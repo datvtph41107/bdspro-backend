@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"organization/config"
 	organization_config "organization/config"
@@ -17,6 +16,8 @@ import (
 	organization_internal_domain_repository "organization/internal/domain/repository"
 	organization_internal_interface "organization/internal/interface"
 	organization_internal_usecase "organization/internal/usecase"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -45,6 +46,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_infrastructure_repository_postgres.OrganizationRoleRepository)),
+	wire.Bind(new(organization_internal_domain_repository.DealMilestoneRepository), new(*organization_infrastructure_repository_postgres.DealMilestonePostgresRepository)),
 	organization_infrastructure_transformer.NewBankAccountMapper,
 	organization_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_infrastructure_client.NewBdsproClient,
@@ -136,7 +138,15 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_validator.NewOrganizationValidator,
 	organization_infrastructure_repository_postgres.NewPostgresTransaction,
 	organization_infrastructure_client.NewUserClient,
+
+	// Deal Milestone providers
+	organization_infrastructure_handler.NewDealMilestoneHandler,
+	organization_infrastructure_repository_postgres.NewDealMilestonePostgresRepository,
+	organization_infrastructure_transformer.NewDealMilestoneTransformer,
+	organization_internal_usecase.NewDealMilestoneUsecase,
+	organization_infrastructure_validator.NewDealMilestoneValidator,
 )
+
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

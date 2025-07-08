@@ -30,6 +30,7 @@ type GRPCServer struct {
 
 	groupHandler             *handler.GroupHandler
 	groupDealHandler         *handler.GroupDealHandler
+	dealMilestoneHandler     *handler.DealMilestoneHandler
 	groupLogActivityHandler  *handler.GroupLogActivityHandler
 	groupNotificationHandler *handler.GroupNotificationHandler
 	groupSettingHandler      *handler.GroupSettingHandler
@@ -51,6 +52,7 @@ func NewGRPCServer(
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
 	groupDealHandler *handler.GroupDealHandler,
+	dealMilestoneHandler *handler.DealMilestoneHandler,
 	groupLogActivityHandler *handler.GroupLogActivityHandler,
 	groupNotificationHandler *handler.GroupNotificationHandler,
 	groupSettingHandler *handler.GroupSettingHandler,
@@ -71,6 +73,7 @@ func NewGRPCServer(
 
 		groupHandler:             groupHandler,
 		groupDealHandler:         groupDealHandler,
+		dealMilestoneHandler:     dealMilestoneHandler,
 		groupLogActivityHandler:  groupLogActivityHandler,
 		groupNotificationHandler: groupNotificationHandler,
 		groupSettingHandler:      groupSettingHandler,
@@ -95,6 +98,7 @@ func (s *GRPCServer) Start() {
 		s.groupDocumentHandler,
 		s.groupHandler,
 		s.groupDealHandler,
+		s.dealMilestoneHandler,
 		s.groupLogActivityHandler,
 		s.groupNotificationHandler,
 		s.groupSettingHandler,
@@ -124,6 +128,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
 	groupDealHandler *handler.GroupDealHandler,
+	dealMilestoneHandler *handler.DealMilestoneHandler,
 	groupLogActivityHandler *handler.GroupLogActivityHandler,
 	groupNotificationHandler *handler.GroupNotificationHandler,
 	groupSettingHandler *handler.GroupSettingHandler,
@@ -155,6 +160,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 
 			organizationpb.RegisterGroupServiceServer(s, groupHandler)
 			organizationpb.RegisterGroupDealServiceServer(s, groupDealHandler)
+			organizationpb.RegisterDealMilestoneServiceServer(s, dealMilestoneHandler)
 			organizationpb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
 			organizationpb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
 			organizationpb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
