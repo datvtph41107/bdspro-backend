@@ -23,4 +23,5 @@ type LeadRepo interface {
 	SwitchStage(c context.Context, id uint64, stageID *uint64) (*domain.LeadEntity, error)
 	GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRuleDTO, error)
 	// UpdateAutoTrigger(c context.Context, id uint64) (*domain.CustomerEntity, error)
+	CareExpiredTime(c context.Context, organizationId uint64) (int64, error)
 }

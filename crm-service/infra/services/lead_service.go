@@ -281,3 +281,20 @@ func (s *LeadService) Manager(ctx context.Context, req *crmpb.LeadManagerRequest
 		Total: uint32(total),
 	}, err
 }
+
+// @Summary Lấy thời gian hết hạn bảo trì
+// @Description Lấy thời gian hết hạn bảo trì
+// @Tags Khách hàng
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /lead/care-expired [get]
+func (s *LeadService) GetCareExpiredTime(ctx context.Context, req *sharepb.Empty) (*crmpb.CareExpiredResponse, error) {
+	count, err := s.UC.GetCareExpiredTime(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &crmpb.CareExpiredResponse{
+		Count: count,
+	}, nil
+}

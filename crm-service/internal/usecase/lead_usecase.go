@@ -443,3 +443,9 @@ func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personCha
 
 	return lead, nil
 }
+
+func (u *LeadUsecase) GetCareExpiredTime(ctx context.Context) (int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+
+	return u.leadRepo.CareExpiredTime(ctx, organizationId)
+}

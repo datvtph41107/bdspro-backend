@@ -60,6 +60,15 @@ service LeadService {
       get: "/v2/crm/lead/manage/{pipelineId}"
     };
   };
+  rpc GetCareExpiredTime (sharepb.Empty) returns (CareExpiredResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/care-expired"
+    };
+  };
+}
+
+message CareExpiredResponse {
+  int64 count = 1;
 }
 
 message LeadSearchRequest {
