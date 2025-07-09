@@ -158,9 +158,9 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 			Message: "Không lấy được id từ Zalo",
 		}
 	}
-	e, err := auth_model.AuthFindByOAuthId(username, "ZALO")
+	existingUser, err := auth_model.AuthFindByOAuthId(username, "ZALO")
 	if err != nil {
-		e = &auth_model.UserAuthEntity{
+		e := &auth_model.UserAuthEntity{
 			Provider:    "ZALO",
 			Username:    username,
 			OAuthID:     username,
@@ -170,17 +170,18 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 		}
 		_db.SaveWithAudit(c, e)
 		s.AuthService.NewUser(c, e.ID)
+		existingUser = e
 	}
 
-	session := s.AuthService.CreateSession(c, e, &dto.OtpVerifyRequest{})
+	session := s.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})
 	if err != nil {
 		return nil, err
 	}
 	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	s.AuthService.GenRefreshToken(c, e, session.SessionID)
+	profile := s.AuthService.GetProfileByID(existingUser.UserID)
+	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
-	profile := s.AuthService.GetProfileByID(e.UserID)
-	return s.AuthService.ResponseLogin(e, profile, session.SessionID), nil
+	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
 }
 
 func extractAvatar(userInfo map[string]interface{}) string {

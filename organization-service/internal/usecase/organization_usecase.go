@@ -42,9 +42,9 @@ func NewOrganizationUsecase(
 }
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
-	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, currentUserId)
+	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, uint32(currentUserId))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -121,8 +121,8 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organizati
 }
 
 func (o *organizationUsecase) GetOrganizations(ctx context.Context, page, size int) ([]*entity.Organization, uint32, error) {
-	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
-	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, currentUserId, page, size)
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	return o.OrganizationRepository.FindByUserIdWithPagination(ctx, uint32(currentUserId), page, size)
 }
 
 func (o *organizationUsecase) GetOrganizationByUserId(ctx context.Context) ([]*entity.Organization, error) {

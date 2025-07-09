@@ -1,6 +1,7 @@
 package client
 
 import (
+	_middleware "common/middleware"
 	"fmt"
 	"log"
 	"user/env"
@@ -17,7 +18,11 @@ func NewOrganizationClient() organizationpb.OrganizationServiceClient {
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+	)
 	if err != nil {
 		log.Fatalf("Failed to connect to organization service: %v", err)
 	}
@@ -31,7 +36,11 @@ func NewOrganizationMemberClient() organizationpb.OrganizationMemberServiceClien
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+	)
 	if err != nil {
 		log.Fatalf("Failed to connect to organization service: %v", err)
 	}
@@ -44,7 +53,11 @@ func NewGroupClient() organizationpb.GroupServiceClient {
 	if env.ENV_RUNTIME == "release" {
 		url = "organization"
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+	)
 	if err != nil {
 		log.Fatalf("Failed to connect to group service: %v", err)
 	}

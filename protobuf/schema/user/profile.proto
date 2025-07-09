@@ -21,7 +21,7 @@ service ProfileService {
     }
     rpc ListAccountMe(sharepb.Empty) returns (AccountInfoResponse) {
         option (google.api.http) = {
-            get: "/v2/user/profile/me"
+            get: "/v2/user/profile/accounts/me"
         };
     }
     rpc SetInfo(SetInfoRequest) returns (sharepb.Empty) {
