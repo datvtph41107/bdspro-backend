@@ -14,10 +14,12 @@ type AssetMapper struct {
 }
 
 func NewAssetMapper(assetLegalMapper *AssetLegalMapper, productMapper *ProductMapper) *AssetMapper {
-	return &AssetMapper{
+	result := &AssetMapper{
 		AssetLegalMapper: assetLegalMapper,
 		ProductMapper:    productMapper,
 	}
+	productMapper.PostMapper.AssetMapper = result
+	return result
 }
 
 func (m *AssetMapper) AssetToPb(asset *domain.Asset) *pb_bdspro.Asset {

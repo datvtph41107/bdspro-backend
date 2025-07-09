@@ -1,7 +1,7 @@
 package org_router
 
 import (
-	user_dto "bdspro/internal/dto/user"
+	"bdspro/internal/dto"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -47,7 +47,7 @@ func (r *OrgAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
 // // @Security BearerAuth
 // // @Router /v1/bdspro/v2/org/asset [post]
 // func (r *OrgAssetRouter) CreateAsset(c *gin.Context) {
-// 	body := user_dto.AssetSaveRequest{}
+// 	body := dto.AssetSaveRequest{}
 // 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 // 		_routes.RouteResult(c, nil, err)
 // 		return
@@ -60,11 +60,11 @@ func (r *OrgAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
 // // @Summary Tạo từ sản phẩm
 // // @Tags Tổ chức: Tài sản
 // // @Produce json
-// // @Param body body user_dto.AssetSaveRequest true "Body"
+// // @Param body body dto.AssetSaveRequest true "Body"
 // // @Security BearerAuth
 // // @Router /v1/bdspro/v2/org/asset/from-product [post]
 // func (r *OrgAssetRouter) CreateAssetFromProduct(c *gin.Context) {
-// 	body := user_dto.AssetSaveRequest{}
+// 	body := dto.AssetSaveRequest{}
 // 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 // 		_routes.RouteResult(c, nil, err)
 // 		return
@@ -77,11 +77,11 @@ func (r *OrgAssetRouter) RegisterRoutes(router *gin.RouterGroup, path string) {
 // @Summary Lấy danh sách tài sản của người dùng
 // @Tags Tổ chức: Tài sản
 // @Produce json
-// @Param query query user_dto.AssetSearchDTO true "Size"
+// @Param query query dto.AssetSearchDTO true "Size"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/org/asset/search [get]
 func (r *OrgAssetRouter) SearchMe(c *gin.Context) {
-	body := user_dto.AssetSearchDTO{}
+	body := dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -96,7 +96,7 @@ func (r *OrgAssetRouter) SearchMe(c *gin.Context) {
 }
 
 func (r *OrgAssetRouter) SearchShare(c *gin.Context) {
-	body := user_dto.AssetSearchDTO{}
+	body := dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -113,11 +113,11 @@ func (r *OrgAssetRouter) SearchShare(c *gin.Context) {
 // @Summary Lấy danh sách tài sản có số lượng con
 // @Tags Tổ chức: Tài sản
 // @Produce json
-// @Param body query user_dto.AssetSearchDTO true "body"
+// @Param body query dto.AssetSearchDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/org/asset/split [get]
 func (r *OrgAssetRouter) SearchSplit(c *gin.Context) {
-	body := user_dto.AssetSearchDTO{}
+	body := dto.AssetSearchDTO{}
 	if err := _utils.ParseQuery2(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -135,11 +135,11 @@ func (r *OrgAssetRouter) SearchSplit(c *gin.Context) {
 // @Tags Tổ chức: Tài sản
 // @Produce json
 // @Param id path int true "ID"
-// @Param body body user_dto.AssetArchivedDTO true "Body"
+// @Param body body dto.AssetArchivedDTO true "Body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/org/asset/archived/{id} [put]
 func (r *OrgAssetRouter) Archived(c *gin.Context) {
-	body := user_dto.AssetArchivedDTO{}
+	body := dto.AssetArchivedDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -152,11 +152,11 @@ func (r *OrgAssetRouter) Archived(c *gin.Context) {
 // @Summary Gộp tài sản
 // @Tags Tổ chức: Tài sản
 // @Produce json
-// @Param body body user_dto.MergeAssetDTO true "body"
+// @Param body body dto.MergeAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/org/asset/merge [post]
 func (r *OrgAssetRouter) Merge(c *gin.Context) {
-	body := user_dto.MergeAssetDTO{}
+	body := dto.MergeAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -169,11 +169,11 @@ func (r *OrgAssetRouter) Merge(c *gin.Context) {
 // @Summary Tách tài sản
 // @Tags Tổ chức: Tài sản
 // @Produce json
-// @Param body body user_dto.SplitAssetDTO true "body"
+// @Param body body dto.SplitAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v1/bdspro/v2/org/asset/split [post]
 func (r *OrgAssetRouter) Split(c *gin.Context) {
-	body := user_dto.SplitAssetDTO{}
+	body := dto.SplitAssetDTO{}
 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 		_routes.RouteResult(c, nil, err)
 		return
@@ -223,7 +223,7 @@ func (r *OrgAssetRouter) Split(c *gin.Context) {
 // func (r *OrgAssetRouter) UpdateAsset(c *gin.Context) {
 // 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-// 	body := user_dto.AssetSaveRequest{}
+// 	body := dto.AssetSaveRequest{}
 // 	if err := _utils.ParseBodyWithValidator(c, &body); err != nil {
 // 		_routes.RouteResult(c, nil, err)
 // 		return

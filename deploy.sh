@@ -35,6 +35,7 @@ case "$1" in
   "user")
     service_path=user-service
     path_jar=main
+    payload_build=user
     ;;
   "user-grpc")
     service_path=user-service
@@ -155,6 +156,9 @@ fi
 if [ "$1" = "org" ]; then
   scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
+if [ "$1" = "payment" ]; then
+  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
 if [ "$1" = "appointment" ]; then
   scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
@@ -174,8 +178,10 @@ fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
-docker-compose up -d --build ${payload_build}
+docker-compose build --no-cache ${payload_build}
+docker-compose up -d ${payload_build}
 "
+# docker-compose build --no-cache ${payload_build}
 
 # # SSH vào server và chạy lệnh build (giả sử bạn có file build.sh trong thư mục remote)
 # echo "Đang chạy build trên server..."

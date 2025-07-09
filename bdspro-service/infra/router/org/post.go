@@ -80,7 +80,7 @@ func (r *OrgPostRouter) UpdatePost(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.UpdatePost(c, id, body)
+	result, err := r.UC.UpdatePost(c, id, &body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -142,7 +142,7 @@ func (r *OrgPostRouter) GetPersonalPost(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.UC.PersonalPost(c, query)
+	result, total, err := r.UC.PersonalPost(c, &query)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

@@ -249,7 +249,7 @@ func (s *UserPostUC) Detail(c context.Context, id uint64) (*dto.PostDetail, erro
 	}, nil
 }
 
-func (s *UserPostUC) PersonalPost(c context.Context, dto dto.PostSearchRequest) (_routes.ResponseDTO, error) {
+func (s *UserPostUC) PersonalPost(c context.Context, dto *dto.PostSearchRequest) (_routes.ResponseDTO, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
 	if err != nil {

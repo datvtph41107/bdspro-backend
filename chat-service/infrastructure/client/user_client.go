@@ -132,12 +132,16 @@ func (c *UserClient) MapAvatarAndNameToPb(ctx context.Context, conversation *cha
 	if conversation.ReceiverId != nil {
 		if *conversation.ReceiverId != currentUserId {
 			user, _ := c.GetUserById(ctx, *conversation.ReceiverId)
-			conversation.Avatar = user.Avatar
-			conversation.Name = user.FullName
+			if user != nil {
+				conversation.Avatar = user.Avatar
+				conversation.Name = user.FullName
+			}
 		} else {
 			user, _ := c.GetUserById(ctx, uint64(conversation.CreatedBy))
-			conversation.Avatar = user.Avatar
-			conversation.Name = user.FullName
+			if user != nil {
+				conversation.Avatar = user.Avatar
+				conversation.Name = user.FullName
+			}
 		}
 	} else if len(conversation.Participants) > 0 {
 		userIds := make([]uint64, 0)

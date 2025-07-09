@@ -1,24 +1,4 @@
 definitions:
-  dto.CertificationBatchSave:
-    properties:
-      fileName:
-        type: string
-      fileType:
-        type: string
-      fileUrl:
-        type: string
-      id:
-        type: integer
-      issueDate:
-        type: string
-      issuer:
-        type: string
-      name:
-        description: |-
-          Title     string    `json:"title,omitempty"`
-          Type      uint8     `json:"type,omitempty"`
-        type: string
-    type: object
   dto.FollowInfoRes:
     properties:
       numFollower:
@@ -83,23 +63,6 @@ definitions:
     - otp
     - phone
     type: object
-  dto.ProfessionBatchSave:
-    properties:
-      fileName:
-        type: string
-      fileType:
-        type: string
-      fileUrl:
-        type: string
-      id:
-        type: integer
-      issueDate:
-        type: string
-      issuer:
-        type: string
-      name:
-        type: string
-    type: object
   dto.PublicUserInfo:
     properties:
       address:
@@ -115,7 +78,7 @@ definitions:
       certifications:
         description: transient
         items:
-          $ref: '#/definitions/user_model.CertificationItem'
+          $ref: '#/definitions/user_model.CertificationEntity'
         type: array
       departmentId:
         type: integer
@@ -143,7 +106,7 @@ definitions:
         type: string
       professions:
         items:
-          $ref: '#/definitions/user_model.ProfessionItem'
+          $ref: '#/definitions/user_model.ProfessionEntity'
         type: array
       profileId:
         type: integer
@@ -219,79 +182,6 @@ definitions:
         type: integer
     required:
     - organizationId
-    type: object
-  dto.UserInfoRequest:
-    properties:
-      address:
-        type: string
-      avatar:
-        type: string
-      backIdentify:
-        type: string
-      backgroundImage:
-        type: string
-      birth:
-        type: string
-      certificationRemoveIds:
-        items:
-          type: integer
-        type: array
-      certifications:
-        items:
-          $ref: '#/definitions/dto.CertificationBatchSave'
-        type: array
-      departmentId:
-        type: integer
-      email:
-        type: string
-      facebook:
-        type: string
-      frontIdentify:
-        type: string
-      fullname:
-        type: string
-      instagram:
-        type: string
-      introduction:
-        type: string
-      linkedin:
-        type: string
-      phone:
-        type: string
-      phone2:
-        type: string
-      position:
-        type: string
-      professionRemoveIds:
-        items:
-          type: integer
-        type: array
-      professions:
-        items:
-          $ref: '#/definitions/dto.ProfessionBatchSave'
-        type: array
-      profileVisibility:
-        type: integer
-      roleRealEstate:
-        $ref: '#/definitions/enums.ERoleRealEstate'
-      slogan:
-        type: string
-      startDate:
-        type: string
-      statusOnline:
-        $ref: '#/definitions/enums.EOnlineStatus'
-      tabDefault:
-        $ref: '#/definitions/enums.ESettingTab'
-      taxCode:
-        type: string
-      twitter:
-        type: string
-      visibility:
-        type: integer
-      website:
-        type: string
-      youtube:
-        type: string
     type: object
   dto.UserInfoResponse:
     properties:
@@ -443,8 +333,15 @@ definitions:
       rateId:
         type: integer
     type: object
-  user_model.CertificationItem:
+  user_model.CertificationEntity:
     properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
       fileName:
         description: Tên file
         type: string
@@ -456,9 +353,19 @@ definitions:
         type: string
       id:
         type: integer
+      issueDate:
+        description: Ngày cấp
+        type: string
+      issuer:
+        description: Cơ quan cấp
+        type: string
       name:
         description: Tên chứng chỉ
         type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
       verifiedStatus:
         allOf:
         - $ref: '#/definitions/enums.VerifyStatus'
@@ -497,14 +404,34 @@ definitions:
       updatedBy:
         type: integer
     type: object
-  user_model.ProfessionItem:
+  user_model.ProfessionEntity:
     properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
       id:
         type: integer
-      name:
+      issueDate:
+        description: ngày cấp
         type: string
-      verifiedStatus:
-        $ref: '#/definitions/enums.VerifyStatus'
+      issuer:
+        description: cơ quan cấp
+        type: string
+      name:
+        description: tên văn bằng
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.VerifyStatus'
+        description: trạng thái
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
     type: object
   user_model.Rate:
     properties:
@@ -606,19 +533,29 @@ definitions:
     type: object
   userpb.CertificationItem:
     properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
       fileUrl:
         type: string
       id:
         type: integer
-      title:
+      issueDate:
         type: string
-      verifiedStatus:
-        type: integer
+      issuer:
+        type: string
+      name:
+        type: string
     type: object
   userpb.ProfessionItem:
     properties:
       id:
         type: integer
+      issueDate:
+        type: string
+      issuer:
+        type: string
       name:
         type: string
       verifiedStatus:
@@ -672,6 +609,8 @@ definitions:
         type: array
       profileId:
         type: integer
+      profileVisibility:
+        type: integer
       rateStats:
         $ref: '#/definitions/userpb.RateStats'
       referralBy:
@@ -692,6 +631,8 @@ definitions:
         type: string
       twitter:
         type: string
+      visibility:
+        type: integer
       website:
         type: string
       youtube:
@@ -1680,59 +1621,6 @@ paths:
       summary: Xem thông tin public của người dùng
       tags:
       - Profile
-  /v1/user/profile/me:
-    get:
-      consumes:
-      - application/json
-      description: API này trả về thông tin của user hiện tại
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UserInfoResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Lấy thông tin cá nhân của user
-      tags:
-      - Profile
-  /v1/user/profile/set-info:
-    put:
-      consumes:
-      - application/json
-      description: API này cho phép người dùng cập nhật thông tin hồ sơ
-      parameters:
-      - description: Thông tin cập nhật
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UserInfoRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Cập nhật thành công
-          schema:
-            $ref: '#/definitions/dto.UserInfoResponse'
-      security:
-      - BearerAuth: []
-      summary: Cập nhật thông tin hồ sơ
-      tags:
-      - Profile
   /v1/user/rate:
     post:
       consumes:
@@ -1893,6 +1781,23 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy thông tin công khai của người dùng
+      tags:
+      - Profile
+  /v2/user/profile/info/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng request me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/userpb.ProfilePublicInfo'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng request
       tags:
       - Profile
   /v2/user/rate:

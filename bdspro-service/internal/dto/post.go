@@ -13,10 +13,9 @@ type PostLinkSearch struct {
 }
 
 type PostSearchRequest struct {
-	Size            int        `form:"size,default=20"`
-	Page            int        `form:"page,default=0"`
+	_dto.Pagable
 	Content         string     `form:"content"`
-	TransactionType uint       `form:"transactionType"`
+	TransactionType uint32     `form:"transactionType"`
 	Text            string     `form:"text"`
 	Title           string     `form:"title"`
 	ExpiredFrom     *time.Time `form:"expiredFrom"`
@@ -38,7 +37,8 @@ type PostSaveRequest struct {
 	Title           string            `json:"title"`
 	Content         string            `json:"content" binding:"required"`
 	Price           float64           `json:"postPrice"`
-	TransactionType uint              `json:"transactionType" binding:"required"`
+	TransactionType uint32            `json:"transactionType" binding:"required"`
+	PriceType       uint32            `json:"priceType"`
 	Visibility      enums.EVisibility `json:"visibility" binding:"required"`
 	PackageVisible  uint              `json:"packageVisible"`
 	ExpiredAt       *time.Time        `json:"expiredAt"`
@@ -77,9 +77,10 @@ type PostUpdateRequest struct {
 	Title           string            `json:"title"`
 	Content         string            `json:"content"`
 	Price           float64           `json:"postPrice"`
-	TransactionType uint              `json:"transactionType"`
+	TransactionType uint32            `json:"transactionType"`
 	PackageVisible  uint              `json:"packageVisible"`
 	Visibility      enums.EVisibility `json:"visibility"`
+	PriceType       uint32            `json:"priceType"`
 	NumDate         int               `json:"numDate"`
 	MediaList       []PostMediaItem   `json:"mediaList"`
 }

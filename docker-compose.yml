@@ -7,14 +7,6 @@ services:
       dockerfile: Dockerfile
     container_name: user
     command: ["./main", "http"]
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     networks:
       - internal
     
@@ -119,6 +111,11 @@ services:
       context: ./payment-service
       dockerfile: Dockerfile
     container_name: payment
+    command: ["/app/main", "grpc"]
+    volumes:
+      - ${PWD}/config:/app/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
     networks:
       - internal
   

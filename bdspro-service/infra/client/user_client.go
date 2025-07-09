@@ -6,6 +6,7 @@ import (
 	clients "pb/clients"
 	pb_bdspro "pb/types/bdspro"
 	notificationpb "pb/types/notification"
+	sharepb "pb/types/shared"
 )
 
 type UserClient struct {
@@ -56,4 +57,17 @@ func (c *UserClient) MapUserToSharingAccess(ctx context.Context, dtos []*pb_bdsp
 			dtos[i].Avatar = profile.Avatar
 		}
 	}
+}
+
+func (c *UserClient) GetProfileById(ctx context.Context, id uint64) *sharepb.ProfileItem {
+	if c.Client == nil {
+		return nil
+	}
+	profile, err := c.Client.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: []uint64{id},
+	})
+	if err != nil {
+		return nil
+	}
+	return profile.Profiles[0]
 }

@@ -21,7 +21,7 @@ func NewChatClient() *ChatClient {
 	chatClient := &ChatClient{Client: nil}
 	go func() {
 		url := "localhost"
-		name := "chat_grpc"
+		name := "chat"
 		if config.ENV_RUNTIME == "release" {
 			url = name
 		}

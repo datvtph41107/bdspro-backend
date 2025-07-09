@@ -94,6 +94,20 @@ var Rules = []_utils.Rule{
 			return strings.ToLower(strings.TrimSpace(match[1]))
 		},
 	},
+	{
+		Field:   "transactionType",
+		Pattern: regexp.MustCompile(`(?i)\b(bán|cho\s*thuê)\b`),
+		GetValue: func(match []string) interface{} {
+			switch strings.ToLower(strings.ReplaceAll(match[1], " ", "")) {
+			case "bán":
+				return 10
+			case "chothue":
+				return 20
+			default:
+				return nil
+			}
+		},
+	},
 }
 
 func InferSearchText(text string) (dto.TotalSearchParser, error) {

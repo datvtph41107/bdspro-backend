@@ -3,7 +3,6 @@ package postgre
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	user_dto "bdspro/internal/dto/user"
 	"bdspro/internal/enums"
 	"common/case/crud3"
 	"context"
@@ -68,7 +67,7 @@ func (r *PostgreAsset) GetAssets(ctx context.Context, profileId uint64, limit, o
 	return assets, nil
 }
 
-func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto user_dto.AssetSearchDTO) *gorm.DB {
+func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto dto.AssetSearchDTO) *gorm.DB {
 	if dto.Text != "" {
 		trimmed := strings.TrimSpace(dto.Text)
 		pattern := "%" + strings.ToLower(trimmed) + "%"
@@ -101,7 +100,7 @@ func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto user_dto.AssetSearchDTO) 
 	return query
 }
 
-func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto user_dto.AssetSearchDTO) *gorm.DB {
+func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dto.AssetSearchDTO) *gorm.DB {
 	query := r.DB.
 		// Debug().
 		Table("assets").
@@ -130,7 +129,7 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto us
 	return r.QuerySearch(query, dto)
 
 }
-func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, ownerType uint32, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, ownerType uint32, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	var assets []domain.AssetList
 	var total int64
 
@@ -161,7 +160,7 @@ func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, ownerTyp
 	return assets, total, nil
 }
 
-func (r *PostgreAsset) SearchShare(ctx context.Context, ownerID uint64, ownerType uint32, dto user_dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (r *PostgreAsset) SearchShare(ctx context.Context, ownerID uint64, ownerType uint32, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
 	var assets []domain.AssetList
 	var total int64
 	// query := r.DB.WithContext(ctx).
@@ -491,8 +490,8 @@ func (r *PostgreAsset) CreateBatch(c context.Context, entity []domain.Asset) err
 	return r.DB.WithContext(c).Create(&entity).Error
 }
 
-func (r *PostgreAsset) GetAssetsWithChildCount(ctx context.Context, ownerID uint64, searchDto user_dto.AssetSearchDTO) ([]user_dto.AssetWithChildCountDTO, int64, error) {
-	var assets []user_dto.AssetWithChildCountDTO
+func (r *PostgreAsset) GetAssetsWithChildCount(ctx context.Context, ownerID uint64, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
+	var assets []dto.AssetWithChildCountDTO
 	var total int64
 
 	query := r.DB.WithContext(ctx).

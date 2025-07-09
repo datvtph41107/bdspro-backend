@@ -2,7 +2,7 @@ package service
 
 import (
 	"bdspro/internal/domain"
-	_jwt "common/jwt"
+	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"io"
@@ -21,12 +21,8 @@ func NewMemberPlanUsecase() *MemberPlanUsecase {
 }
 
 func (s *MemberPlanUsecase) CurrentPlan(c context.Context) *domain.MemberPlan {
-	// var id *uint64
-	metadata := _jwt.MetadataFromContext(c)
-	// if metadata.PlanID != nil {
-	// 	id, _ = val.(*uint64)
-	// }
-	return s.Plans[*metadata.PlanID]
+	planId := _utils.GetPlanIdFromContext(c)
+	return s.Plans[planId]
 }
 
 func (s *MemberPlanUsecase) loadPlans() {

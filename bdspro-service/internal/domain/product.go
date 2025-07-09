@@ -63,8 +63,8 @@ type Product struct {
 	HouseInfo       *HouseInfo           `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
 	Archived        bool                 `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
 	// OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)
-	CreatedUser *ProfileInfo `gorm:"foreignKey:CreatedBy;references:ProfileId" json:"createdUser,omitempty"`
-	UpdatedUser *ProfileInfo `gorm:"foreignKey:UpdatedBy;references:ProfileId" json:"updatedUser,omitempty"`
+	CreatedUser *ProfileInfo `gorm:"-" json:"createdUser,omitempty"`
+	UpdatedUser *ProfileInfo `gorm:"-" json:"updatedUser,omitempty"`
 	// SalePriceTotal       *float64                `gorm:"type:DECIMAL(15,0)" json:"sale_price_total,omitempty"`                                                      // Giá bán niêm yết (công khai)
 	// SalePricePerM2       *float64                `gorm:"type:DECIMAL(15,2)" json:"sale_price_per_m2,omitempty"`                                                     // Giá bán/m² (công khai)
 	// SaleCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"sale_commission,omitempty"`                                                       // Hoa hồng bán (nội bộ)

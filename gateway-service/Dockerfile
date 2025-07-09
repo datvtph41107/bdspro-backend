@@ -6,7 +6,7 @@ COPY main .
 
 COPY docs docs
 
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 
 EXPOSE 8080
 

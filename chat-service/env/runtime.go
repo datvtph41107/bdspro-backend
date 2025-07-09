@@ -1,3 +1,5 @@
 package env
 
-var ENV_RUNTIME = "local"
+import "os"
+
+var ENV_RUNTIME = os.Getenv("ENV_RUNTIME")

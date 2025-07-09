@@ -25,6 +25,7 @@ func MigrateDomain() {
 		// &domain.AssetCostType{},
 		// &domain.AssetLegal{},
 		// &domain.RecordHistory{},
-		&domain.SharingAccess{},
+		// &domain.SharingAccess{},
+		&domain.Post{},
 	)
 }

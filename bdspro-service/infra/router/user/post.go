@@ -142,7 +142,7 @@ func (r *UserPostRouter) GetPersonalPost(c *gin.Context) {
 		return
 	}
 
-	result, err := r.UC.PersonalPost(c, query)
+	result, err := r.UC.PersonalPost(c, &query)
 	_routes.RouteResult(c, result, err)
 }
 

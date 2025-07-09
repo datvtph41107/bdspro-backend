@@ -158,6 +158,7 @@ message ProductResponse {
     string districtName = 52;
     string provinceName = 53;
     string wardName = 54;
+    optional sharepb.ProfileItem createdUser = 55;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

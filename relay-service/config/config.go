@@ -88,7 +88,7 @@ func loadConfig() {
 
 	NUMBER_OF_WORKER = cfg.GetInt("worker.number")
 	MAX_PARTICIPANT = cfg.GetInt("max_participant")
-	ENV_RUNTIME = cfg.GetString("env.runtime")
+	ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 	PORT = cfg.GetString("server.port")
 }
 

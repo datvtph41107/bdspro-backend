@@ -97,3 +97,7 @@ func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, en
 	// 	RentPaymentCycle: entity.RentPaymentCycle,
 	// })
 }
+
+func (r *GormProductPriceRepo) Create(c context.Context, entity *domain.ProductPrice) error {
+	return GetDB(c, r.DB).Create(entity).Error
+}

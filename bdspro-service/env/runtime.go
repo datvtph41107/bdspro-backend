@@ -1,3 +1,5 @@
 package env
 
-var ENV_RELEASE = "local"
+import "os"
+
+var ENV_RELEASE = os.Getenv("ENV_RELEASE")

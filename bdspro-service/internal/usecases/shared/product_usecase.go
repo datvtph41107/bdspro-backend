@@ -187,13 +187,11 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	var assetEntity *domain.Asset
 
 	s.Transaction.WithTransaction(c, func(c context.Context) error {
-		if err := s.UpdatePrice(c, 0, product.PriceData); err != nil {
+		price := product.PriceData
+		if err := s.PriceRepo.Create(c, price); err != nil {
 			return err
 		}
-		if product.PriceData != nil {
-			entity.LastPriceID = &product.PriceData.ID
-		}
-
+		entity.LastPriceID = &price.ID
 		entity.OwnerUserID = &ownerId
 		entity.OwnerType = product.OwnerType
 		// _db.SaveWithContext(c, entity)
@@ -540,10 +538,10 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 	searchs.Province = province
 	if searchs.PriceSuggest != nil {
 		if *searchs.PriceSuggest > 100_000_000 {
-			searchs.TransactionType = 1
+			searchs.TransactionType = 10
 			searchs.SalePrice = searchs.PriceSuggest
 		} else {
-			searchs.TransactionType = 2
+			searchs.TransactionType = 20
 			searchs.RentPrice = searchs.PriceSuggest
 		}
 	}

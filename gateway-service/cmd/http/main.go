@@ -158,7 +158,7 @@ var HttpCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		r := gin.Default()
-		env := os.Getenv("APP_ENV")
+		env := os.Getenv("ENV_RUNTIME")
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_middleware.InjectGrpcMetadataContextMiddleware),

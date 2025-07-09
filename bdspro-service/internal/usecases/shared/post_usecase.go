@@ -13,16 +13,14 @@ import (
 	_utils "common/utils"
 	"context"
 	"time"
-
-	"github.com/jinzhu/copier"
 )
 
-type IPostUsecase interface {
-	Save(c context.Context, entity *domain.Post) error
-}
+// type IPostUsecase interface {
+// 	Save(c context.Context, entity *domain.Post) error
+// }
 
 type PostUsecase struct {
-	This           IPostUsecase
+	// This           IPostUsecase
 	ClientUC       iusecase.INotificationClient
 	ProductUsecase *ProductUsecase // forward reference
 	ProductRepo    repo.ProductRepo
@@ -55,12 +53,13 @@ func NewSharedPostUsecase(repo repo.UPostRepo,
 
 func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*domain.Post, error) {
 	plan := s.PlanUsecase.CurrentPlan(c)
-	if plan == nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Vui lòng thử lại sau",
-		}
-	}
+	// todo: nhớ check plan
+	// if plan == nil {
+	// 	return nil, &_routes.Except{
+	// 		Code:    500,
+	// 		Message: "Vui lòng thử lại sau",
+	// 	}
+	// }
 
 	_, err := s.ProductUsecase.RequiredOwner(c, dto.ProductID)
 	if err != nil {
@@ -69,7 +68,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 
 	profileId := _utils.GetProfileIdWithContext(c)
 	// profileId := _jwt.GetProfileId(c)
-	if plan.LimitPost <= s.Repo.CountPostFromDate(c, time.Now().Add(-30)) {
+	if plan != nil && plan.LimitPost <= s.Repo.CountPostFromDate(c, time.Now().Add(-30)) {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Số lượng tạo tin đã đạt giới hạn. Vui lòng nâng cấp gói",
@@ -97,6 +96,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		Content:         dto.Content,
 		Price:           dto.Price,
 		TransactionType: dto.TransactionType,
+		PriceType:       dto.PriceType,
 		PackageVisible:  dto.PackageVisible,
 		Visibility:      dto.Visibility,
 		NumDate:         numDate,
@@ -109,7 +109,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		entity.ExpiredAt = &expired
 	}
 
-	err = s.This.Save(c, entity)
+	err = s.Save(c, entity)
 
 	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
 		return nil, err
@@ -153,13 +153,20 @@ func (s *PostUsecase) Action(c context.Context, dto dto.ActionRequest) (*domain.
 	return nil, err
 }
 
-func (s *PostUsecase) UpdatePost(c context.Context, id uint64, dto dto.PostUpdateRequest) (*domain.Post, error) {
+func (s *PostUsecase) UpdatePost(c context.Context, id uint64, dto *dto.PostUpdateRequest) (*domain.Post, error) {
 	entity, err := s.RequiredOwner(c, id)
 	if err != nil {
 		return nil, err
 	}
 
-	copier.Copy(&entity, &dto)
+	entity.TransactionType = dto.TransactionType
+	entity.Title = dto.Title
+	entity.PriceType = dto.PriceType
+	entity.Price = dto.Price
+	entity.Content = dto.Content
+	entity.NumDate = dto.NumDate
+	entity.Visibility = dto.Visibility
+	entity.PackageVisible = dto.PackageVisible
 
 	err = _db.SaveWithContext(c, entity)
 
@@ -253,7 +260,7 @@ func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, err
 	}, nil
 }
 
-func (s *PostUsecase) PersonalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
 	if err != nil {

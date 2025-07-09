@@ -6,7 +6,7 @@ import (
 )
 
 var GrpcServerCmd = &cobra.Command{
-	Use:   "grpc-server",
+	Use:   "grpc",
 	Short: "Start the gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		appconfig.InitConfig()

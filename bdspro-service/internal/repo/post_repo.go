@@ -23,8 +23,8 @@ type UPostRepo interface {
 	CountPost(ctx context.Context, profileId uint64) int64
 	CountPostFromDate(ctx context.Context, from time.Time) int64
 	ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64) bool
-	Query(query *gorm.DB, dto dto.PostSearchRequest) (tx *gorm.DB)
-	Search(ctx context.Context, profileId uint64, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error)
+	Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *gorm.DB)
+	Search(ctx context.Context, profileId uint64, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error)
 	Global(ctx context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error)
 	SearchLinkToProduct(ctx context.Context, profileId uint64, dto *dto.PostLinkSearch) ([]domain.PostItem, error)
 	Delete(ctx context.Context, profileId, id uint64) error

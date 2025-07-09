@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/dto"
+	_models "common/models"
 	_utils "common/utils"
 	pb_bdspro "pb/types/bdspro"
 )
@@ -25,7 +26,7 @@ func NewProductMapper(postMapper *PostMapper,
 	projectMapper *ProjectMapper,
 	developerMapper *DeveloperMapper,
 ) *ProductMapper {
-	return &ProductMapper{
+	result := &ProductMapper{
 		PostMapper:               postMapper,
 		ApartmentMapper:          apartmentMapper,
 		ApartmentAttributeMapper: apartmentAttributeMapper,
@@ -33,6 +34,8 @@ func NewProductMapper(postMapper *PostMapper,
 		ProjectMapper:            projectMapper,
 		DeveloperMapper:          developerMapper,
 	}
+	postMapper.ProductMapper = result
+	return result
 }
 
 func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.ProductResponse {
@@ -243,9 +246,9 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 		ProvinceID:      req.ProvinceId,
 		DistrictID:      req.DistrictId,
 		WardID:          req.WardId,
-		TransactionType: int(req.TransactionType),
+		TransactionType: req.TransactionType,
 		GoogleMapLink:   req.GoogleMapLink,
-		SourceType:      uint(req.SourceType),
+		SourceType:      req.SourceType,
 		SaleStatus:      enums.EProductStatus(req.SaleStatus),
 		RentStatus:      enums.EProductStatus(req.RentStatus),
 		SaleVisibility:  enums.EVisibility(req.SaleVisibility),
@@ -282,25 +285,11 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 	}
 
 	if req.HouseInfo != nil {
-		result.HouseInfo = &dto.HouseInfoUpdate{
-			NumBedroom:  int(req.HouseInfo.NumBedroom),
-			NumBathroom: int(req.HouseInfo.NumBathroom),
-			NumFloor:    int(req.HouseInfo.NumFloor),
-			NumFront:    int(req.HouseInfo.NumFront),
-			NumCarPark:  int(req.HouseInfo.NumCarPark),
-			Furniture:   req.HouseInfo.Furniture,
-			Orientation: req.HouseInfo.Orientation,
-		}
+		result.HouseInfo = m.HouseInfoToDomain(req.HouseInfo)
 	}
 
 	if req.ProductPrivate != nil {
-		result.PrivateData = &domain.ProductPrivate{
-			PrivateDocs:   req.ProductPrivate.PrivateDocs,
-			ImportPrice:   &req.ProductPrivate.ImportPrice,
-			OperatingCost: &req.ProductPrivate.OperatingCost,
-			InternalNote:  req.ProductPrivate.InternalNote,
-			TargetProfit:  &req.ProductPrivate.TargetProfit,
-		}
+		result.PrivateData = m.PrivateDataToDomain(req.ProductPrivate)
 	}
 
 	// todo: map nôt asset và post
@@ -433,4 +422,127 @@ func (m *ProductMapper) MapProductMarketPbList(products []domain.ProductMarket) 
 		productList[i] = m.MapProductMarketToPb(&product)
 	}
 	return productList
+}
+
+func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *dto.ProductSaveRequest {
+	result := &dto.ProductSaveRequest{
+		ParentID:        req.ParentId,
+		Name:            req.Name,
+		Code:            req.Code,
+		Area:            req.Area,
+		Description:     req.Description,
+		Note:            req.Note,
+		PropertyTypeId:  req.PropertyTypeId,
+		DocTypeId:       req.DocTypeId,
+		AmenityIds:      req.AmenityIds,
+		ProjectId:       req.ProjectId,
+		ProvinceID:      req.ProvinceId,
+		DistrictID:      req.DistrictId,
+		WardID:          req.WardId,
+		TransactionType: req.TransactionType,
+		// HouseInfo:       req.HouseInfo,
+		// PrivateData:    req.PrivateData,
+		GoogleMapLink:  req.GoogleMapLink,
+		SourceType:     req.SourceType,
+		SaleStatus:     enums.EProductStatus(req.SaleStatus),
+		RentStatus:     enums.EProductStatus(req.RentStatus),
+		SaleVisibility: enums.EVisibility(req.SaleVisibility),
+		RentVisibility: enums.EVisibility(req.RentVisibility),
+		OwnerType:      req.OwnerType,
+	}
+	if req.PriceData != nil {
+		result.PriceData = m.PriceDataToDomain(req.PriceData)
+	}
+	if req.MediaItems != nil {
+		result.MediaItems = m.MediaItemsToDomain(req.MediaItems)
+	}
+	if req.HouseInfo != nil {
+		result.HouseInfo = m.HouseInfoToDomain(req.HouseInfo)
+	}
+	// todo: cập nhật thông tin private hiện chưa có
+	// if req.PrivateData != nil {
+	// 	result.PrivateData = m.PrivateDataToDomain(req.PrivateData)
+	// }
+	// PostCreate:     req.PostCreate,
+	// 	AssetCreate:    req.AssetCreate,
+	if req.Post != nil {
+		result.PostCreate = &dto.PostSaveWithProduct{
+			ProductID:       req.Post.ProductId,
+			Title:           req.Post.Title,
+			Content:         req.Post.Content,
+			TransactionType: uint(req.Post.TransactionType),
+			Visibility:      enums.EVisibility(req.Post.Visibility),
+			PackageVisible:  uint(req.Post.PackageVisible),
+			// ExpiredAt:       _utils.ParseStringToTime(req.Post.ExpiredAt),
+			NumDate: int(req.Post.NumDate),
+			Hidden:  req.Post.Hidden,
+			// Metadatas:       req.Post.Metadatas,
+			// Price:           req.Post.PostPrice,
+		}
+	}
+
+	if req.Asset != nil {
+		result.AssetCreate = &dto.AssetCreateWithProduct{
+			PurchasePrice: result.AssetCreate.PurchasePrice,
+			PurchaseDate:  result.AssetCreate.PurchaseDate,
+			LegalStatus:   result.AssetCreate.LegalStatus,
+			RentStatus:    result.AssetCreate.RentStatus,
+			Description:   result.AssetCreate.Description,
+			LegalItems:    result.AssetCreate.LegalItems,
+		}
+	}
+
+	return result
+}
+
+func (m *ProductMapper) PriceDataToDomain(req *pb_bdspro.ProductPrice) *domain.ProductPrice {
+	result := &domain.ProductPrice{
+		BaseEntity: _models.BaseEntity{
+			ID: req.Id,
+		},
+		ProductID:        &req.ProductId,
+		Currency:         req.Currency,
+		PriceOwner:       req.PriceOwner,
+		SalePrice:        req.SalePrice,
+		SaleCommission:   req.SaleCommission,
+		Deposite:         req.Deposite,
+		RentPrice:        req.RentPrice,
+		RentCommission:   req.RentCommission,
+		RentPaymentCycle: req.RentPaymentCycle,
+	}
+	return result
+}
+
+func (m *ProductMapper) MediaItemsToDomain(req []*pb_bdspro.MediaItem) []dto.MediaItem {
+	result := make([]dto.MediaItem, len(req))
+	for i, media := range req {
+		result[i] = dto.MediaItem{
+			ID:        media.Id,
+			MediaURL:  media.MediaUrl,
+			MediaType: media.MediaType,
+		}
+	}
+	return result
+}
+
+func (m *ProductMapper) HouseInfoToDomain(req *pb_bdspro.HouseInfo) *dto.HouseInfoUpdate {
+	return &dto.HouseInfoUpdate{
+		NumBedroom:  int(req.NumBedroom),
+		NumBathroom: int(req.NumBathroom),
+		NumFloor:    int(req.NumFloor),
+		NumFront:    int(req.NumFront),
+		NumCarPark:  int(req.NumCarPark),
+		Furniture:   req.Furniture,
+		Orientation: req.Orientation,
+	}
+}
+
+func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *domain.ProductPrivate {
+	return &domain.ProductPrivate{
+		PrivateDocs:   req.PrivateDocs,
+		ImportPrice:   &req.ImportPrice,
+		OperatingCost: &req.OperatingCost,
+		InternalNote:  req.InternalNote,
+		TargetProfit:  &req.TargetProfit,
+	}
 }

@@ -145,7 +145,7 @@ func Contains(arr []uint64, value uint64) bool {
 	return false
 }
 
-func (r *GormPostRepo) Query(query *gorm.DB, dto dto.PostSearchRequest) (tx *gorm.DB) {
+func (r *GormPostRepo) Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *gorm.DB) {
 	if dto.Text != "" {
 		text := "%" + strings.ToLower(dto.Text) + "%"
 		query = query.Where("LOWER(posts.title) LIKE ?", text)
@@ -218,7 +218,7 @@ func (r *GormPostRepo) Query(query *gorm.DB, dto dto.PostSearchRequest) (tx *gor
 	return query
 }
 
-func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	var results []domain.PostItem
 	// now := time.Now()
 
@@ -229,6 +229,10 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto dto.Pos
 		province.name as province_name, 
 		district.name as district_name, 
 		ward.name as ward_name,
+		CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
+			ELSE COALESCE(prices.rent_price, 0)
+			END AS post_price,
 		COALESCE(json_agg(json_build_object(
 			'id', post_media.id,
 			'mediaUrl', post_media.media_url,
@@ -238,12 +242,13 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto dto.Pos
 		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw
 		`).
 		Joins("left join products products on products.id = posts.product_id").
+		Joins("left join product_price prices on prices.id = products.last_price_id").
 		Joins("left join region province on province.id = products.province_id").
 		Joins("left join region district  on district.id = products.district_id").
 		Joins("left join region ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
 		Where("posts.created_by = ? AND posts.deleted_at is null", profileId).
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id")
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id")
 
 	query = r.Query(query, dto)
 	size := dto.Size
@@ -287,7 +292,7 @@ func (r *GormPostRepo) Global(ctx context.Context, dto dto.PostSearchRequest) ([
 		// Preload()
 		Where("deleted_at is null")
 
-	query = r.Query(query, dto)
+	query = r.Query(query, &dto)
 
 	size := dto.Size
 	if size <= 0 {

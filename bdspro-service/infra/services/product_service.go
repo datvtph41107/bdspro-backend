@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
 	"bdspro/internal/dto"
@@ -21,18 +22,21 @@ type ProductService struct {
 	ProductRepo      repo.ProductRepo
 	ProductMapper    *mapper.ProductMapper
 	ProductValidator *validator.ProductValidator
+	UserClient       *client.UserClient
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
 	productRepo repo.ProductRepo,
 	productMapper *mapper.ProductMapper,
 	productValidator *validator.ProductValidator,
+	userClient *client.UserClient,
 ) *ProductService {
 	return &ProductService{
 		UC:               uc,
 		ProductRepo:      productRepo,
 		ProductMapper:    productMapper,
 		ProductValidator: productValidator,
+		UserClient:       userClient,
 	}
 }
 
@@ -258,16 +262,21 @@ func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSe
 // @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
 // @Router /v2/bdspro/v2/product/new [post]
 func (s *ProductService) ProductNew(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
-	body := &dto.ProductSaveRequest{}
-	if err := copier.Copy(body, req); err != nil {
+	body := s.ProductMapper.ProductSavePbToDTO(req)
+	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
 		return nil, err
 	}
 
-	_, err := s.UC.CreateProduct(ctx, body)
+	result, err := s.UC.CreateProduct(ctx, body)
 	if err != nil {
 		return nil, err
 	}
+	id := uint64(0)
+	if result.Product != nil {
+		id = result.Product.ID
+	}
 	return &pb_bdspro.Response{
+		Id:      id,
 		Message: "success",
 	}, nil
 }
@@ -417,6 +426,9 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 		return nil, err
 	}
 	productResponse := s.ProductMapper.MapProductPb(product)
+	if product.OwnerUserID != nil {
+		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, *product.OwnerUserID)
+	}
 	return productResponse, nil
 }
 
@@ -504,8 +516,8 @@ func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest)
 // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/{id} [put]
 func (s *ProductService) UpdateProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
-	body := &dto.ProductSaveRequest{}
-	if err := copier.Copy(body, req); err != nil {
+	body := s.ProductMapper.ProductSavePbToDTO(req)
+	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
 		return nil, err
 	}
 

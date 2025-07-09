@@ -16,6 +16,28 @@
     "application/json"
   ],
   "paths": {
+    "/v2/user/profile/accounts/me": {
+      "get": {
+        "operationId": "ProfileService_ListAccountMe",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAccountInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/info/me": {
       "get": {
         "operationId": "ProfileService_GetProfileInfoMe",
@@ -64,28 +86,6 @@
             "format": "uint64"
           }
         ],
-        "tags": [
-          "ProfileService"
-        ]
-      }
-    },
-    "/v2/user/profile/me": {
-      "get": {
-        "operationId": "ProfileService_ListAccountMe",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/userpbAccountInfoResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
         "tags": [
           "ProfileService"
         ]

@@ -137,8 +137,8 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		Preload("Apartment", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
 		Preload("HouseInfo", "deleted_at IS NULL").
-		Preload("CreatedUser").
-		Preload("UpdatedUser").
+		// Preload("CreatedUser").
+		// Preload("UpdatedUser").
 		Preload("Province", "deleted_at IS NULL").
 		Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").

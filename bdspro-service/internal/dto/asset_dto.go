@@ -1,4 +1,4 @@
-package user_dto
+package dto
 
 import (
 	"bdspro/internal/domain"

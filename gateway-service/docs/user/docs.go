@@ -1431,91 +1431,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/profile/me": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này trả về thông tin của user hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Profile"
-                ],
-                "summary": "Lấy thông tin cá nhân của user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserInfoResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/profile/set-info": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép người dùng cập nhật thông tin hồ sơ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Profile"
-                ],
-                "summary": "Cập nhật thông tin hồ sơ",
-                "parameters": [
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserInfoRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cập nhật thành công",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserInfoResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/user/rate": {
             "post": {
                 "security": [
@@ -1726,6 +1641,34 @@ const docTemplate = `{
                         "description": "Danh sách tài khoản của người dùng",
                         "schema": {
                             "$ref": "#/definitions/userpb.AccountInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/profile/info/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin công khai của người dùng request me",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy thông tin công khai của người dùng request",
+                "responses": {
+                    "200": {
+                        "description": "Thông tin công khai của người dùng",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ProfilePublicInfo"
                         }
                     }
                 }
@@ -2074,33 +2017,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.CertificationBatchSave": {
-            "type": "object",
-            "properties": {
-                "fileName": {
-                    "type": "string"
-                },
-                "fileType": {
-                    "type": "string"
-                },
-                "fileUrl": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "issueDate": {
-                    "type": "string"
-                },
-                "issuer": {
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Title     string    ` + "`" + `json:\"title,omitempty\"` + "`" + `\nType      uint8     ` + "`" + `json:\"type,omitempty\"` + "`" + `",
-                    "type": "string"
-                }
-            }
-        },
         "dto.FollowInfoRes": {
             "type": "object",
             "properties": {
@@ -2194,32 +2110,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ProfessionBatchSave": {
-            "type": "object",
-            "properties": {
-                "fileName": {
-                    "type": "string"
-                },
-                "fileType": {
-                    "type": "string"
-                },
-                "fileUrl": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "issueDate": {
-                    "type": "string"
-                },
-                "issuer": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.PublicUserInfo": {
             "type": "object",
             "properties": {
@@ -2242,7 +2132,7 @@ const docTemplate = `{
                     "description": "transient",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.CertificationItem"
+                        "$ref": "#/definitions/user_model.CertificationEntity"
                     }
                 },
                 "departmentId": {
@@ -2284,7 +2174,7 @@ const docTemplate = `{
                 "professions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.ProfessionItem"
+                        "$ref": "#/definitions/user_model.ProfessionEntity"
                     }
                 },
                 "profileId": {
@@ -2397,116 +2287,6 @@ const docTemplate = `{
             "properties": {
                 "organizationId": {
                     "type": "integer"
-                }
-            }
-        },
-        "dto.UserInfoRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "avatar": {
-                    "type": "string"
-                },
-                "backIdentify": {
-                    "type": "string"
-                },
-                "backgroundImage": {
-                    "type": "string"
-                },
-                "birth": {
-                    "type": "string"
-                },
-                "certificationRemoveIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "certifications": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.CertificationBatchSave"
-                    }
-                },
-                "departmentId": {
-                    "type": "integer"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "facebook": {
-                    "type": "string"
-                },
-                "frontIdentify": {
-                    "type": "string"
-                },
-                "fullname": {
-                    "type": "string"
-                },
-                "instagram": {
-                    "type": "string"
-                },
-                "introduction": {
-                    "type": "string"
-                },
-                "linkedin": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phone2": {
-                    "type": "string"
-                },
-                "position": {
-                    "type": "string"
-                },
-                "professionRemoveIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "professions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ProfessionBatchSave"
-                    }
-                },
-                "profileVisibility": {
-                    "type": "integer"
-                },
-                "roleRealEstate": {
-                    "$ref": "#/definitions/enums.ERoleRealEstate"
-                },
-                "slogan": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string"
-                },
-                "statusOnline": {
-                    "$ref": "#/definitions/enums.EOnlineStatus"
-                },
-                "tabDefault": {
-                    "$ref": "#/definitions/enums.ESettingTab"
-                },
-                "taxCode": {
-                    "type": "string"
-                },
-                "twitter": {
-                    "type": "string"
-                },
-                "visibility": {
-                    "type": "integer"
-                },
-                "website": {
-                    "type": "string"
-                },
-                "youtube": {
-                    "type": "string"
                 }
             }
         },
@@ -2716,9 +2496,19 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.CertificationItem": {
+        "user_model.CertificationEntity": {
             "type": "object",
             "properties": {
+                "approveUserId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
                 "fileName": {
                     "description": "Tên file",
                     "type": "string"
@@ -2734,9 +2524,23 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "issueDate": {
+                    "description": "Ngày cấp",
+                    "type": "string"
+                },
+                "issuer": {
+                    "description": "Cơ quan cấp",
+                    "type": "string"
+                },
                 "name": {
                     "description": "Tên chứng chỉ",
                     "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
                 },
                 "verifiedStatus": {
                     "description": "Trạng thái xác minh",
@@ -2800,17 +2604,47 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.ProfessionItem": {
+        "user_model.ProfessionEntity": {
             "type": "object",
             "properties": {
+                "approveUserId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
-                "name": {
+                "issueDate": {
+                    "description": "ngày cấp",
                     "type": "string"
                 },
-                "verifiedStatus": {
-                    "$ref": "#/definitions/enums.VerifyStatus"
+                "issuer": {
+                    "description": "cơ quan cấp",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "tên văn bằng",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "trạng thái",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.VerifyStatus"
+                        }
+                    ]
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
                 }
             }
         },
@@ -2963,17 +2797,26 @@ const docTemplate = `{
         "userpb.CertificationItem": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
                 "fileUrl": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "title": {
+                "issueDate": {
                     "type": "string"
                 },
-                "verifiedStatus": {
-                    "type": "integer"
+                "issuer": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -2982,6 +2825,12 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "type": "integer"
+                },
+                "issueDate": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -3063,6 +2912,9 @@ const docTemplate = `{
                 "profileId": {
                     "type": "integer"
                 },
+                "profileVisibility": {
+                    "type": "integer"
+                },
                 "rateStats": {
                     "$ref": "#/definitions/userpb.RateStats"
                 },
@@ -3092,6 +2944,9 @@ const docTemplate = `{
                 },
                 "twitter": {
                     "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
                 },
                 "website": {
                     "type": "string"

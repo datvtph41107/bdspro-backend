@@ -74,12 +74,9 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostBy
 }
 
 func (s *PostService) CreatePost(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
-	body := dto.PostSaveRequest{}
-	if err := copier.Copy(&body, req); err != nil {
-		return nil, err
-	}
+	body := s.PostMapper.PostSaveRequestToDTO(req)
 
-	result, err := s.UC.CreatePost(ctx, &body)
+	result, err := s.UC.CreatePost(ctx, body)
 	if err != nil {
 		return nil, err
 	}
@@ -113,17 +110,10 @@ func (s *PostService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest) (
 		return nil, err
 	}
 
-	post := &pb_bdspro.PostDetailResponse{}
-	if err := copier.Copy(post, result); err != nil {
-		return nil, err
-	}
-	return post, nil
+	return s.PostMapper.PostDetailToPb(result), nil
 }
 func (s *PostService) UpdatePost(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
-	body := dto.PostUpdateRequest{}
-	if err := copier.Copy(&body, req); err != nil {
-		return nil, err
-	}
+	body := s.PostMapper.PostUpdateRequestToDTO(req)
 
 	result, err := s.UC.UpdatePost(ctx, req.Id, body)
 	if err != nil {
@@ -162,10 +152,7 @@ func (s *PostService) UpdateHidden(ctx context.Context, req *pb_bdspro.UpdateHid
 	}, nil
 }
 func (s *PostService) GetPersonalPost(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
-	query := dto.PostSearchRequest{}
-	if err := copier.Copy(&query, req); err != nil {
-		return nil, err
-	}
+	query := s.PostMapper.PostSearchRequestToDTO(req)
 
 	result, total, err := s.UC.PersonalPost(ctx, query)
 	if err != nil {

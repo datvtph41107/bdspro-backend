@@ -625,6 +625,10 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        },
+        "priceType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1055,7 +1059,8 @@
           "format": "int64"
         },
         "visibility": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "hidden": {
           "type": "boolean"
@@ -1064,7 +1069,8 @@
           "type": "string"
         },
         "transactionType": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "title": {
           "type": "string"
@@ -1254,6 +1260,10 @@
         "id": {
           "type": "string",
           "format": "uint64"
+        },
+        "priceType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1536,6 +1546,9 @@
         },
         "wardName": {
           "type": "string"
+        },
+        "createdUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -1666,6 +1679,27 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
         }
       }
     }

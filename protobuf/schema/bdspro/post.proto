@@ -92,10 +92,10 @@ message Post {
   uint64 productId = 2;
   string expiredAt = 3;
   uint32 status = 4;
-  string visibility = 5;
+  uint32 visibility = 5;
   bool hidden = 6;
   string content = 7;
-  string transactionType = 8;
+  uint32 transactionType = 8;
   string title = 9;
   int32 numDate = 10;
   string type = 11; // 1: normal, 2: feed, 3: share
@@ -195,6 +195,7 @@ message PostSaveRequest {
 	repeated PostMedia mediaList = 11;
 	uint32 status = 12;
 	uint64 id = 13;
+	uint32 priceType = 14;
 }
 
 message PostDetailResponse {
