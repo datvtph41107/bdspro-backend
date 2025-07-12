@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"organization/internal/domain/entity"
+	"organization/internal/enums"
 
 	"gorm.io/gorm"
 )
@@ -18,6 +19,8 @@ type OrganizationRoleModel struct {
 	UpdatedAt      time.Time                      `gorm:"autoUpdateTime"`
 	Permissions    []*OrganizationPermissionModel `gorm:"many2many:role_permissions;"`
 	OrganizationId uint32                         `gorm:"not null;index:idx_org_roles_organization_id"`
+	IsDefault      bool                           `gorm:"default:false;index"`
+	DomainType     int                            `gorm:"default:0;index"`
 	DeletedAt      *time.Time                     `gorm:"index"`
 	IsDeleted      bool                           `gorm:"default:false"`
 }
@@ -37,6 +40,8 @@ func RoleModelToEntity(model *OrganizationRoleModel) *entity.OrganizationRole {
 		Key:            model.Key,
 		Permissions:    permissions,
 		OrganizationId: model.OrganizationId,
+		IsDefault:      model.IsDefault,
+		DomainType:     enums.DomainType(model.DomainType),
 	}
 }
 
@@ -53,6 +58,8 @@ func RoleEntityToModel(entity *entity.OrganizationRole) *OrganizationRoleModel {
 		Key:            entity.Key,
 		OrganizationId: entity.OrganizationId,
 		Permissions:    permissions,
+		IsDefault:      entity.IsDefault,
+		DomainType:     int(entity.DomainType),
 		IsDeleted:      false,
 	}
 }
@@ -79,6 +86,8 @@ func (r *OrganizationRoleRepository) Create(ctx context.Context, role *entity.Or
 		Name:           role.Name,
 		Key:            role.Key,
 		OrganizationId: role.OrganizationId,
+		IsDefault:      role.IsDefault,
+		DomainType:     int(role.DomainType),
 		IsDeleted:      false,
 	}
 

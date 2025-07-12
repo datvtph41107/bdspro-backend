@@ -237,6 +237,13 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -281,6 +288,13 @@
             "type": "string",
             "format": "uint64"
           }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -367,6 +381,13 @@
             "type": "object",
             "$ref": "#/definitions/organizationpbPermission"
           }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
