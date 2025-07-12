@@ -19,10 +19,16 @@ func NewInvestmentMapper(documentMapper *DocumentMapper) *InvestmentMapper {
 
 func (m *InvestmentMapper) SubmitInvestRequestToEntity(req *organizationpb.SubmitInvestRequest) *entity.Investment {
 	result := &entity.Investment{
-		DealID:       req.DealId,
-		Amount:       req.Amount,
+		DealID:      req.DealId,
+		MemberID:    req.MemberId,
+		Amount:      req.Amount,
 		TransferTime: _utils.ParseStringToTime(req.TransferTime),
-		Note:         req.Note,
+		Note:        req.Note,
+	}
+
+	// Handle nullable proxy user ID
+	if req.ProxyUserId != nil {
+		result.ProxyUserID = req.ProxyUserId
 	}
 
 	if len(req.Documents) > 0 {
@@ -41,6 +47,7 @@ func (m *InvestmentMapper) EntityToPb(investment *entity.Investment) *organizati
 	result := &organizationpb.Investment{
 		Id:           investment.ID,
 		DealId:       investment.DealID,
+		MemberId:     investment.MemberID,
 		Amount:       investment.Amount,
 		TransferTime: _utils.FormatTimeToString(investment.TransferTime),
 		Note:         investment.Note,
@@ -49,6 +56,12 @@ func (m *InvestmentMapper) EntityToPb(investment *entity.Investment) *organizati
 		StatusName:   enums.ApprovedStatusMap[investment.Status],
 		ChangedAt:    _utils.FormatTimeToString(investment.ChangedAt),
 		CreatedBy:    investment.CreatedBy,
+		Confirmed:    investment.Confirmed,
+	}
+
+	// Handle nullable proxy user ID
+	if investment.ProxyUserID != nil {
+		result.ProxyUserId = investment.ProxyUserID
 	}
 
 	if len(investment.AttachDocument) > 0 {

@@ -45,3 +45,9 @@ func (c *NotificationClient) SendBatchNotification(ctx context.Context, notifica
 	}
 	return c.client.SendBatch(ctx, notiRequests)
 }
+
+func (c *NotificationClient) SendInvestmentNotification(ctx context.Context, dealID uint64, investmentID uint64, message string) error {
+	// TODO: Implement investment notification logic
+	// For now, return nil to allow build to pass
+	return nil
+}

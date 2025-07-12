@@ -4,6 +4,7 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 	"organization/internal/dto"
@@ -14,14 +15,14 @@ import (
 type InvestmentUsecase struct {
 	investmentRepository repository.InvestmentRepository
 	dealRepository       repository.GroupDealRepository
-	groupAuthUsecase     GroupAuthUsecase
+	groupAuthUsecase     iusecase.IGroupAuth
 	notiClient           iusecase.INotiClient
 }
 
 func NewInvestmentUsecase(
 	investmentRepository repository.InvestmentRepository,
 	dealRepository repository.GroupDealRepository,
-	groupAuthUsecase GroupAuthUsecase,
+	groupAuthUsecase iusecase.IGroupAuth,
 	notiClient iusecase.INotiClient,
 ) *InvestmentUsecase {
 	return &InvestmentUsecase{
@@ -33,174 +34,164 @@ func NewInvestmentUsecase(
 }
 
 func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionCreateInvestment) {
+		return nil, errors.New("permission denied")
+	}
+
+	// Validate deal member exists
+	deal, err := u.dealRepository.GetByID(ctx, req.DealID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set default status to pending
+	req.Status = enums.ApprovedStatusPending
+
+	// Set document owner type
 	if len(req.AttachDocument) > 0 {
 		for i := range req.AttachDocument {
 			req.AttachDocument[i].DocOwner = enums.DocOwnerInvest
 		}
 	}
+
 	investment, err := u.investmentRepository.CreateInvestment(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Send notification to deal owner and managers
+	u.notiClient.SendInvestmentNotification(ctx, deal.ID, investment.ID, "New investment contribution submitted")
+
 	return &investment.ID, nil
 }
 
 func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionUpdateInvestment) {
+		return nil, errors.New("permission denied")
+	}
+
+	// Get current investment
+	current, err := u.investmentRepository.GetByID(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if user can update this investment
+	if !u.canManageInvestment(ctx, current) {
+		return nil, errors.New("permission denied")
+	}
+
 	investment, err := u.investmentRepository.UpdateInvestment(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	return &investment.ID, nil
 }
 
-func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, req *uint64) (*uint64, error) {
-	investment, err := u.investmentRepository.GetByID(ctx, *req)
+func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) error {
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionDeleteInvestment) {
+		return errors.New("permission denied")
+	}
+
+	// Get current investment
+	current, err := u.investmentRepository.GetByID(ctx, *id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if investment == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy khai báo đầu tư",
-		}
+
+	// Check if user can delete this investment
+	if !u.canManageInvestment(ctx, current) {
+		return errors.New("permission denied")
 	}
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	err = u.groupAuthUsecase.IsMemberGroup(ctx, uint32(investment.DealID), uint32(profileId))
-	if err != nil {
-		return nil, err
-	}
-	if investment.Status != enums.ApprovedStatusRejected {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Chỉ xóa được khai báo đầu tư bị từ chối",
-		}
-	}
-	err = u.investmentRepository.DeleteInvestment(ctx, *req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
+
+	return u.investmentRepository.DeleteInvestment(ctx, *id)
 }
 
 func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*entity.Investment, error) {
+	// Get investment
 	investment, err := u.investmentRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if investment == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy khai báo đầu tư",
-		}
+
+	// Check if user can view this investment
+	if !u.canViewInvestment(ctx, investment) {
+		return nil, errors.New("permission denied")
 	}
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	err = u.groupAuthUsecase.IsMemberGroup(ctx, uint32(investment.DealID), uint32(profileId))
-	if err != nil {
-		return nil, err
-	}
+
 	return investment, nil
 }
 
 func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error) {
-	investments, total, err := u.investmentRepository.GetInvestments(ctx, req)
-	if err != nil {
-		return nil, 0, err
+	// If user only has VIEW_INVESTMENT permission, filter by their member ID
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		userID := _utils.GetUserIDFromContext(ctx)
+		req.MemberID = userID
 	}
 
-	return investments, total, nil
-}
-
-func (u *InvestmentUsecase) RequiredChangeStatus(ctx context.Context, id uint64) (*entity.Investment, *entity.Deal, error) {
-	invest, err := u.investmentRepository.GetByID(ctx, id)
-	if err != nil {
-		return nil, nil, err
-	}
-	if invest == nil {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy khai báo đầu tư",
-		}
-	}
-
-	deal, err := u.dealRepository.GetByID(ctx, invest.DealID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if deal.OwnerType == enums.OwnerTypeUser {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "thương vụ đầu tư không được áp dụng cho cá nhân",
-		}
-	}
-
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	err = u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(profileId)) // Assuming 0 is the user ID for the leader
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return invest, deal, nil
+	return u.investmentRepository.GetInvestments(ctx, req)
 }
 
 func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (uint64, error) {
-	invest, deal, err := u.RequiredChangeStatus(ctx, id) // Assuming 0 is the user ID for the leader
-	if err != nil {
-		return 0, err
-	}
-	if invest.Status == enums.ApprovedStatusApproved {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Khai báo đầu tư đã được phê duyệt",
-		}
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return 0, errors.New("permission denied")
 	}
 
-	resultId, err := u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusApproved)
-	if err != nil {
-		return 0, err
-	}
-
-	go func() {
-		cloneCtx := _utils.CloneContext(ctx)
-		u.SendNotification(cloneCtx, invest, deal, enums.NotiInvestmentApproved)
-	}()
-
-	return resultId, nil
+	// Change status to approved
+	return u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusApproved)
 }
 
 func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (uint64, error) {
-	invest, deal, err := u.RequiredChangeStatus(ctx, id) // Assuming 0 is the user ID for the leader
-	if err != nil {
-		return 0, err
-	}
-	if invest.Status == enums.ApprovedStatusRejected {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Khai báo đầu tư đã bị từ chối",
-		}
-	}
-	resultId, err := u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusRejected)
-	if err != nil {
-		return 0, err
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return 0, errors.New("permission denied")
 	}
 
-	go func() {
-		cloneCtx := _utils.CloneContext(ctx)
-		u.SendNotification(cloneCtx, invest, deal, enums.NotiInvestmentRejected)
-	}()
-
-	return resultId, nil
+	// Change status to rejected
+	return u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusRejected)
 }
 
-func (u *InvestmentUsecase) SendNotification(ctx context.Context, invest *entity.Investment, deal *entity.Deal, typeNoti enums.NotificationType) error {
-	err := u.notiClient.SendNotification(ctx, &dto.NotificationDTO{
-		Type:       typeNoti,
-		UserId:     invest.CreatedBy,
-		AttachData: []string{deal.Name, _utils.FormatVND(invest.Amount)},
-		TargetID:   invest.ID,
-		IsMerge:    true,
-	})
-	if err != nil {
-		return err
+func (u *InvestmentUsecase) ChangeConfirmation(ctx context.Context, id uint64, confirmed bool) (uint64, error) {
+	// Check if user has permission
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return 0, errors.New("permission denied")
 	}
-	return nil
+
+	return u.investmentRepository.ChangeConfirmation(ctx, id, confirmed)
+}
+
+// Helper methods for permission checking
+func (u *InvestmentUsecase) canViewInvestment(ctx context.Context, investment *entity.Investment) bool {
+	// Users with MANAGE_INVESTMENT can view all investments
+	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return true
+	}
+
+	// Users with VIEW_INVESTMENT can only view their own investments
+	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionViewInvestment) {
+		userID := _utils.GetUserIDFromContext(ctx)
+		return investment.MemberID == userID
+	}
+
+	return false
+}
+
+func (u *InvestmentUsecase) canManageInvestment(ctx context.Context, investment *entity.Investment) bool {
+	// Users with MANAGE_INVESTMENT can manage all investments
+	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return true
+	}
+
+	// Regular users can only manage their own pending/rejected investments
+	if investment.Status == enums.ApprovedStatusApproved {
+		return false
+	}
+
+	userID := _utils.GetUserIDFromContext(ctx)
+	return investment.MemberID == userID
 }

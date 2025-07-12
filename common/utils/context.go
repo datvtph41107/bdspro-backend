@@ -63,3 +63,19 @@ func GetPlanIdFromContext(ctx context.Context) uint64 {
 	}
 	return planId.(uint64)
 }
+
+// New functions for investment module
+const (
+	UserIDKey = "user_id"
+)
+
+func GetUserIDFromContext(ctx context.Context) uint64 {
+	if userID, ok := ctx.Value(UserIDKey).(uint64); ok {
+		return userID
+	}
+	return 0
+}
+
+func SetUserIDToContext(ctx context.Context, userID uint64) context.Context {
+	return context.WithValue(ctx, UserIDKey, userID)
+}

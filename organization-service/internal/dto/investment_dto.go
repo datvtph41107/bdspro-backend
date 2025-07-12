@@ -8,11 +8,12 @@ import (
 type InvestmentDTO struct {
 	ID           uint64               `json:"id"`
 	DealID       uint64               `json:"deal_id"`
+	MemberID     uint64               `json:"member_id"`
 	InvestType   enums.DealMemberType `json:"invest_type"`
 	Amount       float64              `json:"amount"`
 	TransferTime time.Time            `json:"transfer_time"`
 	Note         string               `json:"note"`
-	// Documents    []DocumentItem `json:"documents"`
+	ProxyUserID  uint64              `json:"proxy_user_id"`
 }
 
 type InfoInvestmentDTO struct {
