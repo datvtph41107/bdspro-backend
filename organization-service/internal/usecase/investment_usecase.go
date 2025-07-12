@@ -17,14 +17,14 @@ import (
 type InvestmentUsecase struct {
 	investmentRepository repository.InvestmentRepository
 	dealRepository       repository.GroupDealRepository
-	groupAuthUsecase     iusecase.IGroupAuth
+	groupAuthUsecase     GroupAuthUsecase	
 	notiClient           iusecase.INotiClient
 }
 
 func NewInvestmentUsecase(
 	investmentRepository repository.InvestmentRepository,
 	dealRepository repository.GroupDealRepository,
-	groupAuthUsecase iusecase.IGroupAuth,
+	groupAuthUsecase GroupAuthUsecase,
 	notiClient iusecase.INotiClient,
 ) *InvestmentUsecase {
 	return &InvestmentUsecase{

@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package organization;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "types/organizationpb";
+
+service DealInvitationService {
+  rpc SendInvitation(SendInvitationRequest) returns (SendInvitationResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation"
+      body: "*"
+    };
+  }
+
+  rpc AcceptInvitation(AcceptInvitationRequest) returns (AcceptInvitationResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/accept"
+      body: "*"
+    };
+  }
+
+  rpc RejectInvitation(RejectInvitationRequest) returns (RejectInvitationResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/reject"
+      body: "*"
+    };
+  }
+
+  rpc ResendInvitation(ResendInvitationRequest) returns (ResendInvitationResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/resend"
+      body: "*"
+    };
+  }
+
+  rpc GetAcceptedMembers(GetAcceptedMembersRequest) returns (GetAcceptedMembersResponse) {
+    option (google.api.http) = {
+      get: "/deal/{deal_id}/accepted-members"
+    };
+  }
+
+  rpc WithdrawFromDeal(WithdrawFromDealRequest) returns (WithdrawFromDealResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/withdraw"
+      body: "*"
+    };
+  }
+
+  rpc RemoveFromDeal(RemoveFromDealRequest) returns (RemoveFromDealResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/remove"
+      body: "*"
+    };
+  }
+
+  rpc ConfirmWithdrawal(ConfirmWithdrawalRequest) returns (ConfirmWithdrawalResponse) {
+    option (google.api.http) = {
+      post: "/deal-invitation/confirm-withdrawal"
+      body: "*"
+    };
+  }
+
+  rpc SearchMembers(SearchMembersRequest) returns (SearchMembersResponse) {
+    option (google.api.http) = {
+      get: "/deal/{deal_id}/search-members"
+    };
+  }
+
+  rpc GetInvitation(GetInvitationRequest) returns (GetInvitationResponse) {
+    option (google.api.http) = {
+      get: "/deal-invitation/{id}"
+    };
+  }
+
+  rpc GetPendingInvitations(GetPendingInvitationsRequest) returns (GetPendingInvitationsResponse) {
+    option (google.api.http) = {
+      get: "/deal-invitation/pending"
+    };
+  }
+
+  rpc GetInvitationsByDeal(GetInvitationsByDealRequest) returns (GetInvitationsByDealResponse) {
+    option (google.api.http) = {
+      get: "/deal/{deal_id}/invitations"
+    };
+  }
+}
+
+message SendInvitationRequest {
+  uint64 deal_id = 1;
+  uint64 inviter_id = 2;
+  uint64 invitee_id = 3;
+  string message = 4;
+  string role = 5;
+}
+
+message SendInvitationResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message AcceptInvitationRequest {
+  uint64 invitation_id = 1;
+}
+
+message AcceptInvitationResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+}
+
+message RejectInvitationRequest {
+  uint64 invitation_id = 1;
+  string reason = 2;
+}
+
+message RejectInvitationResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+}
+
+message ResendInvitationRequest {
+  uint64 invitation_id = 1;
+}
+
+message ResendInvitationResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message GetAcceptedMembersRequest {
+  uint64 deal_id = 1;
+}
+
+message GetAcceptedMembersResponse {
+  repeated DealInvitationMember members = 1;
+}
+
+message WithdrawFromDealRequest {
+  uint64 invitation_id = 1;
+  string reason = 2;
+}
+
+message WithdrawFromDealResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+}
+
+message RemoveFromDealRequest {
+  uint64 invitation_id = 1;
+  string reason = 2;
+}
+
+message RemoveFromDealResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+}
+
+message ConfirmWithdrawalRequest {
+  uint64 invitation_id = 1;
+}
+
+message ConfirmWithdrawalResponse {
+  uint64 invitation_id = 1;
+  bool success = 2;
+}
+
+message SearchMembersRequest {
+  uint64 deal_id = 1;
+  string keyword = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message SearchMembersResponse {
+  repeated DealInvitationMember members = 1;
+  int64 total = 2;
+}
+
+message GetInvitationRequest {
+  uint64 id = 1;
+}
+
+message GetInvitationResponse {
+  DealInvitation invitation = 1;
+}
+
+message GetPendingInvitationsRequest {
+  uint64 invitee_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetPendingInvitationsResponse {
+  repeated DealInvitation invitations = 1;
+  int64 total = 2;
+}
+
+message GetInvitationsByDealRequest {
+  uint64 deal_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetInvitationsByDealResponse {
+  repeated DealInvitation invitations = 1;
+  int64 total = 2;
+}
+
+message DealInvitation {
+  uint64 id = 1;
+  uint64 deal_id = 2;
+  uint64 inviter_id = 3;
+  uint64 invitee_id = 4;
+  string status = 5;
+  string message = 6;
+  string role = 7;
+  string reason = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message DealInvitationMember {
+  uint64 user_id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+  google.protobuf.Timestamp joined_at = 5;
+} 

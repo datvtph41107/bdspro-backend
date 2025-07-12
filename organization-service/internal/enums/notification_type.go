@@ -14,6 +14,13 @@ const (
 	NotiInvestmentCreated NotificationType = 7005
 	NotiInvestmentApproved NotificationType = 7006
 	NotiInvestmentRejected NotificationType = 7007
+
+	// Deal Invitation notifications
+	NotiDealInvitation           NotificationType = 7008
+	NotiDealInvitationAccepted   NotificationType = 7009
+	NotiDealInvitationRejected   NotificationType = 7010
+	NotiDealMemberWithdrawn      NotificationType = 7011
+	NotiDealMemberRemoved        NotificationType = 7012
 )
 
 var NotiTypeMap = map[NotificationType]string{
@@ -25,4 +32,9 @@ var NotiTypeMap = map[NotificationType]string{
 	NotiInvestmentCreated:  "Gửi thông báo góp vốn",
 	NotiInvestmentApproved: "Khai báo góp vốn đã được phê duyệt",
 	NotiInvestmentRejected: "Khai báo góp vốn đã bị từ chối",
+	NotiDealInvitation:     "Lời mời tham gia thương vụ",
+	NotiDealInvitationAccepted: "Đã chấp nhận lời mời tham gia thương vụ",
+	NotiDealInvitationRejected: "Đã từ chối lời mời tham gia thương vụ",
+	NotiDealMemberWithdrawn: "Thành viên rút khỏi thương vụ",
+	NotiDealMemberRemoved:   "Thành viên bị gỡ khỏi thương vụ",
 }
