@@ -12,7 +12,7 @@ type OrganizationRoleTransformer interface {
 	EntityToGetRolesResponse(entities []*entity.OrganizationRole, total uint32) *organizationpb.GetRolesResponse
 	EntityToUpdateRoleResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleResponse
 	EntityToDeleteRoleResponse(entity *entity.OrganizationRole) *organizationpb.DeleteRoleResponse
-	EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRolesResponse
+	EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRoleResponse
 	UpdateRoleRequestToEntity(req *organizationpb.UpdateRoleRequest) *entity.OrganizationRole
 }
 
@@ -82,14 +82,22 @@ func (t *organizationRoleTransformer) EntityToDeleteRoleResponse(entity *entity.
 	}
 }
 
-func (t *organizationRoleTransformer) EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRolesResponse {
-	roles := make([]*organizationpb.Role, 0)
-	roles = append(roles, &organizationpb.Role{
-		Id:   entity.Id,
-		Name: entity.Name,
-		Key:  entity.Key,
-	})
-	return &organizationpb.GetRolesResponse{
-		Roles: roles,
+func (t *organizationRoleTransformer) EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRoleResponse {
+	permissions := make([]*organizationpb.Permission, len(entity.Permissions))
+	for i, permission := range entity.Permissions {
+		permissions[i] = &organizationpb.Permission{
+			Id:   permission.Id,
+			Name: permission.Name,
+			Key:  permission.Key,
+		}
+	}
+	
+	return &organizationpb.GetRoleResponse{
+		Role: &organizationpb.Role{
+			Id:          entity.Id,
+			Name:        entity.Name,
+			Key:         entity.Key,
+			Permissions: permissions,
+		},
 	}
 }

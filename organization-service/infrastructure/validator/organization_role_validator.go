@@ -5,6 +5,8 @@ import (
 
 	"organization/internal/custom_error"
 
+	"errors"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 )
@@ -15,6 +17,7 @@ type OrganizationRoleValidator interface {
 	ValidateDeleteRoleRequest(req *organizationpb.DeleteRoleRequest) error
 	ValidateGetRolesRequest(req *organizationpb.GetRolesRequest) error
 	ValidateAddPermissionToRoleRequest(req *organizationpb.AddPermissionToRoleRequest) error
+	ValidateGetRoleRequest(req *organizationpb.GetRoleRequest) error
 }
 
 type organizationRoleValidator struct {
@@ -88,23 +91,16 @@ func (v *organizationRoleValidator) ValidateUpdateRoleRequest(req *organizationp
 }
 
 func (v *organizationRoleValidator) ValidateDeleteRoleRequest(req *organizationpb.DeleteRoleRequest) error {
-	details := []protoadapt.MessageV1{}
-
 	if req.Id == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "id",
-					Description: "id is required",
-				},
-			},
-		})
+		return errors.New("role id is required")
 	}
+	return nil
+}
 
-	if len(details) > 0 {
-		return custom_error.InvalidRequest(details...)
+func (v *organizationRoleValidator) ValidateGetRoleRequest(req *organizationpb.GetRoleRequest) error {
+	if req.Id == 0 {
+		return errors.New("role id is required")
 	}
-
 	return nil
 }
 

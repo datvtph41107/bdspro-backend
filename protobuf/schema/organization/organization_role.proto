@@ -35,6 +35,12 @@ service OrganizationRoleService {
         };
     }
 
+    rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/role/{id}"
+        };
+    }
+
     rpc AddPermissionToRole(AddPermissionToRoleRequest) returns (AddPermissionToRoleResponse) {
         option (google.api.http) = {
             post: "/v2/org/organization/role/add-permission"
@@ -90,6 +96,14 @@ message Role {
 message GetRolesResponse {
     repeated Role roles = 1 [json_name = "roles"];
     uint32 total = 2 [json_name = "total"];
+}
+
+message GetRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetRoleResponse {
+    Role role = 1 [json_name = "role"];
 }
 
 message AddPermissionToRoleRequest {

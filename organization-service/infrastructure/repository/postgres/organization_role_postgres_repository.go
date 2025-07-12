@@ -91,7 +91,7 @@ func (r *OrganizationRoleRepository) Create(ctx context.Context, role *entity.Or
 
 func (r *OrganizationRoleRepository) GetAll(ctx context.Context) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("is_deleted = ?", false).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("is_deleted = ?", false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (r *OrganizationRoleRepository) GetAll(ctx context.Context) ([]*entity.Orga
 
 func (r *OrganizationRoleRepository) FindById(ctx context.Context, id uint32) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -134,7 +134,7 @@ func (r *OrganizationRoleRepository) Delete(ctx context.Context, id uint32) erro
 
 func (r *OrganizationRoleRepository) GetByKey(ctx context.Context, key string) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("key = ?", key).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("key = ?", key).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -145,7 +145,7 @@ func (r *OrganizationRoleRepository) GetByKey(ctx context.Context, key string) (
 
 func (r *OrganizationRoleRepository) FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error) {
 	var models []*OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("organization_id = ? AND is_deleted = ?", organizationId, false).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	return RoleModelsToEntities(models), nil
@@ -153,7 +153,7 @@ func (r *OrganizationRoleRepository) FindByOrganizationId(ctx context.Context, o
 
 func (r *OrganizationRoleRepository) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error) {
 	var model OrganizationRoleModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ? AND key = ? AND is_deleted = ?", organizationId, key, false).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("organization_id = ? AND key = ? AND is_deleted = ?", organizationId, key, false).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

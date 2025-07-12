@@ -122,6 +122,27 @@ func (h *OrganizationRoleHandler) GetRoles(ctx context.Context, req *organizatio
 	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, total), nil
 }
 
+// @Summary Lấy chi tiết vai trò
+// @Description Lấy chi tiết vai trò theo ID
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của vai trò"
+// @Security BearerAuth
+// @Router /organization/role/{id} [get]
+func (h *OrganizationRoleHandler) GetRole(ctx context.Context, req *organizationpb.GetRoleRequest) (*organizationpb.GetRoleResponse, error) {
+	if err := h.OrganizationRoleValidator.ValidateGetRoleRequest(req); err != nil {
+		return nil, err
+	}
+	
+	role, err := h.OrganizationRoleUsecase.GetRole(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	
+	return h.OrganizationRoleTransformer.EntityToGetRoleResponse(role), nil
+}
+
 func (h *OrganizationRoleHandler) AddPermissionToRole(ctx context.Context, req *organizationpb.AddPermissionToRoleRequest) (*organizationpb.AddPermissionToRoleResponse, error) {
 	if err := h.OrganizationRoleValidator.ValidateAddPermissionToRoleRequest(req); err != nil {
 		return nil, err

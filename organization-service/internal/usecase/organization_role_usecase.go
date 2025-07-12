@@ -17,6 +17,7 @@ type OrganizationRoleUsecase interface {
 	DeleteRole(ctx context.Context, roleId uint32) error
 	GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error)
 	GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error)
+	GetRole(ctx context.Context, roleId uint32) (*entity.OrganizationRole, error)
 	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
 }
 
@@ -183,6 +184,33 @@ func (u *organizationRoleUsecase) GetRoles(ctx context.Context, page, size int) 
 	}
 
 	return roles, total, nil
+}
+
+func (u *organizationRoleUsecase) GetRole(ctx context.Context, roleId uint32) (*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	role, err := u.organizationRoleRepository.FindById(ctx, roleId)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, custom_error.RecordNotFound("Role not found")
+	}
+
+	// Check if role belongs to current organization
+	if role.OrganizationId != uint32(organizationId) {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	return role, nil
 }
 func (u *organizationRoleUsecase) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)

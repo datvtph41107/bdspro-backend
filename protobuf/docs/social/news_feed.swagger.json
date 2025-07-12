@@ -210,6 +210,20 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -462,7 +476,8 @@
           "format": "int64"
         },
         "visibility": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "hidden": {
           "type": "boolean"
@@ -471,7 +486,8 @@
           "type": "string"
         },
         "transactionType": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "title": {
           "type": "string"

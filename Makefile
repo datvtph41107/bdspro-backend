@@ -80,7 +80,7 @@ relay:
 chat-swagger:
 	cd chat-service && go run main.go swagger-serve
 payment:
-	cd payment-service && go run main.go grpc-server
+	cd payment-service && go run main.go grpc
 chat-grpc:
 	cd chat-service && go run main.go grpc-serve
 membership:
