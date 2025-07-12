@@ -46,12 +46,13 @@ func (r *InvestmentPostgres) UpdateInvestment(ctx context.Context, investment *e
 	}
 
 	updateData := map[string]interface{}{
-		"member_id":     investment.MemberID,
-		"amount":        investment.Amount,
-		"transfer_time": investment.TransferTime,
-		"note":         investment.Note,
-		"status":       investment.Status,
-		"changed_at":   time.Now(),
+		"member_id":            investment.MemberID,
+		"amount":               investment.Amount,
+		"transfer_time":        investment.TransferTime,
+		"note":                 investment.Note,
+		"transfer_proof_image": investment.TransferProofImage,
+		"status":               investment.Status,
+		"changed_at":           time.Now(),
 	}
 
 	// Only update proxy_user_id if it's provided

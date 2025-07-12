@@ -362,6 +362,10 @@
         "note": {
           "type": "string"
         },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
+        },
         "documents": {
           "type": "array",
           "items": {
@@ -423,6 +427,10 @@
         },
         "note": {
           "type": "string"
+        },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
         },
         "documents": {
           "type": "array",
@@ -507,6 +515,10 @@
         },
         "note": {
           "type": "string"
+        },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
         },
         "documents": {
           "type": "array",

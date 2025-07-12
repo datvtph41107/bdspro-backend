@@ -132,7 +132,7 @@ func (r *GroupDealPostgresRepository) DetailByID(ctx context.Context, id uint64)
 
 func (r *GroupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
 	var models []entity.Deal
-	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Debug().Where("owner_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.Deal, len(models))

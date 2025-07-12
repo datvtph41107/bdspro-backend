@@ -28,5 +28,8 @@ func AutoMigrate() {
 	db.AutoMigrate(&entity.DealProduct{})
 	db.AutoMigrate(&entity.AttachDocument{})
 	db.AutoMigrate(&entity.BankAccount{})
-	db.AutoMigrate(&entity.Investment{})
+	err := db.AutoMigrate(&entity.Investment{})
+	if err != nil {
+		panic(err)
+	}
 }

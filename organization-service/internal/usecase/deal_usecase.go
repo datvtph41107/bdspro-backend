@@ -58,14 +58,20 @@ func NewGroupDealUsecase(
 
 func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	err := u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
-	if err != nil {
-		return nil, custom_error.Forbidden("you are not allowed to create deal")
+
+	switch deal.OwnerType {
+	case enums.OwnerTypeGroup:
+		err := u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+		if err != nil {
+			return nil, custom_error.Forbidden("you are not allowed to create deal")
+		}
 	}
+	
 	var createdDeal *entity.Deal
 
 	// todo: nhớ check xem các member có nằm trong group không
 	// todo: xử lý user có thể vừa là khách, đối tác, thành viên
+	var err error
 	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		// tạo mới tài khoản nếu chưa tồn tại
 		bankAccount := deal.BankAccount

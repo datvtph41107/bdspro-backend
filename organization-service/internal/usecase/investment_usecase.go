@@ -5,11 +5,13 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 	"organization/internal/dto"
 	"organization/internal/enums"
 	iusecase "organization/internal/interface"
+	"time"
 )
 
 type InvestmentUsecase struct {
@@ -60,8 +62,20 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 		return nil, err
 	}
 
-	// Send notification to deal owner and managers
-	u.notiClient.SendInvestmentNotification(ctx, deal.ID, investment.ID, "New investment contribution submitted")
+	// Send notification to deal owner and managers in a separate goroutine
+	go func() {
+		// Create context with 10 second timeout for notification
+		notiCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		notification := &dto.NotificationDTO{
+			Type:       enums.NotiInvestmentCreated,
+			TargetID:   deal.ID,
+			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
+			IsMerge:    false,
+		}
+		u.notiClient.SendNotification(notiCtx, notification)
+	}()
 
 	return &investment.ID, nil
 }
@@ -78,9 +92,19 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 		return nil, err
 	}
 
+	// Check if investment is already confirmed - don't allow editing
+	if current.Status == enums.ApprovedStatusApproved {
+		return nil, errors.New("cannot edit confirmed investment")
+	}
+
 	// Check if user can update this investment
 	if !u.canManageInvestment(ctx, current) {
 		return nil, errors.New("permission denied")
+	}
+
+	// If investment was rejected, change status back to pending
+	if current.Status == enums.ApprovedStatusRejected {
+		req.Status = enums.ApprovedStatusPending
 	}
 
 	investment, err := u.investmentRepository.UpdateInvestment(ctx, req)
@@ -112,15 +136,15 @@ func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) er
 }
 
 func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*entity.Investment, error) {
+	// Only users with MANAGE_INVESTMENT permission can view investment details
+	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		return nil, errors.New("permission denied - only managers can view investment details")
+	}
+
 	// Get investment
 	investment, err := u.investmentRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if user can view this investment
-	if !u.canViewInvestment(ctx, investment) {
-		return nil, errors.New("permission denied")
 	}
 
 	return investment, nil
@@ -129,6 +153,11 @@ func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*enti
 func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error) {
 	// If user only has VIEW_INVESTMENT permission, filter by their member ID
 	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+		// Check if user has VIEW_INVESTMENT permission
+		if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionViewInvestment) {
+			return nil, 0, errors.New("permission denied - need VIEW_INVESTMENT permission")
+		}
+		// Force filter by current user's member ID
 		userID := _utils.GetUserIDFromContext(ctx)
 		req.MemberID = userID
 	}
@@ -142,8 +171,34 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 		return 0, errors.New("permission denied")
 	}
 
+	// Get investment details for notification
+	investment, err := u.investmentRepository.GetByID(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
 	// Change status to approved
-	return u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusApproved)
+	investmentID, err := u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusApproved)
+	if err != nil {
+		return 0, err
+	}
+
+	// Send notification in a separate goroutine
+	go func() {
+		// Create context with 10 second timeout for notification
+		notiCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		notification := &dto.NotificationDTO{
+			Type:       enums.NotiInvestmentApproved,
+			TargetID:   investment.DealID,
+			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
+			IsMerge:    false,
+		}
+		u.notiClient.SendNotification(notiCtx, notification)
+	}()
+
+	return investmentID, nil
 }
 
 func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (uint64, error) {
@@ -152,8 +207,34 @@ func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (ui
 		return 0, errors.New("permission denied")
 	}
 
+	// Get investment details for notification
+	investment, err := u.investmentRepository.GetByID(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
 	// Change status to rejected
-	return u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusRejected)
+	investmentID, err := u.investmentRepository.ChangeStatus(ctx, id, enums.ApprovedStatusRejected)
+	if err != nil {
+		return 0, err
+	}
+
+	// Send notification in a separate goroutine
+	go func() {
+		// Create context with 10 second timeout for notification
+		notiCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		notification := &dto.NotificationDTO{
+			Type:       enums.NotiInvestmentRejected,
+			TargetID:   investment.DealID,
+			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
+			IsMerge:    false,
+		}
+		u.notiClient.SendNotification(notiCtx, notification)
+	}()
+
+	return investmentID, nil
 }
 
 func (u *InvestmentUsecase) ChangeConfirmation(ctx context.Context, id uint64, confirmed bool) (uint64, error) {

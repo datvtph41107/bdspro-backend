@@ -45,6 +45,7 @@ func (u *groupAuthUsecase) IsLeaderGroup(ctx context.Context, groupId uint32, us
 }
 
 func (u *groupAuthUsecase) IsMemberGroup(ctx context.Context, groupId uint32, userId uint32) error {
+	fmt.Println("IsMemberGroup", groupId, userId)
 	if err := u.IsLeaderGroup(ctx, groupId, userId); err == nil {
 		return nil
 	}

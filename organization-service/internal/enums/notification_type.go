@@ -11,8 +11,9 @@ const (
 
 	NotiDealUpdateStatus NotificationType = 7004
 
-	NotiInvestmentApproved NotificationType = 7005
-	NotiInvestmentRejected NotificationType = 7006
+	NotiInvestmentCreated NotificationType = 7005
+	NotiInvestmentApproved NotificationType = 7006
+	NotiInvestmentRejected NotificationType = 7007
 )
 
 var NotiTypeMap = map[NotificationType]string{
@@ -21,6 +22,7 @@ var NotiTypeMap = map[NotificationType]string{
 	NotiCustomerJoinDeal:   "Thêm khách hàng vào thương vụ",
 	NotiPartnerJoinDeal:    "Thêm đối tác vào thương vụ",
 	NotiDealUpdateStatus:   "Cập nhật trạng thái thương vụ",
+	NotiInvestmentCreated:  "Gửi thông báo góp vốn",
 	NotiInvestmentApproved: "Khai báo góp vốn đã được phê duyệt",
 	NotiInvestmentRejected: "Khai báo góp vốn đã bị từ chối",
 }

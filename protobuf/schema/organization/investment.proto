@@ -65,8 +65,9 @@ message SubmitInvestRequest {
     double amount = 5;
     string transferTime = 6;
     string note = 7;
-    repeated DocumentItem documents = 8;
-    optional uint64 proxyUserId = 9;  // For proxy investments
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    optional uint64 proxyUserId = 10;  // For proxy investments
 }
 
 message ListInvestment {
@@ -82,15 +83,16 @@ message Investment {
     double amount = 5;
     string transferTime = 6;
     string note = 7;
-    repeated DocumentItem documents = 8;
-    uint32 status = 9;
-    string changedAt = 10;
-    optional uint64 createdBy = 11;
-    optional sharepb.ProfileItem createdUser = 12;
-    string statusName = 13;
-    bool confirmed = 14;
-    optional uint64 proxyUserId = 15;  // ID of admin who created on behalf
-    optional sharepb.ProfileItem proxyUser = 16;  // Profile of proxy user
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    uint32 status = 10;
+    string changedAt = 11;
+    optional uint64 createdBy = 12;
+    optional sharepb.ProfileItem createdUser = 13;
+    string statusName = 14;
+    bool confirmed = 15;
+    optional uint64 proxyUserId = 16;  // ID of admin who created on behalf
+    optional sharepb.ProfileItem proxyUser = 17;  // Profile of proxy user
 }
 
 message InvestmentListRequest {
