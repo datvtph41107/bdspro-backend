@@ -33,4 +33,8 @@ func AutoMigrate() {
 	if err != nil {
 		panic(err)
 	}
+
+	db.AutoMigrate(&entity.DealMember{})
+	db.AutoMigrate(&entity.DealTransaction{})
+
 }

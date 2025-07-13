@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "types/organizationpb";
+
+// Enum cho loại giao dịch
+enum TransactionType {
+    TRANSACTION_TYPE_UNKNOWN = 0;
+    TRANSACTION_TYPE_EXPENSE = 10; // Chi phí
+    TRANSACTION_TYPE_REVENUE = 20; // Doanh thu
+}
+
+// Enum cho trạng thái phê duyệt
+enum ApprovedStatus {
+    APPROVED_STATUS_UNKNOWN = 0;
+    APPROVED_STATUS_PENDING = 10;   // Chờ xác nhận
+    APPROVED_STATUS_APPROVED = 20;  // Đã xác nhận
+    APPROVED_STATUS_REJECTED = 30;  // Từ chối
+}
+
+service DealTransactionService {
+    // Tạo giao dịch chi phí/doanh thu
+    rpc CreateTransaction(CreateDealTransactionRequest) returns (DealTransactionResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/deal/{dealId}/transactions"
+            body: "*"
+        };
+    }
+
+    // Cập nhật giao dịch
+    rpc UpdateTransaction(UpdateDealTransactionRequest) returns (DealTransactionResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/transactions/{id}"
+            body: "*"
+        };
+    }
+
+    // Xóa giao dịch
+    rpc DeleteTransaction(DeleteDealTransactionRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/org/deal/transactions/{id}"
+        };
+    }
+
+    // Lấy chi tiết giao dịch
+    rpc GetTransaction(GetDealTransactionRequest) returns (DealTransactionResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/transactions/{id}"
+        };
+    }
+
+    // Lấy danh sách giao dịch
+    rpc GetTransactions(GetDealTransactionsRequest) returns (DealTransactionListResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{dealId}/transactions"
+        };
+    }
+
+    // Phê duyệt/từ chối giao dịch
+    rpc ApproveTransaction(ApproveDealTransactionRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/transactions/{id}/approve"
+            body: "*"
+        };
+    }
+
+    // Lấy thống kê tài chính
+    rpc GetFinancialSummary(GetFinancialSummaryRequest) returns (FinancialSummaryResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{dealId}/financial-summary"
+        };
+    }
+}
+
+// Request tạo giao dịch
+message CreateDealTransactionRequest {
+    uint64 dealId = 1;
+    TransactionType type = 2;
+    double amount = 3;
+    string description = 4;
+    string transactionDate = 5;
+    string category = 6;
+    string note = 7;
+    repeated uint64 documentIds = 8;
+}
+
+// Request cập nhật giao dịch
+message UpdateDealTransactionRequest {
+    uint64 id = 1;
+    double amount = 2;
+    string description = 3;
+    string transactionDate = 4;
+    string category = 5;
+    string note = 6;
+    repeated uint64 documentIds = 7;
+}
+
+// Request xóa giao dịch
+message DeleteDealTransactionRequest {
+    uint64 id = 1;
+}
+
+// Request lấy chi tiết giao dịch
+message GetDealTransactionRequest {
+    uint64 id = 1;
+}
+
+// Request lấy danh sách giao dịch
+message GetDealTransactionsRequest {
+    uint64 dealId = 1;
+    optional TransactionType type = 2;
+    uint32 page = 3;
+    uint32 limit = 4;
+}
+
+// Request phê duyệt giao dịch
+message ApproveDealTransactionRequest {
+    uint64 id = 1;
+    string rejectReason = 2;
+}
+
+// Request lấy thống kê tài chính
+message GetFinancialSummaryRequest {
+    uint64 dealId = 1;
+}
+
+// Response cho giao dịch
+message DealTransactionResponse {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    TransactionType type = 3;
+    string typeName = 4;
+    double amount = 5;
+    string description = 6;
+    string transactionDate = 7;
+    string category = 8;
+    string note = 9;
+    uint64 createdBy = 10;
+    ApprovedStatus status = 11;
+    string statusName = 12;
+    optional uint64 approvedBy = 13;
+    optional string approvedAt = 14;
+    string rejectReason = 15;
+    repeated uint64 documentIds = 16;
+    string createdAt = 17;
+    string updatedAt = 18;
+}
+
+// Response cho danh sách giao dịch
+message DealTransactionListResponse {
+    repeated DealTransactionResponse transactions = 1;
+    uint64 total = 2;
+    uint32 page = 3;
+    uint32 limit = 4;
+}
+
+// Response cho thống kê tài chính
+message FinancialSummaryResponse {
+    uint64 dealId = 1;
+    double totalRevenue = 2;
+    double totalExpense = 3;
+    double netProfit = 4;
+    double profitMargin = 5;
+    double targetProfit = 6;
+    string profitStatus = 7;
+    repeated string warningMessages = 8;
+} 

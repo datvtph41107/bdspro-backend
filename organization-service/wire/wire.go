@@ -46,13 +46,11 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_infrastructure_repository_postgres.OrganizationRoleRepository)),
-	// ❌ ĐÃ XOÁ dòng gây lỗi:
-	// wire.Bind(new(organization_internal_domain_repository.DealInvitationRepository), new(*organization_infrastructure_repository_postgres.DealInvitationPostgresRepository)),
-
-	// ✅ Giữ lại provider duy nhất này là đủ:
+	wire.Bind(new(organization_internal_domain_repository.DealMemberRepository), new(*organization_infrastructure_repository_postgres.DealMemberPostgresRepository)),
+	wire.Bind(new(organization_internal_domain_repository.DealTransactionRepository), new(*organization_infrastructure_repository_postgres.DealTransactionPostgresRepository)),
+	organization_infrastructure_repository_postgres.NewDealMemberPostgresRepository,
 	organization_infrastructure_repository_postgres.NewDealInvitationPostgresRepository,
-
-	// Các provider khác giữ nguyên
+	organization_infrastructure_repository_postgres.NewDealTransactionPostgresRepository,
 	organization_infrastructure_transformer.NewBankAccountMapper,
 	organization_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_infrastructure_client.NewBdsproClient,
@@ -148,7 +146,10 @@ var wireSet = wire.NewSet(
 	organization_internal_usecase.NewDealInvitationUsecase,
 	organization_infrastructure_validator.NewDealInvitationValidator,
 	organization_infrastructure_handler.NewDealInvitationHandler,
-
+	organization_infrastructure_transformer.NewDealTransactionTransformer,
+	organization_internal_usecase.NewDealTransactionUsecase,
+	organization_infrastructure_validator.NewDealTransactionValidator,
+	organization_infrastructure_handler.NewDealTransactionHandler,
 )
 
 func InitializeApp() (*config.ConfigApp, error) {

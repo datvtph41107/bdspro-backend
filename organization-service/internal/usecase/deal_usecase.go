@@ -441,7 +441,7 @@ func (u *groupDealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, m
 		MemberID: memberID,
 	}
 
-	err = u.dealMemberRepository.CreateMember(ctx, dealMember)
+	_, err = u.dealMemberRepository.CreateMember(ctx, dealMember)
 	if err != nil {
 		return err
 	}

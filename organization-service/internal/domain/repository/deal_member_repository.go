@@ -6,5 +6,5 @@ import (
 )
 
 type DealMemberRepository interface {
-	CreateMember(ctx context.Context, dealMember *entity.DealMember) error
+	CreateMember(ctx context.Context, dealMember *entity.DealMember) (*entity.DealMember, error)
 }

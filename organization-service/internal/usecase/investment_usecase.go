@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -37,7 +36,7 @@ func NewInvestmentUsecase(
 
 func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionCreateInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionCreateInvestment) {
 		return nil, errors.New("permission denied")
 	}
 
@@ -82,7 +81,7 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 
 func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionUpdateInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionUpdateInvestment) {
 		return nil, errors.New("permission denied")
 	}
 
@@ -117,7 +116,7 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 
 func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) error {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionDeleteInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionDeleteInvestment) {
 		return errors.New("permission denied")
 	}
 
@@ -137,7 +136,7 @@ func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) er
 
 func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*entity.Investment, error) {
 	// Only users with MANAGE_INVESTMENT permission can view investment details
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return nil, errors.New("permission denied - only managers can view investment details")
 	}
 
@@ -152,9 +151,9 @@ func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*enti
 
 func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error) {
 	// If user only has VIEW_INVESTMENT permission, filter by their member ID
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		// Check if user has VIEW_INVESTMENT permission
-		if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionViewInvestment) {
+		if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionViewInvestment) {
 			return nil, 0, errors.New("permission denied - need VIEW_INVESTMENT permission")
 		}
 		// Force filter by current user's member ID
@@ -167,7 +166,7 @@ func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.Investm
 
 func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return 0, errors.New("permission denied")
 	}
 
@@ -203,7 +202,7 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 
 func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return 0, errors.New("permission denied")
 	}
 
@@ -239,7 +238,7 @@ func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (ui
 
 func (u *InvestmentUsecase) ChangeConfirmation(ctx context.Context, id uint64, confirmed bool) (uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return 0, errors.New("permission denied")
 	}
 
@@ -249,12 +248,12 @@ func (u *InvestmentUsecase) ChangeConfirmation(ctx context.Context, id uint64, c
 // Helper methods for permission checking
 func (u *InvestmentUsecase) canViewInvestment(ctx context.Context, investment *entity.Investment) bool {
 	// Users with MANAGE_INVESTMENT can view all investments
-	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return true
 	}
 
 	// Users with VIEW_INVESTMENT can only view their own investments
-	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionViewInvestment) {
+	if u.groupAuthUsecase.HasPermission(ctx, enums.PermissionViewInvestment) {
 		userID := _utils.GetUserIDFromContext(ctx)
 		return investment.MemberID == userID
 	}
@@ -264,7 +263,7 @@ func (u *InvestmentUsecase) canViewInvestment(ctx context.Context, investment *e
 
 func (u *InvestmentUsecase) canManageInvestment(ctx context.Context, investment *entity.Investment) bool {
 	// Users with MANAGE_INVESTMENT can manage all investments
-	if u.groupAuthUsecase.HasPermission(ctx, _routes.PermissionManageInvestment) {
+	if u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
 		return true
 	}
 
