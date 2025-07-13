@@ -34,8 +34,8 @@ type ProductSearchRequest struct {
 	AmenityIds       []uint64   `form:"amenityIds"`
 	SourceTypeIds    []uint     `form:"sourceTypeIds"`
 	TransactionTypes []uint     `form:"transactionTypes"`
-	SaleStatus       []uint     `form:"saleStatus"`
-	RentStatus       []uint     `form:"rentStatus"`
+	SaleStatus       []uint32   `form:"saleStatus"`
+	RentStatus       []uint32   `form:"rentStatus"`
 	ProvinceIds      []uint64   `form:"provinceIds"`
 	DistrictIds      []uint64   `form:"districtIds"`
 	WardIds          []uint64   `form:"wardIds"`

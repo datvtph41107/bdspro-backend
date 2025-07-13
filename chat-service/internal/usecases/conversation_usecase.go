@@ -215,7 +215,7 @@ func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Co
 	return nil
 }
 
-func (c *conversationUsecases) GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error) {
+func (c *conversationUsecases) GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error) {
 	// currentUserId := utils.GetCurrentUserID(ctx)
 
 	participants, _, err := c.repo.GetListParticipant(ctx, conversationId)

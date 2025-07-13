@@ -27,6 +27,7 @@ var wireSet = wire.NewSet(
 	notification_config.NewFirebaseConfig,
 	notification_infra_firebase.NewFirebaseService,
 	notification_infra_service.NewGatewayNotiService,
+	notification_infra_mapper.NewHistoryMapper,
 	notification_infra_postgres.NewHistoryRepo,
 	notification_infra_postgres.NewHistoryRepository,
 	notification_infra_service.NewHistoryService,

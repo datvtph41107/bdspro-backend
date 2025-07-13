@@ -68,7 +68,7 @@ func (v *transactionValidator) ValidateCreateTransactionRequest(req *bdspropb.Cr
 		})
 	}
 
-	if req.TransactionType == "" {
+	if req.TransactionType == 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{

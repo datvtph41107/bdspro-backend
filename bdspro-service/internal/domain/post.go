@@ -7,56 +7,45 @@ import (
 	"time"
 )
 
+// type PostStatus struct {
+// 	Status enums.EPostStatus `gorm:"-" json:"status"`
+// }
+
 type Post struct {
 	_models.BaseEntity
-	ID              uint64            `gorm:"primaryKey;autoIncrement" json:"id"`
-	ProductId       uint64            `json:"productId"`
-	ExpiredAt       *time.Time        `json:"expiredAt"`
-	Status          enums.EPostStatus `json:"status"`
-	Visibility      enums.EVisibility `json:"visibility"`
-	Hidden          bool              `gorm:"default:false" json:"hidden"`
-	Content         string            `json:"content"`
-	TransactionType uint32            `json:"transactionType"`
-	Title           string            `json:"title"`
-	NumDate         int               `json:"numDate"`
-	Type            uint              `json:"type"` // 1: normal, 2: feed, 3: share
-	Price           float64           `json:"postPrice"`
-	PriceType       uint32            `json:"priceType"`      // 1: chính thức, 2: thỏa thuận
-	PackageVisible  uint              `json:"packageVisible"` // 1: thường, 2: VIP
-	Like            uint64            `json:"numLike"`
-	Comment         uint64            `json:"numComment"`
-	NumView         uint64            `json:"numView"`
-	Product         *Product          `gorm:"-" json:"product"`
-	MediaList       []PostMediaEntity `json:"mediaList"`
-	OwnerID         uint64            `json:"ownerId"`
-	OwnerType       enums.EOwnerType  `gorm:"column:owner_type;default:10" json:"ownerType"`
+	ID              uint64                `gorm:"primaryKey;autoIncrement" json:"id"`
+	ProductId       uint64                `json:"productId"`
+	ExpiredAt       *time.Time            `json:"expiredAt"`
+	Visibility      enums.EVisibility     `json:"visibility"`
+	Hidden          bool                  `gorm:"default:false" json:"hidden"`
+	Content         string                `json:"content"`
+	TransactionType enums.TransactionType `json:"transactionType"`
+	Title           string                `json:"title"`
+	NumDate         int                   `json:"numDate"`
+	Type            uint                  `json:"type"` // 1: normal, 2: feed, 3: share
+	Price           float64               `json:"postPrice"`
+	PriceType       uint32                `json:"priceType"`      // 1: chính thức, 2: thỏa thuận
+	PackageVisible  uint                  `json:"packageVisible"` // 1: thường, 2: VIP
+	Like            uint64                `json:"numLike"`
+	Comment         uint64                `json:"numComment"`
+	NumView         uint64                `json:"numView"`
+	Product         *Product              `gorm:"-" json:"product"`
+	MediaList       []PostMediaEntity     `json:"mediaList"`
+	OwnerID         uint64                `json:"ownerId"`
+	OwnerType       enums.EOwnerType      `gorm:"column:owner_type;default:10" json:"ownerType"`
 	// Asset           *Asset               `json:"asset"`
 }
 
 type PostItem struct {
-	_models.BaseEntity
-	ID              uint64             `gorm:"primaryKey;autoIncrement" json:"id"`
-	ProductId       uint64             `json:"productId"`
-	ExpiredAt       *time.Time         `json:"expiredAt"`
-	Status          enums.EPostStatus  `json:"status"`
-	Visibility      enums.EVisibility  `json:"visibility"`
-	Hidden          bool               `json:"hidden"`
-	Content         string             `json:"content"`
-	TransactionType uint               `json:"transactionType"`
-	Title           string             `json:"title"`
-	Type            uint               `json:"type"` // 1: normal, 2: feed, 3: share
-	PostPrice       float64            `gorm:"column:post_price" json:"postPrice"`
-	PriceType       uint               `json:"priceType"`      // 1: chính thức, 2: thỏa thuận
-	PackageVisible  uint               `json:"packageVisible"` // 1: thường, 2: VIP
-	Like            uint64             `json:"numLike"`
-	Comment         uint64             `json:"numComment"`
-	NumView         uint64             `json:"numView"`
-	Address         uint64             `gorm:"column:address" json:"address"`
-	ProvinceName    string             `gorm:"column:province_name" json:"provinceName"`
-	DistrictName    string             `gorm:"column:district_name" json:"districtName"`
-	WardName        string             `gorm:"column:ward_name" json:"wardName"`
-	MediaList       *[]PostMediaEntity `gorm:"-" json:"mediaList"`
-	MediaListRaw    json.RawMessage    `gorm:"column:media_list_raw" json:"-"`
+	Post
+	PostPrice         float64                 `gorm:"column:post_price" json:"postPrice"`
+	Address           uint64                  `gorm:"column:address" json:"address"`
+	ProvinceName      string                  `gorm:"column:province_name" json:"provinceName"`
+	DistrictName      string                  `gorm:"column:district_name" json:"districtName"`
+	WardName          string                  `gorm:"column:ward_name" json:"wardName"`
+	MediaListRaw      json.RawMessage         `gorm:"column:media_list_raw" json:"-"`
+	Status            enums.EPostStatus       `gorm:"-" json:"status"`
+	TransactionStatus enums.TransactionStatus `gorm:"column:transaction_status" json:"transactionStatus"`
 }
 
 func (PostItem) TableName() string {

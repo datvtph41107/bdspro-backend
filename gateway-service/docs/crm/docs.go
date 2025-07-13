@@ -1211,283 +1211,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/histories/{id}/{ownerType}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách lịch sử",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Lịch sử"
-                ],
-                "summary": "Lấy danh sách lịch sử",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30
-                        ],
-                        "type": "integer",
-                        "description": "Owner Type",
-                        "name": "ownerType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30,
-                            40,
-                            120,
-                            130,
-                            140,
-                            150,
-                            160,
-                            170,
-                            180,
-                            190,
-                            200,
-                            210,
-                            6010,
-                            6020,
-                            6030,
-                            6040,
-                            6050,
-                            6060,
-                            6070,
-                            6080,
-                            6090,
-                            6100,
-                            6110
-                        ],
-                        "type": "integer",
-                        "x-enum-varnames": [
-                            "HistoryCreateStep",
-                            "HistoryDelete",
-                            "HistoryAssignRole",
-                            "HistorySettingAuto",
-                            "HistoryPipelineCreate",
-                            "HistoryPipelineUpdate",
-                            "HistoryPipelineDelete",
-                            "HistoryStageCreate",
-                            "HistoryStageUpdate",
-                            "HistoryStageDelete",
-                            "HistoryRuleCreate",
-                            "HistoryRuleUpdate",
-                            "HistoryRuleDelete",
-                            "HistoryRuleEvent",
-                            "HistoryContactCreate",
-                            "HistoryContactUpdate",
-                            "HistoryContactDelete",
-                            "HistoryContactAssign",
-                            "HistoryReminder",
-                            "HistorySwitchStage",
-                            "HistoryUpdateNote",
-                            "HistoryContactInstall",
-                            "HistoryContactFriend",
-                            "HistoryContactStage",
-                            "HistoryContactMessage"
-                        ],
-                        "name": "actionType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "fromDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "targetId",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            10,
-                            20,
-                            30,
-                            40,
-                            50
-                        ],
-                        "type": "integer",
-                        "x-enum-varnames": [
-                            "TargetHistoryLead",
-                            "TargetHistoryContact",
-                            "TargetHistoryPipeline",
-                            "TargetHistoryStage",
-                            "TargetHistoryRule"
-                        ],
-                        "name": "targetType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "toDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "userId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/history/contact/{contactId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy lịch sử của liên hệ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Lịch sử"
-                ],
-                "summary": "Lấy lịch sử của liên hệ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của liên hệ",
-                        "name": "contactId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "name": "contactId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/history/list/{ownerId}/{ownerType}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy lịch sử của người dùng",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Lịch sử"
-                ],
-                "summary": "Lấy lịch sử của người dùng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của người dùng",
-                        "name": "ownerId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Loại người dùng",
-                        "name": "ownerType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "name": "actionType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "ownerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "ownerType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "targetId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "targetType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "userId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/invitation/list": {
             "get": {
                 "security": [
@@ -1679,6 +1402,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/lead/care-expired": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thời gian hết hạn bảo trì",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Khách hàng"
+                ],
+                "summary": "Lấy thời gian hết hạn bảo trì",
+                "responses": {}
+            }
+        },
         "/lead/detail/{id}": {
             "get": {
                 "security": [
@@ -1805,7 +1549,7 @@ const docTemplate = `{
             }
         },
         "/lead/stage": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2328,7 +2072,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/rule/search": {
+        "/rule/list": {
             "get": {
                 "security": [
                     {
@@ -3590,63 +3334,6 @@ const docTemplate = `{
                 "ConditionEventDate"
             ]
         },
-        "enums.EHistory": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30,
-                40,
-                120,
-                130,
-                140,
-                150,
-                160,
-                170,
-                180,
-                190,
-                200,
-                210,
-                6010,
-                6020,
-                6030,
-                6040,
-                6050,
-                6060,
-                6070,
-                6080,
-                6090,
-                6100,
-                6110
-            ],
-            "x-enum-varnames": [
-                "HistoryCreateStep",
-                "HistoryDelete",
-                "HistoryAssignRole",
-                "HistorySettingAuto",
-                "HistoryPipelineCreate",
-                "HistoryPipelineUpdate",
-                "HistoryPipelineDelete",
-                "HistoryStageCreate",
-                "HistoryStageUpdate",
-                "HistoryStageDelete",
-                "HistoryRuleCreate",
-                "HistoryRuleUpdate",
-                "HistoryRuleDelete",
-                "HistoryRuleEvent",
-                "HistoryContactCreate",
-                "HistoryContactUpdate",
-                "HistoryContactDelete",
-                "HistoryContactAssign",
-                "HistoryReminder",
-                "HistorySwitchStage",
-                "HistoryUpdateNote",
-                "HistoryContactInstall",
-                "HistoryContactFriend",
-                "HistoryContactStage",
-                "HistoryContactMessage"
-            ]
-        },
         "enums.EOwnerType": {
             "type": "integer",
             "enum": [
@@ -3692,23 +3379,6 @@ const docTemplate = `{
                 "StepClose"
             ]
         },
-        "enums.ETargetHistory": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30,
-                40,
-                50
-            ],
-            "x-enum-varnames": [
-                "TargetHistoryLead",
-                "TargetHistoryContact",
-                "TargetHistoryPipeline",
-                "TargetHistoryStage",
-                "TargetHistoryRule"
-            ]
-        },
         "enums.FriendStatus": {
             "type": "integer",
             "enum": [
@@ -3741,22 +3411,61 @@ const docTemplate = `{
         "pb_bdspro.Apartment": {
             "type": "object",
             "properties": {
+                "apartmentAttrId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "type": "integer"
+                },
+                "buildId": {
+                    "type": "integer"
+                },
+                "floor": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ordinal": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
                 }
             }
         },
         "pb_bdspro.ApartmentAttribute": {
             "type": "object",
             "properties": {
+                "area": {
+                    "type": "number"
+                },
+                "blueprintUrl": {
+                    "type": "string"
+                },
+                "furniture": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
                 }
             }
         },
@@ -3771,27 +3480,43 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Deposite": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                }
-            }
-        },
         "pb_bdspro.Developer": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "backgroundUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
+                "logoUrl": {
+                    "type": "string"
+                },
                 "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "website": {
                     "type": "string"
                 }
             }
@@ -3884,6 +3609,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentCommission": {
+                    "description": "1000000 -\u003e 10%",
                     "type": "number"
                 },
                 "rentPaymentCycle": {
@@ -3893,7 +3619,8 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "saleCommission": {
-                    "type": "integer"
+                    "description": "1000000 -\u003e 10%",
+                    "type": "number"
                 },
                 "salePrice": {
                     "type": "number"
@@ -3971,13 +3698,10 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "createdUser": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
                 "customerId": {
-                    "type": "integer"
-                },
-                "deposite": {
-                    "$ref": "#/definitions/pb_bdspro.Deposite"
-                },
-                "depositeId": {
                     "type": "integer"
                 },
                 "description": {
@@ -4031,10 +3755,10 @@ const docTemplate = `{
                 "organizationId": {
                     "type": "integer"
                 },
-                "ownerType": {
+                "ownerId": {
                     "type": "integer"
                 },
-                "ownerUserId": {
+                "ownerType": {
                     "type": "integer"
                 },
                 "parentId": {
@@ -4073,11 +3797,17 @@ const docTemplate = `{
                 "rentStatus": {
                     "type": "integer"
                 },
+                "rentTransaction": {
+                    "$ref": "#/definitions/pb_bdspro.Transaction"
+                },
                 "rentVisibility": {
                     "type": "integer"
                 },
                 "saleStatus": {
                     "type": "integer"
+                },
+                "saleTransaction": {
+                    "$ref": "#/definitions/pb_bdspro.Transaction"
                 },
                 "saleVisibility": {
                     "type": "integer"
@@ -4116,11 +3846,35 @@ const docTemplate = `{
         "pb_bdspro.ProjectBuild": {
             "type": "object",
             "properties": {
+                "apartments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.Apartment"
+                    }
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.ApartmentAttribute"
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "numApartment": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "projectId": {
+                    "type": "integer"
                 }
             }
         },
@@ -4142,6 +3896,89 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pb_bdspro.Transaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvalDate": {
+                    "type": "string"
+                },
+                "approvalStatus": {
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "type": "integer"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "depositeAmount": {
+                    "type": "number"
+                },
+                "depositeNote": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDeleted": {
+                    "type": "boolean"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -4180,19 +4017,6 @@ const docTemplate = `{
                 },
                 "tickVerified": {
                     "type": "boolean"
-                }
-            }
-        },
-        "timestamppb.Timestamp": {
-            "type": "object",
-            "properties": {
-                "nanos": {
-                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
-                    "type": "integer"
-                },
-                "seconds": {
-                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
-                    "type": "integer"
                 }
             }
         }

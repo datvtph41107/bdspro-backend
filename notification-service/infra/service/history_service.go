@@ -14,11 +14,12 @@ import (
 
 type HistoryService struct {
 	notificationpb.UnimplementedHistoryServiceServer
-	UC *usecase.HistoryUsecase
+	UC     *usecase.HistoryUsecase
+	Mapper *mapper.HistoryMapper
 }
 
-func NewHistoryService(uc *usecase.HistoryUsecase) *HistoryService {
-	return &HistoryService{UC: uc}
+func NewHistoryService(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper) *HistoryService {
+	return &HistoryService{UC: uc, Mapper: mapper}
 }
 
 // @Summary Lấy lịch sử của người dùng
@@ -45,7 +46,7 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 
 	historiesPb := make([]*notificationpb.HistoryDTO, len(histories))
 	for i, history := range histories {
-		historiesPb[i] = mapper.HistoryDomainToPb(&history)
+		historiesPb[i] = s.Mapper.HistoryDomainToPb(&history)
 	}
 
 	return &notificationpb.HistoryListDTO{
@@ -60,7 +61,7 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 // @Accept json
 // @Produce json
 // @Param contactId path int true "ID của liên hệ"
-// @Param page query notificationpb.HistoryContactRequest false "Trang"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/contact/{contactId} [get]
 func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
@@ -74,7 +75,7 @@ func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb
 		return nil, err
 	}
 
-	historiesPb := mapper.HistoryToPbs(histories)
+	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
 		Data:          historiesPb,
@@ -93,7 +94,7 @@ func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.H
 		return nil, err
 	}
 
-	historiesPb := mapper.HistoryToPbs(histories)
+	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
 		Data:          historiesPb,
@@ -112,7 +113,7 @@ func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb
 		return nil, err
 	}
 
-	historiesPb := mapper.HistoryToPbs(histories)
+	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
 		Data:          historiesPb,
@@ -120,6 +121,15 @@ func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb
 	}, nil
 }
 
+// @Summary Lấy lịch sử của sản phẩm con
+// @Description Lấy lịch sử của sản phẩm con
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param productId path int true "ID của sản phẩm"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/product/child/{productId} [get]
 func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ProductChildHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
@@ -131,8 +141,34 @@ func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificat
 		return nil, err
 	}
 
-	historiesPb := mapper.HistoryToPbs(histories)
+	historiesPb := s.Mapper.HistoryToPbs(histories)
 
+	return &notificationpb.HistoryListDTO{
+		Data:          historiesPb,
+		TotalElements: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy lịch sử của quy tắc
+// @Description Lấy lịch sử của quy tắc
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param ruleEventId path int true "ID của quy tắc"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/rule-event/{ruleEventId} [get]
+func (s *HistoryService) RuleEventHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+	histories, total, err := s.UC.RuleEventHistory(ctx, req.Id, dto.HistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
 		Data:          historiesPb,
 		TotalElements: uint32(total),
@@ -150,5 +186,5 @@ func (s *HistoryService) Create(ctx context.Context, req *notificationpb.History
 	if err != nil {
 		return nil, err
 	}
-	return mapper.HistoryDomainToPb(history), nil
+	return s.Mapper.HistoryDomainToPb(history), nil
 }

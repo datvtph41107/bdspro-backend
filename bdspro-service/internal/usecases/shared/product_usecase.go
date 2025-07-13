@@ -9,7 +9,6 @@ import (
 	"bdspro/internal/usecases"
 	iusecase "bdspro/internal/usecases/interface"
 	"bdspro/internal/utils"
-	_db "common/db"
 	_dto "common/dto"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -47,12 +46,12 @@ type ProductUsecase struct {
 	ProductHistoryRepo repo.ProductHistoryRepo
 	MemberPlan         usecases.PlanUsecase
 	PostUsecase        *PostUsecase
-	// UAssetUsecase      *UAssetUsecase
-	DepositeRepo       repo.DepositeRepo
 	OwnerType          enums.EOwnerType
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 	NotificationClient iusecase.INotificationClient
 	Transaction        iusecase.ITransaction
+	TransactionUsecase usecases.TransactionUsecase
+	TransactionRepo    repo.TransactionRepository
 }
 
 func NewProductUsecase(
@@ -70,11 +69,11 @@ func NewProductUsecase(
 	amenity repo.AmenityRepo,
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
-	// UAssetUsecase *UAssetUsecase,
-	depositeRepo repo.DepositeRepo,
 	productChildRepo repo.UProductChildRepo,
 	notificationClient iusecase.INotificationClient,
 	transaction iusecase.ITransaction,
+	transactionUsecase usecases.TransactionUsecase,
+	transactionRepo repo.TransactionRepository,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -91,12 +90,12 @@ func NewProductUsecase(
 		MemberPlan:         memberPlan,
 		ProductHistoryRepo: ProductHistoryRepo,
 		PostUsecase:        PostUsecase,
-		// UAssetUsecase:      UAssetUsecase,
-		DepositeRepo:       depositeRepo,
 		ProductChildRepo:   productChildRepo,
 		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 		NotificationClient: notificationClient,
 		Transaction:        transaction,
+		TransactionUsecase: transactionUsecase,
+		TransactionRepo:    transactionRepo,
 		// OwnerType:    ownerType,
 	}
 
@@ -120,9 +119,8 @@ func MakeProductUsecase(
 	amenity repo.AmenityRepo,
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
-	// UAssetUsecase *UAssetUsecase,
-	depositeRepo repo.DepositeRepo,
 	ownerType enums.EOwnerType,
+	transactionRepo repo.TransactionRepository,
 ) *ProductUsecase {
 	return &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -139,9 +137,8 @@ func MakeProductUsecase(
 		MemberPlan:         memberPlan,
 		ProductHistoryRepo: ProductHistoryRepo,
 		PostUsecase:        PostUsecase,
-		// UAssetUsecase:      UAssetUsecase,
-		DepositeRepo: depositeRepo,
-		OwnerType:    ownerType,
+		OwnerType:          ownerType,
+		TransactionRepo:    transactionRepo,
 	}
 }
 
@@ -192,7 +189,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			return err
 		}
 		entity.LastPriceID = &price.ID
-		entity.OwnerUserID = &ownerId
+		entity.OwnerID = ownerId
 		entity.OwnerType = product.OwnerType
 		// _db.SaveWithContext(c, entity)
 		if err := s.ProductRepo.Create(c, entity); err != nil {
@@ -277,6 +274,44 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	}, nil
 }
 
+func (s *ProductUsecase) updateProduct(contextTx context.Context, id uint64, product *dto.ProductSaveRequest) error {
+	entity, err := s.ProductRepo.GetByIDContext(contextTx, id)
+	if err != nil {
+		return err
+	}
+
+	copier.Copy(&entity, &product)
+
+	// err = s.productRepo.UpdateProduct(c, id, product)
+	// s.UpdateReference(c, product, dto)
+	if product.PriceData != nil {
+		product.PriceData.ProductID = &id
+	}
+	if err := s.UpdatePrice(contextTx, entity.LastPriceID, product.PriceData); err != nil {
+		return err
+	}
+	if err := s.UpdateAmenity(contextTx, entity.ID, product.AmenityIds); err != nil {
+		return err
+	}
+	if err := s.UpdateMediaItems(contextTx, entity.ID, product.MediaItems); err != nil {
+		return err
+	}
+
+	houseInfoEntity := &domain.HouseInfo{}
+	copier.Copy(&houseInfoEntity, &product.HouseInfo)
+	if err := s.UpdateHouseInfo(contextTx, entity.ID, houseInfoEntity); err != nil {
+		return err
+	}
+	if err := s.UpdatePrivateData(contextTx, entity.ID, product.PrivateData); err != nil {
+		return err
+	}
+	entity.LastPriceID = &product.PriceData.ID
+	if err = s.ProductRepo.UpdateProduct(contextTx, id, entity); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.ProductSaveRequest) (*domain.Product, error) {
 	// profileId := _jwt.GetProfileId(c)
 	err := s.CheckPermission(c, &id, enums.PermissionProductUpdate)
@@ -291,40 +326,18 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 	// if err != nil {
 	// 	return nil, err
 	// }
-	entity, err := s.ProductRepo.GetByID(id)
-	if err != nil {
+
+	contextTx := s.Transaction.StartTransaction(c)
+	if err = s.updateProduct(contextTx, id, product); err != nil {
+		s.Transaction.RollbackTransaction(contextTx)
 		return nil, err
 	}
 
-	copier.Copy(&entity, &product)
-
-	// err = s.productRepo.UpdateProduct(c, id, product)
-	// s.UpdateReference(c, product, dto)
-	if product.PriceData != nil {
-		product.PriceData.ProductID = &id
-	}
-	if err := s.UpdatePrice(c, *entity.LastPriceID, product.PriceData); err != nil {
-		return nil, err
-	}
-	if err := s.UpdateAmenity(c, entity.ID, product.AmenityIds); err != nil {
-		return nil, err
-	}
-	if err := s.UpdateMediaItems(c, entity.ID, product.MediaItems); err != nil {
+	if err = s.Transaction.CommitTransaction(contextTx); err != nil {
 		return nil, err
 	}
 
-	houseInfoEntity := &domain.HouseInfo{}
-	copier.Copy(&houseInfoEntity, &product.HouseInfo)
-	if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
-		return nil, err
-	}
-	if err := s.UpdatePrivateData(c, entity.ID, product.PrivateData); err != nil {
-		return nil, err
-	}
-	entity.LastPriceID = &product.PriceData.ID
-	err = _db.SaveWithContext(c, &entity)
-
-	return entity, err
+	return nil, nil
 }
 
 // func (s *ProductUsecase) CheckAccessProduct(c context.Context, profileId, productId uint64) (*domain.Product, error) {
@@ -358,7 +371,14 @@ func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.Produc
 	// if err != nil {
 	// 	return nil, 0, err
 	// }
-	return s.ProductRepo.SearchProductWithOwner(&ownerID, *dto)
+	results, total, err := s.ProductRepo.SearchProductWithOwner(&ownerID, *dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := 0; i < len(results); i++ {
+		s.MapProductStatus(c, &results[i])
+	}
+	return results, total, nil
 }
 
 func (s *ProductUsecase) SearchExport(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
@@ -413,6 +433,8 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 		}
 	}
 
+	s.MapProductStatus(c, entity)
+
 	return entity, nil
 }
 
@@ -435,10 +457,18 @@ func (s *ProductUsecase) SmartSearch(c context.Context, text string, dto *dto.Te
 	if err != nil {
 		return nil, 0, err
 	}
-	return s.ProductRepo.SmartSearch(ownerID, s.This.GetOwnerType(c), &searchs)
+
+	results, total, err := s.ProductRepo.SmartSearch(ownerID, s.This.GetOwnerType(c), &searchs)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := 0; i < len(results); i++ {
+		s.MapProductStatus(c, &results[i])
+	}
+	return results, total, nil
 }
 
-func (s *ProductUsecase) UpdatePrice(c context.Context, priceID uint64, entity *domain.ProductPrice) error {
+func (s *ProductUsecase) UpdatePrice(c context.Context, priceID *uint64, entity *domain.ProductPrice) error {
 	return s.PriceRepo.UpdatePrice(c, priceID, entity)
 }
 
@@ -558,7 +588,7 @@ func (s *ProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Pr
 	// profileId := _jwt.GetProfileId(c)
 	profileId := _utils.GetProfileIdWithContext(c)
 
-	if *product.OwnerUserID != profileId {
+	if product.OwnerID != profileId {
 		return nil, &_routes.Except{
 			Code:    401,
 			Message: "Bạn không có quyền truy cập",
@@ -591,7 +621,7 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 	}
 
 	// todo: thêm hoặc có tin active
-	if product.SaleStatus != enums.EProductNotSold || product.RentStatus != enums.EProductNotRent {
+	if product.SaleTransactionID != nil || product.RentTransactionID != nil {
 		return &_routes.Except{
 			Code:    401,
 			Message: "Không thể xóa sản phẩm này",
@@ -600,20 +630,186 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 	return s.ProductRepo.Delete(c, id)
 }
 
-func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdate) error {
-	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductUpdateStatus)
-	if err != nil {
-		return err
-	}
-	return s.ProductRepo.SetRentStatus(c, dto.ProductID, dto.Status)
-}
+// func (s *ProductUsecase) GetProductStatus(c context.Context, trans *domain.Transaction) enums.EProductStatus {
+// 	if trans.TransactionType == enums.TransactionTypeSale {
+// 		return enums.EProductStatus(trans.TransactionStatus)
+// 	}
+// 	if product.RentTransactionID != nil {
+// 		return enums.EProductStatus(product.RentTransaction.TransactionStatus)
+// 	}
+// 	return enums.EProductStatus(product.TransactionStatus)
+// }
 
-func (s *ProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpdate) error {
-	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductUpdateStatus)
+// func (s *ProductUsecase) UpdateTransactionStatus(c context.Context,
+// 	newStatus enums.TransactionStatus,
+// 	transactionType enums.TransactionType,
+// 	productId *uint64,
+// ) error {
+// 	// todo: không thể cập nhật trạng thái sản phẩm thành cọc ở api này. dung api deposite riêng
+// 	if newStatus == enums.TransactionStatusDeposite {
+// 		return &_routes.Except{
+// 			Code:    400,
+// 			Message: "Không thể cập nhật trạng thái sản phẩm thành cọc",
+// 		}
+// 	}
+// 	err := s.CheckPermission(c, productId, enums.PermissionProductUpdateStatus)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	product, err := s.ProductRepo.GetByID(*productId)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var trans *domain.Transaction
+// 	// tạo transaction mới
+// 	isNewTransaction := false
+// 	if transactionType == enums.TransactionTypeSale && product.SaleTransactionID != nil {
+// 		trans, err = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
+// 	} else if transactionType == enums.TransactionTypeRent && product.RentTransactionID != nil {
+// 		trans, err = s.TransactionRepo.GetByID(c, product.RentTransactionID)
+// 	} else {
+// 		isNewTransaction = true
+// 		trans = s.EmptyTransaction(product)
+// 	}
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if trans.TransactionStatus == newStatus && trans.ID != 0 {
+// 		return &_routes.Except{
+// 			Code:    400,
+// 			Message: "Trạng thái trùng với trạng thái cũ",
+// 		}
+// 	}
+
+// 	contextTx := s.Transaction.StartTransaction(c)
+
+// 	// nếu chuyển thành chưa bắt đầu/hủy thì hủy giao dịch cũ đồng thời tạo giao dịch mới
+// 	if (newStatus == enums.TransactionStatusDraft ||
+// 		newStatus == enums.TransactionStatusCanceled ||
+// 		newStatus < trans.TransactionStatus) && trans.ID != 0 {
+// 		trans.TransactionStatus = enums.TransactionStatusCanceled
+// 		_, err = s.TransactionRepo.Update(contextTx, trans)
+// 		if err != nil {
+// 			s.Transaction.RollbackTransaction(contextTx)
+// 			return err
+// 		}
+// 		trans = s.EmptyTransaction(product)
+// 		isNewTransaction = true
+// 	} else {
+// 		trans.TransactionStatus = newStatus
+// 	}
+
+// 	trans, err = s.TransactionRepo.Update(contextTx, trans)
+// 	if err != nil {
+// 		s.Transaction.RollbackTransaction(contextTx)
+// 		return err
+// 	}
+
+// 	if isNewTransaction {
+// 		if transactionType == enums.TransactionTypeSale {
+// 			product.SaleTransactionID = &trans.ID
+// 		} else if transactionType == enums.TransactionTypeRent {
+// 			product.RentTransactionID = &trans.ID
+// 		}
+// 	}
+// 	if isNewTransaction {
+// 		err = s.ProductRepo.UpdateProduct(contextTx, *productId, product)
+// 		if err != nil {
+// 			s.Transaction.RollbackTransaction(contextTx)
+// 			return err
+// 		}
+// 	}
+// 	if err := s.Transaction.CommitTransaction(contextTx); err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+func (s *ProductUsecase) ProductDeposite(c context.Context, dto *domain.Transaction) (*domain.Transaction, error) {
+	// sản phẩm đang cọc
+	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductDeposite)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.ProductRepo.SetSaleStatus(c, dto.ProductID, dto.Status)
+
+	product, err := s.ProductRepo.GetProductByID(c, dto.ProductID)
+	if err != nil {
+		return nil, err
+	}
+
+	var tx *domain.Transaction
+	if dto.TransactionType == 10 && product.SaleTransactionID != nil {
+		tx, err = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
+	} else if dto.TransactionType == 20 && product.RentTransactionID != nil {
+		tx, err = s.TransactionRepo.GetByID(c, product.RentTransactionID)
+	} else {
+		tx = &domain.Transaction{}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// typeName := "bán"
+	// if dto.TransactionType == 20 {
+	// 	typeName = "cho thuê"
+	// }
+
+	// todo: nếu đặt cọc khi giao dịch không phải nháp/hủy thì sẽ hủy giao dịch cũ đồng thời tạo giao dịch mới
+	// if tx.TransactionStatus != enums.TransactionStatusDraft &&
+	// 	tx.TransactionStatus != enums.TransactionStatusCanceled {
+	// 	return nil, &_routes.Except{
+	// 		Code:    400,
+	// 		Message: fmt.Sprintf("Chỉ đặt cọc với sản phẩm chưa %s\nhoặc đã hủy", typeName),
+	// 	}
+	// }
+
+	// var record *domain.Transaction
+	err = s.Transaction.WithTransaction(c, func(c context.Context) error {
+		if tx.TransactionStatus != enums.TransactionStatusDraft &&
+			tx.TransactionStatus != enums.TransactionStatusCanceled {
+			tx.TransactionStatus = enums.TransactionStatusCanceled
+			tx, err = s.TransactionRepo.Update(c, tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		newTx := &domain.Transaction{
+			ProductID:         dto.ProductID,
+			ContactID:         dto.ContactID,
+			DepositeAmount:    dto.DepositeAmount,
+			DepositeNote:      dto.DepositeNote,
+			TransactionType:   dto.TransactionType,
+			TransactionStatus: enums.TransactionStatusDeposite,
+			OwnerId:           product.OwnerID,
+			OwnerType:         product.OwnerType,
+		}
+		newTx, err = s.TransactionRepo.Create(c, newTx)
+		if err != nil {
+			return err
+		}
+		if dto.TransactionType == 10 {
+			product.SaleTransactionID = &newTx.ID
+		} else {
+			product.RentTransactionID = &newTx.ID
+		}
+		if err := s.ProductRepo.Save(c, product); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// product.DepositeID = &record.ID
+	// if err := s.ProductRepo.Update(c, product.ID, product); err != nil {
+	// 	return nil, err
+	// }
+	return tx, nil
 }
 
 func (s *ProductUsecase) RentVisibilityUpdate(c context.Context, dto dto.VisibilityUpdate) error {
@@ -632,50 +828,14 @@ func (s *ProductUsecase) SaleVisibilityUpdate(c context.Context, dto dto.Visibil
 	return s.ProductRepo.SetSaleVisibility(c, dto.ProductID, dto.Visibility)
 }
 
-func (s *ProductUsecase) ProductDeposite(c context.Context, dto dto.DepositeRequest) (*domain.Deposite, error) {
+func (s *ProductUsecase) CancelDeposite(c context.Context, transactionId uint64) error {
 	// sản phẩm đang cọc
-	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductDeposite)
-	if err != nil {
-		return nil, err
-	}
-
-	product, err := s.ProductRepo.GetProductByID(c, dto.ProductID)
-	if err != nil {
-		return nil, err
-	}
-
-	if product.DepositeID != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Sản phẩm đã đặt cọc",
-		}
-	}
-
-	record := domain.Deposite{
-		ProductID:     dto.ProductID,
-		CustomerName:  dto.CustomerName,
-		CustomerPhone: dto.CustomerPhone,
-		Amount:        dto.Amount,
-		Note:          dto.Note,
-	}
-	if err := s.ProductRepo.NewDeposite(c, &record); err != nil {
-		return nil, err
-	}
-	product.DepositeID = &record.ID
-	if err := s.ProductRepo.Update(c, product.ID, product); err != nil {
-		return nil, err
-	}
-	return &record, nil
-}
-
-func (s *ProductUsecase) CancelDeposite(c context.Context, id uint64) error {
-	// sản phẩm đang cọc
-	err := s.CheckPermission(c, &id, enums.PermissionProductDeposite)
+	err := s.CheckPermission(c, &transactionId, enums.PermissionProductDeposite)
 	if err != nil {
 		return err
 	}
 
-	deposite, err := s.DepositeRepo.GetDepositeByID(c, id)
+	transaction, err := s.TransactionRepo.GetByID(c, &transactionId)
 	if err != nil {
 		return err
 	}
@@ -684,21 +844,21 @@ func (s *ProductUsecase) CancelDeposite(c context.Context, id uint64) error {
 	// 	return err
 	// }
 
-	product, err := s.ProductRepo.GetProductByID(c, deposite.ProductID)
-	if err != nil {
-		return err
-	}
+	// product, err := s.ProductRepo.GetProductByID(c, deposite.ProductID)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if product.DepositeID == nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Sản phẩm chưa đặt cọc",
-		}
-	}
+	// if product.DepositeID == nil {
+	// 	return &_routes.Except{
+	// 		Code:    400,
+	// 		Message: "Sản phẩm chưa đặt cọc",
+	// 	}
+	// }
 
-	product.DepositeID = nil
+	// product.DepositeID = nil
 
-	return s.ProductRepo.CancelDeposite(c, product.ID)
+	return s.TransactionRepo.CancelDeposite(c, transaction.ID)
 }
 
 func (uc *ProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSearch) (*[]domain.PostItem, error) {
@@ -751,7 +911,7 @@ func (s *ProductUsecase) RequiredBeforeSave(c context.Context, parentID uint64) 
 
 	profileId := _utils.GetProfileIdWithContext(c)
 
-	if *parent.OwnerUserID != profileId {
+	if parent.OwnerID != profileId {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Sản phẩm không thuộc quyền sở hữu của bạn",

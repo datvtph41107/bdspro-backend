@@ -10,10 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type UPostRepo interface {
+type PostRepo interface {
 	// crud2.IBaseRepo[domain.Post]
 	GetByID(id uint64) (*domain.Post, error)
-	GetByIDs(ctx context.Context, ids []uint64) ([]*domain.Post, error)
+	GetPostItemByID(ctx context.Context, id uint64) (*domain.PostItem, error)
+	GetByIDs(ctx context.Context, ids []uint64) ([]*domain.PostItem, error)
 	CreatePost(post *domain.Post) error
 	GetPostByProductID(productID uint64) (*domain.Post, error)
 	UpdatePost(c context.Context, post *domain.Post) error
@@ -22,7 +23,7 @@ type UPostRepo interface {
 	UpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error
 	CountPost(ctx context.Context, profileId uint64) int64
 	CountPostFromDate(ctx context.Context, from time.Time) int64
-	ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64) bool
+	ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64, transactionType enums.TransactionType) bool
 	Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *gorm.DB)
 	Search(ctx context.Context, profileId uint64, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error)
 	Global(ctx context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error)

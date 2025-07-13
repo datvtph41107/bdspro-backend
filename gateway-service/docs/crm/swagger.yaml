@@ -571,60 +571,6 @@ definitions:
     - ConditionTag
     - ConditionBirth
     - ConditionEventDate
-  enums.EHistory:
-    enum:
-    - 10
-    - 20
-    - 30
-    - 40
-    - 120
-    - 130
-    - 140
-    - 150
-    - 160
-    - 170
-    - 180
-    - 190
-    - 200
-    - 210
-    - 6010
-    - 6020
-    - 6030
-    - 6040
-    - 6050
-    - 6060
-    - 6070
-    - 6080
-    - 6090
-    - 6100
-    - 6110
-    type: integer
-    x-enum-varnames:
-    - HistoryCreateStep
-    - HistoryDelete
-    - HistoryAssignRole
-    - HistorySettingAuto
-    - HistoryPipelineCreate
-    - HistoryPipelineUpdate
-    - HistoryPipelineDelete
-    - HistoryStageCreate
-    - HistoryStageUpdate
-    - HistoryStageDelete
-    - HistoryRuleCreate
-    - HistoryRuleUpdate
-    - HistoryRuleDelete
-    - HistoryRuleEvent
-    - HistoryContactCreate
-    - HistoryContactUpdate
-    - HistoryContactDelete
-    - HistoryContactAssign
-    - HistoryReminder
-    - HistorySwitchStage
-    - HistoryUpdateNote
-    - HistoryContactInstall
-    - HistoryContactFriend
-    - HistoryContactStage
-    - HistoryContactMessage
   enums.EOwnerType:
     enum:
     - 10
@@ -661,20 +607,6 @@ definitions:
     - StepNegotiate
     - StepDeposite
     - StepClose
-  enums.ETargetHistory:
-    enum:
-    - 10
-    - 20
-    - 30
-    - 40
-    - 50
-    type: integer
-    x-enum-varnames:
-    - TargetHistoryLead
-    - TargetHistoryContact
-    - TargetHistoryPipeline
-    - TargetHistoryStage
-    - TargetHistoryRule
   enums.FriendStatus:
     enum:
     - 10
@@ -698,17 +630,43 @@ definitions:
     type: object
   pb_bdspro.Apartment:
     properties:
+      apartmentAttrId:
+        type: integer
+      archived:
+        type: integer
+      buildId:
+        type: integer
+      floor:
+        type: integer
       id:
         type: integer
       name:
         type: string
+      note:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
     type: object
   pb_bdspro.ApartmentAttribute:
     properties:
+      area:
+        type: number
+      blueprintUrl:
+        type: string
+      furniture:
+        type: string
       id:
         type: integer
       name:
         type: string
+      numBathroom:
+        type: integer
+      numBedroom:
+        type: integer
+      price:
+        type: number
     type: object
   pb_bdspro.AttributeProduct:
     properties:
@@ -717,20 +675,31 @@ definitions:
       name:
         type: string
     type: object
-  pb_bdspro.Deposite:
-    properties:
-      amount:
-        type: number
-      id:
-        type: integer
-      productId:
-        type: integer
-    type: object
   pb_bdspro.Developer:
     properties:
+      address:
+        type: string
+      backgroundUrl:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
       id:
         type: integer
+      logoUrl:
+        type: string
       name:
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+      status:
+        type: integer
+      website:
         type: string
     type: object
   pb_bdspro.DocType:
@@ -791,13 +760,15 @@ definitions:
       productId:
         type: integer
       rentCommission:
+        description: 1000000 -> 10%
         type: number
       rentPaymentCycle:
         type: integer
       rentPrice:
         type: number
       saleCommission:
-        type: integer
+        description: 1000000 -> 10%
+        type: number
       salePrice:
         type: number
     type: object
@@ -848,11 +819,9 @@ definitions:
         type: integer
       code:
         type: string
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
       customerId:
-        type: integer
-      deposite:
-        $ref: '#/definitions/pb_bdspro.Deposite'
-      depositeId:
         type: integer
       description:
         type: string
@@ -888,9 +857,9 @@ definitions:
         type: integer
       organizationId:
         type: integer
-      ownerType:
+      ownerId:
         type: integer
-      ownerUserId:
+      ownerType:
         type: integer
       parentId:
         type: integer
@@ -916,10 +885,14 @@ definitions:
         type: string
       rentStatus:
         type: integer
+      rentTransaction:
+        $ref: '#/definitions/pb_bdspro.Transaction'
       rentVisibility:
         type: integer
       saleStatus:
         type: integer
+      saleTransaction:
+        $ref: '#/definitions/pb_bdspro.Transaction'
       saleVisibility:
         type: integer
       sourceType:
@@ -944,10 +917,26 @@ definitions:
     type: object
   pb_bdspro.ProjectBuild:
     properties:
+      apartments:
+        items:
+          $ref: '#/definitions/pb_bdspro.Apartment'
+        type: array
+      attributes:
+        items:
+          $ref: '#/definitions/pb_bdspro.ApartmentAttribute'
+        type: array
       id:
         type: integer
       name:
         type: string
+      note:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+      projectId:
+        type: integer
     type: object
   pb_bdspro.PropertyType:
     properties:
@@ -961,6 +950,61 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+    type: object
+  pb_bdspro.Transaction:
+    properties:
+      amount:
+        type: number
+      approvalDate:
+        type: string
+      approvalStatus:
+        type: string
+      approvedBy:
+        type: integer
+      categoryId:
+        type: integer
+      contactId:
+        type: integer
+      createdAt:
+        type: string
+      currency:
+        type: string
+      depositeAmount:
+        type: number
+      depositeNote:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      isDeleted:
+        type: boolean
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      paymentMethodId:
+        type: integer
+      productId:
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      status:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionStatus:
+        type: integer
+      transactionType:
+        type: string
+      updatedAt:
         type: string
     type: object
   sharepb.FriendItem:
@@ -986,22 +1030,6 @@ definitions:
         type: string
       tickVerified:
         type: boolean
-    type: object
-  timestamppb.Timestamp:
-    properties:
-      nanos:
-        description: |-
-          Non-negative fractions of a second at nanosecond resolution. Negative
-          second values with fractions must still have non-negative nanos values
-          that count forward in time. Must be from 0 to 999,999,999
-          inclusive.
-        type: integer
-      seconds:
-        description: |-
-          Represents seconds of UTC time since Unix epoch
-          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-          9999-12-31T23:59:59Z inclusive.
-        type: integer
     type: object
 info:
   contact: {}
@@ -1769,201 +1797,6 @@ paths:
       summary: Lấy danh sách các lời mời kết bạn đã gửi
       tags:
       - Bạn bè
-  /histories/{id}/{ownerType}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách lịch sử
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Owner Type
-        enum:
-        - 10
-        - 20
-        - 30
-        in: path
-        name: ownerType
-        required: true
-        type: integer
-      - enum:
-        - 10
-        - 20
-        - 30
-        - 40
-        - 120
-        - 130
-        - 140
-        - 150
-        - 160
-        - 170
-        - 180
-        - 190
-        - 200
-        - 210
-        - 6010
-        - 6020
-        - 6030
-        - 6040
-        - 6050
-        - 6060
-        - 6070
-        - 6080
-        - 6090
-        - 6100
-        - 6110
-        in: query
-        name: actionType
-        type: integer
-        x-enum-varnames:
-        - HistoryCreateStep
-        - HistoryDelete
-        - HistoryAssignRole
-        - HistorySettingAuto
-        - HistoryPipelineCreate
-        - HistoryPipelineUpdate
-        - HistoryPipelineDelete
-        - HistoryStageCreate
-        - HistoryStageUpdate
-        - HistoryStageDelete
-        - HistoryRuleCreate
-        - HistoryRuleUpdate
-        - HistoryRuleDelete
-        - HistoryRuleEvent
-        - HistoryContactCreate
-        - HistoryContactUpdate
-        - HistoryContactDelete
-        - HistoryContactAssign
-        - HistoryReminder
-        - HistorySwitchStage
-        - HistoryUpdateNote
-        - HistoryContactInstall
-        - HistoryContactFriend
-        - HistoryContactStage
-        - HistoryContactMessage
-      - in: query
-        name: fromDate
-        type: string
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - in: query
-        name: targetId
-        type: integer
-      - enum:
-        - 10
-        - 20
-        - 30
-        - 40
-        - 50
-        in: query
-        name: targetType
-        type: integer
-        x-enum-varnames:
-        - TargetHistoryLead
-        - TargetHistoryContact
-        - TargetHistoryPipeline
-        - TargetHistoryStage
-        - TargetHistoryRule
-      - in: query
-        name: toDate
-        type: string
-      - in: query
-        name: userId
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách lịch sử
-      tags:
-      - Lịch sử
-  /history/contact/{contactId}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy lịch sử của liên hệ
-      parameters:
-      - description: ID của liên hệ
-        in: path
-        name: contactId
-        required: true
-        type: integer
-      - in: query
-        name: contactId
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy lịch sử của liên hệ
-      tags:
-      - Lịch sử
-  /history/list/{ownerId}/{ownerType}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy lịch sử của người dùng
-      parameters:
-      - description: ID của người dùng
-        in: path
-        name: ownerId
-        required: true
-        type: integer
-      - description: Loại người dùng
-        in: path
-        name: ownerType
-        required: true
-        type: integer
-      - in: query
-        name: actionType
-        type: integer
-      - in: query
-        name: ownerId
-        type: integer
-      - in: query
-        name: ownerType
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: targetId
-        type: integer
-      - in: query
-        name: targetType
-        type: integer
-      - in: query
-        name: userId
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy lịch sử của người dùng
-      tags:
-      - Lịch sử
   /invitation/list:
     get:
       consumes:
@@ -2126,6 +1959,19 @@ paths:
       summary: Lấy khách hàng theo liên hệ
       tags:
       - Khách hàng
+  /lead/care-expired:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thời gian hết hạn bảo trì
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thời gian hết hạn bảo trì
+      tags:
+      - Khách hàng
   /lead/detail/{id}:
     get:
       consumes:
@@ -2205,7 +2051,7 @@ paths:
       tags:
       - Khách hàng
   /lead/stage:
-    post:
+    put:
       consumes:
       - application/json
       description: Chuyển trạng thái khách hàng
@@ -2583,7 +2429,7 @@ paths:
       summary: Chi tiết quy tắc
       tags:
       - Quy tắc
-  /rule/search:
+  /rule/list:
     get:
       consumes:
       - application/json

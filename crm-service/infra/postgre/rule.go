@@ -23,7 +23,7 @@ func (r *PostgreRule) Search(c context.Context, ownerId uint64, ownerType enums.
 	var entities []domain.RuleEntity
 	query := r.db.WithContext(c).Model(&domain.RuleEntity{})
 
-	query = query.Where("owner_id = ? AND owner_type = ?", ownerId, ownerType)
+	// query = query.Where("owner_id = ? AND owner_type = ?", ownerId, ownerType)
 
 	if err := query.Find(&entities).
 		Offset(dto.GetOffset()).

@@ -38,6 +38,12 @@ service HistoryService {
     };
   };
 
+  rpc RuleEventHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/rule-event/{id}"
+    };
+  };
+
   rpc Create (HistoryDTO) returns (HistoryDTO);
 }
 
@@ -54,8 +60,8 @@ message HistorySearchRequest {
   uint32 size = 2;
 
   uint64 userId = 3;
-  google.protobuf.Timestamp fromDate = 4;
-  google.protobuf.Timestamp toDate = 5;
+  string fromDate = 4;
+  string toDate = 5;
 
   optional int32 actionType = 6;
   optional int32 targetType = 7;

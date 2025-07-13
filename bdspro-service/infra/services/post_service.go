@@ -13,12 +13,12 @@ import (
 
 type PostService struct {
 	pb_bdspro.UnimplementedPostServiceServer
-	postRepo   repo.UPostRepo
+	postRepo   repo.PostRepo
 	UC         *shared_usecase.PostUsecase
 	PostMapper *mapper.PostMapper
 }
 
-func NewGrpcPostService(postRepo repo.UPostRepo,
+func NewGrpcPostService(postRepo repo.PostRepo,
 	uc *shared_usecase.PostUsecase,
 	postMapper *mapper.PostMapper,
 ) *PostService {
@@ -35,7 +35,7 @@ func (s *PostService) OwnerPost(ctx context.Context, req *pb_bdspro.OwnerPostReq
 }
 
 func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByIDRequest) (*pb_bdspro.Post, error) {
-	post, err := s.postRepo.GetByID(req.Id)
+	post, err := s.postRepo.GetPostItemByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostBy
 	if err != nil {
 		return nil, err
 	}
-	postList := s.PostMapper.PostToPbList(posts)
+	postList := s.PostMapper.PostPointerToPbList(posts)
 	return &pb_bdspro.GetPostByIDsResponse{Posts: postList}, nil
 }
 
@@ -159,8 +159,7 @@ func (s *PostService) GetPersonalPost(ctx context.Context, req *pb_bdspro.PostSe
 		return nil, err
 	}
 
-	postList := make([]*pb_bdspro.Post, len(result))
-	copier.Copy(&postList, &result)
+	postList := s.PostMapper.PostToPbList(&result)
 
 	return &pb_bdspro.PostListResponse{
 		Data:  postList,

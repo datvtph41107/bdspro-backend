@@ -1,16 +1,37 @@
 package domain
 
 import (
+	"bdspro/internal/enums"
+	_models "common/models"
 	"time"
-
-	"gorm.io/gorm"
 )
 
-// Bảng tỉnh/thành phố
+// Transaction represents a financial transaction
 type Transaction struct {
-	ID        uint64         `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string         `gorm:"size:100;not null" json:"name"`
-	Code      int            `gorm:"unique;not null" json:"code"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	_models.BaseEntity
+	OwnerId              uint64
+	OwnerType            enums.EOwnerType
+	ProductID            *uint64
+	DepositeAmount       *float64 // cọc
+	DepositeNote         *string  // ghi chú cọc
+	ContactPhone         *string  // số điện thoại liên hệ
+	ContactID            *uint64
+	Amount               float64
+	Currency             string
+	TransactionName      string
+	Description          string
+	TransactionType      enums.TransactionType
+	CategoryId           uint32
+	PaymentMethodId      uint32
+	RelatedDealId        *uint32
+	RelatedTransactionId *uint32
+	ApprovalStatus       enums.ApprovalStatus
+	ApprovedBy           *uint32
+	ApprovalDate         *time.Time
+	TransactionStatus    enums.TransactionStatus
+	TransactionDate      time.Time
+}
+
+func (t *Transaction) TableName() string {
+	return "transactions"
 }

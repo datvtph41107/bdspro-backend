@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"common/case/crud3"
-	_db "common/db"
+	_dto "common/dto"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: bdspro/internal/repo.UPostRepo
+// @bind: bdspro/internal/repo.PostRepo
 type GormPostRepo struct {
 	crud3.BaseRepo[domain.Post]
 }
@@ -43,7 +43,7 @@ func (r *GormPostRepo) GetPostByProductID(productID uint64) (*domain.Post, error
 }
 
 func (r *GormPostRepo) UpdatePost(c context.Context, post *domain.Post) error {
-	return _db.SaveWithContext(c, post)
+	return GetDB(c, r.DB).Save(post).Error
 }
 
 func (r *GormPostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID uint64, status enums.EPostStatus) error {
@@ -54,7 +54,7 @@ func (r *GormPostRepo) CreateOrUpdatePostStatus(ctx context.Context, productID u
 		// Nếu không có bài đăng, tạo mới
 		post = domain.Post{
 			ProductId: productID,
-			Status:    status,
+			// Status:    status,
 		}
 		return r.DB.WithContext(ctx).Create(&post).Error
 	}
@@ -119,13 +119,13 @@ func (r *GormPostRepo) CountPostFromDate(ctx context.Context, from time.Time) in
 	return count
 }
 
-func (r *GormPostRepo) ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64) bool {
+func (r *GormPostRepo) ExistedPostWorking(ctx context.Context, productID uint64, profileId uint64, transactionType enums.TransactionType) bool {
 	var count int64
 	now := time.Now()
 
 	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
-		Where("product_id = ? AND created_by = ? AND expired_at > ? AND deleted_at is null",
-			productID, profileId, now).
+		Where("product_id = ? AND created_by = ? AND expired_at > ? AND deleted_at is null AND transaction_type = ?",
+			productID, profileId, now, transactionType).
 		Count(&count).Error
 
 	if err != nil {
@@ -239,7 +239,12 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 			'mediaType', post_media.media_type,
 			'isMain', post_media.is_main,
 			'sortOrder', post_media.sort_order
-		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw
+		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
+		 CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
+			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+			ELSE 0
+			END AS transaction_status
 		`).
 		Joins("left join products products on products.id = posts.product_id").
 		Joins("left join product_price prices on prices.id = products.last_price_id").
@@ -247,8 +252,17 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		Joins("left join region district  on district.id = products.district_id").
 		Joins("left join region ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
-		Where("posts.created_by = ? AND posts.deleted_at is null", profileId).
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id")
+		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
+		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
+		Where("posts.deleted_at is null").
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status")
+
+	if profileId != 0 {
+		query = query.Where("posts.created_by = ?", profileId)
+	}
+	if dto.ProductID != nil {
+		query = query.Where("posts.product_id = ?", dto.ProductID)
+	}
 
 	query = r.Query(query, dto)
 	size := dto.Size
@@ -268,8 +282,8 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 
 	for i, r := range results {
 		if r.MediaListRaw != nil {
-			list := &[]domain.PostMediaEntity{}
-			if err := json.Unmarshal(r.MediaListRaw, list); err != nil {
+			list := []domain.PostMediaEntity{}
+			if err := json.Unmarshal(r.MediaListRaw, &list); err != nil {
 				return nil, 0, err
 			}
 			results[i].MediaList = list
@@ -313,43 +327,56 @@ func (r *GormPostRepo) Global(ctx context.Context, dto dto.PostSearchRequest) ([
 	return results, total, nil
 }
 
-func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64, dto *dto.PostLinkSearch) ([]domain.PostItem, error) {
-	var results []domain.PostItem
-	// now := time.Now()
-
-	query := r.DB.
-		Debug().
-		Model(domain.PostItem{}).
-		Select(`posts.*,
-		province.name as province_name, 
-		district.name as district_name, 
-		ward.name as ward_name
-		`).
-		Joins("left join products products on products.id = posts.product_id").
-		Joins("left join region province on province.id = products.province_id").
-		Joins("left join region district  on district.id = products.district_id").
-		Joins("left join region ward on ward.id = products.ward_id").
-		Where("posts.product_id = ? AND posts.deleted_at is null", profileId)
-
-	// query = r.Query(query, dto)
-	size := dto.Size
-	if size <= 0 {
-		size = 20
+func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64, req *dto.PostLinkSearch) ([]domain.PostItem, error) {
+	searchDto := &dto.PostSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		ProductID: req.ProductID,
 	}
-
-	err := query.
-		Order("posts.created_at desc").
-		Offset(dto.GetOffset()).
-		Limit(dto.GetLimit()).
-		Find(&results).Error
+	results, _, err := r.Search(ctx, 0, searchDto)
 	if err != nil {
-		// Log nếu cần thiết
 		return nil, err
 	}
-	var total int64
-	query.Count(&total)
 
 	return results, nil
+	// var results []domain.PostItem
+	// // now := time.Now()
+
+	// query := r.DB.
+	// 	Debug().
+	// 	Model(domain.PostItem{}).
+	// 	Select(`posts.*,
+	// 	province.name as province_name,
+	// 	district.name as district_name,
+	// 	ward.name as ward_name
+	// 	`).
+	// 	Joins("left join products products on products.id = posts.product_id").
+	// 	Joins("left join region province on province.id = products.province_id").
+	// 	Joins("left join region district  on district.id = products.district_id").
+	// 	Joins("left join region ward on ward.id = products.ward_id").
+	// 	Where("posts.product_id = ? AND posts.deleted_at is null", profileId)
+
+	// // query = r.Query(query, dto)
+	// size := dto.Size
+	// if size <= 0 {
+	// 	size = 20
+	// }
+
+	// err := query.
+	// 	Order("posts.created_at desc").
+	// 	Offset(dto.GetOffset()).
+	// 	Limit(dto.GetLimit()).
+	// 	Find(&results).Error
+	// if err != nil {
+	// 	// Log nếu cần thiết
+	// 	return nil, err
+	// }
+	// var total int64
+	// query.Count(&total)
+
+	// return results, nil
 }
 
 func (r *GormPostRepo) GetByID(id uint64) (*domain.Post, error) {
@@ -358,6 +385,19 @@ func (r *GormPostRepo) GetByID(id uint64) (*domain.Post, error) {
 		Preload("MediaList", "deleted_at is null").
 		Where("id = ? AND deleted_at is null", id).
 		First(&post).Error
+	if err != nil {
+		return nil, err
+	}
+	return &post, nil
+}
+
+func (r *GormPostRepo) GetPostItemByID(ctx context.Context, id uint64) (*domain.PostItem, error) {
+	var post domain.PostItem
+	err := GetDB(ctx, r.DB).
+		Preload("MediaList", "deleted_at is null").
+		Where("id = ? AND deleted_at is null", id).
+		First(&post).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -407,8 +447,8 @@ func (r *GormPostRepo) OwnerPost(ctx context.Context, profileId uint64, postId u
 	return true, nil
 }
 
-func (r *GormPostRepo) GetByIDs(ctx context.Context, ids []uint64) ([]*domain.Post, error) {
-	var posts []*domain.Post
+func (r *GormPostRepo) GetByIDs(ctx context.Context, ids []uint64) ([]*domain.PostItem, error) {
+	var posts []*domain.PostItem
 	err := r.DB.WithContext(ctx).
 		Preload("MediaList", "deleted_at is null").
 		Where("id in (?) and deleted_at is null", ids).

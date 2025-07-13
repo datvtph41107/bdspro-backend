@@ -24,27 +24,28 @@ type PostSearchRequest struct {
 	Status          []uint64   `form:"status"`
 	Types           []uint64   `form:"types"` // 1: hiển thị, 2: hết hạn; 3: tạm ẩn
 	PackageVisibles []uint64   `form:"packageVisibles"`
+	ProductID       *uint64    `form:"productId"`
 }
 
 type PostDetail struct {
-	Post        *domain.Post    `json:"post"`
-	ProductInfo *domain.Product `json:"product"`
-	AssetInfo   *domain.Asset   `json:"asset"`
+	Post        *domain.PostItem `json:"post"`
+	ProductInfo *domain.Product  `json:"product"`
+	AssetInfo   *domain.Asset    `json:"asset"`
 }
 
 type PostSaveRequest struct {
-	ProductID       uint64            `json:"productId" binding:"required"`
-	Title           string            `json:"title"`
-	Content         string            `json:"content" binding:"required"`
-	Price           float64           `json:"postPrice"`
-	TransactionType uint32            `json:"transactionType" binding:"required"`
-	PriceType       uint32            `json:"priceType"`
-	Visibility      enums.EVisibility `json:"visibility" binding:"required"`
-	PackageVisible  uint              `json:"packageVisible"`
-	ExpiredAt       *time.Time        `json:"expiredAt"`
-	NumDate         int               `json:"numDate"`
-	Hidden          bool              `json:"hidden"`
-	MediaList       []PostMediaItem   `json:"mediaList"`
+	ProductID       uint64                `json:"productId" binding:"required"`
+	Title           string                `json:"title"`
+	Content         string                `json:"content" binding:"required"`
+	Price           float64               `json:"postPrice"`
+	TransactionType enums.TransactionType `json:"transactionType" binding:"required"`
+	PriceType       uint32                `json:"priceType"`
+	Visibility      enums.EVisibility     `json:"visibility" binding:"required"`
+	PackageVisible  uint                  `json:"packageVisible"`
+	ExpiredAt       *time.Time            `json:"expiredAt"`
+	NumDate         int                   `json:"numDate"`
+	Hidden          bool                  `json:"hidden"`
+	MediaList       []PostMediaItem       `json:"mediaList"`
 	// Status    uint   `json:"status"`
 }
 

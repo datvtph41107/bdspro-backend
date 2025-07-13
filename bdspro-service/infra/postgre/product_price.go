@@ -3,7 +3,6 @@ package postgre
 import (
 	"bdspro/internal/domain"
 	"common/case/crud3"
-	_db "common/db"
 	_utils "common/utils"
 	"context"
 
@@ -23,10 +22,10 @@ func NewGormProductPriceRepo(db *gorm.DB) *GormProductPriceRepo {
 	}
 }
 
-func (r *GormProductPriceRepo) FindByProductId(productId *uint64) *domain.ProductPrice {
+func (r *GormProductPriceRepo) FindByProductId(ctx context.Context, productId *uint64) *domain.ProductPrice {
 	var price *domain.ProductPrice
 
-	_db.DB.
+	GetDB(ctx, r.DB).
 		Where("product_id = ? AND deleted_at IS NULL", productId).
 		Order("created_at DESC").
 		Limit(1).
@@ -60,15 +59,18 @@ func (r *GormProductPriceRepo) UpdateProductID(c context.Context, productId *uin
 	price.ProductID = productId
 	return GetDB(c, r.DB).Save(price).Error
 }
-func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, entity *domain.ProductPrice) error {
+func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64, entity *domain.ProductPrice) error {
 	if entity == nil {
 		return nil
 	}
+	if priceId == nil {
+		return GetDB(ctx, r.DB).Create(entity).Error
+	}
 	// oldPrice := r.FindByProductId(productId)
-	oldPrice, _ := r.GetByID(c, priceId)
+	oldPrice, _ := r.GetByID(ctx, *priceId)
 	if oldPrice != nil {
 		diff := !_utils.CompareEqual(&oldPrice.Currency, &entity.Currency) ||
-			!_utils.CompareEqual(&oldPrice.PriceOwner, &entity.PriceOwner) ||
+			// !_utils.CompareEqual(&oldPrice.PriceOwner, &entity.PriceOwner) ||
 			!_utils.CompareEqual(&oldPrice.SalePrice, &entity.SalePrice) ||
 			!_utils.CompareEqual(&oldPrice.SaleCommission, &entity.SaleCommission) ||
 			!_utils.CompareEqual(&oldPrice.RentPrice, &entity.RentPrice) ||
@@ -79,11 +81,12 @@ func (r *GormProductPriceRepo) UpdatePrice(c context.Context, priceId uint64, en
 			// oldPrice.RentCommissionType != entity.Price.RentCommissionType ||
 
 		if !diff {
+			entity.ID = oldPrice.ID
 			return nil
 		}
 	}
 
-	return GetDB(c, r.DB).Save(entity).Error
+	return GetDB(ctx, r.DB).Save(entity).Error
 	// return _db.SaveWithAudit(c, &domain.ProductPrice{
 	// 	ProductID:      productId,
 	// 	Currency:       entity.Currency,

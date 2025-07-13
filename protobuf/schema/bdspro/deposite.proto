@@ -4,11 +4,11 @@ package pb_bdspro;
 
 option go_package = "pb/types/bdspro;pb_bdspro";
 
-message Deposite {
+message DepositeRequest {
   uint64 id = 1;
   uint64 productId = 2;
-  double amount = 3;
-  string customerName = 4;
-  string customerPhone = 5;
-  string note = 6;
+  double depositeAmount = 3;
+  string depositeNote = 4;
+  uint32 transactionType = 5;
+  uint64 contactId = 6;
 }

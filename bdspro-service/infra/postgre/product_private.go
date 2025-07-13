@@ -3,7 +3,6 @@ package postgre
 import (
 	"bdspro/internal/domain"
 	"common/case/crud3"
-	_db "common/db"
 	"context"
 	"errors"
 	"fmt"
@@ -72,8 +71,8 @@ func FilterFields(obj interface{}, fields []string, desc interface{}) error {
 }
 
 func (repo *GormProductPrivateRepo) GetPrivateFields(c context.Context, profileId uint64, product *domain.Product) (*domain.ProductPrivate, error) {
-	privateData := repo.FindByProductId(&product.ID)
-	if product.OwnerUserID == &profileId {
+	privateData := repo.FindByProductId(c, &product.ID)
+	if product.OwnerID == profileId {
 		return privateData, nil
 	}
 	access, _ := repo.ProductAccess.GetByUserAndProduct(profileId, product.ID)
@@ -89,10 +88,10 @@ func (repo *GormProductPrivateRepo) GetPrivateFields(c context.Context, profileI
 	FilterFields(privateData, access.GetFields(), &result)
 	return &result, nil
 }
-func (r *GormProductPrivateRepo) FindByProductId(productId *uint64) *domain.ProductPrivate {
+func (r *GormProductPrivateRepo) FindByProductId(c context.Context, productId *uint64) *domain.ProductPrivate {
 	var data *domain.ProductPrivate
 
-	_db.DB.
+	GetDB(c, r.DB).
 		Where("product_id = ? AND deleted_at IS NULL", productId).
 		Order("created_at DESC").
 		Limit(1).
@@ -105,7 +104,7 @@ func (r *GormProductPrivateRepo) UpdateInfo(c context.Context, productId uint64,
 	if entity == nil {
 		return nil
 	}
-	data := r.FindByProductId(&productId)
+	data := r.FindByProductId(c, &productId)
 	// if oldPrice != nil {
 	// 	diff := !_utils.CompareEqual(&oldPrice.Currency, &entity.Currency) ||
 	// 		!_utils.CompareEqual(&oldPrice.PriceOwner, &entity.PriceOwner) ||

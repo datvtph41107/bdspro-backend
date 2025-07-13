@@ -35,12 +35,12 @@ func NewStageUsecase(
 	}
 }
 
-func (u *StageUsecase) CheckPermission(c context.Context, pipelineId uint64) (*domain.PipelineEntity, error) {
+func (u *StageUsecase) CheckPermission(c context.Context, pipelineId uint64, getRequest bool) (*domain.PipelineEntity, error) {
 	pipeline, err := u.pipelineRepo.GetByID(c, pipelineId)
 	if err != nil {
 		return nil, err
 	}
-	if !pipeline.IsCustom {
+	if !pipeline.IsCustom && !getRequest {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Giai đoạn của quy trình mặc định không thể thao tác",
@@ -55,14 +55,14 @@ func (u *StageUsecase) CheckPermission(c context.Context, pipelineId uint64) (*d
 }
 
 func (u *StageUsecase) Search(c context.Context, pipelineId uint64, dto dto.StageSearchDTO) ([]domain.StageEntity, int64, error) {
-	if _, err := u.CheckPermission(c, pipelineId); err != nil {
+	if _, err := u.CheckPermission(c, pipelineId, true); err != nil {
 		return nil, 0, err
 	}
 	return u.stageRepo.Search(c, pipelineId, dto)
 }
 
 func (u *StageUsecase) Create(c context.Context, entity *domain.StageEntity) (*domain.StageEntity, error) {
-	pipeline, err := u.CheckPermission(c, entity.PipelineID)
+	pipeline, err := u.CheckPermission(c, entity.PipelineID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (u *StageUsecase) Update(c context.Context, id uint64, entity *domain.Stage
 		return nil, err
 	}
 
-	pipeline, err := u.CheckPermission(c, stage.PipelineID)
+	pipeline, err := u.CheckPermission(c, stage.PipelineID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (u *StageUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	pipeline, err := u.CheckPermission(c, stage.PipelineID)
+	pipeline, err := u.CheckPermission(c, stage.PipelineID, false)
 	if err != nil {
 		return err
 	}

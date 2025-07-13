@@ -1813,6 +1813,24 @@ paths:
       summary: Xóa vai trò
       tags:
       - Vai trò
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết vai trò theo ID
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết vai trò
+      tags:
+      - Vai trò
     put:
       consumes:
       - application/json
@@ -1824,6 +1842,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/organizationpb.UpdateRoleRequest'
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses: {}

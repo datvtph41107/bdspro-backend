@@ -809,32 +809,6 @@
         }
       }
     },
-    "pb_bdsproDeposite": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "productId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "customerName": {
-          "type": "string"
-        },
-        "customerPhone": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        }
-      }
-    },
     "pb_bdsproDeveloper": {
       "type": "object",
       "properties": {
@@ -1097,13 +1071,6 @@
           "type": "string",
           "format": "uint64"
         },
-        "depositeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "deposite": {
-          "$ref": "#/definitions/pb_bdsproDeposite"
-        },
         "assetId": {
           "type": "string",
           "format": "uint64"
@@ -1221,7 +1188,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "ownerUserId": {
+        "ownerId": {
           "type": "string",
           "format": "uint64"
         },
@@ -1291,6 +1258,12 @@
         },
         "createdUser": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "saleTransaction": {
+          "$ref": "#/definitions/pb_bdsproTransaction"
+        },
+        "rentTransaction": {
+          "$ref": "#/definitions/pb_bdsproTransaction"
         }
       }
     },
@@ -1476,6 +1449,104 @@
             "type": "object",
             "$ref": "#/definitions/pb_bdsproAsset"
           }
+        }
+      }
+    },
+    "pb_bdsproTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentMethodId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedDealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedTransactionId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalStatus": {
+          "type": "string"
+        },
+        "approvedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalDate": {
+          "type": "string"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "depositeAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "depositeNote": {
+          "type": "string"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

@@ -48,6 +48,353 @@
                 }
             }
         },
+        "/history/contact/{contactId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của liên hệ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của liên hệ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của liên hệ",
+                        "name": "contactId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/list/{ownerId}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "ownerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại người dùng",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/product/child/{productId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của sản phẩm con",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của sản phẩm",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/rule-event/{ruleEventId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của quy tắc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của quy tắc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của quy tắc",
+                        "name": "ruleEventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/list": {
             "get": {
                 "security": [
@@ -283,7 +630,7 @@
                 "message": {
                     "type": "string"
                 },
-                "targetId": {
+                "ownerId": {
                     "type": "integer"
                 },
                 "title": {
@@ -314,6 +661,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "targetId": {
+                    "type": "integer"
                 },
                 "timestamp": {
                     "type": "string"

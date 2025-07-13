@@ -59,8 +59,8 @@ func setupHandlers(mux *http.ServeMux, wsHandler *wshandler.WebSocketHandler) ht
 	handler := middlewares.JWTMiddleware(mux)
 	handler = middlewares.WSLoggingMiddleware(handler)
 
-	mux.HandleFunc("/ws", wsHandler.HandleWebSocket)
-	mux.HandleFunc("/ws/room", wsHandler.HandleRoomWebSocket)
+	// mux.HandleFunc("/ws", wsHandler.HandleWebSocket)
+	// mux.HandleFunc("/ws/room", wsHandler.HandleRoomWebSocket)
 	mux.HandleFunc("/connect", wsHandler.HandleConnect)
 
 	return handler

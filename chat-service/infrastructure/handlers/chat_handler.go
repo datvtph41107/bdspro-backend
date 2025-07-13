@@ -1130,9 +1130,9 @@ func (s *chatHandler) ValidConversationAndCurrentUser(ctx context.Context, req *
 	return &sharepb.Empty{}, nil
 }
 
-func (s *chatHandler) GetRoomMembers(ctx context.Context, req *sharepb.IdRequest) (*chatpb.GetRoomMemberIdResponse, error) {
-	fmt.Println("GetRoomMembers", req.Id)
-	members, err := s.conversationUsecases.GetRoomMembers(ctx, req.Id)
+func (s *chatHandler) GetMembersOfRoom(ctx context.Context, req *sharepb.IdRequest) (*chatpb.GetRoomMemberIdResponse, error) {
+	fmt.Println("GetMembersOfRoom", req.Id)
+	members, err := s.conversationUsecases.GetMembersOfRoom(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ definitions:
         type: string
       message:
         type: string
-      targetId:
+      ownerId:
         type: integer
       title:
         type: string
@@ -27,6 +27,8 @@ definitions:
         items:
           type: string
         type: array
+      targetId:
+        type: integer
       timestamp:
         type: string
       title:
@@ -67,6 +69,219 @@ paths:
       summary: Số thông báo mới chưa đọc
       tags:
       - Notifications
+  /history/contact/{contactId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của liên hệ
+      tags:
+      - Lịch sử
+  /history/list/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Loại người dùng
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của người dùng
+      tags:
+      - Lịch sử
+  /history/product/child/{productId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của sản phẩm con
+      parameters:
+      - description: ID của sản phẩm
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của sản phẩm con
+      tags:
+      - Lịch sử
+  /history/rule-event/{ruleEventId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của quy tắc
+      parameters:
+      - description: ID của quy tắc
+        in: path
+        name: ruleEventId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của quy tắc
+      tags:
+      - Lịch sử
   /list:
     get:
       consumes:

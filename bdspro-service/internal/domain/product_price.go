@@ -6,13 +6,13 @@ type ProductPrice struct {
 	_models.BaseEntity
 	ProductID        *uint64  `json:"productId,omitempty"`
 	Currency         string   `json:"currency,omitempty"`
-	PriceOwner       *float64 `json:"priceOwner,omitempty"` // deprecated
 	SalePrice        *float64 `gorm:"type:DECIMAL(15,0)" json:"salePrice,omitempty"`
 	SaleCommission   *float64 `gorm:"type:DECIMAL(15,0)" json:"saleCommission,omitempty"`
 	Deposite         *float64 `gorm:"type:DECIMAL(15,0)" json:"deposite,omitempty"`
 	RentPrice        *float64 `gorm:"type:DECIMAL(15,0)" json:"rentPrice,omitempty"`
 	RentCommission   *float64 `gorm:"type:DECIMAL(15,0)" json:"rentCommission,omitempty"`
 	RentPaymentCycle *uint32  `json:"rentPaymentCycle,omitempty"`
+	// PriceOwner       *float64 `json:"priceOwner,omitempty"` // deprecated
 	// SaleCommissionType uint     `json:"saleCommissionType,omitempty"`
 	// RentCommissionType uint     `json:"rentCommissionType,omitempty"`
 	// Chu kỳ thanh toán ("tháng", "quý"...)

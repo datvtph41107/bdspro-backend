@@ -30,7 +30,7 @@ func NewRuleService(uc *usecase.RuleUsecase) *RuleService {
 // @Produce json
 // @Param query query crmpb.RuleSearchRequest false "Giá trị điều kiện"
 // @Security BearerAuth
-// @Router /rule/search [get]
+// @Router /rule/list [get]
 func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) (*crmpb.RuleListDTO, error) {
 	dto := dto.RuleSearchDTO{
 		Pagable: _dto.Pagable{

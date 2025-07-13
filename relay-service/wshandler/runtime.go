@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"sync"
 
 	"relay/constants"
@@ -20,11 +19,12 @@ var wsLogger = flogging.MustGetLogger("ws_handler")
 type WebSocketHandler struct {
 	upgrader    websocket.Upgrader
 	redisClient redisClient
-	clients     map[string]*websocket.Conn          // Conn -> userID
-	rooms       map[string]map[*websocket.Conn]bool // roomID -> list of connections
-	roomMembers map[string][]uint64                 // roomID -> list of userIDs
-	mu          sync.Mutex
-	chatClient  ChatClient
+	clients     map[uint64]*websocket.Conn // Conn -> userID
+	// rooms       map[string]map[*websocket.Conn]bool // roomID -> list of connections
+	rooms      map[uint64][]uint64 // roomID -> list of userIDs: gửi socket tới room
+	users      map[uint64][]uint64 // userID -> list of roomIDs: check online
+	mu         sync.Mutex
+	chatClient ChatClient
 }
 
 type RedisMessage struct {
@@ -42,83 +42,84 @@ func NewWebSocketHandler(chatClient ChatClient) *WebSocketHandler {
 			},
 		},
 		redisClient: redis.NewRedisClient(),
-		clients:     make(map[string]*websocket.Conn),
-		rooms:       make(map[string]map[*websocket.Conn]bool),
-		roomMembers: make(map[string][]uint64),
-		chatClient:  chatClient,
+		clients:     make(map[uint64]*websocket.Conn),
+		// rooms:       make(map[string]map[*websocket.Conn]bool),
+		rooms:      make(map[uint64][]uint64),
+		users:      make(map[uint64][]uint64),
+		chatClient: chatClient,
 	}
 }
 
-func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := h.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
-		return
-	}
-	userId := utils.GetCurrentUserID(r.Context())
-	if userId == 0 {
-		conn.Close()
-		wsLogger.Error("Missing user_id")
-		return
-	}
-	userIdStr := strconv.FormatUint(userId, 10)
-	h.mu.Lock()
-	h.clients[userIdStr] = conn
-	h.mu.Unlock()
+// func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+// 	conn, err := h.upgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+// 		return
+// 	}
+// 	userId := utils.GetCurrentUserID(r.Context())
+// 	if userId == 0 {
+// 		conn.Close()
+// 		wsLogger.Error("Missing user_id")
+// 		return
+// 	}
+// 	userIdStr := strconv.FormatUint(userId, 10)
+// 	h.mu.Lock()
+// 	h.clients[userIdStr] = conn
+// 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s connected", userId)
+// 	wsLogger.Infof("User %s connected", userId)
 
-	go h.handleDisconnect(conn, userIdStr)
-}
+// 	go h.handleDisconnect(conn, userIdStr)
+// }
 
-func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := h.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
-		return
-	}
+// func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Request) {
+// 	conn, err := h.upgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+// 		return
+// 	}
 
-	userId := utils.GetCurrentUserID(r.Context())
+// 	userId := utils.GetCurrentUserID(r.Context())
 
-	if userId == 0 {
-		conn.Close()
-		wsLogger.Error("Missing user_id")
-		return
-	}
-	userIdStr := strconv.FormatUint(userId, 10)
+// 	if userId == 0 {
+// 		conn.Close()
+// 		wsLogger.Error("Missing user_id")
+// 		return
+// 	}
+// 	userIdStr := strconv.FormatUint(userId, 10)
 
-	roomID := r.URL.Query().Get("roomId")
+// 	roomID := r.URL.Query().Get("roomId")
 
-	if roomID == "" {
-		conn.Close()
-		wsLogger.Error("Missing  roomId")
-		return
-	}
-	roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
-	if err != nil {
-		conn.Close()
-		wsLogger.Error("Invalid roomId format")
-		return
-	}
-	err = h.chatClient.ValidateConversationAndCurrentUser(r.Context(), roomIDUint)
-	if err != nil {
-		conn.Close()
-		wsLogger.Error("Invalid roomId")
-		return
-	}
-	h.mu.Lock()
-	if h.rooms[roomID] == nil {
-		h.rooms[roomID] = make(map[*websocket.Conn]bool)
-	}
-	h.rooms[roomID][conn] = true
-	h.clients[userIdStr] = conn
+// 	if roomID == "" {
+// 		conn.Close()
+// 		wsLogger.Error("Missing  roomId")
+// 		return
+// 	}
+// 	roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
+// 	if err != nil {
+// 		conn.Close()
+// 		wsLogger.Error("Invalid roomId format")
+// 		return
+// 	}
+// 	err = h.chatClient.ValidateConversationAndCurrentUser(r.Context(), roomIDUint)
+// 	if err != nil {
+// 		conn.Close()
+// 		wsLogger.Error("Invalid roomId")
+// 		return
+// 	}
+// 	h.mu.Lock()
+// 	if h.rooms[roomID] == nil {
+// 		h.rooms[roomID] = make(map[*websocket.Conn]bool)
+// 	}
+// 	h.rooms[roomID][conn] = true
+// 	h.clients[userIdStr] = conn
 
-	h.mu.Unlock()
+// 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s joined room %s", userIdStr, roomID)
+// 	wsLogger.Infof("User %s joined room %s", userIdStr, roomID)
 
-	go h.handleDisconnect(conn, userIdStr)
-}
+// 	go h.handleDisconnect(conn, userIdStr)
+// }
 
 func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request) {
 	conn, err := h.upgrader.Upgrade(w, r, nil)
@@ -134,7 +135,7 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 		wsLogger.Error("Missing user_id")
 		return
 	}
-	userIdStr := strconv.FormatUint(userId, 10)
+	// userIdStr := strconv.FormatUint(userId, 10)
 
 	// roomID := r.URL.Query().Get("roomId")
 
@@ -160,13 +161,24 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 	// 	h.rooms[roomID] = make(map[*websocket.Conn]bool)
 	// }
 	// h.rooms[roomID][conn] = true
-	h.clients[userIdStr] = conn
+	h.clients[userId] = conn
+	h.loadRoomsOfMember(userId)
 
 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s connected", userIdStr)
+	wsLogger.Infof("User %s connected", userId)
 
-	go h.handleDisconnect(conn, userIdStr)
+	go h.handleDisconnect(conn, userId)
+}
+
+func (h *WebSocketHandler) roomsOfUser(userId uint64) []uint64 {
+	rooms := h.users[userId]
+	for _, roomID := range rooms {
+		if _, exists := h.rooms[roomID]; !exists {
+			h.loadMemberOfRoom(roomID)
+		}
+	}
+	return rooms
 }
 
 func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
@@ -187,20 +199,28 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
 	}()
 }
 
-func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID string) {
+func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64) {
 	defer conn.Close()
 	<-context.Background().Done()
 
 	h.mu.Lock()
 	delete(h.clients, userID)
-	for room, members := range h.rooms {
-		if _, exists := members[conn]; exists {
-			delete(members, conn)
-			if len(members) == 0 {
-				delete(h.rooms, room)
-			}
-		}
-	}
+	// for room, members := range h.rooms {
+	// 	if _, exists := members[conn]; exists {
+	// 		delete(members, conn)
+	// 		if len(members) == 0 {
+	// 			delete(h.rooms, room)
+	// 		}
+	// 	}
+	// }
+	// for room, memberIds := range h.roomMembers {
+	// 	if _, exists := h.clients[userID]; exists {
+	// 		delete(h.roomMembers[room], userID)
+	// 		if len(h.roomMembers[room]) == 0 {
+	// 			delete(h.rooms, room)
+	// 		}
+	// 	}
+	// }
 	h.mu.Unlock()
 
 	wsLogger.Infof("User %s disconnected", userID)
@@ -225,59 +245,57 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 	switch msg.Type {
 
 	case constants.CREATE_ROOM_TYPE:
-		if roomName, ok := m["roomId"].(string); ok {
-			h.rooms[roomName] = make(map[*websocket.Conn]bool)
-		}
+		// if roomName, ok := m["roomId"].(string); ok {
+		// 	h.rooms[roomName] = make(map[*websocket.Conn]bool)
+		// }
 		if rawMembers, ok := m["members"].([]any); ok {
-			members := make([]string, 0, len(rawMembers))
+			members := make([]uint64, 0, len(rawMembers))
 			for _, v := range rawMembers {
-				if str, ok := v.(string); ok {
-					members = append(members, str)
+				if userID, ok := v.(float64); ok {
+					members = append(members, uint64(userID))
 				}
 			}
 			h.sendToUser(members, data)
 		}
 
 	case constants.JOIN_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(string); ok {
-			if userID, ok := m["userId"].(string); ok {
-				h.sendToRoom2(roomID, data)
-
-				h.addUserToRoom(roomID, userID)
+		if roomID, ok := m["roomId"].(float64); ok {
+			if userID, ok := m["userId"].(float64); ok {
+				h.addUserToRoom(uint64(roomID), uint64(userID))
+				h.sendToRoom(uint64(roomID), data)
 			}
 		}
 
 	case constants.LEAVE_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(string); ok {
-			if userID, ok := m["userId"].(string); ok {
-				h.sendToRoom(roomID, data)
+		if roomID, ok := m["roomId"].(float64); ok {
+			if userID, ok := m["userId"].(float64); ok {
+				h.sendToRoom(uint64(roomID), data)
 
-				h.removeUserFromRoom(roomID, userID)
+				h.removeUserFromRoom(uint64(roomID), uint64(userID))
 			}
 		}
 
 	case constants.DELETE_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(string); ok {
-			h.sendToRoom(roomID, data)
+		if roomID, ok := m["roomId"].(float64); ok {
+			h.sendToRoom(uint64(roomID), data)
 
-			delete(h.rooms, roomID)
-
+			delete(h.rooms, uint64(roomID))
 		}
 
 	case constants.REMOVE_MEMBER_TYPE:
-		if roomID, ok := m["roomId"].(string); ok {
-			if userID, ok := m["userId"].(string); ok {
-				h.sendToRoom(roomID, data)
+		if roomID, ok := m["roomId"].(float64); ok {
+			if userID, ok := m["userId"].(float64); ok {
+				h.sendToRoom(uint64(roomID), data)
 
-				h.removeUserFromRoom(roomID, userID)
+				h.removeUserFromRoom(uint64(roomID), uint64(userID))
 
 			}
 		}
 	case constants.UPDATE_ROOM_TYPE:
 		if userIds, ok := m["members"].([]any); ok {
 			for _, v := range userIds {
-				if userID, ok := v.(string); ok {
-					h.sendToUser([]string{userID}, data)
+				if userID, ok := v.(float64); ok {
+					h.sendToUser([]uint64{uint64(userID)}, data)
 				}
 			}
 		}
@@ -285,7 +303,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 	case constants.UPDATE_SETTINGS_TYPE:
 		// Truyền tin nhắn đến phòng theo loại sự kiện
 		if conversationID, ok := m["conversationId"].(float64); ok {
-			h.sendToRoom2(strconv.FormatUint(uint64(conversationID), 10), data)
+			h.sendToRoom(uint64(conversationID), data)
 		}
 
 	case constants.RECALL_MESSAGE_TYPE,
@@ -298,8 +316,8 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.MESSAGE_TYPE:
 
 		// Truyền tin nhắn đến phòng theo loại sự kiện
-		if roomID, ok := m["roomId"].(string); ok {
-			h.sendToRoom2(roomID, data)
+		if roomID, ok := m["roomId"].(float64); ok {
+			h.sendToRoom(uint64(roomID), data)
 		}
 
 	default:
@@ -307,40 +325,48 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 	}
 }
 
-func (h *WebSocketHandler) sendToRoom(roomID string, data []byte) {
-	if roomClients, exists := h.rooms[roomID]; exists {
-		for conn := range roomClients {
-			err := conn.WriteMessage(websocket.TextMessage, data)
-			if err != nil {
-				wsLogger.Errorf("Failed to send message to room %s: %v", roomID, err)
-			}
+// func (h *WebSocketHandler) sendToRoom(roomID string, data []byte) {
+// 	if roomClients, exists := h.rooms[roomID]; exists {
+// 		for conn := range roomClients {
+// 			err := conn.WriteMessage(websocket.TextMessage, data)
+// 			if err != nil {
+// 				wsLogger.Errorf("Failed to send message to room %s: %v", roomID, err)
+// 			}
 
-		}
-	} else {
-		wsLogger.Warnf("Room %s not found, message not delivered", roomID)
+// 		}
+// 	} else {
+// 		wsLogger.Warnf("Room %s not found, message not delivered", roomID)
+// 	}
+// }
+
+func (h *WebSocketHandler) addUserToRoom(roomID uint64, userID uint64) {
+	if _, exists := h.rooms[roomID]; !exists {
+		h.rooms[roomID] = make([]uint64, 0)
 	}
+	h.rooms[roomID] = append(h.rooms[roomID], userID)
+	// for uid, conn := range h.clients {
+	// 	if uid == userID {
+
+	// 	}
+	// }
 }
 
-func (h *WebSocketHandler) addUserToRoom(roomID, userID string) {
-	for uid, conn := range h.clients {
-		if uid == userID {
-			if _, exists := h.rooms[roomID]; !exists {
-				h.rooms[roomID] = make(map[*websocket.Conn]bool)
-			}
-			h.rooms[roomID][conn] = true
+func (h *WebSocketHandler) removeUserFromRoom(roomID uint64, userID uint64) {
+	members := h.rooms[roomID]
+	for i, member := range members {
+		if member == userID {
+			h.rooms[roomID] = append(members[:i], members[i+1:]...)
+			break
 		}
 	}
+	// for uid, conn := range h.clients {
+	// 	if uid == userID {
+	// 		delete(h.rooms[roomID], conn)
+	// 	}
+	// }
 }
 
-func (h *WebSocketHandler) removeUserFromRoom(roomID, userID string) {
-	for uid, conn := range h.clients {
-		if uid == userID {
-			delete(h.rooms[roomID], conn)
-		}
-	}
-}
-
-func (h *WebSocketHandler) sendToUser(members []string, data []byte) {
+func (h *WebSocketHandler) sendToUser(members []uint64, data []byte) {
 	for _, userId := range members {
 		if h.clients[userId] != nil {
 			conn := h.clients[userId]
@@ -352,34 +378,48 @@ func (h *WebSocketHandler) sendToUser(members []string, data []byte) {
 	}
 }
 
-func (h *WebSocketHandler) loadMemberOfRoom(roomID string) {
-	roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
-	if err != nil {
-		wsLogger.Errorf("Invalid roomId format: %v", err)
-		return
-	}
-	members, err := h.chatClient.GetRoomMembers(context.Background(), roomIDUint)
+func (h *WebSocketHandler) loadMemberOfRoom(roomID uint64) {
+	// roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
+	// if err != nil {
+	// 	wsLogger.Errorf("Invalid roomId format: %v", err)
+	// 	return
+	// }
+	members, err := h.chatClient.GetMembersOfRoom(context.Background(), roomID)
 	if err != nil {
 		wsLogger.Errorf("Failed to get room members: %v", err)
 		return
 	}
-	h.roomMembers[roomID] = members
+	h.rooms[roomID] = members
 }
 
-func (h *WebSocketHandler) sendToRoom2(roomID string, data []byte) {
-	_, ok := h.roomMembers[roomID]
+func (h *WebSocketHandler) loadRoomsOfMember(userId uint64) {
+	// roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
+	// if err != nil {
+	// 	wsLogger.Errorf("Invalid roomId format: %v", err)
+	// 	return
+	// }
+	members, err := h.chatClient.GetRoomsOfMember(context.Background(), userId)
+	if err != nil {
+		wsLogger.Errorf("Failed to get room members: %v", err)
+		return
+	}
+	h.rooms[userId] = members
+}
+
+func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
+	_, ok := h.rooms[roomID]
 	wsLogger.Infof("Room %s: %v, %v", roomID, ok, string(data))
 	if !ok {
 		h.loadMemberOfRoom(roomID)
 	}
-	members, ok := h.roomMembers[roomID]
+	members, ok := h.rooms[roomID]
 	if !ok {
 		wsLogger.Warnf("Room %s not found, message not delivered2", roomID)
 		return
 	}
 
 	for _, clientId := range members {
-		conn := h.clients[strconv.FormatUint(clientId, 10)]
+		conn := h.clients[clientId]
 		if conn == nil {
 			continue
 		}

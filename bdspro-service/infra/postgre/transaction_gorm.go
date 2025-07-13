@@ -21,6 +21,19 @@ func (t *TransactionGorm) WithTransaction(ctx context.Context, fn func(ctx conte
 	})
 }
 
+func (t *TransactionGorm) StartTransaction(ctx context.Context) context.Context {
+	tx := t.DB.Begin()
+	return context.WithValue(ctx, "tx", tx)
+}
+
+func (t *TransactionGorm) RollbackTransaction(ctx context.Context) error {
+	return GetDB(ctx, t.DB).Rollback().Error
+}
+
+func (t *TransactionGorm) CommitTransaction(ctx context.Context) error {
+	return GetDB(ctx, t.DB).Commit().Error
+}
+
 func GetDB(ctx context.Context, defaultDB *gorm.DB) *gorm.DB {
 	if tx, ok := ctx.Value("tx").(*gorm.DB); ok && tx != nil {
 		return tx.WithContext(ctx)

@@ -54,7 +54,18 @@ func (c *ChatClient) ValidateConversationAndCurrentUser(ctx context.Context, con
 	return err
 }
 
-func (c *ChatClient) GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error) {
+func (c *ChatClient) GetRoomsOfMember(ctx context.Context, userId uint64) ([]uint64, error) {
+	// request := &sharepb.IdRequest{
+	// 	Id: userId,
+	// }
+	// response, err := c.Client.GetRoomMembers(ctx, request)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return []uint64{}, nil
+}
+
+func (c *ChatClient) GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error) {
 	request := &sharepb.IdRequest{
 		Id: conversationId,
 	}

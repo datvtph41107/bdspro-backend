@@ -1,51 +1,67 @@
 package mapper
 
 import (
+	"bdspro/internal/domain"
+	"bdspro/internal/enums"
+	_models "common/models"
 	"time"
 
 	bdspropb "pb/types/bdspro"
-
-	"bdspro/internal/domain/transaction"
 )
 
 type TransactionTransformer interface {
-	CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *transaction.Transaction
-	UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *transaction.Transaction
-	EntityToTransactionResponse(tx *transaction.Transaction) *bdspropb.Transaction
-	EntityToListTransactionsResponse(txs []*transaction.Transaction, total int32) *bdspropb.ListTransactionsResponse
+	CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *domain.Transaction
+	UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *domain.Transaction
+	EntityToTransactionResponse(tx *domain.Transaction) *bdspropb.Transaction
+	EntityToListTransactionsResponse(txs []*domain.Transaction, total int32) *bdspropb.ListTransactionsResponse
 	EntityToTransactionTypesResponse(types []string) *bdspropb.GetTransactionTypesResponse
 }
 
-type transactionTransformer struct{}
-
-func NewTransactionTransformer() TransactionTransformer {
-	return &transactionTransformer{}
+type transactionTransformer struct {
+	DepositeMapper *DepositeMapper
 }
 
-func (t *transactionTransformer) CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *transaction.Transaction {
+func NewTransactionTransformer(
+	depositeMapper *DepositeMapper,
+) TransactionTransformer {
+	return &transactionTransformer{
+		DepositeMapper: depositeMapper,
+	}
+}
+
+// func (t *transactionTransformer) GetStatusTransaction(e *domain.Transaction) uint32 {
+// 	if e.DepositeID != nil {
+// 		return 20
+// 	}
+// 	return 10
+// }
+
+func (t *transactionTransformer) CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *domain.Transaction {
 	transactionDate, _ := time.Parse(time.RFC3339, req.TransactionDate)
-	return &transaction.Transaction{
-		OwnerId:              req.OwnerId,
-		OrganizationId:       req.OrganizationId,
+	return &domain.Transaction{
+		// OrganizationId:       req.OrganizationId,
+		OwnerId:              uint64(req.OwnerId),
 		Amount:               req.Amount,
 		Currency:             req.Currency,
 		TransactionName:      req.TransactionName,
 		Description:          req.Description,
-		TransactionType:      transaction.TransactionType(req.TransactionType),
+		TransactionType:      enums.TransactionType(req.TransactionType),
 		CategoryId:           req.CategoryId,
 		PaymentMethodId:      req.PaymentMethodId,
 		RelatedDealId:        req.RelatedDealId,
 		RelatedTransactionId: req.RelatedTransactionId,
 		TransactionDate:      transactionDate,
-		TransactionStatus:    transaction.TransactionStatusDraft,
-		ApprovalStatus:       transaction.ApprovalStatusPending,
+		TransactionStatus:    enums.TransactionStatusDraft,
+		ApprovalStatus:       enums.ApprovalStatusPending,
 	}
 }
 
-func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *transaction.Transaction {
+func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *domain.Transaction {
 	transactionDate, _ := time.Parse(time.RFC3339, req.TransactionDate)
-	return &transaction.Transaction{
-		Id:                   req.Id,
+	return &domain.Transaction{
+		BaseEntity: _models.BaseEntity{
+			ID: uint64(req.Id),
+		},
 		Amount:               req.Amount,
 		Currency:             req.Currency,
 		TransactionName:      req.TransactionName,
@@ -58,7 +74,7 @@ func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.
 	}
 }
 
-func (t *transactionTransformer) EntityToTransactionResponse(tx *transaction.Transaction) *bdspropb.Transaction {
+func (t *transactionTransformer) EntityToTransactionResponse(tx *domain.Transaction) *bdspropb.Transaction {
 	if tx == nil {
 		return nil
 	}
@@ -68,10 +84,10 @@ func (t *transactionTransformer) EntityToTransactionResponse(tx *transaction.Tra
 		approvalDate = &date
 	}
 
-	return &bdspropb.Transaction{
-		Id:                   tx.Id,
-		OwnerId:              tx.OwnerId,
-		OrganizationId:       tx.OrganizationId,
+	result := &bdspropb.Transaction{
+		Id:      tx.ID,
+		OwnerId: uint32(tx.OwnerId),
+		// OrganizationId:       tx.OrganizationId,
 		Amount:               tx.Amount,
 		Currency:             tx.Currency,
 		TransactionName:      tx.TransactionName,
@@ -84,15 +100,17 @@ func (t *transactionTransformer) EntityToTransactionResponse(tx *transaction.Tra
 		ApprovalStatus:       string(tx.ApprovalStatus),
 		ApprovedBy:           tx.ApprovedBy,
 		ApprovalDate:         approvalDate,
-		TransactionStatus:    string(tx.TransactionStatus),
+		TransactionStatus:    uint32(tx.TransactionStatus),
 		TransactionDate:      tx.TransactionDate.Format(time.RFC3339),
-		IsDeleted:            tx.IsDeleted,
-		CreatedAt:            tx.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:            tx.UpdatedAt.Format(time.RFC3339),
+		DepositeAmount:       tx.DepositeAmount,
+		DepositeNote:         tx.DepositeNote,
+		ContactId:            tx.ContactID,
 	}
+
+	return result
 }
 
-func (t *transactionTransformer) EntityToListTransactionsResponse(txs []*transaction.Transaction, total int32) *bdspropb.ListTransactionsResponse {
+func (t *transactionTransformer) EntityToListTransactionsResponse(txs []*domain.Transaction, total int32) *bdspropb.ListTransactionsResponse {
 	transactions := make([]*bdspropb.Transaction, 0, len(txs))
 	for _, tx := range txs {
 		transactions = append(transactions, t.EntityToTransactionResponse(tx))

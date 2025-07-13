@@ -92,6 +92,8 @@ func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(orga
 			Address:            org.Address,
 			Phone:              org.Phone,
 			Email:              org.Email,
+			LogoUrl:            org.LogoUrl,
+			Website:            org.Website,
 		}
 	}
 	return &organizationpb.GetOrganizationByUserIdResponse{

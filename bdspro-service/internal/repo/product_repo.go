@@ -11,10 +11,10 @@ import (
 // ProductRepo định nghĩa các phương thức mà GormUserProductRepo cung cấp
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
-	UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductStatus) error
+	UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error
 
 	// Cập nhật trạng thái cho thuê
-	UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductStatus) error
+	UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error
 
 	// Cập nhật trạng thái hiển thị bán
 	UpdateSaleVisibility(ctx context.Context, id uint64, vis enums.EVisibility) error
@@ -27,12 +27,15 @@ type ProductRepo interface {
 
 	// Cập nhật thông tin sản phẩm
 	UpdateProduct(c context.Context, id uint64, entity *domain.Product) error
+	UpdateSaleTransactionID(c context.Context, id uint64, transactionID *uint64) error
+	UpdateRentTransactionID(c context.Context, id uint64, transactionID *uint64) error
+	Save(c context.Context, entity *domain.Product) error
 
 	// // Lấy sản phẩm theo ID
 	// GetByID(ctx context.Context, id uint64) (*domain.Product, error)
 
 	// Lấy sản phẩm theo ID (phiên bản khác)
-	GetByID2(ctx context.Context, productID uint64) (*domain.Product, error)
+	// GetByID2(ctx context.Context, productID uint64) (*domain.Product, error)
 
 	// Cập nhật danh sách tiện ích của sản phẩm
 	UpdateProductAmenityIds(ctx context.Context, productID uint64, amenityIDs []uint64) error
@@ -56,21 +59,21 @@ type ProductRepo interface {
 	// UpdateArchived(ctx context.Context, productId uint64, archived bool) error
 
 	// Tạo mới thông tin đặt cọc
-	NewDeposite(ctx context.Context, dto *domain.Deposite) error
+	// NewDeposite(ctx context.Context, dto *domain.Deposite) error
 	CountByAssetID(assetID uint64) (int64, error)
 	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
-	CancelDeposite(ctx context.Context, id uint64) error
+	// CancelDeposite(ctx context.Context, id uint64) error
 
 	// SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	SearchExport(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, error)
 	SmartSearch(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
 	Archived(ctx context.Context, productId *uint64, archived bool) error
-	SetRentStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error
-	SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error
+	SetRentStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error
+	SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error
 	SetRentVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
 	SetSaleVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
-	GetProductByID(ctx context.Context, id *uint64) (*domain.Product, error)
+	GetProductByID(ctx context.Context, productID *uint64) (*domain.Product, error)
 	SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error)
 	SyncData(ctx context.Context) error

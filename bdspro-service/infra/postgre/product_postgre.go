@@ -4,8 +4,8 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/repo"
 	"common/case/crud3"
-	_db "common/db"
 	_utils "common/utils"
 	"context"
 	"strings"
@@ -16,31 +16,34 @@ import (
 // @bind: bdspro/internal/repo.ProductRepo
 type GormUserProductRepo struct {
 	crud3.BaseRepo[domain.Product]
-	PriceRepo      *GormProductPriceRepo
-	ProductAccess  *SharingAccessPostgre
-	ProductPrivate *GormProductPrivateRepo
+	PriceRepo       *GormProductPriceRepo
+	ProductAccess   *SharingAccessPostgre
+	ProductPrivate  *GormProductPrivateRepo
+	TransactionRepo repo.TransactionRepository
 }
 
 func NewGormUserProductRepo(db *gorm.DB,
 	PriceRepo *GormProductPriceRepo,
 	ProductAccess *SharingAccessPostgre,
 	ProductPrivate *GormProductPrivateRepo,
+	TransactionRepo repo.TransactionRepository,
 ) *GormUserProductRepo {
 	return &GormUserProductRepo{
-		BaseRepo:       crud3.BaseRepo[domain.Product]{DB: db},
-		PriceRepo:      PriceRepo,
-		ProductAccess:  ProductAccess,
-		ProductPrivate: ProductPrivate,
+		BaseRepo:        crud3.BaseRepo[domain.Product]{DB: db},
+		PriceRepo:       PriceRepo,
+		ProductAccess:   ProductAccess,
+		ProductPrivate:  ProductPrivate,
+		TransactionRepo: TransactionRepo,
 	}
 }
 
-func (r *GormUserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
+func (r *GormUserProductRepo) UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("sale_status", status).Error
 }
-func (r *GormUserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductStatus) error {
+func (r *GormUserProductRepo) UpdateRentStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
@@ -74,7 +77,7 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 	entity.PrivateData = nil
 	entity.HouseInfo = nil
 
-	err := r.DB.WithContext(c).Model(entity).
+	err := GetDB(c, r.DB).Model(entity).
 		Where("id = ? and deleted_at is null", id).
 		Updates(entity).Error
 
@@ -97,41 +100,42 @@ func (r *GormUserProductRepo) UpdateAsset(asset *domain.Asset) error {
 	return r.DB.Save(asset).Error
 }
 
-func (r *GormUserProductRepo) GetByID2(ctx context.Context, productID uint64) (*domain.Product, error) {
-	var product domain.Product
+// func (r *GormUserProductRepo) GetByID2(ctx context.Context, productID uint64) (*domain.Product, error) {
+// 	var product domain.Product
 
-	// Truy vấn thông tin sản phẩm từ cơ sở dữ liệu
-	err := r.DB.WithContext(ctx).
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("Deposite", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Preload("CreatedUser").
-		Preload("UpdatedUser").
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		Where("id = ? AND deleted_at IS NULL", productID).
-		First(&product).Error
+// 	// Truy vấn thông tin sản phẩm từ cơ sở dữ liệu
+// 	err := r.DB.WithContext(ctx).
+// 		Preload("PropertyType", "deleted_at IS NULL").
+// 		Preload("Deposite", "deleted_at IS NULL").
+// 		Preload("DocType", "deleted_at IS NULL").
+// 		Preload("Amenities", "deleted_at IS NULL").
+// 		Preload("MediaList", "deleted_at IS NULL").
+// 		Preload("CreatedUser").
+// 		Preload("UpdatedUser").
+// 		Preload("Province", "deleted_at IS NULL").
+// 		Preload("District", "deleted_at IS NULL").
+// 		Preload("Ward", "deleted_at IS NULL").
+// 		Where("id = ? AND deleted_at IS NULL", productID).
+// 		First(&product).Error
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &product, nil
-}
+// 	return &product, nil
+// }
 
 func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error) {
 	var entity *domain.Product
-	price := r.PriceRepo.FindByProductId(&id)
+	price := r.PriceRepo.FindByProductId(ctx, &id)
 
-	err := _db.DB.
-		Table("products p").
+	err := GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		// Table("products p").
 		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
         	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
 		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("Deposite", "deleted_at IS NULL").
+		// Preload("Deposite", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
 		Preload("Apartment", "deleted_at IS NULL").
@@ -142,8 +146,10 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		Preload("Province", "deleted_at IS NULL").
 		Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
+		// Preload("SaleTransaction", "deleted_at IS NULL").
+		// Preload("RentTransaction", "deleted_at IS NULL").
 		// Preload("PrivateData").
-		Where("p.id = ? AND p.deleted_at IS NULL", id).
+		Where("products.id = ? AND products.deleted_at IS NULL", id).
 		First(&entity).Error
 
 	if err != nil {
@@ -154,13 +160,13 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 
 	if entity.Apartment != nil {
 		var build *domain.ProjectBuild
-		_ = _db.DB.
+		_ = GetDB(ctx, r.DB).
 			Where("id = ? AND deleted_at IS NULL", entity.Apartment.BuildID).
 			First(&build).Error
 		entity.Build = build
 
 		var attribute *domain.ApartmentAttribute
-		_ = _db.DB.
+		_ = GetDB(ctx, r.DB).
 			Where("id = ? AND deleted_at IS NULL", entity.Apartment.ApartmentAttrID).
 			First(&attribute).Error
 		entity.ApartmentAttr = attribute
@@ -168,7 +174,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 
 	if entity.Build != nil {
 		var project *domain.Project
-		_ = _db.DB.
+		_ = GetDB(ctx, r.DB).
 			Where("id = ? AND deleted_at IS NULL", entity.Build.ProjectID).
 			First(&project).Error
 		entity.Project = project
@@ -176,7 +182,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 
 	if entity.Project != nil {
 		var developer *domain.Developer
-		_ = _db.DB.
+		_ = GetDB(ctx, r.DB).
 			Where("id = ? AND deleted_at IS NULL", entity.Project.DeveloperID).
 			First(&developer).Error
 		entity.Developer = developer
@@ -187,6 +193,13 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 	privateData, _ := r.ProductPrivate.GetPrivateFields(ctx, profileId, entity)
 	if privateData != nil {
 		entity.PrivateData = privateData
+	}
+
+	if entity.SaleTransactionID != nil {
+		entity.SaleTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.SaleTransactionID)
+	}
+	if entity.RentTransactionID != nil {
+		entity.RentTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.RentTransactionID)
 	}
 
 	return entity, nil
@@ -300,12 +313,14 @@ func (r *GormUserProductRepo) SearchProductWithOwner(profileId *uint64, dto dto.
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+		Preload("SaleTransaction", "deleted_at IS NULL").
+		Preload("RentTransaction", "deleted_at IS NULL").
+		Where("products.owner_id = ? and products.deleted_at is NULL", profileId)
 
 	query = r.QueryDomain(query, &dto)
 
 	err := query.
-		Order("created_at desc").
+		Order("updated_at desc").
 		Limit(dto.GetLimit()).
 		Offset(dto.GetOffset()).
 		Find(&results).Error
@@ -346,7 +361,7 @@ func (r *GormUserProductRepo) SearchToExport(profileId uint64, dto dto.ProductSe
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
-		Where("products.owner_user_id = ? and products.deleted_at is NULL", profileId)
+		Where("products.owner_id = ? and products.deleted_at is NULL", profileId)
 
 	query = r.QueryDomain(query, &dto)
 
@@ -404,12 +419,12 @@ func (r *GormUserProductRepo) SearchProductMarket(profileId uint64, dto dto.Prod
 	if len(dto.PropertyTypeIds) > 0 {
 		query = query.Where("products.property_type_id IN (?)", dto.PropertyTypeIds)
 	}
-	if len(dto.RentStatus) > 0 {
-		query = query.Where("products.rent_status IN (?)", dto.RentStatus)
-	}
-	if len(dto.SaleStatus) > 0 {
-		query = query.Where("products.sale_status IN (?)", dto.SaleStatus)
-	}
+	// if len(dto.RentStatus) > 0 {
+	// 	query = query.Where("products.rent_status IN (?)", dto.RentStatus)
+	// }
+	// if len(dto.SaleStatus) > 0 {
+	// 	query = query.Where("products.sale_status IN (?)", dto.SaleStatus)
+	// }
 	if len(dto.TransactionTypes) > 0 {
 		query = query.Where("products.transaction_type IN (?)", dto.TransactionTypes)
 	}
@@ -546,9 +561,9 @@ func (r *GormUserProductRepo) DetectProductData(profileId uint64, input string) 
 	return nil, 0, nil
 }
 
-func (r *GormUserProductRepo) NewDeposite(ctx context.Context, dto *domain.Deposite) error {
-	return r.DB.WithContext(ctx).Create(&dto).Error
-}
+// func (r *GormUserProductRepo) NewDeposite(ctx context.Context, dto *domain.Deposite) error {
+// 	return GetDB(ctx, r.DB).Create(&dto).Error
+// }
 
 func (r *GormUserProductRepo) CountByAssetID(assetID uint64) (int64, error) {
 	var count int64
@@ -565,13 +580,6 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 		Where("id = ? and deleted_at is null and asset_id is null", id).
 		Update("asset_id", assetID).
 		Error
-}
-
-func (r *GormUserProductRepo) CancelDeposite(ctx context.Context, id uint64) error {
-	return r.DB.WithContext(ctx).
-		Model(&domain.Product{}).
-		Where("id = ? and deleted_at is null", id).
-		Update("deposite_id", nil).Error
 }
 
 // func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
@@ -633,14 +641,14 @@ func (r *GormUserProductRepo) Archived(ctx context.Context, productId *uint64, a
 		Update("archived", archived).Error
 }
 
-func (r *GormUserProductRepo) SetRentStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
+func (r *GormUserProductRepo) SetRentStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("rent_status", status).Error
 }
 
-func (r *GormUserProductRepo) SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductStatus) error {
+func (r *GormUserProductRepo) SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
@@ -729,4 +737,22 @@ func (r *GormUserProductRepo) Create(c context.Context, entity *domain.Product) 
 
 func (r *GormUserProductRepo) SyncData(ctx context.Context) error {
 	return r.DB.Exec(`REFRESH MATERIALIZED VIEW public.product_market`).Error
+}
+
+func (r *GormUserProductRepo) Save(c context.Context, entity *domain.Product) error {
+	return GetDB(c, r.DB).Save(entity).Error
+}
+
+func (r *GormUserProductRepo) UpdateSaleTransactionID(c context.Context, id uint64, transactionID *uint64) error {
+	return r.DB.WithContext(c).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("sale_transaction_id", transactionID).Error
+}
+
+func (r *GormUserProductRepo) UpdateRentTransactionID(c context.Context, id uint64, transactionID *uint64) error {
+	return r.DB.WithContext(c).
+		Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("rent_transaction_id", transactionID).Error
 }

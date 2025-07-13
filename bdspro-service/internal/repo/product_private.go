@@ -9,6 +9,6 @@ import (
 type ProductPrivateRepo interface {
 	crud3.CrudRepo[domain.ProductPrivate]
 	UpdateInfo(c context.Context, productId uint64, entity *domain.ProductPrivate) error
-	FindByProductId(productId *uint64) *domain.ProductPrivate
+	FindByProductId(c context.Context, productId *uint64) *domain.ProductPrivate
 	GetPrivateFields(c context.Context, profileId uint64, product *domain.Product) (*domain.ProductPrivate, error)
 }

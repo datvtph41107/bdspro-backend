@@ -61,7 +61,7 @@ func (r *PostgreProductChild) InfoArea(ctx context.Context, profileId, id *uint6
 						FROM products WHERE deleted_at is null GROUP BY parent_id)
 						AS child ON products.id = child.parent_id`).
 		// Preload("PrivateData").
-		Where("products.id = ? AND products.owner_user_id = ? AND products.deleted_at IS NULL", id, profileId).
+		Where("products.id = ? AND products.owner_id = ? AND products.deleted_at IS NULL", id, profileId).
 		Scan(&entity).Error
 
 	if err != nil {

@@ -41,15 +41,16 @@ func (r *PublicRouter) GetEnumByType(c *gin.Context) {
 
 	// Khai báo enumProviders nội bộ
 	var enumProviders = map[string]interface{}{
-		"product_status":     EnumMapToList(enums.EProductStatusNames),
-		"asset_history":      EnumMapToList(enums.AssetHistoryNames),
-		"target_type":        EnumMapToList(enums.TargetTypeNames),
-		"visibility":         EnumMapToList(enums.EVisibilityNames),
-		"transaction_status": EnumMapToList(enums.TransactionStatusNames),
-		"producthistory":     EnumMapToList(enums.EProductHistoryNames),
-		"poststatus":         EnumMapToList(enums.EPostStatusNames),
-		"doctype":            EnumMapToList(enums.EDocTypeNames),
-		"assetstatus":        EnumMapToList(enums.EAssetStatusNames),
+		"product_sale_status": EnumMapToList(enums.EProductSaleStatusNames),
+		"product_rent_status": EnumMapToList(enums.EProductRentStatusNames),
+		"asset_history":       EnumMapToList(enums.AssetHistoryNames),
+		"target_type":         EnumMapToList(enums.TargetTypeNames),
+		"visibility":          EnumMapToList(enums.EVisibilityNames),
+		// "transaction_status": EnumMapToList(enums.TransactionStatusNames),
+		"producthistory": EnumMapToList(enums.EProductHistoryNames),
+		"poststatus":     EnumMapToList(enums.EPostStatusNames),
+		"doctype":        EnumMapToList(enums.EDocTypeNames),
+		"assetstatus":    EnumMapToList(enums.EAssetStatusNames),
 		// Thêm các enum khác ở đây nếu cần
 	}
 

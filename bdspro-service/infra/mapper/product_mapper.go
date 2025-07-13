@@ -17,6 +17,8 @@ type ProductMapper struct {
 	BuildMapper              *BuildMapper
 	ProjectMapper            *ProjectMapper
 	DeveloperMapper          *DeveloperMapper
+	DepositeMapper           *DepositeMapper
+	TransactionMapper        TransactionTransformer
 }
 
 func NewProductMapper(postMapper *PostMapper,
@@ -25,6 +27,8 @@ func NewProductMapper(postMapper *PostMapper,
 	buildMapper *BuildMapper,
 	projectMapper *ProjectMapper,
 	developerMapper *DeveloperMapper,
+	depositeMapper *DepositeMapper,
+	transactionMapper TransactionTransformer,
 ) *ProductMapper {
 	result := &ProductMapper{
 		PostMapper:               postMapper,
@@ -33,71 +37,191 @@ func NewProductMapper(postMapper *PostMapper,
 		BuildMapper:              buildMapper,
 		ProjectMapper:            projectMapper,
 		DeveloperMapper:          developerMapper,
+		DepositeMapper:           depositeMapper,
+		TransactionMapper:        transactionMapper,
 	}
 	postMapper.ProductMapper = result
 	return result
 }
 
-func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.ProductResponse {
-	result := m.MapProductPb(product)
-	result.Id = product.ID
-	result.ParentId = *product.ParentId
-	result.DepositeId = product.DepositeID
-	// result.Deposite           = product.Deposite
-	result.AssetId = product.AssetId
-	result.PropertyTypeId = product.PropertyTypeId
-	// result.PropertyType       = product.PropertyType
-	result.DocTypeId = product.DocTypeId
-	// result.DocType            = product.DocType
-	// result.Amenities          = product.AmenityIDs
-	result.Visibility = uint32(product.Visibility)
-	result.Code = product.Code
-	result.CategoryId = product.CategoryID
-	result.PositionUrl = product.PositionUrl
-	result.Description = product.Description
-	// result.OrganizationId     = product.OrganizationID
-	// result.OrgStatus          = product.OrgStatus
-	result.LastPriceId = product.LastPriceID
-	// result.Price              = product.Price
-	result.ApartmentId = product.ApartmentID
-	// result.Apartment          = product.Apartment
-	// result.ApartmentAttribute = product.ApartmentAttribute
-	// result.Build              = product.Build
-	// result.Project            = product.Project
-	// result.Developer          = product.Developer
-	result.SourceType = int32(product.SourceType)
-	result.CustomerId = product.CustomerID
-	// result.PrivateData        = product.PrivateData
-	result.Note = product.Note
-	result.TransactionType = int32(product.TransactionType)
-	result.SaleVisibility = uint32(product.SaleVisibility)
-	result.RentVisibility = uint32(product.RentVisibility)
-	// result.OwnerUserId        = product.OwnerUserID
-	result.OwnerType = uint32(product.OwnerType)
-	result.Address = product.Address
-	result.GoogleMapLink = product.GoogleMapLink
-	// result.Attributes         = product.Attributes
-	// result.MediaList          = product.MediaList
-	// result.HouseInfo          = product.HouseInfo
-	result.Archived = product.Archived
-	// result.PriceSuggest       = product.PriceSuggest
+// func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.ProductResponse {
+// 	result := m.MapProductPb(product)
+// 	result.Id = product.ID
+// 	result.ParentId = product.ParentId
+// 	// result.DepositeId = product.DepositeID
+// 	// result.Deposite           = product.Deposite
+// 	result.AssetId = product.AssetId
+// 	result.PropertyTypeId = product.PropertyTypeId
+// 	// result.PropertyType       = product.PropertyType
+// 	result.DocTypeId = product.DocTypeId
+// 	// result.DocType            = product.DocType
+// 	// result.Amenities          = product.AmenityIDs
+// 	result.Visibility = uint32(product.Visibility)
+// 	result.Code = product.Code
+// 	result.CategoryId = product.CategoryID
+// 	result.PositionUrl = product.PositionUrl
+// 	result.Description = product.Description
+// 	// result.OrganizationId     = product.OrganizationID
+// 	// result.OrgStatus          = product.OrgStatus
+// 	result.LastPriceId = product.LastPriceID
+// 	// result.Price              = product.Price
+// 	result.ApartmentId = product.ApartmentID
+// 	// result.Apartment          = product.Apartment
+// 	// result.ApartmentAttribute = product.ApartmentAttribute
+// 	// result.Build              = product.Build
+// 	// result.Project            = product.Project
+// 	// result.Developer          = product.Developer
+// 	result.SourceType = int32(product.SourceType)
+// 	result.CustomerId = product.CustomerID
+// 	// result.PrivateData        = product.PrivateData
+// 	result.Note = product.Note
+// 	result.TransactionType = int32(product.TransactionType)
+// 	result.SaleVisibility = uint32(product.SaleVisibility)
+// 	result.RentVisibility = uint32(product.RentVisibility)
+// 	result.OwnerId = product.OwnerID
+// 	result.OwnerType = uint32(product.OwnerType)
+// 	result.Address = product.Address
+// 	result.GoogleMapLink = product.GoogleMapLink
+// 	// result.Attributes         = product.Attributes
+// 	// result.MediaList          = product.MediaList
+// 	// result.HouseInfo          = product.HouseInfo
+// 	result.Archived = product.Archived
+// 	// result.PriceSuggest       = product.PriceSuggest
 
-	if product.Deposite != nil {
-		result.Deposite = &pb_bdspro.Deposite{
-			Id:            product.Deposite.ID,
-			ProductId:     product.ID,
-			Amount:        float64(product.Deposite.Amount),
-			CustomerName:  product.Deposite.CustomerName,
-			CustomerPhone: product.Deposite.CustomerPhone,
-			Note:          product.Deposite.Note,
-		}
+// 	if product.Deposite != nil {
+// 		result.Deposite = m.DepositeMapper.MapDepositePb(product.Deposite)
+// 	}
+
+// 	if product.PropertyType != nil {
+// 		result.PropertyType = &pb_bdspro.PropertyType{
+// 			Id:   product.PropertyType.ID,
+// 			Name: product.PropertyType.Name,
+// 			// Active:    product.PropertyType.Ac,
+// 		}
+// 	}
+
+// 	if product.DocType != nil {
+// 		result.DocType = &pb_bdspro.DocType{
+// 			Id:   product.DocType.ID,
+// 			Name: product.DocType.Name,
+// 		}
+// 	}
+
+// 	// todo: map thêm category
+// 	// if product.Category != nil {
+// 	// 	result.Category = &pb_bdspro.Category{
+// 	// 		Id:   product.Category.ID,
+// 	// 		Name: product.Category.Name,
+// 	// 	}
+// 	// }
+
+// 	if product.Apartment != nil {
+// 		result.Apartment = m.ApartmentMapper.MapApartmentPb(product.Apartment)
+// 	}
+
+// 	if product.ApartmentAttr != nil {
+// 		result.ApartmentAttribute = m.ApartmentAttributeMapper.MapApartmentAttributePb(product.ApartmentAttr)
+// 	}
+
+// 	if product.Build != nil {
+// 		result.Build = m.BuildMapper.MapBuildPbItem(product.Build)
+// 	}
+
+// 	if product.Project != nil {
+// 		result.Project = m.ProjectMapper.MapProjectPbItem(product.Project)
+// 	}
+
+// 	if product.Developer != nil {
+// 		result.Developer = m.DeveloperMapper.MapDeveloperPbItem(product.Developer)
+// 	}
+// 	if product.SaleTransaction != nil {
+// 		result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
+// 	}
+// 	if product.RentTransaction != nil {
+// 		result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
+// 	}
+
+// 	// if product.Attributes != nil {
+// 	// 	result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
+// 	// 	for i, attribute := range product.Attributes {
+// 	// 		result.Attributes[i] = &pb_bdspro.AttributeProduct{
+// 	// 			Id:   attribute.ID,
+// 	// 			Name: attribute.Name,
+// 	// 		}
+// 	// 	}
+// 	// }
+
+// 	return result
+// }
+
+func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.ProductResponse {
+	result := &pb_bdspro.ProductResponse{
+		Id:       product.ID,
+		ParentId: product.ParentId,
+		// DepositeId: product.DepositeID,
+		// Deposite:        product.Deposite,
+		AssetId:        product.AssetId,
+		PropertyTypeId: product.PropertyTypeId,
+		// PropertyType:    product.PropertyType,
+		DocTypeId: product.DocTypeId,
+		// DocType:         product.DocType,
+		// Amenities       []AmenityItem        `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
+		Visibility:  uint32(product.Visibility),
+		Name:        product.Name,
+		Code:        product.Code,
+		CategoryId:  product.CategoryID,
+		Area:        product.Area,
+		PositionUrl: product.PositionUrl,
+		Description: product.Description,
+		// OrganizationId: *product.OrganizationID,
+		// OrgStatus:   int32(product.OrgStatus),
+		LastPriceId: product.LastPriceID,
+		// Price:           product.Price,
+		ApartmentId: product.ApartmentID,
+		// Apartment:       product.Apartment,
+		// ApartmentAttr:   product.ApartmentAttr,
+		// Build:           product.Build,
+		// Project:         product.Project,
+		// Developer:       product.Developer,
+		SourceType: int32(product.SourceType),
+		// CustomerId: product.CustomerID,
+		// PrivateData:     product.PrivateData,
+		Note:            product.Note,
+		TransactionType: int32(product.TransactionType),
+		SaleStatus:      uint32(product.SaleStatus),
+		SaleVisibility:  uint32(product.SaleVisibility),
+		RentStatus:      uint32(product.RentStatus),
+		RentVisibility:  uint32(product.RentVisibility),
+		OwnerId:         &product.OwnerID,
+		OwnerType:       uint32(product.OwnerType),
+		ProvinceId:      product.ProvinceID,
+		DistrictId:      product.DistrictID,
+		WardId:          product.WardID,
+		Address:         product.Address,
+		GoogleMapLink:   product.GoogleMapLink,
+		// Attributes:    product.Attributes,
+		// MediaList:     product.MediaList,
+		// HouseInfo:     product.HouseInfo,
+		Archived: product.Archived,
 	}
+
+	// if product.Attributes != nil {
+	// 	result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
+	// 	for i, attribute := range product.Attributes {
+	// 		result.Attributes[i] = &pb_bdspro.AttributeProduct{
+	// 			Id:   attribute.ID,
+	// 			Name: attribute.Name,
+	// 		}
+	// 	}
+	// }
+	// if product.Deposite != nil {
+	// 	result.Deposite = m.DepositeMapper.MapDepositePb(product.Deposite)
+	// }
 
 	if product.PropertyType != nil {
 		result.PropertyType = &pb_bdspro.PropertyType{
 			Id:   product.PropertyType.ID,
 			Name: product.PropertyType.Name,
-			// Active:    product.PropertyType.Ac,
 		}
 	}
 
@@ -108,24 +232,14 @@ func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.P
 		}
 	}
 
-	// todo: map thêm category
-	// if product.Category != nil {
-	// 	result.Category = &pb_bdspro.Category{
-	// 		Id:   product.Category.ID,
-	// 		Name: product.Category.Name,
-	// 	}
-	// }
-
-	if product.Apartment != nil {
-		result.Apartment = m.ApartmentMapper.MapApartmentPb(product.Apartment)
-	}
-
-	if product.ApartmentAttr != nil {
-		result.ApartmentAttribute = m.ApartmentAttributeMapper.MapApartmentAttributePb(product.ApartmentAttr)
-	}
-
-	if product.Build != nil {
-		result.Build = m.BuildMapper.MapBuildPbItem(product.Build)
+	if product.Amenities != nil {
+		result.Amenities = make([]*pb_bdspro.AmenityItem, len(product.Amenities))
+		for i, amenity := range product.Amenities {
+			result.Amenities[i] = &pb_bdspro.AmenityItem{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
 	}
 
 	if product.Project != nil {
@@ -136,14 +250,63 @@ func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.P
 		result.Developer = m.DeveloperMapper.MapDeveloperPbItem(product.Developer)
 	}
 
-	if product.Attributes != nil {
-		result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
-		for i, attribute := range product.Attributes {
-			result.Attributes[i] = &pb_bdspro.AttributeProduct{
-				Id:   attribute.ID,
-				Name: attribute.Name,
+	if product.Build != nil {
+		result.Build = m.BuildMapper.MapBuildPbItem(product.Build)
+	}
+
+	if product.Apartment != nil {
+		result.Apartment = m.ApartmentMapper.MapApartmentPb(product.Apartment)
+	}
+
+	if product.ApartmentAttr != nil {
+		result.ApartmentAttribute = m.ApartmentAttributeMapper.MapApartmentAttributePb(product.ApartmentAttr)
+	}
+
+	if product.HouseInfo != nil {
+		result.HouseInfo = m.HouseInfoToPb(product.HouseInfo)
+	}
+
+	if product.District != nil {
+		result.DistrictName = product.District.Name
+	}
+	if product.Province != nil {
+		result.ProvinceName = product.Province.Name
+	}
+	if product.Ward != nil {
+		result.WardName = product.Ward.Name
+	}
+
+	if len(product.MediaList) > 0 {
+		result.MediaList = make([]*pb_bdspro.MediaItem, len(product.MediaList))
+		for i, media := range product.MediaList {
+			result.MediaList[i] = &pb_bdspro.MediaItem{
+				Id:        media.ID,
+				MediaUrl:  media.MediaURL,
+				MediaType: media.MediaType,
 			}
 		}
+	}
+
+	if product.Price != nil {
+		result.Price = &pb_bdspro.ProductPrice{
+			// PriceOwner:     product.Price.PriceOwner,
+			Id:               product.Price.ID,
+			Currency:         product.Price.Currency,
+			SalePrice:        product.Price.SalePrice,
+			SaleCommission:   product.Price.SaleCommission,
+			RentPrice:        product.Price.RentPrice,
+			RentCommission:   product.Price.RentCommission,
+			Deposite:         product.Price.Deposite,
+			RentPaymentCycle: product.Price.RentPaymentCycle,
+		}
+
+	}
+
+	if product.SaleTransaction != nil {
+		result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
+	}
+	if product.RentTransaction != nil {
+		result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
 	}
 
 	return result
@@ -192,7 +355,13 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 			Deposite:         product.Price.Deposite,
 			RentPaymentCycle: product.Price.RentPaymentCycle,
 		}
+	}
 
+	if product.SaleTransaction != nil {
+		result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
+	}
+	if product.RentTransaction != nil {
+		result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
 	}
 
 	return result
@@ -210,12 +379,12 @@ func MapProductAttachmentPbList(products []domain.Product) []*pb_bdspro.ProductA
 	productList := make([]*pb_bdspro.ProductAttachment, len(products))
 	for i, product := range products {
 		productList[i] = &pb_bdspro.ProductAttachment{
-			Id:             product.ID,
-			Name:           product.Name,
-			Code:           product.Code,
-			Area:           product.Area,
-			AssetId:        product.AssetId,
-			DepositeId:     product.DepositeID,
+			Id:      product.ID,
+			Name:    product.Name,
+			Code:    product.Code,
+			Area:    product.Area,
+			AssetId: product.AssetId,
+			// DepositeId: product.DepositeID,
 			RentStatus:     uint32(product.RentStatus),
 			SaleStatus:     uint32(product.SaleStatus),
 			SourceType:     int32(product.SourceType),
@@ -249,10 +418,10 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 		TransactionType: req.TransactionType,
 		GoogleMapLink:   req.GoogleMapLink,
 		SourceType:      req.SourceType,
-		SaleStatus:      enums.EProductStatus(req.SaleStatus),
-		RentStatus:      enums.EProductStatus(req.RentStatus),
-		SaleVisibility:  enums.EVisibility(req.SaleVisibility),
-		RentVisibility:  enums.EVisibility(req.RentVisibility),
+		// SaleStatus:      enums.EProductStatus(req.SaleStatus),
+		// RentStatus:      enums.EProductStatus(req.RentStatus),
+		SaleVisibility: enums.EVisibility(req.SaleVisibility),
+		RentVisibility: enums.EVisibility(req.RentVisibility),
 		// OwnerType:      enums.EOwnerType(req.OwnerType),
 	}
 
@@ -261,7 +430,7 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 
 	if req.PriceData != nil {
 		result.PriceData = &domain.ProductPrice{
-			PriceOwner:     req.PriceData.PriceOwner,
+			// PriceOwner:     req.PriceData.PriceOwner,
 			Currency:       req.PriceData.Currency,
 			SalePrice:      req.PriceData.SalePrice,
 			SaleCommission: req.PriceData.SaleCommission,
@@ -343,8 +512,8 @@ func (m *ProductMapper) MapMarketProductToDTO(req *pb_bdspro.ProductMarketReques
 		// WardIds:          []uint64{req.WardId},
 		// SourceTypeIds:    []uint{req.SourceType},
 		// TransactionTypes: []uint{req.TransactionType},
-		// SaleStatus:       []uint{req.SaleStatus},
-		// RentStatus:       []uint{req.RentStatus},
+		SaleStatus: []uint32{uint32(req.SaleStatus)},
+		RentStatus: []uint32{uint32(req.RentStatus)},
 	}
 }
 
@@ -442,10 +611,10 @@ func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *d
 		TransactionType: req.TransactionType,
 		// HouseInfo:       req.HouseInfo,
 		// PrivateData:    req.PrivateData,
-		GoogleMapLink:  req.GoogleMapLink,
-		SourceType:     req.SourceType,
-		SaleStatus:     enums.EProductStatus(req.SaleStatus),
-		RentStatus:     enums.EProductStatus(req.RentStatus),
+		GoogleMapLink: req.GoogleMapLink,
+		SourceType:    req.SourceType,
+		// SaleStatus:     enums.EProductStatus(req.SaleStatus),
+		// RentStatus:     enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
 		RentVisibility: enums.EVisibility(req.RentVisibility),
 		OwnerType:      req.OwnerType,
@@ -500,9 +669,9 @@ func (m *ProductMapper) PriceDataToDomain(req *pb_bdspro.ProductPrice) *domain.P
 		BaseEntity: _models.BaseEntity{
 			ID: req.Id,
 		},
-		ProductID:        &req.ProductId,
-		Currency:         req.Currency,
-		PriceOwner:       req.PriceOwner,
+		ProductID: &req.ProductId,
+		Currency:  req.Currency,
+		// PriceOwner:       req.PriceOwner,
 		SalePrice:        req.SalePrice,
 		SaleCommission:   req.SaleCommission,
 		Deposite:         req.Deposite,
@@ -535,6 +704,42 @@ func (m *ProductMapper) HouseInfoToDomain(req *pb_bdspro.HouseInfo) *dto.HouseIn
 		Furniture:   req.Furniture,
 		Orientation: req.Orientation,
 	}
+}
+
+func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *pb_bdspro.HouseInfo {
+	result := &pb_bdspro.HouseInfo{
+		// NumBedroom:  int32(*req.NumBedroom),
+		// NumBathroom: int32(*req.NumBathroom),
+		// NumFloor:    int32(*req.NumFloor),
+		// NumFront:    int32(*req.NumFront),
+		// NumCarPark:  int32(*req.NumCarPark),
+		// Furniture:   *req.Furniture,
+		// Orientation: *req.Orientation,
+	}
+
+	if req.NumBedroom != nil {
+		result.NumBedroom = int32(*req.NumBedroom)
+	}
+	if req.NumBathroom != nil {
+		result.NumBathroom = int32(*req.NumBathroom)
+	}
+	if req.NumFloor != nil {
+		result.NumFloor = int32(*req.NumFloor)
+	}
+	if req.NumFront != nil {
+		result.NumFront = int32(*req.NumFront)
+	}
+	if req.NumCarPark != nil {
+		result.NumCarPark = int32(*req.NumCarPark)
+	}
+	if req.Furniture != nil {
+		result.Furniture = *req.Furniture
+	}
+	if req.Orientation != nil {
+		result.Orientation = *req.Orientation
+	}
+
+	return result
 }
 
 func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *domain.ProductPrivate {

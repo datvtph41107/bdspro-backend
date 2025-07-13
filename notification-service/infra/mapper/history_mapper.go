@@ -6,17 +6,22 @@ import (
 	"time"
 )
 
-func HistoryToPbs(histories []domain.HistoryEntity) []*notipb.HistoryDTO {
+type HistoryMapper struct {
+}
+
+func NewHistoryMapper() *HistoryMapper {
+	return &HistoryMapper{}
+}
+
+func (h *HistoryMapper) HistoryToPbs(histories []domain.HistoryEntity) []*notipb.HistoryDTO {
 	result := make([]*notipb.HistoryDTO, len(histories))
 	for i, history := range histories {
-		result[i] = HistoryDomainToPb(&history)
+		result[i] = h.HistoryDomainToPb(&history)
 	}
 	return result
 }
 
-// --map--
-
-func HistoryDomainToPb(history *domain.HistoryEntity) *notipb.HistoryDTO {
+func (h *HistoryMapper) HistoryDomainToPb(history *domain.HistoryEntity) *notipb.HistoryDTO {
 	return &notipb.HistoryDTO{
 		TargetId:   history.TargetId,
 		TargetType: int32(history.TargetType),

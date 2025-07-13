@@ -4,11 +4,11 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
-	"time"
 
-	"bdspro/internal/domain/transaction"
-
+	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	"bdspro/internal/repo"
+	iusecase "bdspro/internal/usecases/interface"
 )
 
 var (
@@ -17,34 +17,36 @@ var (
 )
 
 type TransactionUsecase interface {
-	CreateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
-	GetTransaction(ctx context.Context, id uint32) (*transaction.Transaction, error)
-	UpdateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error)
-	DeleteTransaction(ctx context.Context, id uint32) error
-	ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*transaction.Transaction, int64, error)
-	ApproveTransaction(ctx context.Context, id uint32, approvedBy uint32) error
-	RejectTransaction(ctx context.Context, id uint32) error
+	CreateTransaction(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error)
+	GetTransaction(ctx context.Context, id uint64) (*domain.Transaction, error)
+	UpdateTransaction(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error)
+	DeleteTransaction(ctx context.Context, id uint64) error
+	ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*domain.Transaction, int64, error)
+	ApproveTransaction(ctx context.Context, id uint64, approvedBy uint32) error
+	RejectTransaction(ctx context.Context, id uint64) error
 	GetTransactionTypes(ctx context.Context) ([]string, error)
 }
 
 type transactionUsecase struct {
 	transactionRepo repo.TransactionRepository
+	Transaction     iusecase.ITransaction
 }
 
-func NewTransactionUsecase(transactionRepo repo.TransactionRepository) TransactionUsecase {
+func NewTransactionUsecase(
+	transactionRepo repo.TransactionRepository,
+	transaction iusecase.ITransaction,
+) TransactionUsecase {
 	return &transactionUsecase{
 		transactionRepo: transactionRepo,
+		Transaction:     transaction,
 	}
 }
 
-func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
+func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
 	// Set default values
-	tx.TransactionStatus = transaction.TransactionStatusDraft
-	tx.ApprovalStatus = transaction.ApprovalStatusPending
-	tx.IsDeleted = false
-	tx.CreatedAt = time.Now()
-	tx.UpdatedAt = time.Now()
-	tx.OwnerId = uint32(_utils.GetProfileIdWithContext(ctx))
+	tx.TransactionStatus = enums.TransactionStatusDraft
+	tx.ApprovalStatus = enums.ApprovalStatusPending
+	tx.OwnerId = _utils.GetProfileIdWithContext(ctx)
 	entity, err := uc.transactionRepo.Create(ctx, tx)
 	if err != nil {
 		return nil, err
@@ -52,8 +54,8 @@ func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *transac
 	return entity, nil
 }
 
-func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint32) (*transaction.Transaction, error) {
-	tx, err := uc.transactionRepo.GetByID(ctx, id)
+func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint64) (*domain.Transaction, error) {
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +65,9 @@ func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint32) (*t
 	return tx, nil
 }
 
-func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transaction.Transaction) (*transaction.Transaction, error) {
+func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
 	// Get existing transaction
-	existingTx, err := uc.transactionRepo.GetByID(ctx, tx.Id)
+	existingTx, err := uc.transactionRepo.GetByID(ctx, &tx.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,6 @@ func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transac
 	existingTx.RelatedDealId = tx.RelatedDealId
 	existingTx.RelatedTransactionId = tx.RelatedTransactionId
 	existingTx.TransactionDate = tx.TransactionDate
-	existingTx.UpdatedAt = time.Now()
 
 	entity, err := uc.transactionRepo.Update(ctx, existingTx)
 	if err != nil {
@@ -92,9 +93,9 @@ func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *transac
 	return entity, nil
 }
 
-func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint32) error {
+func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint64) error {
 	// Check if transaction exists
-	existingTx, err := uc.transactionRepo.GetByID(ctx, id)
+	existingTx, err := uc.transactionRepo.GetByID(ctx, &id)
 	if err != nil {
 		return err
 	}
@@ -102,16 +103,16 @@ func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint32) 
 		return ErrNotFound
 	}
 
-	return uc.transactionRepo.Delete(ctx, id)
+	return uc.transactionRepo.Delete(ctx, uint32(id))
 }
 
-func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*transaction.Transaction, int64, error) {
+func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*domain.Transaction, int64, error) {
 	return uc.transactionRepo.List(ctx, filters)
 }
 
-func (uc *transactionUsecase) ApproveTransaction(ctx context.Context, id uint32, approvedBy uint32) error {
+func (uc *transactionUsecase) ApproveTransaction(ctx context.Context, id uint64, approvedBy uint32) error {
 	// Get existing transaction
-	tx, err := uc.transactionRepo.GetByID(ctx, id)
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
 	if err != nil {
 		return err
 	}
@@ -120,20 +121,20 @@ func (uc *transactionUsecase) ApproveTransaction(ctx context.Context, id uint32,
 	}
 
 	// Check if transaction can be approved
-	if tx.ApprovalStatus != transaction.ApprovalStatusPending {
+	if tx.ApprovalStatus != enums.ApprovalStatusPending {
 		return ErrInvalidState
 	}
 
-	err = uc.transactionRepo.Approve(ctx, id, approvedBy)
+	err = uc.transactionRepo.Approve(ctx, uint32(id), approvedBy)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (uc *transactionUsecase) RejectTransaction(ctx context.Context, id uint32) error {
+func (uc *transactionUsecase) RejectTransaction(ctx context.Context, id uint64) error {
 	// Get existing transaction
-	tx, err := uc.transactionRepo.GetByID(ctx, id)
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
 	if err != nil {
 		return err
 	}
@@ -142,11 +143,11 @@ func (uc *transactionUsecase) RejectTransaction(ctx context.Context, id uint32) 
 	}
 
 	// Check if transaction can be rejected
-	if tx.ApprovalStatus != transaction.ApprovalStatusPending {
+	if tx.ApprovalStatus != enums.ApprovalStatusPending {
 		return ErrInvalidState
 	}
 
-	err = uc.transactionRepo.Reject(ctx, id)
+	err = uc.transactionRepo.Reject(ctx, uint32(id))
 	if err != nil {
 		return err
 	}

@@ -167,6 +167,15 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 			enums.RuleThenMap[customer.Trigger],
 		},
 	})
+	u.client.CreateHistory(c, &shared_dto.HistoryDTO{
+		TargetId:   customer.RuleID,
+		TargetType: shared_enum.TargetHistoryRule,
+		ActionType: shared_enum.HistoryRuleEvent,
+		OwnerID:    &customer.OwnerID,
+		OwnerType:  customer.OwnerType,
+		Title:      "Quy tắc \"" + customer.RuleName + "\" đã kích hoạt cho \"" + customer.FullName + "\"",
+		Note:       []string{},
+	})
 	return nil
 }
 

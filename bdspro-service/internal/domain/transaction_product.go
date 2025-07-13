@@ -1,4 +1,4 @@
-package transaction
+package domain
 
 import (
 	"time"
@@ -6,8 +6,8 @@ import (
 
 // TransactionProduct represents the products associated with a transaction
 type TransactionProduct struct {
-	Id            uint32    
-	TransactionId uint32    
-	ProductId     uint32    
-	CreatedAt     time.Time 
-} 
+	Id            uint32
+	TransactionId uint32
+	ProductId     uint32
+	CreatedAt     time.Time
+}

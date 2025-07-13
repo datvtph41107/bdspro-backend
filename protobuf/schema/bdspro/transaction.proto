@@ -59,7 +59,7 @@ service TransactionService {
 }
 
 message Transaction {
-  uint32 id = 1;
+  uint64 id = 1;
   uint32 ownerId = 2;
   optional uint32 organizationId = 3;
   double amount = 4;
@@ -74,17 +74,23 @@ message Transaction {
   string approvalStatus = 13;
   optional uint32 approvedBy = 14;
   optional string approvalDate = 15;
-  string transactionStatus = 16;
+  uint32 transactionStatus = 16;
   string transactionDate = 17;
   bool isDeleted = 18;
   string createdAt = 19;
   string updatedAt = 20;
+  uint32 ownerType = 21;
+  optional uint32 productId = 22;
+  uint32 status = 23;
+  optional double depositeAmount = 24;
+  optional string depositeNote = 25;
+  optional uint64 contactId = 26;
 }
 
 message ListTransactionsRequest {
   optional string transactionType = 1;
   optional string approvalStatus = 2;
-  optional string transactionStatus = 3;
+  optional uint32 transactionStatus = 3;
   optional string startDate = 4;
   optional string endDate = 5;
   optional int32 page = 6;
@@ -107,7 +113,7 @@ message CreateTransactionRequest {
   string currency = 4;
   string transactionName = 5;
   string description = 6;
-  string transactionType = 7;
+  uint32 transactionType = 7;
   uint32 categoryId = 8;
   uint32 paymentMethodId = 9;
   optional uint32 relatedDealId = 10;

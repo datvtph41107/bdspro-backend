@@ -8,6 +8,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	shared_usecase "bdspro/internal/usecases/shared"
+	_dto "common/dto"
 	"context"
 	pb_bdspro "pb/types/bdspro"
 
@@ -18,11 +19,14 @@ import (
 
 type ProductService struct {
 	pb_bdspro.UnimplementedProductServiceServer
-	UC               *shared_usecase.ProductUsecase
-	ProductRepo      repo.ProductRepo
-	ProductMapper    *mapper.ProductMapper
-	ProductValidator *validator.ProductValidator
-	UserClient       *client.UserClient
+	UC                *shared_usecase.ProductUsecase
+	ProductRepo       repo.ProductRepo
+	ProductMapper     *mapper.ProductMapper
+	ProductValidator  *validator.ProductValidator
+	UserClient        *client.UserClient
+	DepositeMapper    *mapper.DepositeMapper
+	TransactionMapper mapper.TransactionTransformer
+	PostMapper        *mapper.PostMapper
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
@@ -30,13 +34,19 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	productMapper *mapper.ProductMapper,
 	productValidator *validator.ProductValidator,
 	userClient *client.UserClient,
+	depositeMapper *mapper.DepositeMapper,
+	transactionMapper mapper.TransactionTransformer,
+	postMapper *mapper.PostMapper,
 ) *ProductService {
 	return &ProductService{
-		UC:               uc,
-		ProductRepo:      productRepo,
-		ProductMapper:    productMapper,
-		ProductValidator: productValidator,
-		UserClient:       userClient,
+		UC:                uc,
+		ProductRepo:       productRepo,
+		ProductMapper:     productMapper,
+		ProductValidator:  productValidator,
+		UserClient:        userClient,
+		DepositeMapper:    depositeMapper,
+		TransactionMapper: transactionMapper,
+		PostMapper:        postMapper,
 	}
 }
 
@@ -183,10 +193,29 @@ func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChil
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
+// @Param body body pb_bdspro.Deposite true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/deposite [post]
-func (s *ProductService) Deposite(context.Context, *pb_bdspro.DepositRequest) (*pb_bdspro.Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Deposite not implemented")
+func (s *ProductService) ProductDeposite(ctx context.Context, req *pb_bdspro.DepositeRequest) (*pb_bdspro.Transaction, error) {
+	dto := s.DepositeMapper.MapDepositePbToDomain(req)
+
+	if dto.DepositeAmount == nil || *dto.DepositeAmount <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "deposite amount is required")
+	}
+
+	if dto.ContactID == nil || *dto.ContactID == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "contactId is required")
+	}
+
+	if dto.TransactionType != enums.TransactionTypeSale && dto.TransactionType != enums.TransactionTypeRent {
+		return nil, status.Errorf(codes.InvalidArgument, "transactionType is invalid")
+	}
+
+	result, err := s.UC.ProductDeposite(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+	transaction := s.TransactionMapper.EntityToTransactionResponse(result)
+	return transaction, nil
 }
 
 // @Summary Hủy cọc
@@ -195,10 +224,16 @@ func (s *ProductService) Deposite(context.Context, *pb_bdspro.DepositRequest) (*
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param depositeId path int true "Deposite ID"
-// @Router /v2/bdspro/v2/product/deposite/{depositeId} [delete]
-func (s *ProductService) DeleteDeposite(context.Context, *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteDeposite not implemented")
+// @Param transactionId path int true "Transaction ID"
+// @Router /v2/bdspro/v2/product/deposite/{transactionId} [delete]
+func (s *ProductService) DeleteDeposite(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+	err := s.UC.CancelDeposite(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb_bdspro.Response{
+		Message: "success",
+	}, nil
 }
 
 // @Summary Xuất danh sách sản phẩm ra Excel
@@ -244,8 +279,10 @@ func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSe
 		return nil, err
 	}
 
-	products := make([]*pb_bdspro.ProductResponse, 0)
-	copier.Copy(&products, &result)
+	products := s.ProductMapper.MapProductPbList(result)
+
+	// products := make([]*pb_bdspro.ProductResponse, 0)
+	// copier.Copy(&products, &result)
 	return &pb_bdspro.SearchResponse{
 		Data:          products,
 		TotalElements: uint32(total),
@@ -294,8 +331,12 @@ func (s *ProductService) RentStatus(ctx context.Context, req *pb_bdspro.StatusRe
 		return nil, status.Errorf(codes.InvalidArgument, "id, status is required")
 	}
 	body := dto.StatusUpdate{
-		ProductID: &req.Id,
-		Status:    enums.EProductStatus(req.Status),
+		ProductID:  &req.Id,
+		RentStatus: enums.EProductRentStatus(req.Status),
+		ContactID:  &req.ContactId,
+		Note:       req.Note,
+		Amount:     req.Amount,
+		Phone:      req.Phone,
 	}
 
 	err := s.UC.RentStatusUpdate(ctx, body)
@@ -346,8 +387,12 @@ func (s *ProductService) SaleStatus(ctx context.Context, req *pb_bdspro.StatusRe
 		return nil, status.Errorf(codes.InvalidArgument, "id, status is required")
 	}
 	body := dto.StatusUpdate{
-		ProductID: &req.Id,
-		Status:    enums.EProductStatus(req.Status),
+		ProductID:  &req.Id,
+		SaleStatus: enums.EProductSaleStatus(req.Status),
+		ContactID:  &req.ContactId,
+		Note:       req.Note,
+		Amount:     req.Amount,
+		Phone:      req.Phone,
 	}
 
 	err := s.UC.SaleStatusUpdate(ctx, body)
@@ -425,9 +470,9 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 	if err != nil {
 		return nil, err
 	}
-	productResponse := s.ProductMapper.MapProductPb(product)
-	if product.OwnerUserID != nil {
-		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, *product.OwnerUserID)
+	productResponse := s.ProductMapper.MapDetailProductPb(product)
+	if product.OwnerID != 0 && product.OwnerType == enums.EOwnerTypeMember {
+		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
 	return productResponse, nil
 }
@@ -491,16 +536,21 @@ func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdReques
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
 func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.PostResponse, error) {
-	query := dto.PostLinkSearch{}
-	if err := copier.Copy(&query, req); err != nil {
-		return nil, err
+	query := dto.PostLinkSearch{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		ProductID: &req.Id,
 	}
 	posts, err := s.UC.Posts(ctx, req.Id, query)
 	if err != nil {
 		return nil, err
 	}
-	postResponse := make([]*pb_bdspro.PostItem, 0)
-	copier.Copy(&postResponse, &posts)
+
+	postResponse := s.PostMapper.PostToPbList(posts)
+	// postResponse := make([]*pb_bdspro.PostItem, 0)
+	// copier.Copy(&postResponse, &posts)
 	return &pb_bdspro.PostResponse{
 		Data: postResponse,
 	}, nil

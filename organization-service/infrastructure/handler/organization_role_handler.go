@@ -56,6 +56,7 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 // @Produce json
 // @Param request body organizationpb.UpdateRoleRequest true "Thông tin vai trò"
 // @Security BearerAuth
+// @Param id path int true "ID của vai trò"
 // @Router /organization/role/{id} [put]
 func (h *OrganizationRoleHandler) UpdateRole(ctx context.Context, req *organizationpb.UpdateRoleRequest) (*organizationpb.UpdateRoleResponse, error) {
 	role := h.OrganizationRoleTransformer.UpdateRoleRequestToEntity(req)
@@ -134,12 +135,12 @@ func (h *OrganizationRoleHandler) GetRole(ctx context.Context, req *organization
 	if err := h.OrganizationRoleValidator.ValidateGetRoleRequest(req); err != nil {
 		return nil, err
 	}
-	
+
 	role, err := h.OrganizationRoleUsecase.GetRole(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return h.OrganizationRoleTransformer.EntityToGetRoleResponse(role), nil
 }
 

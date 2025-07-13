@@ -81,6 +81,14 @@ func (h *HistoryUsecase) ProductChildHistory(c context.Context, productId uint64
 	return histories, total, nil
 }
 
+func (h *HistoryUsecase) RuleEventHistory(c context.Context, ruleEventId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	history, total, err := h.historyRepo.RuleEventHistory(c, ruleEventId, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return history, total, nil
+}
+
 func (h *HistoryUsecase) Create(c context.Context, history *shared_dto.HistoryDTO) (*domain.HistoryEntity, error) {
 	historyEntity := &domain.HistoryEntity{
 		ActionType: history.ActionType,

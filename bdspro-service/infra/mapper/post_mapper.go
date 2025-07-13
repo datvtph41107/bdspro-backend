@@ -28,7 +28,15 @@ func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMe
 	}
 }
 
-func (m *PostMapper) PostToPbList(posts []*domain.Post) []*pb_bdspro.Post {
+func (m *PostMapper) PostToPbList(posts *[]domain.PostItem) []*pb_bdspro.Post {
+	postList := make([]*pb_bdspro.Post, len(*posts))
+	for i, post := range *posts {
+		postList[i] = m.PostToPb(&post)
+	}
+	return postList
+}
+
+func (m *PostMapper) PostPointerToPbList(posts []*domain.PostItem) []*pb_bdspro.Post {
 	postList := make([]*pb_bdspro.Post, len(posts))
 	for i, post := range posts {
 		postList[i] = m.PostToPb(post)
@@ -36,7 +44,7 @@ func (m *PostMapper) PostToPbList(posts []*domain.Post) []*pb_bdspro.Post {
 	return postList
 }
 
-func (m *PostMapper) PostToPb(post *domain.Post) *pb_bdspro.Post {
+func (m *PostMapper) PostToPb(post *domain.PostItem) *pb_bdspro.Post {
 	mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
 	for i, media := range post.MediaList {
 		mediaList[i] = m.MapPostMedia(&media)
@@ -44,10 +52,10 @@ func (m *PostMapper) PostToPb(post *domain.Post) *pb_bdspro.Post {
 	return &pb_bdspro.Post{
 		Id:              post.ID,
 		Title:           post.Title,
-		PostPrice:       post.Price,
+		PostPrice:       post.PostPrice,
 		PriceType:       uint32(post.PriceType),
 		PackageVisible:  uint32(post.PackageVisible),
-		TransactionType: post.TransactionType,
+		TransactionType: uint32(post.TransactionType),
 		Visibility:      uint32(post.Visibility),
 		Like:            post.Like,
 		Comment:         post.Comment,
@@ -80,7 +88,7 @@ func (m *PostMapper) PostSaveRequestToDTO(request *pb_bdspro.PostSaveRequest) *d
 		Title:           request.Title,
 		Content:         request.Content,
 		Price:           request.Price,
-		TransactionType: request.TransactionType,
+		TransactionType: enums.TransactionType(request.TransactionType),
 		Visibility:      enums.EVisibility(request.Visibility),
 		PackageVisible:  uint(request.PackageVisible),
 		ExpiredAt:       _utils.ParseStringToTime(request.ExpiredAt),

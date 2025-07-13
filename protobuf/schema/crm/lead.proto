@@ -65,6 +65,12 @@ service LeadService {
       get: "/v2/crm/lead/care-expired"
     };
   };
+  rpc Stage (LeadStageRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/lead/stage"
+      body: "*"
+    };
+  };
 }
 
 message CareExpiredResponse {

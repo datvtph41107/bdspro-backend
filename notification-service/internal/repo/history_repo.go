@@ -18,6 +18,7 @@ type HistoryRepo interface {
 	AssetHistory(c context.Context, assetId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 	ProductHistory(c context.Context, productId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 	ProductChildHistory(c context.Context, productId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
+	RuleEventHistory(c context.Context, ruleEventId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 	CreateHistory(c context.Context, entity *domain.HistoryEntity) error
 	ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)
 	// ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)

@@ -24,13 +24,13 @@ type PostUsecase struct {
 	ClientUC       iusecase.INotificationClient
 	ProductUsecase *ProductUsecase // forward reference
 	ProductRepo    repo.ProductRepo
-	Repo           repo.UPostRepo
+	Repo           repo.PostRepo
 	PostMediaRepo  repo.PostMediaRepo
 	AssetRepo      repo.AssetRepo
 	PlanUsecase    usecases.PlanUsecase
 }
 
-func NewSharedPostUsecase(repo repo.UPostRepo,
+func NewSharedPostUsecase(repo repo.PostRepo,
 	// planService *providers.MemberPlanProvider,
 	productRepo repo.ProductRepo,
 	postMediaRepo repo.PostMediaRepo,
@@ -76,7 +76,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		}
 	}
 	// plan := s.planService.Plans
-	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId); existed {
+	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId, dto.TransactionType); existed {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Tin đăng vẫn còn hạn",
@@ -90,6 +90,11 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	if numDate > 30 {
 		numDate = 30
 	}
+
+	// status := enums.EPostSelling
+	// if dto.TransactionType == 2 {
+	// 	status = enums.EPostRenting
+	// }
 	entity := &domain.Post{
 		ProductId:       dto.ProductID,
 		Title:           dto.Title,
@@ -101,8 +106,8 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		Visibility:      dto.Visibility,
 		NumDate:         numDate,
 		ExpiredAt:       dto.ExpiredAt,
-		Status:          enums.EPostPublic,
-		Hidden:          dto.Hidden,
+		// Status:          enums.EPostPublic,
+		Hidden: dto.Hidden,
 	}
 	if entity.ExpiredAt == nil {
 		expired := time.Now().Add(time.Duration(numDate) * 24 * time.Hour)
@@ -136,7 +141,7 @@ func (s *PostUsecase) UpdateHidden(c context.Context, dto dto.UpdateHiddenReques
 	entity.Hidden = dto.Hidden
 
 	err = _db.SaveWithContext(c, entity)
-	return entity, err
+	return &entity.Post, err
 }
 
 func (s *PostUsecase) Action(c context.Context, dto dto.ActionRequest) (*domain.Post, error) {
@@ -147,7 +152,7 @@ func (s *PostUsecase) Action(c context.Context, dto dto.ActionRequest) (*domain.
 
 	if dto.Action == 1 {
 		entity.NumView = entity.NumView + 1
-		err = _db.SaveWithContext(c, entity)
+		err = s.Save(c, &entity.Post)
 	}
 
 	return nil, err
@@ -159,7 +164,7 @@ func (s *PostUsecase) UpdatePost(c context.Context, id uint64, dto *dto.PostUpda
 		return nil, err
 	}
 
-	entity.TransactionType = dto.TransactionType
+	// entity.TransactionType = dto.TransactionType
 	entity.Title = dto.Title
 	entity.PriceType = dto.PriceType
 	entity.Price = dto.Price
@@ -168,16 +173,16 @@ func (s *PostUsecase) UpdatePost(c context.Context, id uint64, dto *dto.PostUpda
 	entity.Visibility = dto.Visibility
 	entity.PackageVisible = dto.PackageVisible
 
-	err = _db.SaveWithContext(c, entity)
+	err = s.Save(c, &entity.Post)
 
 	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
 		return nil, err
 	}
-	return entity, err
+	return &entity.Post, err
 }
 
-func (s *PostUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Post, error) {
-	post, err := s.Repo.GetByID(id)
+func (s *PostUsecase) RequiredOwner(c context.Context, id uint64) (*domain.PostItem, error) {
+	post, err := s.Repo.GetPostItemByID(c, id)
 	if err != nil {
 		return nil, err
 	}
@@ -235,15 +240,15 @@ func (s *PostUsecase) MakeNewExpired(c context.Context, dto dto.PostExpiredReque
 		VisibleAt: &visibleAt,
 	})
 
-	return entity, err
+	return &entity.Post, err
 }
 
 func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, error) {
-	post, err := s.Repo.GetByID(id)
+	post, err := s.Repo.GetPostItemByID(c, id)
 	if err != nil {
 		return nil, err
 	}
-	product, _ := s.ProductRepo.GetByIDContext(c, post.ProductId)
+	product, _ := s.ProductUsecase.Detail(c, post.ProductId)
 	if err != nil {
 		return nil, err
 	}
@@ -253,6 +258,8 @@ func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, err
 		asset, _ = s.AssetRepo.GetAssetByProductID(c, &post.ProductId)
 	}
 
+	s.MapPostStatus(post)
+
 	return &dto.PostDetail{
 		Post:        post,
 		ProductInfo: product,
@@ -260,11 +267,32 @@ func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, err
 	}, nil
 }
 
+func (s *PostUsecase) MapPostStatus(post *domain.PostItem) enums.EPostStatus {
+	// product := post.Product
+	transactionType := post.TransactionType
+	if transactionType == enums.TransactionTypeSale &&
+		post.TransactionStatus == enums.TransactionStatusCompleted {
+		post.Status = enums.EPostSold
+	} else if transactionType == enums.TransactionTypeSale {
+		post.Status = enums.EPostSelling
+	} else if transactionType == enums.TransactionTypeRent &&
+		post.TransactionStatus == enums.TransactionStatusCompleted {
+		post.Status = enums.EPostRented
+	} else {
+		post.Status = enums.EPostRenting
+	}
+	return post.Status
+}
+
 func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for i, entity := range entities {
+		entities[i].Status = s.MapPostStatus(&entity)
 	}
 
 	return entities, total, nil
@@ -281,7 +309,15 @@ func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) (
 
 func (s *PostUsecase) ProductPostLink(c context.Context, id uint64, dto *dto.PostLinkSearch) (*[]domain.PostItem, error) {
 	entities, err := s.Repo.SearchLinkToProduct(c, id, dto)
-	return &entities, err
+	if err != nil {
+		return nil, err
+	}
+
+	for i, entity := range entities {
+		entities[i].Status = s.MapPostStatus(&entity)
+	}
+
+	return &entities, nil
 }
 
 func (s *PostUsecase) Delete(c context.Context, id uint64) error {
@@ -290,7 +326,7 @@ func (s *PostUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	if requiredOwner.Status == enums.EPostPublic {
+	if requiredOwner.Status == enums.EPostSelling || requiredOwner.Status == enums.EPostRenting {
 		return &_routes.Except{
 			Code:    400,
 			Message: "Tin đăng đã được đăng",

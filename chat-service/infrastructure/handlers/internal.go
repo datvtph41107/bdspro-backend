@@ -23,7 +23,7 @@ type conversationUsecases interface {
 	DeleteRoom(ctx context.Context, conversationId uint64) error
 	GetSetting(ctx context.Context, conversationId uint64) (*models.ConversationModel, *models.ParticipantModel, error)
 	ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error
-	GetRoomMembers(ctx context.Context, conversationId uint64) ([]uint64, error)
+	GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error)
 	SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*models.ConversationModel, error)
 }
 

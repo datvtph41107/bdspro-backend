@@ -226,7 +226,7 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 // @Produce json
 // @Param body body crmpb.LeadStageRequest true "Chuyển trạng thái khách hàng"
 // @Security BearerAuth
-// @Router /lead/stage [post]
+// @Router /lead/stage [put]
 func (s *LeadService) Stage(ctx context.Context, req *crmpb.LeadStageRequest) (*crmpb.LeadDTO, error) {
 	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId)
 	return s.LeadMapper.LeadToPb(result), err

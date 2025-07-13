@@ -1895,6 +1895,34 @@ const docTemplate = `{
             }
         },
         "/organization/role/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy chi tiết vai trò theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vai trò"
+                ],
+                "summary": "Lấy chi tiết vai trò",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của vai trò",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
             "put": {
                 "security": [
                     {
@@ -1921,6 +1949,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/organizationpb.UpdateRoleRequest"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của vai trò",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}

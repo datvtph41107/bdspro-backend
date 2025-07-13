@@ -12,59 +12,63 @@ import (
 
 type Product struct {
 	_models.BaseEntity
-	ID              uint64               `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
-	ParentId        *uint64              `gorm:"type:int8" json:"parentId,omitempty"`
-	DepositeID      *uint64              `gorm:"type:int8" json:"depositeId,omitempty"`
-	Deposite        *Deposite            `gorm:"foreignKey:DepositeID;references:ID" json:"deposite,omitempty"`
-	AssetId         *uint64              `gorm:"type:int8" json:"assetId,omitempty"`
-	PropertyTypeId  *uint64              `json:"propertyTypeId,omitempty"`
-	PropertyType    *PropertyTypeItem    `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
-	DocTypeId       *uint64              `json:"docTypeId,omitempty"`
-	DocType         *DocTypeItem         `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
-	Amenities       []AmenityItem        `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
-	Visibility      enums.EVisibility    `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
-	Name            string               `gorm:"size:255" json:"name,omitempty"`
-	Code            string               `gorm:"size:15" json:"code,omitempty"`
-	CategoryID      *uint64              `json:"categoryId,omitempty"`
-	Area            float64              `json:"area"`
-	PositionUrl     string               `json:"positionUrl,omitempty"`
-	Description     string               `json:"description,omitempty"`
-	OrganizationID  *uint64              `json:"organizationId,omitempty"`
-	OrgStatus       int16                `json:"orgStatus,omitempty"`
-	LastPriceID     *uint64              `json:"lastPriceId,omitempty"`
-	Price           *ProductPrice        `gorm:"foreignKey:LastPriceID;references:ID" json:"price,omitempty"`
-	ApartmentID     *uint64              `json:"apartmentId,omitempty"`
-	Apartment       *Apartment           `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
-	ApartmentAttr   *ApartmentAttribute  `gorm:"-" json:"apartmentAttribute,omitempty"`
-	Build           *ProjectBuild        `gorm:"-" json:"build,omitempty"`
-	Project         *Project             `gorm:"-" json:"project,omitempty"`
-	Developer       *Developer           `gorm:"-" json:"developer,omitempty"`
-	SourceType      enums.ESourceType    `json:"sourceType,omitempty"`
-	CustomerID      *uint64              `json:"customerId,omitempty"`
-	PrivateData     *ProductPrivate      `json:"privateInfo,omitempty"`
-	Note            string               `json:"note,omitempty"`
-	TransactionType uint                 `gorm:"type:smallint;default:10" json:"transactionType"`
-	SaleStatus      enums.EProductStatus `gorm:"type:smallint;not null;default:10" json:"saleStatus"`     // 1=Chưa bán, 2=Đang bán, 3=Đã bán
-	SaleVisibility  enums.EVisibility    `gorm:"type:smallint;not null;default:10" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	RentStatus      enums.EProductStatus `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
-	RentVisibility  enums.EVisibility    `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	OwnerUserID     *uint64              `gorm:"type:int8" json:"ownerUserId,omitempty"`                  // Ai sở hữu (nếu đã bán)
-	OwnerType       enums.EOwnerType     `gorm:"type:smallint;not null;default:10" json:"ownerType"`      // 1=Cá nhân, 2=Tổ chức
-	ProvinceID      *uint64              `json:"provinceId,omitempty"`
-	Province        *Region              `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
-	DistrictID      *uint64              `json:"districtId,omitempty"`
-	District        *Region              `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
-	WardID          *uint64              `json:"wardId,omitempty"`
-	Ward            *Region              `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
-	Address         string               `gorm:"size:255" json:"address,omitempty"`
-	GoogleMapLink   string               `gorm:"size:255" json:"googleMapLink,omitempty"`
-	Attributes      []AttributeProduct   `gorm:"foreignKey:ProductID" json:"attributes,omitempty"`
-	MediaList       []ProductMediaItem   `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
-	HouseInfo       *HouseInfo           `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
-	Archived        bool                 `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+	// DepositeID      *uint64             `gorm:"type:int8" json:"depositeId,omitempty"`
+	// ID              uint64              `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
+	// Deposite        *Deposite           `gorm:"-" json:"deposite,omitempty"`
+	ParentId       *uint64             `gorm:"type:int8" json:"parentId,omitempty"`
+	AssetId        *uint64             `gorm:"type:int8" json:"assetId,omitempty"`
+	PropertyTypeId *uint64             `json:"propertyTypeId,omitempty"`
+	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
+	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
+	DocType        *DocTypeItem        `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
+	Amenities      []AmenityItem       `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
+	Visibility     enums.EVisibility   `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
+	Name           string              `gorm:"size:255" json:"name,omitempty"`
+	Code           string              `gorm:"size:15" json:"code,omitempty"`
+	CategoryID     *uint64             `json:"categoryId,omitempty"`
+	Area           float64             `json:"area"`
+	PositionUrl    string              `json:"positionUrl,omitempty"`
+	Description    string              `json:"description,omitempty"`
+	LastPriceID    *uint64             `json:"lastPriceId,omitempty"`
+	Price          *ProductPrice       `gorm:"foreignKey:LastPriceID;references:ID" json:"price,omitempty"`
+	ApartmentID    *uint64             `json:"apartmentId,omitempty"`
+	Apartment      *Apartment          `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
+	ApartmentAttr  *ApartmentAttribute `gorm:"-" json:"apartmentAttribute,omitempty"`
+	Build          *ProjectBuild       `gorm:"-" json:"build,omitempty"`
+	Project        *Project            `gorm:"-" json:"project,omitempty"`
+	Developer      *Developer          `gorm:"-" json:"developer,omitempty"`
+	SourceType     enums.ESourceType   `json:"sourceType,omitempty"`
+	// CustomerID        *uint64                  `json:"customerId,omitempty"`
+	PrivateData       *ProductPrivate          `json:"privateInfo,omitempty"`
+	Note              string                   `json:"note,omitempty"`
+	TransactionType   uint                     `gorm:"type:smallint;default:10" json:"transactionType"`
+	SaleStatus        enums.EProductSaleStatus `gorm:"type:smallint;not null;default:10" json:"saleStatus"` // 1=Chưa bán, 2=Đang bán, 3=Đã bán
+	SaleTransactionID *uint64                  `json:"saleTransactionId,omitempty"`
+	SaleTransaction   *Transaction             `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`
+	SaleVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	RentStatus        enums.EProductRentStatus `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
+	RentTransactionID *uint64                  `json:"rentTransactionId,omitempty"`
+	RentTransaction   *Transaction             `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
+	RentVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	OwnerID           uint64                   `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
+	OwnerType         enums.EOwnerType         `gorm:"type:smallint;not null;default:10" json:"ownerType"`
+	ProvinceID        *uint64                  `json:"provinceId,omitempty"`
+	Province          *Region                  `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
+	DistrictID        *uint64                  `json:"districtId,omitempty"`
+	District          *Region                  `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
+	WardID            *uint64                  `json:"wardId,omitempty"`
+	Ward              *Region                  `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
+	Address           string                   `gorm:"size:255" json:"address,omitempty"`
+	GoogleMapLink     string                   `gorm:"size:255" json:"googleMapLink,omitempty"`
+	MediaList         []ProductMediaItem       `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
+	HouseInfo         *HouseInfo               `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
+	Archived          bool                     `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
+	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`
 	// OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)
-	CreatedUser *ProfileInfo `gorm:"-" json:"createdUser,omitempty"`
-	UpdatedUser *ProfileInfo `gorm:"-" json:"updatedUser,omitempty"`
+	// OrganizationID  *uint64              `json:"organizationId,omitempty"`
+	// OrgStatus       int16                `json:"orgStatus,omitempty"`
+	// Attributes      []AttributeProduct   `gorm:"foreignKey:ProductID" json:"attributes,omitempty"`
 	// SalePriceTotal       *float64                `gorm:"type:DECIMAL(15,0)" json:"sale_price_total,omitempty"`                                                      // Giá bán niêm yết (công khai)
 	// SalePricePerM2       *float64                `gorm:"type:DECIMAL(15,2)" json:"sale_price_per_m2,omitempty"`                                                     // Giá bán/m² (công khai)
 	// SaleCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"sale_commission,omitempty"`                                                       // Hoa hồng bán (nội bộ)
@@ -100,16 +104,6 @@ func (Product) TableName() string {
 	return "products"
 }
 
-type ProductItem struct {
-	ID   uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name string `gorm:"size:255" json:"name"`
-	Code string `gorm:"size:15" json:"code"`
-}
-
-func (ProductItem) TableName() string {
-	return "products"
-}
-
 type ProductMarket struct {
 	ID               int64      `gorm:"column:id" json:"id"`
 	CreatedAt        time.Time  `gorm:"column:created_at" json:"createdAt"`
@@ -124,8 +118,7 @@ type ProductMarket struct {
 	SaleVisibility   int16      `gorm:"column:sale_visibility" json:"saleVisibility"`
 	RentStatus       int16      `gorm:"column:rent_status" json:"rentStatus"`
 	RentVisibility   int16      `gorm:"column:rent_visibility" json:"rentVisibility"`
-	OwnerUserID      *int64     `gorm:"column:owner_user_id" json:"ownerUserId"`
-	OwnerOrgID       *int64     `gorm:"column:owner_org_id" json:"ownerOrgId"`
+	OwnerID          *int64     `gorm:"column:owner_id" json:"ownerId"`
 	PropertyTypeID   *int64     `gorm:"column:property_type_id" json:"propertyTypeId"`
 	DocTypeID        *int64     `gorm:"column:doc_type_id" json:"docTypeId"`
 	PositionURL      *string    `gorm:"column:position_url" json:"positionUrl"`
@@ -163,9 +156,9 @@ type ProductMarket struct {
 	DocTypeName      *string `gorm:"column:doc_type_name" json:"docTypeName"`
 	PropertyTypeName *string `gorm:"column:property_type_name" json:"propertyTypeName"`
 
+	// PriceOwner         *int64   `gorm:"column:price_owner" json:"priceOwner"`
 	// Latest Product Price Info
 	Currency           *string  `gorm:"column:currency" json:"currency"`
-	PriceOwner         *int64   `gorm:"column:price_owner" json:"priceOwner"`
 	SalePrice          *float64 `gorm:"column:sale_price" json:"salePrice"`
 	SaleCommission     *int64   `gorm:"column:sale_commission" json:"saleCommission"`
 	SaleCommissionType *int64   `gorm:"column:sale_commission_type" json:"saleCommissionType"`
@@ -179,6 +172,9 @@ type ProductMarket struct {
 	TargetProfit       *int64   `gorm:"column:target_profit" json:"targetProfit"`
 	PrivateDocs        *float64 `gorm:"column:private_docs" json:"privateDocs"`
 	Deposite           *float64 `gorm:"column:deposite" json:"deposite"`
+
+	// OwnerOrgID       *int64     `gorm:"column:owner_org_id" json:"ownerOrgId"`
+
 }
 
 func (ProductMarket) TableName() string {

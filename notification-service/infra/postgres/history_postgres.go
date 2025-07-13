@@ -143,3 +143,7 @@ func (r *HistoryRepo) ProductHistory(c context.Context, productId uint64, dto dt
 func (r *HistoryRepo) ProductChildHistory(c context.Context, productId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
 	return r.HistoryWithEnumGroup(c, productId, shared_enum.HistoryProductChild, dto)
 }
+
+func (r *HistoryRepo) RuleEventHistory(c context.Context, ruleEventId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	return r.HistoryWithEnumGroup(c, ruleEventId, []shared_enum.EHistory{shared_enum.HistoryRuleEvent}, dto)
+}

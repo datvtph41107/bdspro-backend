@@ -101,7 +101,7 @@ func (h *TransactionHandler) GetTransactionDetail(ctx context.Context, req *bdsp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	transaction, err := h.TransactionUsecase.GetTransaction(ctx, req.Id)
+	transaction, err := h.TransactionUsecase.GetTransaction(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -163,7 +163,7 @@ func (h *TransactionHandler) DeleteTransaction(ctx context.Context, req *bdsprop
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := h.TransactionUsecase.DeleteTransaction(ctx, req.Id); err != nil {
+	if err := h.TransactionUsecase.DeleteTransaction(ctx, uint64(req.Id)); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -183,11 +183,11 @@ func (h *TransactionHandler) ApproveTransaction(ctx context.Context, req *bdspro
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := h.TransactionUsecase.ApproveTransaction(ctx, req.Id, 0); err != nil {
+	if err := h.TransactionUsecase.ApproveTransaction(ctx, uint64(req.Id), 0); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	transaction, err := h.TransactionUsecase.GetTransaction(ctx, req.Id)
+	transaction, err := h.TransactionUsecase.GetTransaction(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -206,11 +206,11 @@ func (h *TransactionHandler) RejectTransaction(ctx context.Context, req *bdsprop
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := h.TransactionUsecase.RejectTransaction(ctx, req.Id); err != nil {
+	if err := h.TransactionUsecase.RejectTransaction(ctx, uint64(req.Id)); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	transaction, err := h.TransactionUsecase.GetTransaction(ctx, req.Id)
+	transaction, err := h.TransactionUsecase.GetTransaction(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

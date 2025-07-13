@@ -47,7 +47,7 @@ func (r *OrgProductRouter) RegisterRoutes(router *gin.RouterGroup, path string) 
 		api.PUT("/rent-status", r.RentStatusUpdate)
 		api.PUT("/sale-visibility", r.SaleVisibilityUpdate)
 		api.PUT("/rent-visibility", r.RentVisibilityUpdate)
-		api.POST("/deposite", r.Deposite)
+		// api.POST("/deposite", r.Deposite)
 		api.DELETE("/deposite/:depositeId", r.CancelDeposite)
 		api.POST("/export", r.ExportExcel)
 	}
@@ -412,24 +412,24 @@ func (route *OrgProductRouter) SaleVisibilityUpdate(c *gin.Context) {
 	_routes.RouteResult(c, nil, err)
 }
 
-// @Summary Cọc
-// @Description API
-// @Tags Tổ chức: Sản phẩm
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v1/bdspro/v2/org/product/deposite [post]
-func (route *OrgProductRouter) Deposite(c *gin.Context) {
-	dto := dto.DepositeRequest{}
+// // @Summary Cọc
+// // @Description API
+// // @Tags Tổ chức: Sản phẩm
+// // @Accept json
+// // @Produce json
+// // @Security BearerAuth
+// // @Param body body dto.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
+// // @Router /v1/bdspro/v2/org/product/deposite [post]
+// func (route *OrgProductRouter) Deposite(c *gin.Context) {
+// 	dto := &dto.DepositeRequest{}
 
-	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	deposite, err := route.OrgProductUsecase.ProductDeposite(c, dto)
-	_routes.RouteResult(c, deposite, err)
-}
+// 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
+// 		_routes.RouteResult(c, nil, err)
+// 		return
+// 	}
+// 	deposite, err := route.OrgProductUsecase.ProductDeposite(c, dto)
+// 	_routes.RouteResult(c, deposite, err)
+// }
 
 // @Summary Hủy cọc
 // @Description API
@@ -579,11 +579,11 @@ func (route *OrgProductRouter) ExportExcel(c *gin.Context) {
 			product.Area,
 			product.Description,
 			product.TransactionType,
-			product.SaleStatus,
+			nil,
 			product.SaleVisibility,
-			product.RentStatus,
+			nil,
 			product.RentVisibility,
-			product.OwnerUserID,
+			product.OwnerID,
 			nil,
 			product.PositionUrl,
 			product.Address,
@@ -611,7 +611,7 @@ func (route *OrgProductRouter) ExportExcel(c *gin.Context) {
 			nilIfNil(product.DocType, func() any { return product.DocType.Name }),
 			nilIfNil(product.PropertyType, func() any { return product.PropertyType.Name }),
 			dereference(product.Price.Currency),
-			dereference(product.Price.PriceOwner),
+			// dereference(product.Price.PriceOwner),
 			dereference(product.Price.SalePrice),
 			product.Price.SaleCommission,
 			nil, //product.Price.SaleCommissionType,
@@ -624,7 +624,7 @@ func (route *OrgProductRouter) ExportExcel(c *gin.Context) {
 			nil, //product.Price.InternalNote,
 			nil, //product.Price.TargetProfit,
 			nil, //product.PrivateDocs,
-			nilIfNil(product.Deposite, func() any { return product.Deposite.Amount }),
+			nil,
 		}
 
 		for j, val := range values {

@@ -160,9 +160,9 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		UserId: uint32(profileId),
 	})
 
-	groups, _ := s.GroupClient.GetGroupByUserId(ctx, &organizationpb.GetGroupByUserIdRequest{
-		UserId: uint32(profileId),
-	})
+	// groups, _ := s.GroupClient.GetGroupByUserId(ctx, &organizationpb.GetGroupByUserIdRequest{
+	// 	UserId: uint32(profileId),
+	// })
 
 	profile, _ := s.ProfileRepo.GetByProfileID(profileId)
 	if profile == nil {
@@ -183,7 +183,7 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 
 	if orgs != nil && len(orgs.Data) > 0 {
 		for _, org := range orgs.Data {
-			ownerType := uint32(10)
+			ownerType := uint32(30)
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
 				// Id:              uint64(org.Id),
 				FullName:        &org.Name,
@@ -197,16 +197,16 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		}
 	}
 
-	if groups != nil && len(groups.Data) > 0 {
-		for _, group := range groups.Data {
-			accountInfos = append(accountInfos, &userpb.AccountInfo{
-				// Id:       uint64(group.Id),
-				FullName: &group.Name,
-				Avatar:   &group.AvatarUrl,
-				GroupId:  &group.Id,
-			})
-		}
-	}
+	// if groups != nil && len(groups.Data) > 0 {
+	// 	for _, group := range groups.Data {
+	// 		accountInfos = append(accountInfos, &userpb.AccountInfo{
+	// 			// Id:       uint64(group.Id),
+	// 			FullName: &group.Name,
+	// 			Avatar:   &group.AvatarUrl,
+	// 			GroupId:  &group.Id,
+	// 		})
+	// 	}
+	// }
 
 	return &userpb.AccountInfoResponse{
 		Data:  accountInfos,
