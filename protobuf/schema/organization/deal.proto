@@ -65,6 +65,13 @@ service GroupDealService {
             get: "/v2/org/deal/{id}/members"
         };
     }
+
+    rpc AddMemberToDeal(AddMemberToDealRequest) returns (AddMemberToDealResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/deal/add-member"
+            body: "*"
+        };
+    }
 }
 
 
@@ -206,4 +213,14 @@ message DealMember {
 message GetDealMembersResponse {
     repeated DealMember data = 1;
     uint32 total = 2;
+}
+
+message AddMemberToDealRequest {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
+}
+
+message AddMemberToDealResponse {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
 }

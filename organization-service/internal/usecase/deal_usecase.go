@@ -10,6 +10,8 @@ import (
 	"organization/internal/dto"
 	"organization/internal/enums"
 	iusecase "organization/internal/interface"
+
+	sharepb "pb/types/shared"
 )
 
 type DealUsecase interface {
@@ -21,6 +23,7 @@ type DealUsecase interface {
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
 	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
 	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
+	AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error
 }
 
 type groupDealUsecase struct {
@@ -32,6 +35,8 @@ type groupDealUsecase struct {
 	logWorker             *LogWorker
 	transaction           iusecase.ITransaction
 	notiClient            iusecase.INotiClient
+	dealMemberRepository  repository.DealMemberRepository
+	userClient            iusecase.IUserClient
 }
 
 func NewGroupDealUsecase(
@@ -43,6 +48,8 @@ func NewGroupDealUsecase(
 	logWorker *LogWorker,
 	transaction iusecase.ITransaction,
 	notiClient iusecase.INotiClient,
+	dealMemberRepository repository.DealMemberRepository,
+	userClient iusecase.IUserClient,
 ) DealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository:   groupDealRepository,
@@ -53,6 +60,8 @@ func NewGroupDealUsecase(
 		logWorker:             logWorker,
 		transaction:           transaction,
 		notiClient:            notiClient,
+		dealMemberRepository:  dealMemberRepository,
+		userClient:            userClient,
 	}
 }
 
@@ -66,7 +75,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			return nil, custom_error.Forbidden("you are not allowed to create deal")
 		}
 	}
-	
+
 	var createdDeal *entity.Deal
 
 	// todo: nhớ check xem các member có nằm trong group không
@@ -301,7 +310,6 @@ func (u *groupDealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.
 	info, err := u.investmentRepository.CountDashboard(ctx, &dto.InvestmentDTO{
 		DealID: id,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -407,4 +415,36 @@ func (u *groupDealUsecase) AccountInvestment(ctx context.Context, id uint64) (*e
 	}
 
 	return bankAccount, nil
+}
+
+func (u *groupDealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error {
+	deal, err := u.groupDealRepository.GetByID(ctx, dealID)
+	if err != nil {
+		return err
+	}
+	if deal == nil {
+		return custom_error.RecordNotFound("deal not found")
+	}
+
+	user, err := u.userClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: []uint64{memberID},
+	})
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return custom_error.RecordNotFound("user not found")
+	}
+
+	dealMember := &entity.DealMember{
+		DealID:   dealID,
+		MemberID: memberID,
+	}
+
+	err = u.dealMemberRepository.CreateMember(ctx, dealMember)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

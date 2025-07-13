@@ -15,6 +15,7 @@ type GroupDealValidator interface {
 	ValidateGetGroupDealRequest(request *organizationpb.GetGroupDealRequest) error
 	ValidateGetGroupDealsRequest(request *organizationpb.GetGroupDealsRequest) error
 	ValidateUpdateGroupDealStatusRequest(request *organizationpb.UpdateGroupDealStatusRequest) error
+	ValidateAddMemberToDealRequest(request *organizationpb.AddMemberToDealRequest) error
 }
 
 type groupDealValidator struct{}
@@ -193,6 +194,33 @@ func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *organ
 				{
 					Field:       "status",
 					Description: "status is required",
+				},
+			},
+		})
+	}
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+	return nil
+}
+func (v *groupDealValidator) ValidateAddMemberToDealRequest(request *organizationpb.AddMemberToDealRequest) error {
+	details := []protoadapt.MessageV1{}
+	if request.DealId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "deal_id",
+					Description: "deal_id is required",
+				},
+			},
+		})
+	}
+	if request.MemberId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "member_id",
+					Description: "member_id is required",
 				},
 			},
 		})

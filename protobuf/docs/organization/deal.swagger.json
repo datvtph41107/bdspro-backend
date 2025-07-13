@@ -91,6 +91,38 @@
         ]
       }
     },
+    "/v2/org/deal/add-member": {
+      "post": {
+        "operationId": "GroupDealService_AddMemberToDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbAddMemberToDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbAddMemberToDealRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{id}": {
       "get": {
         "operationId": "GroupDealService_GetGroupDeal",
@@ -344,6 +376,32 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbAddMemberToDealRequest": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "organizationpbAddMemberToDealResponse": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

@@ -237,3 +237,20 @@ func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.I
 		AccountName:   account.AccountName,
 	}, nil
 }
+
+
+func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizationpb.AddMemberToDealRequest) (*organizationpb.AddMemberToDealResponse, error) {
+	if err := h.GroupDealValidator.ValidateAddMemberToDealRequest(req); err != nil {
+		return nil, err
+	}
+
+	err := h.DealUsecase.AddMemberToDeal(ctx, req.DealId, req.MemberId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.AddMemberToDealResponse{
+		DealId: req.DealId,
+		MemberId: req.MemberId,
+	}, nil
+}
