@@ -254,3 +254,190 @@ func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizatio
 		MemberId: req.MemberId,
 	}, nil
 }
+
+// @Summary Tạo thương vụ cho tổ chức
+// @Description Tạo thương vụ cho tổ chức
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param organizationId path uint64 true "ID tổ chức"
+// @Param request body organizationpb.CreateOrganizationDealRequest true "Thông tin thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.CreateOrganizationDealResponse "Thành công"
+// @Router /organization/{organizationId}/deal [post]
+func (h *GroupDealHandler) CreateOrganizationDeal(ctx context.Context, req *organizationpb.CreateOrganizationDealRequest) (*organizationpb.CreateOrganizationDealResponse, error) {
+	// Lấy organizationId từ path parameter
+	organizationId := getOrganizationIdFromContext(ctx)
+	
+	deal := h.GroupDealTransformer.CreateOrganizationDealRequestToEntity(req)
+	
+	createdDeal, err := h.DealUsecase.CreateOrganizationDeal(ctx, organizationId, deal)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupDealTransformer.EntityToCreateOrganizationDealResponse(createdDeal), nil
+}
+
+// @Summary Tạo thương vụ cho nhóm
+// @Description Tạo thương vụ cho nhóm
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param groupId path uint64 true "ID nhóm"
+// @Param request body organizationpb.CreateGroupDealV2Request true "Thông tin thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.CreateGroupDealV2Response "Thành công"
+// @Router /group/{groupId}/deal [post]
+func (h *GroupDealHandler) CreateGroupDealV2(ctx context.Context, req *organizationpb.CreateGroupDealV2Request) (*organizationpb.CreateGroupDealV2Response, error) {
+	// Lấy groupId từ path parameter
+	groupId := getGroupIdFromContext(ctx)
+	
+	deal := h.GroupDealTransformer.CreateGroupDealV2RequestToEntity(req)
+	
+	createdDeal, err := h.DealUsecase.CreateGroupDeal(ctx, groupId, deal)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupDealTransformer.EntityToCreateGroupDealV2Response(createdDeal), nil
+}
+
+// @Summary Lấy danh sách thương vụ của tổ chức
+// @Description Lấy danh sách thương vụ của tổ chức
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param organizationId path uint64 true "ID tổ chức"
+// @Param page query uint32 false "Trang" default(1)
+// @Param size query uint32 false "Kích thước" default(10)
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetOrganizationDealsResponse "Thành công"
+// @Router /organization/{organizationId}/deals [get]
+func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organizationpb.GetOrganizationDealsRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
+	organizationId := req.OrganizationId
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+	
+
+	
+	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, page, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total), nil
+}
+
+// @Summary Lấy danh sách thương vụ của nhóm
+// @Description Lấy danh sách thương vụ của nhóm
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param groupId path uint64 true "ID nhóm"
+// @Param page query uint32 false "Trang" default(1)
+// @Param size query uint32 false "Kích thước" default(10)
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetGroupDealsV2Response "Thành công"
+// @Router /group/{groupId}/deals [get]
+func (h *GroupDealHandler) GetGroupDealsV2(ctx context.Context, req *organizationpb.GetGroupDealsV2Request) (*organizationpb.GetGroupDealsV2Response, error) {
+	groupId := req.GroupId
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+	
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 {
+		size = 10
+	}
+	
+	deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, groupId, page, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
+}
+
+// @Summary Cập nhật trạng thái thương vụ cho tổ chức
+// @Description Cập nhật trạng thái thương vụ cho tổ chức
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param organizationId path uint64 true "ID tổ chức"
+// @Param dealId path uint64 true "ID thương vụ"
+// @Param request body organizationpb.UpdateOrganizationDealStatusRequest true "Thông tin cập nhật"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.UpdateOrganizationDealStatusResponse "Thành công"
+// @Router /organization/{organizationId}/deal/{dealId}/status [put]
+func (h *GroupDealHandler) UpdateOrganizationDealStatus(ctx context.Context, req *organizationpb.UpdateOrganizationDealStatusRequest) (*organizationpb.UpdateOrganizationDealStatusResponse, error) {
+	err := h.DealUsecase.UpdateOrganizationDealStatus(ctx, req.OrganizationId, req.DealId, enums.DealStatus(req.Status))
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.UpdateOrganizationDealStatusResponse{DealId: req.DealId}, nil
+}
+
+// @Summary Cập nhật trạng thái thương vụ cho nhóm
+// @Description Cập nhật trạng thái thương vụ cho nhóm
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param groupId path uint64 true "ID nhóm"
+// @Param dealId path uint64 true "ID thương vụ"
+// @Param request body organizationpb.UpdateGroupDealStatusV2Request true "Thông tin cập nhật"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.UpdateGroupDealStatusV2Response "Thành công"
+// @Router /group/{groupId}/deal/{dealId}/status [put]
+func (h *GroupDealHandler) UpdateGroupDealStatusV2(ctx context.Context, req *organizationpb.UpdateGroupDealStatusV2Request) (*organizationpb.UpdateGroupDealStatusV2Response, error) {
+	err := h.DealUsecase.UpdateGroupDealStatusV2(ctx, req.GroupId, req.DealId, enums.DealStatus(req.Status))
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.UpdateGroupDealStatusV2Response{DealId: req.DealId}, nil
+}
+
+// @Summary Hủy thương vụ
+// @Description Hủy thương vụ với lý do
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param id path uint32 true "ID thương vụ"
+// @Param request body organizationpb.CancelDealRequest true "Lý do hủy"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.CancelDealResponse "Thành công"
+// @Router /deal/{id}/cancel [put]
+func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.CancelDealRequest) (*organizationpb.CancelDealResponse, error) {
+	err := h.DealUsecase.CancelDeal(ctx, uint64(req.Id), req.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.CancelDealResponse{Id: req.Id}, nil
+}
+
+// Helper functions để lấy ID từ context
+func getOrganizationIdFromContext(ctx context.Context) uint64 {
+	// Implementation sẽ được thêm sau khi có middleware
+	return 0
+}
+
+func getGroupIdFromContext(ctx context.Context) uint64 {
+	// Implementation sẽ được thêm sau khi có middleware
+	return 0
+}

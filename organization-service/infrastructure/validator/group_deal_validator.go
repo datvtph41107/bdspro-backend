@@ -203,6 +203,111 @@ func (v *groupDealValidator) ValidateUpdateGroupDealStatusRequest(request *organ
 	}
 	return nil
 }
+
+func (v *groupDealValidator) ValidateUpdateOrganizationDealStatusRequest(request *organizationpb.UpdateOrganizationDealStatusRequest) error {
+	details := []protoadapt.MessageV1{}
+	if request.OrganizationId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "organizationId",
+					Description: "organizationId is required",
+				},
+			},
+		})
+	}
+	if request.DealId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "dealId",
+					Description: "dealId is required",
+				},
+			},
+		})
+	}
+	if request.Status == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "status",
+					Description: "status is required",
+				},
+			},
+		})
+	}
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+	return nil
+}
+
+func (v *groupDealValidator) ValidateUpdateGroupDealStatusV2Request(request *organizationpb.UpdateGroupDealStatusV2Request) error {
+	details := []protoadapt.MessageV1{}
+	if request.GroupId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "groupId",
+					Description: "groupId is required",
+				},
+			},
+		})
+	}
+	if request.DealId == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "dealId",
+					Description: "dealId is required",
+				},
+			},
+		})
+	}
+	if request.Status == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "status",
+					Description: "status is required",
+				},
+			},
+		})
+	}
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+	return nil
+}
+
+func (v *groupDealValidator) ValidateCancelDealRequest(request *organizationpb.CancelDealRequest) error {
+	details := []protoadapt.MessageV1{}
+	if request.Id == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "id",
+					Description: "id is required",
+				},
+			},
+		})
+	}
+	if request.Reason == "" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "reason",
+					Description: "reason is required",
+				},
+			},
+		})
+	}
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+	return nil
+}
+
 func (v *groupDealValidator) ValidateAddMemberToDealRequest(request *organizationpb.AddMemberToDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.DealId == 0 {

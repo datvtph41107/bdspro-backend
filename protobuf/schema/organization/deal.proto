@@ -16,6 +16,22 @@ service GroupDealService {
         };
     }
 
+    // API tạo thương vụ cho tổ chức
+    rpc CreateOrganizationDeal(CreateOrganizationDealRequest) returns (CreateOrganizationDealResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/{organizationId}/deal"
+            body: "*"
+        };
+    }
+
+    // API tạo thương vụ cho nhóm
+    rpc CreateGroupDealV2(CreateGroupDealV2Request) returns (CreateGroupDealV2Response) {
+        option (google.api.http) = {
+            post: "/v2/org/group/{groupId}/deal"
+            body: "*"
+        };
+    }
+
     rpc UpdateGroupDeal(UpdateGroupDealRequest) returns (UpdateGroupDealResponse) {
         option (google.api.http) = {
             put: "/v2/org/deal/{id}"
@@ -41,9 +57,47 @@ service GroupDealService {
         };
     }
 
+    // API lấy danh sách thương vụ theo tổ chức
+    rpc GetOrganizationDeals(GetOrganizationDealsRequest) returns (GetOrganizationDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/{organizationId}/deals"
+        };
+    }
+
+    // API lấy danh sách thương vụ theo nhóm
+    rpc GetGroupDealsV2(GetGroupDealsV2Request) returns (GetGroupDealsV2Response) {
+        option (google.api.http) = {
+            get: "/v2/org/group/{groupId}/deals"
+        };
+    }
+
     rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
         option (google.api.http) = {
             put: "/v2/org/deal/{id}/status"
+            body: "*"
+        };
+    }
+
+    // API cập nhật trạng thái thương vụ cho tổ chức
+    rpc UpdateOrganizationDealStatus(UpdateOrganizationDealStatusRequest) returns (UpdateOrganizationDealStatusResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/{organizationId}/deal/{dealId}/status"
+            body: "*"
+        };
+    }
+
+    // API cập nhật trạng thái thương vụ cho nhóm
+    rpc UpdateGroupDealStatusV2(UpdateGroupDealStatusV2Request) returns (UpdateGroupDealStatusV2Response) {
+        option (google.api.http) = {
+            put: "/v2/org/group/{groupId}/deal/{dealId}/status"
+            body: "*"
+        };
+    }
+
+    // API hủy thương vụ với lý do
+    rpc CancelDeal(CancelDealRequest) returns (CancelDealResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/{id}/cancel"
             body: "*"
         };
     }
@@ -145,6 +199,35 @@ message UpdateGroupDealStatusResponse {
     uint32 id = 1;
 }
 
+message UpdateOrganizationDealStatusRequest {
+    uint64 organizationId = 1;
+    uint64 dealId = 2;
+    uint32 status = 3;
+}
+
+message UpdateOrganizationDealStatusResponse {
+    uint64 dealId = 1;
+}
+
+message UpdateGroupDealStatusV2Request {
+    uint64 groupId = 1;
+    uint64 dealId = 2;
+    uint32 status = 3;
+}
+
+message UpdateGroupDealStatusV2Response {
+    uint64 dealId = 1;
+}
+
+message CancelDealRequest {
+    uint32 id = 1;
+    string reason = 2;
+}
+
+message CancelDealResponse {
+    uint32 id = 1;
+}
+
 message GroupDeal {
     uint32 id = 1;
     string name = 2;
@@ -166,6 +249,7 @@ message GroupDeal {
     repeated sharepb.ProfileItem customers = 18;
     repeated sharepb.ProfileItem partners = 19;
     repeated sharepb.ProfileItem members = 20;
+    optional string cancelReason = 21;
 }
 
 message DocumentItem {
@@ -223,4 +307,68 @@ message AddMemberToDealRequest {
 message AddMemberToDealResponse {
     uint64 dealId = 1;
     uint64 memberId = 2;
+}
+
+// API cho tổ chức
+message CreateOrganizationDealRequest {
+    string name = 1;
+    double targetProfit = 2;
+    uint32 dealType = 3;
+    string note = 4;
+    optional uint64 bankAccountId = 5;
+    repeated DocumentItem documents = 6;
+    optional BankAccountItem bankAccount = 7;
+    repeated uint64 customerIds = 8;
+    repeated uint64 partnerIds = 9;
+    repeated uint64 memberIds = 10;
+    repeated uint64 productIds = 11;
+    uint64 chargePersonId = 12;
+    uint64 organizationId = 13;
+}
+
+message CreateOrganizationDealResponse {
+    uint32 id = 1;
+}
+
+message GetOrganizationDealsRequest {
+    uint64 organizationId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetOrganizationDealsResponse {
+    repeated GroupDeal data = 1 [json_name = "data"];
+    uint32 total = 2;
+}
+
+// API cho nhóm
+message CreateGroupDealV2Request {
+    string name = 1;
+    double targetProfit = 2;
+    uint32 dealType = 3;
+    string note = 4;
+    optional uint64 bankAccountId = 5;
+    repeated DocumentItem documents = 6;
+    optional BankAccountItem bankAccount = 7;
+    repeated uint64 customerIds = 8;
+    repeated uint64 partnerIds = 9;
+    repeated uint64 memberIds = 10;
+    repeated uint64 productIds = 11;
+    uint64 chargePersonId = 12;
+    uint64 groupId = 13;
+}
+
+message CreateGroupDealV2Response {
+    uint32 id = 1;
+}
+
+message GetGroupDealsV2Request {
+    uint64 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetGroupDealsV2Response {
+    repeated GroupDeal data = 1 [json_name = "data"];
+    uint32 total = 2;
 }

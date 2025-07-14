@@ -16,11 +16,17 @@ import (
 
 type DealUsecase interface {
 	CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
+	CreateOrganizationDeal(ctx context.Context, organizationId uint64, deal *entity.Deal) (*entity.Deal, error)
+	CreateGroupDeal(ctx context.Context, groupId uint64, deal *entity.Deal) (*entity.Deal, error)
 	UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	DeleteGroupDeal(ctx context.Context, id uint64) error
 	GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error)
 	GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error)
+	GetOrganizationDealsByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
+	UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error
+	UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error
+	CancelDeal(ctx context.Context, id uint64, reason string) error
 	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
 	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
 	AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error
@@ -37,6 +43,7 @@ type groupDealUsecase struct {
 	notiClient            iusecase.INotiClient
 	dealMemberRepository  repository.DealMemberRepository
 	userClient            iusecase.IUserClient
+	organizationAuthUsecase OrganizationAuthUsecase
 }
 
 func NewGroupDealUsecase(
@@ -50,6 +57,7 @@ func NewGroupDealUsecase(
 	notiClient iusecase.INotiClient,
 	dealMemberRepository repository.DealMemberRepository,
 	userClient iusecase.IUserClient,
+	organizationAuthUsecase OrganizationAuthUsecase,
 ) DealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository:   groupDealRepository,
@@ -62,6 +70,7 @@ func NewGroupDealUsecase(
 		notiClient:            notiClient,
 		dealMemberRepository:  dealMemberRepository,
 		userClient:            userClient,
+		organizationAuthUsecase: organizationAuthUsecase,
 	}
 }
 
@@ -171,6 +180,139 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 	return createdDeal, nil
 }
 
+func (u *groupDealUsecase) CreateOrganizationDeal(ctx context.Context, organizationId uint64, deal *entity.Deal) (*entity.Deal, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+
+	// Kiểm tra quyền - chỉ admin hoặc leader của tổ chức mới được tạo thương vụ
+	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), "CREATE_DEAL")
+	if err != nil || !hasPermission {
+		return nil, custom_error.Forbidden("you are not allowed to create deal for this organization")
+	}
+
+	// Set owner type và owner id
+	deal.OwnerType = enums.OwnerTypeOrganization
+	deal.OwnerId = organizationId
+
+	return u.createDealInternal(ctx, deal, "CREATE_ORGANIZATION_DEAL")
+}
+
+func (u *groupDealUsecase) CreateGroupDeal(ctx context.Context, groupId uint64, deal *entity.Deal) (*entity.Deal, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+
+	// Kiểm tra quyền - chỉ leader của nhóm mới được tạo thương vụ
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(groupId), uint32(currentUserId))
+	if err != nil {
+		return nil, custom_error.Forbidden("you are not allowed to create deal for this group")
+	}
+
+	// Set owner type và owner id
+	deal.OwnerType = enums.OwnerTypeGroup
+	deal.OwnerId = groupId
+
+	return u.createDealInternal(ctx, deal, "CREATE_GROUP_DEAL")
+}
+
+func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.Deal, logType string) (*entity.Deal, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	var createdDeal *entity.Deal
+	var err error
+
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		// tạo mới tài khoản nếu chưa tồn tại
+		bankAccount := deal.BankAccount
+		deal.BankAccount = nil
+		if bankAccount != nil && deal.BankAccountID == nil && deal.ChargePersonID != nil {
+			bankAccount.OwnerID = *deal.ChargePersonID
+			bankAccount.OwnerType = deal.OwnerType
+			bankAccount, err := u.bankAccountRepository.Create(ctx, bankAccount)
+			if err != nil {
+				return err
+			}
+			deal.BankAccountID = &bankAccount.ID
+		}
+
+		if len(deal.MemberIds) > 0 {
+			members := make([]entity.DealMember, len(deal.MemberIds))
+			for i, memberID := range deal.MemberIds {
+				members[i] = entity.DealMember{
+					MemberID:   memberID,
+					MemberType: enums.DealMemberTypeMember,
+				}
+			}
+			deal.Members = members
+		}
+
+		if len(deal.CustomerIds) > 0 {
+			customers := make([]entity.DealMember, len(deal.CustomerIds))
+			for i, customerID := range deal.CustomerIds {
+				customers[i] = entity.DealMember{
+					MemberID:   customerID,
+					MemberType: enums.DealMemberTypeCustomer,
+				}
+			}
+			deal.Customers = customers
+		}
+
+		if len(deal.PartnerIds) > 0 {
+			partners := make([]entity.DealMember, len(deal.PartnerIds))
+			for i, partnerID := range deal.PartnerIds {
+				partners[i] = entity.DealMember{
+					MemberID:   partnerID,
+					MemberType: enums.DealMemberTypePartner,
+				}
+			}
+			deal.Partners = partners
+		}
+
+		// tạo mới sản phẩm liên quan nếu chưa tồn tại
+		if len(deal.ProductIds) > 0 {
+			products := make([]entity.DealProduct, len(deal.ProductIds))
+			for i, productID := range deal.ProductIds {
+				products[i] = entity.DealProduct{
+					DealID:    deal.ID,
+					ProductID: productID,
+				}
+			}
+			deal.Products = products
+		}
+
+		if len(deal.Documents) > 0 {
+			for i := range deal.Documents {
+				deal.Documents[i].OwnerId = deal.ID
+				deal.Documents[i].DocOwner = enums.DocOwnerDeal
+			}
+		}
+
+		// tạo deal
+		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Ghi log
+	u.logWorker.Push(LogEvent{
+		GroupId: uint32(createdDeal.OwnerId),
+		ActorId: uint32(currentUserId),
+		LogType: logType,
+		LogData: "Created new deal",
+	})
+
+	// Gửi thông báo
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		u.SendNotification(cloneCtx, createdDeal, enums.NotiDealCreate)
+	}()
+
+	return createdDeal, nil
+}
+
 func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
 	existedDeal, err := u.groupDealRepository.GetByID(ctx, deal.ID)
 	if err != nil {
@@ -256,12 +398,11 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 }
 
 func (u *groupDealUsecase) GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	err := u.groupAuthUsecase.IsMemberGroup(ctx, uint32(groupID), uint32(currentUserId))
-	if err != nil {
-		return nil, 0, custom_error.Forbidden("you are not allowed to get deals")
-	}
 	return u.groupDealRepository.GetByGroupID(ctx, groupID, page, size)
+}
+
+func (u *groupDealUsecase) GetOrganizationDealsByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+	return u.groupDealRepository.GetByOrganizationID(ctx, organizationID, page, size)
 }
 
 func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
@@ -296,6 +437,115 @@ func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64,
 	go func() {
 		cloneCtx := _utils.CloneContext(ctx)
 		deal.Status = status
+		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
+	}()
+	return nil
+}
+
+func (u *groupDealUsecase) UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error {
+	deal, err := u.groupDealRepository.GetByID(ctx, dealId)
+	if err != nil {
+		return err
+	}
+
+	if deal == nil {
+		return custom_error.RecordNotFound("deal not found")
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), "UPDATE_DEAL_STATUS")
+	if err != nil || !hasPermission {
+		return custom_error.Forbidden("you are not allowed to update deal status for this organization")
+	}
+
+	err = u.groupDealRepository.UpdateStatus(ctx, dealId, status)
+	if err != nil {
+		return err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: uint32(deal.OwnerId),
+		LogType: "UPDATE_ORGANIZATION_DEAL_STATUS",
+		LogData: "Updated deal status to " + enums.DealStatusMap[enums.DealStatus(status)],
+	})
+
+	// todo: gửi thông báo cho các member của group
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		deal.Status = status
+		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
+	}()
+	return nil
+}
+
+func (u *groupDealUsecase) UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error {
+	deal, err := u.groupDealRepository.GetByID(ctx, dealId)
+	if err != nil {
+		return err
+	}
+
+	if deal == nil {
+		return custom_error.RecordNotFound("deal not found")
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err = u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(groupId), uint32(currentUserId))
+	if err != nil {
+		return custom_error.Forbidden("you are not allowed to update deal status for this group")
+	}
+
+	err = u.groupDealRepository.UpdateStatus(ctx, dealId, status)
+	if err != nil {
+		return err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: uint32(deal.OwnerId),
+		LogType: "UPDATE_GROUP_DEAL_STATUS_V2",
+		LogData: "Updated deal status to " + enums.DealStatusMap[enums.DealStatus(status)],
+	})
+
+	// todo: gửi thông báo cho các member của group
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		deal.Status = status
+		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
+	}()
+	return nil
+}
+
+func (u *groupDealUsecase) CancelDeal(ctx context.Context, id uint64, reason string) error {
+	deal, err := u.groupDealRepository.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if deal == nil {
+		return custom_error.RecordNotFound("deal not found")
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err = u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+	if err != nil {
+		return custom_error.Forbidden("you are not allowed to cancel deal")
+	}
+
+	err = u.groupDealRepository.UpdateStatusAndCancelReason(ctx, id, enums.DealStatusCanceled, reason)
+	if err != nil {
+		return err
+	}
+
+	u.logWorker.Push(LogEvent{
+		GroupId: uint32(deal.OwnerId),
+		ActorId: uint32(currentUserId),
+		LogType: "CANCEL_DEAL",
+		LogData: "Deal cancelled",
+	})
+
+	// todo: gửi thông báo cho các member của group
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		deal.Status = enums.DealStatusCanceled
 		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
 	return nil

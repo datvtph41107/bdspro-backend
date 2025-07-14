@@ -19,6 +19,7 @@ type Deal struct {
 	Note           string
 	NumMember      uint32 `gorm:"-"`
 	ChargePersonID *uint64
+	CancelReason   *string          // Lý do hủy thương vụ
 	Products       []DealProduct    `gorm:"foreignKey:DealID;references:ID"`
 	ProductIds     []uint64         `gorm:"-"`
 	Documents      []AttachDocument `gorm:"foreignKey:OwnerId;references:ID;-:migration"`

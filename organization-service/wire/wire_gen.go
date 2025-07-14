@@ -85,7 +85,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgresTransaction := postgres.NewPostgresTransaction(db)
 	notificationClient := client.NewNotificationClient()
 	dealMemberPostgresRepository := postgres.NewDealMemberPostgresRepository(db)
-	dealUsecase := usecase.NewGroupDealUsecase(groupDealPostgresRepository, investmentPostgres, bankAccountPostgresRepository, documentPostgresRepository, groupAuthUsecase, logWorker, postgresTransaction, notificationClient, dealMemberPostgresRepository, userClient)
+	dealUsecase := usecase.NewGroupDealUsecase(groupDealPostgresRepository, investmentPostgres, bankAccountPostgresRepository, documentPostgresRepository, groupAuthUsecase, logWorker, postgresTransaction, notificationClient, dealMemberPostgresRepository, userClient, organizationAuthUsecase)
 	documentMapper := transformer.NewDocumentMapper()
 	bankAccountMapper := transformer.NewBankAccountMapper()
 	groupDealTransformer := transformer.NewGroupDealTransformer(documentMapper, bankAccountMapper)

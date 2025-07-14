@@ -251,6 +251,46 @@
         ]
       }
     },
+    "/v2/org/deal/{id}/cancel": {
+      "put": {
+        "summary": "API hủy thương vụ với lý do",
+        "operationId": "GroupDealService_CancelDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCancelDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceCancelDealBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{id}/investment": {
       "get": {
         "operationId": "GroupDealService_InfoInvestment",
@@ -351,9 +391,415 @@
           "GroupDealService"
         ]
       }
+    },
+    "/v2/org/group/{groupId}/deal": {
+      "post": {
+        "summary": "API tạo thương vụ cho nhóm",
+        "operationId": "GroupDealService_CreateGroupDealV2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupDealV2Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceCreateGroupDealV2Body"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/group/{groupId}/deal/{dealId}/status": {
+      "put": {
+        "summary": "API cập nhật trạng thái thương vụ cho nhóm",
+        "operationId": "GroupDealService_UpdateGroupDealStatusV2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateGroupDealStatusV2Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusV2Body"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/group/{groupId}/deals": {
+      "get": {
+        "summary": "API lấy danh sách thương vụ theo nhóm",
+        "operationId": "GroupDealService_GetGroupDealsV2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDealsV2Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/organization/{organizationId}/deal": {
+      "post": {
+        "summary": "API tạo thương vụ cho tổ chức",
+        "operationId": "GroupDealService_CreateOrganizationDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceCreateOrganizationDealBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/organization/{organizationId}/deal/{dealId}/status": {
+      "put": {
+        "summary": "API cập nhật trạng thái thương vụ cho tổ chức",
+        "operationId": "GroupDealService_UpdateOrganizationDealStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateOrganizationDealStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateOrganizationDealStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/organization/{organizationId}/deals": {
+      "get": {
+        "summary": "API lấy danh sách thương vụ theo tổ chức",
+        "operationId": "GroupDealService_GetOrganizationDeals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationDealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
     }
   },
   "definitions": {
+    "GroupDealServiceCancelDealBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "GroupDealServiceCreateGroupDealV2Body": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "bankAccountId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
+        },
+        "customerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "API cho nhóm"
+    },
+    "GroupDealServiceCreateOrganizationDealBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "bankAccountId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
+        },
+        "customerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "API cho tổ chức"
+    },
     "GroupDealServiceUpdateGroupDealBody": {
       "type": "object",
       "properties": {
@@ -371,6 +817,24 @@
       }
     },
     "GroupDealServiceUpdateGroupDealStatusBody": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "GroupDealServiceUpdateGroupDealStatusV2Body": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "GroupDealServiceUpdateOrganizationDealStatusBody": {
       "type": "object",
       "properties": {
         "status": {
@@ -419,6 +883,15 @@
         },
         "accountName": {
           "type": "string"
+        }
+      }
+    },
+    "organizationpbCancelDealResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -512,6 +985,24 @@
         }
       }
     },
+    "organizationpbCreateGroupDealV2Response": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbCreateOrganizationDealResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "organizationpbDealMember": {
       "type": "object",
       "properties": {
@@ -590,6 +1081,38 @@
       }
     },
     "organizationpbGetGroupDealsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbGroupDeal"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetGroupDealsV2Response": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbGroupDeal"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetOrganizationDealsResponse": {
       "type": "object",
       "properties": {
         "data": {
@@ -696,6 +1219,9 @@
             "type": "object",
             "$ref": "#/definitions/sharepbProfileItem"
           }
+        },
+        "cancelReason": {
+          "type": "string"
         }
       }
     },
@@ -767,6 +1293,24 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbUpdateGroupDealStatusV2Response": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "organizationpbUpdateOrganizationDealStatusResponse": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
