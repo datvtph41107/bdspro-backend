@@ -150,6 +150,21 @@ var wireSet = wire.NewSet(
 	organization_internal_usecase.NewDealTransactionUsecase,
 	organization_infrastructure_validator.NewDealTransactionValidator,
 	organization_infrastructure_handler.NewDealTransactionHandler,
+	// Deal Commission
+	organization_internal_usecase.NewDealCommissionUsecase,
+	organization_infrastructure_transformer.NewDealCommissionTransformer,
+	organization_infrastructure_validator.NewDealCommissionValidator,
+	organization_infrastructure_handler.NewDealCommissionHandler,
+)
+
+// Deal Commission
+var dealCommissionSet = wire.NewSet(
+	organization_infrastructure_repository_postgres.NewDealMemberPostgresRepository,
+	wire.Bind(new(organization_internal_domain_repository.DealMemberRepository), new(*organization_infrastructure_repository_postgres.DealMemberPostgresRepository)),
+	organization_internal_usecase.NewDealCommissionUsecase,
+	organization_infrastructure_transformer.NewDealCommissionTransformer,
+	organization_infrastructure_validator.NewDealCommissionValidator,
+	organization_infrastructure_handler.NewDealCommissionHandler,
 )
 
 func InitializeApp() (*config.ConfigApp, error) {

@@ -36,5 +36,7 @@ func AutoMigrate() {
 
 	db.AutoMigrate(&entity.DealMember{})
 	db.AutoMigrate(&entity.DealTransaction{})
-
+	
+	// Thêm migration cho DealMemberModel với các trường hoa hồng
+	db.AutoMigrate(&postgres.DealMemberModel{})
 }
