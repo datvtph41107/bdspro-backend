@@ -5,6 +5,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"time"
+
 	"social/internal/domain"
 	"social/internal/enums"
 	iusecase "social/internal/interface"
@@ -152,7 +154,7 @@ func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enum
 		TargetType: targetType,
 		UserID:     profileId,
 		DisLike:    dislike,
-		CreatedAt:  _utils.NowPtr(),
+		CreatedAt:  &time.Time{},
 	}
 
 	if liked != nil {

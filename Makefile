@@ -8,21 +8,6 @@ proto:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path $(word 2, $(MAKECMDGOALS))
 run:
 	cd $(word 2, $(MAKECMDGOALS))-service && go run main.go $(word 3, $(MAKECMDGOALS))
-gateway:
-	cd gateway-service && go run main.go http
-crm:
-	cd crm-service && go run main.go grpc
-org:
-	cd organization-service && go run main.go grpc-server
-
-init:
-	cd gateway-service && go mod tidy
-	cd user-service && go mod tidy
-	cd organization-service && go mod tidy
-	cd appointment-service && go mod tidy
-	cd payment-service && go mod tidy
-	cd notification-service && go mod tidy
-	cd chat-service && go mod tidy
 
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
@@ -32,7 +17,7 @@ buf-document:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path document
 buf-social:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path social
-buf-noti:
+buf-notification:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path notification
 buf-user:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path user
@@ -50,52 +35,75 @@ buf-payment:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path payment
 buf-chat:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path chat
-buf-all: buf-social buf-noti buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat
+buf-task:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path task
+
+buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task 
 	echo "done"	
 	
+init:
+	cd gateway-service && go mod tidy
+	cd user-service && go mod tidy
+	cd organization-service && go mod tidy
+	cd appointment-service && go mod tidy
+	cd payment-service && go mod tidy
+	cd notification-service && go mod tidy
+	cd chat-service && go mod tidy
+	cd social-service && go mod tidy
+	cd file-service && go mod tidy
+	cd membership-service && go mod tidy
+	cd relay-service && go mod tidy
+	cd bdspro-service && go mod tidy
+	cd crm-service && go mod tidy
+	
 
-bdspro:
-	cd bdspro-service && go run main.go grpc
-user:
-	cd user-service && go run main.go grpc
-admin:
-	cd admin-service && go run main.go grpc
-organization:
-	cd organization-service && go run main.go grpc-server
-noti:
-	cd notification-service && go run main.go grpc
-social:
-	cd social-service && go run main.go grpc
-appointment:
-	cd appointment-service && go run main.go grpc-server
+gateway-http:
+	cd gateway-service && air http
+crm-grpc:
+	cd crm-service && air grpc
+bdspro-grpc:
+	cd bdspro-service && air grpc 
 user-http:
-	cd user-service && go run main.go http
-chat:
-	cd chat-service && go run main.go grpc
-swag-merge:
-	cd code/script/merge_swagger && go run runtime.go
+	cd user-service && air http
+user-grpc:
+	cd user-service && air grpc
+organization:
+	cd organization-service && air grpc
+notification:
+	cd notification-service && air grpc
+social:
+	cd social-service && air grpc
+appointment:
+	cd appointment-service && air grpc
 chat-http:
-	cd chat-service && go run main.go http-serve
-relay:
-	cd relay-service && go run main.go grpc-server
-chat-swagger:
-	cd chat-service && go run main.go swagger-serve
-payment:
-	cd payment-service && go run main.go grpc
+	cd chat-service && air grpc
 chat-grpc:
-	cd chat-service && go run main.go grpc-serve
-membership:
-	cd membership-service && go run main.go grpc-server
-file:
-	cd file-service && go run main.go
+	cd chat-service && air grpc
+relay-grpc:
+	cd relay-service && air
+payment-grpc:
+	cd payment-service && air grpc
+membership-grpc:
+	cd membership-service && air grpc
+file-http:
+	cd file-service && air http
+
 
 start-all:
-	make buf-all
-	make swag-merge
-	make chat-http
-	make chat-ws
-	make chat-swagger
-	make payment
-	make org
-	make user-http
-	make chat
+	@echo "Starting all services..."
+	$(MAKE) gateway-http &
+	$(MAKE) crm-grpc &
+	$(MAKE) bdspro-grpc &
+	$(MAKE) user-http &
+	$(MAKE) user-grpc &
+	$(MAKE) organization &
+	$(MAKE) notification &
+	$(MAKE) social &
+	$(MAKE) appointment &
+	$(MAKE) chat-http &
+	$(MAKE) chat-grpc &
+	$(MAKE) relay-grpc &
+	$(MAKE) payment-grpc &
+	$(MAKE) membership-grpc &
+	$(MAKE) file-http &
+	wait
