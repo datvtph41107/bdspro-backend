@@ -21,17 +21,18 @@ func NewGormPostMediaRepo(db *gorm.DB) *GormPostMediaRepo {
 
 func (r *GormPostMediaRepo) UpdateMediaItems(c context.Context, postID uint64, mediaItems []dto.PostMediaItem) error {
 	// Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
-	tx := r.DB.WithContext(c).Begin()
+	// tx := r.DB.WithContext(c).Begin()
+	tx := GetDB(c, r.DB)
 
 	// Xóa các bản ghi cũ trong bảng
 	if err := tx.Where("post_id = ?", postID).Delete(&domain.PostMediaEntity{}).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Nếu danh sách amenityIDs rỗng -> không cần thêm mới, chỉ cần xóa là đủ
 	if len(mediaItems) == 0 {
-		tx.Commit()
+		// tx.Commit()
 		return nil
 	}
 
@@ -49,12 +50,12 @@ func (r *GormPostMediaRepo) UpdateMediaItems(c context.Context, postID uint64, m
 
 	// Chèn danh sách mới vào bảng nối
 	if err := tx.Create(&postMedia).Error; err != nil {
-		tx.Rollback()
+		// tx.Rollback()
 		return err
 	}
 
 	// Commit transaction
-	tx.Commit()
+	// tx.Commit()
 	return nil
 }
 

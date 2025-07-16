@@ -11,6 +11,7 @@ import (
 	sharepb "pb/types/shared"
 	socialpb "pb/types/social"
 	"social/infra/client"
+	"social/infra/mapper"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
@@ -24,6 +25,7 @@ type NewsFeedService struct {
 	newsFeedShareUsecase *usecase.NewsFeedShareUsecase
 	bdsproClient         *client.BdsproClient
 	userClient           *client.UserClient
+	newsFeedMapper       *mapper.NewsFeedMapper
 	socialpb.UnimplementedNewsFeedServiceServer
 }
 
@@ -32,12 +34,14 @@ func NewNewsFeedService(
 	newsFeedShareUsecase *usecase.NewsFeedShareUsecase,
 	bdsproClient *client.BdsproClient,
 	userClient *client.UserClient,
+	mapper *mapper.NewsFeedMapper,
 ) *NewsFeedService {
 	return &NewsFeedService{
 		newsFeedUsecase:      newsFeedUsecase,
 		newsFeedShareUsecase: newsFeedShareUsecase,
 		bdsproClient:         bdsproClient,
 		userClient:           userClient,
+		newsFeedMapper:       mapper,
 	}
 }
 
@@ -172,6 +176,34 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *socialpb.Share
 	return &socialpb.ShareResponse{
 		Id:      newsFeedShare.ID,
 		Success: true,
+	}, nil
+}
+
+// @Summary Get news feed by id
+// @Description Get news feed by id
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param newsFeedId path uint64 true "NewsFeedId"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /news-feed/public/reel [get]
+func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRequest) (*socialpb.ListReelResponse, error) {
+	reqPagable := _dto.Pagable{
+		Page: int(req.Page),
+		Size: int(req.Size),
+	}
+	newsFeed, count, err := s.newsFeedUsecase.GetReelNewsFeed(ctx, reqPagable)
+	if err != nil {
+		return nil, err
+	}
+
+	result := s.newsFeedMapper.DomainToReelResponseList(newsFeed)
+	s.userClient.PbUserToReels(ctx, result)
+
+	return &socialpb.ListReelResponse{
+		Data:  result,
+		Total: count,
 	}, nil
 }
 

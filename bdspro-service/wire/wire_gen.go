@@ -70,7 +70,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgreProductChild := postgre.NewPostgreProductChildRepo(db)
 	transactionGorm := postgre.NewTransactionGorm(db)
 	transactionUsecase := usecases.NewTransactionUsecase(transactionRepository, transactionGorm)
-	productUsecase := shared_usecase.NewProductUsecase(gormUserProductRepo, postgreHistoryRepo, postgreAsset, gormProductMediaRepo, sharingAccessPostgre, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, postgreRegion, postgreDocType, postgrePropertyType, postgreAmenity, memberPlanUsecase, postUsecase, postgreProductChild, notificationClient, transactionGorm, transactionUsecase, transactionRepository)
+	productUsecase := shared_usecase.NewProductUsecase(gormUserProductRepo, postgreHistoryRepo, postgreAsset, gormProductMediaRepo, sharingAccessPostgre, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, postgreRegion, postgreDocType, postgrePropertyType, postgreAmenity, memberPlanUsecase, postUsecase, postgreProductChild, notificationClient, transactionGorm, transactionUsecase, transactionRepository, assetUsecase)
 	userProductRouter := user_router.NewUserProductRouter(productUsecase)
 	userPostRouter := user_router.NewUserPostRoute(postUsecase)
 	postMediaUsecase := usecases.NewUPostMediaUsecase(gormPostMediaRepo)

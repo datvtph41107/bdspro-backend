@@ -1,9 +1,9 @@
 package mapper
 
 import (
+	_utils "common/utils"
 	"noti/internal/domain"
 	notipb "pb/types/notification"
-	"time"
 )
 
 type HistoryMapper struct {
@@ -31,7 +31,9 @@ func (h *HistoryMapper) HistoryDomainToPb(history *domain.HistoryEntity) *notipb
 		AfterStage: history.AfterStage,
 		OwnerId:    history.OwnerID,
 		OwnerType:  int32(history.OwnerType),
-		CreatedAt:  history.CreatedAt.Format(time.RFC3339),
+		CreatedAt:  _utils.FormatTimeToString(history.CreatedAt),
+		ActionUser: "Hệ thống",
+		ActionName: "Thao tác",
 		// CreatedBy:  history.CreatedBy,
 		Title: history.Title,
 	}

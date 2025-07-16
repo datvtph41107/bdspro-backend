@@ -1,9 +1,9 @@
-FROM alpine:latest
+FROM file-ffmpeg
 
 WORKDIR /
 
-COPY main .
+COPY docs docs
 
-EXPOSE 8080
+COPY main .
 
 CMD ["./main"]

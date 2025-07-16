@@ -320,6 +320,7 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 		Address:    product.Address,
 		SaleStatus: uint32(product.SaleStatus),
 		RentStatus: uint32(product.RentStatus),
+		AssetId:    product.AssetId,
 	}
 
 	if product.District != nil {
@@ -635,29 +636,49 @@ func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *d
 	// PostCreate:     req.PostCreate,
 	// 	AssetCreate:    req.AssetCreate,
 	if req.Post != nil {
-		result.PostCreate = &dto.PostSaveWithProduct{
+		size := len(req.Post.Metadatas)
+		metadatas := make([]dto.PostMediaItem, size)
+		for i, item := range req.Post.Metadatas {
+			metadatas[i] = dto.PostMediaItem{
+				MediaURL:  item.MediaUrl,
+				MediaType: item.MediaType,
+				Order:     (size - i) * 10,
+			}
+		}
+
+		result.PostCreate = &dto.PostSaveRequest{
 			ProductID:       req.Post.ProductId,
 			Title:           req.Post.Title,
 			Content:         req.Post.Content,
-			TransactionType: uint(req.Post.TransactionType),
+			TransactionType: enums.TransactionType(req.Post.TransactionType),
 			Visibility:      enums.EVisibility(req.Post.Visibility),
 			PackageVisible:  uint(req.Post.PackageVisible),
+			NumDate:         int(req.Post.NumDate),
+			Hidden:          req.Post.Hidden,
+			Medatadatas:     metadatas,
 			// ExpiredAt:       _utils.ParseStringToTime(req.Post.ExpiredAt),
-			NumDate: int(req.Post.NumDate),
-			Hidden:  req.Post.Hidden,
-			// Metadatas:       req.Post.Metadatas,
 			// Price:           req.Post.PostPrice,
 		}
 	}
 
 	if req.Asset != nil {
+		legalItems := make([]domain.AssetLegal, len(req.Asset.LegalItems))
+		for i, item := range req.Asset.LegalItems {
+			legal := &domain.AssetLegal{
+				DocumentURL:  item.DocumentUrl,
+				DocumentName: item.DocumentName,
+				DocumentType: item.DocumentType,
+			}
+			legalItems[i] = *legal
+		}
+
 		result.AssetCreate = &dto.AssetCreateWithProduct{
-			PurchasePrice: result.AssetCreate.PurchasePrice,
-			PurchaseDate:  result.AssetCreate.PurchaseDate,
-			LegalStatus:   result.AssetCreate.LegalStatus,
-			RentStatus:    result.AssetCreate.RentStatus,
-			Description:   result.AssetCreate.Description,
-			LegalItems:    result.AssetCreate.LegalItems,
+			PurchasePrice: req.Asset.PurchasePrice,
+			// PurchaseDate:  req.Asset.PurchaseDate,
+			LegalStatus: uint(req.Asset.LegalStatus),
+			RentStatus:  enums.EAssetStatus(req.Asset.RentStatus),
+			Description: req.Asset.Description,
+			LegalItems:  legalItems,
 		}
 	}
 
@@ -751,3 +772,20 @@ func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *doma
 		TargetProfit:  &req.TargetProfit,
 	}
 }
+
+
+// cmd := exec.Command("ffmpeg",
+// 			"-i", filePath,
+// 			"-preset", "ultrafast",
+// 			"-b:v", "8000k", // 8 Mbps video bitrate
+// 			"-maxrate", "8000k", // Giữ ổn định
+// 			"-bufsize", "16000k",
+// 			"-profile:v", "baseline",
+// 			"-level", "3.0",
+// 			"-start_number", "0",
+// 			"-hls_time", "5", // → ~5MB/segment
+// 			"-hls_list_size", "0",
+// 			"-hls_segment_filename", filepath.Join(outputDir, "segment_%03d.ts"),
+// 			"-f", "hls",
+// 			filepath.Join(outputDir, "index.m3u8"),
+// 		)

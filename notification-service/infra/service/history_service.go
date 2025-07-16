@@ -55,6 +55,32 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 	}, nil
 }
 
+// @Summary Lấy lịch sử của CRM
+// @Description Lấy lịch sử của CRM
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param crmId path int true "ID của CRM"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/crm/{crmId} [get]
+func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+	histories, total, err := s.UC.CrmHistory(ctx, req.Id, dto.HistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	historiesPb := s.Mapper.HistoryToPbs(histories)
+	return &notificationpb.HistoryListDTO{
+		Data:          historiesPb,
+		TotalElements: uint32(total),
+	}, nil
+}
+
 // @Summary Lấy lịch sử của liên hệ
 // @Description Lấy lịch sử của liên hệ
 // @Tags Lịch sử

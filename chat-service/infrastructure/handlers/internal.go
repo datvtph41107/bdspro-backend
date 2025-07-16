@@ -13,6 +13,7 @@ type redisClient interface {
 type conversationUsecases interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*models.ConversationModel, error)
+	GetUnreadCount(ctx context.Context) (int64, error)
 
 	EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error
 	CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error)

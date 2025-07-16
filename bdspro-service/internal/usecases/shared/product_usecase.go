@@ -51,6 +51,7 @@ type ProductUsecase struct {
 	NotificationClient iusecase.INotificationClient
 	Transaction        iusecase.ITransaction
 	TransactionUsecase usecases.TransactionUsecase
+	AssetUsecase       *AssetUsecase
 	TransactionRepo    repo.TransactionRepository
 }
 
@@ -74,6 +75,7 @@ func NewProductUsecase(
 	transaction iusecase.ITransaction,
 	transactionUsecase usecases.TransactionUsecase,
 	transactionRepo repo.TransactionRepository,
+	assetUsecase *AssetUsecase,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -96,6 +98,7 @@ func NewProductUsecase(
 		Transaction:        transaction,
 		TransactionUsecase: transactionUsecase,
 		TransactionRepo:    transactionRepo,
+		AssetUsecase:       assetUsecase,
 		// OwnerType:    ownerType,
 	}
 
@@ -183,7 +186,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	var postEntity *domain.Post
 	var assetEntity *domain.Asset
 
-	s.Transaction.WithTransaction(c, func(c context.Context) error {
+	err = s.Transaction.WithTransaction(c, func(c context.Context) error {
 		price := product.PriceData
 		if err := s.PriceRepo.Create(c, price); err != nil {
 			return err
@@ -220,17 +223,17 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		if postInfo != nil && s.PostUsecase != nil {
 			postInfo.ProductID = entity.ID
 			postInfo.Content = entity.Description
-			postInfo.TransactionType = entity.TransactionType
-			if entity.TransactionType == 10 {
-				postInfo.Price = *product.PriceData.SalePrice
-			} else {
-				postInfo.Price = *product.PriceData.RentPrice
-			}
+			postInfo.TransactionType = enums.TransactionType(entity.TransactionType)
+			// if entity.TransactionType == 10 {
+			// 	postInfo.Price = *product.PriceData.SalePrice
+			// } else {
+			// 	postInfo.Price = *product.PriceData.RentPrice
+			// }
 
-			dto := dto.PostSaveRequest{}
-			copier.Copy(&dto, &postInfo)
+			// dto := dto.PostSaveRequest{}
+			// copier.Copy(&dto, &postInfo)
 
-			postEntity, err = s.PostUsecase.CreatePost(c, &dto)
+			postEntity, err = s.PostUsecase.CreatePost(c, postInfo)
 			if err != nil {
 				return err
 			}
@@ -251,14 +254,18 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 				PurchasePrice:  assetInfo.PurchasePrice,
 				PurchaseDate:   assetInfo.PurchaseDate,
 				LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
+				LegalItems:     &assetInfo.LegalItems,
 				RentStatus:     assetInfo.RentStatus,
+				OwnerType:      entity.OwnerType,
 				// Description:    assetInfo.Description,
 			}
 
-			// assetEntity, err = s.UAssetUsecase.CreateAsset(c, &user_dto.AssetSaveRequest{
-			// 	Asset:      *assetEntity,
-			// 	LegalItems: assetInfo.LegalItems,
-			// })
+			assetEntity, err = s.AssetUsecase.CreateAsset(c, assetEntity)
+			if err != nil {
+				return err
+			}
+
+			err = s.ProductRepo.UpdateAssetID(c, entity.ID, assetEntity.ID)
 			if err != nil {
 				return err
 			}
@@ -266,6 +273,10 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &dto.CreateResponse{
 		Product: entity,
@@ -580,7 +591,7 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 }
 
 func (s *ProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Product, error) {
-	product, err := s.ProductRepo.GetByID(id)
+	product, err := s.ProductRepo.GetByIDContext(c, id)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,12 @@ REMOTE_HOST="14.225.205.222"
 WORKSPACE_NAME=backend-microservice
 REMOTE_PATH=/root/$WORKSPACE_NAME
 
+# if [ "$1" = "file" ]; then
+#   REMOTE_HOST=14.225.210.29
+# fi
+
 if [ "$1" = "compose" ]; then
+  REMOTE_HOST=14.225.210.29
   echo "đẩy docker-compose.yml lên server..." $REMOTE_PATH
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_PATH}
@@ -167,6 +172,9 @@ if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ "$1" = "gateway" ]; then
+  scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+fi
+if [ "$1" = "file" ]; then
   scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ $? -ne 0 ]; then

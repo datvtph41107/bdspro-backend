@@ -576,7 +576,7 @@ func (r *GormUserProductRepo) CountByAssetID(assetID uint64) (int64, error) {
 }
 
 func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetID uint64) error {
-	return r.DB.WithContext(c).Model(&domain.Product{}).
+	return GetDB(c, r.DB).Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null and asset_id is null", id).
 		Update("asset_id", assetID).
 		Error

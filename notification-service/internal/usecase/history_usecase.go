@@ -38,6 +38,14 @@ func (h *HistoryUsecase) Search(c context.Context, ownerId uint64, ownerType sha
 	return histories, total, nil
 }
 
+func (h *HistoryUsecase) CrmHistory(c context.Context, crmId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	histories, total, err := h.historyRepo.CrmHistory(c, crmId, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return histories, total, nil
+}
+
 func (h *HistoryUsecase) ContactHistory(c context.Context, contactId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
 	// contact, err := h.contactRepo.GetById(c, contactId)
 	// if err != nil {

@@ -29,3 +29,8 @@ type NewsFeed struct {
 	LikedAt        *time.Time       `gorm:"-" json:"likedAt"`
 	DisLike        *bool            `gorm:"-" json:"disLike"`
 }
+
+type ReelEntity struct {
+	NewsFeed
+	ReelUrl string `gorm:"column:reel_url" json:"reel_url"`
+}

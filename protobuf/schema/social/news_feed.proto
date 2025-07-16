@@ -53,6 +53,12 @@ service NewsFeedService {
             body: "*"
         };
     };
+
+    rpc GetReelNewsFeed(sharepb.IdRequest) returns (ListReelResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/public/reel"
+        };
+    };
 }
 
 message VisibilityRequest {
@@ -127,4 +133,22 @@ message ShareResponse {
 
 message DetailRequest {
     uint64 newsFeedId = 1;
+}
+
+message ReelResponse {
+    uint64 id = 1;
+    string content = 2;
+    string reelUrl = 3;
+    string authorAvatar = 4;
+    string authorName = 5;
+    string createdAt = 6;
+    uint64 numLike = 7;
+    uint64 numComment = 8;
+    uint64 numShare = 9;
+    uint64 numView = 10;
+    uint64 createdBy = 11;
+}
+message ListReelResponse {
+    repeated ReelResponse data = 1;
+    int64 total = 2;
 }

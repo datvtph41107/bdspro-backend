@@ -68,6 +68,28 @@ paths:
       security:
       - BearerAuth: []
       summary: Upload file
+  /upload/video:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload video HLS
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload video HLS
 securityDefinitions:
   BearerAuth:
     in: header

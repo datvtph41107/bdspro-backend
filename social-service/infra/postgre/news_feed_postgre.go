@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	_dto "common/dto"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
@@ -335,4 +336,34 @@ func (r *PostgreNewsFeed) IncrementNumberShare(ctx context.Context, newsFeedID u
 
 func (r *PostgreNewsFeed) SyncData(ctx context.Context) error {
 	return r.db.Exec(`REFRESH MATERIALIZED VIEW public.news_feed_global`).Error
+}
+
+func (r *PostgreNewsFeed) GetReelTx(ctx context.Context, tx *gorm.DB) *gorm.DB {
+	return GetDB(ctx, tx).
+		Table("news_feeds").
+		Select(`news_feeds.*, nfm.url as reel_url`).
+		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
+		Where("news_feeds.deleted_at is null and news_feeds.is_reel = true and nfm.type = 'video'").
+		Order("news_feeds.created_at desc").
+		Group("news_feeds.id, nfm.id")
+}
+
+func (r *PostgreNewsFeed) GetReel(ctx context.Context, dto _dto.Pagable) ([]*domain.ReelEntity, int64, error) {
+	var results []*domain.ReelEntity
+	var count int64
+	err := r.GetReelTx(ctx, r.db).
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.GetReelTx(ctx, r.db).Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, count, nil
 }

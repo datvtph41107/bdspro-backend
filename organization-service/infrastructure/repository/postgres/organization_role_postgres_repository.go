@@ -80,9 +80,10 @@ func (r *OrganizationRoleRepository) Create(ctx context.Context, role *entity.Or
 		Key:            role.Key,
 		OrganizationId: role.OrganizationId,
 		IsDeleted:      false,
+		// Permissions:    role.Permissions,
 	}
 
-	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+	if err := GetDB(ctx, r.db).Create(model).Error; err != nil {
 		return nil, err
 	}
 

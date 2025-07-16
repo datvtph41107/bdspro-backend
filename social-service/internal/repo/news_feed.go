@@ -1,6 +1,7 @@
 package repo
 
 import (
+	_dto "common/dto"
 	"context"
 	"social/internal/domain"
 	"social/internal/dto"
@@ -28,4 +29,5 @@ type NewsFeedRepo interface {
 	UpdateCommentNumber(ctx context.Context, newFeedID uint64, totalComment int) error
 	IncrementNumberShare(ctx context.Context, newFeedID uint64) error
 	SyncData(ctx context.Context) error
+	GetReel(ctx context.Context, dto _dto.Pagable) ([]*domain.ReelEntity, int64, error)
 }

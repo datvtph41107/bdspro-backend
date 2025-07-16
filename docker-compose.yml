@@ -51,10 +51,13 @@ services:
       context: ./file-service
       dockerfile: Dockerfile
     container_name: file
+    command: ["./main", "http"]
+    ports:
+      - "8002:8002"
     networks:
       - internal
     volumes:
-      - ${PWD}/file-service/files:/files
+      - ${PWD}/files:/files
 
   chat:
     build:

@@ -1,4 +1,5 @@
-
+swag-file:
+	cd file-service && swag init --parseDependency --output docs/file
 swag:
 	./script.sh swag $(word 2, $(MAKECMDGOALS))
 wire:
@@ -85,6 +86,8 @@ chat-grpc:
 	cd chat-service && go run main.go grpc-serve
 membership:
 	cd membership-service && go run main.go grpc-server
+file:
+	cd file-service && go run main.go
 
 start-all:
 	make buf-all

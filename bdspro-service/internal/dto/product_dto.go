@@ -44,7 +44,7 @@ type ProductSaveRequest struct {
 	PrivateData     *domain.ProductPrivate  `json:"productPrivate"`
 	GoogleMapLink   string                  `json:"googleMapLink"`
 	SourceType      uint32                  `json:"sourceType"`
-	PostCreate      *PostSaveWithProduct    `json:"post"`
+	PostCreate      *PostSaveRequest        `json:"post"`
 	AssetCreate     *AssetCreateWithProduct `json:"asset"`
 	SaleVisibility  enums.EVisibility       `json:"saleVisibility"`
 	RentVisibility  enums.EVisibility       `json:"rentVisibility"`

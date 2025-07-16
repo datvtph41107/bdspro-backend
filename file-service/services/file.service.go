@@ -5,12 +5,14 @@ import (
 	_jwt "common/jwt"
 	_utils "common/utils"
 	"errors"
+	"file/dto"
 	"file/models"
 	"file/repositories"
 	"file/utils"
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -114,16 +116,48 @@ func loadFileVideo(path string, from, to uint64) ([]byte, error) {
 	return buffer[:n], nil
 }
 
-func LoadFileAndResponse(c *gin.Context, path string, ext string) {
+func LoadVideoAndResponse(c *gin.Context, fileInfoDecode *dto.FileInfo, segmentId string) {
+	var pathSegment string
+	contentType := "video/mp4"
+	if segmentId == "index" {
+		pathSegment = filepath.Join(fileInfoDecode.AbsolutePath, "playlist.m3u8")
+		contentType = "application/vnd.apple.mpegurl"
+		fmt.Printf("pathSegment: %s\n", pathSegment)
+	} else {
+		pathSegment = filepath.Join(fileInfoDecode.AbsolutePath, segmentId)
+	}
+
+	file, err := os.Open(pathSegment)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open file"})
+		return
+	}
+	defer file.Close()
+
+	fileInfo, _ := file.Stat()
+	fileSize := fileInfo.Size()
+
+	buffer := make([]byte, fileSize)
+	file.Read(buffer)
+
+	c.Header("Content-Length", strconv.FormatInt(fileSize, 10))
+	c.Header("Content-Type", contentType)
+	c.Status(http.StatusOK) // 206 Partial Content
+	c.Writer.Write(buffer)
+}
+
+func LoadFileAndResponse(c *gin.Context, path string, ext string, signatureOrSegmentID string) {
 	mimeType := "application/octet-stream"
 	contentType := map[string]string{
-		"mp4":  "video/mp4",
-		"mov":  "video/quicktime",
-		"webm": "video/webm",
-		"ogg":  "video/ogg",
-		"png":  "image/png",
-		"jpg":  "image/jpg",
-		"jpeg": "image/jpeg",
+		"mp4":   "video/mp4",
+		"mov":   "video/quicktime",
+		"webm":  "video/webm",
+		"ogg":   "video/ogg",
+		"png":   "image/png",
+		"jpg":   "image/jpg",
+		"jpeg":  "image/jpeg",
+		"m3u8":  "application/vnd.apple.mpegurl",
+		"video": "application/vnd.apple.mpegurl",
 	}
 	mime, exists := contentType[ext]
 	if exists {
@@ -131,6 +165,29 @@ func LoadFileAndResponse(c *gin.Context, path string, ext string) {
 	} else {
 		mimeType = "application/octet-stream"
 	}
+
+	// if ext == "mp4" {
+	// 	pathSegment := filepath.Join(path, signatureOrSegmentID)
+	// 	fmt.Printf("pathSegment: %s\n", pathSegment)
+	// 	file, err := os.Open(pathSegment)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open file"})
+	// 		return
+	// 	}
+	// 	defer file.Close()
+
+	// 	fileInfo, _ := file.Stat()
+	// 	fileSize := fileInfo.Size()
+
+	// 	buffer := make([]byte, fileSize)
+	// 	file.Read(buffer)
+
+	// 	c.Header("Content-Length", strconv.FormatInt(fileSize, 10))
+	// 	c.Header("Content-Type", "video/mp4")
+	// 	c.Status(http.StatusOK) // 206 Partial Content
+	// 	c.Writer.Write(buffer)
+	// 	return
+	// }
 
 	isStream := isVideoFormat(ext)
 	// chunk với luồng video
@@ -165,7 +222,7 @@ func LoadFileAndResponse(c *gin.Context, path string, ext string) {
 		}
 
 		length := end - start + 1
-		// limit := int64(5 * 1024 * 1024) // limit 5MB cho mỗi lần load video
+		// limit := int64(2 * 1024 * 1024) // limit 5MB cho mỗi lần load video
 		// if length > limit {
 		// 	end = start + limit - 1
 		// 	length = limit
@@ -211,6 +268,46 @@ func isVideoFormat(x string) bool {
 	return videoFormats[x]
 }
 
+// @Summary Tải video
+// @Description Tải video
+// @Param fileInfo dto.FileInfo true "File info"
+// @Produce json
+// @Router /video/{p}/{segmentId} [get]
+func (fs *FileService) LoadVideoAndResponse(c *gin.Context) {
+	p := c.Param("p")
+	segmentId := c.Param("segmentId")
+	if p == "" || segmentId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "p and segmentId is required"})
+		return
+	}
+	if len(p) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Đường dẫn không chính xác"})
+		return
+	}
+	// firstChar := string(p[0]) // Ký tự đầu tiên
+	remainingStr := p[1:]
+
+	decodedPath, err := _utils.XorDecode(remainingStr, fs.XorCryptKey)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		// http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+
+	fileInfo, err := ParseVideoPath(decodedPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	if fileInfo.Type != "video" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Đường dẫn không chính xác"})
+		return
+	}
+
+	LoadVideoAndResponse(c, fileInfo, segmentId)
+}
+
 // @Summary Tải file
 // @Description Tải file
 // @Param s path string true "Parameter S"
@@ -238,10 +335,22 @@ func (fs *FileService) GetFile(c *gin.Context) {
 		return
 	}
 
+	fileInfo, err := ParseVideoPath(decodedPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	if fileInfo.Type == "video" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Đường dẫn không dành cho video"})
+		return
+	}
+
 	ext := _utils.GetFileExtension(decodedPath)
+	fmt.Printf("decodedPath: %s\n", decodedPath)
 
 	if firstChar == "p" {
-		LoadFileAndResponse(c, decodedPath, ext)
+		LoadFileAndResponse(c, decodedPath, ext, s)
 		return
 	}
 
@@ -266,7 +375,7 @@ func (fs *FileService) GetFile(c *gin.Context) {
 		return
 	}
 
-	LoadFileAndResponse(c, decodedPath, ext)
+	LoadFileAndResponse(c, decodedPath, ext, s)
 	// Load file dưới dạng byte
 
 	// if isStream {
@@ -462,4 +571,68 @@ func getFileIdFromPath(path string) int64 {
 		return id
 	}
 	return -1
+}
+
+// @Summary Upload video HLS
+// @Description Upload video HLS
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to upload"
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Router /upload/video [post]
+func (s *FileService) UploadVideoHLS(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
+	}
+
+	// Unique ID (bạn có thể dùng UUID nếu muốn)
+	// id := strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	// Đường dẫn đầu ra: public/videos/<id>/
+	// secure := c.PostForm("secure") == "true"
+	description := c.DefaultQuery("description", "")
+	fileEntity := models.FileEntity{
+		Description: description,
+	}
+	if err := _db.SaveWithAudit(c, &fileEntity); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		// fmt.Errorf("failed to save file entity: %v", err)
+		return
+	}
+
+	fileInfo, err := s.Storage.StoreVideo(c, file, file.Filename, nil, fileEntity.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	// 4. Mã hóa đường dẫn file (giống encrypt trong Spring Boot)
+	encryptedPath := _utils.XorEncode(fileInfo.RelativePath, s.XorCryptKey)
+
+	encryptedThumbnailPath := _utils.XorEncode(fileInfo.ThumbnailPath, s.XorCryptKey)
+
+	// 5. Cập nhật thông tin file
+	fileInfo.ThumbnailPath = "p" + encryptedThumbnailPath
+	fileEntity.SetFields(fileInfo)
+
+	fileEntity.Path = "p" + encryptedPath
+	if err := _db.SaveWithAudit(c, &fileEntity); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		// fmt.Errorf("failed to update file entity: %v", err)
+		return
+	}
+	// 6. Cập nhật file info để trả về client
+	fileInfo.ID = fileEntity.ID
+	fileInfo.RelativePath = fileEntity.Path
+
+	c.JSON(http.StatusOK, gin.H{"file": fileInfo})
+	// Trả về response chứa đường dẫn HLS
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"message":       "Video uploaded and processed successfully",
+	// 	"m3u8_url":      fmt.Sprintf("/videos/%s/playlist.m3u8", id),
+	// 	"download_link": fmt.Sprintf("/download/%s", id),
+	// })
 }

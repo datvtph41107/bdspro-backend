@@ -147,3 +147,33 @@ func (r *HistoryRepo) ProductChildHistory(c context.Context, productId uint64, d
 func (r *HistoryRepo) RuleEventHistory(c context.Context, ruleEventId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
 	return r.HistoryWithEnumGroup(c, ruleEventId, []shared_enum.EHistory{shared_enum.HistoryRuleEvent}, dto)
 }
+
+func (r *HistoryRepo) CrmHistory(c context.Context, crmId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	query := r.DB.WithContext(c).Model(&domain.HistoryEntity{}).
+		Where("owner_id = ? and owner_type = ? and action_type = ?",
+			crmId, 30, shared_enum.HistoryContactAction)
+
+	query, err := r.QueryFilter(c, query, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var histories []domain.HistoryEntity
+	var total int64
+
+	err = query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = query.
+		Order("created_at DESC").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&histories).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return histories, total, nil
+}

@@ -16,6 +16,7 @@ type Repository interface {
 	GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error)
 	DeleteConversation(ctx context.Context, conversationID uint64) error
 	GetMessageByTypeWithPagination(ctx context.Context, limit int64, offset int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error)
+	GetUnreadCount(ctx context.Context, userId uint64) (int64, error)
 
 	CreateMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
 	CreateMessages(ctx context.Context, messages []*models.MessageModel) ([]*models.MessageModel, error)

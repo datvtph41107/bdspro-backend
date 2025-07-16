@@ -5,10 +5,10 @@ type BdsproPost struct {
 	ProductId       uint64
 	ExpiredAt       string
 	Status          uint32
-	Visibility      string
+	Visibility      uint32
 	Hidden          bool
 	Content         string
-	TransactionType string
+	TransactionType uint32
 	Title           string
 	NumDate         int32
 	Type            string

@@ -14,6 +14,12 @@ service HistoryService {
       };
   };
 
+  rpc CrmHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/crm"
+    };
+  };
+
   rpc ContactHistory (HistorySearchRequest) returns (HistoryListDTO) {
     option (google.api.http) = {
         get: "/v2/notification/history/contact/{id}"
@@ -87,6 +93,8 @@ message HistoryDTO {
   string createdAt = 9;
   optional uint64 createdBy = 10;
   string title = 11;
+  string actionUser = 12;
+  string actionName = 13;
 }
 
 message HistoryListDTO {

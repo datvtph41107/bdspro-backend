@@ -144,3 +144,29 @@ func (c *UserClient) PbUserToComment(ctx context.Context, comments []*pb_social.
 
 	return profileMap, nil
 }
+
+func (c *UserClient) PbUserToReels(ctx context.Context, newsFeeds []*pb_social.ReelResponse) {
+	profileIDSet := make(map[uint64]struct{})
+	for _, nf := range newsFeeds {
+		if nf.CreatedBy != 0 {
+			profileIDSet[nf.CreatedBy] = struct{}{}
+		}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return
+	}
+
+	// Gán Author và FriendTags cho từng newsFeed
+	for _, nf := range newsFeeds {
+		// Gán Author
+		if nf.CreatedBy != 0 {
+			if profile, ok := profileMap[nf.CreatedBy]; ok {
+				nf.AuthorName = profile.FullName
+				nf.AuthorAvatar = profile.Avatar
+			}
+		}
+	}
+
+}

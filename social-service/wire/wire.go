@@ -44,6 +44,7 @@ var wireSet = wire.NewSet(
 	social_infra_postgre.NewLikeRepo,
 	social_infra_service.NewLikeService,
 	social_internal_usecase.NewLikeUsecase,
+	social_infra_mapper.NewNewsFeedMapper,
 	social_infra_service.NewNewsFeedService,
 	social_internal_usecase.NewNewsFeedShareUsecase,
 	social_internal_usecase.NewNewsFeedUsecase,

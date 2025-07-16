@@ -129,6 +129,51 @@
         ]
       }
     },
+    "/v2/social/news-feed/public/reel": {
+      "get": {
+        "operationId": "NewsFeedService_GetReelNewsFeed",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialListReelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
+    },
     "/v2/social/news-feed/user/{userId}": {
       "get": {
         "operationId": "NewsFeedService_GetNewsFeedByUserID",
@@ -597,6 +642,22 @@
         }
       }
     },
+    "pb_socialListReelResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_socialReelResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "pb_socialNewsFeed": {
       "type": "object",
       "properties": {
@@ -701,6 +762,50 @@
         "orderNumber": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_socialReelResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "content": {
+          "type": "string"
+        },
+        "reelUrl": {
+          "type": "string"
+        },
+        "authorAvatar": {
+          "type": "string"
+        },
+        "authorName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "numLike": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numComment": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numShare": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numView": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

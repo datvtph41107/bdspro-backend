@@ -13,4 +13,11 @@ type FileInfo struct {
 	ContentType   string `json:"contentType"`
 	Description   string `json:"description"`
 	Mine          string `json:"mine"`
+
+	Scope  string // "public"
+	Type   string // "video"
+	Date   string // "2025-07-14"
+	UUID   string // "1752485034177081000"
+	FileID string // "619"
+	Ext    string // "mp4"
 }

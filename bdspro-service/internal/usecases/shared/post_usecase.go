@@ -114,9 +114,9 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		entity.ExpiredAt = &expired
 	}
 
-	err = s.Save(c, entity)
+	err = s.Repo.CreatePost(c, entity)
 
-	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
+	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.Medatadatas); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +152,7 @@ func (s *PostUsecase) Action(c context.Context, dto dto.ActionRequest) (*domain.
 
 	if dto.Action == 1 {
 		entity.NumView = entity.NumView + 1
-		err = s.Save(c, &entity.Post)
+		err = s.Repo.UpdatePost(c, &entity.Post)
 	}
 
 	return nil, err
@@ -173,7 +173,7 @@ func (s *PostUsecase) UpdatePost(c context.Context, id uint64, dto *dto.PostUpda
 	entity.Visibility = dto.Visibility
 	entity.PackageVisible = dto.PackageVisible
 
-	err = s.Save(c, &entity.Post)
+	err = s.Repo.UpdatePost(c, &entity.Post)
 
 	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.MediaList); err != nil {
 		return nil, err
@@ -347,6 +347,6 @@ func (s *PostUsecase) GetPublishByProfileID(c context.Context, profileId uint64,
 	return entities, total, nil
 }
 
-func (s *PostUsecase) Save(c context.Context, entity *domain.Post) error {
-	return _db.SaveWithContext(c, entity)
-}
+// func (s *PostUsecase) Save(c context.Context, entity *domain.Post) error {
+// 	return _db.SaveWithContext(c, entity)
+// }

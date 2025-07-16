@@ -57,6 +57,19 @@ ORDER BY COALESCE(m.created_at,c.created_at) DESC
 LIMIT $4 OFFSET $5
 `
 
+var QUERY_COUNT_UNREAD_USER = `
+	select count(p.user_id) from participants p
+left join conversations c on p.conversation_id = c.id
+left join lateral (
+	select * from messages m 
+	where m.conversation_id = c.id
+	order by created_at desc nulls last
+	limit 1
+) m on true
+left join read_recepts r on r.message_id = m.id and r.user_id = $1
+where p.user_id = $2 and r.read_at is null and m.created_at is not null
+`
+
 func (r *gormRepository) CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
 	conversation.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(conversation).Error
@@ -204,4 +217,15 @@ func (r *gormRepository) SetBackgroundImage(ctx context.Context, conversationId 
 	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", conversationId, false).Updates(map[string]any{
 		"background_image_id": backgroundImageId,
 	}).Error
+}
+
+func (r *gormRepository) GetUnreadCount(ctx context.Context, userId uint64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Raw(QUERY_COUNT_UNREAD_USER, userId, userId).
+		Scan(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

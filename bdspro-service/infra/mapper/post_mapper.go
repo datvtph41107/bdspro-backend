@@ -93,7 +93,7 @@ func (m *PostMapper) PostSaveRequestToDTO(request *pb_bdspro.PostSaveRequest) *d
 		PackageVisible:  uint(request.PackageVisible),
 		ExpiredAt:       _utils.ParseStringToTime(request.ExpiredAt),
 		NumDate:         int(request.NumDate),
-		MediaList:       m.PostMediaToDTO(request.MediaList),
+		Medatadatas:     m.PostMediaToDTO(request.MediaList),
 		PriceType:       request.PriceType,
 	}
 	if request.Hidden != nil {

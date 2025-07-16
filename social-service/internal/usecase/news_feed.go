@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_dto "common/dto"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -256,4 +257,12 @@ func (u *NewsFeedUsecase) SyncNewsFeed(ctx context.Context) {
 		log.Printf("SyncNewsFeed error: %v", err)
 	}
 	log.Printf("SyncNewsFeed success")
+}
+
+func (u *NewsFeedUsecase) GetReelNewsFeed(ctx context.Context, req _dto.Pagable) ([]*domain.ReelEntity, int64, error) {
+	newsFeed, count, err := u.newsFeedRepo.GetReel(ctx, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeed, count, nil
 }

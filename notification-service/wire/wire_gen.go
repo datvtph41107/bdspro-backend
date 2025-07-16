@@ -33,7 +33,8 @@ func InitializeApp() (*config.ConfigApp, error) {
 	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase)
 	historyRepo := postgres.NewHistoryRepo(db)
 	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
-	historyService := service.NewHistoryService(historyUsecase)
+	historyMapper := mapper.NewHistoryMapper()
+	historyService := service.NewHistoryService(historyUsecase, historyMapper)
 	configApp := config.NewConfigApp(internalNotiService, gatewayNotiService, historyService)
 	return configApp, nil
 }
@@ -41,4 +42,4 @@ func InitializeApp() (*config.ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)

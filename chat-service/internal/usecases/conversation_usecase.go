@@ -100,6 +100,14 @@ func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offs
 	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
+func (c *conversationUsecases) GetUnreadCount(ctx context.Context) (int64, error) {
+	userId := utils.GetCurrentUserID(ctx)
+	if userId == 0 {
+		return 0, errors.Unauthorized()
+	}
+	return c.repo.GetUnreadCount(ctx, userId)
+}
+
 func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {

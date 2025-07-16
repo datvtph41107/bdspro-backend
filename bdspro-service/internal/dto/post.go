@@ -45,22 +45,22 @@ type PostSaveRequest struct {
 	ExpiredAt       *time.Time            `json:"expiredAt"`
 	NumDate         int                   `json:"numDate"`
 	Hidden          bool                  `json:"hidden"`
-	MediaList       []PostMediaItem       `json:"mediaList"`
+	Medatadatas     []PostMediaItem       `json:"mediaList"`
 	// Status    uint   `json:"status"`
 }
 
 type PostSaveWithProduct struct {
-	ProductID       uint64                  `json:"productId"`
-	Title           string                  `json:"title"`
-	Content         string                  `json:"content"`
-	Price           float64                 `json:"postPrice"`
-	TransactionType uint                    `json:"transactionType"`
-	Visibility      enums.EVisibility       `json:"visibility"`
-	PackageVisible  uint                    `json:"packageVisible"`
-	ExpiredAt       *time.Time              `json:"expiredAt"`
-	NumDate         int                     `json:"numDate"`
-	Hidden          bool                    `json:"hidden"`
-	Metadatas       domain.ProductMediaItem `json:"metadatas"`
+	ProductID       uint64                    `json:"productId"`
+	Title           string                    `json:"title"`
+	Content         string                    `json:"content"`
+	Price           float64                   `json:"postPrice"`
+	TransactionType uint                      `json:"transactionType"`
+	Visibility      enums.EVisibility         `json:"visibility"`
+	PackageVisible  uint                      `json:"packageVisible"`
+	ExpiredAt       *time.Time                `json:"expiredAt"`
+	NumDate         int                       `json:"numDate"`
+	Hidden          bool                      `json:"hidden"`
+	Metadatas       []domain.ProductMediaItem `json:"metadatas"`
 	// Status    uint   `json:"status"`
 }
 

@@ -27,8 +27,8 @@ func NewGormPostRepo(db *gorm.DB) *GormPostRepo {
 	}
 }
 
-func (r *GormPostRepo) CreatePost(post *domain.Post) error {
-	return r.DB.Create(post).Error
+func (r *GormPostRepo) CreatePost(ctx context.Context, post *domain.Post) error {
+	return GetDB(ctx, r.DB).Create(post).Error
 }
 
 func (r *GormPostRepo) GetPostByProductID(productID uint64) (*domain.Post, error) {

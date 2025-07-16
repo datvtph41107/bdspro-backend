@@ -1039,8 +1039,8 @@ func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesReques
 	}
 
 	return &chatpb.GetImagesResponse{
-		Messages: pbMessage,
-		Total:    total,
+		Data:  pbMessage,
+		Total: total,
 	}, nil
 }
 
@@ -1113,6 +1113,22 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 	return &chatpb.ReactionMessageResponse{
 		Success: true,
 	}, nil
+}
+
+// @Summary Lấy số lượng tin nhắn chưa đọc
+// @Description Lấy số lượng tin nhắn chưa đọc của người dùng hiện tại
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} chatpb.UnreadCountResponse
+// @Router /unread-count [get]
+func (s *chatHandler) UnreadCount(ctx context.Context, req *sharepb.Empty) (*chatpb.UnreadCountResponse, error) {
+	unreadCount, err := s.conversationUsecases.GetUnreadCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &chatpb.UnreadCountResponse{UnreadCount: unreadCount}, nil
 }
 
 func (s *chatHandler) Start() {
