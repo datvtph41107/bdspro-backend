@@ -1,11 +1,10 @@
 package validator
 
 import (
+	"errors"
 	organizationpb "pb/types/organization"
 
 	"organization/internal/custom_error"
-
-	"errors"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
@@ -18,17 +17,16 @@ type OrganizationRoleValidator interface {
 	ValidateGetRolesRequest(req *organizationpb.GetRolesRequest) error
 	ValidateAddPermissionToRoleRequest(req *organizationpb.AddPermissionToRoleRequest) error
 	ValidateGetRoleRequest(req *organizationpb.GetRoleRequest) error
+	ValidateCreateNewRoleWithMembersRequest(req *organizationpb.CreateNewRoleWithMembersRequest) error
 }
 
-type organizationRoleValidator struct {
-}
+type organizationRoleValidator struct{}
 
 func NewOrganizationRoleValidator() OrganizationRoleValidator {
 	return &organizationRoleValidator{}
 }
 
 func (v *organizationRoleValidator) ValidateCreateRoleRequest(req *organizationpb.CreateRoleRequest) error {
-
 	details := []protoadapt.MessageV1{}
 
 	if req.Name == "" {
@@ -123,6 +121,37 @@ func (v *organizationRoleValidator) ValidateAddPermissionToRoleRequest(req *orga
 				{
 					Field:       "roleId",
 					Description: "roleId is required",
+				},
+			},
+		})
+	}
+
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+
+	return nil
+}
+
+func (v *organizationRoleValidator) ValidateCreateNewRoleWithMembersRequest(req *organizationpb.CreateNewRoleWithMembersRequest) error {
+	details := []protoadapt.MessageV1{}
+
+	if req.Name == "" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "name",
+					Description: "name is required",
+				},
+			},
+		})
+	}
+	if req.Key == "" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "key",
+					Description: "key is required",
 				},
 			},
 		})

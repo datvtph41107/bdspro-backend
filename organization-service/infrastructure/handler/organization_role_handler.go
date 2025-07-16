@@ -42,7 +42,6 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 		return nil, err
 	}
 	role, err := h.OrganizationRoleUsecase.CreateNewRole(ctx, role)
-
 	if err != nil {
 		return nil, err
 	}
@@ -155,4 +154,26 @@ func (h *OrganizationRoleHandler) AddPermissionToRole(ctx context.Context, req *
 	return &organizationpb.AddPermissionToRoleResponse{
 		Id: req.RoleId,
 	}, nil
+}
+
+// @Summary Tạo vai trò với thành viên và quyền
+// @Description Tạo vai trò mới và gán thành viên cùng quyền
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.CreateNewRoleWithMembersRequest true "Thông tin vai trò với thành viên và quyền"
+// @Security BearerAuth
+// @Router /organization/role/with-members [post]
+func (h *OrganizationRoleHandler) CreateNewRoleWithMembers(ctx context.Context, req *organizationpb.CreateNewRoleWithMembersRequest) (*organizationpb.CreateNewRoleWithMembersResponse, error) {
+	if err := h.OrganizationRoleValidator.ValidateCreateNewRoleWithMembersRequest(req); err != nil {
+		return nil, err
+	}
+
+	role := h.OrganizationRoleTransformer.CreateNewRoleWithMembersRequestToEntity(req)
+	role, err := h.OrganizationRoleUsecase.CreateNewRoleWithMembers(ctx, role, req.MemberIds, req.PermissionIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.OrganizationRoleTransformer.EntityToCreateNewRoleWithMembersResponse(role, req.MemberIds, req.PermissionIds), nil
 }

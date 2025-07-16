@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"log"
+
 	config "organization/config"
 
 	"organization/infrastructure/repository"

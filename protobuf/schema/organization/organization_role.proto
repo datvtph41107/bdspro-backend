@@ -47,6 +47,13 @@ service OrganizationRoleService {
             body: "*"
         };
     }
+
+    rpc CreateNewRoleWithMembers(CreateNewRoleWithMembersRequest) returns (CreateNewRoleWithMembersResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/role/with-members"
+            body: "*"
+        };
+    }
     
 }
 
@@ -119,4 +126,19 @@ message AddPermissionToRoleRequest {
 
 message AddPermissionToRoleResponse {
     uint32 id = 1 [json_name = "id"];
+}
+
+message CreateNewRoleWithMembersRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    repeated uint32 memberIds = 3 [json_name = "memberIds"];
+    repeated uint32 permissionIds = 4 [json_name = "permissionIds"];
+}
+
+message CreateNewRoleWithMembersResponse {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated uint32 memberIds = 4 [json_name = "memberIds"];
+    repeated uint32 permissionIds = 5 [json_name = "permissionIds"];
 }

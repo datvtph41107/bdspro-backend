@@ -228,11 +228,18 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 		return nil, 0, err
 	}
 
+	profilesMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, profile := range profiles.Profiles {
+		profilesMap[uint64(profile.Id)] = profile
+	}
+
 	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
 	for i, member := range members {
 		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
 			OrganizationMember: member,
-			Profile:            profiles.Profiles[i],
+		}
+		if profile, ok := profilesMap[uint64(member.UserID)]; ok {
+			membersWithProfiles[i].Profile = profile
 		}
 	}
 	return membersWithProfiles, total, nil
@@ -265,13 +272,16 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 	// if err != nil {
 	// 	return nil, 0, err
 	// }
-
+	profilesMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, profile := range profiles {
+		profilesMap[uint64(profile.Id)] = profile
+	}
 	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
 	for i, member := range members {
 		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
 			OrganizationMember: member,
 		}
-		if profile, ok := profiles[uint64(member.UserID)]; ok {
+		if profile, ok := profilesMap[uint64(member.UserID)]; ok {
 			membersWithProfiles[i].Profile = profile
 		}
 	}
@@ -279,7 +289,6 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 }
 
 func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error) {
-
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
 	member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, uint32(profileId), uint32(currentOrgId))

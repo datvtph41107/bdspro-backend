@@ -3,12 +3,15 @@ package usecase
 import (
 	_utils "common/utils"
 	"context"
+	"errors"
 
 	"organization/env"
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 	"organization/pkg/utils"
+
+	"gorm.io/gorm"
 )
 
 type OrganizationRoleUsecase interface {
@@ -19,6 +22,7 @@ type OrganizationRoleUsecase interface {
 	GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error)
 	GetRole(ctx context.Context, roleId uint32) (*entity.OrganizationRole, error)
 	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
+	CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error)
 }
 
 type organizationRoleUsecase struct {
@@ -27,6 +31,8 @@ type organizationRoleUsecase struct {
 	organizationRepository           repository.OrganizationRepository
 	organizationAuthUsecase          OrganizationAuthUsecase
 	logWorker                        *OrganizationLogWorker
+	organizationMemberRepository     repository.OrganizationMemberRepository
+	organizationMemberUsecase        OrganizationMemberUsecase
 }
 
 func NewOrganizationRoleUsecase(
@@ -35,6 +41,8 @@ func NewOrganizationRoleUsecase(
 	organizationRepository repository.OrganizationRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
+	organizationMemberRepository repository.OrganizationMemberRepository,
+	organizationMemberUsecase OrganizationMemberUsecase,
 ) OrganizationRoleUsecase {
 	return &organizationRoleUsecase{
 		organizationRoleRepository:       organizationRoleRepository,
@@ -42,6 +50,8 @@ func NewOrganizationRoleUsecase(
 		organizationRepository:           organizationRepository,
 		organizationAuthUsecase:          organizationAuthUsecase,
 		logWorker:                        logWorker,
+		organizationMemberRepository:     organizationMemberRepository,
+		organizationMemberUsecase:        organizationMemberUsecase,
 	}
 }
 
@@ -212,6 +222,7 @@ func (u *organizationRoleUsecase) GetRole(ctx context.Context, roleId uint32) (*
 
 	return role, nil
 }
+
 func (u *organizationRoleUsecase) AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
@@ -242,4 +253,92 @@ func (u *organizationRoleUsecase) AddPermissionToRole(ctx context.Context, roleI
 		return err
 	}
 	return nil
+}
+
+func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	if organization == nil {
+		return nil, custom_error.RecordNotFound("Organization not found")
+	}
+	existRole, err := u.organizationRoleRepository.FindByOrganizationIdAndKey(ctx, uint32(organizationId), model.Key)
+	if err != nil {
+		return nil, err
+	}
+	if existRole != nil {
+		return nil, custom_error.RoleKeyAlreadyExists()
+	}
+	model.OrganizationId = uint32(organizationId)
+
+	role, err := u.organizationRoleRepository.Create(ctx, model)
+	if err != nil {
+		return nil, err
+	}
+
+	// Assign members to the role
+	for _, memberId := range memberIds {
+
+		member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, memberId, uint32(organizationId))
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Không tồn tại → tạo mới
+				member = &entity.OrganizationMember{
+					OrganizationID: uint32(organizationId),
+					UserID:         memberId,
+					RoleId:         role.Id,
+				}
+				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		}
+
+		// Tồn tại → update role nếu cần
+		if member.RoleId != role.Id {
+			member.RoleId = role.Id
+			_, err = u.organizationMemberRepository.UpdateOrganizationMember(ctx, member)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Assign permissions to the role
+	for _, permissionId := range permissionIds {
+		permission, err := u.organizationPermissionRepository.FindById(ctx, permissionId)
+		if err != nil {
+			return nil, err
+		}
+		if permission == nil {
+			return nil, custom_error.RecordNotFound("Permission not found")
+		}
+		err = u.organizationRoleRepository.AddPermissionToRole(ctx, role.Id, permissionId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Log role creation
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: uint32(organizationId),
+		ActorId:        currentUserId,
+		LogType:        "ROLE_CREATE",
+		LogData:        "Created new role with members and permissions in organization",
+	})
+
+	return role, nil
 }

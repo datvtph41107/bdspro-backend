@@ -45,7 +45,7 @@ func InitializeApp() (*config.ConfigApp, error) {
 	organizationMemberTransformer := transformer.NewOrganizationMemberTransformer()
 	organizationMemberValidator := validator.NewOrganizationMemberValidator()
 	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator)
-	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationPostgresRepository, organizationAuthUsecase, organizationLogWorker)
+	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationPostgresRepository, organizationAuthUsecase, organizationLogWorker, organizationMemberPostgresRepository, organizationMemberUsecase)
 	organizationRoleTransformer := transformer.NewOrganizationRoleTransformer()
 	organizationRoleValidator := validator.NewOrganizationRoleValidator()
 	organizationRoleHandler := handler.NewOrganizationRoleHandler(organizationRoleUsecase, organizationRoleTransformer, organizationRoleValidator)
