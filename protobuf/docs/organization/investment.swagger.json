@@ -176,9 +176,71 @@
         ]
       }
     },
+    "/v2/org/investment/{id}/confirm": {
+      "post": {
+        "operationId": "InvestmentService_ConfirmInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
     "/v2/org/investment/{id}/reject": {
       "post": {
         "operationId": "InvestmentService_RejectInvestment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbIdDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
+    "/v2/org/investment/{id}/unconfirm": {
+      "post": {
+        "operationId": "InvestmentService_UnconfirmInvestment",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -257,6 +319,14 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "memberId",
+            "description": "Filter by member ID",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -273,6 +343,11 @@
           "type": "string",
           "format": "uint64"
         },
+        "memberId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID of the deal member making the investment"
+        },
         "investType": {
           "type": "integer",
           "format": "int64"
@@ -287,12 +362,21 @@
         "note": {
           "type": "string"
         },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
+        },
         "documents": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/organizationpbDocumentItem"
           }
+        },
+        "proxyUserId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "For proxy investments"
         }
       }
     },
@@ -325,6 +409,11 @@
           "type": "string",
           "format": "uint64"
         },
+        "memberId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID of the deal member"
+        },
         "investType": {
           "type": "integer",
           "format": "int64"
@@ -338,6 +427,10 @@
         },
         "note": {
           "type": "string"
+        },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
         },
         "documents": {
           "type": "array",
@@ -362,6 +455,18 @@
         },
         "statusName": {
           "type": "string"
+        },
+        "confirmed": {
+          "type": "boolean"
+        },
+        "proxyUserId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID of admin who created on behalf"
+        },
+        "proxyUser": {
+          "$ref": "#/definitions/sharepbProfileItem",
+          "title": "Profile of proxy user"
         }
       }
     },
@@ -392,6 +497,11 @@
           "type": "string",
           "format": "uint64"
         },
+        "memberId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID of the deal member making the investment"
+        },
         "investType": {
           "type": "integer",
           "format": "int64"
@@ -406,12 +516,21 @@
         "note": {
           "type": "string"
         },
+        "transferProofImage": {
+          "type": "string",
+          "title": "URL to transfer proof image"
+        },
         "documents": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/organizationpbDocumentItem"
           }
+        },
+        "proxyUserId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "For proxy investments"
         }
       }
     },

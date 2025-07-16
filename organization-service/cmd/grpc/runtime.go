@@ -4,7 +4,7 @@ import (
 	"log"
 	config "organization/config"
 
-	// "organization/internal/infrastructure/repository"
+	"organization/infrastructure/repository"
 	"organization/wire"
 
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ var GrpcServerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.InitConfig()
 		app, err := wire.InitializeApp()
-		// repository.AutoMigrate()
+		repository.AutoMigrate()
 		if err != nil {
 			log.Fatalf("Failed to initialize app: %v", err)
 		}

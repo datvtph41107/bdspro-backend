@@ -17,6 +17,9 @@ func (v *InvestmentValidator) ValidateCreateInvestment(req *entity.Investment) e
 	if req.DealID == 0 {
 		return errors.New("deal_id is required")
 	}
+	if req.MemberID == 0 {
+		return errors.New("member_id is required")
+	}
 	if req.Amount <= 0 {
 		return errors.New("amount is required")
 	}
@@ -26,6 +29,9 @@ func (v *InvestmentValidator) ValidateCreateInvestment(req *entity.Investment) e
 func (v *InvestmentValidator) ValidateUpdateInvestment(req *entity.Investment) error {
 	if req.ID == 0 {
 		return errors.New("id is required")
+	}
+	if req.MemberID == 0 {
+		return errors.New("member_id is required")
 	}
 	if req.Amount <= 0 {
 		return errors.New("amount is required")

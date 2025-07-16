@@ -3,18 +3,22 @@ package transformer
 import (
 	"organization/internal/domain/entity"
 	"organization/internal/enums"
-	bdspropb "pb/types/bdspro"
 	organizationpb "pb/types/organization"
-	sharepb "pb/types/shared"
 )
 
 type GroupDealTransformer interface {
 	CreateGroupDealRequestToEntity(request *organizationpb.CreateGroupDealRequest) *entity.Deal
+	CreateOrganizationDealRequestToEntity(request *organizationpb.CreateOrganizationDealRequest) *entity.Deal
+	CreateGroupDealV2RequestToEntity(request *organizationpb.CreateGroupDealV2Request) *entity.Deal
 	UpdateGroupDealRequestToEntity(request *organizationpb.UpdateGroupDealRequest) *entity.Deal
 	EntityToCreateGroupDealResponse(deal *entity.Deal) *organizationpb.CreateGroupDealResponse
+	EntityToCreateOrganizationDealResponse(deal *entity.Deal) *organizationpb.CreateOrganizationDealResponse
+	EntityToCreateGroupDealV2Response(deal *entity.Deal) *organizationpb.CreateGroupDealV2Response
 	EntityToUpdateGroupDealResponse(deal *entity.Deal) *organizationpb.UpdateGroupDealResponse
 	EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal
 	EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse
+	EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse
+	EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response
 }
 
 type groupDealTransformer struct {
@@ -73,6 +77,80 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *organizat
 	return result
 }
 
+func (t *groupDealTransformer) CreateOrganizationDealRequestToEntity(request *organizationpb.CreateOrganizationDealRequest) *entity.Deal {
+	result := &entity.Deal{
+		Name:           request.Name,
+		TargetProfit:   request.TargetProfit,
+		DealType:       enums.DealType(request.DealType),
+		Note:           request.Note,
+		BankAccountID:  request.BankAccountId,
+		CustomerIds:    request.CustomerIds,
+		PartnerIds:     request.PartnerIds,
+		MemberIds:      request.MemberIds,
+		ProductIds:     request.ProductIds,
+		ChargePersonID: &request.ChargePersonId,
+	}
+
+	if request.BankAccount != nil {
+		result.BankAccount = &entity.BankAccount{
+			BankName:      request.BankAccount.BankName,
+			AccountNumber: request.BankAccount.AccountNumber,
+			AccountName:   request.BankAccount.AccountName,
+		}
+	}
+
+	if request.Documents != nil {
+		result.Documents = make([]entity.AttachDocument, len(request.Documents))
+		for i, document := range request.Documents {
+			result.Documents[i] = entity.AttachDocument{
+				DocName: document.Name,
+				DocPath: document.Path,
+				DocType: document.Type,
+				DocSize: document.Size,
+			}
+		}
+	}
+
+	return result
+}
+
+func (t *groupDealTransformer) CreateGroupDealV2RequestToEntity(request *organizationpb.CreateGroupDealV2Request) *entity.Deal {
+	result := &entity.Deal{
+		Name:           request.Name,
+		TargetProfit:   request.TargetProfit,
+		DealType:       enums.DealType(request.DealType),
+		Note:           request.Note,
+		BankAccountID:  request.BankAccountId,
+		CustomerIds:    request.CustomerIds,
+		PartnerIds:     request.PartnerIds,
+		MemberIds:      request.MemberIds,
+		ProductIds:     request.ProductIds,
+		ChargePersonID: &request.ChargePersonId,
+	}
+
+	if request.BankAccount != nil {
+		result.BankAccount = &entity.BankAccount{
+			BankName:      request.BankAccount.BankName,
+			AccountNumber: request.BankAccount.AccountNumber,
+			AccountName:   request.BankAccount.AccountName,
+		}
+	}
+
+	if request.Documents != nil {
+		result.Documents = make([]entity.AttachDocument, len(request.Documents))
+		for i, document := range request.Documents {
+			result.Documents[i] = entity.AttachDocument{
+				DocName: document.Name,
+				DocPath: document.Path,
+				DocType: document.Type,
+				DocSize: document.Size,
+			}
+		}
+	}
+
+	return result
+}
+
 func (t *groupDealTransformer) UpdateGroupDealRequestToEntity(request *organizationpb.UpdateGroupDealRequest) *entity.Deal {
 	return &entity.Deal{
 		// ID:     uint32(request.Id),
@@ -84,6 +162,18 @@ func (t *groupDealTransformer) UpdateGroupDealRequestToEntity(request *organizat
 
 func (t *groupDealTransformer) EntityToCreateGroupDealResponse(deal *entity.Deal) *organizationpb.CreateGroupDealResponse {
 	return &organizationpb.CreateGroupDealResponse{
+		Id: uint32(deal.ID),
+	}
+}
+
+func (t *groupDealTransformer) EntityToCreateOrganizationDealResponse(deal *entity.Deal) *organizationpb.CreateOrganizationDealResponse {
+	return &organizationpb.CreateOrganizationDealResponse{
+		Id: uint32(deal.ID),
+	}
+}
+
+func (t *groupDealTransformer) EntityToCreateGroupDealV2Response(deal *entity.Deal) *organizationpb.CreateGroupDealV2Response {
+	return &organizationpb.CreateGroupDealV2Response{
 		Id: uint32(deal.ID),
 	}
 }
@@ -124,92 +214,57 @@ func (t *groupDealTransformer) EntityToPb(deal *entity.Deal) *organizationpb.Gro
 }
 
 func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal {
-	result := t.EntityToPb(deal)
-
-	// if deal.Products != nil {
-	// 	result.Products = make([]*organizationpb.ProductItem, len(deal.Products))
-	// 	for i, product := range deal.Products {
-	// 		result.Products[i] = &organizationpb.ProductItem{
-	// 			Id: uint32(product.ProductID),
-	// 		}
-	// 	}
-	// }
-
-	if deal.BankAccount != nil {
-		result.BankAccount = &organizationpb.BankAccountItem{
-			Name:          deal.BankAccount.BankName,
-			BankName:      deal.BankAccount.BankName,
-			AccountNumber: deal.BankAccount.AccountNumber,
-			AccountName:   deal.BankAccount.AccountName,
-		}
+	response := &organizationpb.GroupDeal{
+		Id:           uint32(deal.ID),
+		Name:         deal.Name,
+		TargetProfit: deal.TargetProfit,
+		Status:       uint32(deal.Status),
+		DealType:     uint32(deal.DealType),
+		OwnerId:      uint32(deal.OwnerId),
+		OwnerType:    uint32(deal.OwnerType),
+		Note:         deal.Note,
+		CancelReason: deal.CancelReason,
 	}
 
-	if deal.Documents != nil {
-		result.Documents = make([]*organizationpb.DocumentItem, len(deal.Documents))
-		for i, document := range deal.Documents {
-			result.Documents[i] = &organizationpb.DocumentItem{
-				Name: document.DocName,
-				Path: document.DocPath,
-				Type: document.DocType,
-				Size: document.DocSize,
-			}
-		}
-	}
-
-	if deal.Products != nil {
-		result.Products = make([]*bdspropb.ProductAttachment, len(deal.Products))
-		for i, product := range deal.Products {
-			result.Products[i] = &bdspropb.ProductAttachment{
-				Id: uint64(product.ProductID),
-			}
-		}
-	}
-
-	if deal.Members != nil {
-		result.Members = make([]*sharepb.ProfileItem, len(deal.Members))
-		for i, member := range deal.Members {
-			result.Members[i] = &sharepb.ProfileItem{
-				Id: uint64(member.MemberID),
-			}
-		}
-	}
-
-	if deal.Customers != nil {
-		result.Customers = make([]*sharepb.ProfileItem, len(deal.Customers))
-		for i, customer := range deal.Customers {
-			result.Customers[i] = &sharepb.ProfileItem{
-				Id: uint64(customer.MemberID),
-			}
-		}
-	}
-
-	if deal.Partners != nil {
-		result.Partners = make([]*sharepb.ProfileItem, len(deal.Partners))
-		for i, partner := range deal.Partners {
-			result.Partners[i] = &sharepb.ProfileItem{
-				Id: uint64(partner.MemberID),
-			}
-		}
-	}
-
-	return result
+	// Add other fields as needed
+	return response
 }
 
 func (t *groupDealTransformer) EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse {
-	dealsResponse := make([]*organizationpb.GroupDeal, len(deals))
-	for i, deal := range deals {
-		dealsResponse[i] = &organizationpb.GroupDeal{
-			Id:   uint32(deal.ID),
-			Name: deal.Name,
-			// Amount:       deal.Amount,
-			DealType:     uint32(deal.DealType),
-			DealTypeName: enums.DealTypeMap[deal.DealType],
-			// CreatedAt:    _utils.FormatTimeToString(&deal.CreatedAt),
-			// UpdatedAt:    _utils.FormatTimeToString(&deal.UpdatedAt),
-		}
-	}
-	return &organizationpb.GetGroupDealsResponse{
-		Data:  dealsResponse,
+	response := &organizationpb.GetGroupDealsResponse{
 		Total: total,
+		Data:  make([]*organizationpb.GroupDeal, len(deals)),
 	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
+}
+
+func (t *groupDealTransformer) EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse {
+	response := &organizationpb.GetOrganizationDealsResponse{
+		Total: total,
+		Data:  make([]*organizationpb.GroupDeal, len(deals)),
+	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
+}
+
+func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response {
+	response := &organizationpb.GetGroupDealsV2Response{
+		Total: total,
+		Data:  make([]*organizationpb.GroupDeal, len(deals)),
+	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
 }

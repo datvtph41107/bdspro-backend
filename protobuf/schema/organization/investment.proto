@@ -45,45 +45,30 @@ service InvestmentService {
             post: "/v2/org/investment/{id}/reject"
         };
     };
-}
-
-message CreateInvestmentRequest {
-    uint64 dealId = 1;
-    uint32 investType = 2;
-    double amount = 3;
-    string transferTime = 4;
-    string note = 5;
-    repeated DocumentItem documents = 6;
-}
-
-message CreateInvestmentResponse {
-    uint64 id = 1;
-}
-
-message UpdateInvestmentRequest {
-    uint64 id = 1;
-    uint64 dealId = 2;
-    uint32 investType = 3;
-    double amount = 4;
-    string transferTime = 5;
-    string note = 6;
-    repeated DocumentItem documents = 7;
-}
-
-message UpdateInvestmentResponse {
-    uint64 id = 1;
+    rpc ConfirmInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2/org/investment/{id}/confirm"
+        };
+    };
+    rpc UnconfirmInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2/org/investment/{id}/unconfirm"
+        };
+    };
 }
 
 message SubmitInvestRequest {
     uint64 id = 1;
     uint64 dealId = 2;
-    uint32 investType = 3;
-    double amount = 4;
-    string transferTime = 5;
-    string note = 6;
-    repeated DocumentItem documents = 7;
+    uint64 memberId = 3;  // ID of the deal member making the investment
+    uint32 investType = 4;
+    double amount = 5;
+    string transferTime = 6;
+    string note = 7;
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    optional uint64 proxyUserId = 10;  // For proxy investments
 }
-
 
 message ListInvestment {
     repeated Investment data = 1;
@@ -93,16 +78,21 @@ message ListInvestment {
 message Investment {
     uint64 id = 1;
     uint64 dealId = 2;
-    uint32 investType = 3;
-    double amount = 4;
-    string transferTime = 5;
-    string note = 6;
-    repeated DocumentItem documents = 7;
-    uint32 status = 8;
-    string changedAt = 9;
-    optional uint64 createdBy = 10;
-    optional sharepb.ProfileItem createdUser = 11;
-    string statusName = 12;
+    uint64 memberId = 3;  // ID of the deal member
+    uint32 investType = 4;
+    double amount = 5;
+    string transferTime = 6;
+    string note = 7;
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    uint32 status = 10;
+    string changedAt = 11;
+    optional uint64 createdBy = 12;
+    optional sharepb.ProfileItem createdUser = 13;
+    string statusName = 14;
+    bool confirmed = 15;
+    optional uint64 proxyUserId = 16;  // ID of admin who created on behalf
+    optional sharepb.ProfileItem proxyUser = 17;  // Profile of proxy user
 }
 
 message InvestmentListRequest {
@@ -112,4 +102,5 @@ message InvestmentListRequest {
     string transferTime = 4;
     string note = 5;
     repeated DocumentItem documents = 6;
+    optional uint64 memberId = 7;  // Filter by member ID
 }

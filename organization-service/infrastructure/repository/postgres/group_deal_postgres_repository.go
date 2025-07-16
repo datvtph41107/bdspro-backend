@@ -131,21 +131,64 @@ func (r *GroupDealPostgresRepository) DetailByID(ctx context.Context, id uint64)
 }
 
 func (r *GroupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	var models []entity.Deal
-	if err := r.db.WithContext(ctx).Where("group_id = ? AND is_deleted = ?", groupID, false).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	var deals []*entity.Deal
+	var total int64
+
+	offset := (page - 1) * size
+
+	// Count total
+	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).
+		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", groupID, enums.OwnerTypeGroup, false).
+		Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	entities := make([]*entity.Deal, len(models))
-	for i, model := range models {
-		entities[i] = &model
-	}
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).Where("group_id = ? AND is_deleted = ?", groupID, false).Count(&count).Error; err != nil {
+
+	// Get deals with pagination
+	if err := r.db.WithContext(ctx).
+		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", groupID, enums.OwnerTypeGroup, false).
+		Offset(offset).Limit(size).
+		Order("created_at DESC").
+		Find(&deals).Error; err != nil {
 		return nil, 0, err
 	}
-	return entities, uint32(count), nil
+
+	return deals, uint32(total), nil
+}
+
+func (r *GroupDealPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+	var deals []*entity.Deal
+	var total int64
+
+	offset := (page - 1) * size
+
+	// Count total
+	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).
+		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", organizationID, enums.OwnerTypeOrganization, false).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get deals with pagination
+	if err := r.db.WithContext(ctx).
+		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", organizationID, enums.OwnerTypeOrganization, false).
+		Offset(offset).Limit(size).
+		Order("created_at DESC").
+		Find(&deals).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return deals, uint32(total), nil
 }
 
 func (r *GroupDealPostgresRepository) UpdateStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
 	return r.db.WithContext(ctx).Model(&entity.Deal{}).Where("id = ? AND is_deleted = ?", id, false).Update("status", status).Error
+}
+
+func (r *GroupDealPostgresRepository) UpdateStatusAndCancelReason(ctx context.Context, id uint64, status enums.DealStatus, cancelReason string) error {
+	return r.db.WithContext(ctx).Model(&entity.Deal{}).
+		Where("id = ? AND is_deleted = ?", id, false).
+		Updates(map[string]interface{}{
+			"status":        status,
+			"cancel_reason": cancelReason,
+		}).Error
 }

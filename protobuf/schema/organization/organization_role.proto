@@ -55,6 +55,8 @@ message CreateRoleRequest {
     string key = 2 [json_name = "key"];
     uint32 organizationId = 3 [json_name = "organizationId"];
     repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
 }
 
 message CreateRoleResponse {
@@ -66,6 +68,8 @@ message UpdateRoleRequest {
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
     repeated uint32 permissionIds = 4 [json_name = "permissionIds"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
 }
 
 message UpdateRoleResponse {    
@@ -91,6 +95,8 @@ message Role {
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
     repeated Permission permissions = 4 [json_name = "permissions"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
 }
 
 message GetRolesResponse {

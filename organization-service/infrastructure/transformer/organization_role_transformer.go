@@ -4,6 +4,7 @@ import (
 	organizationpb "pb/types/organization"
 
 	"organization/internal/domain/entity"
+	"organization/internal/enums"
 )
 
 type OrganizationRoleTransformer interface {
@@ -28,6 +29,8 @@ func (t *organizationRoleTransformer) CreateRoleRequestToEntity(req *organizatio
 		Name:           req.Name,
 		Key:            req.Key,
 		OrganizationId: req.OrganizationId,
+		IsDefault:      req.IsDefault,
+		DomainType:     enums.DomainType(req.DomainType),
 	}
 }
 
@@ -37,6 +40,8 @@ func (t *organizationRoleTransformer) UpdateRoleRequestToEntity(req *organizatio
 		Name:          req.Name,
 		Key:           req.Key,
 		PermissionIds: req.PermissionIds,
+		IsDefault:     req.IsDefault,
+		DomainType:    enums.DomainType(req.DomainType),
 	}
 }
 

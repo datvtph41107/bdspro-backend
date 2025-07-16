@@ -85,11 +85,11 @@ func (h *InvestmentHandler) UpdateInvestment(ctx context.Context, req *organizat
 // @Success 200 {object} uint64
 // @Router /investment/{id} [delete]
 func (h *InvestmentHandler) DeleteInvestment(ctx context.Context, req *sharepb.IdDTO) (*sharepb.IdDTO, error) {
-	id, err := h.InvestmentUsecase.DeleteInvestment(ctx, &req.Id)
+	err := h.InvestmentUsecase.DeleteInvestment(ctx, &req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &sharepb.IdDTO{Id: *id}, nil
+	return &sharepb.IdDTO{Id: req.Id}, nil
 }
 
 // @Summary get form khai báo góp vốn
@@ -123,6 +123,11 @@ func (h *InvestmentHandler) DetailInvestment(ctx context.Context, req *sharepb.I
 func (h *InvestmentHandler) GetInvestments(ctx context.Context, req *organizationpb.InvestmentListRequest) (*organizationpb.ListInvestment, error) {
 	dto := &dto.InvestmentDTO{
 		DealID: req.DealId,
+	}
+
+	// Handle nullable member ID
+	if req.MemberId != nil {
+		dto.MemberID = *req.MemberId
 	}
 
 	investments, total, err := h.InvestmentUsecase.GetInvestments(ctx, dto)
@@ -172,6 +177,46 @@ func (h *InvestmentHandler) ApproveInvestment(ctx context.Context, req *sharepb.
 // @Router /investment/{id}/reject [post]
 func (h *InvestmentHandler) RejectInvestment(ctx context.Context, req *sharepb.IdDTO) (*sharepb.IdDTO, error) {
 	id, err := h.InvestmentUsecase.RejectInvestment(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.IdDTO{
+		Id: id,
+	}, nil
+}
+
+// @Summary confirm form khai báo góp vốn
+// @Description confirm form khai báo góp vốn
+// @Tags Investment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID"
+// @Success 200 {object} uint64
+// @Router /investment/{id}/confirm [post]
+func (h *InvestmentHandler) ConfirmInvestment(ctx context.Context, req *sharepb.IdDTO) (*sharepb.IdDTO, error) {
+	id, err := h.InvestmentUsecase.ChangeConfirmation(ctx, req.Id, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.IdDTO{
+		Id: id,
+	}, nil
+}
+
+// @Summary unconfirm form khai báo góp vốn
+// @Description unconfirm form khai báo góp vốn
+// @Tags Investment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID"
+// @Success 200 {object} uint64
+// @Router /investment/{id}/unconfirm [post]
+func (h *InvestmentHandler) UnconfirmInvestment(ctx context.Context, req *sharepb.IdDTO) (*sharepb.IdDTO, error) {
+	id, err := h.InvestmentUsecase.ChangeConfirmation(ctx, req.Id, false)
 	if err != nil {
 		return nil, err
 	}

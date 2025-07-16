@@ -45,3 +45,4 @@ func (c *NotificationClient) SendBatchNotification(ctx context.Context, notifica
 	}
 	return c.client.SendBatch(ctx, notiRequests)
 }
+

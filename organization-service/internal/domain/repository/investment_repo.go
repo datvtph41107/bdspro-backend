@@ -14,5 +14,6 @@ type InvestmentRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entity.Investment, error)
 	GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error)
 	ChangeStatus(ctx context.Context, id uint64, status enums.ApprovedStatus) (uint64, error)
+	ChangeConfirmation(ctx context.Context, id uint64, confirmed bool) (uint64, error)
 	CountDashboard(ctx context.Context, req *dto.InvestmentDTO) (*dto.InfoInvestmentDTO, error)
 }

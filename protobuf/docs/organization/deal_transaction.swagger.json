@@ -1,0 +1,547 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "organization/deal_transaction.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "DealTransactionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/org/deal/transactions/{id}": {
+      "get": {
+        "summary": "Lấy chi tiết giao dịch",
+        "operationId": "DealTransactionService_GetTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      },
+      "delete": {
+        "summary": "Xóa giao dịch",
+        "operationId": "DealTransactionService_DeleteTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      },
+      "put": {
+        "summary": "Cập nhật giao dịch",
+        "operationId": "DealTransactionService_UpdateTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealTransactionServiceUpdateTransactionBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      }
+    },
+    "/v2/org/deal/transactions/{id}/approve": {
+      "put": {
+        "summary": "Phê duyệt/từ chối giao dịch",
+        "operationId": "DealTransactionService_ApproveTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealTransactionServiceApproveTransactionBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/financial-summary": {
+      "get": {
+        "summary": "Lấy thống kê tài chính",
+        "operationId": "DealTransactionService_GetFinancialSummary",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbFinancialSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/transactions": {
+      "get": {
+        "summary": "Lấy danh sách giao dịch",
+        "operationId": "DealTransactionService_GetTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "type",
+            "description": " - TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TRANSACTION_TYPE_UNKNOWN",
+              "TRANSACTION_TYPE_EXPENSE",
+              "TRANSACTION_TYPE_REVENUE"
+            ],
+            "default": "TRANSACTION_TYPE_UNKNOWN"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      },
+      "post": {
+        "summary": "Tạo giao dịch chi phí/doanh thu",
+        "operationId": "DealTransactionService_CreateTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealTransactionServiceCreateTransactionBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealTransactionService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "DealTransactionServiceApproveTransactionBody": {
+      "type": "object",
+      "properties": {
+        "rejectReason": {
+          "type": "string"
+        }
+      },
+      "title": "Request phê duyệt giao dịch"
+    },
+    "DealTransactionServiceCreateTransactionBody": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/organizationpbTransactionType"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      },
+      "title": "Request tạo giao dịch"
+    },
+    "DealTransactionServiceUpdateTransactionBody": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      },
+      "title": "Request cập nhật giao dịch"
+    },
+    "organizationpbApprovedStatus": {
+      "type": "string",
+      "enum": [
+        "APPROVED_STATUS_UNKNOWN",
+        "APPROVED_STATUS_PENDING",
+        "APPROVED_STATUS_APPROVED",
+        "APPROVED_STATUS_REJECTED"
+      ],
+      "default": "APPROVED_STATUS_UNKNOWN",
+      "description": "- APPROVED_STATUS_PENDING: Chờ xác nhận\n - APPROVED_STATUS_APPROVED: Đã xác nhận\n - APPROVED_STATUS_REJECTED: Từ chối",
+      "title": "Enum cho trạng thái phê duyệt"
+    },
+    "organizationpbDealTransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDealTransactionResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Response cho danh sách giao dịch"
+    },
+    "organizationpbDealTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "type": {
+          "$ref": "#/definitions/organizationpbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "$ref": "#/definitions/organizationpbApprovedStatus"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "approvedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "approvedAt": {
+          "type": "string"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Response cho giao dịch"
+    },
+    "organizationpbFinancialSummaryResponse": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalExpense": {
+          "type": "number",
+          "format": "double"
+        },
+        "netProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitMargin": {
+          "type": "number",
+          "format": "double"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitStatus": {
+          "type": "string"
+        },
+        "warningMessages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "Response cho thống kê tài chính"
+    },
+    "organizationpbTransactionType": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_TYPE_UNKNOWN",
+        "TRANSACTION_TYPE_EXPENSE",
+        "TRANSACTION_TYPE_REVENUE"
+      ],
+      "default": "TRANSACTION_TYPE_UNKNOWN",
+      "description": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu",
+      "title": "Enum cho loại giao dịch"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

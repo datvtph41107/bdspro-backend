@@ -28,5 +28,15 @@ func AutoMigrate() {
 	db.AutoMigrate(&entity.DealProduct{})
 	db.AutoMigrate(&entity.AttachDocument{})
 	db.AutoMigrate(&entity.BankAccount{})
-	db.AutoMigrate(&entity.Investment{})
+	db.AutoMigrate(&entity.DealInvitation{}) // Thêm migration cho deal_invitations
+	err := db.AutoMigrate(&entity.Investment{})
+	if err != nil {
+		panic(err)
+	}
+
+	db.AutoMigrate(&entity.DealMember{})
+	db.AutoMigrate(&entity.DealTransaction{})
+	
+	// Thêm migration cho DealMemberModel với các trường hoa hồng
+	db.AutoMigrate(&postgres.DealMemberModel{})
 }

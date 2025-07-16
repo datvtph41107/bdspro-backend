@@ -6,6 +6,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	TimeFormat = "2006-01-02 15:04:05"
+)
+
 func TimeToTimestamp(t *time.Time) *timestamppb.Timestamp {
 	if t == nil {
 		return nil
@@ -41,7 +45,22 @@ func ParseStringToTime(value string) *time.Time {
 	return &t
 }
 
-func NowPtr() *time.Time {
-	t := time.Now()
+// --- ADDITIONAL FUNCTIONS FOR INVESTMENT MODULE ---
+// These use a custom format, do not affect old code
+func ParseStringToTimeCustom(timeStr string) *time.Time {
+	if timeStr == "" {
+		return nil
+	}
+	t, err := time.Parse(TimeFormat, timeStr)
+	if err != nil {
+		return nil
+	}
 	return &t
+}
+
+func FormatTimeToStringCustom(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format(TimeFormat)
 }

@@ -39,6 +39,8 @@ type GRPCServer struct {
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler
 	internalOrganizationHandler    *handler.InternalOrganizationHandler
+	dealInvitationHandler          *handler.DealInvitationHandler
+	dealCommissionHandler          *handler.DealCommissionHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -61,6 +63,8 @@ func NewGRPCServer(
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
+	dealInvitationHandler *handler.DealInvitationHandler,
+	dealCommissionHandler *handler.DealCommissionHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -82,6 +86,8 @@ func NewGRPCServer(
 
 		organizationLogActivityHandler: organizationLogActivityHandler,
 		internalOrganizationHandler:    internalOrganizationHandler,
+		dealInvitationHandler:          dealInvitationHandler,
+		dealCommissionHandler:          dealCommissionHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 	}
 }
@@ -106,6 +112,8 @@ func (s *GRPCServer) Start() {
 		s.investmentHandler,
 		s.organizationLogActivityHandler,
 		s.internalOrganizationHandler,
+		s.dealInvitationHandler,
+		s.dealCommissionHandler,
 	)
 
 	g.Add(start, stop)
@@ -137,6 +145,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 
 	organizationLogActivityHandler *handler.OrganizationLogActivityHandler,
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
+	dealInvitationHandler *handler.DealInvitationHandler,
+	dealCommissionHandler *handler.DealCommissionHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -170,6 +180,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterInvestmentServiceServer(s, investmentHandler)
 
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
+			organizationpb.RegisterDealInvitationServiceServer(s, dealInvitationHandler)
+			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
 		},
 		unaryInts,
 		streamInts,

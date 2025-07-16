@@ -21,7 +21,7 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = crmpb.RegisterContactServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterLeadServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterStageServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = crmpb.RegisterHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	// _ = crmpb.RegisterHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterRuleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterBlockServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterFollowServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
