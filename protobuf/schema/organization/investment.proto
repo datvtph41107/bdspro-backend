@@ -32,7 +32,7 @@ service InvestmentService {
     };
     rpc GetInvestments(InvestmentListRequest) returns (ListInvestment) {
         option (google.api.http) = {
-            get: "/v2/org/investments/{dealId}"
+            get: "/v2/org/investments/list/{dealId}"
         };
     };
     rpc ApproveInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {

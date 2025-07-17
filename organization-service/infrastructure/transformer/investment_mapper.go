@@ -2,6 +2,7 @@ package transformer
 
 import (
 	_utils "common/utils"
+	_models "common/models"
 	"organization/internal/domain/entity"
 	"organization/internal/enums"
 	organizationpb "pb/types/organization"
@@ -19,6 +20,9 @@ func NewInvestmentMapper(documentMapper *DocumentMapper) *InvestmentMapper {
 
 func (m *InvestmentMapper) SubmitInvestRequestToEntity(req *organizationpb.SubmitInvestRequest) *entity.Investment {
 	result := &entity.Investment{
+		BaseEntity: _models.BaseEntity{
+			ID: req.Id,
+		},
 		DealID:            req.DealId,
 		MemberID:          req.MemberId,
 		Amount:            req.Amount,

@@ -17,6 +17,7 @@ type DealMemberModel struct {
 	CommissionValue float64              `gorm:"default:0"`  // Giá trị hoa hồng
 	CommissionType  enums.CommissionType `gorm:"default:10"` // Loại hoa hồng
 	Note            string               `gorm:"type:text"`  // Ghi chú
+	IsUnilateral    bool                 `gorm:"default:false"` // Đánh dấu gỡ khỏi thương vụ một cách đơn phương
 }
 
 func (DealMemberModel) TableName() string {
@@ -41,6 +42,7 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 		CommissionValue: dealMember.CommissionValue,
 		CommissionType:  dealMember.CommissionType,
 		Note:            dealMember.Note,
+		IsUnilateral:   dealMember.IsUnilateral,
 	}
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -65,6 +67,7 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 		CommissionValue: model.CommissionValue,
 		CommissionType:  model.CommissionType,
 		Note:            model.Note,
+		IsUnilateral:   model.IsUnilateral,
 	}, nil
 }
 
@@ -84,6 +87,12 @@ func (r *DealMemberPostgresRepository) UpdateNote(ctx context.Context, dealID, m
 		Update("note", note).Error
 }
 
+func (r *DealMemberPostgresRepository) UpdateUnilateralStatus(ctx context.Context, dealID, memberID uint64, isUnilateral bool) error {
+	return r.db.WithContext(ctx).Model(&DealMemberModel{}).
+		Where("deal_id = ? AND member_id = ?", dealID, memberID).
+		Update("is_unilateral", isUnilateral).Error
+}
+
 func (r *DealMemberPostgresRepository) UpdateMembersCommission(ctx context.Context, dealID uint64, members []*entity.DealMember) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, member := range members {
@@ -93,6 +102,7 @@ func (r *DealMemberPostgresRepository) UpdateMembersCommission(ctx context.Conte
 					"commission_value": member.CommissionValue,
 					"commission_type":  member.CommissionType,
 					"note":             member.Note,
+					"is_unilateral":   member.IsUnilateral,
 				}).Error
 			if err != nil {
 				return err
@@ -119,6 +129,7 @@ func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, dealI
 			CommissionValue: model.CommissionValue,
 			CommissionType:  model.CommissionType,
 			Note:            model.Note,
+			IsUnilateral:   model.IsUnilateral,
 		}
 	}
 

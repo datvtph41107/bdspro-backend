@@ -3,7 +3,6 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = ["grpc"]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ."
   delay = 1000

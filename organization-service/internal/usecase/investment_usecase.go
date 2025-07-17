@@ -72,6 +72,7 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 			TargetID:   deal.ID,
 			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
 			IsMerge:    false,
+			UserId:     &deal.OwnerId,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
 	}()
@@ -181,18 +182,18 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 	if err != nil {
 		return 0, err
 	}
-
+	//TODO: uncomment when notification service is ready	
 	// Send notification in a separate goroutine
 	go func() {
 		// Create context with 10 second timeout for notification
 		notiCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-
 		notification := &dto.NotificationDTO{
 			Type:       enums.NotiInvestmentApproved,
 			TargetID:   investment.DealID,
 			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
 			IsMerge:    false,
+			UserId:     &investment.MemberID,	
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
 	}()
@@ -229,6 +230,7 @@ func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (ui
 			TargetID:   investment.DealID,
 			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
 			IsMerge:    false,
+			UserId:     &investment.MemberID,	
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
 	}()

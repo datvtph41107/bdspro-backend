@@ -15,6 +15,7 @@ type DealTransaction struct {
 	TransactionDate *time.Time          `gorm:"not null"`
 	Category       string               `gorm:"not null"` // Danh mục chi phí/doanh thu
 	Note           string               `gorm:"type:text"`
+	IsManual       bool                 `gorm:"default:false"` // Đánh dấu doanh thu được nhập tay
 	
 	// Người tạo giao dịch
 	CreatedBy      uint64               `gorm:"not null"`

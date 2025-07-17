@@ -160,7 +160,6 @@ func (h *InvestmentHandler) ApproveInvestment(ctx context.Context, req *sharepb.
 	if err != nil {
 		return nil, err
 	}
-
 	return &sharepb.IdDTO{
 		Id: id,
 	}, nil

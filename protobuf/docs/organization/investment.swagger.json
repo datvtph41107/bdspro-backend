@@ -269,7 +269,7 @@
         ]
       }
     },
-    "/v2/org/investments/{dealId}": {
+    "/v2/org/investments/list/{dealId}": {
       "get": {
         "operationId": "InvestmentService_GetInvestments",
         "responses": {

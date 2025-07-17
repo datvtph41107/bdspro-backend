@@ -14,6 +14,7 @@ type CreateDealTransactionRequest struct {
 	TransactionDate *time.Time          `json:"transaction_date" validate:"required"`
 	Category       string               `json:"category" validate:"required"`
 	Note           string               `json:"note"`
+	IsManual       bool                 `json:"is_manual"` // Đánh dấu doanh thu được nhập tay
 	DocumentIds    []uint64             `json:"document_ids"`
 }
 
@@ -24,6 +25,7 @@ type UpdateDealTransactionRequest struct {
 	TransactionDate *time.Time          `json:"transaction_date" validate:"required"`
 	Category       string               `json:"category" validate:"required"`
 	Note           string               `json:"note"`
+	IsManual       bool                 `json:"is_manual"` // Đánh dấu doanh thu được nhập tay
 	DocumentIds    []uint64             `json:"document_ids"`
 }
 
@@ -50,6 +52,7 @@ type DealTransactionResponse struct {
 	TransactionDate *time.Time           `json:"transaction_date"`
 	Category        string               `json:"category"`
 	Note            string               `json:"note"`
+	IsManual        bool                 `json:"is_manual"` // Đánh dấu doanh thu được nhập tay
 	CreatedBy       uint64               `json:"created_by"`
 	Status          enums.ApprovedStatus `json:"status"`
 	StatusName      string               `json:"status_name"`

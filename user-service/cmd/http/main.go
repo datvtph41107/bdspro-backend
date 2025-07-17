@@ -2,6 +2,7 @@ package cmd_http
 
 import (
 	"common"
+	"fmt"
 	"os"
 	"time"
 	"user/config"
@@ -31,6 +32,7 @@ var HttpCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Run the HTTP server",
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Running HTTP server")
 		r := gin.Default()
 		// os.Setenv("TZ", "Europe/London")
 

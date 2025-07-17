@@ -94,7 +94,7 @@ func (r *DealInvitationPostgresRepository) GetByDealID(ctx context.Context, deal
 	var models []DealInvitationModel
 	var total int64
 	
-	offset := (page - 1) * size
+	offset := page * size
 	
 	// Count total
 	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("deal_id = ?", dealID).Count(&total).Error; err != nil {
@@ -118,7 +118,7 @@ func (r *DealInvitationPostgresRepository) GetPendingByInviteeID(ctx context.Con
 	var models []DealInvitationModel
 	var total int64
 	
-	offset := (page - 1) * size
+	offset := page * size
 	
 	// Count total
 	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Count(&total).Error; err != nil {
@@ -126,7 +126,7 @@ func (r *DealInvitationPostgresRepository) GetPendingByInviteeID(ctx context.Con
 	}
 	
 	// Get paginated results
-	if err := r.db.WithContext(ctx).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Offset(offset).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Debug().Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Offset(offset).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	

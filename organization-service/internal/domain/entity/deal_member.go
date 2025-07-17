@@ -11,6 +11,7 @@ type DealMember struct {
 	CommissionValue float64              `gorm:"default:0"` // Giá trị hoa hồng (tiền hoặc %)
 	CommissionType  enums.CommissionType `gorm:"default:10"` // Loại hoa hồng (% hoặc VND)
 	Note            string               `gorm:"type:text"`  // Ghi chú
+	IsUnilateral    bool                 `gorm:"default:false"` // Đánh dấu gỡ khỏi thương vụ một cách đơn phương
 }
 
 func (DealMember) TableName() string {

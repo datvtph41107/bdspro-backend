@@ -15,6 +15,7 @@ import (
 type DealCommissionUsecase interface {
 	UpdateDealMemberCommission(ctx context.Context, dealID, memberID uint64, commissionValue float64, commissionType enums.CommissionType, note string) error
 	UpdateDealMemberNote(ctx context.Context, dealID, memberID uint64, note string) error
+	UpdateDealMemberUnilateralStatus(ctx context.Context, dealID, memberID uint64, isUnilateral bool) error
 	UpdateDealMembersCommission(ctx context.Context, dealID uint64, members []*entity.DealMember) error
 	GetDealCommissionStats(ctx context.Context, dealID uint64) (*entity.CommissionStats, error)
 	ValidateCommission(ctx context.Context, dealID uint64, commissionValue float64, commissionType enums.CommissionType) error
@@ -125,6 +126,46 @@ func (u *dealCommissionUsecase) UpdateDealMemberNote(ctx context.Context, dealID
 		ActorId: uint32(currentUserId),
 		LogType: "UPDATE_DEAL_MEMBER_NOTE",
 		LogData: fmt.Sprintf("Updated note for member %d in deal %d", memberID, dealID),
+	})
+
+	return nil
+}
+
+func (u *dealCommissionUsecase) UpdateDealMemberUnilateralStatus(ctx context.Context, dealID, memberID uint64, isUnilateral bool) error {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+
+	// Kiểm tra deal có tồn tại không
+	deal, err := u.dealRepository.GetByID(ctx, dealID)
+	if err != nil {
+		return err
+	}
+	if deal == nil {
+		return custom_error.RecordNotFound("deal not found")
+	}
+
+	// Kiểm tra quyền - chỉ leader mới được cập nhật hoa hồng
+	err = u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+	if err != nil {
+		return custom_error.Forbidden("you are not allowed to update commission")
+	}
+
+	// Kiểm tra member có tồn tại trong deal không
+	_, err = u.dealMemberRepository.GetByDealIDAndMemberID(ctx, dealID, memberID)
+	if err != nil {
+		return custom_error.RecordNotFound("deal member not found")
+	}
+
+	err = u.dealMemberRepository.UpdateUnilateralStatus(ctx, dealID, memberID, isUnilateral)
+	if err != nil {
+		return err
+	}
+
+	// Ghi log
+	u.logWorker.Push(LogEvent{
+		GroupId: uint32(deal.OwnerId),
+		ActorId: uint32(currentUserId),
+		LogType: "UPDATE_DEAL_MEMBER_UNILATERAL_STATUS",
+		LogData: fmt.Sprintf("Updated unilateral status for member %d in deal %d to %t", memberID, dealID, isUnilateral),
 	})
 
 	return nil

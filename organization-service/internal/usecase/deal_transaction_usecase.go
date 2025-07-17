@@ -59,6 +59,7 @@ func (u *dealTransactionUsecase) CreateTransaction(ctx context.Context, req *dto
 		TransactionDate: req.TransactionDate,
 		Category:        req.Category,
 		Note:            req.Note,
+		IsManual:        req.IsManual,
 		CreatedBy:       userID,
 		Status:          enums.ApprovedStatusPending,
 	}
@@ -96,6 +97,7 @@ func (u *dealTransactionUsecase) UpdateTransaction(ctx context.Context, req *dto
 	transaction.TransactionDate = req.TransactionDate
 	transaction.Category = req.Category
 	transaction.Note = req.Note
+	transaction.IsManual = req.IsManual
 
 	if err := u.dealTransactionRepo.Update(ctx, transaction); err != nil {
 		return nil, fmt.Errorf("failed to update transaction: %w", err)
@@ -202,6 +204,7 @@ func (u *dealTransactionUsecase) toResponse(transaction *entity.DealTransaction)
 		TransactionDate: transaction.TransactionDate,
 		Category:        transaction.Category,
 		Note:            transaction.Note,
+		IsManual:        transaction.IsManual,
 		CreatedBy:       transaction.CreatedBy,
 		Status:          transaction.Status,
 		StatusName:      enums.ApprovedStatusMap[transaction.Status],

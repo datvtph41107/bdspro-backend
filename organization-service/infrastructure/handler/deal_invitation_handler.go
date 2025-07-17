@@ -288,13 +288,14 @@ func (h *DealInvitationHandler) GetPendingInvitations(ctx context.Context, req *
 		return nil, err
 	}
 
-	page := int(req.Page)
-	size := int(req.Size)
-	if page <= 0 {
-		page = 1
+	page := 0
+	size := 10
+
+	if req.Page != 0 {
+		page = int(req.Page)
 	}
-	if size <= 0 {
-		size = 10
+	if req.Size != 0 {
+		size = int(req.Size)
 	}
 
 	invitations, total, err := h.dealInvitationUsecase.GetPendingInvitations(ctx, req.InviteeId, page, size)
@@ -319,13 +320,14 @@ func (h *DealInvitationHandler) GetInvitationsByDeal(ctx context.Context, req *o
 		return nil, err
 	}
 
-	page := int(req.Page)
-	size := int(req.Size)
-	if page <= 0 {
-		page = 1
+	page := 0
+	size := 10
+
+	if req.Page != 0 {
+		page = int(req.Page)
 	}
-	if size <= 0 {
-		size = 10
+	if req.Size != 0 {
+		size = int(req.Size)
 	}
 
 	invitations, total, err := h.dealInvitationUsecase.GetInvitationsByDealID(ctx, req.DealId, page, size)
