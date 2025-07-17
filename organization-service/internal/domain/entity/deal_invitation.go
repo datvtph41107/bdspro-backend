@@ -9,15 +9,13 @@ type DealInvitationStatus uint32
 
 const (
 	DealInvitationStatusInvited     DealInvitationStatus = 1 // Đã mời
-	DealInvitationStatusPending     DealInvitationStatus = 2 // Chờ xác nhận
-	DealInvitationStatusRejected    DealInvitationStatus = 3 // Từ chối
-	DealInvitationStatusAccepted    DealInvitationStatus = 4 // Đã tham gia
-	DealInvitationStatusWithdrawn   DealInvitationStatus = 5 // Đã rút khỏi thương vụ
+	DealInvitationStatusRejected    DealInvitationStatus = 2 // Từ chối
+	DealInvitationStatusAccepted    DealInvitationStatus = 3 // Đã tham gia
+	DealInvitationStatusWithdrawn   DealInvitationStatus = 4 // Đã rút khỏi thương vụ
 )
 
 var DealInvitationStatusMap = map[DealInvitationStatus]string{
 	DealInvitationStatusInvited:   "Đã mời",
-	DealInvitationStatusPending:   "Chờ xác nhận",
 	DealInvitationStatusRejected:  "Từ chối",
 	DealInvitationStatusAccepted:  "Đã tham gia",
 	DealInvitationStatusWithdrawn: "Đã rút khỏi thương vụ",
@@ -51,8 +49,12 @@ func (DealInvitation) TableName() string {
 }
 
 // Helper methods
-func (di *DealInvitation) IsPending() bool {
-	return di.Status == DealInvitationStatusPending
+func (di *DealInvitation) IsInvited() bool {
+	return di.Status == DealInvitationStatusInvited
+}
+
+func (di *DealInvitation) IsInvitee(inviteeID uint64) bool {
+	return di.InviteeID == inviteeID
 }
 
 func (di *DealInvitation) IsAccepted() bool {

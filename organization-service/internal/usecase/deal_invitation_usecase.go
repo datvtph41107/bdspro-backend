@@ -174,7 +174,7 @@ func (u *dealInvitationUsecase) AcceptInvitation(ctx context.Context, invitation
 	}
 	
 	// Kiểm tra trạng thái
-	if !invitation.IsPending() {
+	if !invitation.IsInvited() {
 		return custom_error.InvalidRequest(&errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
@@ -254,7 +254,7 @@ func (u *dealInvitationUsecase) RejectInvitation(ctx context.Context, invitation
 	}
 	
 	// Kiểm tra trạng thái
-	if !invitation.IsPending() {
+	if !invitation.IsInvited() {
 		return custom_error.InvalidRequest(&errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{

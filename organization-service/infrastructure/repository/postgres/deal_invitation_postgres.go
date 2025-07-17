@@ -46,7 +46,6 @@ func NewDealInvitationPostgresRepository() repository.DealInvitationRepository {
 
 func (r *DealInvitationPostgresRepository) Create(ctx context.Context, invitation *entity.DealInvitation) (*entity.DealInvitation, error) {
 	model := r.entityToModel(invitation)
-	
 	if err := r.db.WithContext(ctx).Create(&model).Error; err != nil {
 		return nil, err
 	}
@@ -56,8 +55,7 @@ func (r *DealInvitationPostgresRepository) Create(ctx context.Context, invitatio
 
 func (r *DealInvitationPostgresRepository) Update(ctx context.Context, invitation *entity.DealInvitation) (*entity.DealInvitation, error) {
 	model := r.entityToModel(invitation)
-	
-	if err := r.db.WithContext(ctx).Save(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("id = ?", model.ID).Updates(&model).Error; err != nil {
 		return nil, err
 	}
 	
@@ -121,12 +119,12 @@ func (r *DealInvitationPostgresRepository) GetPendingByInviteeID(ctx context.Con
 	offset := page * size
 	
 	// Count total
-	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Count(&total).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusInvited).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	
 	// Get paginated results
-	if err := r.db.WithContext(ctx).Debug().Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Offset(offset).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Debug().Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusInvited).Offset(offset).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	
@@ -166,7 +164,7 @@ func (r *DealInvitationPostgresRepository) CountByDealID(ctx context.Context, de
 func (r *DealInvitationPostgresRepository) CountPendingByInviteeID(ctx context.Context, inviteeID uint64) (uint32, error) {
 	var count int64
 	
-	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusPending).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("invitee_id = ? AND status = ?", inviteeID, entity.DealInvitationStatusInvited).Count(&count).Error; err != nil {
 		return 0, err
 	}
 	
