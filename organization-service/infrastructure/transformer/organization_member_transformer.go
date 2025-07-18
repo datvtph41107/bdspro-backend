@@ -69,14 +69,11 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 		membersResponse[i] = &organizationpb.OrganizationMember{
 			Id:     member.OrganizationMember.ID,
 			UserId: member.OrganizationMember.UserID,
-			Role:   member.OrganizationMember.RoleId,
+			RoleId: member.OrganizationMember.RoleId, // Add roleId field
 			Status: getStatusString(member.OrganizationMember.Status),
-			// Profile: profile,
 		}
-		profile := member.Profile
-		if profile != nil {
-			profile.Phone = ""
-			membersResponse[i].Profile = profile
+		if member.Profile != nil {
+			membersResponse[i].Profile = member.Profile
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{

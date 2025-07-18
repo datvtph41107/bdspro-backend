@@ -99,6 +99,7 @@ message DeleteOrganizationMemberResponse {
 }
 
 message GetOrganizationMembersRequest {
+    optional uint32 roleId = 1 [json_name = "roleId"];
     optional uint32 page = 2 [json_name = "page"];
     optional uint32 size = 3 [json_name = "size"];
 }
@@ -107,8 +108,9 @@ message OrganizationMember {
     uint32 id = 1 [json_name = "id"];
     uint32 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
-    string status = 4 [json_name = "status"];
-    sharepb.ProfileItem profile = 5 [json_name = "profile"];
+    uint32 roleId = 4 [json_name = "roleId"];
+    string status = 5 [json_name = "status"];
+    sharepb.ProfileItem profile = 6 [json_name = "profile"];
 }
 
 message GetOrganizationMembersResponse {

@@ -113,6 +113,7 @@ func (h *OrganizationMemberHandler) DeleteOrganizationMember(ctx context.Context
 // @Tags Thành viên
 // @Accept json
 // @Produce json
+// @Param roleId query int false "Role ID để lọc thành viên"
 // @Param page query int false "Page number"
 // @Param size query int false "Page size"
 // @Param text query string false "Tên thành viên"
@@ -129,8 +130,14 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 		size = int(*req.Size)
 	}
 
-	// Get members with pagination
-	members, total, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, page, size)
+	// Get roleId parameter for filtering
+	var roleId *uint32
+	if req.RoleId != nil {
+		roleId = req.RoleId
+	}
+
+	// Get members with pagination and role filtering
+	members, total, err := h.OrganizationMemberUsecase.GetOrganizationMembers(ctx, page, size, roleId)
 	if err != nil {
 		return nil, err
 	}

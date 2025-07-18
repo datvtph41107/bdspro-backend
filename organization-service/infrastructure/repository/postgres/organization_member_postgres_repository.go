@@ -199,9 +199,16 @@ func (r *OrganizationMemberPostgresRepository) CountMemberByOrganizationId(ctx c
 	return uint32(count), nil
 }
 
-func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationMember, uint32, error) {
+func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32) ([]*entity.OrganizationMember, uint32, error) {
 	var models []*OrganizationMemberModel
-	if err := r.db.WithContext(ctx).Where("organization_id = ?", organizationId).Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+	query := r.db.WithContext(ctx).Where("organization_id = ?", organizationId)
+	
+	// Add role filter if roleId is provided
+	if roleId != nil {
+		query = query.Where("role = ?", *roleId)
+	}
+	
+	if err := query.Debug().Offset(page * size).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 	entities := make([]*entity.OrganizationMember, len(models))
@@ -210,7 +217,11 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 	}
 
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("organization_id = ?", organizationId).Count(&count).Error; err != nil {
+	countQuery := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("organization_id = ?", organizationId)
+	if roleId != nil {
+		countQuery = countQuery.Where("role = ?", *roleId)
+	}
+	if err := countQuery.Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return entities, uint32(count), nil

@@ -25,7 +25,7 @@ type OrganizationMemberUsecase interface {
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
-	GetOrganizationMembers(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
+	GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error)
 	// GetOrganizationOfMember(ctx context.Context) (*entity.Organization, error)
@@ -199,8 +199,8 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	return deletedMember, nil
 }
 
-// GetOrganizationMembers retrieves all members of an organization with pagination
-func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
+// GetOrganizationMembers retrieves all members of an organization with pagination and role filtering
+func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
@@ -211,7 +211,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size)
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), page, size, roleId)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -256,7 +256,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), page, size)
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), page, size, nil)
 	if err != nil {
 		return nil, 0, err
 	}
