@@ -98,7 +98,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbGetOrganizationBranchDetailResponse"
+              "$ref": "#/definitions/organizationpbOrganizationBranchDetail"
             }
           },
           "default": {
@@ -441,14 +441,6 @@
       "properties": {
         "success": {
           "type": "boolean"
-        }
-      }
-    },
-    "organizationpbGetOrganizationBranchDetailResponse": {
-      "type": "object",
-      "properties": {
-        "branch": {
-          "$ref": "#/definitions/organizationpbOrganizationBranchDetail"
         }
       }
     },

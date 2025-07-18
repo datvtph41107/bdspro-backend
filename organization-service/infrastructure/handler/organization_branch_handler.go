@@ -101,7 +101,7 @@ func (h *OrganizationBranchHandler) DeleteOrganizationBranch(ctx context.Context
 // @Param id path uint32 true "ID chi nhánh"
 // @Security BearerAuth
 // @Router /organization/branch/{id} [get]
-func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Context, req *organizationpb.GetOrganizationBranchDetailRequest) (*organizationpb.GetOrganizationBranchDetailResponse, error) {
+func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Context, req *organizationpb.GetOrganizationBranchDetailRequest) (*organizationpb.OrganizationBranchDetail, error) {
 	if err := h.validator.ValidateGetOrganizationBranchDetail(req); err != nil {
 		return nil, err
 	}
@@ -111,23 +111,21 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Cont
 		return nil, err
 	}
 
-	return &organizationpb.GetOrganizationBranchDetailResponse{
-		Branch: &organizationpb.OrganizationBranchDetail{
-			Id:          branch.Id,
-			Name:        branch.Name,
-			Address:     branch.Address,
-			Phone:       branch.Phone,
-			Email:       branch.Email,
-			ManagerId:   branch.ManagerId,
-			IsActive:    branch.IsActive,
-			Type:        string(branch.Type),
-			TotalMember: branch.TotalMember,
-			TotalAsset:  branch.TotalAsset,
-			TotalDeal:   branch.TotalDeal,
-			CreatedAt:   branch.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   branch.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			CreatedBy:   branch.CreatedBy,
-		},
+	return &organizationpb.OrganizationBranchDetail{
+		Id:          branch.Id,
+		Name:        branch.Name,
+		Address:     branch.Address,
+		Phone:       branch.Phone,
+		Email:       branch.Email,
+		ManagerId:   branch.ManagerId,
+		IsActive:    branch.IsActive,
+		Type:        string(branch.Type),
+		TotalMember: branch.TotalMember,
+		TotalAsset:  branch.TotalAsset,
+		TotalDeal:   branch.TotalDeal,
+		CreatedAt:   branch.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   branch.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedBy:   branch.CreatedBy,
 	}, nil
 }
 
