@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	_dto "common/dto"
 	_models "common/models"
 	_utils "common/utils"
 	sharepb "pb/types/shared"
@@ -99,6 +100,10 @@ func (m *RateMapper) EntityToPbRate(rate *user_model.Rate) *userpb.Rate {
 
 func (m *RateMapper) PbToEntityRateSearch(req *userpb.GetRateListRequest) *dto.RateSearchDTO {
 	return &dto.RateSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
 		TargetId:   req.TargetId,
 		TargetType: req.TargetType,
 		ParentId:   req.ParentId,

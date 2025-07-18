@@ -34,6 +34,16 @@ service RuleService {
       delete: "/v2/crm/rule/{id}"
     };
   };
+  rpc Active (ActiveRuleRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/rule/{id}/active"
+    };
+  };
+}
+
+message ActiveRuleRequest {
+  uint64 id = 1;
+  bool active = 2;
 }
 
 message RuleSearchRequest {

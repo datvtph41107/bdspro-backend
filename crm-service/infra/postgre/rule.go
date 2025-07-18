@@ -74,3 +74,11 @@ func (r *PostgreRule) GetByID(c context.Context, id uint64) (*domain.RuleEntity,
 	}
 	return &entity, nil
 }
+
+func (r *PostgreRule) Active(c context.Context, id uint64, active bool) error {
+	return r.db.WithContext(c).
+		Model(&domain.RuleEntity{}).
+		Where("id = ?", id).
+		Update("active", active).
+		Error
+}

@@ -193,7 +193,7 @@ func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChil
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_bdspro.Deposite true "Thông tin sản phẩm cần cập nhật"
+// @Param body body pb_bdspro.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/deposite [post]
 func (s *ProductService) ProductDeposite(ctx context.Context, req *pb_bdspro.DepositeRequest) (*pb_bdspro.Transaction, error) {
 	dto := s.DepositeMapper.MapDepositePbToDomain(req)

@@ -79,6 +79,11 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 		return nil, err
 	}
 
+	stage, err := u.stageRepo.GetByID(ctx, *dto.StageID)
+	if err != nil {
+		return nil, err
+	}
+
 	var contact *domain.ContactEntity
 	var lead *domain.LeadEntity
 	u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
@@ -104,6 +109,8 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 			OwnerType:        enums.EOwnerTypeOrgnization,
 			ChargePersonID:   dto.ChargePersonID,
 			ChargePersonType: enums.EOwnerType(enums.EOwnerTypeMember),
+			StageID:          &stage.ID,
+			PipelineID:       &stage.PipelineID,
 		})
 		if err != nil {
 			return err

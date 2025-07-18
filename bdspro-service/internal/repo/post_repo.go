@@ -15,6 +15,7 @@ type PostRepo interface {
 	GetByID(id uint64) (*domain.Post, error)
 	GetPostItemByID(ctx context.Context, id uint64) (*domain.PostItem, error)
 	GetByIDs(ctx context.Context, ids []uint64) ([]*domain.PostItem, error)
+	GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]*domain.PostItem, error)
 	CreatePost(ctx context.Context, post *domain.Post) error
 	GetPostByProductID(productID uint64) (*domain.Post, error)
 	UpdatePost(c context.Context, post *domain.Post) error

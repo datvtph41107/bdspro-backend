@@ -110,3 +110,7 @@ func (u *RuleUsecase) Delete(c context.Context, id uint64) error {
 func (u *RuleUsecase) GetByID(c context.Context, id uint64) (*domain.RuleEntity, error) {
 	return u.ruleRepo.GetByID(c, id)
 }
+
+func (u *RuleUsecase) Active(c context.Context, id uint64, active bool) error {
+	return u.ruleRepo.Active(c, id, active)
+}

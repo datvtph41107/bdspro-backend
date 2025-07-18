@@ -13,4 +13,5 @@ type RuleRepo interface {
 	Update(c context.Context, entity *domain.RuleEntity) (*domain.RuleEntity, error)
 	Delete(c context.Context, id uint64) error
 	GetByID(c context.Context, id uint64) (*domain.RuleEntity, error)
+	Active(c context.Context, id uint64, active bool) error
 }

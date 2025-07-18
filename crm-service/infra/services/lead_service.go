@@ -144,7 +144,10 @@ func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*
 	dto := s.LeadMapper.LeadSaveToDomain(req)
 
 	result, err := s.UC.Create(ctx, dto)
-	return s.LeadMapper.LeadToPb(result), err
+	if err != nil {
+		return nil, err
+	}
+	return s.LeadMapper.LeadToPb(result), nil
 }
 
 // @Summary Cập nhật khách hàng
@@ -261,7 +264,7 @@ func (s *LeadService) Manager(ctx context.Context, req *crmpb.LeadManagerRequest
 	dto := dto.LeadSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: int(req.Page),
-			Size: int(req.Size),
+			Size: 999,
 		},
 		LastUpdatedAt: _utils.ParseStringToTime(req.LastUpdatedAt),
 		PipelineID:    &req.PipelineId,

@@ -154,7 +154,7 @@ func (s *AssetService) CreateAsset(ctx context.Context, req *pb_bdspro.SaveAsset
 // @Summary Cập nhật
 // @Tags User: Tài sản
 // @Produce json
-// @Param body body pb_bdspro.UpdateAssetRequest true "Body"
+// @Param body body pb_bdspro.SaveAssetRequest true "Body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset [put]
 func (s *AssetService) UpdateAsset(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Response, error) {

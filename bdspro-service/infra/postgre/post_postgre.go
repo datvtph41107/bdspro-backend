@@ -341,42 +341,6 @@ func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64
 	}
 
 	return results, nil
-	// var results []domain.PostItem
-	// // now := time.Now()
-
-	// query := r.DB.
-	// 	Debug().
-	// 	Model(domain.PostItem{}).
-	// 	Select(`posts.*,
-	// 	province.name as province_name,
-	// 	district.name as district_name,
-	// 	ward.name as ward_name
-	// 	`).
-	// 	Joins("left join products products on products.id = posts.product_id").
-	// 	Joins("left join region province on province.id = products.province_id").
-	// 	Joins("left join region district  on district.id = products.district_id").
-	// 	Joins("left join region ward on ward.id = products.ward_id").
-	// 	Where("posts.product_id = ? AND posts.deleted_at is null", profileId)
-
-	// // query = r.Query(query, dto)
-	// size := dto.Size
-	// if size <= 0 {
-	// 	size = 20
-	// }
-
-	// err := query.
-	// 	Order("posts.created_at desc").
-	// 	Offset(dto.GetOffset()).
-	// 	Limit(dto.GetLimit()).
-	// 	Find(&results).Error
-	// if err != nil {
-	// 	// Log nếu cần thiết
-	// 	return nil, err
-	// }
-	// var total int64
-	// query.Count(&total)
-
-	// return results, nil
 }
 
 func (r *GormPostRepo) GetByID(id uint64) (*domain.Post, error) {
@@ -455,6 +419,57 @@ func (r *GormPostRepo) GetByIDs(ctx context.Context, ids []uint64) ([]*domain.Po
 		Find(&posts).Error
 	if err != nil {
 		return nil, err
+	}
+	return posts, nil
+}
+
+func (r *GormPostRepo) GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]*domain.PostItem, error) {
+	var posts []*domain.PostItem
+	err := GetDB(ctx, r.DB).
+		Model(domain.PostItem{}).
+		Select(`posts.*,
+		province.name as province_name, 
+		district.name as district_name, 
+		ward.name as ward_name,
+		CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
+			ELSE COALESCE(prices.rent_price, 0)
+			END AS post_price,
+		COALESCE(json_agg(json_build_object(
+			'id', post_media.id,
+			'mediaUrl', post_media.media_url,
+			'mediaType', post_media.media_type,
+			'isMain', post_media.is_main,
+			'sortOrder', post_media.sort_order
+		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
+		 CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
+			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+			ELSE 0
+			END AS transaction_status
+		`).
+		Joins("left join products products on products.id = posts.product_id").
+		Joins("left join product_price prices on prices.id = products.last_price_id").
+		Joins("left join region province on province.id = products.province_id").
+		Joins("left join region district  on district.id = products.district_id").
+		Joins("left join region ward on ward.id = products.ward_id").
+		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
+		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
+		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
+		Where("posts.id in (?) and posts.deleted_at is null", ids).
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status").
+		Scan(&posts).Error
+	if err != nil {
+		return nil, err
+	}
+	for i, r := range posts {
+		if r.MediaListRaw != nil {
+			list := []domain.PostMediaEntity{}
+			if err := json.Unmarshal(r.MediaListRaw, &list); err != nil {
+				return nil, err
+			}
+			posts[i].MediaList = list
+		}
 	}
 	return posts, nil
 }

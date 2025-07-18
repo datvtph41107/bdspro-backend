@@ -234,6 +234,9 @@ func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerTy
 		Where("phone = ? and deleted_at is null and owner_id = ? and owner_type = ?", phone, profileId, ownerType).
 		First(&contact)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, result.Error
 	}
 	return &contact, nil

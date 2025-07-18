@@ -65,11 +65,15 @@ func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByI
 }
 
 func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostByIDsRequest) (*pb_bdspro.GetPostByIDsResponse, error) {
-	posts, err := s.postRepo.GetByIDs(ctx, req.Ids)
+	posts, err := s.postRepo.GetByIDsWithStatus(ctx, req.Ids)
 	if err != nil {
 		return nil, err
 	}
+	for i, post := range posts {
+		posts[i].Status = s.UC.MapPostStatus(post)
+	}
 	postList := s.PostMapper.PostPointerToPbList(posts)
+
 	return &pb_bdspro.GetPostByIDsResponse{Posts: postList}, nil
 }
 

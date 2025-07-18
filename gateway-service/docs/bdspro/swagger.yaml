@@ -168,16 +168,16 @@ definitions:
         type: integer
       legalItems:
         items:
-          $ref: '#/definitions/domain.LegalItem'
+          $ref: '#/definitions/domain.AssetLegal'
         type: array
       legalStatus:
         $ref: '#/definitions/enums.EDocType'
       name:
         type: string
-      ownerOrgId:
+      ownerId:
         type: integer
-      ownerUserId:
-        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
       parentAssetId:
         type: integer
       product:
@@ -220,6 +220,8 @@ definitions:
         type: number
       assetId:
         type: integer
+      costType:
+        $ref: '#/definitions/domain.AssetCostType'
       costTypeId:
         type: integer
       createdAt:
@@ -306,6 +308,8 @@ definitions:
         type: integer
       incomeAmount:
         type: number
+      ownerId:
+        type: integer
       ownerType:
         $ref: '#/definitions/enums.EOwnerType'
       startDate:
@@ -327,6 +331,36 @@ definitions:
     - customer
     - typeId
     type: object
+  domain.AssetLegal:
+    properties:
+      assetId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      documentName:
+        type: string
+      documentType:
+        type: string
+      documentUrl:
+        type: string
+      expiryDate:
+        type: string
+      id:
+        type: integer
+      issuedDate:
+        type: string
+      relatedSplitMergeId:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   domain.AssetShare:
     properties:
       assetId:
@@ -341,93 +375,6 @@ definitions:
     - assetId
     - targetId
     - typeShare
-    type: object
-  domain.Attribute:
-    properties:
-      attribute_values:
-        items:
-          $ref: '#/definitions/domain.AttributeValue'
-        type: array
-      created_at:
-        type: string
-      hint_text:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      type:
-        type: integer
-      unit:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  domain.AttributeProduct:
-    properties:
-      attribute:
-        $ref: '#/definitions/domain.Attribute'
-      attribute_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      product:
-        $ref: '#/definitions/domain.Product'
-      product_id:
-        type: integer
-      updated_at:
-        type: string
-      value:
-        type: string
-      values:
-        items:
-          $ref: '#/definitions/domain.AttributeValue'
-        type: array
-    type: object
-  domain.AttributeValue:
-    properties:
-      attribute:
-        $ref: '#/definitions/domain.Attribute'
-      attribute_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-      value:
-        type: integer
-    type: object
-  domain.Deposite:
-    properties:
-      amount:
-        type: integer
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      customerName:
-        type: string
-      customerPhone:
-        type: string
-      id:
-        type: integer
-      note:
-        type: string
-      productId:
-        type: integer
-      updatedAt:
-        type: string
-      updatedBy:
-        type: integer
     type: object
   domain.Developer:
     properties:
@@ -518,23 +465,6 @@ definitions:
       updatedBy:
         type: integer
     type: object
-  domain.LegalItem:
-    properties:
-      assetId:
-        type: integer
-      description:
-        type: string
-      documentName:
-        type: string
-      documentUrl:
-        type: string
-      expiryDate:
-        type: string
-      id:
-        type: integer
-      issuedDate:
-        type: string
-    type: object
   domain.Post:
     properties:
       content:
@@ -578,12 +508,10 @@ definitions:
         $ref: '#/definitions/domain.Product'
       productId:
         type: integer
-      status:
-        $ref: '#/definitions/enums.EPostStatus'
       title:
         type: string
       transactionType:
-        type: integer
+        $ref: '#/definitions/enums.TransactionType'
       type:
         description: '1: normal, 2: feed, 3: share'
         type: integer
@@ -640,10 +568,6 @@ definitions:
         type: number
       assetId:
         type: integer
-      attributes:
-        items:
-          $ref: '#/definitions/domain.AttributeProduct'
-        type: array
       build:
         $ref: '#/definitions/domain.ProjectBuild'
       categoryId:
@@ -654,17 +578,6 @@ definitions:
         type: string
       createdBy:
         description: gorm.Model
-        type: integer
-      createdUser:
-        allOf:
-        - $ref: '#/definitions/domain.ProfileInfo'
-        description: OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   //
-          Tổ chức sở hữu (nếu cty mua)
-      customerId:
-        type: integer
-      deposite:
-        $ref: '#/definitions/domain.Deposite'
-      depositeId:
         type: integer
       description:
         type: string
@@ -694,25 +607,25 @@ definitions:
         type: string
       note:
         type: string
-      orgStatus:
-        type: integer
-      organizationId:
-        type: integer
-      ownerType:
-        allOf:
-        - $ref: '#/definitions/enums.EOwnerType'
-        description: 1=Cá nhân, 2=Tổ chức
-      ownerUserId:
+      ownerId:
         description: Ai sở hữu (nếu đã bán)
         type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
       parentId:
+        description: |-
+          DepositeID      *uint64             `gorm:"type:int8" json:"depositeId,omitempty"`
+          ID              uint64              `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
+          Deposite        *Deposite           `gorm:"-" json:"deposite,omitempty"`
         type: integer
       positionUrl:
         type: string
       price:
         $ref: '#/definitions/domain.ProductPrice'
       privateInfo:
-        $ref: '#/definitions/domain.ProductPrivate'
+        allOf:
+        - $ref: '#/definitions/domain.ProductPrivate'
+        description: CustomerID        *uint64                  `json:"customerId,omitempty"`
       project:
         $ref: '#/definitions/domain.Project'
       propertyType:
@@ -725,16 +638,24 @@ definitions:
         type: integer
       rentStatus:
         allOf:
-        - $ref: '#/definitions/enums.EProductStatus'
+        - $ref: '#/definitions/enums.EProductRentStatus'
         description: 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
+      rentTransaction:
+        $ref: '#/definitions/domain.Transaction'
+      rentTransactionId:
+        type: integer
       rentVisibility:
         allOf:
         - $ref: '#/definitions/enums.EVisibility'
         description: 1=Riêng tư, 2=Nội bộ, 3=Công khai
       saleStatus:
         allOf:
-        - $ref: '#/definitions/enums.EProductStatus'
+        - $ref: '#/definitions/enums.EProductSaleStatus'
         description: 1=Chưa bán, 2=Đang bán, 3=Đã bán
+      saleTransaction:
+        $ref: '#/definitions/domain.Transaction'
+      saleTransactionId:
+        type: integer
       saleVisibility:
         allOf:
         - $ref: '#/definitions/enums.EVisibility'
@@ -747,8 +668,6 @@ definitions:
         type: string
       updatedBy:
         type: integer
-      updatedUser:
-        $ref: '#/definitions/domain.ProfileInfo'
       visibility:
         allOf:
         - $ref: '#/definitions/enums.EVisibility'
@@ -829,8 +748,6 @@ definitions:
         type: number
       id:
         type: integer
-      priceOwner:
-        type: number
       productId:
         type: integer
       rentCommission:
@@ -840,7 +757,7 @@ definitions:
       rentPrice:
         type: number
       saleCommission:
-        type: integer
+        type: number
       salePrice:
         type: number
       updatedAt:
@@ -1011,6 +928,65 @@ definitions:
       updatedBy:
         type: integer
     type: object
+  domain.Transaction:
+    properties:
+      amount:
+        type: number
+      approvalDate:
+        type: string
+      approvalStatus:
+        $ref: '#/definitions/enums.ApprovalStatus'
+      approvedBy:
+        type: integer
+      categoryId:
+        type: integer
+      contactID:
+        type: integer
+      contactPhone:
+        description: số điện thoại liên hệ
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      currency:
+        type: string
+      depositeAmount:
+        description: cọc
+        type: number
+      depositeNote:
+        description: ghi chú cọc
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      paymentMethodId:
+        type: integer
+      productID:
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionStatus:
+        $ref: '#/definitions/enums.TransactionStatus'
+      transactionType:
+        $ref: '#/definitions/enums.TransactionType'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   dto.ArchivedRequest:
     properties:
       archived:
@@ -1021,6 +997,31 @@ definitions:
     - archived
     - productId
     type: object
+  dto.AssetArchivedDTO:
+    properties:
+      archived:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  dto.AssetCreateWithProduct:
+    properties:
+      description:
+        type: string
+      legalItems:
+        items:
+          $ref: '#/definitions/domain.AssetLegal'
+        type: array
+      legalStatus:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        description: Name          string            `json:"name,omitempty" binding:"required"`
+        type: number
+      rentStatus:
+        $ref: '#/definitions/enums.EAssetStatus'
+    type: object
   dto.CreateResponse:
     properties:
       asset:
@@ -1029,26 +1030,6 @@ definitions:
         $ref: '#/definitions/domain.Post'
       product:
         $ref: '#/definitions/domain.Product'
-    type: object
-  dto.DepositeRequest:
-    properties:
-      amount:
-        type: integer
-      customerName:
-        minLength: 2
-        type: string
-      customerPhone:
-        minLength: 9
-        type: string
-      note:
-        type: string
-      productId:
-        type: integer
-    required:
-    - amount
-    - customerName
-    - customerPhone
-    - productId
     type: object
   dto.DevideChildRequest:
     properties:
@@ -1098,6 +1079,15 @@ definitions:
         type: string
       order:
         type: integer
+    type: object
+  dto.MergeAssetDTO:
+    properties:
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - ids
     type: object
   dto.MergeProductChildRequest:
     properties:
@@ -1179,12 +1169,14 @@ definitions:
         type: integer
       postPrice:
         type: number
+      priceType:
+        type: integer
       productId:
         type: integer
       title:
         type: string
       transactionType:
-        type: integer
+        $ref: '#/definitions/enums.TransactionType'
       visibility:
         $ref: '#/definitions/enums.EVisibility'
     required:
@@ -1192,31 +1184,6 @@ definitions:
     - productId
     - transactionType
     - visibility
-    type: object
-  dto.PostSaveWithProduct:
-    properties:
-      content:
-        type: string
-      expiredAt:
-        type: string
-      hidden:
-        type: boolean
-      metadatas:
-        $ref: '#/definitions/domain.ProductMediaItem'
-      numDate:
-        type: integer
-      packageVisible:
-        type: integer
-      postPrice:
-        type: number
-      productId:
-        type: integer
-      title:
-        type: string
-      transactionType:
-        type: integer
-      visibility:
-        $ref: '#/definitions/enums.EVisibility'
     type: object
   dto.PostUpdateRequest:
     properties:
@@ -1232,6 +1199,8 @@ definitions:
         type: integer
       postPrice:
         type: number
+      priceType:
+        type: integer
       title:
         type: string
       transactionType:
@@ -1257,7 +1226,7 @@ definitions:
       area:
         type: number
       asset:
-        $ref: '#/definitions/user_dto.AssetCreateWithProduct'
+        $ref: '#/definitions/dto.AssetCreateWithProduct'
       code:
         type: string
       description:
@@ -1283,7 +1252,7 @@ definitions:
       parentId:
         type: integer
       post:
-        $ref: '#/definitions/dto.PostSaveWithProduct'
+        $ref: '#/definitions/dto.PostSaveRequest'
       priceData:
         $ref: '#/definitions/domain.ProductPrice'
       productPrivate:
@@ -1294,12 +1263,8 @@ definitions:
         type: integer
       provinceId:
         type: integer
-      rentStatus:
-        $ref: '#/definitions/enums.EProductStatus'
       rentVisibility:
         $ref: '#/definitions/enums.EVisibility'
-      saleStatus:
-        $ref: '#/definitions/enums.EProductStatus'
       saleVisibility:
         $ref: '#/definitions/enums.EVisibility'
       sourceType:
@@ -1311,72 +1276,6 @@ definitions:
     required:
     - area
     - name
-    - priceData
-    type: object
-  dto.SaveProductChildRequest:
-    properties:
-      amenityIds:
-        items:
-          type: integer
-        type: array
-      area:
-        type: number
-      asset:
-        $ref: '#/definitions/user_dto.AssetCreateWithProduct'
-      code:
-        type: string
-      description:
-        type: string
-      districtId:
-        type: integer
-      docTypeId:
-        type: integer
-      googleMapLink:
-        type: string
-      houseInfo:
-        $ref: '#/definitions/dto.HouseInfoUpdate'
-      mediaItems:
-        items:
-          $ref: '#/definitions/dto.MediaItem'
-        type: array
-      name:
-        type: string
-      note:
-        type: string
-      ownerType:
-        $ref: '#/definitions/enums.EOwnerType'
-      parentId:
-        type: integer
-      post:
-        $ref: '#/definitions/dto.PostSaveWithProduct'
-      priceData:
-        $ref: '#/definitions/domain.ProductPrice'
-      productPrivate:
-        $ref: '#/definitions/domain.ProductPrivate'
-      projectId:
-        type: integer
-      propertyTypeId:
-        type: integer
-      provinceId:
-        type: integer
-      rentStatus:
-        $ref: '#/definitions/enums.EProductStatus'
-      rentVisibility:
-        $ref: '#/definitions/enums.EVisibility'
-      saleStatus:
-        $ref: '#/definitions/enums.EProductStatus'
-      saleVisibility:
-        $ref: '#/definitions/enums.EVisibility'
-      sourceType:
-        type: integer
-      transactionType:
-        type: integer
-      wardId:
-        type: integer
-    required:
-    - area
-    - name
-    - parentId
     - priceData
     type: object
   dto.SharingAccessSearch:
@@ -1396,15 +1295,38 @@ definitions:
       toType:
         $ref: '#/definitions/enums.EOwnerType'
     type: object
+  dto.SplitAssetDTO:
+    properties:
+      datas:
+        items:
+          $ref: '#/definitions/domain.Asset'
+        type: array
+      id:
+        type: integer
+    required:
+    - datas
+    - id
+    type: object
   dto.StatusUpdate:
     properties:
+      amount:
+        type: number
+      contactId:
+        type: integer
+      note:
+        type: string
+      phone:
+        type: string
       productId:
         type: integer
-      status:
-        $ref: '#/definitions/enums.EProductStatus'
+      rentStatus:
+        $ref: '#/definitions/enums.EProductRentStatus'
+      saleStatus:
+        $ref: '#/definitions/enums.EProductSaleStatus'
     required:
     - productId
-    - status
+    - rentStatus
+    - saleStatus
     type: object
   dto.UpdateHiddenRequest:
     properties:
@@ -1425,6 +1347,16 @@ definitions:
     - productId
     - visibility
     type: object
+  enums.ApprovalStatus:
+    enum:
+    - pending
+    - approved
+    - rejected
+    type: string
+    x-enum-varnames:
+    - ApprovalStatusPending
+    - ApprovalStatusApproved
+    - ApprovalStatusRejected
   enums.EAssetStatus:
     enum:
     - 10
@@ -1488,24 +1420,6 @@ definitions:
     - EOwnerTypeMember
     - EOwnerTypeGroup
     - EOwnerTypeOrgnization
-  enums.EPostStatus:
-    enum:
-    - 10
-    - 20
-    - 40
-    - 50
-    - 60
-    - 70
-    type: integer
-    x-enum-comments:
-      EPostStop: tùy nghiệp vụ về sau
-    x-enum-varnames:
-    - EPostPublic
-    - EPostFinished
-    - EPostSold
-    - EPostRent
-    - EPostStop
-    - EPostStatusCompleted
   enums.EProductHistory:
     enum:
     - 10
@@ -1518,22 +1432,26 @@ definitions:
     - EProductHistory_Merge
     - EProductHistory_MergeAll
     - EProductHistory_Devide
-  enums.EProductStatus:
+  enums.EProductRentStatus:
     enum:
     - 10
     - 20
     - 30
-    - 40
-    - 50
-    - 60
+    type: integer
+    x-enum-varnames:
+    - EProductNotRent
+    - EProductRenting
+    - EProductRented
+  enums.EProductSaleStatus:
+    enum:
+    - 10
+    - 20
+    - 30
     type: integer
     x-enum-varnames:
     - EProductNotSold
     - EProductSelling
     - EProductSold
-    - EProductNotRent
-    - EProductRenting
-    - EProductRented
   enums.ESourceType:
     enum:
     - 10
@@ -1556,6 +1474,37 @@ definitions:
     - EVisiblePublic
     - EVisibleInternal
     - EVisiblePrivate
+  enums.TransactionStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-comments:
+      TransactionStatusCanceled: Hủy
+      TransactionStatusCompleted: Hoàn thành
+      TransactionStatusDeposite: Đặt cọc
+      TransactionStatusDraft: Nháp
+      TransactionStatusSigned: Đã ký
+    x-enum-varnames:
+    - TransactionStatusDraft
+    - TransactionStatusDeposite
+    - TransactionStatusSigned
+    - TransactionStatusCompleted
+    - TransactionStatusCanceled
+  enums.TransactionType:
+    enum:
+    - 10
+    - 20
+    type: integer
+    x-enum-comments:
+      TransactionTypeRent: Thuê
+      TransactionTypeSale: Bán
+    x-enum-varnames:
+    - TransactionTypeSale
+    - TransactionTypeRent
   org_dto.ProductShareRequest:
     properties:
       groupId:
@@ -1588,6 +1537,8 @@ definitions:
       description:
         type: string
       id:
+        type: integer
+      ownerId:
         type: integer
       ownerType:
         type: integer
@@ -1628,6 +1579,8 @@ definitions:
     type: object
   pb_bdspro.AssetExploitationDTO:
     properties:
+      amount:
+        type: number
       assetID:
         type: integer
       contractName:
@@ -1646,8 +1599,6 @@ definitions:
         type: string
       id:
         type: integer
-      incomeAmount:
-        type: number
       startDate:
         type: string
       status:
@@ -1687,51 +1638,27 @@ definitions:
       totalElements:
         type: integer
     type: object
-  pb_bdspro.CreateAssetRequest:
+  pb_bdspro.CashProfit:
     properties:
-      address:
-        type: string
-      archived:
-        type: boolean
-      area:
+      amountIn:
         type: number
-      buyedDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      description:
-        type: string
-      districtId:
-        type: integer
-      docStatus:
-        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
-        type: integer
-      id:
-        type: integer
+      amountOut:
+        type: number
       name:
         type: string
-      ownerOrgId:
-        type: integer
-      ownerUserId:
-        type: integer
-      parentAssetId:
-        type: integer
-      price:
+      profit:
         type: number
-      productId:
-        type: integer
-      propertyTypeId:
-        type: integer
-      provinceId:
-        type: integer
-      purchaseDate:
-        type: string
-      purchasePrice:
+    type: object
+  pb_bdspro.CashProfitTime:
+    properties:
+      amountIn:
         type: number
-      rentStatus:
-        type: integer
-      splitMergeStatus:
+      amountOut:
+        type: number
+      profit:
+        type: number
+      time:
         type: string
-      wardId:
-        type: integer
     type: object
   pb_bdspro.CreateTransactionRequest:
     properties:
@@ -1758,7 +1685,36 @@ definitions:
       transactionName:
         type: string
       transactionType:
+        type: integer
+    type: object
+  pb_bdspro.DepositeRequest:
+    properties:
+      contactId:
+        type: integer
+      depositeAmount:
+        type: number
+      depositeNote:
         type: string
+      id:
+        type: integer
+      productId:
+        type: integer
+      transactionType:
+        type: integer
+    type: object
+  pb_bdspro.GetCashProfitResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_bdspro.CashProfit'
+        type: array
+    type: object
+  pb_bdspro.GetCashProfitTimeResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_bdspro.CashProfitTime'
+        type: array
     type: object
   pb_bdspro.HouseInfo:
     properties:
@@ -1807,6 +1763,8 @@ definitions:
       description:
         type: string
       documentName:
+        type: string
+      documentType:
         type: string
       documentUrl:
         type: string
@@ -1874,13 +1832,15 @@ definitions:
       productId:
         type: integer
       rentCommission:
+        description: 1000000 -> 10%
         type: number
       rentPaymentCycle:
         type: integer
       rentPrice:
         type: number
       saleCommission:
-        type: integer
+        description: 1000000 -> 10%
+        type: number
       salePrice:
         type: number
     type: object
@@ -1900,6 +1860,50 @@ definitions:
         type: integer
       targetProfit:
         type: number
+    type: object
+  pb_bdspro.SaveAssetRequest:
+    properties:
+      address:
+        type: string
+      archived:
+        type: boolean
+      area:
+        type: number
+      description:
+        type: string
+      districtId:
+        type: integer
+      id:
+        type: integer
+      legalItems:
+        items:
+          $ref: '#/definitions/pb_bdspro.LegalItem'
+        type: array
+      legalStatus:
+        description: '10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ'
+        type: integer
+      name:
+        type: string
+      ownerType:
+        type: integer
+      parentAssetId:
+        type: integer
+      productId:
+        type: integer
+      propertyTypeId:
+        type: integer
+      provinceId:
+        type: integer
+      purchaseDate:
+        type: string
+      purchasePrice:
+        type: number
+      rentStatus:
+        type: integer
+      splitMergeStatus:
+        type: string
+      wardId:
+        type: integer
     type: object
   pb_bdspro.SaveChildRequest:
     properties:
@@ -1960,54 +1964,6 @@ definitions:
       wardId:
         type: integer
     type: object
-  pb_bdspro.UpdateAssetRequest:
-    properties:
-      address:
-        type: string
-      archived:
-        type: boolean
-      area:
-        type: number
-      buyedDate:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      description:
-        type: string
-      districtId:
-        type: integer
-      docStatus:
-        description: '1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ'
-        type: integer
-      id:
-        type: integer
-      legalStatus:
-        type: integer
-      name:
-        type: string
-      ownerOrgId:
-        type: integer
-      ownerUserId:
-        type: integer
-      parentAssetId:
-        type: integer
-      price:
-        type: number
-      productId:
-        type: integer
-      propertyTypeId:
-        type: integer
-      provinceId:
-        type: integer
-      purchaseDate:
-        type: string
-      purchasePrice:
-        type: number
-      rentStatus:
-        type: integer
-      splitMergeStatus:
-        type: string
-      wardId:
-        type: integer
-    type: object
   pb_bdspro.UpdateTransactionRequest:
     properties:
       amount:
@@ -2033,143 +1989,60 @@ definitions:
     type: object
   sharepb.Empty:
     type: object
-  timestamppb.Timestamp:
-    properties:
-      nanos:
-        description: |-
-          Non-negative fractions of a second at nanosecond resolution. Negative
-          second values with fractions must still have non-negative nanos values
-          that count forward in time. Must be from 0 to 999,999,999
-          inclusive.
-        type: integer
-      seconds:
-        description: |-
-          Represents seconds of UTC time since Unix epoch
-          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-          9999-12-31T23:59:59Z inclusive.
-        type: integer
-    type: object
-  user_dto.AssetArchivedDTO:
-    properties:
-      archived:
-        type: boolean
-      id:
-        type: integer
-    type: object
-  user_dto.AssetCreateWithProduct:
-    properties:
-      description:
-        type: string
-      legalItems:
-        items:
-          $ref: '#/definitions/domain.LegalItem'
-        type: array
-      legalStatus:
-        type: integer
-      purchaseDate:
-        type: string
-      purchasePrice:
-        description: Name          string            `json:"name,omitempty" binding:"required"`
-        type: number
-      rentStatus:
-        $ref: '#/definitions/enums.EAssetStatus'
-    type: object
-  user_dto.AssetSaveRequest:
-    properties:
-      address:
-        type: string
-      archived:
-        type: boolean
-      area:
-        type: number
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      description:
-        type: string
-      district:
-        $ref: '#/definitions/domain.Region'
-      districtId:
-        type: integer
-      id:
-        type: integer
-      legalItems:
-        items:
-          $ref: '#/definitions/domain.LegalItem'
-        type: array
-      legalStatus:
-        $ref: '#/definitions/enums.EDocType'
-      name:
-        type: string
-      ownerOrgId:
-        type: integer
-      ownerUserId:
-        type: integer
-      parentAssetId:
-        type: integer
-      product:
-        $ref: '#/definitions/domain.Product'
-      productId:
-        type: integer
-      propertyType:
-        $ref: '#/definitions/domain.PropertyTypeItem'
-      propertyTypeId:
-        type: integer
-      province:
-        $ref: '#/definitions/domain.Region'
-      provinceId:
-        type: integer
-      purchaseDate:
-        type: string
-      purchasePrice:
-        type: number
-      rentStatus:
-        $ref: '#/definitions/enums.EAssetStatus'
-      splitMergeStatus:
-        type: string
-      updatedAt:
-        type: string
-      updatedBy:
-        type: integer
-      ward:
-        $ref: '#/definitions/domain.Region'
-      wardId:
-        type: integer
-    required:
-    - area
-    - name
-    - purchasePrice
-    - wardId
-    type: object
-  user_dto.MergeAssetDTO:
-    properties:
-      ids:
-        items:
-          type: integer
-        type: array
-    required:
-    - ids
-    type: object
-  user_dto.SplitAssetDTO:
-    properties:
-      datas:
-        items:
-          $ref: '#/definitions/domain.Asset'
-        type: array
-      id:
-        type: integer
-    required:
-    - datas
-    - id
-    type: object
 info:
   contact: {}
   description: API phần logic chính của BĐSPro
   title: BDSPRO API
   version: "1.0"
 paths:
+  /dashboard/cash-profit/time:
+    get:
+      consumes:
+      - application/json
+      description: Get cash profit time
+      parameters:
+      - description: From date
+        in: query
+        name: fromDate
+        type: string
+      - description: To date
+        in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.GetCashProfitTimeResponse'
+      summary: Get cash profit time
+      tags:
+      - Dashboard
+  /dashboard/cash-profit/type:
+    get:
+      consumes:
+      - application/json
+      description: Get cash profit
+      parameters:
+      - description: From date
+        in: query
+        name: fromDate
+        type: string
+      - description: To date
+        in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_bdspro.GetCashProfitResponse'
+      summary: Get cash profit
+      tags:
+      - Dashboard
   /enums/{type}:
     get:
       parameters:
@@ -2577,23 +2450,6 @@ paths:
       summary: Chia sẻ sản phẩm
       tags:
       - Group
-  /v1/bdspro/v2/org/asset:
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/domain.Asset'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo mới
-      tags:
-      - 'Tổ chức: Tài sản'
   /v1/bdspro/v2/org/asset/{id}:
     delete:
       parameters:
@@ -2638,75 +2494,13 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.AssetArchivedDTO'
+          $ref: '#/definitions/dto.AssetArchivedDTO'
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
       summary: Lấy theo ID
-      tags:
-      - 'Tổ chức: Tài sản'
-  /v1/bdspro/v2/org/asset/from-product:
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/user_dto.AssetSaveRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo từ sản phẩm
-      tags:
-      - 'Tổ chức: Tài sản'
-  /v1/bdspro/v2/org/asset/history-owner:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản dành cho user
-      tags:
-      - 'Tổ chức: Tài sản'
-  /v1/bdspro/v2/org/asset/history/:id:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản danh cho tài sản
       tags:
       - 'Tổ chức: Tài sản'
   /v1/bdspro/v2/org/asset/merge:
@@ -2717,7 +2511,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.MergeAssetDTO'
+          $ref: '#/definitions/dto.MergeAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -2855,7 +2649,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.SplitAssetDTO'
+          $ref: '#/definitions/dto.SplitAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -3167,8 +2961,14 @@ paths:
         name: page
         type: integer
       - in: query
+        name: productId
+        type: integer
+      - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       - collectionFormat: csv
         in: query
         items:
@@ -3258,8 +3058,14 @@ paths:
         name: page
         type: integer
       - in: query
+        name: productId
+        type: integer
+      - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       - collectionFormat: csv
         in: query
         items:
@@ -3519,29 +3325,6 @@ paths:
       summary: Gộp toàn bộ sản phẩm con
       tags:
       - 'Tổ chức: Sản phẩm'
-  /v1/bdspro/v2/org/product/child/history/:id:
-    get:
-      consumes:
-      - application/json
-      description: API
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Gộp toàn bộ sản phẩm con
-      tags:
-      - 'Tổ chức: Sản phẩm'
   /v1/bdspro/v2/org/product/child/merge:
     post:
       consumes:
@@ -3601,26 +3384,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Tạo sản phẩm con
-      tags:
-      - 'Tổ chức: Sản phẩm'
-  /v1/bdspro/v2/org/product/deposite:
-    post:
-      consumes:
-      - application/json
-      description: API
-      parameters:
-      - description: Thông tin sản phẩm cần cập nhật
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.DepositeRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Cọc
       tags:
       - 'Tổ chức: Sản phẩm'
   /v1/bdspro/v2/org/product/deposite/{depositeId}:
@@ -3981,75 +3744,13 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.AssetArchivedDTO'
+          $ref: '#/definitions/dto.AssetArchivedDTO'
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
       summary: Lấy theo ID
-      tags:
-      - 'User: Tài sản'
-  /v1/bdspro/v2/user/asset/from-product:
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/user_dto.AssetSaveRequest'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo từ sản phẩm
-      tags:
-      - 'User: Tài sản'
-  /v1/bdspro/v2/user/asset/history-owner:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản dành cho user
-      tags:
-      - 'User: Tài sản'
-  /v1/bdspro/v2/user/asset/history/:id:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản danh cho tài sản
       tags:
       - 'User: Tài sản'
   /v1/bdspro/v2/user/asset/legal:
@@ -4086,7 +3787,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.MergeAssetDTO'
+          $ref: '#/definitions/dto.MergeAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -4224,7 +3925,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.SplitAssetDTO'
+          $ref: '#/definitions/dto.SplitAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -4937,8 +4638,14 @@ paths:
         name: page
         type: integer
       - in: query
+        name: productId
+        type: integer
+      - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       - collectionFormat: csv
         in: query
         items:
@@ -5044,8 +4751,14 @@ paths:
         name: page
         type: integer
       - in: query
+        name: productId
+        type: integer
+      - in: query
         name: size
         type: integer
+      - in: query
+        name: sort
+        type: string
       - collectionFormat: csv
         in: query
         items:
@@ -5100,7 +4813,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/pb_bdspro.CreateAssetRequest'
+          $ref: '#/definitions/pb_bdspro.SaveAssetRequest'
       produces:
       - application/json
       responses: {}
@@ -5116,7 +4829,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/pb_bdspro.UpdateAssetRequest'
+          $ref: '#/definitions/pb_bdspro.SaveAssetRequest'
       produces:
       - application/json
       responses: {}
@@ -5274,7 +4987,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.AssetArchivedDTO'
+          $ref: '#/definitions/dto.AssetArchivedDTO'
       produces:
       - application/json
       responses: {}
@@ -5616,51 +5329,6 @@ paths:
       summary: Lấy chi tiết khai thác
       tags:
       - Hợp đồng & Thu chi & Loại chi phí
-  /v2/bdspro/v2/asset/history-owner:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản dành cho user
-      tags:
-      - 'User: Tài sản'
-  /v2/bdspro/v2/asset/history/:id:
-    get:
-      parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lịch sử tách gộp tài sản danh cho tài sản
-      tags:
-      - 'User: Tài sản'
   /v2/bdspro/v2/asset/merge:
     post:
       parameters:
@@ -5669,7 +5337,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.MergeAssetDTO'
+          $ref: '#/definitions/dto.MergeAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -5860,7 +5528,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/user_dto.SplitAssetDTO'
+          $ref: '#/definitions/dto.SplitAssetDTO'
       produces:
       - application/json
       responses: {}
@@ -5877,6 +5545,9 @@ paths:
       parameters:
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: parentId
         type: integer
       - in: query
         name: size
@@ -5900,6 +5571,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: parentId
+        type: integer
+      - in: query
         name: size
         type: integer
       - in: query
@@ -5919,6 +5593,9 @@ paths:
       parameters:
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: parentId
         type: integer
       - in: query
         name: size
@@ -5942,6 +5619,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: parentId
+        type: integer
+      - in: query
         name: size
         type: integer
       - in: query
@@ -5961,6 +5641,9 @@ paths:
       parameters:
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: parentId
         type: integer
       - in: query
         name: size
@@ -6039,25 +5722,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy chi tiết sản phẩm
-      tags:
-      - 'User: Sản phẩm'
-  /v2/bdspro/v2/product/{id}/histories:
-    get:
-      consumes:
-      - application/json
-      description: Returns a list of history of a product
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách lịch sử của sản phẩm
       tags:
       - 'User: Sản phẩm'
   /v2/bdspro/v2/product/{id}/members:
@@ -6157,34 +5821,6 @@ paths:
       summary: Chia sản phẩm con
       tags:
       - 'User: Sản phẩm'
-  /v2/bdspro/v2/product/child/history/{id}:
-    get:
-      consumes:
-      - application/json
-      description: API
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: sort
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy lịch sử sản phẩm con
-      tags:
-      - 'User: Sản phẩm'
   /v2/bdspro/v2/product/child/merge:
     post:
       consumes:
@@ -6255,7 +5891,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.DepositeRequest'
+          $ref: '#/definitions/pb_bdspro.DepositeRequest'
       produces:
       - application/json
       responses: {}
@@ -6264,15 +5900,15 @@ paths:
       summary: Cọc
       tags:
       - 'User: Sản phẩm'
-  /v2/bdspro/v2/product/deposite/{depositeId}:
+  /v2/bdspro/v2/product/deposite/{transactionId}:
     delete:
       consumes:
       - application/json
       description: API
       parameters:
-      - description: Deposite ID
+      - description: Transaction ID
         in: path
-        name: depositeId
+        name: transactionId
         required: true
         type: integer
       produces:
@@ -6596,6 +6232,27 @@ paths:
       summary: Gợi ý các trường thông tin
       tags:
       - 'User: Sản phẩm'
+  /v2/bdspro/v2/product/total:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tổng số lượng sản phẩm
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Lấy tổng số lượng sản phẩm
+      tags:
+      - Sản phẩm
   /v2/bdspro/v2/transaction:
     post:
       parameters:

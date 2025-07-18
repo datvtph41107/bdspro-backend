@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package pb_bdspro;
+
+import "bdspro/product.proto";
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+import "google/api/annotations.proto";
+
+service BdsproDashboardService {
+    rpc GetCashProfit(GetCashProfitRequest) returns (GetCashProfitResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/cash-profit/type"
+        };
+    };
+    rpc GetCashProfitTime(GetCashProfitRequest) returns (GetCashProfitTimeResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/cash-profit/time"
+        };
+    };
+}
+
+message GetCashProfitRequest {
+    string fromDate = 1;
+    string toDate = 2;
+    uint64 costTypeId = 3;
+    uint32 quarter = 4;
+}
+
+message CashProfit {
+    string name = 1;
+    double amountIn = 2;
+    double amountOut = 3;
+    double profit = 4;
+}
+
+message GetCashProfitResponse {
+    repeated CashProfit data = 1;
+}
+
+message CashProfitTime {
+    string time = 1;
+    double amountIn = 2;
+    double amountOut = 3;
+    double profit = 4;
+}
+
+
+message GetCashProfitTimeResponse {
+    repeated CashProfitTime data = 1;
+}

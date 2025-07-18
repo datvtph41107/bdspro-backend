@@ -15,6 +15,80 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/dashboard/cash-profit/time": {
+            "get": {
+                "description": "Get cash profit time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get cash profit time",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "From date",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date",
+                        "name": "toDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.GetCashProfitTimeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/dashboard/cash-profit/type": {
+            "get": {
+                "description": "Get cash profit",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get cash profit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "From date",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date",
+                        "name": "toDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_bdspro.GetCashProfitResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/enums/{type}": {
             "get": {
                 "produces": [
@@ -657,34 +731,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/bdspro/v2/org/asset": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Tạo mới",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.Asset"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/org/asset/archived/{id}": {
             "put": {
                 "security": [
@@ -713,111 +759,8 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.AssetArchivedDTO"
+                            "$ref": "#/definitions/dto.AssetArchivedDTO"
                         }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/from-product": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Tạo từ sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user_dto.AssetSaveRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/history-owner": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản dành cho user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/history/:id": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản danh cho tài sản",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {}
@@ -844,7 +787,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.MergeAssetDTO"
+                            "$ref": "#/definitions/dto.MergeAssetDTO"
                         }
                     }
                 ],
@@ -1070,7 +1013,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.SplitAssetDTO"
+                            "$ref": "#/definitions/dto.SplitAssetDTO"
                         }
                     }
                 ],
@@ -1540,7 +1483,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
                         "in": "query"
                     },
                     {
@@ -1688,7 +1641,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
                         "in": "query"
                     },
                     {
@@ -1937,44 +1900,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/org/product/child/history/:id": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Gộp toàn bộ sản phẩm con",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/org/product/child/merge": {
             "post": {
                 "security": [
@@ -2067,38 +1992,6 @@ const docTemplate = `{
                         "description": "Product ID",
                         "name": "productId",
                         "in": "path"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/deposite": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Cọc",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.DepositeRequest"
-                        }
                     }
                 ],
                 "responses": {}
@@ -2857,111 +2750,8 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.AssetArchivedDTO"
+                            "$ref": "#/definitions/dto.AssetArchivedDTO"
                         }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/from-product": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Tạo từ sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user_dto.AssetSaveRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/history-owner": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản dành cho user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/history/:id": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản danh cho tài sản",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {}
@@ -3032,7 +2822,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.MergeAssetDTO"
+                            "$ref": "#/definitions/dto.MergeAssetDTO"
                         }
                     }
                 ],
@@ -3258,7 +3048,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.SplitAssetDTO"
+                            "$ref": "#/definitions/dto.SplitAssetDTO"
                         }
                     }
                 ],
@@ -4410,7 +4200,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
                         "in": "query"
                     },
                     {
@@ -4584,7 +4384,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
                         "in": "query"
                     },
                     {
@@ -4755,7 +4565,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.UpdateAssetRequest"
+                            "$ref": "#/definitions/pb_bdspro.SaveAssetRequest"
                         }
                     }
                 ],
@@ -4781,7 +4591,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.CreateAssetRequest"
+                            "$ref": "#/definitions/pb_bdspro.SaveAssetRequest"
                         }
                     }
                 ],
@@ -5008,7 +4818,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.AssetArchivedDTO"
+                            "$ref": "#/definitions/dto.AssetArchivedDTO"
                         }
                     }
                 ],
@@ -5542,81 +5352,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v2/bdspro/v2/asset/history-owner": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản dành cho user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/asset/history/:id": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lịch sử tách gộp tài sản danh cho tài sản",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v2/bdspro/v2/asset/merge": {
             "post": {
                 "security": [
@@ -5638,7 +5373,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.MergeAssetDTO"
+                            "$ref": "#/definitions/dto.MergeAssetDTO"
                         }
                     }
                 ],
@@ -5951,7 +5686,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_dto.SplitAssetDTO"
+                            "$ref": "#/definitions/dto.SplitAssetDTO"
                         }
                     }
                 ],
@@ -6005,6 +5740,11 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
                         "in": "query"
                     },
@@ -6034,6 +5774,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
                         "in": "query"
                     },
                     {
@@ -6071,6 +5816,11 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
                         "in": "query"
                     },
@@ -6104,6 +5854,11 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "name": "size",
                         "in": "query"
                     },
@@ -6133,6 +5888,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
                         "in": "query"
                     },
                     {
@@ -6238,51 +5998,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/pb_bdspro.SaveChildRequest"
                         }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/product/child/history/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy lịch sử sản phẩm con",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -6407,14 +6122,14 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DepositeRequest"
+                            "$ref": "#/definitions/pb_bdspro.DepositeRequest"
                         }
                     }
                 ],
                 "responses": {}
             }
         },
-        "/v2/bdspro/v2/product/deposite/{depositeId}": {
+        "/v2/bdspro/v2/product/deposite/{transactionId}": {
             "delete": {
                 "security": [
                     {
@@ -6435,8 +6150,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Deposite ID",
-                        "name": "depositeId",
+                        "description": "Transaction ID",
+                        "name": "transactionId",
                         "in": "path",
                         "required": true
                     }
@@ -6938,6 +6653,39 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/product/total": {
+            "get": {
+                "description": "Lấy tổng số lượng sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy tổng số lượng sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/product/{id}": {
             "put": {
                 "security": [
@@ -7040,36 +6788,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/v2/bdspro/v2/product/{id}/histories": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of history of a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách lịch sử của sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
             }
         },
         "/v2/bdspro/v2/product/{id}/members": {
@@ -7629,7 +7347,7 @@ const docTemplate = `{
                 "legalItems": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.LegalItem"
+                        "$ref": "#/definitions/domain.AssetLegal"
                     }
                 },
                 "legalStatus": {
@@ -7638,11 +7356,11 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "ownerOrgId": {
+                "ownerId": {
                     "type": "integer"
                 },
-                "ownerUserId": {
-                    "type": "integer"
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
                 },
                 "parentAssetId": {
                     "type": "integer"
@@ -7704,6 +7422,9 @@ const docTemplate = `{
                 },
                 "assetId": {
                     "type": "integer"
+                },
+                "costType": {
+                    "$ref": "#/definitions/domain.AssetCostType"
                 },
                 "costTypeId": {
                     "type": "integer"
@@ -7833,6 +7554,9 @@ const docTemplate = `{
                 "incomeAmount": {
                     "type": "number"
                 },
+                "ownerId": {
+                    "type": "integer"
+                },
                 "ownerType": {
                     "$ref": "#/definitions/enums.EOwnerType"
                 },
@@ -7846,6 +7570,51 @@ const docTemplate = `{
                     "$ref": "#/definitions/domain.AssetCostType"
                 },
                 "typeId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.AssetLegal": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentType": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                },
+                "relatedSplitMergeId": {
                     "type": "integer"
                 },
                 "updatedAt": {
@@ -7874,138 +7643,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "typeShare": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.Attribute": {
-            "type": "object",
-            "properties": {
-                "attribute_values": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.AttributeValue"
-                    }
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "hint_text": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                },
-                "unit": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.AttributeProduct": {
-            "type": "object",
-            "properties": {
-                "attribute": {
-                    "$ref": "#/definitions/domain.Attribute"
-                },
-                "attribute_id": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "product": {
-                    "$ref": "#/definitions/domain.Product"
-                },
-                "product_id": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                },
-                "values": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.AttributeValue"
-                    }
-                }
-            }
-        },
-        "domain.AttributeValue": {
-            "type": "object",
-            "properties": {
-                "attribute": {
-                    "$ref": "#/definitions/domain.Attribute"
-                },
-                "attribute_id": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.Deposite": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "integer"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "customerName": {
-                    "type": "string"
-                },
-                "customerPhone": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
                     "type": "integer"
                 }
             }
@@ -8141,32 +7778,6 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.LegalItem": {
-            "type": "object",
-            "properties": {
-                "assetId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentName": {
-                    "type": "string"
-                },
-                "documentUrl": {
-                    "type": "string"
-                },
-                "expiryDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "issuedDate": {
-                    "type": "string"
-                }
-            }
-        },
         "domain.Post": {
             "type": "object",
             "properties": {
@@ -8230,14 +7841,11 @@ const docTemplate = `{
                 "productId": {
                     "type": "integer"
                 },
-                "status": {
-                    "$ref": "#/definitions/enums.EPostStatus"
-                },
                 "title": {
                     "type": "string"
                 },
                 "transactionType": {
-                    "type": "integer"
+                    "$ref": "#/definitions/enums.TransactionType"
                 },
                 "type": {
                     "description": "1: normal, 2: feed, 3: share",
@@ -8322,12 +7930,6 @@ const docTemplate = `{
                 "assetId": {
                     "type": "integer"
                 },
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.AttributeProduct"
-                    }
-                },
                 "build": {
                     "$ref": "#/definitions/domain.ProjectBuild"
                 },
@@ -8342,23 +7944,6 @@ const docTemplate = `{
                 },
                 "createdBy": {
                     "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "createdUser": {
-                    "description": "OwnerOrgID      *uint64              ` + "`" + `gorm:\"type:int8\" json:\"ownerOrgId,omitempty\"` + "`" + `                   // Tổ chức sở hữu (nếu cty mua)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/domain.ProfileInfo"
-                        }
-                    ]
-                },
-                "customerId": {
-                    "type": "integer"
-                },
-                "deposite": {
-                    "$ref": "#/definitions/domain.Deposite"
-                },
-                "depositeId": {
                     "type": "integer"
                 },
                 "description": {
@@ -8403,25 +7988,15 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
-                "orgStatus": {
-                    "type": "integer"
-                },
-                "organizationId": {
-                    "type": "integer"
-                },
-                "ownerType": {
-                    "description": "1=Cá nhân, 2=Tổ chức",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/enums.EOwnerType"
-                        }
-                    ]
-                },
-                "ownerUserId": {
+                "ownerId": {
                     "description": "Ai sở hữu (nếu đã bán)",
                     "type": "integer"
                 },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
                 "parentId": {
+                    "description": "DepositeID      *uint64             ` + "`" + `gorm:\"type:int8\" json:\"depositeId,omitempty\"` + "`" + `\nID              uint64              ` + "`" + `gorm:\"primaryKey;autoIncrement\" json:\"id,omitempty\"` + "`" + `\nDeposite        *Deposite           ` + "`" + `gorm:\"-\" json:\"deposite,omitempty\"` + "`" + `",
                     "type": "integer"
                 },
                 "positionUrl": {
@@ -8431,7 +8006,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/domain.ProductPrice"
                 },
                 "privateInfo": {
-                    "$ref": "#/definitions/domain.ProductPrivate"
+                    "description": "CustomerID        *uint64                  ` + "`" + `json:\"customerId,omitempty\"` + "`" + `",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.ProductPrivate"
+                        }
+                    ]
                 },
                 "project": {
                     "$ref": "#/definitions/domain.Project"
@@ -8452,9 +8032,15 @@ const docTemplate = `{
                     "description": "1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.EProductStatus"
+                            "$ref": "#/definitions/enums.EProductRentStatus"
                         }
                     ]
+                },
+                "rentTransaction": {
+                    "$ref": "#/definitions/domain.Transaction"
+                },
+                "rentTransactionId": {
+                    "type": "integer"
                 },
                 "rentVisibility": {
                     "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
@@ -8468,9 +8054,15 @@ const docTemplate = `{
                     "description": "1=Chưa bán, 2=Đang bán, 3=Đã bán",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/enums.EProductStatus"
+                            "$ref": "#/definitions/enums.EProductSaleStatus"
                         }
                     ]
+                },
+                "saleTransaction": {
+                    "$ref": "#/definitions/domain.Transaction"
+                },
+                "saleTransactionId": {
+                    "type": "integer"
                 },
                 "saleVisibility": {
                     "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
@@ -8491,9 +8083,6 @@ const docTemplate = `{
                 },
                 "updatedBy": {
                     "type": "integer"
-                },
-                "updatedUser": {
-                    "$ref": "#/definitions/domain.ProfileInfo"
                 },
                 "visibility": {
                     "description": "phạm vi",
@@ -8618,9 +8207,6 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "priceOwner": {
-                    "type": "number"
-                },
                 "productId": {
                     "type": "integer"
                 },
@@ -8634,7 +8220,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "saleCommission": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "salePrice": {
                     "type": "number"
@@ -8893,6 +8479,93 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.Transaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvalDate": {
+                    "type": "string"
+                },
+                "approvalStatus": {
+                    "$ref": "#/definitions/enums.ApprovalStatus"
+                },
+                "approvedBy": {
+                    "type": "integer"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "contactID": {
+                    "type": "integer"
+                },
+                "contactPhone": {
+                    "description": "số điện thoại liên hệ",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "depositeAmount": {
+                    "description": "cọc",
+                    "type": "number"
+                },
+                "depositeNote": {
+                    "description": "ghi chú cọc",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "$ref": "#/definitions/enums.EOwnerType"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "productID": {
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "$ref": "#/definitions/enums.TransactionStatus"
+                },
+                "transactionType": {
+                    "$ref": "#/definitions/enums.TransactionType"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.ArchivedRequest": {
             "type": "object",
             "required": [
@@ -8908,6 +8581,44 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.AssetArchivedDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AssetCreateWithProduct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AssetLegal"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.EAssetStatus"
+                }
+            }
+        },
         "dto.CreateResponse": {
             "type": "object",
             "properties": {
@@ -8919,34 +8630,6 @@ const docTemplate = `{
                 },
                 "product": {
                     "$ref": "#/definitions/domain.Product"
-                }
-            }
-        },
-        "dto.DepositeRequest": {
-            "type": "object",
-            "required": [
-                "amount",
-                "customerName",
-                "customerPhone",
-                "productId"
-            ],
-            "properties": {
-                "amount": {
-                    "type": "integer"
-                },
-                "customerName": {
-                    "type": "string",
-                    "minLength": 2
-                },
-                "customerPhone": {
-                    "type": "string",
-                    "minLength": 9
-                },
-                "note": {
-                    "type": "string"
-                },
-                "productId": {
-                    "type": "integer"
                 }
             }
         },
@@ -9018,6 +8701,20 @@ const docTemplate = `{
                 },
                 "order": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.MergeAssetDTO": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -9148,43 +8845,8 @@ const docTemplate = `{
                 "postPrice": {
                     "type": "number"
                 },
-                "productId": {
+                "priceType": {
                     "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "transactionType": {
-                    "type": "integer"
-                },
-                "visibility": {
-                    "$ref": "#/definitions/enums.EVisibility"
-                }
-            }
-        },
-        "dto.PostSaveWithProduct": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "expiredAt": {
-                    "type": "string"
-                },
-                "hidden": {
-                    "type": "boolean"
-                },
-                "metadatas": {
-                    "$ref": "#/definitions/domain.ProductMediaItem"
-                },
-                "numDate": {
-                    "type": "integer"
-                },
-                "packageVisible": {
-                    "type": "integer"
-                },
-                "postPrice": {
-                    "type": "number"
                 },
                 "productId": {
                     "type": "integer"
@@ -9193,7 +8855,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionType": {
-                    "type": "integer"
+                    "$ref": "#/definitions/enums.TransactionType"
                 },
                 "visibility": {
                     "$ref": "#/definitions/enums.EVisibility"
@@ -9220,6 +8882,9 @@ const docTemplate = `{
                 },
                 "postPrice": {
                     "type": "number"
+                },
+                "priceType": {
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"
@@ -9264,7 +8929,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "asset": {
-                    "$ref": "#/definitions/user_dto.AssetCreateWithProduct"
+                    "$ref": "#/definitions/dto.AssetCreateWithProduct"
                 },
                 "code": {
                     "type": "string"
@@ -9303,7 +8968,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "post": {
-                    "$ref": "#/definitions/dto.PostSaveWithProduct"
+                    "$ref": "#/definitions/dto.PostSaveRequest"
                 },
                 "priceData": {
                     "$ref": "#/definitions/domain.ProductPrice"
@@ -9320,112 +8985,8 @@ const docTemplate = `{
                 "provinceId": {
                     "type": "integer"
                 },
-                "rentStatus": {
-                    "$ref": "#/definitions/enums.EProductStatus"
-                },
                 "rentVisibility": {
                     "$ref": "#/definitions/enums.EVisibility"
-                },
-                "saleStatus": {
-                    "$ref": "#/definitions/enums.EProductStatus"
-                },
-                "saleVisibility": {
-                    "$ref": "#/definitions/enums.EVisibility"
-                },
-                "sourceType": {
-                    "type": "integer"
-                },
-                "transactionType": {
-                    "type": "integer"
-                },
-                "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "dto.SaveProductChildRequest": {
-            "type": "object",
-            "required": [
-                "area",
-                "name",
-                "parentId",
-                "priceData"
-            ],
-            "properties": {
-                "amenityIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "area": {
-                    "type": "number"
-                },
-                "asset": {
-                    "$ref": "#/definitions/user_dto.AssetCreateWithProduct"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docTypeId": {
-                    "type": "integer"
-                },
-                "googleMapLink": {
-                    "type": "string"
-                },
-                "houseInfo": {
-                    "$ref": "#/definitions/dto.HouseInfoUpdate"
-                },
-                "mediaItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.MediaItem"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
-                },
-                "parentId": {
-                    "type": "integer"
-                },
-                "post": {
-                    "$ref": "#/definitions/dto.PostSaveWithProduct"
-                },
-                "priceData": {
-                    "$ref": "#/definitions/domain.ProductPrice"
-                },
-                "productPrivate": {
-                    "$ref": "#/definitions/domain.ProductPrivate"
-                },
-                "projectId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "rentStatus": {
-                    "$ref": "#/definitions/enums.EProductStatus"
-                },
-                "rentVisibility": {
-                    "$ref": "#/definitions/enums.EVisibility"
-                },
-                "saleStatus": {
-                    "$ref": "#/definitions/enums.EProductStatus"
                 },
                 "saleVisibility": {
                     "$ref": "#/definitions/enums.EVisibility"
@@ -9467,18 +9028,52 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SplitAssetDTO": {
+            "type": "object",
+            "required": [
+                "datas",
+                "id"
+            ],
+            "properties": {
+                "datas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Asset"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.StatusUpdate": {
             "type": "object",
             "required": [
                 "productId",
-                "status"
+                "rentStatus",
+                "saleStatus"
             ],
             "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
                 "productId": {
                     "type": "integer"
                 },
-                "status": {
-                    "$ref": "#/definitions/enums.EProductStatus"
+                "rentStatus": {
+                    "$ref": "#/definitions/enums.EProductRentStatus"
+                },
+                "saleStatus": {
+                    "$ref": "#/definitions/enums.EProductSaleStatus"
                 }
             }
         },
@@ -9510,6 +9105,19 @@ const docTemplate = `{
                     "$ref": "#/definitions/enums.EVisibility"
                 }
             }
+        },
+        "enums.ApprovalStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "approved",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "ApprovalStatusPending",
+                "ApprovalStatusApproved",
+                "ApprovalStatusRejected"
+            ]
         },
         "enums.EAssetStatus": {
             "type": "integer",
@@ -9592,28 +9200,6 @@ const docTemplate = `{
                 "EOwnerTypeOrgnization"
             ]
         },
-        "enums.EPostStatus": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                40,
-                50,
-                60,
-                70
-            ],
-            "x-enum-comments": {
-                "EPostStop": "tùy nghiệp vụ về sau"
-            },
-            "x-enum-varnames": [
-                "EPostPublic",
-                "EPostFinished",
-                "EPostSold",
-                "EPostRent",
-                "EPostStop",
-                "EPostStatusCompleted"
-            ]
-        },
         "enums.EProductHistory": {
             "type": "integer",
             "enum": [
@@ -9629,23 +9215,30 @@ const docTemplate = `{
                 "EProductHistory_Devide"
             ]
         },
-        "enums.EProductStatus": {
+        "enums.EProductRentStatus": {
             "type": "integer",
             "enum": [
                 10,
                 20,
-                30,
-                40,
-                50,
-                60
+                30
+            ],
+            "x-enum-varnames": [
+                "EProductNotRent",
+                "EProductRenting",
+                "EProductRented"
+            ]
+        },
+        "enums.EProductSaleStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30
             ],
             "x-enum-varnames": [
                 "EProductNotSold",
                 "EProductSelling",
-                "EProductSold",
-                "EProductNotRent",
-                "EProductRenting",
-                "EProductRented"
+                "EProductSold"
             ]
         },
         "enums.ESourceType": {
@@ -9674,6 +9267,45 @@ const docTemplate = `{
                 "EVisiblePublic",
                 "EVisibleInternal",
                 "EVisiblePrivate"
+            ]
+        },
+        "enums.TransactionStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ],
+            "x-enum-comments": {
+                "TransactionStatusCanceled": "Hủy",
+                "TransactionStatusCompleted": "Hoàn thành",
+                "TransactionStatusDeposite": "Đặt cọc",
+                "TransactionStatusDraft": "Nháp",
+                "TransactionStatusSigned": "Đã ký"
+            },
+            "x-enum-varnames": [
+                "TransactionStatusDraft",
+                "TransactionStatusDeposite",
+                "TransactionStatusSigned",
+                "TransactionStatusCompleted",
+                "TransactionStatusCanceled"
+            ]
+        },
+        "enums.TransactionType": {
+            "type": "integer",
+            "enum": [
+                10,
+                20
+            ],
+            "x-enum-comments": {
+                "TransactionTypeRent": "Thuê",
+                "TransactionTypeSale": "Bán"
+            },
+            "x-enum-varnames": [
+                "TransactionTypeSale",
+                "TransactionTypeRent"
             ]
         },
         "org_dto.ProductShareRequest": {
@@ -9724,6 +9356,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
                     "type": "integer"
                 },
                 "ownerType": {
@@ -9786,6 +9421,9 @@ const docTemplate = `{
         "pb_bdspro.AssetExploitationDTO": {
             "type": "object",
             "properties": {
+                "amount": {
+                    "type": "number"
+                },
                 "assetID": {
                     "type": "integer"
                 },
@@ -9812,9 +9450,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
-                },
-                "incomeAmount": {
-                    "type": "number"
                 },
                 "startDate": {
                     "type": "string"
@@ -9876,72 +9511,37 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.CreateAssetRequest": {
+        "pb_bdspro.CashProfit": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "area": {
+                "amountIn": {
                     "type": "number"
                 },
-                "buyedDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docStatus": {
-                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
+                "amountOut": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"
                 },
-                "ownerOrgId": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "price": {
+                "profit": {
+                    "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.CashProfitTime": {
+            "type": "object",
+            "properties": {
+                "amountIn": {
                     "type": "number"
                 },
-                "productId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
+                "amountOut": {
                     "type": "number"
                 },
-                "rentStatus": {
-                    "type": "integer"
+                "profit": {
+                    "type": "number"
                 },
-                "splitMergeStatus": {
+                "time": {
                     "type": "string"
-                },
-                "wardId": {
-                    "type": "integer"
                 }
             }
         },
@@ -9982,7 +9582,52 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.DepositeRequest": {
+            "type": "object",
+            "properties": {
+                "contactId": {
+                    "type": "integer"
+                },
+                "depositeAmount": {
+                    "type": "number"
+                },
+                "depositeNote": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pb_bdspro.GetCashProfitResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.CashProfit"
+                    }
+                }
+            }
+        },
+        "pb_bdspro.GetCashProfitTimeResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.CashProfitTime"
+                    }
                 }
             }
         },
@@ -10057,6 +9702,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "documentName": {
+                    "type": "string"
+                },
+                "documentType": {
                     "type": "string"
                 },
                 "documentUrl": {
@@ -10159,6 +9807,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentCommission": {
+                    "description": "1000000 -\u003e 10%",
                     "type": "number"
                 },
                 "rentPaymentCycle": {
@@ -10168,7 +9817,8 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "saleCommission": {
-                    "type": "integer"
+                    "description": "1000000 -\u003e 10%",
+                    "type": "number"
                 },
                 "salePrice": {
                     "type": "number"
@@ -10198,6 +9848,72 @@ const docTemplate = `{
                 },
                 "targetProfit": {
                     "type": "number"
+                }
+            }
+        },
+        "pb_bdspro.SaveAssetRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb_bdspro.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "description": "10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
                 }
             }
         },
@@ -10290,78 +10006,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.UpdateAssetRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "area": {
-                    "type": "number"
-                },
-                "buyedDate": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docStatus": {
-                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "legalStatus": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerOrgId": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "type": "integer"
-                },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
         "pb_bdspro.UpdateTransactionRequest": {
             "type": "object",
             "properties": {
@@ -10399,191 +10043,6 @@ const docTemplate = `{
         },
         "sharepb.Empty": {
             "type": "object"
-        },
-        "timestamppb.Timestamp": {
-            "type": "object",
-            "properties": {
-                "nanos": {
-                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
-                    "type": "integer"
-                },
-                "seconds": {
-                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
-                    "type": "integer"
-                }
-            }
-        },
-        "user_dto.AssetArchivedDTO": {
-            "type": "object",
-            "properties": {
-                "archived": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user_dto.AssetCreateWithProduct": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "legalItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.LegalItem"
-                    }
-                },
-                "legalStatus": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
-                    "description": "Name          string            ` + "`" + `json:\"name,omitempty\" binding:\"required\"` + "`" + `",
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "$ref": "#/definitions/enums.EAssetStatus"
-                }
-            }
-        },
-        "user_dto.AssetSaveRequest": {
-            "type": "object",
-            "required": [
-                "area",
-                "name",
-                "purchasePrice",
-                "wardId"
-            ],
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "area": {
-                    "type": "number"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "district": {
-                    "$ref": "#/definitions/domain.Region"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "legalItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.LegalItem"
-                    }
-                },
-                "legalStatus": {
-                    "$ref": "#/definitions/enums.EDocType"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerOrgId": {
-                    "type": "integer"
-                },
-                "ownerUserId": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "product": {
-                    "$ref": "#/definitions/domain.Product"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "propertyType": {
-                    "$ref": "#/definitions/domain.PropertyTypeItem"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "province": {
-                    "$ref": "#/definitions/domain.Region"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "$ref": "#/definitions/enums.EAssetStatus"
-                },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                },
-                "ward": {
-                    "$ref": "#/definitions/domain.Region"
-                },
-                "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user_dto.MergeAssetDTO": {
-            "type": "object",
-            "required": [
-                "ids"
-            ],
-            "properties": {
-                "ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "user_dto.SplitAssetDTO": {
-            "type": "object",
-            "required": [
-                "datas",
-                "id"
-            ],
-            "properties": {
-                "datas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.Asset"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
         }
     },
     "securityDefinitions": {

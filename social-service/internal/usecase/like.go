@@ -149,12 +149,13 @@ func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enum
 		return nil, errors.New("already like")
 	}
 
+	now := time.Now()
 	like := &domain.Like{
 		TargetID:   targetId,
 		TargetType: targetType,
 		UserID:     profileId,
 		DisLike:    dislike,
-		CreatedAt:  &time.Time{},
+		CreatedAt:  &now,
 	}
 
 	if liked != nil {

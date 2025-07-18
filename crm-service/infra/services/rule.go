@@ -140,3 +140,28 @@ func (s *RuleService) Delete(ctx context.Context, req *sharepb.IdRequest) (*shar
 		Message: "Delete rule success",
 	}, err
 }
+
+// @Summary Active quy tắc
+// @Description Active quy tắc
+// @Tags Quy tắc
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Security BearerAuth
+// @Router /rule/{id}/active [put]
+func (s *RuleService) Active(ctx context.Context, req *crmpb.ActiveRuleRequest) (*sharepb.SubmitResponse, error) {
+	if req.Id == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "id is required",
+		}
+	}
+	err := s.UC.Active(ctx, req.Id, req.Active)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{
+		Id:      req.Id,
+		Message: "Active rule success",
+	}, err
+}

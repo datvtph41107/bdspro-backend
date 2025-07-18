@@ -87,6 +87,8 @@ membership-grpc:
 	cd membership-service && air grpc
 file-http:
 	cd file-service && air http
+crm:
+	cd crm-service && go run main.go grpc
 
 
 start-all:
