@@ -13,6 +13,7 @@ type OrganizationBranchValidator interface {
 	ValidateCreateOrganizationBranch(request *organizationpb.CreateOrganizationBranchRequest) error
 	ValidateUpdateOrganizationBranch(request *organizationpb.UpdateOrganizationBranchRequest) error
 	ValidateDeleteOrganizationBranch(request *organizationpb.DeleteOrganizationBranchRequest) error
+	ValidateGetOrganizationBranchDetail(request *organizationpb.GetOrganizationBranchDetailRequest) error
 	ValidateAddMemberToOrganizationBranch(request *organizationpb.AddMemberToOrganizationBranchRequest) error
 	ValidateRemoveMemberFromOrganizationBranch(request *organizationpb.RemoveMemberFromOrganizationBranchRequest) error
 	ValidateGetOrganizationBranchMembers(request *organizationpb.GetOrganizationBranchMembersRequest) error
@@ -189,6 +190,26 @@ func (v *organizationBranchValidator) ValidateRemoveMemberFromOrganizationBranch
 }
 
 func (v *organizationBranchValidator) ValidateGetOrganizationBranchMembers(request *organizationpb.GetOrganizationBranchMembersRequest) error {
+	details := []protoadapt.MessageV1{}
+
+	if request.Id == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "id",
+					Description: "id is required",
+				},
+			},
+		})
+	}
+
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+	return nil
+}
+
+func (v *organizationBranchValidator) ValidateGetOrganizationBranchDetail(request *organizationpb.GetOrganizationBranchDetailRequest) error {
 	details := []protoadapt.MessageV1{}
 
 	if request.Id == 0 {

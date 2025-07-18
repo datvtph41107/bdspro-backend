@@ -16,6 +16,7 @@ type OrganizationBranchUsecase interface {
 	CreateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
 	UpdateOrganizationBranch(ctx context.Context, organizationBranch *entity.OrganizationBranch) (*entity.OrganizationBranch, error)
 	DeleteOrganizationBranch(ctx context.Context, id uint32) error
+	GetOrganizationBranchDetail(ctx context.Context, id uint32) (*entity.OrganizationBranch, error)
 	AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error)
 	RemoveMemberFromOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) error
 	GetOrganizationBranchMembers(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error)
@@ -129,6 +130,36 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 		return custom_error.Forbidden("You are not authorized to access this resource")
 	}
 	return u.organizationBranchRepository.DeleteOrganizationBranch(ctx, id)
+}
+
+func (u *organizationBranchUsecase) GetOrganizationBranchDetail(ctx context.Context, id uint32) (*entity.OrganizationBranch, error) {
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+
+	organizationBranch, err := u.organizationBranchRepository.GetOrganizationBranchById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if organizationBranch == nil {
+		return nil, custom_error.RecordNotFound("Organization branch not found")
+	}
+
+	// Kiểm tra quyền truy cập - chỉ admin hoặc manager của chi nhánh mới được xem
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hasRole && currentUserId != organizationBranch.ManagerId {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Kiểm tra xem chi nhánh có thuộc về organization hiện tại không
+	if organizationBranch.OrganizationId != uint32(organizationId) {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	return organizationBranch, nil
 }
 
 func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Context, organizationBranchId uint32, userId uint32) (*entity.OrganizationBranchMember, error) {

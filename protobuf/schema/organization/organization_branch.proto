@@ -54,6 +54,11 @@ service OrganizationBranchService {
             body: "*"
         };
     }
+    rpc GetOrganizationBranchDetail(GetOrganizationBranchDetailRequest) returns (GetOrganizationBranchDetailResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/branch/{id}"
+        };
+    }
 }
 
 message CreateOrganizationBranchRequest {
@@ -158,4 +163,29 @@ message UpdateIsActiveRequest {
 
 message UpdateIsActiveResponse {
     bool success = 1;
+}
+
+message GetOrganizationBranchDetailRequest {
+    uint32 id = 1;
+}
+
+message GetOrganizationBranchDetailResponse {
+    OrganizationBranchDetail branch = 1;
+}
+
+message OrganizationBranchDetail {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+    uint32 managerId = 6;
+    bool isActive = 7;
+    string type = 8; // branch, department, store
+    uint32 totalMember = 9;
+    uint32 totalAsset = 10;
+    uint32 totalDeal = 11;
+    string createdAt = 12;
+    string updatedAt = 13;
+    uint32 createdBy = 14;
 }
