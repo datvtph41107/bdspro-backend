@@ -237,7 +237,7 @@
             "format": "int64"
           },
           {
-            "name": "limit",
+            "name": "size",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -384,14 +384,6 @@
         "total": {
           "type": "string",
           "format": "uint64"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "limit": {
-          "type": "integer",
-          "format": "int64"
         }
       },
       "title": "Response cho danh sách giao dịch"

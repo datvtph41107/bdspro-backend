@@ -41,6 +41,7 @@ type GRPCServer struct {
 	internalOrganizationHandler    *handler.InternalOrganizationHandler
 	dealInvitationHandler          *handler.DealInvitationHandler
 	dealCommissionHandler          *handler.DealCommissionHandler
+	dealTransactionHandler         *handler.DealTransactionHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -65,6 +66,7 @@ func NewGRPCServer(
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
+	dealTransactionHandler *handler.DealTransactionHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -88,6 +90,7 @@ func NewGRPCServer(
 		internalOrganizationHandler:    internalOrganizationHandler,
 		dealInvitationHandler:          dealInvitationHandler,
 		dealCommissionHandler:          dealCommissionHandler,
+		dealTransactionHandler:         dealTransactionHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 	}
 }
@@ -114,6 +117,7 @@ func (s *GRPCServer) Start() {
 		s.internalOrganizationHandler,
 		s.dealInvitationHandler,
 		s.dealCommissionHandler,
+		s.dealTransactionHandler,
 	)
 
 	g.Add(start, stop)
@@ -147,6 +151,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
+	dealTransactionHandler *handler.DealTransactionHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -161,34 +166,25 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		func(s *grpc.Server) {
 			logger.Info("Registering OrganizationServiceServer")
 			organizationpb.RegisterOrganizationServiceServer(s, organizationHandler)
-			fmt.Println("Go1")
 			organizationpb.RegisterOrganizationMemberServiceServer(s, organizationMemberHandler)
-			fmt.Println("Go2")
 			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
-			fmt.Println("Go3")
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
-			fmt.Println("Go4")
 			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
 
 			organizationpb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
-			fmt.Println("Go5")
 			organizationpb.RegisterGroupServiceServer(s, groupHandler)
-			fmt.Println("Go6")
 			organizationpb.RegisterGroupDealServiceServer(s, groupDealHandler)
-			fmt.Println("Go7")
 			organizationpb.RegisterDealMilestoneServiceServer(s, dealMilestoneHandler)
 			organizationpb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
 			organizationpb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
 			organizationpb.RegisterGroupSettingServiceServer(s, groupSettingHandler)
 			organizationpb.RegisterGroupMemberServiceServer(s, groupMemberHandler)
-			fmt.Println("Go8")
 			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
-			fmt.Println("Go9")
 			organizationpb.RegisterInvestmentServiceServer(s, investmentHandler)
-			fmt.Println("Go10")
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
 			organizationpb.RegisterDealInvitationServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
+			organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 		},
 		unaryInts,
 		streamInts,

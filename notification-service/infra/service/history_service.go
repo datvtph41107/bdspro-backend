@@ -214,3 +214,34 @@ func (s *HistoryService) Create(ctx context.Context, req *notificationpb.History
 	}
 	return s.Mapper.HistoryDomainToPb(history), nil
 }
+
+func (s *HistoryService) CreateInternal(ctx context.Context, req *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error) {
+	history, err := s.UC.CreateInternal(ctx, &shared_dto.HistoryDTO{
+		ActionType: shared_enum.EHistory(req.ActionType),
+		TargetId:   req.TargetId,
+		OwnerID:    req.OwnerId,
+		Note:       req.Note,
+		Title:      req.Title,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.Mapper.HistoryDomainToPb(history), nil
+}
+
+func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+	histories, total, err := s.UC.SearchInternal(ctx, dto.HistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	historiesPb := s.Mapper.HistoryToPbs(histories)
+	return &notificationpb.HistoryListDTO{
+		Data:          historiesPb,
+		TotalElements: uint32(total),
+	}, nil
+}

@@ -112,3 +112,27 @@ func (h *HistoryUsecase) Create(c context.Context, history *shared_dto.HistoryDT
 	}
 	return historyEntity, nil
 }
+
+func (h *HistoryUsecase) CreateInternal(c context.Context, history *shared_dto.HistoryDTO) (*domain.HistoryEntity, error) {
+	historyEntity := &domain.HistoryEntity{
+		ActionType: history.ActionType,
+		TargetId:   history.TargetId,
+		OwnerID:    history.OwnerID,
+		Note:       history.Note,
+		Title:      history.Title,
+		IsInternal: true,
+	}
+	err := h.historyRepo.CreateHistory(c, historyEntity)
+	if err != nil {
+		return nil, err
+	}
+	return historyEntity, nil
+}
+
+func (h *HistoryUsecase) SearchInternal(c context.Context, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	histories, total, err := h.historyRepo.SearchInternal(c, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return histories, total, nil
+}

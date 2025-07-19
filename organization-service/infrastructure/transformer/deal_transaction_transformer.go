@@ -134,8 +134,6 @@ func (t *dealTransactionTransformer) TransformToProtoListResponse(response *dto.
 	return &pb.DealTransactionListResponse{
 		Transactions: transactions,
 		Total:        uint64(response.Total),
-		Page:         uint32(response.Page),
-		Limit:        uint32(response.Limit),
 	}
 }
 

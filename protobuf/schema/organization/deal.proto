@@ -219,6 +219,8 @@ message CreateGroupDealRequest {
     repeated uint64 productIds = 14;
     uint64 ownerId = 15;
     uint64 chargePersonId = 16;
+    bool isUnilateral = 17;  // Đơn phương (gỡ khỏi thương vụ)
+    bool isManual = 18;      // Nhập tay (dành cho doanh thu)
 }
 
 message CreateGroupDealResponse {
@@ -323,6 +325,8 @@ message GroupDeal {
     repeated sharepb.ProfileItem partners = 19;
     repeated sharepb.ProfileItem members = 20;
     optional string cancelReason = 21;
+    bool isUnilateral = 22;  // Đơn phương (gỡ khỏi thương vụ)
+    bool isManual = 23;      // Nhập tay (dành cho doanh thu)
 }
 
 message DocumentItem {
@@ -498,6 +502,8 @@ message CreateOrganizationDealRequest {
     repeated uint64 productIds = 11;
     uint64 chargePersonId = 12;
     uint64 organizationId = 13;
+    bool isUnilateral = 14;  // Đơn phương (gỡ khỏi thương vụ)
+    bool isManual = 15;      // Nhập tay (dành cho doanh thu)
 }
 
 message CreateOrganizationDealResponse {
@@ -530,6 +536,8 @@ message CreateGroupDealV2Request {
     repeated uint64 productIds = 11;
     uint64 chargePersonId = 12;
     uint64 groupId = 13;
+    bool isUnilateral = 14;  // Đơn phương (gỡ khỏi thương vụ)
+    bool isManual = 15;      // Nhập tay (dành cho doanh thu)
 }
 
 message CreateGroupDealV2Response {

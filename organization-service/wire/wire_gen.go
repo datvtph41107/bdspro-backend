@@ -7,8 +7,7 @@
 package wire
 
 import (
-	"common/db"
-	"github.com/google/wire"
+	_db "common/db"
 	"organization/config"
 	"organization/infrastructure/client"
 	"organization/infrastructure/handler"
@@ -17,8 +16,10 @@ import (
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/domain/repository"
-	"organization/internal/interface"
+	iusecase "organization/internal/interface"
 	"organization/internal/usecase"
+
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
@@ -131,7 +132,12 @@ func InitializeApp() (*config.ConfigApp, error) {
 	dealCommissionTransformer := transformer.NewDealCommissionTransformer()
 	dealCommissionValidator := validator.NewDealCommissionValidator()
 	dealCommissionHandler := handler.NewDealCommissionHandler(dealCommissionUsecase, dealCommissionTransformer, dealCommissionValidator)
-	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler, organizationRoleHandler, organizationPermissionHandler, organizationBranchHandler, groupDocumentHandler, groupHandler, groupDealHandler, dealMilestoneHandler, groupLogActivityHandler, groupNotificationHandler, groupSettingHandler, groupMemberHandler, investmentHandler, organizationLogActivityHandler, internalOrganizationHandler, dealInvitationHandler, dealCommissionHandler)
+	dealTransactionPostgresRepository := postgres.NewDealTransactionPostgresRepository(db)
+	dealTransactionUsecase := usecase.NewDealTransactionUsecase(dealTransactionPostgresRepository, groupDealPostgresRepository, organizationMemberPostgresRepository, notificationClient, groupAuthUsecase)
+	dealTransactionTransformer := transformer.NewDealTransactionTransformer()
+	dealTransactionValidator := validator.NewDealTransactionValidator()
+	dealTransactionHandler := handler.NewDealTransactionHandler(dealTransactionUsecase, dealTransactionValidator, dealTransactionTransformer)
+	grpcServer := grpc.NewGRPCServer(organizationHandler, organizationMemberHandler, organizationRoleHandler, organizationPermissionHandler, organizationBranchHandler, groupDocumentHandler, groupHandler, groupDealHandler, dealMilestoneHandler, groupLogActivityHandler, groupNotificationHandler, groupSettingHandler, groupMemberHandler, investmentHandler, organizationLogActivityHandler, internalOrganizationHandler, dealInvitationHandler, dealCommissionHandler, dealTransactionHandler)
 	configApp := config.NewConfigApp(grpcServer)
 	return configApp, nil
 }

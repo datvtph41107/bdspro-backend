@@ -116,7 +116,7 @@ message GetDealTransactionsRequest {
     uint64 dealId = 1;
     optional TransactionType type = 2;
     uint32 page = 3;
-    uint32 limit = 4;
+    uint32 size = 4;
 }
 
 // Request phê duyệt giao dịch
@@ -156,8 +156,6 @@ message DealTransactionResponse {
 message DealTransactionListResponse {
     repeated DealTransactionResponse transactions = 1;
     uint64 total = 2;
-    uint32 page = 3;
-    uint32 limit = 4;
 }
 
 // Response cho thống kê tài chính

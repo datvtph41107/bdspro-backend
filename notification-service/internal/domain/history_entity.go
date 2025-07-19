@@ -18,6 +18,7 @@ type HistoryEntity struct {
 	AfterStage string                     `json:"afterStage,omitempty"`
 	OwnerID    *uint64                    `json:"ownerId"`
 	OwnerType  shared_enum.EOwnerType     `json:"ownerType"`
+	IsInternal bool                       `json:"isInternal"`
 }
 
 func (HistoryEntity) TableName() string {

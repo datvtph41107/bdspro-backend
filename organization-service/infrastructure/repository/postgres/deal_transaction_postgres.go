@@ -44,14 +44,17 @@ func (r *DealTransactionPostgresRepository) GetByID(ctx context.Context, id uint
 	return &transaction, nil
 }
 
-func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, limit int) ([]*entity.DealTransaction, int64, error) {
+func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, size int) ([]*entity.DealTransaction, int64, error) {
 	var transactions []*entity.DealTransaction
 	var total int64
-
-	query := r.db.WithContext(ctx).Model(&entity.DealTransaction{}).Where("deal_id = ?", dealID)
+	query := r.db.WithContext(ctx).Debug().Model(&entity.DealTransaction{})
 	
 	if transactionType != nil {
 		query = query.Where("type = ?", *transactionType)
+	}
+
+	if dealID > 0 {
+		query = query.Where("deal_id = ?", dealID)
 	}
 
 	// Đếm tổng số records
@@ -60,13 +63,13 @@ func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dea
 	}
 
 	// Lấy data với pagination
-	offset := (page - 1) * limit
+	offset := page * size
 	err := query.
 		Preload("AttachDocuments").
 		Preload("Deal").
 		Order("created_at DESC").
 		Offset(offset).
-		Limit(limit).
+		Limit(size).
 		Find(&transactions).Error
 
 	if err != nil {

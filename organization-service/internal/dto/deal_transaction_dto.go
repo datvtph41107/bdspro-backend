@@ -38,7 +38,7 @@ type GetDealTransactionsRequest struct {
 	DealID uint64 `json:"deal_id" validate:"required"`
 	Type   *enums.TransactionType `json:"type"` // Optional filter
 	Page   int    `json:"page" validate:"min=1"`
-	Limit  int    `json:"limit" validate:"min=1,max=100"`
+	Size  int    `json:"size" validate:"min=1,max=100"`
 }
 
 // Response DTOs

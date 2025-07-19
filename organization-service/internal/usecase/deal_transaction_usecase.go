@@ -41,13 +41,22 @@ func NewDealTransactionUsecase(
 		dealRepo:               dealRepo,
 		organizationMemberRepo: organizationMemberRepo,
 		notiClient:             notiClient,
+		groupAuthUsecase:       groupAuthUsecase,
 	}
 }
 
 func (u *dealTransactionUsecase) CreateTransaction(ctx context.Context, req *dto.CreateDealTransactionRequest, userID uint64) (*dto.DealTransactionResponse, error) {
-	//Todo
+	// Todo
 	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionCreateDeal) {
 		return nil, fmt.Errorf("permission denied")
+	}
+	deal, err := u.dealRepo.GetByID(ctx, req.DealID)
+	if err != nil {
+		return nil, fmt.Errorf("deal not found: %w", err)
+	}
+
+	if !deal.IsManual {
+		return nil, fmt.Errorf("deal is not manual")
 	}
 
 	// Tạo transaction
@@ -140,7 +149,7 @@ func (u *dealTransactionUsecase) GetTransaction(ctx context.Context, transaction
 }
 
 func (u *dealTransactionUsecase) GetTransactions(ctx context.Context, req *dto.GetDealTransactionsRequest, userID uint64) (*dto.DealTransactionListResponse, error) {
-	transactions, total, err := u.dealTransactionRepo.GetByDealID(ctx, req.DealID, req.Type, req.Page, req.Limit)
+	transactions, total, err := u.dealTransactionRepo.GetByDealID(ctx, req.DealID, req.Type, req.Page, req.Size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}
@@ -153,8 +162,6 @@ func (u *dealTransactionUsecase) GetTransactions(ctx context.Context, req *dto.G
 	return &dto.DealTransactionListResponse{
 		Transactions: responses,
 		Total:        total,
-		Page:         req.Page,
-		Limit:        req.Limit,
 	}, nil
 }
 

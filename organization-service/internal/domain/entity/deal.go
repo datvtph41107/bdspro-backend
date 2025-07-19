@@ -20,6 +20,8 @@ type Deal struct {
 	NumMember      uint32 `gorm:"-"`
 	ChargePersonID *uint64
 	CancelReason   *string          // Lý do hủy thương vụ
+	IsUnilateral   bool             `gorm:"default:false"` // Đơn phương (gỡ khỏi thương vụ)
+	IsManual       bool             `gorm:"default:false"` // Nhập tay (dành cho doanh thu)
 	Products       []DealProduct    `gorm:"foreignKey:DealID;references:ID"`
 	ProductIds     []uint64         `gorm:"-"`
 	Documents      []AttachDocument `gorm:"foreignKey:OwnerId;references:ID;-:migration"`

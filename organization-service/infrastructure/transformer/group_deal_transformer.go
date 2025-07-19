@@ -52,6 +52,8 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *organizat
 		OwnerId:       request.OwnerId,
 		// OwnerType:     enums.OwnerTypeGroup,
 		ChargePersonID: &request.ChargePersonId,
+		IsUnilateral:   request.IsUnilateral,
+		IsManual:       request.IsManual,
 	}
 
 	if request.BankAccount != nil {
@@ -89,6 +91,8 @@ func (t *groupDealTransformer) CreateOrganizationDealRequestToEntity(request *or
 		MemberIds:      request.MemberIds,
 		ProductIds:     request.ProductIds,
 		ChargePersonID: &request.ChargePersonId,
+		IsUnilateral:   request.IsUnilateral,
+		IsManual:       request.IsManual,
 	}
 
 	if request.BankAccount != nil {
@@ -126,6 +130,8 @@ func (t *groupDealTransformer) CreateGroupDealV2RequestToEntity(request *organiz
 		MemberIds:      request.MemberIds,
 		ProductIds:     request.ProductIds,
 		ChargePersonID: &request.ChargePersonId,
+		IsUnilateral:   request.IsUnilateral,
+		IsManual:       request.IsManual,
 	}
 
 	if request.BankAccount != nil {
@@ -197,6 +203,8 @@ func (t *groupDealTransformer) EntityToPb(deal *entity.Deal) *organizationpb.Gro
 		DealTypeName: enums.DealTypeMap[deal.DealType],
 		Note:         deal.Note,
 		NumMember:    deal.NumMember,
+		IsUnilateral: deal.IsUnilateral,
+		IsManual:     deal.IsManual,
 	}
 
 	if deal.Documents != nil {

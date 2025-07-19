@@ -1,15 +1,18 @@
 package handler
 
 import (
+	"common/utils"
 	"context"
+	pb "pb/types/organization"
+
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/dto"
 	"organization/internal/usecase"
-	pb "pb/types/organization"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type DealTransactionHandler struct {
@@ -42,7 +45,6 @@ func (h *DealTransactionHandler) CreateTransaction(ctx context.Context, req *pb.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to transform request: %v", err)
 	}
-
 	// Get user ID from context
 	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
@@ -54,7 +56,6 @@ func (h *DealTransactionHandler) CreateTransaction(ctx context.Context, req *pb.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create transaction: %v", err)
 	}
-
 	// Transform response
 	pbResponse := h.transformer.TransformToProtoResponse(response)
 	return pbResponse, nil
@@ -89,7 +90,7 @@ func (h *DealTransactionHandler) UpdateTransaction(ctx context.Context, req *pb.
 	return pbResponse, nil
 }
 
-func (h *DealTransactionHandler) DeleteTransaction(ctx context.Context, req *pb.DeleteDealTransactionRequest) (*pb.DealTransactionResponse, error) {
+func (h *DealTransactionHandler) DeleteTransaction(ctx context.Context, req *pb.DeleteDealTransactionRequest) (*emptypb.Empty, error) {
 	// Validate request
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "transaction ID is required")
@@ -107,9 +108,7 @@ func (h *DealTransactionHandler) DeleteTransaction(ctx context.Context, req *pb.
 		return nil, status.Errorf(codes.Internal, "failed to delete transaction: %v", err)
 	}
 
-	return &pb.DealTransactionResponse{
-		Id: req.Id,
-	}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (h *DealTransactionHandler) GetTransaction(ctx context.Context, req *pb.GetDealTransactionRequest) (*pb.DealTransactionResponse, error) {
@@ -140,19 +139,20 @@ func (h *DealTransactionHandler) GetTransactions(ctx context.Context, req *pb.Ge
 	if req.DealId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "deal ID is required")
 	}
-
-	if req.Page < 1 {
-		req.Page = 1
+	page := 0
+	size := 10
+	if req.Page > 0 {
+		page = int(req.Page)
 	}
-	if req.Limit < 1 || req.Limit > 100 {
-		req.Limit = 20
+	if req.Size > 0 {
+		size = int(req.Size)
 	}
 
 	// Transform request
 	getReq := &dto.GetDealTransactionsRequest{
 		DealID: req.DealId,
-		Page:   int(req.Page),
-		Limit:  int(req.Limit),
+		Page:   page,
+		Size:   size,
 	}
 
 	// Set transaction type filter if provided
@@ -178,7 +178,7 @@ func (h *DealTransactionHandler) GetTransactions(ctx context.Context, req *pb.Ge
 	return pbResponse, nil
 }
 
-func (h *DealTransactionHandler) ApproveTransaction(ctx context.Context, req *pb.ApproveDealTransactionRequest) (*pb.DealTransactionResponse, error) {
+func (h *DealTransactionHandler) ApproveTransaction(ctx context.Context, req *pb.ApproveDealTransactionRequest) (*emptypb.Empty, error) {
 	// Validate request
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "transaction ID is required")
@@ -202,9 +202,7 @@ func (h *DealTransactionHandler) ApproveTransaction(ctx context.Context, req *pb
 		return nil, status.Errorf(codes.Internal, "failed to approve transaction: %v", err)
 	}
 
-		return &pb.DealTransactionResponse{
-		Id: req.Id,
-	}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (h *DealTransactionHandler) GetFinancialSummary(ctx context.Context, req *pb.GetFinancialSummaryRequest) (*pb.FinancialSummaryResponse, error) {
@@ -232,11 +230,6 @@ func (h *DealTransactionHandler) GetFinancialSummary(ctx context.Context, req *p
 
 // Helper function to get user ID from context
 func getUserIDFromContext(ctx context.Context) (uint64, error) {
-	// Implementation depends on your authentication middleware
-	// This is a placeholder - you need to implement based on your auth system
-	userID, ok := ctx.Value("user_id").(uint64)
-	if !ok {
-		return 0, status.Errorf(codes.Unauthenticated, "user ID not found in context")
-	}
+	userID := _utils.GetUserIDFromContext(ctx)
 	return userID, nil
-} 
+}

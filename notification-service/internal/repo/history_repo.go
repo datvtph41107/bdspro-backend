@@ -22,5 +22,5 @@ type HistoryRepo interface {
 	CreateHistory(c context.Context, entity *domain.HistoryEntity) error
 	CrmHistory(c context.Context, crmId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 	ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)
-	// ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error)
+	SearchInternal(c context.Context, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error)
 }

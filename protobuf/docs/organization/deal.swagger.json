@@ -1169,6 +1169,14 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
         }
       },
       "title": "API cho nhóm"
@@ -1235,6 +1243,14 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
         }
       },
       "title": "API cho tổ chức"
@@ -1435,6 +1451,14 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
         }
       }
     },
@@ -1859,6 +1883,14 @@
         },
         "cancelReason": {
           "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
         }
       }
     },
