@@ -191,6 +191,19 @@ var HttpCmd = &cobra.Command{
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 
 		r.Static("/swagger-doc", "docs")
+
+		// Endpoint cho merged swagger (tất cả API)
+		r.GET("/swagger/merged/*any", func(c *gin.Context) {
+			// Trỏ tới file merged_swagger.json
+			swaggerURL := ginSwagger.URL("/swagger-doc/merged_swagger.json")
+
+			// Tạo handler mới với URL tương ứng
+			handler := ginSwagger.WrapHandler(swaggerFiles.Handler, swaggerURL)
+
+			handler(c)
+		})
+
+		// Endpoint cho từng service riêng lẻ (giữ lại để backward compatibility)
 		r.GET("/swagger/:service/*any", func(c *gin.Context) {
 			service := c.Param("service")
 
