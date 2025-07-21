@@ -6,6 +6,10 @@ __debug_bin**
 /protobuf/googleapis
 /protobuf/types
 
+# Ignore all tmp folders
+**/tmp/
+**/tmp/*
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
