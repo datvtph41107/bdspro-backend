@@ -1,0 +1,16 @@
+GRPC:
+  PORT: 8209
+
+Database:
+  PRIMARY_DB_TYPE: postgres
+  DB_DNS: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=marketing_db port=5432 sslmode=disable
+
+Payment:
+  SERVICE_HOST: localhost
+  SERVICE_PORT: 8208
+
+Notification:
+  SERVICE_HOST: localhost
+  SERVICE_PORT: 8204
+
+ENV_RUNTIME: localhost 

@@ -37,8 +37,9 @@ buf-chat:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path chat
 buf-task:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path task
-
-buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task 
+buf-marketing:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path marketing	
+buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing
 	echo "done"	
 	
 init:
@@ -55,7 +56,7 @@ init:
 	cd relay-service && go mod tidy
 	cd bdspro-service && go mod tidy
 	cd crm-service && go mod tidy
-	
+	cd marketing-service && go mod tidy
 
 gateway-http:
 	cd gateway-service && air http
@@ -89,6 +90,8 @@ file-http:
 	cd file-service && air http
 crm:
 	cd crm-service && go run main.go grpc
+marketing-grpc:
+	cd marketing-service && air grpc
 
 
 start-all:

@@ -53,6 +53,20 @@ const (
 	HistoryProductMerge       EHistory = 8100
 	HistoryProductDevide      EHistory = 8110
 	HistoryProductMergeAll    EHistory = 8120
+
+	// -- action for advertising/marketing --
+	HistoryCampaignCreate    EHistory = 9010
+	HistoryCampaignUpdate    EHistory = 9020
+	HistoryCampaignDelete    EHistory = 9030
+	HistoryCampaignPayment   EHistory = 9040
+	HistoryCampaignActivate  EHistory = 9050
+	HistoryCampaignPause     EHistory = 9060
+	HistoryCampaignResume    EHistory = 9070
+	HistoryCampaignExtend    EHistory = 9080
+	HistoryCampaignTopup     EHistory = 9090
+	HistoryPackageCreate     EHistory = 9110
+	HistoryPackageUpdate     EHistory = 9120
+	HistoryPackageDelete     EHistory = 9130
 )
 
 var HistoryMap = map[EHistory]string{
@@ -102,6 +116,20 @@ var HistoryMap = map[EHistory]string{
 	HistoryProductArchive:   "Lưu sản phẩm",
 	HistoryProductUnarchive: "Mở sản phẩm",
 	HistoryProductShare:     "Chia sẻ sản phẩm",
+
+	// -- action for advertising/marketing --
+	HistoryCampaignCreate:    "Tạo chiến dịch quảng cáo",
+	HistoryCampaignUpdate:    "Cập nhật chiến dịch quảng cáo",
+	HistoryCampaignDelete:    "Xóa chiến dịch quảng cáo",
+	HistoryCampaignPayment:   "Thanh toán chiến dịch",
+	HistoryCampaignActivate:  "Kích hoạt chiến dịch",
+	HistoryCampaignPause:     "Tạm dừng chiến dịch",
+	HistoryCampaignResume:    "Tiếp tục chiến dịch",
+	HistoryCampaignExtend:    "Gia hạn chiến dịch",
+	HistoryCampaignTopup:     "Nạp tiền chiến dịch",
+	HistoryPackageCreate:     "Tạo gói quảng cáo",
+	HistoryPackageUpdate:     "Cập nhật gói quảng cáo",
+	HistoryPackageDelete:     "Xóa gói quảng cáo",
 }
 
 var HistoryContactAction = []EHistory{
@@ -160,4 +188,22 @@ var HistoryProductChild = []EHistory{
 	HistoryProductMergeAll,
 	HistoryProductDevide,
 	HistoryProductChildCreate,
+}
+
+var HistoryCampaignActionType = []EHistory{
+	HistoryCampaignCreate,
+	HistoryCampaignUpdate,
+	HistoryCampaignDelete,
+	HistoryCampaignPayment,
+	HistoryCampaignActivate,
+	HistoryCampaignPause,
+	HistoryCampaignResume,
+	HistoryCampaignExtend,
+	HistoryCampaignTopup,
+}
+
+var HistoryPackageActionType = []EHistory{
+	HistoryPackageCreate,
+	HistoryPackageUpdate,
+	HistoryPackageDelete,
 }

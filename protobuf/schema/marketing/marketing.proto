@@ -1,0 +1,1072 @@
+syntax = "proto3";
+
+package pb_marketing;
+option go_package = "pb/types/marketing;pb_marketing";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
+
+service MarketingService {
+  // Campaign Management APIs - D.10.2.1
+  rpc CreateCampaign(CreateCampaignRequest) returns (CampaignResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/campaigns"
+      body: "*"
+    };
+  };
+
+  rpc GetCampaign(GetCampaignRequest) returns (CampaignResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}"
+    };
+  };
+
+  rpc UpdateCampaign(UpdateCampaignRequest) returns (CampaignResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/campaigns/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteCampaign(DeleteCampaignRequest) returns (DeleteCampaignResponse) {
+    option (google.api.http) = {
+      delete: "/v2/marketing/campaigns/{id}"
+    };
+  };
+
+  rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns"
+    };
+  };
+
+  rpc UpdateCampaignStatus(UpdateCampaignStatusRequest) returns (CampaignResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/campaigns/{id}/status"
+      body: "*"
+    };
+  };
+
+  rpc TopupCampaignBudget(TopupCampaignBudgetRequest) returns (CampaignResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/campaigns/{id}/topup"
+      body: "*"
+    };
+  };
+
+  // Package Management APIs - D.10.2.2
+  rpc CreatePackage(CreatePackageRequest) returns (PackageResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/packages"
+      body: "*"
+    };
+  };
+
+  rpc GetPackage(GetPackageRequest) returns (PackageResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/packages/{id}"
+    };
+  };
+
+  rpc UpdatePackage(UpdatePackageRequest) returns (PackageResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/packages/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse) {
+    option (google.api.http) = {
+      delete: "/v2/marketing/packages/{id}"
+    };
+  };
+
+  rpc ListPackages(ListPackagesRequest) returns (ListPackagesResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/packages"
+    };
+  };
+
+  // Payment Management APIs - D.10.2.3
+  rpc CreatePayment(CreatePaymentRequest) returns (PaymentResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/payments"
+      body: "*"
+    };
+  };
+
+  rpc GetPayment(GetPaymentRequest) returns (PaymentResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/payments/{id}"
+    };
+  };
+
+  rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/payments"
+    };
+  };
+
+  // Campaign Detail Management APIs - D.10.2.4
+  rpc CreateCampaignDetail(CreateCampaignDetailRequest) returns (CampaignDetailResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/campaign-details"
+      body: "*"
+    };
+  };
+
+  rpc GetCampaignDetail(GetCampaignDetailRequest) returns (CampaignDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaign-details/{id}"
+    };
+  };
+
+  rpc UpdateCampaignDetail(UpdateCampaignDetailRequest) returns (CampaignDetailResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/campaign-details/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteCampaignDetail(DeleteCampaignDetailRequest) returns (DeleteCampaignDetailResponse) {
+    option (google.api.http) = {
+      delete: "/v2/marketing/campaign-details/{id}"
+    };
+  };
+
+  rpc ListCampaignDetails(ListCampaignDetailsRequest) returns (ListCampaignDetailsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaign-details"
+    };
+  };
+
+  // Budget Management APIs - D.10.2.5
+  rpc CreateBudget(CreateBudgetRequest) returns (BudgetResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/budgets"
+      body: "*"
+    };
+  };
+
+  rpc GetBudget(GetBudgetRequest) returns (BudgetResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/budgets/{id}"
+    };
+  };
+
+  rpc UpdateBudget(UpdateBudgetRequest) returns (BudgetResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/budgets/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteBudget(DeleteBudgetRequest) returns (DeleteBudgetResponse) {
+    option (google.api.http) = {
+      delete: "/v2/marketing/budgets/{id}"
+    };
+  };
+
+  rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/budgets"
+    };
+  };
+
+  // Advertising Settings Management APIs - D.10.2.6
+  rpc CreateAdvertisingSettings(CreateAdvertisingSettingsRequest) returns (AdvertisingSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/advertising-settings"
+      body: "*"
+    };
+  };
+
+  rpc GetAdvertisingSettings(GetAdvertisingSettingsRequest) returns (AdvertisingSettingsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/advertising-settings/{id}"
+    };
+  };
+
+  rpc UpdateAdvertisingSettings(UpdateAdvertisingSettingsRequest) returns (AdvertisingSettingsResponse) {
+    option (google.api.http) = {
+      put: "/v2/marketing/advertising-settings/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteAdvertisingSettings(DeleteAdvertisingSettingsRequest) returns (DeleteAdvertisingSettingsResponse) {
+    option (google.api.http) = {
+      delete: "/v2/marketing/advertising-settings/{id}"
+    };
+  };
+
+  rpc ListAdvertisingSettings(ListAdvertisingSettingsRequest) returns (ListAdvertisingSettingsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/advertising-settings"
+    };
+  };
+
+  // Lưu ý: GetCampaignTransactionHistory đã được xóa
+  // Sử dụng trực tiếp API từ notification service:
+  // GET /v2/notification/history/campaign/{id}
+  // GET /v2/notification/history/package/{id}
+}
+
+message Campaign {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  uint64 productId = 6;
+  string productName = 7;
+  string productType = 8;
+  uint64 packageId = 9;
+  string packageName = 10;
+  double budget = 11;
+  uint32 duration = 12;
+  string startDate = 13;
+  string endDate = 14;
+  string targetAudience = 15;
+  string targetLocation = 16;
+  bool isActive = 17;
+  uint32 priority = 18;
+  string internalNote = 19;
+  uint64 createdBy = 20;
+  uint64 organizationId = 21;
+  string walletId = 22;
+  double walletBalance = 23;
+  string currency = 24;
+  uint64 transactionId = 25; // Payment transaction ID
+  string createdAt = 26;
+  string updatedAt = 27;
+}
+
+message CreateCampaignRequest {
+  string name = 1;
+  string description = 2;
+  string type = 3;
+  uint64 productId = 4;
+  string productName = 5;
+  string productType = 6;
+  uint64 packageId = 7;
+  string packageName = 8;
+  double budget = 9;
+  uint32 duration = 10;
+  string startDate = 11;
+  string endDate = 12;
+  string targetAudience = 13;
+  string targetLocation = 14;
+  uint32 priority = 15;
+  string internalNote = 16;
+  bool termsAccepted = 17;
+}
+
+message UpdateCampaignRequest {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  uint64 productId = 5;
+  string productName = 6;
+  string productType = 7;
+  uint64 packageId = 8;
+  string packageName = 9;
+  double budget = 10;
+  uint32 duration = 11;
+  string startDate = 12;
+  string endDate = 13;
+  string targetAudience = 14;
+  string targetLocation = 15;
+  string status = 16;
+  uint32 priority = 17;
+  string internalNote = 18;
+}
+
+message CampaignResponse {
+  Campaign data = 1;
+}
+
+message SearchCampaignsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string name = 3;
+  string type = 4;
+  string status = 5;
+  uint64 productId = 6;
+  string productType = 7;
+  uint64 packageId = 8;
+  bool isActive = 9;
+  string fromDate = 10;
+  string toDate = 11;
+}
+
+message SearchCampaignsResponse {
+  repeated Campaign data = 1;
+  uint32 total = 2;
+}
+
+message GetCampaignsByProductRequest {
+  uint64 productId = 1;
+}
+
+message UpdateCampaignStatusRequest {
+  uint64 id = 1;
+  string status = 2;
+}
+
+// Campaign budget management messages
+message TopupCampaignBudgetRequest {
+  uint64 id = 1;
+  double amount = 2;
+  string paymentMethod = 3;
+  string externalPaymentId = 4;
+  string description = 5;
+}
+
+message CampaignBudgetTopupResponse {
+  uint64 campaignId = 1;
+  uint64 transactionId = 2;
+  double amount = 3;
+  double previousBalance = 4;
+  double newBalance = 5;
+  string currency = 6;
+  string status = 7;
+  string transactionCode = 8;
+  string paymentMethod = 9;
+  string externalPaymentId = 10;
+  string createdAt = 11;
+  string message = 12;
+}
+
+message CampaignWalletInfoResponse {
+  uint64 campaignId = 1;
+  string walletId = 2;
+  double balance = 3;
+  string currency = 4;
+  double totalDeposited = 5;
+  double totalSpent = 6;
+  double availableBudget = 7;
+  double campaignBudget = 8;
+  double remainingBudget = 9;
+  string lastUpdated = 10;
+}
+
+message GetCampaignTransactionsRequest {
+  uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message CampaignTransactionsResponse {
+  repeated CampaignBudgetTopupResponse data = 1;
+  uint32 total = 2;
+}
+
+// Package messages - D.10.2.2
+message Package {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  double price = 6;
+  string currency = 7;
+  uint32 duration = 8;
+  string features = 9;
+  uint32 maxImpressions = 10;
+  uint32 maxClicks = 11;
+  double minBudget = 12;
+  double maxBudget = 13;
+  uint32 estimatedReach = 14;
+  uint32 estimatedClicks = 15;
+  bool isPopular = 16;
+  bool isRecommended = 17;
+  string icon = 18;
+  string color = 19;
+  bool requiresVerification = 20;
+  bool requiresPayment = 21;
+  uint64 createdBy = 22;
+  uint64 organizationId = 23;
+  string createdAt = 24;
+  string updatedAt = 25;
+}
+
+message CreatePackageRequest {
+  string name = 1;
+  string description = 2;
+  string type = 3;
+  double price = 4;
+  string currency = 5;
+  uint32 duration = 6;
+  string features = 7;
+  uint32 maxImpressions = 8;
+  uint32 maxClicks = 9;
+  double minBudget = 10;
+  double maxBudget = 11;
+  uint32 estimatedReach = 12;
+  uint32 estimatedClicks = 13;
+  bool isPopular = 14;
+  bool isRecommended = 15;
+  string icon = 16;
+  string color = 17;
+  bool requiresVerification = 18;
+  bool requiresPayment = 19;
+}
+
+message UpdatePackageRequest {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  double price = 6;
+  string currency = 7;
+  uint32 duration = 8;
+  string features = 9;
+  uint32 maxImpressions = 10;
+  uint32 maxClicks = 11;
+  double minBudget = 12;
+  double maxBudget = 13;
+  uint32 estimatedReach = 14;
+  uint32 estimatedClicks = 15;
+  bool isPopular = 16;
+  bool isRecommended = 17;
+  string icon = 18;
+  string color = 19;
+  bool requiresVerification = 20;
+  bool requiresPayment = 21;
+}
+
+message PackageResponse {
+  Package data = 1;
+}
+
+message SearchPackagesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string type = 3;
+  string status = 4;
+  double minPrice = 5;
+  double maxPrice = 6;
+  bool isPopular = 7;
+  bool isRecommended = 8;
+  bool requiresVerification = 9;
+}
+
+message SearchPackagesResponse {
+  repeated Package data = 1;
+  uint32 total = 2;
+}
+
+message GetPackagesByTypeRequest {
+  string type = 1;
+}
+
+// D.10.2.2 specific messages
+message SelectPackageRequest {
+  uint64 packageId = 1;
+  double customBudget = 2;
+  uint32 duration = 3;
+}
+
+message PackageSelectionResponse {
+  Package selectedPackage = 1;
+  double customBudget = 2;
+  uint32 customDuration = 3;
+  double totalPrice = 4;
+  uint32 estimatedReach = 5;
+  uint32 estimatedClicks = 6;
+  string nextStep = 7;
+}
+
+message GetPackageRecommendationsRequest {
+  uint64 productId = 1;
+  string productType = 2;
+  uint32 currentViews = 3;
+  string targetAudience = 4;
+  double budget = 5;
+}
+
+message PackageRecommendationsResponse {
+  repeated Package recommendedPackages = 1;
+  repeated Package popularPackages = 2;
+  repeated Package bestValuePackages = 3;
+  repeated ComboPackage comboSuggestions = 4;
+}
+
+message ComboPackage {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  repeated Package packages = 4;
+  double totalPrice = 5;
+  double discount = 6;
+  double savings = 7;
+}
+
+message GetPopularPackagesRequest {
+  uint32 limit = 1;
+}
+
+message GetRecommendedPackagesRequest {
+  uint32 limit = 1;
+}
+
+message GetBestValuePackagesRequest {
+  uint32 limit = 1;
+}
+
+// Payment management messages - D.10.2.3
+message GetPaymentSummaryRequest {
+  uint64 packageId = 1;
+  uint64 productId = 2;
+  double customBudget = 3;
+  uint32 customDuration = 4;
+}
+
+message PaymentSummaryResponse {
+  uint64 packageId = 1;
+  string packageName = 2;
+  string packageType = 3;
+  uint64 productId = 4;
+  string productName = 5;
+  string productImage = 6;
+  uint32 duration = 7;
+  double totalCost = 8;
+  string currency = 9;
+  double customBudget = 10;
+  uint32 customDuration = 11;
+  uint32 estimatedReach = 12;
+  uint32 estimatedClicks = 13;
+}
+
+message ValidatePaymentRequest {
+  uint64 campaignId = 1;
+  uint64 packageId = 2;
+  double amount = 3;
+  string paymentMethod = 4;
+  string walletId = 5;
+  uint64 productId = 6;
+  string productName = 7;
+  string productType = 8;
+  double customBudget = 9;
+  uint32 customDuration = 10;
+  bool requireInvoice = 11;
+  string invoiceEmail = 12;
+  bool termsAccepted = 13;
+}
+
+message PaymentValidationResponse {
+  bool isValid = 1;
+  repeated string errors = 2;
+  repeated string warnings = 3;
+  WalletBalanceResponse walletBalance = 4;
+  repeated PaymentMethodResponse paymentMethods = 5;
+  bool canProceed = 6;
+  bool requiresTopup = 7;
+  double topupAmount = 8;
+}
+
+message ProcessPaymentRequest {
+  uint64 campaignId = 1;
+  uint64 packageId = 2;
+  double amount = 3;
+  string paymentMethod = 4;
+  string walletId = 5;
+  uint64 productId = 6;
+  string productName = 7;
+  string productType = 8;
+  double customBudget = 9;
+  uint32 customDuration = 10;
+  bool requireInvoice = 11;
+  string invoiceEmail = 12;
+  bool termsAccepted = 13;
+}
+
+message PaymentResponse {
+  bool success = 1;
+  uint64 transactionId = 2;
+  uint64 campaignId = 3;
+  double amount = 4;
+  string currency = 5;
+  string paymentMethod = 6;
+  string status = 7;
+  string transactionCode = 8;
+  double walletBalance = 9;
+  double previousBalance = 10;
+  string createdAt = 11;
+  string message = 12;
+  string nextStep = 13;
+}
+
+message GetWalletBalanceRequest {
+  string walletId = 1;
+  double requiredAmount = 2;
+}
+
+message WalletBalanceResponse {
+  string walletId = 1;
+  double balance = 2;
+  string currency = 3;
+  bool isSufficient = 4;
+  double requiredAmount = 5;
+  double shortfall = 6;
+  string lastUpdated = 7;
+}
+
+message Empty {}
+
+message PaymentMethodsResponse {
+  repeated PaymentMethodResponse paymentMethods = 1;
+}
+
+message PaymentMethodResponse {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  bool isActive = 5;
+  bool isDefault = 6;
+  string icon = 7;
+}
+
+message GetPaymentHistoryRequest {
+  uint64 campaignId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message PaymentHistoryResponse {
+  repeated PaymentHistoryItemResponse data = 1;
+  uint32 total = 2;
+}
+
+message PaymentHistoryItemResponse {
+  uint64 id = 1;
+  uint64 campaignId = 2;
+  uint64 packageId = 3;
+  double amount = 4;
+  string currency = 5;
+  string paymentMethod = 6;
+  string status = 7;
+  string transactionCode = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  string campaignName = 11;
+  string packageName = 12;
+}
+
+message CampaignPaymentResponse {
+	uint64 campaignId = 1;
+	uint64 packageId = 2;
+	double amount = 3;
+	string currency = 4;
+	string paymentStatus = 5;
+	uint64 transactionId = 6;
+	string paymentMethod = 7;
+	string paidAt = 8;
+	string invoiceNumber = 9;
+	bool requireInvoice = 10;
+	string invoiceEmail = 11;
+}
+
+// Campaign detail messages - D.10.2.4
+message CampaignDetailResponse {
+	CampaignDetail data = 1;
+}
+
+message CampaignDetail {
+	uint64 id = 1;
+	string name = 2;
+	string description = 3;
+	string type = 4;
+	string status = 5;
+	uint64 productId = 6;
+	string productName = 7;
+	string productImage = 8;
+	string productType = 9;
+	uint64 packageId = 10;
+	string packageName = 11;
+	string packageType = 12;
+	double budget = 13;
+	uint32 duration = 14;
+	string startDate = 15;
+	string endDate = 16;
+	string currency = 17;
+	uint32 impressions = 18;
+	uint32 clicks = 19;
+	double ctr = 20;
+	double cpc = 21;
+	double spentAmount = 22;
+	double remainingBudget = 23;
+	string walletId = 24;
+	double walletBalance = 25;
+	uint64 transactionId = 26;
+	bool canEdit = 27;
+	bool canPause = 28;
+	bool canResume = 29;
+	bool canExtend = 30;
+	bool canTopup = 31;
+	uint64 createdBy = 32;
+	uint64 organizationId = 33;
+	string createdAt = 34;
+	string updatedAt = 35;
+}
+
+message GetCampaignPerformanceRequest {
+	uint64 id = 1;
+	string startDate = 2;
+	string endDate = 3;
+}
+
+message CampaignPerformanceResponse {
+	CampaignPerformance data = 1;
+}
+
+message CampaignPerformance {
+	uint64 campaignId = 1;
+	string date = 2;
+	uint32 impressions = 3;
+	uint32 clicks = 4;
+	double ctr = 5;
+	double cpc = 6;
+	double spent = 7;
+	repeated CampaignDailyData dailyData = 8;
+	CampaignPerformanceSummary summary = 9;
+}
+
+message CampaignDailyData {
+	string date = 1;
+	uint32 impressions = 2;
+	uint32 clicks = 3;
+	double ctr = 4;
+	double cpc = 5;
+	double spent = 6;
+}
+
+message CampaignPerformanceSummary {
+	uint32 totalImpressions = 1;
+	uint32 totalClicks = 2;
+	double averageCtr = 3;
+	double averageCpc = 4;
+	double totalSpent = 5;
+	double remainingBudget = 6;
+	double roi = 7;
+}
+
+message GetCampaignHistoryRequest {
+	uint64 id = 1;
+	uint32 page = 2;
+	uint32 size = 3;
+}
+
+message CampaignHistoryResponse {
+	repeated CampaignHistoryItem data = 1;
+	uint32 total = 2;
+}
+
+message CampaignHistoryItem {
+	uint64 id = 1;
+	uint64 campaignId = 2;
+	string action = 3;
+	string description = 4;
+	uint64 performedBy = 5;
+	string performedByUser = 6;
+	string performedAt = 7;
+	string ipAddress = 8;
+	string userAgent = 9;
+}
+
+message ExtendCampaignRequest {
+	uint64 id = 1;
+	uint32 extensionDays = 2;
+	double additionalBudget = 3;
+	string paymentMethod = 4;
+	bool termsAccepted = 5;
+}
+
+message ExportCampaignDataRequest {
+	uint64 id = 1;
+	string exportType = 2;
+	string dateRange = 3;
+}
+
+message CampaignExportResponse {
+	CampaignExport data = 1;
+}
+
+message CampaignExport {
+	uint64 campaignId = 1;
+	string campaignName = 2;
+	string exportType = 3;
+	string dateRange = 4;
+	repeated CampaignDailyData performanceData = 5;
+	CampaignPerformanceSummary summary = 6;
+	string generatedAt = 7;
+	uint64 generatedBy = 8;
+}
+
+message CampaignOptimizationResponse {
+	CampaignOptimization data = 1;
+}
+
+message CampaignOptimization {
+	uint64 campaignId = 1;
+	repeated string suggestions = 2;
+	string priority = 3;
+	string estimatedImpact = 4;
+	string generatedAt = 5;
+}
+
+// Lưu ý: Campaign Transaction History messages đã được xóa
+// Sử dụng trực tiếp API từ notification service:
+// GET /v2/notification/history/campaign/{id}
+// GET /v2/notification/history/package/{id} 
+
+// Missing message definitions for service methods
+message GetCampaignRequest {
+  uint64 id = 1;
+}
+
+message DeleteCampaignRequest {
+  uint64 id = 1;
+}
+
+message DeleteCampaignResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListCampaignsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string status = 3;
+  string type = 4;
+  uint64 organizationId = 5;
+}
+
+message ListCampaignsResponse {
+  repeated Campaign data = 1;
+  uint32 total = 2;
+}
+
+message GetPackageRequest {
+  uint64 id = 1;
+}
+
+message DeletePackageRequest {
+  uint64 id = 1;
+}
+
+message DeletePackageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListPackagesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string type = 3;
+  string status = 4;
+}
+
+message ListPackagesResponse {
+  repeated Package data = 1;
+  uint32 total = 2;
+}
+
+message CreatePaymentRequest {
+  uint64 campaignId = 1;
+  uint64 packageId = 2;
+  double amount = 3;
+  string paymentMethod = 4;
+  string walletId = 5;
+  bool requireInvoice = 6;
+  string invoiceEmail = 7;
+  bool termsAccepted = 8;
+}
+
+message GetPaymentRequest {
+  uint64 id = 1;
+}
+
+message ListPaymentsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 campaignId = 3;
+  string status = 4;
+}
+
+message ListPaymentsResponse {
+  repeated PaymentHistoryItemResponse data = 1;
+  uint32 total = 2;
+}
+
+message CreateCampaignDetailRequest {
+  uint64 campaignId = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  uint64 productId = 5;
+  uint64 packageId = 6;
+  double budget = 7;
+  uint32 duration = 8;
+  string startDate = 9;
+  string endDate = 10;
+}
+
+message GetCampaignDetailRequest {
+  uint64 id = 1;
+}
+
+message UpdateCampaignDetailRequest {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  uint64 productId = 5;
+  uint64 packageId = 6;
+  double budget = 7;
+  uint32 duration = 8;
+  string startDate = 9;
+  string endDate = 10;
+}
+
+message DeleteCampaignDetailRequest {
+  uint64 id = 1;
+}
+
+message DeleteCampaignDetailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListCampaignDetailsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 campaignId = 3;
+  string status = 4;
+}
+
+message ListCampaignDetailsResponse {
+  repeated CampaignDetail data = 1;
+  uint32 total = 2;
+}
+
+message CreateBudgetRequest {
+  uint64 campaignId = 1;
+  double amount = 2;
+  string currency = 3;
+  string description = 4;
+}
+
+message GetBudgetRequest {
+  uint64 id = 1;
+}
+
+message UpdateBudgetRequest {
+  uint64 id = 1;
+  double amount = 2;
+  string currency = 3;
+  string description = 4;
+}
+
+message DeleteBudgetRequest {
+  uint64 id = 1;
+}
+
+message DeleteBudgetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListBudgetsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 campaignId = 3;
+}
+
+message ListBudgetsResponse {
+  repeated Budget data = 1;
+  uint32 total = 2;
+}
+
+message Budget {
+  uint64 id = 1;
+  uint64 campaignId = 2;
+  double amount = 3;
+  string currency = 4;
+  string description = 5;
+  string status = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message BudgetResponse {
+  Budget data = 1;
+}
+
+message CreateAdvertisingSettingsRequest {
+  uint64 campaignId = 1;
+  string platform = 2;
+  string targetAudience = 3;
+  string targetLocation = 4;
+  string adFormat = 5;
+  string schedule = 6;
+  map<string, string> settings = 7;
+}
+
+message GetAdvertisingSettingsRequest {
+  uint64 id = 1;
+}
+
+message UpdateAdvertisingSettingsRequest {
+  uint64 id = 1;
+  string platform = 2;
+  string targetAudience = 3;
+  string targetLocation = 4;
+  string adFormat = 5;
+  string schedule = 6;
+  map<string, string> settings = 7;
+}
+
+message DeleteAdvertisingSettingsRequest {
+  uint64 id = 1;
+}
+
+message DeleteAdvertisingSettingsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListAdvertisingSettingsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 campaignId = 3;
+  string platform = 4;
+}
+
+message ListAdvertisingSettingsResponse {
+  repeated AdvertisingSettings data = 1;
+  uint32 total = 2;
+}
+
+message AdvertisingSettings {
+  uint64 id = 1;
+  uint64 campaignId = 2;
+  string platform = 3;
+  string targetAudience = 4;
+  string targetLocation = 5;
+  string adFormat = 6;
+  string schedule = 7;
+  map<string, string> settings = 8;
+  string status = 9;
+  string createdAt = 10;
+  string updatedAt = 11;
+}
+
+message AdvertisingSettingsResponse {
+  AdvertisingSettings data = 1;
+}

@@ -245,3 +245,55 @@ func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb
 		TotalElements: uint32(total),
 	}, nil
 }
+
+// @Summary Lấy lịch sử của chiến dịch quảng cáo
+// @Description Lấy lịch sử của chiến dịch quảng cáo
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param campaignId path int true "ID của chiến dịch"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/campaign/{campaignId} [get]
+func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+	histories, total, err := s.UC.CampaignHistory(ctx, req.Id, dto.HistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	historiesPb := s.Mapper.HistoryToPbs(histories)
+	return &notificationpb.HistoryListDTO{
+		Data:          historiesPb,
+		TotalElements: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy lịch sử của gói quảng cáo
+// @Description Lấy lịch sử của gói quảng cáo
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param packageId path int true "ID của gói quảng cáo"
+// @Param page query notificationpb.HistorySearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/package/{packageId} [get]
+func (s *HistoryService) PackageHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+	histories, total, err := s.UC.PackageHistory(ctx, req.Id, dto.HistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	historiesPb := s.Mapper.HistoryToPbs(histories)
+	return &notificationpb.HistoryListDTO{
+		Data:          historiesPb,
+		TotalElements: uint32(total),
+	}, nil
+}

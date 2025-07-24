@@ -13,6 +13,10 @@ const (
 	// bdspro
 	TargetHistoryProduct ETargetHistory = 60
 	TargetHistoryAsset   ETargetHistory = 70
+
+	// advertising/marketing
+	TargetHistoryCampaign ETargetHistory = 80
+	TargetHistoryPackage  ETargetHistory = 90
 )
 
 var TargetHistoryMap = map[ETargetHistory]string{
@@ -23,4 +27,6 @@ var TargetHistoryMap = map[ETargetHistory]string{
 	TargetHistoryRule:     "Quy tắc",
 	TargetHistoryProduct:  "Sản phẩm",
 	TargetHistoryAsset:    "Tài sản",
+	TargetHistoryCampaign: "Chiến dịch quảng cáo",
+	TargetHistoryPackage:  "Gói quảng cáo",
 }

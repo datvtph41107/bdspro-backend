@@ -206,3 +206,11 @@ func (r *HistoryRepo) SearchInternal(c context.Context, dto dto.HistorySearchDTO
 
 	return histories, total, nil
 }
+
+func (r *HistoryRepo) CampaignHistory(c context.Context, campaignId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	return r.HistoryWithEnumGroup(c, campaignId, shared_enum.HistoryCampaignActionType, dto)
+}
+
+func (r *HistoryRepo) PackageHistory(c context.Context, packageId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	return r.HistoryWithEnumGroup(c, packageId, shared_enum.HistoryPackageActionType, dto)
+}

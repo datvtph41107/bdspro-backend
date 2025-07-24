@@ -50,6 +50,18 @@ service HistoryService {
     };
   };
 
+  rpc CampaignHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/campaign/{id}"
+    };
+  };
+
+  rpc PackageHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/package/{id}"
+    };
+  };
+
   rpc Create (HistoryDTO) returns (HistoryDTO);
   rpc CreateInternal (HistoryDTO) returns (HistoryDTO);
   rpc SearchInternal (HistorySearchRequest) returns (HistoryListDTO);

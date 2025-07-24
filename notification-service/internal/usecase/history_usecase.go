@@ -136,3 +136,19 @@ func (h *HistoryUsecase) SearchInternal(c context.Context, dto dto.HistorySearch
 	}
 	return histories, total, nil
 }
+
+func (h *HistoryUsecase) CampaignHistory(c context.Context, campaignId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	histories, total, err := h.historyRepo.CampaignHistory(c, campaignId, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return histories, total, nil
+}
+
+func (h *HistoryUsecase) PackageHistory(c context.Context, packageId uint64, dto dto.HistorySearchDTO) ([]domain.HistoryEntity, int64, error) {
+	histories, total, err := h.historyRepo.PackageHistory(c, packageId, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return histories, total, nil
+}
