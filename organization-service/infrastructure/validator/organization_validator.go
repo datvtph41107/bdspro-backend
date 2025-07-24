@@ -99,6 +99,22 @@ func (o *organizationValidator) ValidateCreateOrganizationRequest(request *organ
 		}
 	}
 
+	// Validate business domain IDs
+	if len(request.BusinessDomainIds) > 0 {
+		for i, domainId := range request.BusinessDomainIds {
+			if domainId == 0 {
+				details = append(details, &errdetails.BadRequest{
+					FieldViolations: []*errdetails.BadRequest_FieldViolation{
+						{
+							Field:       "businessDomainIds",
+							Description: "business domain ID at index " + string(rune(i)) + " cannot be zero",
+						},
+					},
+				})
+			}
+		}
+	}
+
 	if request.Website != nil && *request.Website != "" {
 		website := *request.Website
 		if !strings.HasPrefix(website, "http://") && !strings.HasPrefix(website, "https://") {
@@ -160,6 +176,15 @@ func (o *organizationValidator) ValidateUpdateOrganizationRequest(request *organ
 		phoneRegex := regexp.MustCompile(`^\+?[0-9]{10,15}$`)
 		if !phoneRegex.MatchString(*request.Phone) {
 			return status.Errorf(codes.InvalidArgument, "invalid phone format")
+		}
+	}
+
+	// Validate business domain IDs
+	if len(request.BusinessDomainIds) > 0 {
+		for i, domainId := range request.BusinessDomainIds {
+			if domainId == 0 {
+				return status.Errorf(codes.InvalidArgument, "business domain ID at index %d cannot be zero", i)
+			}
 		}
 	}
 

@@ -29,9 +29,10 @@ type OrganizationModel struct {
 	Status              string `gorm:"index:idx_organizations_status_created_at"`
 	ApproveInvestor     bool   `gorm:"default:false"`
 	AccountBankInvestor *uint64
-	CreatedAt           time.Time `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
-	UpdatedAt           time.Time `gorm:"autoUpdateTime"`
-	CreatedBy           uint32    `gorm:"index:idx_organizations_created_by"`
+	BusinessDomains     []*BusinessDomainModel `gorm:"many2many:organization_business_domains;joinForeignKey:OrganizationID;joinReferences:BusinessDomainID"`
+	CreatedAt           time.Time              `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
+	UpdatedAt           time.Time              `gorm:"autoUpdateTime"`
+	CreatedBy           uint32                 `gorm:"index:idx_organizations_created_by"`
 	UpdatedBy           uint32
 	DeletedAt           *time.Time `gorm:"index"`
 	IsDeleted           bool       `gorm:"default:false"`
@@ -42,6 +43,11 @@ func (OrganizationModel) TableName() string {
 }
 
 func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
+	businessDomains := make([]*entity.BusinessDomain, len(model.BusinessDomains))
+	for i, domain := range model.BusinessDomains {
+		businessDomains[i] = BusinessDomainModelToEntity(domain)
+	}
+
 	return &entity.Organization{
 		ID:                 model.ID,
 		Name:               model.Name,
@@ -53,6 +59,7 @@ func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
 		Website:            model.Website,
 		LogoUrl:            model.LogoUrl,
 		Status:             model.Status,
+		BusinessDomains:    businessDomains,
 		CreatedAt:          model.CreatedAt,
 		UpdatedAt:          model.UpdatedAt,
 		CreatedBy:          model.CreatedBy,
@@ -61,6 +68,13 @@ func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
 }
 
 func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
+	businessDomains := make([]*BusinessDomainModel, len(entity.BusinessDomainIds))
+	for i, domainId := range entity.BusinessDomainIds {
+		businessDomains[i] = &BusinessDomainModel{
+			ID: domainId,
+		}
+	}
+
 	return &OrganizationModel{
 		ID:                 entity.ID,
 		Name:               entity.Name,
@@ -73,6 +87,7 @@ func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
 		LogoUrl:            entity.LogoUrl,
 		Status:             entity.Status,
 		ApproveInvestor:    entity.ApproveInvestor,
+		BusinessDomains:    businessDomains,
 		CreatedAt:          entity.CreatedAt,
 		UpdatedAt:          entity.UpdatedAt,
 		CreatedBy:          entity.CreatedBy,
@@ -127,6 +142,17 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		return nil, nil, err
 	}
 
+	if len(organization.BusinessDomainIds) > 0 {
+		businessDomains := make([]*BusinessDomainModel, len(organization.BusinessDomainIds))
+		for i, domainId := range organization.BusinessDomainIds {
+			businessDomains[i] = &BusinessDomainModel{ID: domainId}
+		}
+		if err := tx.Model(&organizationModel).Association("BusinessDomains").Append(businessDomains); err != nil {
+			tx.Rollback()
+			return nil, nil, err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
@@ -147,16 +173,64 @@ func (o *OrganizationPostgresRepository) FindByTaxCode(ctx context.Context, taxC
 }
 
 func (o *OrganizationPostgresRepository) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
-	model := OrganizationEntityToModel(organization)
-	if err := o.db.WithContext(ctx).Model(&model).Where("id = ? AND is_deleted = ?", organization.ID, false).Updates(model).Error; err != nil {
+	tx := o.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var model OrganizationModel
+	if err := tx.First(&model, "id = ? AND is_deleted = ?", organization.ID, false).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	return OrganizationModelToEntity(model), nil
+
+	// Cập nhật trường khác (ngoài BusinessDomains)
+	updatedModel := OrganizationEntityToModel(organization)
+	updatedModel.ID = model.ID
+	updatedModel.BusinessDomains = nil
+
+	if err := tx.Model(&model).Updates(updatedModel).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Đảm bảo model đã attach vào transaction
+	if err := tx.Save(&model).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Replace BusinessDomains
+	if len(organization.BusinessDomainIds) > 0 {
+		businessDomains := make([]*BusinessDomainModel, len(organization.BusinessDomainIds))
+		for i, id := range organization.BusinessDomainIds {
+			businessDomains[i] = &BusinessDomainModel{ID: id}
+		}
+
+		// ⚠️ Dùng Association từ tx.Model
+		if err := tx.Model(&model).Association("BusinessDomains").Replace(businessDomains); err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return OrganizationModelToEntity(&model), nil
 }
 
 func (o *OrganizationPostgresRepository) FindById(ctx context.Context, id uint32) (*entity.Organization, error) {
 	var organizationModel *OrganizationModel
-	if err := o.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&organizationModel).Error; err != nil {
+	if err := o.db.WithContext(ctx).Preload("BusinessDomains").Where("id = ? AND is_deleted = ?", id, false).First(&organizationModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

@@ -247,6 +247,48 @@
         },
         "status": {
           "type": "string"
+        },
+        "businessDomainIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "organizationpbBusinessDomain": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -284,6 +326,13 @@
         },
         "logoUrl": {
           "type": "string"
+        },
+        "businessDomainIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -366,6 +415,13 @@
         },
         "logoUrl": {
           "type": "string"
+        },
+        "businessDomains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbBusinessDomain"
+          }
         }
       }
     },

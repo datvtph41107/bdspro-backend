@@ -2,6 +2,7 @@ package repository
 
 import (
 	_db "common/db"
+
 	"organization/infrastructure/repository/postgres"
 	"organization/internal/domain/entity"
 )
@@ -9,34 +10,35 @@ import (
 func AutoMigrate() {
 	// db := database.NewPostgresDB(config.DB_DNS)
 	db := _db.DB
-	db.AutoMigrate(&postgres.GroupChatModel{})
-	db.AutoMigrate(&postgres.OrganizationLogActivityModel{})
-	db.AutoMigrate(&postgres.GroupDocumentModel{})
-	db.AutoMigrate(&postgres.GroupNotificationModel{})
-	db.AutoMigrate(&postgres.GroupLogActivityModel{})
-	db.AutoMigrate(&postgres.GroupMemberModel{})
-	db.AutoMigrate(&postgres.GroupSettingModel{})
-	db.AutoMigrate(&postgres.GroupModel{})
-	db.AutoMigrate(&postgres.OrganizationBranchMemberModel{})
-	db.AutoMigrate(&postgres.OrganizationBranchModel{})
-	db.AutoMigrate(&postgres.OrganizationPermissionModel{})
-	db.AutoMigrate(&postgres.OrganizationRoleModel{})
-	db.AutoMigrate(&postgres.OrganizationMemberModel{})
-	db.AutoMigrate(&postgres.OrganizationModel{})
-	db.AutoMigrate(&entity.Deal{})
-	db.AutoMigrate(&entity.DealMember{})
-	db.AutoMigrate(&entity.DealProduct{})
-	db.AutoMigrate(&entity.AttachDocument{})
-	db.AutoMigrate(&entity.BankAccount{})
-	db.AutoMigrate(&entity.DealInvitation{}) // Thêm migration cho deal_invitations
-	err := db.AutoMigrate(&entity.Investment{})
+
+	// Migrate các models hiện có
+	err := db.AutoMigrate(&postgres.GroupChatModel{},
+		&postgres.OrganizationLogActivityModel{},
+		&postgres.GroupDocumentModel{},
+		&postgres.GroupNotificationModel{},
+		&postgres.GroupLogActivityModel{},
+		&postgres.GroupMemberModel{},
+		&postgres.GroupSettingModel{},
+		&postgres.GroupModel{},
+		&postgres.OrganizationBranchMemberModel{},
+		&postgres.OrganizationBranchModel{},
+		&postgres.OrganizationPermissionModel{},
+		&postgres.OrganizationRoleModel{},
+		&postgres.OrganizationMemberModel{},
+		&postgres.BusinessDomainModel{},
+		&postgres.OrganizationBusinessDomainModel{},
+		&postgres.OrganizationModel{}, &entity.Deal{},
+		&entity.DealMember{},
+		&entity.DealProduct{},
+		&entity.AttachDocument{},
+		&entity.BankAccount{},
+		&entity.DealInvitation{},
+		&entity.Investment{},
+		&entity.DealMember{},
+		&entity.DealTransaction{},
+		&postgres.DealMemberModel{},
+	)
 	if err != nil {
 		panic(err)
 	}
-
-	db.AutoMigrate(&entity.DealMember{})
-	db.AutoMigrate(&entity.DealTransaction{})
-	
-	// Thêm migration cho DealMemberModel với các trường hoa hồng
-	db.AutoMigrate(&postgres.DealMemberModel{})
 }

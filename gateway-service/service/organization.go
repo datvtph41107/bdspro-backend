@@ -34,4 +34,5 @@ func RegisterOrganizationService(ctx context.Context, mux *runtime.ServeMux, env
 	_ = organizationpb.RegisterDealInvitationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterDealTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterDealCommissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterBusinessDomainServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

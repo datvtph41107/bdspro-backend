@@ -177,3 +177,24 @@ func (h *OrganizationRoleHandler) CreateNewRoleWithMembers(ctx context.Context, 
 
 	return h.OrganizationRoleTransformer.EntityToCreateNewRoleWithMembersResponse(role, req.MemberIds, req.PermissionIds), nil
 }
+
+// @Summary Cập nhật vai trò với thành viên và quyền
+// @Description Cập nhật vai trò và gán thành viên cùng quyền
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.UpdateRoleWithMembersRequest true "Thông tin vai trò"
+// @Security BearerAuth
+// @Param id path int true "ID của vai trò"
+// @Router /organization/role/{id}/with-members [put]
+func (h *OrganizationRoleHandler) UpdateRoleWithMembers(ctx context.Context, req *organizationpb.UpdateRoleWithMembersRequest) (*organizationpb.UpdateRoleWithMembersResponse, error) {
+	role := h.OrganizationRoleTransformer.UpdateRoleWithMembersRequestToEntity(req)
+	if err := h.OrganizationRoleValidator.ValidateUpdateRoleWithMembersRequest(req); err != nil {
+		return nil, err
+	}
+	role, err := h.OrganizationRoleUsecase.UpdateRoleWithMembers(ctx, role, req.MemberIds, req.PermissionIds)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationRoleTransformer.EntityToUpdateRoleWithMembersResponse(role), nil
+}

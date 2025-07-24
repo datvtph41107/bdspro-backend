@@ -37,6 +37,7 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 		Email:              request.Email,
 		Website:            request.Website,
 		LogoUrl:            request.LogoUrl,
+		BusinessDomainIds:  request.BusinessDomainIds,
 	}
 }
 
@@ -51,6 +52,7 @@ func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *org
 		Email:              request.Email,
 		Website:            request.Website,
 		LogoUrl:            request.LogoUrl,
+		BusinessDomainIds:  request.BusinessDomainIds,
 	}
 }
 
@@ -63,6 +65,17 @@ func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organizatio
 func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations []*entity.Organization, total uint32) *organizationpb.GetOrganizationsResponse {
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
+		businessDomains := make([]*organizationpb.BusinessDomain, len(org.BusinessDomains))
+		for j, domain := range org.BusinessDomains {
+			businessDomains[j] = &organizationpb.BusinessDomain{
+				Id:          domain.ID,
+				Name:        domain.Name,
+				Description: domain.Description,
+				Code:        domain.Code,
+				IsActive:    domain.IsActive,
+			}
+		}
+
 		organizationsResponse[i] = &organizationpb.Organization{
 			Id:                 org.ID,
 			Name:               org.Name,
@@ -73,6 +86,7 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 			Email:              org.Email,
 			Website:            org.Website,
 			LogoUrl:            org.LogoUrl,
+			BusinessDomains:    businessDomains,
 		}
 	}
 	return &organizationpb.GetOrganizationsResponse{
@@ -84,6 +98,17 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse {
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
+		businessDomains := make([]*organizationpb.BusinessDomain, len(org.BusinessDomains))
+		for j, domain := range org.BusinessDomains {
+			businessDomains[j] = &organizationpb.BusinessDomain{
+				Id:          domain.ID,
+				Name:        domain.Name,
+				Description: domain.Description,
+				Code:        domain.Code,
+				IsActive:    domain.IsActive,
+			}
+		}
+
 		organizationsResponse[i] = &organizationpb.Organization{
 			Id:                 org.ID,
 			Name:               org.Name,
@@ -94,6 +119,7 @@ func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(orga
 			Email:              org.Email,
 			LogoUrl:            org.LogoUrl,
 			Website:            org.Website,
+			BusinessDomains:    businessDomains,
 		}
 	}
 	return &organizationpb.GetOrganizationByUserIdResponse{

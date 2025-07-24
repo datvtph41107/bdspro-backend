@@ -17,6 +17,7 @@ import (
 type OrganizationRoleUsecase interface {
 	CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
+	UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error)
 	DeleteRole(ctx context.Context, roleId uint32) error
 	GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error)
 	GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error)
@@ -137,6 +138,86 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.
 		ActorId:        currentUserId,
 		LogType:        "ROLE_UPDATE",
 		LogData:        "Updated role details",
+	})
+
+	return role, nil
+}
+
+func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error) {
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Check if role exists
+	existingRole, err := u.organizationRoleRepository.FindById(ctx, model.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existingRole == nil {
+		return nil, custom_error.RecordNotFound("Role not found")
+	}
+
+	// Check if role belongs to current organization
+	if existingRole.OrganizationId != uint32(organizationId) {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	model.OrganizationId = uint32(organizationId)
+	role, err := u.organizationRoleRepository.Update(ctx, model)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update members for this role
+	for _, memberId := range memberIds {
+		member, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, memberId, uint32(organizationId))
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Không tồn tại → tạo mới
+				member = &entity.OrganizationMember{
+					OrganizationID: uint32(organizationId),
+					UserID:         memberId,
+					RoleId:         role.Id,
+				}
+				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		} else {
+			// Tồn tại → update role nếu cần
+			if member.RoleId != role.Id {
+				member.RoleId = role.Id
+				_, err = u.organizationMemberRepository.UpdateOrganizationMember(ctx, member)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	// Update permissions for this role
+	// Set the permission IDs to the role model so the Update method can handle the association
+	role.PermissionIds = permissionIds
+	role, err = u.organizationRoleRepository.Update(ctx, role)
+	if err != nil {
+		return nil, err
+	}
+
+	// Log role update
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: uint32(organizationId),
+		ActorId:        currentUserId,
+		LogType:        "ROLE_UPDATE",
+		LogData:        "Updated role with members and permissions in organization",
 	})
 
 	return role, nil

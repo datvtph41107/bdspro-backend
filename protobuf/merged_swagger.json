@@ -12454,6 +12454,253 @@
         ]
       }
     },
+    "/v2/org/business-domain": {
+      "get": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_GetAllBusinessDomains",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetAllBusinessDomainsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_CreateBusinessDomain",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateBusinessDomainRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateBusinessDomainResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/business-domain/active": {
+      "get": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_GetActiveBusinessDomains",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetActiveBusinessDomainsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/business-domain/{id}": {
+      "get": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_GetBusinessDomain",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetBusinessDomainResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_UpdateBusinessDomain",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BusinessDomainServiceUpdateBusinessDomainBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateBusinessDomainResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "BusinessDomainService"
+        ],
+        "operationId": "BusinessDomainService_DeleteBusinessDomain",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteBusinessDomainResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/deal": {
       "get": {
         "tags": [
@@ -18043,6 +18290,57 @@
         ]
       }
     },
+    "/v2/org/organization/role/{id}/with-members": {
+      "put": {
+        "tags": [
+          "OrganizationRoleService"
+        ],
+        "operationId": "OrganizationRoleService_UpdateRoleWithMembers",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrganizationRoleServiceUpdateRoleWithMembersBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateRoleWithMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/organization/{id}": {
       "put": {
         "tags": [
@@ -21634,6 +21932,23 @@
       },
       "type": "object"
     },
+    "BusinessDomainServiceUpdateBusinessDomainBody": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ChatServiceEditChannelBody": {
       "properties": {
         "backgroundImageId": {
@@ -22389,10 +22704,49 @@
       },
       "type": "object"
     },
+    "OrganizationRoleServiceUpdateRoleWithMembersBody": {
+      "properties": {
+        "domainType": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        },
+        "memberIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "OrganizationServiceUpdateOrganizationBody": {
       "properties": {
         "address": {
           "type": "string"
+        },
+        "businessDomainIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         },
         "businessLicenseUrl": {
           "type": "string"
@@ -26145,6 +26499,41 @@
       },
       "type": "object"
     },
+    "organizationpbBusinessDomain": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbCancelDealResponse": {
       "properties": {
         "id": {
@@ -26158,6 +26547,32 @@
       "properties": {
         "isExist": {
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateBusinessDomainRequest": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateBusinessDomainResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -26437,6 +26852,13 @@
       "properties": {
         "address": {
           "type": "string"
+        },
+        "businessDomainIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         },
         "businessLicenseUrl": {
           "type": "string"
@@ -26838,6 +27260,15 @@
       "title": "Response cho giao dịch",
       "type": "object"
     },
+    "organizationpbDeleteBusinessDomainResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbDeleteDealMilestoneResponse": {
       "properties": {
         "id": {
@@ -27009,6 +27440,38 @@
         }
       },
       "title": "Response cho thống kê tài chính",
+      "type": "object"
+    },
+    "organizationpbGetActiveBusinessDomainsResponse": {
+      "properties": {
+        "businessDomains": {
+          "items": {
+            "$ref": "#/definitions/organizationpbBusinessDomain",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetAllBusinessDomainsResponse": {
+      "properties": {
+        "businessDomains": {
+          "items": {
+            "$ref": "#/definitions/organizationpbBusinessDomain",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetBusinessDomainResponse": {
+      "properties": {
+        "businessDomain": {
+          "$ref": "#/definitions/organizationpbBusinessDomain"
+        }
+      },
       "type": "object"
     },
     "organizationpbGetCurrentOrganizationMemberRoleResponse": {
@@ -28080,6 +28543,13 @@
         "address": {
           "type": "string"
         },
+        "businessDomains": {
+          "items": {
+            "$ref": "#/definitions/organizationpbBusinessDomain",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "businessLicenseUrl": {
           "type": "string"
         },
@@ -28451,6 +28921,15 @@
       "title": "Enum cho loại giao dịch",
       "type": "string"
     },
+    "organizationpbUpdateBusinessDomainResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbUpdateDealMemberCommissionResponse": {
       "properties": {
         "commissionType": {
@@ -28650,6 +29129,15 @@
       "type": "object"
     },
     "organizationpbUpdateRoleResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbUpdateRoleWithMembersResponse": {
       "properties": {
         "id": {
           "format": "int64",
@@ -33435,6 +33923,9 @@
     },
     {
       "name": "GatewayNotificationService"
+    },
+    {
+      "name": "BusinessDomainService"
     },
     {
       "name": "GroupDealService"

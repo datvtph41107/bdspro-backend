@@ -3,6 +3,7 @@ syntax = "proto3";
 package organizationpb;
 
 import "google/api/annotations.proto";
+import "organization/business_domain.proto";
 
 option go_package = "types/organizationpb";
 
@@ -57,6 +58,7 @@ message CreateOrganizationRequest {
     optional string email = 6 [json_name = "email"];
     optional string website = 7 [json_name = "website"];
     optional string logoUrl = 8 [json_name = "logoUrl"];
+    repeated uint32 businessDomainIds = 9 [json_name = "businessDomainIds"];
 }
 
 message CreateOrganizationResponse {
@@ -74,6 +76,7 @@ message UpdateOrganizationRequest {
     optional string website = 8 [json_name = "website"];
     optional string logoUrl = 9 [json_name = "logoUrl"];
     optional string status = 10 [json_name = "status"];
+    repeated uint32 businessDomainIds = 11 [json_name = "businessDomainIds"];
 }
 
 message UpdateOrganizationResponse {
@@ -96,6 +99,7 @@ message Organization {
     optional string email = 7 [json_name = "email"];
     optional string website = 8 [json_name = "website"];
     optional string logoUrl = 9 [json_name = "logoUrl"];
+    repeated BusinessDomain businessDomains = 10 [json_name = "businessDomains"];
 }
 
 message GetOrganizationsResponse {

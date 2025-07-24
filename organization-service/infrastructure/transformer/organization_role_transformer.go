@@ -17,6 +17,8 @@ type OrganizationRoleTransformer interface {
 	UpdateRoleRequestToEntity(req *organizationpb.UpdateRoleRequest) *entity.OrganizationRole
 	CreateNewRoleWithMembersRequestToEntity(req *organizationpb.CreateNewRoleWithMembersRequest) *entity.OrganizationRole
 	EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) *organizationpb.CreateNewRoleWithMembersResponse
+	UpdateRoleWithMembersRequestToEntity(req *organizationpb.UpdateRoleWithMembersRequest) *entity.OrganizationRole
+	EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse
 }
 
 type organizationRoleTransformer struct{}
@@ -122,5 +124,22 @@ func (t *organizationRoleTransformer) EntityToCreateNewRoleWithMembersResponse(e
 		Key:           entity.Key,
 		MemberIds:     memberIds,
 		PermissionIds: permissionIds,
+	}
+}
+
+func (t *organizationRoleTransformer) UpdateRoleWithMembersRequestToEntity(req *organizationpb.UpdateRoleWithMembersRequest) *entity.OrganizationRole {
+	return &entity.OrganizationRole{
+		Id:            req.Id,
+		Name:          req.Name,
+		Key:           req.Key,
+		PermissionIds: req.PermissionIds,
+		IsDefault:     req.IsDefault,
+		DomainType:    enums.DomainType(req.DomainType),
+	}
+}
+
+func (t *organizationRoleTransformer) EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse {
+	return &organizationpb.UpdateRoleWithMembersResponse{
+		Id: entity.Id,
 	}
 }

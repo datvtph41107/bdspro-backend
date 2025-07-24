@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"organization/config"
 	organization_config "organization/config"
@@ -17,6 +16,8 @@ import (
 	organization_internal_domain_repository "organization/internal/domain/repository"
 	organization_internal_interface "organization/internal/interface"
 	organization_internal_usecase "organization/internal/usecase"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -47,6 +48,9 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_infrastructure_repository_postgres.OrganizationRoleRepository)),
+	wire.Bind(new(organization_internal_domain_repository.BusinessDomainRepository), new(*organization_infrastructure_repository_postgres.BusinessDomainPostgresRepository)),
+	wire.Bind(new(organization_internal_domain_repository.OrganizationBusinessDomainRepository), new(*organization_infrastructure_repository_postgres.OrganizationBusinessDomainPostgresRepository)),
+	wire.Bind(new(organization_internal_domain_repository.DealTransactionRepository), new(*organization_infrastructure_repository_postgres.DealTransactionPostgresRepository)),
 	organization_infrastructure_transformer.NewBankAccountMapper,
 	organization_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_infrastructure_client.NewBdsproClient,
@@ -163,7 +167,14 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_validator.NewOrganizationValidator,
 	organization_infrastructure_repository_postgres.NewPostgresTransaction,
 	organization_infrastructure_client.NewUserClient,
+	organization_infrastructure_handler.NewBusinessDomainHandler,
+	organization_infrastructure_repository_postgres.NewBusinessDomainPostgresRepository,
+	organization_infrastructure_repository_postgres.NewOrganizationBusinessDomainPostgresRepository,
+	organization_infrastructure_transformer.NewBusinessDomainTransformer,
+	organization_internal_usecase.NewBusinessDomainUsecase,
+	organization_infrastructure_validator.NewBusinessDomainValidator,
 )
+
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

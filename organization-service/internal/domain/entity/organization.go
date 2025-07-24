@@ -22,6 +22,8 @@ type Organization struct {
 	LogoUrl            *string
 	Status             string
 	ApproveInvestor    bool
+	BusinessDomains    []*BusinessDomain
+	BusinessDomainIds  []uint32
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 	CreatedBy          uint32

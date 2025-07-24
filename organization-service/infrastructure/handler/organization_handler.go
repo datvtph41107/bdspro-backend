@@ -155,7 +155,7 @@ func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *org
 	if err != nil {
 		return nil, err
 	}
-	return &organizationpb.GetOwnedOrganizationResponse{Organization: &organizationpb.Organization{
+	response := &organizationpb.GetOwnedOrganizationResponse{Organization: &organizationpb.Organization{
 		Id:                 organization.ID,
 		Name:               organization.Name,
 		TaxCode:            organization.TaxCode,
@@ -165,5 +165,21 @@ func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *org
 		BusinessLicenseUrl: organization.BusinessLicenseUrl,
 		Website:            organization.Website,
 		LogoUrl:            organization.LogoUrl,
-	}}, nil
+	}}
+
+	response.Organization.BusinessDomains = make([]*organizationpb.BusinessDomain, len(organization.BusinessDomains))
+	for i, domain := range organization.BusinessDomains {
+		response.Organization.BusinessDomains[i] = &organizationpb.BusinessDomain{
+			Id:          domain.ID,
+			Name:        domain.Name,
+			Code:        domain.Code,
+			Description: domain.Description,
+			IsActive:    domain.IsActive,
+			CreatedAt:   domain.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   domain.UpdatedAt.Format(time.RFC3339),
+			CreatedBy:   domain.CreatedBy,
+			UpdatedBy:   domain.UpdatedBy,
+		}
+	}
+	return response, nil
 }

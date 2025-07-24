@@ -25,6 +25,7 @@ type GRPCServer struct {
 	organizationRoleHandler       *handler.OrganizationRoleHandler
 	organizationPermissionHandler *handler.OrganizationPermissionHandler
 	organizationBranchHandler     *handler.OrganizationBranchHandler
+	businessDomainHandler         *handler.BusinessDomainHandler
 
 	groupDocumentHandler *handler.GroupDocumentHandler
 
@@ -51,6 +52,7 @@ func NewGRPCServer(
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
 	organizationBranchHandler *handler.OrganizationBranchHandler,
+	businessDomainHandler *handler.BusinessDomainHandler,
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
@@ -74,6 +76,7 @@ func NewGRPCServer(
 		organizationRoleHandler:       organizationRoleHandler,
 		organizationPermissionHandler: organizationPermissionHandler,
 		organizationBranchHandler:     organizationBranchHandler,
+		businessDomainHandler:         businessDomainHandler,
 
 		groupDocumentHandler: groupDocumentHandler,
 
@@ -104,6 +107,7 @@ func (s *GRPCServer) Start() {
 		s.organizationRoleHandler,
 		s.organizationPermissionHandler,
 		s.organizationBranchHandler,
+		s.businessDomainHandler,
 		s.groupDocumentHandler,
 		s.groupHandler,
 		s.groupDealHandler,
@@ -136,6 +140,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	organizationRoleHandler *handler.OrganizationRoleHandler,
 	organizationPermissionHandler *handler.OrganizationPermissionHandler,
 	organizationBranchHandler *handler.OrganizationBranchHandler,
+	businessDomainHandler *handler.BusinessDomainHandler,
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
@@ -170,6 +175,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationRoleServiceServer(s, organizationRoleHandler)
 			organizationpb.RegisterOrganizationPermissionServiceServer(s, organizationPermissionHandler)
 			organizationpb.RegisterOrganizationBranchServiceServer(s, organizationBranchHandler)
+			organizationpb.RegisterBusinessDomainServiceServer(s, businessDomainHandler)
 
 			organizationpb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
 			organizationpb.RegisterGroupServiceServer(s, groupHandler)

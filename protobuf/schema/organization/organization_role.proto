@@ -54,6 +54,13 @@ service OrganizationRoleService {
             body: "*"
         };
     }
+
+    rpc UpdateRoleWithMembers(UpdateRoleWithMembersRequest) returns (UpdateRoleWithMembersResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/role/{id}/with-members"
+            body: "*"
+        };
+    }
     
 }
 
@@ -141,4 +148,18 @@ message CreateNewRoleWithMembersResponse {
     string key = 3 [json_name = "key"];
     repeated uint32 memberIds = 4 [json_name = "memberIds"];
     repeated uint32 permissionIds = 5 [json_name = "permissionIds"];
+}
+
+message UpdateRoleWithMembersRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated uint32 memberIds = 4 [json_name = "memberIds"];
+    repeated uint32 permissionIds = 5 [json_name = "permissionIds"];
+    bool isDefault = 6 [json_name = "isDefault"];
+    uint32 domainType = 7 [json_name = "domainType"];
+}
+
+message UpdateRoleWithMembersResponse {
+    uint32 id = 1 [json_name = "id"];
 }
