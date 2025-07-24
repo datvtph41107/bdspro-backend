@@ -9,6 +9,9 @@ proto:
 run:
 	cd $(word 2, $(MAKECMDGOALS))-service && go run main.go $(word 3, $(MAKECMDGOALS))
 
+merge-swagger:
+	cd protobuf && go run scripts/merge_swagger.go
+
 buf-crm:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path crm
 buf-group:
