@@ -11364,6 +11364,1427 @@
         ]
       }
     },
+    "/v2/marketing/advertising-settings": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListAdvertisingSettings",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "campaignId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListAdvertisingSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Advertising Settings Management APIs - D.10.2.6",
+        "operationId": "MarketingService_CreateAdvertisingSettings",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreateAdvertisingSettingsRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingAdvertisingSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/advertising-settings/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetAdvertisingSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingAdvertisingSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdateAdvertisingSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdateAdvertisingSettingsBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingAdvertisingSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_DeleteAdvertisingSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingDeleteAdvertisingSettingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/budgets": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListBudgets",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "campaignId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListBudgetsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Budget Management APIs - D.10.2.5",
+        "operationId": "MarketingService_CreateBudget",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreateBudgetRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/budgets/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetBudget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdateBudget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdateBudgetBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_DeleteBudget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingDeleteBudgetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaign-details": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListCampaignDetails",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "campaignId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListCampaignDetailsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Campaign Detail Management APIs - D.10.2.4",
+        "operationId": "MarketingService_CreateCampaignDetail",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreateCampaignDetailRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaign-details/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetCampaignDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdateCampaignDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdateCampaignDetailBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_DeleteCampaignDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingDeleteCampaignDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaigns": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListCampaigns",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListCampaignsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Campaign Management APIs - D.10.2.1",
+        "operationId": "MarketingService_CreateCampaign",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreateCampaignRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdateCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdateCampaignBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_DeleteCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingDeleteCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaigns/{id}/status": {
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdateCampaignStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdateCampaignStatusBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/campaigns/{id}/topup": {
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_TopupCampaignBudget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceTopupCampaignBudgetBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCampaignResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/packages": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListPackages",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListPackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Package Management APIs - D.10.2.2",
+        "operationId": "MarketingService_CreatePackage",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreatePackageRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingPackageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/packages/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetPackage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingPackageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_UpdatePackage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MarketingServiceUpdatePackageBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingPackageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_DeletePackage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingDeletePackageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/payments": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_ListPayments",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "campaignId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingListPaymentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "MarketingService"
+        ],
+        "summary": "Payment Management APIs - D.10.2.3",
+        "operationId": "MarketingService_CreatePayment",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_marketingCreatePaymentRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingPaymentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/marketing/payments/{id}": {
+      "get": {
+        "tags": [
+          "MarketingService"
+        ],
+        "operationId": "MarketingService_GetPayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_marketingPaymentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/notification/count": {
       "get": {
         "tags": [
@@ -11406,6 +12827,112 @@
           "HistoryService"
         ],
         "operationId": "HistoryService_AssetHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "actionType",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "targetType",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "targetId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbHistoryListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/notification/history/campaign/{id}": {
+      "get": {
+        "tags": [
+          "HistoryService"
+        ],
+        "operationId": "HistoryService_CampaignHistory",
         "parameters": [
           {
             "name": "id",
@@ -11789,6 +13316,112 @@
             "in": "query",
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbHistoryListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/notification/history/package/{id}": {
+      "get": {
+        "tags": [
+          "HistoryService"
+        ],
+        "operationId": "HistoryService_PackageHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "actionType",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "targetType",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "targetId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "isInternal",
@@ -22512,6 +24145,244 @@
       },
       "type": "object"
     },
+    "MarketingServiceTopupCampaignBudgetBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "externalPaymentId": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        }
+      },
+      "title": "Campaign budget management messages",
+      "type": "object"
+    },
+    "MarketingServiceUpdateAdvertisingSettingsBody": {
+      "properties": {
+        "adFormat": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "settings": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MarketingServiceUpdateBudgetBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MarketingServiceUpdateCampaignBody": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productType": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MarketingServiceUpdateCampaignDetailBody": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MarketingServiceUpdateCampaignStatusBody": {
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MarketingServiceUpdatePackageBody": {
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedReach": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "features": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "isPopular": {
+          "type": "boolean"
+        },
+        "isRecommended": {
+          "type": "boolean"
+        },
+        "maxBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "maxClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "maxImpressions": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "minBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "format": "double",
+          "type": "number"
+        },
+        "requiresPayment": {
+          "type": "boolean"
+        },
+        "requiresVerification": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "NewsFeedServiceShareNewsFeedBody": {
       "properties": {
         "content": {
@@ -32043,6 +33914,951 @@
       },
       "type": "object"
     },
+    "pb_genericResponseBody": {
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/protobufAny"
+        },
+        "code": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "errors": {
+          "$ref": "#/definitions/protobufAny"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingAdvertisingSettings": {
+      "properties": {
+        "adFormat": {
+          "type": "string"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "settings": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "status": {
+          "type": "string"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingAdvertisingSettingsResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_marketingAdvertisingSettings"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingBudget": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingBudgetResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_marketingBudget"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCampaign": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productType": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "title": "Payment transaction ID",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "walletBalance": {
+          "format": "double",
+          "type": "number"
+        },
+        "walletId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCampaignDetail": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "canEdit": {
+          "type": "boolean"
+        },
+        "canExtend": {
+          "type": "boolean"
+        },
+        "canPause": {
+          "type": "boolean"
+        },
+        "canResume": {
+          "type": "boolean"
+        },
+        "canTopup": {
+          "type": "boolean"
+        },
+        "clicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "cpc": {
+          "format": "double",
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "ctr": {
+          "format": "double",
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "impressions": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "packageType": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productImage": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productType": {
+          "type": "string"
+        },
+        "remainingBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "spentAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "walletBalance": {
+          "format": "double",
+          "type": "number"
+        },
+        "walletId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCampaignDetailResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_marketingCampaignDetail"
+        }
+      },
+      "title": "Campaign detail messages - D.10.2.4",
+      "type": "object"
+    },
+    "pb_marketingCampaignResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_marketingCampaign"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreateAdvertisingSettingsRequest": {
+      "properties": {
+        "adFormat": {
+          "type": "string"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "settings": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreateBudgetRequest": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreateCampaignDetailRequest": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreateCampaignRequest": {
+      "properties": {
+        "budget": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productType": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "targetAudience": {
+          "type": "string"
+        },
+        "targetLocation": {
+          "type": "string"
+        },
+        "termsAccepted": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreatePackageRequest": {
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedReach": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "features": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "isPopular": {
+          "type": "boolean"
+        },
+        "isRecommended": {
+          "type": "boolean"
+        },
+        "maxBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "maxClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "maxImpressions": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "minBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "format": "double",
+          "type": "number"
+        },
+        "requiresPayment": {
+          "type": "boolean"
+        },
+        "requiresVerification": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingCreatePaymentRequest": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "invoiceEmail": {
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "requireInvoice": {
+          "type": "boolean"
+        },
+        "termsAccepted": {
+          "type": "boolean"
+        },
+        "walletId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingDeleteAdvertisingSettingsResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingDeleteBudgetResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingDeleteCampaignDetailResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingDeleteCampaignResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingDeletePackageResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListAdvertisingSettingsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingAdvertisingSettings",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListBudgetsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingBudget",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListCampaignDetailsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingCampaignDetail",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListCampaignsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingCampaign",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListPackagesResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingPackage",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingListPaymentsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_marketingPaymentHistoryItemResponse",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingPackage": {
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "duration": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "estimatedReach": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "features": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "isPopular": {
+          "type": "boolean"
+        },
+        "isRecommended": {
+          "type": "boolean"
+        },
+        "maxBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "maxClicks": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "maxImpressions": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "minBudget": {
+          "format": "double",
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "price": {
+          "format": "double",
+          "type": "number"
+        },
+        "requiresPayment": {
+          "type": "boolean"
+        },
+        "requiresVerification": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Package messages - D.10.2.2",
+      "type": "object"
+    },
+    "pb_marketingPackageResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/pb_marketingPackage"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingPaymentHistoryItemResponse": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "campaignName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "transactionCode": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_marketingPaymentResponse": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "campaignId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "nextStep": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "previousBalance": {
+          "format": "double",
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "transactionCode": {
+          "type": "string"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "walletBalance": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "pb_paymentCreateWalletResponse": {
       "properties": {
         "id": {
@@ -33917,6 +36733,12 @@
     },
     {
       "name": "StageService"
+    },
+    {
+      "name": "GenericService"
+    },
+    {
+      "name": "MarketingService"
     },
     {
       "name": "NotificationService"
