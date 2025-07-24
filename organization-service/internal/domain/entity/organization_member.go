@@ -23,6 +23,7 @@ type OrganizationMember struct {
 
 	Organization *Organization
 	Role         *OrganizationRole
+	RoleName     string
 }
 
 func (m *OrganizationMember) GetRoleKey() string {

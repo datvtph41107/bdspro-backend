@@ -101,7 +101,6 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		Where("om.user_id = ? AND om.organization_id = ? AND om.is_deleted = ?", userId, organizationId, false).
 		Group("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name").
 		First(&result).Error
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -200,24 +199,70 @@ func (r *OrganizationMemberPostgresRepository) CountMemberByOrganizationId(ctx c
 }
 
 func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32) ([]*entity.OrganizationMember, uint32, error) {
-	var models []*OrganizationMemberModel
-	query := r.db.WithContext(ctx).Where("organization_id = ?", organizationId)
-	
+	var results []struct {
+		ID             uint32     `gorm:"column:id"`
+		UserID         uint32     `gorm:"column:user_id"`
+		OrganizationID uint32     `gorm:"column:organization_id"`
+		RoleId         uint32     `gorm:"column:role"`
+		Status         uint32     `gorm:"column:status"`
+		JoinedAt       time.Time  `gorm:"column:joined_at"`
+		RemovedAt      *time.Time `gorm:"column:removed_at"`
+		RoleKey        string     `gorm:"column:role_key"`
+		RoleName       string     `gorm:"column:role_name"`
+		Permissions    string     `gorm:"column:permissions"`
+	}
+
+	query := r.db.WithContext(ctx).
+		Table("organization_members om").
+		Select("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key as role_key, or2.name as role_name, string_agg(op.key, ',') as permissions").
+		Joins("left join organization_roles or2 on om.role = or2.id").
+		Joins("left join role_permissions rp on or2.id = rp.organization_role_model_id").
+		Joins("left join organization_permissions op on rp.organization_permission_model_id = op.id").
+		Where("om.organization_id = ? AND om.is_deleted = ?", organizationId, false).
+		Group("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name")
+
 	// Add role filter if roleId is provided
 	if roleId != nil {
-		query = query.Where("role = ?", *roleId)
+		query = query.Where("om.role = ?", *roleId)
 	}
-	
-	if err := query.Debug().Offset(page * size).Limit(size).Find(&models).Error; err != nil {
+
+	if err := query.Offset(page * size).Limit(size).Find(&results).Error; err != nil {
 		return nil, 0, err
 	}
-	entities := make([]*entity.OrganizationMember, len(models))
-	for i, model := range models {
-		entities[i] = OrganizationMemberModelToEntity(model)
+
+	entities := make([]*entity.OrganizationMember, len(results))
+	for i, result := range results {
+		member := &entity.OrganizationMember{
+			ID:             result.ID,
+			OrganizationID: result.OrganizationID,
+			UserID:         result.UserID,
+			RoleId:         result.RoleId,
+			Status:         entity.OrganizationMemberStatus(result.Status),
+			JoinedAt:       result.JoinedAt,
+			RemovedAt:      result.RemovedAt,
+			RoleName:       result.RoleName,
+			Role: &entity.OrganizationRole{
+				Id:   result.RoleId,
+				Name: result.RoleName,
+				Key:  result.RoleKey,
+			},
+		}
+
+		if result.Permissions != "" {
+			permissions := strings.Split(result.Permissions, ",")
+			member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
+			for j, permission := range permissions {
+				member.Role.Permissions[j] = &entity.OrganizationPermission{
+					Key: permission,
+				}
+			}
+		}
+
+		entities[i] = member
 	}
 
 	var count int64
-	countQuery := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("organization_id = ?", organizationId)
+	countQuery := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("organization_id = ? AND is_deleted = ?", organizationId, false)
 	if roleId != nil {
 		countQuery = countQuery.Where("role = ?", *roleId)
 	}

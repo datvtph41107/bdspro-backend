@@ -2300,6 +2300,122 @@
         ]
       }
     },
+    "/v2/bdspro/v2/dashboard/cash-profit/time": {
+      "get": {
+        "tags": [
+          "BdsproDashboardService"
+        ],
+        "operationId": "BdsproDashboardService_GetCashProfitTime",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "costTypeId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproGetCashProfitTimeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/bdspro/v2/dashboard/cash-profit/type": {
+      "get": {
+        "tags": [
+          "BdsproDashboardService"
+        ],
+        "operationId": "BdsproDashboardService_GetCashProfit",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "costTypeId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproGetCashProfitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/bdspro/v2/history/asset/{id}": {
       "get": {
         "tags": [
@@ -10805,6 +10921,54 @@
         ]
       }
     },
+    "/v2/crm/rule/{id}/active": {
+      "put": {
+        "tags": [
+          "RuleService"
+        ],
+        "operationId": "RuleService_Active",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/crm/sharing/list/{contactId}": {
       "get": {
         "tags": [
@@ -11309,6 +11473,11 @@
             "format": "int64"
           },
           {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -11410,6 +11579,11 @@
             "format": "int64"
           },
           {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -11508,6 +11682,11 @@
             "in": "query",
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
           },
           {
             "name": "Authorization",
@@ -11612,6 +11791,11 @@
             "format": "uint64"
           },
           {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -11711,6 +11895,11 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
           },
           {
             "name": "Authorization",
@@ -11814,6 +12003,11 @@
             "format": "int64"
           },
           {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -11913,6 +12107,11 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "type": "boolean"
           },
           {
             "name": "Authorization",
@@ -13336,7 +13535,7 @@
             "format": "int64"
           },
           {
-            "name": "limit",
+            "name": "size",
             "in": "query",
             "type": "integer",
             "format": "int64"
@@ -17042,6 +17241,12 @@
         ],
         "operationId": "OrganizationMemberService_GetOrganizationMembers",
         "parameters": [
+          {
+            "name": "roleId",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
           {
             "name": "page",
             "in": "query",
@@ -21146,6 +21351,18 @@
             "type": "string"
           },
           {
+            "name": "page",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -21709,6 +21926,14 @@
           },
           "type": "array"
         },
+        "isManual": {
+          "title": "Nhập tay (dành cho doanh thu)",
+          "type": "boolean"
+        },
+        "isUnilateral": {
+          "title": "Đơn phương (gỡ khỏi thương vụ)",
+          "type": "boolean"
+        },
         "memberIds": {
           "items": {
             "format": "uint64",
@@ -21774,6 +21999,14 @@
             "type": "object"
           },
           "type": "array"
+        },
+        "isManual": {
+          "title": "Nhập tay (dành cho doanh thu)",
+          "type": "boolean"
+        },
+        "isUnilateral": {
+          "title": "Đơn phương (gỡ khỏi thương vụ)",
+          "type": "boolean"
         },
         "memberIds": {
           "items": {
@@ -26521,14 +26754,6 @@
     },
     "organizationpbDealTransactionListResponse": {
       "properties": {
-        "limit": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "page": {
-          "format": "int64",
-          "type": "integer"
-        },
         "total": {
           "format": "uint64",
           "type": "string"
@@ -28057,6 +28282,13 @@
           "format": "int64",
           "type": "integer"
         },
+        "roleId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "roleName": {
+          "type": "string"
+        },
         "status": {
           "type": "string"
         },
@@ -29097,6 +29329,46 @@
       },
       "type": "object"
     },
+    "pb_bdsproCashProfit": {
+      "properties": {
+        "amountIn": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountOut": {
+          "format": "double",
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "profit": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "pb_bdsproCashProfitTime": {
+      "properties": {
+        "amountIn": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountOut": {
+          "format": "double",
+          "type": "number"
+        },
+        "profit": {
+          "format": "double",
+          "type": "number"
+        },
+        "time": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "pb_bdsproCostDocumentDTO": {
       "properties": {
         "archived": {
@@ -29278,6 +29550,30 @@
         },
         "name": {
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_bdsproGetCashProfitResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproCashProfit",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "pb_bdsproGetCashProfitTimeResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproCashProfitTime",
+            "type": "object"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -33067,6 +33363,9 @@
     },
     {
       "name": "CostDocumentService"
+    },
+    {
+      "name": "BdsproDashboardService"
     },
     {
       "name": "HistoryService"

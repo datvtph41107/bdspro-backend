@@ -299,6 +299,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "roleName": {
+          "type": "string"
+        },
         "status": {
           "type": "string"
         },

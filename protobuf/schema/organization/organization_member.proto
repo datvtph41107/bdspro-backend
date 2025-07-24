@@ -109,8 +109,9 @@ message OrganizationMember {
     uint32 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
     uint32 roleId = 4 [json_name = "roleId"];
-    string status = 5 [json_name = "status"];
-    sharepb.ProfileItem profile = 6 [json_name = "profile"];
+    string roleName = 5 [json_name = "roleName"];
+    string status = 6 [json_name = "status"];
+    sharepb.ProfileItem profile = 7 [json_name = "profile"];
 }
 
 message GetOrganizationMembersResponse {

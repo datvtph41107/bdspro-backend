@@ -108,4 +108,12 @@ start-all:
 	$(MAKE) payment-grpc &
 	$(MAKE) membership-grpc &
 	$(MAKE) file-http &
-	wait
+	@echo "All services started in background. Use 'make stop-all' to stop them."
+	@echo "To see running processes: ps aux | grep air"
+	@echo "To see logs: tail -f */tmp/*.log"
+
+stop-all:
+	@echo "Stopping all services..."
+	@pkill -f "air" || true
+	@pkill -f "go run" || true
+	@echo "All services stopped."

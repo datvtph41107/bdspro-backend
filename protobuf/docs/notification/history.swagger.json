@@ -108,6 +108,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -207,6 +213,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -306,6 +318,12 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -405,6 +423,12 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -504,6 +528,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -603,6 +633,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -702,6 +738,12 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "isInternal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [

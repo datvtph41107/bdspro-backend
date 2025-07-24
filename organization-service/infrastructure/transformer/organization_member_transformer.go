@@ -67,10 +67,11 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
 	for i, member := range members {
 		membersResponse[i] = &organizationpb.OrganizationMember{
-			Id:     member.OrganizationMember.ID,
-			UserId: member.OrganizationMember.UserID,
-			RoleId: member.OrganizationMember.RoleId, // Add roleId field
-			Status: getStatusString(member.OrganizationMember.Status),
+			Id:       member.OrganizationMember.ID,
+			UserId:   member.OrganizationMember.UserID,
+			RoleId:   member.OrganizationMember.RoleId, // Add roleId field
+			Status:   getStatusString(member.OrganizationMember.Status),
+			RoleName: member.OrganizationMember.RoleName,
 		}
 		if member.Profile != nil {
 			membersResponse[i].Profile = member.Profile
