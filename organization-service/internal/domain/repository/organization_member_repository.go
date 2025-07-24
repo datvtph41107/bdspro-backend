@@ -10,6 +10,8 @@ type OrganizationMemberRepository interface {
 	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
 	FindByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, member *entity.OrganizationMember) (*entity.OrganizationMember, error)
+	CreateOrganizationMemberBatch(ctx context.Context, members []*entity.OrganizationMember) ([]*entity.OrganizationMember, error)
+	FindByUserIdsAndOrganizationId(ctx context.Context, userIds []uint32, organizationId uint32) ([]*entity.OrganizationMember, error)
 	FindById(ctx context.Context, id uint32) (*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, member *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, member *entity.OrganizationMember) (*entity.OrganizationMember, error)

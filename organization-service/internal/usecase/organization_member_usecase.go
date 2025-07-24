@@ -23,6 +23,7 @@ import (
 type OrganizationMemberUsecase interface {
 	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
+	CreateOrganizationMemberBatch(ctx context.Context, organizationMembers []*entity.OrganizationMember) ([]*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
 	GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error)
@@ -122,6 +123,80 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	})
 
 	return member, nil
+}
+
+func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Context, organizationMembers []*entity.OrganizationMember) ([]*entity.OrganizationMember, error) {
+	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	
+	// Authorization check
+	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRole {
+		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+	
+	// Organization validation
+	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	if organization == nil {
+		return nil, custom_error.InvalidOrganizationID()
+	}
+	
+	// Check current member count
+	currentCount, err := u.organizationMemberRepository.CountMemberByOrganizationId(ctx, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	
+	// Check if adding new members would exceed limit
+	if currentCount+uint32(len(organizationMembers)) > uint32(env.MAX_ORGANIZATION_MEMBERS) {
+		return nil, custom_error.Forbidden("Adding these members would exceed the maximum number of organization members")
+	}
+	
+	// Check for duplicates and validate members
+	userIds := make([]uint32, len(organizationMembers))
+	for i, member := range organizationMembers {
+		userIds[i] = member.UserID
+	}
+	
+	// Check existing members to avoid duplicates
+	existingMembers, err := u.organizationMemberRepository.FindByUserIdsAndOrganizationId(ctx, userIds, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	
+	if len(existingMembers) > 0 {
+		return nil, status.Errorf(codes.AlreadyExists, "Some members already exist in the organization")
+	}
+	
+	// Prepare members for creation
+	validMembers := make([]*entity.OrganizationMember, 0, len(organizationMembers))
+	for _, member := range organizationMembers {
+		member.OrganizationID = uint32(organizationId)
+		member.Status = entity.OrganizationMemberStatusPending
+		validMembers = append(validMembers, member)
+	}
+	
+	// Create members in batch
+	createdMembers, err := u.organizationMemberRepository.CreateOrganizationMemberBatch(ctx, validMembers)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Log batch member creation
+	u.logWorker.Push(OrganizationLogEvent{
+		OrganizationId: uint32(organizationId),
+		ActorId:        currentUserId,
+		LogType:        "MEMBER_CREATE_BATCH",
+		LogData:        "Added multiple members to organization",
+	})
+	
+	return createdMembers, nil
 }
 
 func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {

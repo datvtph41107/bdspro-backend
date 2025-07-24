@@ -91,6 +91,38 @@
         ]
       }
     },
+    "/v2/org/organization/member/batch": {
+      "post": {
+        "operationId": "OrganizationMemberService_CreateOrganizationMemberBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OrganizationMemberService"
+        ]
+      }
+    },
     "/v2/org/organization/member/{id}": {
       "delete": {
         "operationId": "OrganizationMemberService_DeleteOrganizationMember",
@@ -211,6 +243,30 @@
         "role": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbCreateOrganizationMemberBatchRequest": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbCreateOrganizationMemberRequest"
+          }
+        }
+      }
+    },
+    "organizationpbCreateOrganizationMemberBatchResponse": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },

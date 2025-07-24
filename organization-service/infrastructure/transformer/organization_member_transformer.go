@@ -10,6 +10,8 @@ import (
 type OrganizationMemberTransformer interface {
 	CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToCreateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.CreateOrganizationMemberResponse
+	CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember
+	EntitiesToCreateOrganizationMemberBatchResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.CreateOrganizationMemberBatchResponse
 	UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
@@ -35,6 +37,24 @@ func (o *organizationMemberTransformer) CreateOrganizationMemberRequestToEntity(
 func (o *organizationMemberTransformer) EntityToCreateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.CreateOrganizationMemberResponse {
 	return &organizationpb.CreateOrganizationMemberResponse{
 		Id: organizationMember.ID,
+	}
+}
+
+func (o *organizationMemberTransformer) CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember {
+	entities := make([]*entity.OrganizationMember, len(request.Members))
+	for i, memberRequest := range request.Members {
+		entities[i] = o.CreateOrganizationMemberRequestToEntity(memberRequest)
+	}
+	return entities
+}
+
+func (o *organizationMemberTransformer) EntitiesToCreateOrganizationMemberBatchResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.CreateOrganizationMemberBatchResponse {
+	ids := make([]uint32, len(organizationMembers))
+	for i, member := range organizationMembers {
+		ids[i] = member.ID
+	}
+	return &organizationpb.CreateOrganizationMemberBatchResponse{
+		Ids: ids,
 	}
 }
 

@@ -19210,6 +19210,50 @@
         ]
       }
     },
+    "/v2/org/organization/member/batch": {
+      "post": {
+        "tags": [
+          "OrganizationMemberService"
+        ],
+        "operationId": "OrganizationMemberService_CreateOrganizationMemberBatch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberBatchRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateOrganizationMemberBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/organization/member/{id}": {
       "put": {
         "tags": [
@@ -28689,6 +28733,30 @@
         "id": {
           "format": "int64",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateOrganizationMemberBatchRequest": {
+      "properties": {
+        "members": {
+          "items": {
+            "$ref": "#/definitions/organizationpbCreateOrganizationMemberRequest",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateOrganizationMemberBatchResponse": {
+      "properties": {
+        "ids": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         }
       },
       "type": "object"

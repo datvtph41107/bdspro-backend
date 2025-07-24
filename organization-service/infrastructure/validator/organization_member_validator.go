@@ -9,6 +9,7 @@ import (
 
 type OrganizationMemberValidator interface {
 	ValidateCreateOrganizationMemberRequest(request *organizationpb.CreateOrganizationMemberRequest) error
+	ValidateCreateOrganizationMemberBatchRequest(request *organizationpb.CreateOrganizationMemberBatchRequest) error
 	ValidateUpdateOrganizationMemberRequest(request *organizationpb.UpdateOrganizationMemberRequest) error
 }
 
@@ -34,6 +35,27 @@ func (o *organizationMemberValidator) ValidateCreateOrganizationMemberRequest(re
 	return nil
 }
 
+func (o *organizationMemberValidator) ValidateCreateOrganizationMemberBatchRequest(request *organizationpb.CreateOrganizationMemberBatchRequest) error {
+	if request == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if len(request.Members) == 0 {
+		return status.Errorf(codes.InvalidArgument, "members list cannot be empty")
+	}
+
+	if len(request.Members) > 100 {
+		return status.Errorf(codes.InvalidArgument, "cannot create more than 100 members at once")
+	}
+
+	for i, member := range request.Members {
+		if err := o.ValidateCreateOrganizationMemberRequest(member); err != nil {
+			return status.Errorf(codes.InvalidArgument, "member at index %d: %v", i, err)
+		}
+	}
+
+	return nil
+}
 
 func (o *organizationMemberValidator) ValidateUpdateOrganizationMemberRequest(request *organizationpb.UpdateOrganizationMemberRequest) error {
 	if request == nil {

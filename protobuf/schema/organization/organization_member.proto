@@ -18,6 +18,12 @@ service OrganizationMemberService {
             body: "*"
         };
     }
+    rpc CreateOrganizationMemberBatch(CreateOrganizationMemberBatchRequest) returns (CreateOrganizationMemberBatchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/member/batch"
+            body: "*"
+        };
+    }
     rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {
         option (google.api.http) = {
             put: "/v2/org/organization/member/{id}"
@@ -79,6 +85,14 @@ message CreateOrganizationMemberRequest {
 
 message CreateOrganizationMemberResponse {
     uint32 id = 1 [json_name = "id"];
+}
+
+message CreateOrganizationMemberBatchRequest {
+    repeated CreateOrganizationMemberRequest members = 1 [json_name = "members"];
+}
+
+message CreateOrganizationMemberBatchResponse {
+    repeated uint32 ids = 1 [json_name = "ids"];
 }
 
 message UpdateOrganizationMemberRequest {

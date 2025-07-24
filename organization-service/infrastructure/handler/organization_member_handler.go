@@ -72,6 +72,28 @@ func (h *OrganizationMemberHandler) CreateOrganizationMember(ctx context.Context
 	return h.OrganizationMemberTransformer.EntityToCreateOrganizationMemberResponse(organizationMember), nil
 }
 
+// @Summary Tạo nhiều thành viên tổ chức cùng lúc
+// @Description Tạo nhiều thành viên tổ chức cùng lúc
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param organizationMembers body organizationpb.CreateOrganizationMemberBatchRequest true "Danh sách thông tin thành viên"
+// @Security BearerAuth
+// @Router /organization/member/batch [post]
+func (h *OrganizationMemberHandler) CreateOrganizationMemberBatch(ctx context.Context, req *organizationpb.CreateOrganizationMemberBatchRequest) (*organizationpb.CreateOrganizationMemberBatchResponse, error) {
+	if err := h.OrganizationMemberValidator.ValidateCreateOrganizationMemberBatchRequest(req); err != nil {
+		return nil, err
+	}
+
+	organizationMembers := h.OrganizationMemberTransformer.CreateOrganizationMemberBatchRequestToEntities(req)
+	createdMembers, err := h.OrganizationMemberUsecase.CreateOrganizationMemberBatch(ctx, organizationMembers)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.OrganizationMemberTransformer.EntitiesToCreateOrganizationMemberBatchResponse(createdMembers), nil
+}
+
 // @Summary Cập nhật thành viên tổ chức
 // @Description Cập nhật thành viên tổ chức
 // @Tags Thành viên
