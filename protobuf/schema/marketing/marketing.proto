@@ -41,17 +41,41 @@ service MarketingService {
     };
   };
 
-  rpc UpdateCampaignStatus(UpdateCampaignStatusRequest) returns (CampaignResponse) {
+  rpc SearchCampaigns(SearchCampaignsRequest) returns (SearchCampaignsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/search"
+    };
+  };
+
+  rpc GetCampaignsByProduct(GetCampaignsByProductRequest) returns (SearchCampaignsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/product/{productId}"
+    };
+  };
+
+  rpc UpdateCampaignStatus(UpdateCampaignStatusRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       put: "/v2/marketing/campaigns/{id}/status"
       body: "*"
     };
   };
 
-  rpc TopupCampaignBudget(TopupCampaignBudgetRequest) returns (CampaignResponse) {
+  rpc TopupCampaignBudget(TopupCampaignBudgetRequest) returns (CampaignBudgetTopupResponse) {
     option (google.api.http) = {
       post: "/v2/marketing/campaigns/{id}/topup"
       body: "*"
+    };
+  };
+
+  rpc GetCampaignWalletInfo(GetCampaignWalletInfoRequest) returns (CampaignWalletInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/wallet"
+    };
+  };
+
+  rpc GetCampaignTransactions(GetCampaignTransactionsRequest) returns (CampaignTransactionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/transactions"
     };
   };
 
@@ -108,6 +132,50 @@ service MarketingService {
     };
   };
 
+  rpc GetPaymentSummary(GetPaymentSummaryRequest) returns (PaymentSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/payments/summary"
+    };
+  };
+
+  rpc ValidatePayment(ValidatePaymentRequest) returns (PaymentValidationResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/payments/validate"
+      body: "*"
+    };
+  };
+
+  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/payments/process"
+      body: "*"
+    };
+  };
+
+  rpc GetWalletBalance(GetWalletBalanceRequest) returns (WalletBalanceResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/wallet/balance"
+    };
+  };
+
+  rpc GetPaymentMethods(Empty) returns (PaymentMethodsResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/payments/methods"
+    };
+  };
+
+  rpc GetPaymentHistory(GetPaymentHistoryRequest) returns (PaymentHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/payments/history"
+    };
+  };
+
+  rpc GetCampaignPayment(GetCampaignPaymentRequest) returns (CampaignPaymentResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/payment"
+    };
+  };
+
   // Campaign Detail Management APIs - D.10.2.4
   rpc CreateCampaignDetail(CreateCampaignDetailRequest) returns (CampaignDetailResponse) {
     option (google.api.http) = {
@@ -138,6 +206,37 @@ service MarketingService {
   rpc ListCampaignDetails(ListCampaignDetailsRequest) returns (ListCampaignDetailsResponse) {
     option (google.api.http) = {
       get: "/v2/marketing/campaign-details"
+    };
+  };
+
+  rpc GetCampaignPerformance(GetCampaignPerformanceRequest) returns (CampaignPerformanceResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/performance"
+    };
+  };
+
+  rpc GetCampaignHistory(GetCampaignHistoryRequest) returns (CampaignHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/history"
+    };
+  };
+
+  rpc ExtendCampaign(ExtendCampaignRequest) returns (PaymentResponse) {
+    option (google.api.http) = {
+      post: "/v2/marketing/campaigns/{id}/extend"
+      body: "*"
+    };
+  };
+
+  rpc ExportCampaignData(ExportCampaignDataRequest) returns (CampaignExportResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/export"
+    };
+  };
+
+  rpc GetCampaignOptimization(GetCampaignOptimizationRequest) returns (CampaignOptimizationResponse) {
+    option (google.api.http) = {
+      get: "/v2/marketing/campaigns/{id}/optimization"
     };
   };
 
@@ -206,11 +305,6 @@ service MarketingService {
       get: "/v2/marketing/advertising-settings"
     };
   };
-
-  // Lưu ý: GetCampaignTransactionHistory đã được xóa
-  // Sử dụng trực tiếp API từ notification service:
-  // GET /v2/notification/history/campaign/{id}
-  // GET /v2/notification/history/package/{id}
 }
 
 message Campaign {
@@ -1069,4 +1163,17 @@ message AdvertisingSettings {
 
 message AdvertisingSettingsResponse {
   AdvertisingSettings data = 1;
+}
+
+// Missing request/response messages for new methods
+message GetCampaignWalletInfoRequest {
+  uint64 id = 1;
+}
+
+message GetCampaignPaymentRequest {
+  uint64 id = 1;
+}
+
+message GetCampaignOptimizationRequest {
+  uint64 id = 1;
 }

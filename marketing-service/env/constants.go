@@ -13,15 +13,15 @@ var (
 )
 
 var (
-	GRPC_PORT             = "8209"
+	GRPC_PORT              = "8214"
 	PRIMARY_DB_TYPE DBType = ""
-	DB_DNS                = ""
+	DB_DNS                 = ""
 
 	PAYMENT_SERVICE_HOST = "localhost"
-	PAYMENT_SERVICE_PORT = "8208"
-	
+	PAYMENT_SERVICE_PORT = "8205"
+
 	NOTIFICATION_SERVICE_HOST = "localhost"
 	NOTIFICATION_SERVICE_PORT = "8204"
-	
-	ENV_RUNTIME          = ""
-) 
+
+	ENV_RUNTIME = ""
+)

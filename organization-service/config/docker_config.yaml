@@ -5,6 +5,9 @@ GRPC:
   USER_SERVICE_HOST: user_grpc
   USER_SERVICE_PORT: 8201
 
+database:
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_org port=5432 sslmode=disable
+
 Database:
   PRIMARY_DB_TYPE: postgres
   DB_DNS: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_org port=5432 sslmode=disable

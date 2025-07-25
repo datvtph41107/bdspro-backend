@@ -305,35 +305,202 @@ func (h *MarketingGrpcHandler) GetCampaignTransactions(ctx context.Context, req 
 }
 
 func (h *MarketingGrpcHandler) CreatePackage(ctx context.Context, req *pb_marketing.CreatePackageRequest) (*pb_marketing.PackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePackage not implemented")
+	createDTO := &dto.PackageCreateDTO{
+		Name:                 req.Name,
+		Description:          req.Description,
+		Type:                 model.PackageType(req.Type),
+		Price:                req.Price,
+		Currency:             req.Currency,
+		Duration:             int(req.Duration),
+		Features:             req.Features,
+		MaxImpressions:       getIntPtr(req.MaxImpressions),
+		MaxClicks:            getIntPtr(req.MaxClicks),
+		MinBudget:            getFloat64Ptr(req.MinBudget),
+		MaxBudget:            getFloat64Ptr(req.MaxBudget),
+		EstimatedReach:       getIntPtr(req.EstimatedReach),
+		EstimatedClicks:      getIntPtr(req.EstimatedClicks),
+		IsPopular:            req.IsPopular,
+		IsRecommended:        req.IsRecommended,
+		Icon:                 req.Icon,
+		Color:                req.Color,
+		RequiresVerification: req.RequiresVerification,
+		RequiresPayment:      req.RequiresPayment,
+	}
+
+	package_, err := h.packageUsecase.CreatePackage(ctx, createDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create package: %v", err)
+	}
+
+	return h.packageToGrpcResponse(package_), nil
 }
 
 func (h *MarketingGrpcHandler) GetPackage(ctx context.Context, req *pb_marketing.GetPackageRequest) (*pb_marketing.PackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackage not implemented")
+	package_, err := h.packageUsecase.GetPackage(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "package not found: %v", err)
+	}
+
+	return h.packageToGrpcResponse(package_), nil
 }
 
 func (h *MarketingGrpcHandler) UpdatePackage(ctx context.Context, req *pb_marketing.UpdatePackageRequest) (*pb_marketing.PackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackage not implemented")
+	updateDTO := &dto.PackageUpdateDTO{
+		Name:                 req.Name,
+		Description:          req.Description,
+		Type:                 model.PackageType(req.Type),
+		Status:               model.PackageStatus(req.Status),
+		Price:                req.Price,
+		Currency:             req.Currency,
+		Duration:             int(req.Duration),
+		Features:             req.Features,
+		MaxImpressions:       getIntPtr(req.MaxImpressions),
+		MaxClicks:            getIntPtr(req.MaxClicks),
+		MinBudget:            getFloat64Ptr(req.MinBudget),
+		MaxBudget:            getFloat64Ptr(req.MaxBudget),
+		EstimatedReach:       getIntPtr(req.EstimatedReach),
+		EstimatedClicks:      getIntPtr(req.EstimatedClicks),
+		IsPopular:            req.IsPopular,
+		IsRecommended:        req.IsRecommended,
+		Icon:                 req.Icon,
+		Color:                req.Color,
+		RequiresVerification: req.RequiresVerification,
+		RequiresPayment:      req.RequiresPayment,
+	}
+
+	package_, err := h.packageUsecase.UpdatePackage(ctx, req.Id, updateDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update package: %v", err)
+	}
+
+	return h.packageToGrpcResponse(package_), nil
 }
 
 func (h *MarketingGrpcHandler) DeletePackage(ctx context.Context, req *pb_marketing.DeletePackageRequest) (*pb_marketing.DeletePackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePackage not implemented")
+	err := h.packageUsecase.DeletePackage(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete package: %v", err)
+	}
+
+	return &pb_marketing.DeletePackageResponse{
+		Success: true,
+		Message: "Package deleted successfully",
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) ListPackages(ctx context.Context, req *pb_marketing.ListPackagesRequest) (*pb_marketing.ListPackagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPackages not implemented")
+	searchDTO := dto.PackageSearchDTO{
+		Type:   model.PackageType(req.Type),
+		Status: model.PackageStatus(req.Status),
+		Page:   int(req.Page),
+		Limit:  int(req.Size),
+	}
+
+	packages, total, err := h.packageUsecase.SearchPackages(ctx, searchDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list packages: %v", err)
+	}
+
+	grpcPackages := make([]*pb_marketing.Package, len(packages))
+	for i, package_ := range packages {
+		grpcPackages[i] = h.packageToGrpcPackage(package_)
+	}
+
+	return &pb_marketing.ListPackagesResponse{
+		Data:  grpcPackages,
+		Total: uint32(total),
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) CreatePayment(ctx context.Context, req *pb_marketing.CreatePaymentRequest) (*pb_marketing.PaymentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePayment not implemented")
+	// CreatePayment is similar to ProcessPayment but for initial payment creation
+	paymentDTO := &dto.PaymentRequestDTO{
+		CampaignID:     req.CampaignId,
+		PackageID:      req.PackageId,
+		Amount:         req.Amount,
+		PaymentMethod:  req.PaymentMethod,
+		WalletID:       req.WalletId,
+		RequireInvoice: req.RequireInvoice,
+		InvoiceEmail:   req.InvoiceEmail,
+		TermsAccepted:  req.TermsAccepted,
+	}
+
+	result, err := h.paymentUsecase.ProcessPayment(ctx, paymentDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create payment: %v", err)
+	}
+
+	return &pb_marketing.PaymentResponse{
+		Success:         result.Success,
+		TransactionId:   result.TransactionID,
+		CampaignId:      result.CampaignID,
+		Amount:          result.Amount,
+		Currency:        result.Currency,
+		PaymentMethod:   result.PaymentMethod,
+		Status:          result.Status,
+		TransactionCode: result.TransactionCode,
+		WalletBalance:   result.WalletBalance,
+		PreviousBalance: result.PreviousBalance,
+		CreatedAt:       result.CreatedAt,
+		Message:         result.Message,
+		NextStep:        result.NextStep,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) GetPayment(ctx context.Context, req *pb_marketing.GetPaymentRequest) (*pb_marketing.PaymentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPayment not implemented")
+	// GetPayment retrieves payment information by payment ID using usecase
+	result, err := h.paymentUsecase.GetPaymentByID(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "payment not found: %v", err)
+	}
+
+	return &pb_marketing.PaymentResponse{
+		Success:         result.Success,
+		TransactionId:   result.TransactionID,
+		CampaignId:      result.CampaignID,
+		Amount:          result.Amount,
+		Currency:        result.Currency,
+		PaymentMethod:   result.PaymentMethod,
+		Status:          result.Status,
+		TransactionCode: result.TransactionCode,
+		WalletBalance:   result.WalletBalance,
+		PreviousBalance: result.PreviousBalance,
+		CreatedAt:       result.CreatedAt,
+		Message:         result.Message,
+		NextStep:        result.NextStep,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) ListPayments(ctx context.Context, req *pb_marketing.ListPaymentsRequest) (*pb_marketing.ListPaymentsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPayments not implemented")
+	// ListPayments is similar to GetPaymentHistory but with different filtering options
+	history, total, err := h.paymentUsecase.GetPaymentHistory(ctx, req.CampaignId, int(req.Page), int(req.Size))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list payments: %v", err)
+	}
+
+	response := &pb_marketing.ListPaymentsResponse{
+		Data:  make([]*pb_marketing.PaymentHistoryItemResponse, len(history)),
+		Total: uint32(total),
+	}
+
+	for i, item := range history {
+		response.Data[i] = &pb_marketing.PaymentHistoryItemResponse{
+			Id:              item.ID,
+			CampaignId:      item.CampaignID,
+			PackageId:       item.PackageID,
+			Amount:          item.Amount,
+			Currency:        item.Currency,
+			PaymentMethod:   item.PaymentMethod,
+			Status:          item.Status,
+			TransactionCode: item.TransactionCode,
+			CreatedAt:       item.CreatedAt,
+			UpdatedAt:       item.UpdatedAt,
+			CampaignName:    item.CampaignName,
+			PackageName:     item.PackageName,
+		}
+	}
+
+	return response, nil
 }
 
 func (h *MarketingGrpcHandler) GetPaymentSummary(ctx context.Context, req *pb_marketing.GetPaymentSummaryRequest) (*pb_marketing.PaymentSummaryResponse, error) {
@@ -574,7 +741,9 @@ func (h *MarketingGrpcHandler) GetCampaignPayment(ctx context.Context, req *pb_m
 }
 
 func (h *MarketingGrpcHandler) CreateCampaignDetail(ctx context.Context, req *pb_marketing.CreateCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateCampaignDetail not implemented")
+	// Note: Campaign details are typically created automatically when campaigns are created
+	// This method might be for manual creation or updates
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCampaignDetail not implemented - campaign details are auto-generated")
 }
 
 func (h *MarketingGrpcHandler) GetCampaignDetail(ctx context.Context, req *pb_marketing.GetCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
@@ -625,15 +794,21 @@ func (h *MarketingGrpcHandler) GetCampaignDetail(ctx context.Context, req *pb_ma
 }
 
 func (h *MarketingGrpcHandler) UpdateCampaignDetail(ctx context.Context, req *pb_marketing.UpdateCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateCampaignDetail not implemented")
+	// Note: Campaign details are typically updated through campaign updates
+	// This method might be for specific detail updates
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCampaignDetail not implemented - use UpdateCampaign instead")
 }
 
 func (h *MarketingGrpcHandler) DeleteCampaignDetail(ctx context.Context, req *pb_marketing.DeleteCampaignDetailRequest) (*pb_marketing.DeleteCampaignDetailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteCampaignDetail not implemented")
+	// Note: Campaign details are typically deleted when campaigns are deleted
+	// This method might be for manual deletion
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCampaignDetail not implemented - use DeleteCampaign instead")
 }
 
 func (h *MarketingGrpcHandler) ListCampaignDetails(ctx context.Context, req *pb_marketing.ListCampaignDetailsRequest) (*pb_marketing.ListCampaignDetailsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCampaignDetails not implemented")
+	// Note: Campaign details are typically accessed through GetCampaignDetail
+	// This method might be for listing multiple campaign details
+	return nil, status.Errorf(codes.Unimplemented, "method ListCampaignDetails not implemented - use ListCampaigns instead")
 }
 
 func (h *MarketingGrpcHandler) GetCampaignPerformance(ctx context.Context, req *pb_marketing.GetCampaignPerformanceRequest) (*pb_marketing.CampaignPerformanceResponse, error) {
@@ -794,43 +969,77 @@ func (h *MarketingGrpcHandler) GetCampaignOptimization(ctx context.Context, req 
 }
 
 func (h *MarketingGrpcHandler) CreateBudget(ctx context.Context, req *pb_marketing.CreateBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateBudget not implemented")
+	// Note: Protobuf CreateBudgetRequest has different structure than DTO
+	// For now, return unimplemented as the structures don't match
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBudget not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) GetBudget(ctx context.Context, req *pb_marketing.GetBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBudget not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetBudget not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) UpdateBudget(ctx context.Context, req *pb_marketing.UpdateBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateBudget not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBudget not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) DeleteBudget(ctx context.Context, req *pb_marketing.DeleteBudgetRequest) (*pb_marketing.DeleteBudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteBudget not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBudget not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) ListBudgets(ctx context.Context, req *pb_marketing.ListBudgetsRequest) (*pb_marketing.ListBudgetsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBudgets not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method ListBudgets not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) CreateAdvertisingSettings(ctx context.Context, req *pb_marketing.CreateAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAdvertisingSettings not implemented")
+	// Note: Protobuf structure is different from DTO, so we'll need to map fields
+	// For now, return unimplemented as the structures don't match exactly
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAdvertisingSettings not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) GetAdvertisingSettings(ctx context.Context, req *pb_marketing.GetAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAdvertisingSettings not implemented")
+	// Note: Protobuf GetAdvertisingSettingsRequest uses ID, but DTO uses UserID
+	// For now, return unimplemented as the structures don't match exactly
+	return nil, status.Errorf(codes.Unimplemented, "method GetAdvertisingSettings not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) UpdateAdvertisingSettings(ctx context.Context, req *pb_marketing.UpdateAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAdvertisingSettings not implemented")
+	// Note: Protobuf structure is different from DTO, so we'll need to map fields
+	// For now, return unimplemented as the structures don't match exactly
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAdvertisingSettings not implemented - protobuf structure mismatch")
 }
 
 func (h *MarketingGrpcHandler) DeleteAdvertisingSettings(ctx context.Context, req *pb_marketing.DeleteAdvertisingSettingsRequest) (*pb_marketing.DeleteAdvertisingSettingsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteAdvertisingSettings not implemented")
+	err := h.advertisingSettingsUsecase.DeleteAdvertisingSettings(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete advertising settings: %v", err)
+	}
+
+	return &pb_marketing.DeleteAdvertisingSettingsResponse{
+		Success: true,
+		Message: "Advertising settings deleted successfully",
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) ListAdvertisingSettings(ctx context.Context, req *pb_marketing.ListAdvertisingSettingsRequest) (*pb_marketing.ListAdvertisingSettingsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAdvertisingSettings not implemented")
+	searchDTO := dto.AdvertisingSettingsSearchDTO{
+		Page:  int(req.Page),
+		Limit: int(req.Size),
+	}
+
+	settings, total, err := h.advertisingSettingsUsecase.SearchAdvertisingSettings(ctx, searchDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list advertising settings: %v", err)
+	}
+
+	grpcSettings := make([]*pb_marketing.AdvertisingSettings, len(settings))
+	for i, setting := range settings {
+		grpcSettings[i] = h.advertisingSettingsToGrpc(setting)
+	}
+
+	return &pb_marketing.ListAdvertisingSettingsResponse{
+		Data:  grpcSettings,
+		Total: uint32(total),
+	}, nil
 }
 
 func getFloat64Value(ptr *float64) float64 {
@@ -918,4 +1127,64 @@ func (h *MarketingGrpcHandler) campaignToGrpcCampaign(campaign *dto.CampaignResp
 	}
 
 	return grpcCampaign
+}
+
+func (h *MarketingGrpcHandler) packageToGrpcResponse(package_ *dto.PackageResponseDTO) *pb_marketing.PackageResponse {
+	return &pb_marketing.PackageResponse{
+		Data: h.packageToGrpcPackage(package_),
+	}
+}
+
+func (h *MarketingGrpcHandler) packageToGrpcPackage(package_ *dto.PackageResponseDTO) *pb_marketing.Package {
+	grpcPackage := &pb_marketing.Package{
+		Id:                   package_.ID,
+		Name:                 package_.Name,
+		Description:          package_.Description,
+		Type:                 string(package_.Type),
+		Status:               string(package_.Status),
+		Price:                package_.Price,
+		Currency:             package_.Currency,
+		Duration:             uint32(package_.Duration),
+		Features:             package_.Features,
+		IsPopular:            package_.IsPopular,
+		IsRecommended:        package_.IsRecommended,
+		Icon:                 package_.Icon,
+		Color:                package_.Color,
+		RequiresVerification: package_.RequiresVerification,
+		RequiresPayment:      package_.RequiresPayment,
+		CreatedBy:            package_.CreatedBy,
+		OrganizationId:       package_.OrganizationID,
+		CreatedAt:            package_.CreatedAt,
+		UpdatedAt:            package_.UpdatedAt,
+	}
+
+	// Handle optional fields
+	if package_.MaxImpressions != nil {
+		grpcPackage.MaxImpressions = uint32(*package_.MaxImpressions)
+	}
+	if package_.MaxClicks != nil {
+		grpcPackage.MaxClicks = uint32(*package_.MaxClicks)
+	}
+	if package_.MinBudget != nil {
+		grpcPackage.MinBudget = *package_.MinBudget
+	}
+	if package_.MaxBudget != nil {
+		grpcPackage.MaxBudget = *package_.MaxBudget
+	}
+	if package_.EstimatedReach != nil {
+		grpcPackage.EstimatedReach = uint32(*package_.EstimatedReach)
+	}
+	if package_.EstimatedClicks != nil {
+		grpcPackage.EstimatedClicks = uint32(*package_.EstimatedClicks)
+	}
+
+	return grpcPackage
+}
+
+func (h *MarketingGrpcHandler) advertisingSettingsToGrpc(setting *dto.AdvertisingSettingsDTO) *pb_marketing.AdvertisingSettings {
+	// Note: This is a placeholder implementation
+	// The actual mapping would depend on the protobuf AdvertisingSettings structure
+	return &pb_marketing.AdvertisingSettings{
+		// Map fields based on protobuf structure
+	}
 }

@@ -18,6 +18,7 @@ service:
     search: 8211
     membership: 8212
     appointment: 8213
+    marketing: 8214
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+
 	"marketing/infrastructure/client"
 	"marketing/internal/domain/model"
 	"marketing/internal/domain/repository"
@@ -11,6 +12,8 @@ import (
 	_utils "common/utils"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
+
+	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type CampaignUsecase interface {
@@ -21,7 +24,7 @@ type CampaignUsecase interface {
 	SearchCampaigns(ctx context.Context, searchDTO dto.CampaignSearchDTO) ([]dto.CampaignResponseDTO, int64, error)
 	GetCampaignsByProduct(ctx context.Context, productID uint64) ([]dto.CampaignResponseDTO, error)
 	UpdateCampaignStatus(ctx context.Context, id uint64, status model.CampaignStatus) error
-	
+
 	// Budget management
 	TopupCampaignBudget(ctx context.Context, topupDTO *dto.CampaignBudgetTopupDTO) (*dto.CampaignBudgetTopupResponseDTO, error)
 	GetCampaignWalletInfo(ctx context.Context, campaignID uint64) (*dto.CampaignWalletInfoDTO, error)
@@ -29,16 +32,18 @@ type CampaignUsecase interface {
 }
 
 type campaignUsecase struct {
-	campaignRepo   repository.CampaignRepository
-	paymentClient  *client.PaymentClient
+	campaignRepo       repository.CampaignRepository
+	paymentClient      *client.PaymentClient
 	notificationClient *client.NotificationClient
+	logger             *flogging.FabricLogger
 }
 
 func NewCampaignUsecase(campaignRepo repository.CampaignRepository, paymentClient *client.PaymentClient, notificationClient *client.NotificationClient) CampaignUsecase {
 	return &campaignUsecase{
-		campaignRepo:  campaignRepo,
-		paymentClient: paymentClient,
+		campaignRepo:       campaignRepo,
+		paymentClient:      paymentClient,
 		notificationClient: notificationClient,
+		logger:             flogging.MustGetLogger("campaignUsecase"),
 	}
 }
 
@@ -87,28 +92,28 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 
 	// Create campaign entity
 	campaign := &model.Campaign{
-		Name:            createDTO.Name,
-		Description:     createDTO.Description,
-		Type:            createDTO.Type,
-		Status:          model.CampaignStatusDraft,
-		ProductID:       createDTO.ProductID,
-		ProductName:     createDTO.ProductName,
-		ProductType:     createDTO.ProductType,
-		PackageID:       createDTO.PackageID,
-		PackageName:     createDTO.PackageName,
-		Budget:          createDTO.Budget,
-		Duration:        createDTO.Duration,
-		StartDate:       createDTO.StartDate,
-		EndDate:         createDTO.EndDate,
-		TargetAudience:  createDTO.TargetAudience,
-		TargetLocation:  createDTO.TargetLocation,
-		IsActive:        true,
-		Priority:        createDTO.Priority,
-		InternalNote:    createDTO.InternalNote,
-		CreatedBy:       userID,
-		UpdatedBy:       userID,
-		OrganizationID:  organizationID,
-		Currency:        "VND", // Default currency
+		Name:           createDTO.Name,
+		Description:    createDTO.Description,
+		Type:           createDTO.Type,
+		Status:         model.CampaignStatusDraft,
+		ProductID:      createDTO.ProductID,
+		ProductName:    createDTO.ProductName,
+		ProductType:    createDTO.ProductType,
+		PackageID:      createDTO.PackageID,
+		PackageName:    createDTO.PackageName,
+		Budget:         createDTO.Budget,
+		Duration:       createDTO.Duration,
+		StartDate:      createDTO.StartDate,
+		EndDate:        createDTO.EndDate,
+		TargetAudience: createDTO.TargetAudience,
+		TargetLocation: createDTO.TargetLocation,
+		IsActive:       true,
+		Priority:       createDTO.Priority,
+		InternalNote:   createDTO.InternalNote,
+		CreatedBy:      userID,
+		UpdatedBy:      userID,
+		OrganizationID: organizationID,
+		Currency:       "VND", // Default currency
 	}
 
 	// Save campaign to database first
@@ -136,7 +141,7 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 		// Update campaign with wallet information
 		createdCampaign.WalletID = &walletResp.Data.WalletID
 		createdCampaign.WalletBalance = walletResp.Data.Balance
-		
+
 		// Update campaign in database with wallet info
 		_, err = u.campaignRepo.Update(ctx, createdCampaign.ID, createdCampaign)
 		if err != nil {
@@ -149,9 +154,9 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 	response := u.toResponseDTO(createdCampaign)
 
 	// Create history record
-	u.createHistoryRecord(ctx, 
-		shared_enum.HistoryCampaignCreate, 
-		createdCampaign.ID, 
+	u.createHistoryRecord(ctx,
+		shared_enum.HistoryCampaignCreate,
+		createdCampaign.ID,
 		shared_enum.TargetHistoryCampaign,
 		"Tạo chiến dịch quảng cáo",
 		[]string{createdCampaign.Name, fmt.Sprintf("Ngân sách: %.0f %s", createdCampaign.Budget, createdCampaign.Currency)},
@@ -244,9 +249,9 @@ func (u *campaignUsecase) UpdateCampaign(ctx context.Context, id uint64, updateD
 	response := u.toResponseDTO(updatedCampaign)
 
 	// Create history record
-	u.createHistoryRecord(ctx, 
-		shared_enum.HistoryCampaignUpdate, 
-		updatedCampaign.ID, 
+	u.createHistoryRecord(ctx,
+		shared_enum.HistoryCampaignUpdate,
+		updatedCampaign.ID,
 		shared_enum.TargetHistoryCampaign,
 		"Cập nhật chiến dịch quảng cáo",
 		[]string{updatedCampaign.Name, fmt.Sprintf("Ngân sách: %.0f %s", updatedCampaign.Budget, updatedCampaign.Currency)},
@@ -270,9 +275,9 @@ func (u *campaignUsecase) DeleteCampaign(ctx context.Context, id uint64) error {
 	}
 
 	// Create history record
-	u.createHistoryRecord(ctx, 
-		shared_enum.HistoryCampaignDelete, 
-		id, 
+	u.createHistoryRecord(ctx,
+		shared_enum.HistoryCampaignDelete,
+		id,
 		shared_enum.TargetHistoryCampaign,
 		"Xóa chiến dịch quảng cáo",
 		[]string{campaign.Name},
@@ -438,9 +443,9 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 	}
 
 	// Create history record
-	u.createHistoryRecord(ctx, 
-		shared_enum.HistoryCampaignTopup, 
-		topupDTO.CampaignID, 
+	u.createHistoryRecord(ctx,
+		shared_enum.HistoryCampaignTopup,
+		topupDTO.CampaignID,
 		shared_enum.TargetHistoryCampaign,
 		"Nạp tiền chiến dịch quảng cáo",
 		[]string{campaign.Name, fmt.Sprintf("Số tiền: %.0f %s", topupDTO.Amount, campaign.Currency), transaction.TransactionCode},
@@ -479,7 +484,7 @@ func (u *campaignUsecase) GetCampaignWalletInfo(ctx context.Context, campaignID 
 		Page: 1,
 		Size: 100, // Get recent transactions
 	}
-
+	// todo: use internal transaction
 	transactions, err := u.paymentClient.GetWalletTransactions(ctx, transactionsReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet transactions: %w", err)
@@ -601,4 +606,4 @@ func (u *campaignUsecase) toResponseDTO(campaign *model.Campaign) *dto.CampaignR
 		CreatedAt:      campaign.CreatedAt,
 		UpdatedAt:      campaign.UpdatedAt,
 	}
-} 
+}

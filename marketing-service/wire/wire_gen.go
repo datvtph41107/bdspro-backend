@@ -7,7 +7,7 @@
 package wire
 
 import (
-	"gorm.io/gorm"
+	"common/db"
 	"marketing/config"
 	"marketing/infrastructure/client"
 	"marketing/infrastructure/repository/postgres"
@@ -19,7 +19,10 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp() (*config.ConfigApp, error) {
-	db := provideDB()
+	db, err := _db.NewDB()
+	if err != nil {
+		return nil, err
+	}
 	campaignPostgresRepository := postgres.NewCampaignPostgresRepository(db)
 	paymentClient, err := client.NewPaymentClient()
 	if err != nil {
@@ -39,11 +42,4 @@ func InitializeApp() (*config.ConfigApp, error) {
 	grpcServer := grpc.NewGRPCServer(marketingGrpcHandler)
 	configApp := config.NewConfigApp(grpcServer)
 	return configApp, nil
-}
-
-// wire.go:
-
-func provideDB() *gorm.DB {
-
-	return nil
 }
