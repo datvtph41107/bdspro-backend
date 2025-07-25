@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"context"
+	"time"
+
 	"marketing/internal/domain/model"
 	"marketing/internal/dto"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -87,7 +88,7 @@ func (r *CampaignPostgresRepository) Search(ctx context.Context, organizationID 
 	// Apply pagination
 	offset := searchDTO.GetOffset()
 	limit := searchDTO.GetLimit()
-	
+
 	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&campaigns).Error; err != nil {
 		return nil, 0, err
 	}
@@ -104,24 +105,24 @@ func (r *CampaignPostgresRepository) GetByProductID(ctx context.Context, product
 }
 
 func (r *CampaignPostgresRepository) UpdateStatus(ctx context.Context, id uint64, status model.CampaignStatus) error {
-	return r.db.WithContext(ctx).Where("id = ?", id).Update("status", status).Error
+	return r.db.WithContext(ctx).Model(&model.Campaign{}).Where("id = ?", id).Update("status", status).Error
 }
 
 func (r *CampaignPostgresRepository) CheckTimeConflict(ctx context.Context, productID uint64, campaignType model.CampaignType, startDate, endDate *time.Time, excludeID *uint64) (bool, error) {
 	var count int64
-	
+
 	query := r.db.WithContext(ctx).Model(&model.Campaign{}).
 		Where("product_id = ? AND type = ? AND deleted_at IS NULL", productID, campaignType).
 		Where("((start_date <= ? AND end_date >= ?) OR (start_date <= ? AND end_date >= ?) OR (start_date >= ? AND end_date <= ?))",
 			startDate, startDate, endDate, endDate, startDate, endDate)
-	
+
 	if excludeID != nil {
 		query = query.Where("id != ?", *excludeID)
 	}
-	
+
 	if err := query.Count(&count).Error; err != nil {
 		return false, err
 	}
-	
+
 	return count > 0, nil
-} 
+}
