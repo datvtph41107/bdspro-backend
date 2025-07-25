@@ -177,37 +177,6 @@ service MarketingService {
   };
 
   // Campaign Detail Management APIs - D.10.2.4
-  rpc CreateCampaignDetail(CreateCampaignDetailRequest) returns (CampaignDetailResponse) {
-    option (google.api.http) = {
-      post: "/v2/marketing/campaign-details"
-      body: "*"
-    };
-  };
-
-  rpc GetCampaignDetail(GetCampaignDetailRequest) returns (CampaignDetailResponse) {
-    option (google.api.http) = {
-      get: "/v2/marketing/campaign-details/{id}"
-    };
-  };
-
-  rpc UpdateCampaignDetail(UpdateCampaignDetailRequest) returns (CampaignDetailResponse) {
-    option (google.api.http) = {
-      put: "/v2/marketing/campaign-details/{id}"
-      body: "*"
-    };
-  };
-
-  rpc DeleteCampaignDetail(DeleteCampaignDetailRequest) returns (DeleteCampaignDetailResponse) {
-    option (google.api.http) = {
-      delete: "/v2/marketing/campaign-details/{id}"
-    };
-  };
-
-  rpc ListCampaignDetails(ListCampaignDetailsRequest) returns (ListCampaignDetailsResponse) {
-    option (google.api.http) = {
-      get: "/v2/marketing/campaign-details"
-    };
-  };
 
   rpc GetCampaignPerformance(GetCampaignPerformanceRequest) returns (CampaignPerformanceResponse) {
     option (google.api.http) = {
@@ -998,56 +967,7 @@ message ListPaymentsResponse {
   uint32 total = 2;
 }
 
-message CreateCampaignDetailRequest {
-  uint64 campaignId = 1;
-  string name = 2;
-  string description = 3;
-  string type = 4;
-  uint64 productId = 5;
-  uint64 packageId = 6;
-  double budget = 7;
-  uint32 duration = 8;
-  string startDate = 9;
-  string endDate = 10;
-}
 
-message GetCampaignDetailRequest {
-  uint64 id = 1;
-}
-
-message UpdateCampaignDetailRequest {
-  uint64 id = 1;
-  string name = 2;
-  string description = 3;
-  string type = 4;
-  uint64 productId = 5;
-  uint64 packageId = 6;
-  double budget = 7;
-  uint32 duration = 8;
-  string startDate = 9;
-  string endDate = 10;
-}
-
-message DeleteCampaignDetailRequest {
-  uint64 id = 1;
-}
-
-message DeleteCampaignDetailResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-message ListCampaignDetailsRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  uint64 campaignId = 3;
-  string status = 4;
-}
-
-message ListCampaignDetailsResponse {
-  repeated CampaignDetail data = 1;
-  uint32 total = 2;
-}
 
 message CreateBudgetRequest {
   uint64 campaignId = 1;
