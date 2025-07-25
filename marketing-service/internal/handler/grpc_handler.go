@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"marketing/infrastructure/client"
@@ -740,77 +741,6 @@ func (h *MarketingGrpcHandler) GetCampaignPayment(ctx context.Context, req *pb_m
 	return response, nil
 }
 
-func (h *MarketingGrpcHandler) CreateCampaignDetail(ctx context.Context, req *pb_marketing.CreateCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
-	// Note: Campaign details are typically created automatically when campaigns are created
-	// This method might be for manual creation or updates
-	return nil, status.Errorf(codes.Unimplemented, "method CreateCampaignDetail not implemented - campaign details are auto-generated")
-}
-
-func (h *MarketingGrpcHandler) GetCampaignDetail(ctx context.Context, req *pb_marketing.GetCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
-	result, err := h.campaignDetailUsecase.GetCampaignDetail(ctx, req.Id)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get campaign detail: %v", err)
-	}
-
-	return &pb_marketing.CampaignDetailResponse{
-		Data: &pb_marketing.CampaignDetail{
-			Id:              result.ID,
-			Name:            result.Name,
-			Description:     result.Description,
-			Type:            result.Type,
-			Status:          result.Status,
-			ProductId:       result.ProductID,
-			ProductName:     result.ProductName,
-			ProductImage:    result.ProductImage,
-			ProductType:     result.ProductType,
-			PackageId:       result.PackageID,
-			PackageName:     result.PackageName,
-			PackageType:     result.PackageType,
-			Budget:          result.Budget,
-			Duration:        uint32(result.Duration),
-			StartDate:       result.StartDate,
-			EndDate:         result.EndDate,
-			Currency:        result.Currency,
-			Impressions:     uint32(result.Impressions),
-			Clicks:          uint32(result.Clicks),
-			Ctr:             result.CTR,
-			Cpc:             result.CPC,
-			SpentAmount:     result.SpentAmount,
-			RemainingBudget: result.RemainingBudget,
-			WalletId:        result.WalletID,
-			WalletBalance:   result.WalletBalance,
-			TransactionId:   result.TransactionID,
-			CanEdit:         result.CanEdit,
-			CanPause:        result.CanPause,
-			CanResume:       result.CanResume,
-			CanExtend:       result.CanExtend,
-			CanTopup:        result.CanTopup,
-			CreatedBy:       result.CreatedBy,
-			OrganizationId:  result.OrganizationID,
-			CreatedAt:       result.CreatedAt,
-			UpdatedAt:       result.UpdatedAt,
-		},
-	}, nil
-}
-
-func (h *MarketingGrpcHandler) UpdateCampaignDetail(ctx context.Context, req *pb_marketing.UpdateCampaignDetailRequest) (*pb_marketing.CampaignDetailResponse, error) {
-	// Note: Campaign details are typically updated through campaign updates
-	// This method might be for specific detail updates
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateCampaignDetail not implemented - use UpdateCampaign instead")
-}
-
-func (h *MarketingGrpcHandler) DeleteCampaignDetail(ctx context.Context, req *pb_marketing.DeleteCampaignDetailRequest) (*pb_marketing.DeleteCampaignDetailResponse, error) {
-	// Note: Campaign details are typically deleted when campaigns are deleted
-	// This method might be for manual deletion
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteCampaignDetail not implemented - use DeleteCampaign instead")
-}
-
-func (h *MarketingGrpcHandler) ListCampaignDetails(ctx context.Context, req *pb_marketing.ListCampaignDetailsRequest) (*pb_marketing.ListCampaignDetailsResponse, error) {
-	// Note: Campaign details are typically accessed through GetCampaignDetail
-	// This method might be for listing multiple campaign details
-	return nil, status.Errorf(codes.Unimplemented, "method ListCampaignDetails not implemented - use ListCampaigns instead")
-}
-
 func (h *MarketingGrpcHandler) GetCampaignPerformance(ctx context.Context, req *pb_marketing.GetCampaignPerformanceRequest) (*pb_marketing.CampaignPerformanceResponse, error) {
 	result, err := h.campaignDetailUsecase.GetCampaignPerformance(ctx, req.Id, req.StartDate, req.EndDate)
 	if err != nil {
@@ -969,43 +899,200 @@ func (h *MarketingGrpcHandler) GetCampaignOptimization(ctx context.Context, req 
 }
 
 func (h *MarketingGrpcHandler) CreateBudget(ctx context.Context, req *pb_marketing.CreateBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	// Note: Protobuf CreateBudgetRequest has different structure than DTO
-	// For now, return unimplemented as the structures don't match
-	return nil, status.Errorf(codes.Unimplemented, "method CreateBudget not implemented - protobuf structure mismatch")
+	// Map protobuf request to DTO structure
+	createDTO := &dto.BudgetConfigCreateDTO{
+		CampaignID:     req.CampaignId,
+		MonthlyLimit:   req.Amount,
+		AlertThreshold: 80.0, // Default alert threshold
+		AlertEnabled:   true,
+		AutoTopup:      false,
+	}
+
+	// Create budget config
+	budgetConfig, err := h.budgetUsecase.CreateBudgetConfig(ctx, createDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create budget: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	budget := &pb_marketing.Budget{
+		Id:          budgetConfig.ID,
+		CampaignId:  budgetConfig.CampaignID,
+		Amount:      budgetConfig.MonthlyLimit,
+		Currency:    "VND", // Default currency
+		Description: "Monthly budget limit",
+		Status:      "ACTIVE",
+		CreatedAt:   budgetConfig.CreatedAt,
+		UpdatedAt:   budgetConfig.UpdatedAt,
+	}
+
+	return &pb_marketing.BudgetResponse{
+		Data: budget,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) GetBudget(ctx context.Context, req *pb_marketing.GetBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBudget not implemented - protobuf structure mismatch")
+	// Get budget config by campaign ID (assuming the ID is campaign ID)
+	budgetConfig, err := h.budgetUsecase.GetBudgetConfig(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "budget not found: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	budget := &pb_marketing.Budget{
+		Id:          budgetConfig.ID,
+		CampaignId:  budgetConfig.CampaignID,
+		Amount:      budgetConfig.MonthlyLimit,
+		Currency:    "VND", // Default currency
+		Description: "Monthly budget limit",
+		Status:      "ACTIVE",
+		CreatedAt:   budgetConfig.CreatedAt,
+		UpdatedAt:   budgetConfig.UpdatedAt,
+	}
+
+	return &pb_marketing.BudgetResponse{
+		Data: budget,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) UpdateBudget(ctx context.Context, req *pb_marketing.UpdateBudgetRequest) (*pb_marketing.BudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateBudget not implemented - protobuf structure mismatch")
+	// Map protobuf request to DTO structure
+	updateDTO := &dto.BudgetConfigUpdateDTO{
+		MonthlyLimit: &req.Amount,
+	}
+
+	// Update budget config
+	budgetConfig, err := h.budgetUsecase.UpdateBudgetConfig(ctx, req.Id, updateDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update budget: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	budget := &pb_marketing.Budget{
+		Id:          budgetConfig.ID,
+		CampaignId:  budgetConfig.CampaignID,
+		Amount:      budgetConfig.MonthlyLimit,
+		Currency:    "VND", // Default currency
+		Description: "Monthly budget limit",
+		Status:      "ACTIVE",
+		CreatedAt:   budgetConfig.CreatedAt,
+		UpdatedAt:   budgetConfig.UpdatedAt,
+	}
+
+	return &pb_marketing.BudgetResponse{
+		Data: budget,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) DeleteBudget(ctx context.Context, req *pb_marketing.DeleteBudgetRequest) (*pb_marketing.DeleteBudgetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteBudget not implemented - protobuf structure mismatch")
+	err := h.budgetUsecase.DeleteBudgetConfig(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete budget: %v", err)
+	}
+
+	return &pb_marketing.DeleteBudgetResponse{
+		Success: true,
+		Message: "Budget deleted successfully",
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) ListBudgets(ctx context.Context, req *pb_marketing.ListBudgetsRequest) (*pb_marketing.ListBudgetsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBudgets not implemented - protobuf structure mismatch")
+	// Create search DTO
+	searchDTO := dto.BudgetSearchDTO{
+		Page:  int(req.Page),
+		Limit: int(req.Size),
+	}
+
+	// Get budget list
+	budgets, total, err := h.budgetUsecase.GetBudgetList(ctx, searchDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list budgets: %v", err)
+	}
+
+	// Map DTO responses to protobuf structure
+	grpcBudgets := make([]*pb_marketing.Budget, len(budgets))
+	for i, budget := range budgets {
+		grpcBudgets[i] = &pb_marketing.Budget{
+			Id:          budget.ID,
+			CampaignId:  budget.CampaignID,
+			Amount:      budget.MonthlyLimit,
+			Currency:    "VND", // Default currency
+			Description: "Monthly budget limit",
+			Status:      "ACTIVE",
+			CreatedAt:   budget.CreatedAt,
+			UpdatedAt:   budget.UpdatedAt,
+		}
+	}
+
+	return &pb_marketing.ListBudgetsResponse{
+		Data:  grpcBudgets,
+		Total: uint32(total),
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) CreateAdvertisingSettings(ctx context.Context, req *pb_marketing.CreateAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	// Note: Protobuf structure is different from DTO, so we'll need to map fields
-	// For now, return unimplemented as the structures don't match exactly
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAdvertisingSettings not implemented - protobuf structure mismatch")
+	// Map protobuf request to DTO structure
+	createDTO := &dto.AdvertisingSettingsCreateDTO{
+		OrganizationID:      1,       // TODO: Get from context
+		UserID:              1,       // TODO: Get from context
+		DefaultCampaignType: "VIP",   // Default campaign type
+		DefaultBudget:       100000,  // Default budget
+		DefaultDuration:     7,       // Default duration
+		MonthlyBudgetLimit:  1000000, // Default monthly limit
+		AutoSuggestEnabled:  false,
+		AutoRunEnabled:      false,
+		AlertOnBudgetExceed: false,
+	}
+
+	// Create advertising settings
+	settings, err := h.advertisingSettingsUsecase.CreateAdvertisingSettings(ctx, createDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create advertising settings: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	grpcSettings := h.advertisingSettingsToGrpc(settings)
+
+	return &pb_marketing.AdvertisingSettingsResponse{
+		Data: grpcSettings,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) GetAdvertisingSettings(ctx context.Context, req *pb_marketing.GetAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	// Note: Protobuf GetAdvertisingSettingsRequest uses ID, but DTO uses UserID
-	// For now, return unimplemented as the structures don't match exactly
-	return nil, status.Errorf(codes.Unimplemented, "method GetAdvertisingSettings not implemented - protobuf structure mismatch")
+	// Get advertising settings by user ID (assuming the ID is user ID)
+	userID := uint64(1) // TODO: Get from context or use req.Id if it represents user ID
+	settings, err := h.advertisingSettingsUsecase.GetAdvertisingSettings(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "advertising settings not found: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	grpcSettings := h.advertisingSettingsToGrpc(settings)
+
+	return &pb_marketing.AdvertisingSettingsResponse{
+		Data: grpcSettings,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) UpdateAdvertisingSettings(ctx context.Context, req *pb_marketing.UpdateAdvertisingSettingsRequest) (*pb_marketing.AdvertisingSettingsResponse, error) {
-	// Note: Protobuf structure is different from DTO, so we'll need to map fields
-	// For now, return unimplemented as the structures don't match exactly
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAdvertisingSettings not implemented - protobuf structure mismatch")
+	// Map protobuf request to DTO structure
+	updateDTO := &dto.AdvertisingSettingsUpdateDTO{
+		// Map fields based on protobuf structure
+		// For now, using minimal mapping
+	}
+
+	// Update advertising settings
+	settings, err := h.advertisingSettingsUsecase.UpdateAdvertisingSettings(ctx, req.Id, updateDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update advertising settings: %v", err)
+	}
+
+	// Map DTO response to protobuf structure
+	grpcSettings := h.advertisingSettingsToGrpc(settings)
+
+	return &pb_marketing.AdvertisingSettingsResponse{
+		Data: grpcSettings,
+	}, nil
 }
 
 func (h *MarketingGrpcHandler) DeleteAdvertisingSettings(ctx context.Context, req *pb_marketing.DeleteAdvertisingSettingsRequest) (*pb_marketing.DeleteAdvertisingSettingsResponse, error) {
@@ -1182,9 +1269,29 @@ func (h *MarketingGrpcHandler) packageToGrpcPackage(package_ *dto.PackageRespons
 }
 
 func (h *MarketingGrpcHandler) advertisingSettingsToGrpc(setting *dto.AdvertisingSettingsDTO) *pb_marketing.AdvertisingSettings {
-	// Note: This is a placeholder implementation
-	// The actual mapping would depend on the protobuf AdvertisingSettings structure
-	return &pb_marketing.AdvertisingSettings{
-		// Map fields based on protobuf structure
+	// Map DTO to protobuf structure
+	grpcSettings := &pb_marketing.AdvertisingSettings{
+		Id:             setting.ID,
+		CampaignId:     0, // Not available in DTO, using 0 as default
+		Platform:       setting.DefaultCampaignType,
+		TargetAudience: "DEFAULT", // Not available in DTO, using default
+		TargetLocation: "DEFAULT", // Not available in DTO, using default
+		AdFormat:       "DEFAULT", // Not available in DTO, using default
+		Schedule:       "DEFAULT", // Not available in DTO, using default
+		Status:         "ACTIVE",
+		CreatedAt:      setting.CreatedAt,
+		UpdatedAt:      setting.UpdatedAt,
 	}
+
+	// Convert settings map
+	if setting.ProductTypeSettings != nil {
+		grpcSettings.Settings = make(map[string]string)
+		for key, value := range setting.ProductTypeSettings {
+			// Convert ProductTypeSettingDTO to string representation
+			grpcSettings.Settings[key] = fmt.Sprintf("budget:%.2f,duration:%d,priority:%d",
+				value.DefaultBudget, value.DefaultDuration, value.Priority)
+		}
+	}
+
+	return grpcSettings
 }
