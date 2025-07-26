@@ -12,7 +12,7 @@ import (
 	"marketing/env"
 	"marketing/infrastructure/server/grpc/interceptors"
 	"marketing/internal/handler"
-
+	_middleware "common/middleware"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
@@ -48,6 +48,8 @@ func buildGRPCServer(logger *flogging.FabricLogger, marketingHandler *handler.Ma
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
+		_middleware.ParseGrpcMetadataContextMiddleware,
+
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", env.GRPC_PORT))

@@ -24,6 +24,11 @@ service PaymentService {
       get: "/v2/payment/wallets/transactions"
     };
   }
+  
+  rpc GetWalletTransactionsByWalletId(GetWalletTransactionsByWalletIdRequest) returns (WalletTransactionList) {}
+  
+  rpc TransferBetweenWallets(TransferBetweenWalletsRequest) returns (TransferBetweenWalletsResponse) {}
+  
   rpc MakePayment(PaymentRequest) returns (WalletTransaction) {
     option (google.api.http) = {
       post: "/v2/payment/wallets/payment"
@@ -36,6 +41,8 @@ service PaymentService {
       body: "*"
     };
   }
+
+  
   // rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {
   //   option (google.api.http) = {
   //     post: "/v2/payment/wallets/withdraw"
@@ -277,6 +284,34 @@ message GetWalletTransactionsRequest {
   string toDate = 4;
   uint32 page = 5;
   uint32 size = 6;
+}
+
+message GetWalletTransactionsByWalletIdRequest {
+  uint32 walletId = 1;
+  string type = 2;
+  string status = 3;
+  string fromDate = 4;
+  string toDate = 5;
+  uint32 page = 6;
+  uint32 size = 7;
+}
+
+message TransferBetweenWalletsRequest {
+  uint32 fromWalletId = 1;
+  uint32 toWalletId = 2;
+  double amount = 3;
+  string description = 4;
+  string relatedService = 5;
+  string relatedId = 6;
+}
+
+message TransferBetweenWalletsResponse {
+  uint32 fromTransactionId = 1;
+  uint32 toTransactionId = 2;
+  double amount = 3;
+  string status = 4;
+  string transactionCode = 5;
+  string createdAt = 6;
 }
 
 message GetPaymentMethodsRequest {

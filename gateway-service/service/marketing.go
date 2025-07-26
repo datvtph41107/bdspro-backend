@@ -17,6 +17,5 @@ func RegisterMarketingService(ctx context.Context, mux *runtime.ServeMux, env st
 		url = "chat"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	fmt.Println("url", url, "endpoint", endpoint)
 	_ = marketingpb.RegisterMarketingServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

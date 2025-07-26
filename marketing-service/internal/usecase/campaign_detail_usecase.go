@@ -138,7 +138,6 @@ func (u *campaignDetailUsecase) GetCampaignDetail(ctx context.Context, campaignI
 		RemainingBudget: performance.Summary.RemainingBudget,
 		
 		// Wallet information
-		WalletID:        getStringValue(campaign.WalletID),
 		WalletBalance:   campaign.WalletBalance,
 		TransactionID:   getUint64Value(campaign.TransactionID),
 		

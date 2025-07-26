@@ -17,6 +17,8 @@ import (
 type PaymentUsecase interface {
 	GetWalletDashboard(ctx context.Context) (*paymentpb.WalletDashboard, error)
 	GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error)
+	GetWalletTransactionsByWalletId(ctx context.Context, req *paymentpb.GetWalletTransactionsByWalletIdRequest) (*paymentpb.WalletTransactionList, error)
+	TransferBetweenWallets(ctx context.Context, req *paymentpb.TransferBetweenWalletsRequest) (*paymentpb.TransferBetweenWalletsResponse, error)
 	Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error)
 	Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error)
 	MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error)
@@ -124,6 +126,145 @@ func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *payment
 	return &paymentpb.WalletTransactionList{
 		Transactions: transactions,
 		Total:        uint32(total),
+	}, nil
+}
+
+func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, req *paymentpb.GetWalletTransactionsByWalletIdRequest) (*paymentpb.WalletTransactionList, error) {
+	wallet, err := p.walletRepository.GetWalletById(ctx, req.WalletId)
+	if err != nil {
+		return nil, err
+	}
+	transactions, total, err := p.walletTransactionRepository.GetTransactions(ctx, wallet.Id, &paymentpb.GetWalletTransactionsRequest{
+		Page:     req.Page,
+		Size:     req.Size,
+		Type:     req.Type,
+		Status:   req.Status,
+		FromDate: req.FromDate,
+		ToDate:   req.ToDate,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &paymentpb.WalletTransactionList{
+		Transactions: transactions,
+		Total:        uint32(total),
+	}, nil
+}
+
+func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymentpb.TransferBetweenWalletsRequest) (*paymentpb.TransferBetweenWalletsResponse, error) {
+	// Start transaction
+	tx := p.walletRepository.BeginTx(ctx)
+	defer tx.Rollback()
+
+	// Get sender wallet
+	senderWallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.FromWalletId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get receiver wallet
+	receiverWallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.ToWalletId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check sender balance
+	if senderWallet.Balance < req.Amount {
+		return nil, fmt.Errorf("insufficient balance in sender wallet")
+	}
+
+	// Generate transaction code
+	senderTransactionCode := fmt.Sprintf("TRF%d%d", time.Now().UnixNano(), senderWallet.Id)
+	receiverTransactionCode := fmt.Sprintf("TRF%d%d", time.Now().UnixNano(), receiverWallet.Id)
+	// Create sender transaction
+	senderTransaction := &entity.WalletTransaction{
+		WalletId:        req.FromWalletId,
+		Type:            entity.TransactionTypeTransferOut,
+		Amount:          -req.Amount,
+		Status:          entity.TransactionStatusCompleted,
+		RelatedService:  req.RelatedService,
+		RelatedId:       req.RelatedId,
+		TransactionCode: senderTransactionCode,
+		Description:     req.Description,
+	}
+	err = p.walletTransactionRepository.CreateTransaction(ctx, senderTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create receiver transaction
+	receiverTransaction := &entity.WalletTransaction{
+		WalletId:        req.ToWalletId,
+		Type:            entity.TransactionTypeTransferIn,
+		Amount:          req.Amount,
+		Status:          entity.TransactionStatusCompleted,
+		RelatedService:  req.RelatedService,
+		RelatedId:       req.RelatedId,
+		TransactionCode: receiverTransactionCode,
+		Description:     req.Description,
+	}
+	err = p.walletTransactionRepository.CreateTransaction(ctx, receiverTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update sender balance
+	oldSenderBalance := senderWallet.Balance
+	senderWallet.Balance -= req.Amount
+	err = p.walletRepository.UpdateWallet(ctx, senderWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update receiver balance
+	oldReceiverBalance := receiverWallet.Balance
+	receiverWallet.Balance += req.Amount
+	err = p.walletRepository.UpdateWallet(ctx, receiverWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create audit logs
+	senderAuditLog := &entity.WalletAuditLog{
+		WalletId:   senderWallet.Id,
+		OldBalance: oldSenderBalance,
+		NewBalance: senderWallet.Balance,
+		Reason:     fmt.Sprintf("Transfer to wallet %d: %s", req.ToWalletId, req.Description),
+		ChangedBy:  0, // System
+	}
+	err = p.walletAuditLogRepository.CreateAuditLog(ctx, senderAuditLog)
+	if err != nil {
+		return nil, err
+	}
+
+	receiverAuditLog := &entity.WalletAuditLog{
+		WalletId:   receiverWallet.Id,
+		OldBalance: oldReceiverBalance,
+		NewBalance: receiverWallet.Balance,
+		Reason:     fmt.Sprintf("Transfer from wallet %d: %s", req.FromWalletId, req.Description),
+		ChangedBy:  0, // System
+	}
+	err = p.walletAuditLogRepository.CreateAuditLog(ctx, receiverAuditLog)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Send notifications
+	go p.notificationWorker.PushToQueue(ctx, senderTransaction, "Chuyển tiền thành công")
+	go p.notificationWorker.PushToQueue(ctx, receiverTransaction, "Nhận tiền thành công")
+
+	return &paymentpb.TransferBetweenWalletsResponse{
+		FromTransactionId: senderTransaction.Id,
+		ToTransactionId:   receiverTransaction.Id,
+		Amount:            req.Amount,
+		Status:            "COMPLETED",
+		TransactionCode:   senderTransactionCode,
+		CreatedAt:         senderTransaction.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
 

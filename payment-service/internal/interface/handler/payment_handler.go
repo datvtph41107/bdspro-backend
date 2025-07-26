@@ -4,6 +4,7 @@ import (
 	"context"
 	paymentpb "pb/types/payment"
 	"regexp"
+
 	"github.com/tuandq2112/payment-service/appconfig"
 	"github.com/tuandq2112/payment-service/internal/usecase"
 	"google.golang.org/grpc/codes"
@@ -28,6 +29,14 @@ func (h *PaymentHandler) GetWalletDashboard(ctx context.Context, req *paymentpb.
 
 func (h *PaymentHandler) GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error) {
 	return h.paymentUsecase.GetWalletTransactions(ctx, req)
+}
+
+func (h *PaymentHandler) GetWalletTransactionsByWalletId(ctx context.Context, req *paymentpb.GetWalletTransactionsByWalletIdRequest) (*paymentpb.WalletTransactionList, error) {
+	return h.paymentUsecase.GetWalletTransactionsByWalletId(ctx, req)
+}
+
+func (h *PaymentHandler) TransferBetweenWallets(ctx context.Context, req *paymentpb.TransferBetweenWalletsRequest) (*paymentpb.TransferBetweenWalletsResponse, error) {
+	return h.paymentUsecase.TransferBetweenWallets(ctx, req)
 }
 
 func (h *PaymentHandler) Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error) {

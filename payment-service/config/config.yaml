@@ -7,6 +7,8 @@ whitelist:
   - /pb_payment.PaymentService/GetWallet
   - /pb_payment.PaymentService/CreateWallet
   - /pb_payment.PaymentService/SepayWebhook
+  - /pb_payment.PaymentService/GetWalletTransactionsByWalletId
+  - /pb_payment.PaymentService/TransferBetweenWallets
 sepay:
   api_key: Apikey APi cuc xin
 grpc:

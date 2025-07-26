@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
-
+	"time"
 	"marketing/infrastructure/client"
 	"marketing/internal/domain/model"
 	"marketing/internal/domain/repository"
@@ -12,6 +12,7 @@ import (
 	_utils "common/utils"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
+	pb_payment "pb/types/payment"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -123,13 +124,10 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 	}
 
 	// Create wallet for the campaign
-	walletReq := &client.CreateWalletRequest{
-		OwnerID:       createdCampaign.ID,
-		OwnerType:     "CAMPAIGN",
-		Currency:      createdCampaign.Currency,
-		Description:   fmt.Sprintf("Wallet for campaign: %s", createdCampaign.Name),
-		CampaignID:    createdCampaign.ID,
-		InitialAmount: 0, // Start with 0 balance, user will deposit later
+	walletReq := &pb_payment.CreateWalletRequest{
+		UserId:   uint32(createdCampaign.ID),
+		Balance:  0,
+		Currency: "VND",
 	}
 
 	walletResp, err := u.paymentClient.CreateWallet(ctx, walletReq)
@@ -139,8 +137,8 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 		fmt.Printf("Warning: Failed to create wallet for campaign %d: %v\n", createdCampaign.ID, err)
 	} else {
 		// Update campaign with wallet information
-		createdCampaign.WalletID = &walletResp.Data.WalletID
-		createdCampaign.WalletBalance = walletResp.Data.Balance
+		walletID := uint64(walletResp.Id)
+		createdCampaign.WalletID = &walletID
 
 		// Update campaign in database with wallet info
 		_, err = u.campaignRepo.Update(ctx, createdCampaign.ID, createdCampaign)
@@ -375,14 +373,13 @@ func (u *campaignUsecase) UpdateCampaignStatus(ctx context.Context, id uint64, s
 	return nil
 }
 
-// TopupCampaignBudget adds budget to campaign wallet
+// TopupCampaignBudget transfers budget from user wallet to campaign wallet
 func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto.CampaignBudgetTopupDTO) (*dto.CampaignBudgetTopupResponseDTO, error) {
 	// Get campaign to validate and get wallet info
 	campaign, err := u.campaignRepo.GetByID(ctx, topupDTO.CampaignID)
 	if err != nil {
 		return nil, fmt.Errorf("campaign not found: %w", err)
 	}
-
 	// Validate campaign ownership
 	organizationID := _utils.GetOrganizationIdFromContext(ctx)
 	if campaign.OrganizationID != organizationID {
@@ -394,34 +391,51 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 		return nil, fmt.Errorf("campaign does not have a wallet")
 	}
 
-	// Parse wallet ID to get numeric ID
-	var walletIDNum uint32
-	_, err = fmt.Sscanf(*campaign.WalletID, "wallet_%d", &walletIDNum)
-	if err != nil {
-		return nil, fmt.Errorf("invalid wallet ID format: %s", *campaign.WalletID)
+	// Get user ID from context
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("user not authenticated")
 	}
 
-	// Call payment service to deposit
-	depositReq := &client.DepositRequest{
-		WalletID:          uint64(walletIDNum),
-		Amount:            topupDTO.Amount,
-		PaymentMethod:     topupDTO.PaymentMethod,
-		ExternalPaymentID: topupDTO.ExternalPaymentID,
+	// Get user wallet info
+	userWalletInfo, err := u.paymentClient.GetWallet(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user wallet info: %w", err)
 	}
 
-	transaction, err := u.paymentClient.Deposit(ctx, depositReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deposit to wallet: %w", err)
+	// Check if user wallet exists
+	if userWalletInfo == nil {
+		return nil, fmt.Errorf("user wallet not found")
 	}
 
-	// Get updated wallet info
-	walletInfo, err := u.paymentClient.GetWallet(ctx, *campaign.WalletID)
+	// Check user wallet balance
+	if userWalletInfo.Balance < topupDTO.Amount {
+		return nil, fmt.Errorf("insufficient balance in user wallet")
+	}
+
+	userWallet, err := u.paymentClient.GetWallet(ctx, uint64(userID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get updated wallet info: %w", err)
+		return nil, fmt.Errorf("failed to get user wallet info: %w", err)
+	} else {
+		if userWallet.Balance < topupDTO.Amount {
+			return nil, fmt.Errorf("insufficient balance in user wallet")
+		}
+	}
+
+	transferResp, err := u.paymentClient.TransferBetweenWallets(ctx, uint64(userWallet.Id), *campaign.WalletID, topupDTO.Amount,
+		fmt.Sprintf("Topup campaign %d budget", topupDTO.CampaignID), "MARKETING", fmt.Sprintf("campaign_%d_%d", topupDTO.CampaignID, time.Now().UnixNano()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to transfer budget to campaign wallet: %w", err)
+	}
+
+	// Get updated campaign wallet info
+	campaignWalletInfo, err := u.paymentClient.GetWallet(ctx, *campaign.WalletID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated campaign wallet info: %w", err)
 	}
 
 	// Update campaign with new wallet balance
-	campaign.WalletBalance = walletInfo.Data.Balance
+	campaign.WalletBalance = campaignWalletInfo.Balance
 	_, err = u.campaignRepo.Update(ctx, campaign.ID, campaign)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update campaign wallet balance: %w", err)
@@ -429,17 +443,17 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 
 	response := &dto.CampaignBudgetTopupResponseDTO{
 		CampaignID:        topupDTO.CampaignID,
-		TransactionID:     transaction.ID,
+		TransactionID:     transferResp.FromTransactionID, // Use the transfer transaction ID
 		Amount:            topupDTO.Amount,
-		PreviousBalance:   walletInfo.Data.Balance - topupDTO.Amount,
-		NewBalance:        walletInfo.Data.Balance,
+		PreviousBalance:   campaignWalletInfo.Balance - topupDTO.Amount,
+		NewBalance:        campaignWalletInfo.Balance,
 		Currency:          campaign.Currency,
-		Status:            transaction.Status,
-		TransactionCode:   transaction.TransactionCode,
-		PaymentMethod:     topupDTO.PaymentMethod,
-		ExternalPaymentID: topupDTO.ExternalPaymentID,
-		CreatedAt:         transaction.CreatedAt,
-		Message:           "Budget topup successful",
+		Status:            transferResp.Status,
+		TransactionCode:   transferResp.TransactionCode,
+		PaymentMethod:     "WALLET_TRANSFER", // Changed from external payment to wallet transfer
+		ExternalPaymentID: "",                // No external payment ID for internal transfer
+		CreatedAt:         transferResp.CreatedAt,
+		Message:           "Budget transfer from user wallet successful",
 	}
 
 	// Create history record
@@ -447,8 +461,8 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 		shared_enum.HistoryCampaignTopup,
 		topupDTO.CampaignID,
 		shared_enum.TargetHistoryCampaign,
-		"Nạp tiền chiến dịch quảng cáo",
-		[]string{campaign.Name, fmt.Sprintf("Số tiền: %.0f %s", topupDTO.Amount, campaign.Currency), transaction.TransactionCode},
+		"Chuyển tiền từ ví cá nhân sang chiến dịch quảng cáo",
+		[]string{campaign.Name, fmt.Sprintf("Số tiền: %.0f %s", topupDTO.Amount, campaign.Currency), transferResp.TransactionCode},
 	)
 
 	return response, nil
@@ -484,8 +498,8 @@ func (u *campaignUsecase) GetCampaignWalletInfo(ctx context.Context, campaignID 
 		Page: 1,
 		Size: 100, // Get recent transactions
 	}
-	// todo: use internal transaction
-	transactions, err := u.paymentClient.GetWalletTransactions(ctx, transactionsReq)
+	// Use the new method to get transactions for specific wallet
+	transactions, err := u.paymentClient.GetWalletTransactionsByWalletId(ctx, *campaign.WalletID, transactionsReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet transactions: %w", err)
 	}
@@ -508,15 +522,14 @@ func (u *campaignUsecase) GetCampaignWalletInfo(ctx context.Context, campaignID 
 
 	return &dto.CampaignWalletInfoDTO{
 		CampaignID:      campaignID,
-		WalletID:        *campaign.WalletID,
-		Balance:         walletInfo.Data.Balance,
+		Balance:         walletInfo.Balance,
 		Currency:        campaign.Currency,
 		TotalDeposited:  totalDeposited,
 		TotalSpent:      totalSpent,
-		AvailableBudget: walletInfo.Data.Balance,
+		AvailableBudget: walletInfo.Balance,
 		CampaignBudget:  campaign.Budget,
 		RemainingBudget: remainingBudget,
-		LastUpdated:     walletInfo.Data.UpdatedAt,
+		LastUpdated:     walletInfo.UpdatedAt,
 	}, nil
 }
 
@@ -539,20 +552,13 @@ func (u *campaignUsecase) GetCampaignTransactions(ctx context.Context, campaignI
 		return nil, 0, fmt.Errorf("campaign does not have a wallet")
 	}
 
-	// Parse wallet ID
-	var walletIDNum uint32
-	_, err = fmt.Sscanf(*campaign.WalletID, "wallet_%d", &walletIDNum)
-	if err != nil {
-		return nil, 0, fmt.Errorf("invalid wallet ID format: %s", *campaign.WalletID)
-	}
-
 	// Get transactions from payment service
 	transactionsReq := &client.GetWalletTransactionsRequest{
 		Page: page,
 		Size: limit,
 	}
 
-	transactions, err := u.paymentClient.GetWalletTransactions(ctx, transactionsReq)
+	transactions, err := u.paymentClient.GetWalletTransactionsByWalletId(ctx, *campaign.WalletID, transactionsReq)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get wallet transactions: %w", err)
 	}
@@ -600,7 +606,6 @@ func (u *campaignUsecase) toResponseDTO(campaign *model.Campaign) *dto.CampaignR
 		InternalNote:   campaign.InternalNote,
 		CreatedBy:      campaign.CreatedBy,
 		OrganizationID: campaign.OrganizationID,
-		WalletID:       campaign.WalletID,
 		WalletBalance:  campaign.WalletBalance,
 		Currency:       campaign.Currency,
 		CreatedAt:      campaign.CreatedAt,

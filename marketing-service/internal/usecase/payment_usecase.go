@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"marketing/infrastructure/client"
@@ -186,7 +187,7 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 	}
 
 	// Get updated wallet balance
-	walletInfo, err := u.paymentClient.GetWallet(ctx, paymentDTO.WalletID)
+	walletInfo, err := u.paymentClient.GetWallet(ctx, uint64(walletIDNum))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated wallet info: %w", err)
 	}
@@ -199,7 +200,7 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 
 	// Update campaign status to ACTIVE and assign transaction ID
 	campaign.Status = model.CampaignStatusActive
-	campaign.WalletBalance = walletInfo.Data.Balance
+	campaign.WalletBalance = walletInfo.Balance
 	campaign.TransactionID = &transaction.ID // Gán transaction ID vào campaign
 	_, err = u.campaignRepo.Update(ctx, campaign.ID, campaign)
 	if err != nil {
@@ -222,8 +223,8 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 		PaymentMethod:   paymentDTO.PaymentMethod,
 		Status:          transaction.Status,
 		TransactionCode: transaction.TransactionCode,
-		WalletBalance:   walletInfo.Data.Balance,
-		PreviousBalance: walletInfo.Data.Balance + paymentDTO.Amount,
+		WalletBalance:   walletInfo.Balance,
+		PreviousBalance: walletInfo.Balance + paymentDTO.Amount,
 		CreatedAt:       transaction.CreatedAt,
 		Message:         "Payment processed successfully",
 		NextStep:        "campaign_details",
@@ -232,25 +233,30 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 
 // GetWalletBalance gets wallet balance and checks sufficiency
 func (u *paymentUsecase) GetWalletBalance(ctx context.Context, walletID string, requiredAmount float64) (*dto.WalletBalanceDTO, error) {
-	walletInfo, err := u.paymentClient.GetWallet(ctx, walletID)
+	walletIDNum, err := strconv.ParseUint(walletID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid wallet ID format: %w", err)
+	}
+
+	walletInfo, err := u.paymentClient.GetWallet(ctx, walletIDNum)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet info: %w", err)
 	}
 
-	isSufficient := walletInfo.Data.Balance >= requiredAmount
-	shortfall := requiredAmount - walletInfo.Data.Balance
+	isSufficient := walletInfo.Balance >= requiredAmount
+	shortfall := requiredAmount - walletInfo.Balance
 	if shortfall < 0 {
 		shortfall = 0
 	}
 
 	return &dto.WalletBalanceDTO{
 		WalletID:       walletID,
-		Balance:        walletInfo.Data.Balance,
-		Currency:       walletInfo.Data.Currency,
+		Balance:        walletInfo.Balance,
+		Currency:       walletInfo.Currency,
 		IsSufficient:   isSufficient,
 		RequiredAmount: requiredAmount,
 		Shortfall:      shortfall,
-		LastUpdated:    walletInfo.Data.UpdatedAt,
+		LastUpdated:    walletInfo.UpdatedAt,
 	}, nil
 }
 

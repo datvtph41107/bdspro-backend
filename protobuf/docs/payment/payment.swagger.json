@@ -820,6 +820,32 @@
         }
       }
     },
+    "pb_paymentTransferBetweenWalletsResponse": {
+      "type": "object",
+      "properties": {
+        "fromTransactionId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "toTransactionId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "string"
+        },
+        "transactionCode": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
     "pb_paymentWallet": {
       "type": "object",
       "properties": {

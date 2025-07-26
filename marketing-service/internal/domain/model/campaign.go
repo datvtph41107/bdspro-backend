@@ -56,7 +56,7 @@ type Campaign struct {
 	InternalNote    string         `json:"internal_note"`
 	
 	// Payment/Wallet information
-	WalletID        *string        `json:"wallet_id"`
+	WalletID        *uint64        `json:"wallet_id"`
 	WalletBalance   float64        `json:"wallet_balance" gorm:"default:0"`
 	Currency        string         `json:"currency" gorm:"default:'VND'"`
 	TransactionID   *uint64        `json:"transaction_id"` // Payment transaction ID
