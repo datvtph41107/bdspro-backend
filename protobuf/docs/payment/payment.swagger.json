@@ -685,7 +685,7 @@
     "pb_paymentPaymentMethodList": {
       "type": "object",
       "properties": {
-        "paymentMethods": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -811,7 +811,7 @@
     "pb_paymentTransactionTypeList": {
       "type": "object",
       "properties": {
-        "types": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -944,7 +944,7 @@
     "pb_paymentWalletTransactionList": {
       "type": "object",
       "properties": {
-        "transactions": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

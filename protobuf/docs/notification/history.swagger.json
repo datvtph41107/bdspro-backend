@@ -1026,7 +1026,7 @@
             "$ref": "#/definitions/notificationpbHistoryDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }

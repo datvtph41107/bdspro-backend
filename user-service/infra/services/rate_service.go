@@ -65,7 +65,7 @@ func (s *RateService) GetRateList(ctx context.Context, req *userpb.GetRateListRe
 	}
 	return &userpb.RateList{
 		Data:  rateList,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }
 
@@ -132,7 +132,7 @@ func (s *RateService) GetHistoryRate(ctx context.Context, req *userpb.GetHistory
 	}
 	return &userpb.RateList{
 		Data:  rateList,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }
 

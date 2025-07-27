@@ -115,8 +115,8 @@ func (c *PaymentClient) GetWalletTransactions(ctx context.Context, req *GetWalle
 	}
 
 	// Convert transactions
-	transactions := make([]WalletTransaction, len(grpcResp.Transactions))
-	for i, t := range grpcResp.Transactions {
+	transactions := make([]WalletTransaction, len(grpcResp.Data))
+	for i, t := range grpcResp.Data {
 		transactions[i] = WalletTransaction{
 			ID:                uint64(t.Id),
 			WalletID:          uint64(t.WalletId),
@@ -156,8 +156,8 @@ func (c *PaymentClient) GetWalletTransactionsByWalletId(ctx context.Context, wal
 	}
 
 	// Convert transactions
-	transactions := make([]WalletTransaction, len(grpcResp.Transactions))
-	for i, t := range grpcResp.Transactions {
+	transactions := make([]WalletTransaction, len(grpcResp.Data))
+	for i, t := range grpcResp.Data {
 		transactions[i] = WalletTransaction{
 			ID:                uint64(t.Id),
 			WalletID:          uint64(t.WalletId),
@@ -277,8 +277,8 @@ func (c *PaymentClient) GetPaymentMethods(ctx context.Context, req *GetPaymentMe
 	}
 
 	// Convert payment methods
-	methods := make([]PaymentMethod, len(grpcResp.PaymentMethods))
-	for i, m := range grpcResp.PaymentMethods {
+	methods := make([]PaymentMethod, len(grpcResp.Data))
+	for i, m := range grpcResp.Data {
 		methods[i] = PaymentMethod{
 			ID:             uint64(m.Id),
 			OrganizationID: uint64(m.OrganizationId),

@@ -48,8 +48,8 @@ func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest
 		result[i] = mapper.StageDomainToPb(&stage)
 	}
 	return &crmpb.StageListDTO{
-		Data:          result,
-		TotalElements: uint32(total),
+		Data:  result,
+		Total: uint32(total),
 	}, nil
 }
 

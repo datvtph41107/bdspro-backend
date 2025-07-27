@@ -203,7 +203,7 @@ func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRe
 
 	return &socialpb.ListReelResponse{
 		Data:  result,
-		Total: count,
+		Total: int32(count),
 	}, nil
 }
 

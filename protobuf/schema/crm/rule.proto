@@ -69,5 +69,5 @@ message RuleDTO {
 
 message RuleListDTO {
   repeated RuleDTO data = 1;
-  uint32 totalElements = 2;
+  uint32 total = 2;
 }

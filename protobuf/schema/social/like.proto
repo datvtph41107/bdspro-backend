@@ -61,12 +61,12 @@ message LikeResponse {
 
 message UnLikeResponse {
     repeated LikeResponse data = 1;
-    uint64 total = 2;
+    int32 total = 2;
 }
 
 message ListLikeResponse {
     repeated LikeResponse data = 1;
-    uint64 total = 2;
+    int32 total = 2;
 }
 
 message LikeNewsFeedSearch {

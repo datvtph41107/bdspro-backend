@@ -102,6 +102,6 @@ message ListAppointmentsRequest {
 }
 
 message ListAppointmentsResponse {
-  repeated Appointment appointments = 1;
+  repeated Appointment data = 1;
   int32 total = 2;
 } 

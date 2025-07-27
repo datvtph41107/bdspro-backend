@@ -154,8 +154,8 @@ message DealTransactionResponse {
 
 // Response cho danh sách giao dịch
 message DealTransactionListResponse {
-    repeated DealTransactionResponse transactions = 1;
-    uint64 total = 2;
+    repeated DealTransactionResponse data = 1;
+    int32 total = 2;
 }
 
 // Response cho thống kê tài chính

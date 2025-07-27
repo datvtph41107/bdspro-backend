@@ -72,7 +72,7 @@ message ProductMarketRequest {
 
 message ProductMarketResponse {
     repeated ProductMarket data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 message ProductMarket {
@@ -193,7 +193,7 @@ message ItemResponse {
 
 message ListItemResponse {
     repeated ItemResponse data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 message SearchQueryRequest {
@@ -202,3 +202,4 @@ message SearchQueryRequest {
     string text = 3;
     optional uint64 parentId = 4;
 }
+

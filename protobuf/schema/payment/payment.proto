@@ -193,7 +193,7 @@ message WalletTransaction {
 }
 
 message WalletTransactionList {
-  repeated WalletTransaction transactions = 1;
+  repeated WalletTransaction data = 1;
   uint32 total = 2;
 }
 
@@ -327,7 +327,7 @@ message GetPaymentMethodsRequest {
 }
 
 message PaymentMethodList {
-  repeated PaymentMethod paymentMethods = 1;
+  repeated PaymentMethod data = 1;
   uint32 total = 2;
 }
 
@@ -357,7 +357,7 @@ message GetDealTransactionsRequest {
 }
 
 message DealTransactionList {
-  repeated DealTransaction transactions = 1;
+  repeated DealTransaction data = 1;
   uint32 total = 2;
 }
 
@@ -394,7 +394,7 @@ message TransactionType {
 }
 
 message TransactionTypeList {
-  repeated TransactionType types = 1;
+  repeated TransactionType data = 1;
 }
 
 message DeleteTransactionTypeRequest {

@@ -64,5 +64,5 @@ message CommentResponse {
 
 message CommentListResponse {
     repeated CommentResponse data = 1;
-    uint64 total = 2;
+    int32 total = 2;
 }

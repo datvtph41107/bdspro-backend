@@ -366,7 +366,7 @@
             "$ref": "#/definitions/crmpbRuleDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }

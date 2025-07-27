@@ -78,7 +78,7 @@ func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments [
 		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment)
 	}
 	return &appointmentpb.ListAppointmentsResponse{
-		Appointments: appointmentsResponse,
-		Total:        total,
+		Data:  appointmentsResponse,
+		Total: total,
 	}
 }

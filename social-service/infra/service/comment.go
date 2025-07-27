@@ -118,7 +118,7 @@ func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.Comm
 	s.userClient.PbUserToComment(ctx, results)
 	return &pb_social.CommentListResponse{
 		Data:  results,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }
 

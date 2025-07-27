@@ -16,7 +16,7 @@ message StageSearchRequest {
 
 message StageListDTO {
     repeated StageDTO data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 service StageService {

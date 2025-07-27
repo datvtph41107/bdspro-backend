@@ -49,8 +49,8 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdsp
 	}
 	products := s.ProductMapper.MapProductMarketPbList(result)
 	return &pb_bdspro.ProductMarketResponse{
-		Data:          products,
-		TotalElements: uint32(total),
+		Data:  products,
+		Total: uint32(total),
 	}, err
 }
 
@@ -73,8 +73,8 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *pb_bdspr
 	items := make([]*pb_bdspro.ItemResponse, 0)
 	copier.Copy(&items, &result)
 	return &pb_bdspro.ListItemResponse{
-		Data:          items,
-		TotalElements: uint32(len(result)),
+		Data:  items,
+		Total: uint32(len(result)),
 	}, nil
 }
 
@@ -94,8 +94,8 @@ func (s *BdsproPublicService) GetRegion(ctx context.Context, req *pb_bdspro.Sear
 	items := make([]*pb_bdspro.ItemResponse, 0)
 	copier.Copy(&items, &result)
 	return &pb_bdspro.ListItemResponse{
-		Data:          items,
-		TotalElements: uint32(total),
+		Data:  items,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -141,8 +141,8 @@ func (s *BdsproPublicService) GetProject(ctx context.Context, req *pb_bdspro.Sea
 	items := make([]*pb_bdspro.ItemResponse, 0)
 	copier.Copy(&items, &result)
 	return &pb_bdspro.ListItemResponse{
-		Data:          items,
-		TotalElements: uint32(total),
+		Data:  items,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -165,8 +165,8 @@ func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.Sea
 	items := make([]*pb_bdspro.ItemResponse, 0)
 	copier.Copy(&items, &result)
 	return &pb_bdspro.ListItemResponse{
-		Data:          items,
-		TotalElements: uint32(len(result)),
+		Data:  items,
+		Total: uint32(len(result)),
 	}, nil
 }
 
@@ -192,7 +192,7 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 	products := s.ProductMapper.MapProductPbList(result)
 
 	return &pb_bdspro.SearchResponse{
-		Data:          products,
+		Data:  products,
 		TotalElements: uint32(total),
 	}, nil
 }

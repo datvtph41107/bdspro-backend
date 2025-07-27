@@ -1554,7 +1554,7 @@
     "chatpbGetListParticipantResponse": {
       "type": "object",
       "properties": {
-        "participants": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -1562,8 +1562,8 @@
           }
         },
         "total": {
-          "type": "string",
-          "format": "int64"
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

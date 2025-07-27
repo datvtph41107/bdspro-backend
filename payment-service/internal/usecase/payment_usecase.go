@@ -120,8 +120,8 @@ func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *payment
 		return nil, err
 	}
 	return &paymentpb.WalletTransactionList{
-		Transactions: transactions,
-		Total:        uint32(total),
+		Data:  transactions,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -152,8 +152,8 @@ func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, re
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}
 	return &paymentpb.WalletTransactionList{
-		Transactions: transactions,
-		Total:        uint32(total),
+		Data:  transactions,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -571,8 +571,8 @@ func (p *paymentUsecase) GetPaymentMethods(ctx context.Context, req *paymentpb.G
 	}
 
 	return &paymentpb.PaymentMethodList{
-		PaymentMethods: methods,
-		Total:          uint32(total),
+		Data:  methods,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -669,7 +669,7 @@ func (p *paymentUsecase) GetTransactionTypes(ctx context.Context, req *paymentpb
 	}
 
 	return &paymentpb.TransactionTypeList{
-		Types: types,
+		Data: types,
 	}, nil
 }
 

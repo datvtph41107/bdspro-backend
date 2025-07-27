@@ -50,8 +50,8 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 	}
 
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -76,8 +76,8 @@ func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.His
 	}
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -104,8 +104,8 @@ func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -123,8 +123,8 @@ func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.H
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -142,8 +142,8 @@ func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -170,8 +170,8 @@ func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificat
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -196,8 +196,8 @@ func (s *HistoryService) RuleEventHistory(ctx context.Context, req *notification
 	}
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -241,8 +241,8 @@ func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb
 	}
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -267,8 +267,8 @@ func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationp
 	}
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }
 
@@ -293,7 +293,7 @@ func (s *HistoryService) PackageHistory(ctx context.Context, req *notificationpb
 	}
 	historiesPb := s.Mapper.HistoryToPbs(histories)
 	return &notificationpb.HistoryListDTO{
-		Data:          historiesPb,
-		TotalElements: uint32(total),
+		Data:  historiesPb,
+		Total: uint32(total),
 	}, nil
 }

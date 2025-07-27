@@ -72,7 +72,7 @@ message SubmitInvestRequest {
 
 message ListInvestment {
     repeated Investment data = 1;
-    int64 total = 2;
+    int32 total = 2;
 }
 
 message Investment {

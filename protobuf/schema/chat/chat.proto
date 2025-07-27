@@ -434,8 +434,8 @@ message GetListParticipantRequest {
 }
 
 message GetListParticipantResponse {
-  repeated Participant participants = 1;
-  int64 total = 2;
+  repeated Participant data = 1;
+  int32 total = 2;
 }
 
 message GetReadReceiptRequest {

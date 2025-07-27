@@ -52,5 +52,5 @@ message ListInvitationRequest {
 
 message ListInvitationResponse {
     repeated AppInvited data = 1;
-    uint64 total = 2;
+    int32 total = 2;
 }

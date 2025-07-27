@@ -142,7 +142,7 @@ func (h *InvestmentHandler) GetInvestments(ctx context.Context, req *organizatio
 
 	return &organizationpb.ListInvestment{
 		Data:  result,
-		Total: total,
+		Total: int32(total),
 	}, nil
 }
 

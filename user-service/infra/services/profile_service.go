@@ -210,7 +210,7 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 
 	return &userpb.AccountInfoResponse{
 		Data:  accountInfos,
-		Total: uint64(len(accountInfos)),
+		Total: int32(len(accountInfos)),
 	}, nil
 }
 
@@ -238,6 +238,6 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 
 	return &userpb.SearchProfilePublicResponse{
 		Data:  infos,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }

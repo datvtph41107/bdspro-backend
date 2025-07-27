@@ -167,7 +167,7 @@ func (s *PostService) GetPersonalPost(ctx context.Context, req *pb_bdspro.PostSe
 
 	return &pb_bdspro.PostListResponse{
 		Data:  postList,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }
 func (s *PostService) GetGlobalPost(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
@@ -186,7 +186,7 @@ func (s *PostService) GetGlobalPost(ctx context.Context, req *pb_bdspro.PostSear
 
 	return &pb_bdspro.PostListResponse{
 		Data:  postList,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }
 func (s *PostService) GetPublish(ctx context.Context, req *pb_bdspro.PostPublishSearch) (*pb_bdspro.PostListResponse, error) {
@@ -201,6 +201,6 @@ func (s *PostService) GetPublish(ctx context.Context, req *pb_bdspro.PostPublish
 
 	return &pb_bdspro.PostListResponse{
 		Data:  postList,
-		Total: uint64(total),
+		Total: int32(total),
 	}, err
 }

@@ -657,7 +657,7 @@
             "$ref": "#/definitions/crmpbPipelineDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }

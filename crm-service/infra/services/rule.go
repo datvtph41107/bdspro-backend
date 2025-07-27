@@ -51,8 +51,8 @@ func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) 
 	}
 
 	return &crmpb.RuleListDTO{
-		Data:          rulesPb,
-		TotalElements: uint32(total),
+		Data:  rulesPb,
+		Total: uint32(total),
 	}, nil
 }
 

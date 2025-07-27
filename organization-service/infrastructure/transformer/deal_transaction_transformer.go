@@ -132,8 +132,8 @@ func (t *dealTransactionTransformer) TransformToProtoListResponse(response *dto.
 	}
 
 	return &pb.DealTransactionListResponse{
-		Transactions: transactions,
-		Total:        uint64(response.Total),
+		Data:  transactions,
+		Total: int32(response.Total),
 	}
 }
 

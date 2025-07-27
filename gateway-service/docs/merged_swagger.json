@@ -11829,241 +11829,6 @@
         ]
       }
     },
-    "/v2/marketing/campaign-details": {
-      "get": {
-        "tags": [
-          "MarketingService"
-        ],
-        "operationId": "MarketingService_ListCampaignDetails",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "campaignId",
-            "in": "query",
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_marketingListCampaignDetailsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "MarketingService"
-        ],
-        "summary": "Campaign Detail Management APIs - D.10.2.4",
-        "operationId": "MarketingService_CreateCampaignDetail",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_marketingCreateCampaignDetailRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/marketing/campaign-details/{id}": {
-      "get": {
-        "tags": [
-          "MarketingService"
-        ],
-        "operationId": "MarketingService_GetCampaignDetail",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "MarketingService"
-        ],
-        "operationId": "MarketingService_UpdateCampaignDetail",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MarketingServiceUpdateCampaignDetailBody"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_marketingCampaignDetailResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "MarketingService"
-        ],
-        "operationId": "MarketingService_DeleteCampaignDetail",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_marketingDeleteCampaignDetailResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
     "/v2/marketing/campaigns": {
       "get": {
         "tags": [
@@ -25148,42 +24913,6 @@
       },
       "type": "object"
     },
-    "MarketingServiceUpdateCampaignDetailBody": {
-      "properties": {
-        "budget": {
-          "format": "double",
-          "type": "number"
-        },
-        "description": {
-          "type": "string"
-        },
-        "duration": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "endDate": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "packageId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "productId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "startDate": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "MarketingServiceUpdateCampaignStatusBody": {
       "properties": {
         "status": {
@@ -25990,7 +25719,7 @@
     },
     "appointmentListAppointmentsResponse": {
       "properties": {
-        "appointments": {
+        "data": {
           "items": {
             "$ref": "#/definitions/appointmentAppointment",
             "type": "object"
@@ -26432,7 +26161,7 @@
     },
     "chatpbGetListParticipantResponse": {
       "properties": {
-        "participants": {
+        "data": {
           "items": {
             "$ref": "#/definitions/chatpbParticipant",
             "type": "object"
@@ -26440,8 +26169,8 @@
           "type": "array"
         },
         "total": {
-          "format": "int64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -28143,8 +27872,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -28213,7 +27942,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -28327,7 +28056,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -28542,7 +28271,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -28688,7 +28417,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -29953,16 +29682,16 @@
     },
     "organizationpbDealTransactionListResponse": {
       "properties": {
-        "total": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "transactions": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbDealTransactionResponse",
             "type": "object"
           },
           "type": "array"
+        },
+        "total": {
+          "format": "int32",
+          "type": "integer"
         }
       },
       "title": "Response cho danh sách giao dịch",
@@ -31309,8 +31038,8 @@
           "type": "array"
         },
         "total": {
-          "format": "int64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -33042,7 +32771,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -33051,16 +32780,16 @@
     },
     "pb_bdsproListTransactionsResponse": {
       "properties": {
-        "total": {
-          "format": "int32",
-          "type": "integer"
-        },
-        "transactions": {
+        "data": {
           "items": {
             "$ref": "#/definitions/pb_bdsproTransaction",
             "type": "object"
           },
           "type": "array"
+        },
+        "total": {
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -33292,8 +33021,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -33823,7 +33552,7 @@
           },
           "type": "array"
         },
-        "totalElements": {
+        "total": {
           "format": "int64",
           "type": "integer"
         }
@@ -35100,140 +34829,6 @@
       },
       "type": "object"
     },
-    "pb_marketingCampaignDetail": {
-      "properties": {
-        "budget": {
-          "format": "double",
-          "type": "number"
-        },
-        "canEdit": {
-          "type": "boolean"
-        },
-        "canExtend": {
-          "type": "boolean"
-        },
-        "canPause": {
-          "type": "boolean"
-        },
-        "canResume": {
-          "type": "boolean"
-        },
-        "canTopup": {
-          "type": "boolean"
-        },
-        "clicks": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "cpc": {
-          "format": "double",
-          "type": "number"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "createdBy": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "ctr": {
-          "format": "double",
-          "type": "number"
-        },
-        "currency": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "duration": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "endDate": {
-          "type": "string"
-        },
-        "id": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "impressions": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "name": {
-          "type": "string"
-        },
-        "organizationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "packageId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "packageName": {
-          "type": "string"
-        },
-        "packageType": {
-          "type": "string"
-        },
-        "productId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "productImage": {
-          "type": "string"
-        },
-        "productName": {
-          "type": "string"
-        },
-        "productType": {
-          "type": "string"
-        },
-        "remainingBudget": {
-          "format": "double",
-          "type": "number"
-        },
-        "spentAmount": {
-          "format": "double",
-          "type": "number"
-        },
-        "startDate": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "transactionId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "walletBalance": {
-          "format": "double",
-          "type": "number"
-        },
-        "walletId": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "pb_marketingCampaignDetailResponse": {
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/pb_marketingCampaignDetail"
-        }
-      },
-      "title": "Campaign detail messages - D.10.2.4",
-      "type": "object"
-    },
     "pb_marketingCampaignExport": {
       "properties": {
         "campaignId": {
@@ -35600,46 +35195,6 @@
       },
       "type": "object"
     },
-    "pb_marketingCreateCampaignDetailRequest": {
-      "properties": {
-        "budget": {
-          "format": "double",
-          "type": "number"
-        },
-        "campaignId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "duration": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "endDate": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "packageId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "productId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "startDate": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "pb_marketingCreateCampaignRequest": {
       "properties": {
         "budget": {
@@ -35825,17 +35380,6 @@
       },
       "type": "object"
     },
-    "pb_marketingDeleteCampaignDetailResponse": {
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "pb_marketingDeleteCampaignResponse": {
       "properties": {
         "message": {
@@ -35879,22 +35423,6 @@
         "data": {
           "items": {
             "$ref": "#/definitions/pb_marketingBudget",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "total": {
-          "format": "int64",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "pb_marketingListCampaignDetailsResponse": {
-      "properties": {
-        "data": {
-          "items": {
-            "$ref": "#/definitions/pb_marketingCampaignDetail",
             "type": "object"
           },
           "type": "array"
@@ -36514,7 +36042,7 @@
     },
     "pb_paymentPaymentMethodList": {
       "properties": {
-        "paymentMethods": {
+        "data": {
           "items": {
             "$ref": "#/definitions/pb_paymentPaymentMethod",
             "type": "object"
@@ -36640,12 +36168,38 @@
     },
     "pb_paymentTransactionTypeList": {
       "properties": {
-        "types": {
+        "data": {
           "items": {
             "$ref": "#/definitions/pb_paymentTransactionType",
             "type": "object"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "pb_paymentTransferBetweenWalletsResponse": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromTransactionId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "toTransactionId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "transactionCode": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -36747,16 +36301,16 @@
     },
     "pb_paymentWalletTransactionList": {
       "properties": {
-        "total": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "transactions": {
+        "data": {
           "items": {
             "$ref": "#/definitions/pb_paymentWalletTransaction",
             "type": "object"
           },
           "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -36806,8 +36360,8 @@
           "type": "array"
         },
         "total": {
-          "format": "int64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -37354,8 +36908,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -37485,8 +37039,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -37695,8 +37249,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -37951,8 +37505,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -38000,8 +37554,8 @@
           "type": "array"
         },
         "total": {
-          "format": "uint64",
-          "type": "string"
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"

@@ -331,8 +331,8 @@
           }
         },
         "total": {
-          "type": "string",
-          "format": "uint64"
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

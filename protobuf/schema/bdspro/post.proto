@@ -162,7 +162,7 @@ message PostSearchRequest {
 
 message PostListResponse {
 	repeated Post data = 1;
-	uint64 total = 2;
+	int32 total = 2;
 }
 
 message PostPublishSearch {

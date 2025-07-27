@@ -413,7 +413,7 @@
     "pb_bdsproListTransactionsResponse": {
       "type": "object",
       "properties": {
-        "transactions": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

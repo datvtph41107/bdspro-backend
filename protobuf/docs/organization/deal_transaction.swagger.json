@@ -374,7 +374,7 @@
     "organizationpbDealTransactionListResponse": {
       "type": "object",
       "properties": {
-        "transactions": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -382,8 +382,8 @@
           }
         },
         "total": {
-          "type": "string",
-          "format": "uint64"
+          "type": "integer",
+          "format": "int32"
         }
       },
       "title": "Response cho danh sách giao dịch"

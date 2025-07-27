@@ -4,11 +4,12 @@ import (
 	_dto "common/dto"
 	_routes "common/routes"
 	"context"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 )
@@ -51,8 +52,8 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 	}
 
 	return &crmpb.PipelineListDTO{
-		TotalElements: uint32(total),
-		Data:          result,
+		Total: uint32(total),
+		Data:  result,
 	}, nil
 }
 
@@ -184,7 +185,7 @@ func (s *PipelineService) GetWithStages(ctx context.Context, req *crmpb.Pipeline
 	}
 
 	return &crmpb.PipelineListDTO{
-		TotalElements: uint32(total),
-		Data:          result,
+		Total: uint32(total),
+		Data:  result,
 	}, nil
 }

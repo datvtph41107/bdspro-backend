@@ -315,7 +315,7 @@
             "$ref": "#/definitions/crmpbStageDTO"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }

@@ -23,7 +23,7 @@ message PipelineSearchRequest {
 
 message PipelineListDTO {
     repeated PipelineDTO data = 1;
-    uint32 totalElements = 2;
+    uint32 total = 2;
 }
 
 service PipelineService {

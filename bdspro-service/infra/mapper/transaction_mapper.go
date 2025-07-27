@@ -117,8 +117,8 @@ func (t *transactionTransformer) EntityToListTransactionsResponse(txs []*domain.
 	}
 
 	return &bdspropb.ListTransactionsResponse{
-		Transactions: transactions,
-		Total:        total,
+		Data:  transactions,
+		Total: total,
 	}
 }
 

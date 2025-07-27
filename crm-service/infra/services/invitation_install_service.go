@@ -88,6 +88,6 @@ func (s *InvitationInstallService) ListInvitation(ctx context.Context, req *crmp
 	}
 	return &crmpb.ListInvitationResponse{
 		Data:  items,
-		Total: uint64(total),
+		Total: int32(total),
 	}, nil
 }

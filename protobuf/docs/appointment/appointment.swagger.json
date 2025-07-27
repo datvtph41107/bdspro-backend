@@ -359,7 +359,7 @@
     "appointmentListAppointmentsResponse": {
       "type": "object",
       "properties": {
-        "appointments": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

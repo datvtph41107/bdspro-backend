@@ -98,7 +98,7 @@ message ListTransactionsRequest {
 }
 
 message ListTransactionsResponse {
-  repeated Transaction transactions = 1;
+  repeated Transaction data = 1;
   int32 total = 2;
 }
 

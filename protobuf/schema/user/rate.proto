@@ -71,7 +71,7 @@ message GetRateListRequest {
 
 message RateList {
   repeated Rate data = 1;
-  uint64 total = 2;
+  int32 total = 2;
 }
 
 message Attach {

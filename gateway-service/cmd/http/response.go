@@ -55,10 +55,10 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 
 	// fallback default
 	return json.Marshal(map[string]interface{}{
-		"code":          0,
-		"message":       "success",
-		"data":          data,
-		"totalElements": totalElements,
+		"code":    0,
+		"message": "success",
+		"data":    data,
+		"total":   totalElements,
 	})
 }
 

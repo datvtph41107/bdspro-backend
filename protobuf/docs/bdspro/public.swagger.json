@@ -450,7 +450,7 @@
             "$ref": "#/definitions/pb_bdsproItemResponse"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }
@@ -690,7 +690,7 @@
             "$ref": "#/definitions/pb_bdsproProductMarket"
           }
         },
-        "totalElements": {
+        "total": {
           "type": "integer",
           "format": "int64"
         }
