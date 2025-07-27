@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -16,17 +17,61 @@ func NewPostgresDB(dsn string) (*gorm.DB, error) {
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{
 		Logger: logger.New(
-			log.New(os.Stdout, "\r\n", log.LstdFlags), // Ghi log ra terminal
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
 			logger.Config{
-				SlowThreshold:             200 * time.Millisecond, // Đánh dấu query chậm
-				LogLevel:                  logger.Info,            // Debug mode
-				IgnoreRecordNotFoundError: true,                   // Không log lỗi RecordNotFound
-				Colorful:                  true,                   // Hiển thị màu sắc
+				SlowThreshold:             200 * time.Millisecond,
+				LogLevel:                  logger.Info,
+				IgnoreRecordNotFoundError: true,
+				Colorful:                  true,
 			},
 		),
 	})
 	if err != nil {
-		postgresInstance = nil
+		return nil, err
 	}
-	return postgresInstance, err
+
+	// ✅ Get underlying sql.DB for connection pool configuration
+	sqlDB, err := postgresInstance.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	// ✅ Configure connection pool
+	sqlDB.SetMaxOpenConns(25)        // Maximum number of open connections
+	sqlDB.SetMaxIdleConns(10)        // Maximum number of idle connections
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)  // Maximum lifetime of connections
+	sqlDB.SetConnMaxIdleTime(10 * time.Minute)  // Maximum idle time of connections
+
+	// ✅ Health check with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
+	return postgresInstance, nil
+}
+
+// ✅ Add health check function
+func HealthCheck(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	return sqlDB.PingContext(ctx)
+}
+
+// ✅ Add connection pool stats
+func GetConnectionStats(db *gorm.DB) (open, idle int) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return 0, 0
+	}
+	
+	return sqlDB.Stats().OpenConnections, sqlDB.Stats().Idle
 }
