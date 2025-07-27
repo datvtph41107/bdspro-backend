@@ -16,20 +16,20 @@ __debug_bin**
 !.vscode/launch.json
 
 
- appointment-service/appointment-service
- bdspro-service/bdspro-service
- chat-service/chat-service
- crm-service/crm-service
- file-service/file-service
- gateway-service/gateway-service
- map-service/map-service
- marketing-service/marketing-service
- membership-service/membership-service
- notification-service/notification-service
- organization-service/organization-service
- payment-service/payment-service
- relay-service/relay-service
- search-service/search-service
- social-service/social-service
- task-service/task-service
- user-service/user-service
+appointment-service/appointment-service
+bdspro-service/bdspro-service
+chat-service/chat-service
+crm-service/crm-service
+file-service/file-service
+gateway-service/gateway-service
+map-service/map-service
+marketing-service/marketing-service
+membership-service/membership-service
+notification-service/notification-service
+organization-service/organization-service
+payment-service/payment-service
+relay-service/relay-service
+search-service/search-service
+social-service/social-service
+task-service/task-service
+user-service/user-service
