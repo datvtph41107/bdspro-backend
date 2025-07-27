@@ -75,29 +75,7 @@ func (h *PaymentHandler) ExportWalletData(ctx context.Context, req *paymentpb.Re
 	return h.paymentUsecase.ExportWalletData(ctx, req)
 }
 
-// func (h *PaymentHandler) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
-// 	return h.paymentUsecase.GetDealTransactionsDashboard(ctx, req)
-// }
 
-// func (h *PaymentHandler) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
-// 	return h.paymentUsecase.GetDealTransactions(ctx, req)
-// }
-
-// func (h *PaymentHandler) GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-// 	return h.paymentUsecase.GetDealTransaction(ctx, req)
-// }
-
-// func (h *PaymentHandler) CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-// 	return h.paymentUsecase.CreateDealTransaction(ctx, req)
-// }
-
-// func (h *PaymentHandler) UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-// 	return h.paymentUsecase.UpdateDealTransaction(ctx, req)
-// }
-
-// func (h *PaymentHandler) ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-// 	return h.paymentUsecase.ApproveDealTransaction(ctx, req)
-// }
 
 func (h *PaymentHandler) GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error) {
 	return h.paymentUsecase.GetTransactionTypes(ctx, req)
@@ -119,8 +97,12 @@ func (h *PaymentHandler) CreateWallet(ctx context.Context, req *paymentpb.Create
 	return h.paymentUsecase.CreateWallet(ctx, req)
 }
 
-func (h *PaymentHandler) GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error) {
-	return h.paymentUsecase.GetWallet(ctx, req)
+func (h *PaymentHandler) GetWalletByUserId(ctx context.Context, req *paymentpb.GetWalletByUserIdRequest) (*paymentpb.Wallet, error) {
+	return h.paymentUsecase.GetWalletByUserId(ctx, req)
+}
+
+func (h *PaymentHandler) GetWalletByWalletId(ctx context.Context, req *paymentpb.GetWalletByWalletIdRequest) (*paymentpb.Wallet, error) {
+	return h.paymentUsecase.GetWalletByWalletId(ctx, req)
 }
 
 func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayWebhookRequest) (*paymentpb.Empty, error) {

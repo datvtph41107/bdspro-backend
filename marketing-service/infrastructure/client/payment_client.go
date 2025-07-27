@@ -50,20 +50,33 @@ func (c *PaymentClient) CreateWallet(ctx context.Context, req *pb_payment.Create
 }
 
 // GetWallet retrieves wallet information
-func (c *PaymentClient) GetWallet(ctx context.Context, walletID uint64) (*pb_payment.Wallet, error) {
-
+func (c *PaymentClient) GetWalletByWalletId(ctx context.Context, walletID uint64) (*pb_payment.Wallet, error) {
 
 	// Call gRPC service
-	grpcReq := &pb_payment.GetWalletRequest{
-		Id: uint32(walletID),
+	grpcReq := &pb_payment.GetWalletByWalletIdRequest{
+		WalletId: uint32(walletID),
 	}
 
-	grpcResp, err := c.client.GetWallet(ctx, grpcReq)
+	grpcResp, err := c.client.GetWalletByWalletId(ctx, grpcReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet via gRPC: %w", err)
 	}
 
 	// Convert response
+	return grpcResp, nil
+}
+
+func (c *PaymentClient) GetWalletByUserId(ctx context.Context, userId uint64) (*pb_payment.Wallet, error) {
+
+	grpcReq := &pb_payment.GetWalletByUserIdRequest{
+		UserId: uint32(userId),
+	}
+
+	grpcResp, err := c.client.GetWalletByUserId(ctx, grpcReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get wallet via gRPC: %w", err)
+	}
+
 	return grpcResp, nil
 }
 

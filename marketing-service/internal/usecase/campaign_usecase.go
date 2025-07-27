@@ -398,7 +398,7 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 	}
 
 	// Get user wallet info
-	userWalletInfo, err := u.paymentClient.GetWallet(ctx, userID)
+	userWalletInfo, err := u.paymentClient.GetWalletByUserId(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user wallet info: %w", err)
 	}
@@ -413,7 +413,7 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 		return nil, fmt.Errorf("insufficient balance in user wallet")
 	}
 
-	userWallet, err := u.paymentClient.GetWallet(ctx, uint64(userID))
+	userWallet, err := u.paymentClient.GetWalletByUserId(ctx, uint64(userID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user wallet info: %w", err)
 	} else {
@@ -429,7 +429,7 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 	}
 
 	// Get updated campaign wallet info
-	campaignWalletInfo, err := u.paymentClient.GetWallet(ctx, *campaign.WalletID)
+	campaignWalletInfo, err := u.paymentClient.GetWalletByWalletId(ctx, *campaign.WalletID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated campaign wallet info: %w", err)
 	}
@@ -488,7 +488,7 @@ func (u *campaignUsecase) GetCampaignWalletInfo(ctx context.Context, campaignID 
 	}
 
 	// Get wallet info from payment service
-	walletInfo, err := u.paymentClient.GetWallet(ctx, *campaign.WalletID)
+	walletInfo, err := u.paymentClient.GetWalletByWalletId(ctx, *campaign.WalletID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet info: %w", err)
 	}

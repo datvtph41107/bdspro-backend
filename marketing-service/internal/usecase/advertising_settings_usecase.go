@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_utils "common/utils"
 	"context"
 	"fmt"
 	"marketing/internal/domain/model"
@@ -17,22 +16,7 @@ type AdvertisingSettingsUsecase interface {
 	DeleteAdvertisingSettings(ctx context.Context, id uint64) error
 	
 	// Search and list
-	SearchAdvertisingSettings(ctx context.Context, searchDTO dto.AdvertisingSettingsSearchDTO) ([]*dto.AdvertisingSettingsDTO, int64, error)
-	
-	// Campaign defaults
-	GetCampaignDefaults(ctx context.Context, productType string) (*dto.CampaignDefaultsDTO, error)
-	
-	// Auto campaign suggestions
-	GetAutoCampaignSuggestions(ctx context.Context, page, limit int) ([]*dto.AutoCampaignSuggestionDTO, int64, error)
-	AcceptAutoCampaignSuggestion(ctx context.Context, suggestionID uint64) (*dto.CampaignCreateDTO, error)
-	RejectAutoCampaignSuggestion(ctx context.Context, suggestionID uint64) error
-	GenerateAutoCampaignSuggestions(ctx context.Context, requestDTO *dto.AutoCampaignSuggestionRequestDTO) (*dto.AutoCampaignSuggestionResponseDTO, error)
-	
-	// Settings validation
-	ValidateSettings(ctx context.Context, settingsDTO *dto.AdvertisingSettingsCreateDTO) (*dto.SettingsValidationDTO, error)
-	
-	// Auto suggestion triggers
-	TriggerAutoSuggestionForProduct(ctx context.Context, productID uint64, productType string) error
+	SearchAdvertisingSettings(ctx context.Context, searchDTO dto.AdvertisingSettingsSearchDTO) ([]*dto.AdvertisingSettingsDTO, int64, error)		
 }
 
 type advertisingSettingsUsecase struct {
@@ -218,108 +202,6 @@ func (u *advertisingSettingsUsecase) SearchAdvertisingSettings(ctx context.Conte
 	return settingsDTOs, total, nil
 }
 
-// GetCampaignDefaults gets campaign defaults
-func (u *advertisingSettingsUsecase) GetCampaignDefaults(ctx context.Context, productType string) (*dto.CampaignDefaultsDTO, error) {
-	userID := uint64(123) // TODO: Get from context
-	organizationID := _utils.GetOrganizationIdFromContext(ctx)
-
-	// Try to get user-specific defaults first
-	defaults, err := u.settingsRepo.GetCampaignDefaults(ctx, userID, productType)
-	if err != nil {
-		// Fallback to organization defaults
-		defaults, err = u.settingsRepo.GetOrganizationDefaults(ctx, organizationID, productType)
-		if err != nil {
-			// Return system defaults
-			return &dto.CampaignDefaultsDTO{
-				CampaignType:   "VIP",
-				Budget:         100000,
-				Duration:       7,
-				Priority:       5,
-				AutoRunEnabled: false,
-				SettingsSource: "SYSTEM",
-			}, nil
-		}
-	}
-
-	return defaults, nil
-}
-
-// GetAutoCampaignSuggestions gets auto campaign suggestions
-func (u *advertisingSettingsUsecase) GetAutoCampaignSuggestions(ctx context.Context, page, limit int) ([]*dto.AutoCampaignSuggestionDTO, int64, error) {
-	userID := uint64(123) // TODO: Get from context
-	
-	suggestions, total, err := u.settingsRepo.GetAutoCampaignSuggestions(ctx, userID, page, limit)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get auto campaign suggestions: %w", err)
-	}
-
-	suggestionDTOs := make([]*dto.AutoCampaignSuggestionDTO, len(suggestions))
-	for i, suggestion := range suggestions {
-		suggestionDTOs[i] = &dto.AutoCampaignSuggestionDTO{
-			ProductID:             suggestion.ProductID,
-			ProductName:           "Product Name", // TODO: Get from product service
-			ProductType:           "LAND", // TODO: Get from product service
-			SuggestedCampaignType: suggestion.SuggestedCampaignType,
-			SuggestedPackageID:    suggestion.SuggestedPackageID,
-			SuggestedPackageName:  suggestion.SuggestedPackageName,
-			SuggestedBudget:       suggestion.SuggestedBudget,
-			SuggestedDuration:     suggestion.SuggestedDuration,
-			Reason:                suggestion.Reason,
-			Confidence:            suggestion.Confidence,
-			EstimatedReach:        suggestion.EstimatedReach,
-			EstimatedClicks:       suggestion.EstimatedClicks,
-		}
-	}
-
-	return suggestionDTOs, total, nil
-}
-
-// AcceptAutoCampaignSuggestion accepts auto campaign suggestion
-func (u *advertisingSettingsUsecase) AcceptAutoCampaignSuggestion(ctx context.Context, suggestionID uint64) (*dto.CampaignCreateDTO, error) {
-	// Get suggestion
-	suggestions, _, err := u.settingsRepo.GetAutoCampaignSuggestions(ctx, uint64(123), 1, 1) // TODO: Get userID from context
-	if err != nil {
-		return nil, fmt.Errorf("suggestion not found: %w", err)
-	}
-
-	if len(suggestions) == 0 {
-		return nil, fmt.Errorf("suggestion not found")
-	}
-
-	suggestion := suggestions[0]
-
-	// Create campaign from suggestion
-	campaignDTO := &dto.CampaignCreateDTO{
-		Name:            fmt.Sprintf("Auto Campaign for Product %d", suggestion.ProductID),
-		Description:     fmt.Sprintf("Auto-generated campaign based on suggestion: %s", suggestion.Reason),
-		Type:            model.CampaignType(suggestion.SuggestedCampaignType),
-		ProductID:       &suggestion.ProductID,
-		PackageID:       &suggestion.SuggestedPackageID,
-		Budget:          suggestion.SuggestedBudget,
-		Duration:        suggestion.SuggestedDuration,
-		Priority:        5,
-		TermsAccepted:   true,
-	}
-
-	// Accept suggestion
-	err = u.settingsRepo.AcceptAutoCampaignSuggestion(ctx, suggestionID, 0) // TODO: Get campaign ID after creation
-	if err != nil {
-		return nil, fmt.Errorf("failed to accept suggestion: %w", err)
-	}
-
-	return campaignDTO, nil
-}
-
-// RejectAutoCampaignSuggestion rejects auto campaign suggestion
-func (u *advertisingSettingsUsecase) RejectAutoCampaignSuggestion(ctx context.Context, suggestionID uint64) error {
-	return u.settingsRepo.RejectAutoCampaignSuggestion(ctx, suggestionID)
-}
-
-// GenerateAutoCampaignSuggestions generates auto campaign suggestions
-func (u *advertisingSettingsUsecase) GenerateAutoCampaignSuggestions(ctx context.Context, requestDTO *dto.AutoCampaignSuggestionRequestDTO) (*dto.AutoCampaignSuggestionResponseDTO, error) {
-	return u.settingsRepo.GenerateAutoCampaignSuggestions(ctx, requestDTO)
-}
-
 // ValidateSettings validates advertising settings
 func (u *advertisingSettingsUsecase) ValidateSettings(ctx context.Context, settingsDTO *dto.AdvertisingSettingsCreateDTO) (*dto.SettingsValidationDTO, error) {
 	// Convert DTO to model for validation
@@ -333,36 +215,6 @@ func (u *advertisingSettingsUsecase) ValidateSettings(ctx context.Context, setti
 
 	return u.settingsRepo.ValidateSettings(ctx, settings)
 }
-
-// TriggerAutoSuggestionForProduct triggers auto suggestion for a new product
-func (u *advertisingSettingsUsecase) TriggerAutoSuggestionForProduct(ctx context.Context, productID uint64, productType string) error {
-	userID := uint64(123) // TODO: Get from context
-
-	// Get user settings
-	settings, err := u.settingsRepo.GetAdvertisingSettingsByUser(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("user settings not found: %w", err)
-	}
-
-	// Check if auto suggestion is enabled
-	if !settings.AutoSuggestEnabled {
-		return nil // Auto suggestion is disabled
-	}
-
-	// Generate suggestion
-	requestDTO := &dto.AutoCampaignSuggestionRequestDTO{
-		ProductID:   productID,
-		ProductType: productType,
-	}
-
-	_, err = u.GenerateAutoCampaignSuggestions(ctx, requestDTO)
-	if err != nil {
-		return fmt.Errorf("failed to generate auto suggestion: %w", err)
-	}
-
-	return nil
-}
-
 // Helper methods
 
 func (u *advertisingSettingsUsecase) toAdvertisingSettingsDTO(settings *model.AdvertisingSettings) *dto.AdvertisingSettingsDTO {

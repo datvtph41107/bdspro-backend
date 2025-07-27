@@ -28,10 +28,6 @@ const (
 	TransactionTypeTransferOut TransactionType = "TRANSFER_OUT"
 	TransactionTypeTransferIn  TransactionType = "TRANSFER_IN"
 
-	// Deal related types
-	TransactionTypeDealIncome  TransactionType = "DEAL_INCOME"
-	TransactionTypeDealExpense TransactionType = "DEAL_EXPENSE"
-
 )
 type WalletTransaction struct {
 	Id                uint32

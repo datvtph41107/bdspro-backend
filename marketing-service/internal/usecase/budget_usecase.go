@@ -140,7 +140,6 @@ func (u *budgetUsecase) UpdateBudgetConfig(ctx context.Context, id uint64, updat
 		existingConfig.AutoTopupThreshold = *updateDTO.AutoTopupThreshold
 	}
 
-	existingConfig.UpdatedBy = uint64(123) // TODO: Get from context
 
 	updatedConfig, err := u.budgetRepo.UpdateBudgetConfig(ctx, existingConfig.ID, existingConfig)
 	if err != nil {
@@ -186,7 +185,7 @@ func (u *budgetUsecase) DeleteBudgetConfig(ctx context.Context, id uint64) error
 func (u *budgetUsecase) GetBudgetList(ctx context.Context, searchDTO dto.BudgetSearchDTO) ([]*dto.BudgetListDTO, int64, error) {
 	organizationID := _utils.GetOrganizationIdFromContext(ctx)
 	
-	budgets, total, err := u.budgetRepo.GetBudgetList(ctx, organizationID, searchDTO.Page, searchDTO.Limit)
+	budgets, total, err := u.budgetRepo.GetBudgetList(ctx, organizationID, searchDTO.Page, searchDTO.Size)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get budget list: %w", err)
 	}

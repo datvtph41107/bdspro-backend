@@ -123,3 +123,18 @@ stop-all:
 	@pkill -f "air" || true
 	@pkill -f "go run" || true
 	@echo "All services stopped."
+
+build-all:
+	cd gateway-service && go build -o gateway-service main.go
+	cd user-service && go build -o user-service main.go
+	cd organization-service && go build -o organization-service main.go
+	cd appointment-service && go build -o appointment-service main.go
+	cd payment-service && go build -o payment-service main.go
+	cd notification-service && go build -o notification-service main.go
+	cd social-service && go build -o social-service main.go
+	cd file-service && go build -o file-service main.go
+	cd relay-service && go build -o relay-service main.go
+	cd bdspro-service && go build -o bdspro-service main.go
+	cd crm-service && go build -o crm-service main.go
+	cd marketing-service && go build -o marketing-service main.go
+	cd membership-service && go build -o membership-service .

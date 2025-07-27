@@ -473,8 +473,17 @@ func (h *MarketingGrpcHandler) GetPayment(ctx context.Context, req *pb_marketing
 }
 
 func (h *MarketingGrpcHandler) ListPayments(ctx context.Context, req *pb_marketing.ListPaymentsRequest) (*pb_marketing.ListPaymentsResponse, error) {
-	// ListPayments is similar to GetPaymentHistory but with different filtering options
-	history, total, err := h.paymentUsecase.GetPaymentHistory(ctx, req.CampaignId, int(req.Page), int(req.Size))
+	page := 0
+	size := 10
+
+	if req.Page > 0 {
+		page = int(req.Page)
+	}
+
+	if req.Size > 0 {
+		size = int(req.Size)
+	}
+	history, total, err := h.paymentUsecase.GetPaymentHistory(ctx, req.CampaignId, page, size)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list payments: %v", err)
 	}
@@ -998,9 +1007,18 @@ func (h *MarketingGrpcHandler) DeleteBudget(ctx context.Context, req *pb_marketi
 
 func (h *MarketingGrpcHandler) ListBudgets(ctx context.Context, req *pb_marketing.ListBudgetsRequest) (*pb_marketing.ListBudgetsResponse, error) {
 	// Create search DTO
+
 	searchDTO := dto.BudgetSearchDTO{
-		Page:  int(req.Page),
-		Limit: int(req.Size),
+		Page: 0,
+		Size: 10,
+	}
+
+	if req.Page > 0 {
+		searchDTO.Page = int(req.Page)
+	}
+
+	if req.Size > 0 {
+		searchDTO.Size = int(req.Size)
 	}
 
 	// Get budget list

@@ -119,33 +119,42 @@ func (u *paymentUsecase) ValidatePayment(ctx context.Context, paymentDTO *dto.Pa
 		validation.Errors = append(validation.Errors, "Terms must be accepted")
 	}
 
-	// Validate amount
-	if paymentDTO.Amount <= 0 {
+	campaign, err := u.campaignRepo.GetByID(ctx, paymentDTO.CampaignID)
+	if err != nil {
+		return nil, fmt.Errorf("campaign not found: %w", err)
+	}
+
+	if campaign.WalletID == nil {
 		validation.IsValid = false
-		validation.Errors = append(validation.Errors, "Amount must be greater than 0")
+		validation.Errors = append(validation.Errors, "Campaign does not have a wallet")
+	}
+
+	pkg, err := u.packageRepo.GetByID(ctx, *campaign.PackageID)
+	if err != nil {
+		return nil, fmt.Errorf("package not found: %w", err)
 	}
 
 	// Get wallet balance
-	if paymentDTO.WalletID != "" {
-		walletBalance, err := u.GetWalletBalance(ctx, paymentDTO.WalletID, paymentDTO.Amount)
+
+	if campaign.WalletID != nil {
+		walletBalance, err := u.paymentClient.GetWalletByWalletId(ctx, *campaign.WalletID)
+
 		if err != nil {
 			validation.Warnings = append(validation.Warnings, "Unable to check wallet balance")
 		} else {
-			validation.WalletBalance = walletBalance
-			if !walletBalance.IsSufficient {
-				validation.RequiresTopup = true
-				validation.TopupAmount = walletBalance.Shortfall
+			validation.WalletBalance = &dto.WalletBalanceDTO{
+				WalletID:       fmt.Sprintf("wallet_%d", *campaign.WalletID),
+				Balance:        walletBalance.Balance,
+				Currency:       walletBalance.Currency,
+				IsSufficient:   walletBalance.Balance >= pkg.Price,
+				RequiredAmount: pkg.Price,
+				Shortfall:      pkg.Price - walletBalance.Balance,
+				LastUpdated:    walletBalance.UpdatedAt,
+			}
+			if !validation.WalletBalance.IsSufficient {
 				validation.Warnings = append(validation.Warnings, "Insufficient wallet balance")
 			}
 		}
-	}
-
-	// Get payment methods
-	paymentMethods, err := u.GetPaymentMethods(ctx)
-	if err != nil {
-		validation.Warnings = append(validation.Warnings, "Unable to get payment methods")
-	} else {
-		validation.PaymentMethods = paymentMethods
 	}
 
 	// Determine if can proceed
@@ -166,19 +175,22 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 		return nil, fmt.Errorf("payment validation failed: %s", validation.Errors)
 	}
 
-	// Parse wallet ID to get numeric ID
-	var walletIDNum uint32
-	_, err = fmt.Sscanf(paymentDTO.WalletID, "wallet_%d", &walletIDNum)
+	campaign, err := u.campaignRepo.GetByID(ctx, paymentDTO.CampaignID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid wallet ID format: %s", paymentDTO.WalletID)
+		return nil, fmt.Errorf("campaign not found: %w", err)
+	}
+
+	pkg, err := u.packageRepo.GetByID(ctx, *campaign.PackageID)
+	if err != nil {
+		return nil, fmt.Errorf("package not found: %w", err)
 	}
 
 	// Process payment via payment service
 	paymentReq := &client.MakePaymentRequest{
-		WalletID:       uint64(walletIDNum), // Fix linter error
-		Amount:         paymentDTO.Amount,
+		WalletID:       *campaign.WalletID, // Fix linter error
 		RelatedService: "MARKETING",
-		RelatedID:      fmt.Sprintf("campaign_%d", paymentDTO.CampaignID),
+		RelatedID:      fmt.Sprintf("campaign_%d", campaign.ID),
+		Amount:         pkg.Price,
 	}
 
 	transaction, err := u.paymentClient.MakePayment(ctx, paymentReq)
@@ -187,17 +199,12 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 	}
 
 	// Get updated wallet balance
-	walletInfo, err := u.paymentClient.GetWallet(ctx, uint64(walletIDNum))
+	walletInfo, err := u.paymentClient.GetWalletByWalletId(ctx, *campaign.WalletID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated wallet info: %w", err)
 	}
 
 	// Update campaign with payment info and transaction ID
-	campaign, err := u.campaignRepo.GetByID(ctx, paymentDTO.CampaignID)
-	if err != nil {
-		return nil, fmt.Errorf("campaign not found: %w", err)
-	}
-
 	// Update campaign status to ACTIVE and assign transaction ID
 	campaign.Status = model.CampaignStatusActive
 	campaign.WalletBalance = walletInfo.Balance
@@ -205,13 +212,6 @@ func (u *paymentUsecase) ProcessPayment(ctx context.Context, paymentDTO *dto.Pay
 	_, err = u.campaignRepo.Update(ctx, campaign.ID, campaign)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update campaign: %w", err)
-	}
-
-	// Generate invoice if required
-	if paymentDTO.RequireInvoice {
-		// TODO: Generate invoice logic here
-		// invoice := fmt.Sprintf("INV-%d-%d", campaign.ID, transaction.ID)
-		// invoiceNumber = &invoice
 	}
 
 	return &dto.PaymentResponseDTO{
@@ -238,7 +238,7 @@ func (u *paymentUsecase) GetWalletBalance(ctx context.Context, walletID string, 
 		return nil, fmt.Errorf("invalid wallet ID format: %w", err)
 	}
 
-	walletInfo, err := u.paymentClient.GetWallet(ctx, walletIDNum)
+	walletInfo, err := u.paymentClient.GetWalletByWalletId(ctx, walletIDNum)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet info: %w", err)
 	}
@@ -315,7 +315,7 @@ func (u *paymentUsecase) GetPaymentHistory(ctx context.Context, campaignID uint6
 		Size: limit,
 	}
 
-	transactions, err := u.paymentClient.GetWalletTransactions(ctx, transactionsReq)
+	transactions, err := u.paymentClient.GetWalletTransactionsByWalletId(ctx, *campaign.WalletID, transactionsReq)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get wallet transactions: %w", err)
 	}

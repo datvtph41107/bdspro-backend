@@ -28,18 +28,14 @@ type PaymentUsecase interface {
 	DeletePaymentMethod(ctx context.Context, req *paymentpb.DeletePaymentMethodRequest) (*paymentpb.Empty, error)
 	GetWalletReport(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ReportResponse, error)
 	ExportWalletData(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ExportResponse, error)
-	GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error)
-	GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error)
-	GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error)
-	CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error)
-	UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error)
-	ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error)
+
 	GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error)
 	CreateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error)
 	UpdateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error)
 	DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error)
 	CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error)
-	GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error)
+	GetWalletByUserId(ctx context.Context, req *paymentpb.GetWalletByUserIdRequest) (*paymentpb.Wallet, error)
+	GetWalletByWalletId(ctx context.Context, req *paymentpb.GetWalletByWalletIdRequest) (*paymentpb.Wallet, error)
 	HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error)
 }
 
@@ -130,10 +126,20 @@ func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *payment
 }
 
 func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, req *paymentpb.GetWalletTransactionsByWalletIdRequest) (*paymentpb.WalletTransactionList, error) {
+	// Get current user ID for security validation
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	
 	wallet, err := p.walletRepository.GetWalletById(ctx, req.WalletId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
+
+	// Security check: Ensure user owns the wallet (for non-admin users)
+	// Note: In a real system, you might want to add admin role check here
+	if wallet.UserId != userID {
+		return nil, fmt.Errorf("unauthorized access to wallet")
+	}
+
 	transactions, total, err := p.walletTransactionRepository.GetTransactions(ctx, wallet.Id, &paymentpb.GetWalletTransactionsRequest{
 		Page:     req.Page,
 		Size:     req.Size,
@@ -143,7 +149,7 @@ func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, re
 		ToDate:   req.ToDate,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}
 	return &paymentpb.WalletTransactionList{
 		Transactions: transactions,
@@ -152,31 +158,54 @@ func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, re
 }
 
 func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymentpb.TransferBetweenWalletsRequest) (*paymentpb.TransferBetweenWalletsResponse, error) {
-	// Start transaction
-	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
-
-	// Get sender wallet
-	senderWallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.FromWalletId)
-	if err != nil {
-		return nil, err
+	// Validate request
+	if req.Amount <= 0 {
+		return nil, fmt.Errorf("invalid amount: must be greater than 0")
+	}
+	
+	if req.FromWalletId == req.ToWalletId {
+		return nil, fmt.Errorf("cannot transfer to the same wallet")
 	}
 
-	// Get receiver wallet
-	receiverWallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.ToWalletId)
+	// Start transaction
+	tx := p.walletRepository.BeginTx(ctx)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	// Create transaction context
+	txCtx := context.WithValue(ctx, "tx", tx)
+
+	// Get sender wallet with proper locking
+	senderWallet, err := p.walletRepository.GetWalletByIdForUpdate(txCtx, req.FromWalletId)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get sender wallet: %w", err)
+	}
+
+	// Get receiver wallet with proper locking
+	receiverWallet, err := p.walletRepository.GetWalletByIdForUpdate(txCtx, req.ToWalletId)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get receiver wallet: %w", err)
 	}
 
 	// Check sender balance
 	if senderWallet.Balance < req.Amount {
+		tx.Rollback()
 		return nil, fmt.Errorf("insufficient balance in sender wallet")
 	}
 
-	// Generate transaction code
-	senderTransactionCode := fmt.Sprintf("TRF%d%d", time.Now().UnixNano(), senderWallet.Id)
+	// Generate transaction code with different timestamps to avoid conflicts
+	now := time.Now()
+	senderTransactionCode := fmt.Sprintf("TRF%d%d", now.UnixNano(), senderWallet.Id)
+	time.Sleep(1 * time.Nanosecond) // Ensure different timestamp
 	receiverTransactionCode := fmt.Sprintf("TRF%d%d", time.Now().UnixNano(), receiverWallet.Id)
-	// Create sender transaction
+	
+	// Create sender transaction within transaction context
 	senderTransaction := &entity.WalletTransaction{
 		WalletId:        req.FromWalletId,
 		Type:            entity.TransactionTypeTransferOut,
@@ -187,12 +216,13 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 		TransactionCode: senderTransactionCode,
 		Description:     req.Description,
 	}
-	err = p.walletTransactionRepository.CreateTransaction(ctx, senderTransaction)
+	err = p.walletTransactionRepository.CreateTransaction(txCtx, senderTransaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create sender transaction: %w", err)
 	}
 
-	// Create receiver transaction
+	// Create receiver transaction within transaction context
 	receiverTransaction := &entity.WalletTransaction{
 		WalletId:        req.ToWalletId,
 		Type:            entity.TransactionTypeTransferIn,
@@ -203,28 +233,31 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 		TransactionCode: receiverTransactionCode,
 		Description:     req.Description,
 	}
-	err = p.walletTransactionRepository.CreateTransaction(ctx, receiverTransaction)
+	err = p.walletTransactionRepository.CreateTransaction(txCtx, receiverTransaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create receiver transaction: %w", err)
 	}
 
-	// Update sender balance
+	// Update sender balance within transaction context
 	oldSenderBalance := senderWallet.Balance
 	senderWallet.Balance -= req.Amount
-	err = p.walletRepository.UpdateWallet(ctx, senderWallet)
+	err = p.walletRepository.UpdateWallet(txCtx, senderWallet)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update sender wallet: %w", err)
 	}
 
-	// Update receiver balance
+	// Update receiver balance within transaction context
 	oldReceiverBalance := receiverWallet.Balance
 	receiverWallet.Balance += req.Amount
-	err = p.walletRepository.UpdateWallet(ctx, receiverWallet)
+	err = p.walletRepository.UpdateWallet(txCtx, receiverWallet)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update receiver wallet: %w", err)
 	}
 
-	// Create audit logs
+	// Create audit logs within transaction context
 	senderAuditLog := &entity.WalletAuditLog{
 		WalletId:   senderWallet.Id,
 		OldBalance: oldSenderBalance,
@@ -232,9 +265,10 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 		Reason:     fmt.Sprintf("Transfer to wallet %d: %s", req.ToWalletId, req.Description),
 		ChangedBy:  0, // System
 	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, senderAuditLog)
+	err = p.walletAuditLogRepository.CreateAuditLog(txCtx, senderAuditLog)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create sender audit log: %w", err)
 	}
 
 	receiverAuditLog := &entity.WalletAuditLog{
@@ -244,19 +278,22 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 		Reason:     fmt.Sprintf("Transfer from wallet %d: %s", req.FromWalletId, req.Description),
 		ChangedBy:  0, // System
 	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, receiverAuditLog)
+	err = p.walletAuditLogRepository.CreateAuditLog(txCtx, receiverAuditLog)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create receiver audit log: %w", err)
 	}
 
-	// Commit transaction
+	// Commit transaction - if this fails, everything is rolled back
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Send notifications
-	go p.notificationWorker.PushToQueue(ctx, senderTransaction, "Chuyển tiền thành công")
-	go p.notificationWorker.PushToQueue(ctx, receiverTransaction, "Nhận tiền thành công")
+	// Send notifications (outside transaction - fire and forget)
+	go func() {
+		p.notificationWorker.PushToQueue(ctx, senderTransaction, "Chuyển tiền thành công")
+		p.notificationWorker.PushToQueue(ctx, receiverTransaction, "Nhận tiền thành công")
+	}()
 
 	return &paymentpb.TransferBetweenWalletsResponse{
 		FromTransactionId: senderTransaction.Id,
@@ -269,21 +306,36 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 }
 
 func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error) {
+	// Validate amount
+	if req.Amount <= 0 {
+		return nil, fmt.Errorf("invalid amount: must be greater than 0")
+	}
+
 	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+	
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
 
-	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
+	// Create transaction context
+	txCtx := context.WithValue(ctx, "tx", tx)
+
+	// Get wallet within transaction context
+	wallet, err := p.walletRepository.GetWalletByUserId(txCtx, userID)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
 
 	// Generate random transaction code
 	transactionCode := fmt.Sprintf("DEP%d%d", time.Now().UnixNano(), wallet.Id)
 
-	// Create transaction record
+	// Create transaction record within transaction context
 	transaction := &entity.WalletTransaction{
 		WalletId:          wallet.Id,
 		Type:              entity.TransactionTypeDeposit,
@@ -294,16 +346,22 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 		TransactionCode:   transactionCode,
 	}
 
-	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
+	err = p.walletTransactionRepository.CreateTransaction(txCtx, transaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	go p.notificationWorker.PushToQueue(ctx, transaction, "Tạo giao dịch nạp tiền thành công")
+	
+	// Send notification (outside transaction - fire and forget)
+	go func() {
+		p.notificationWorker.PushToQueue(ctx, transaction, "Tạo giao dịch nạp tiền thành công")
+	}()
+	
 	return &paymentpb.WalletTransaction{
 		Id:              transaction.Id,
 		WalletId:        transaction.WalletId,
@@ -315,37 +373,62 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 }
 
 func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRequest) (*paymentpb.WithdrawalRequest, error) {
+	// Validate amount
+	if req.Amount <= 0 {
+		return nil, fmt.Errorf("invalid amount: must be greater than 0")
+	}
+
+	// Get current user ID for security validation
+	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
+
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
 
-	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, req.WalletId)
+	// Create transaction context
+	txCtx := context.WithValue(ctx, "tx", tx)
+
+	// Get wallet with proper locking within transaction context
+	wallet, err := p.walletRepository.GetWalletByIdForUpdate(txCtx, req.WalletId)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
+	}
+
+	// Security check: Ensure user owns the wallet
+	if wallet.UserId != userID {
+		tx.Rollback()
+		return nil, fmt.Errorf("unauthorized access to wallet")
 	}
 
 	// Check balance
 	if wallet.Balance < req.Amount {
+		tx.Rollback()
 		return nil, fmt.Errorf("insufficient balance")
 	}
 
-	// Create withdrawal request
+	// Create withdrawal request within transaction context
 	withdrawal := &entity.WithdrawalRequest{
 		WalletId:        req.WalletId,
 		Amount:          req.Amount,
 		Status:          string(entity.TransactionStatusPending),
 		PaymentMethod:   req.PaymentMethod,
 		BankAccountInfo: req.BankAccountInfo,
-		RequestedBy:     0,
+		RequestedBy:     userID, // Use actual user ID instead of 0
 	}
 
-	err = p.withdrawalRequestRepository.CreateWithdrawalRequest(ctx, withdrawal)
+	err = p.withdrawalRequestRepository.CreateWithdrawalRequest(txCtx, withdrawal)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create withdrawal request: %w", err)
 	}
 
-	// Create transaction record
+	// Create transaction record within transaction context
 	transaction := &entity.WalletTransaction{
 		WalletId:      req.WalletId,
 		Type:          entity.TransactionTypeWithdrawal,
@@ -354,16 +437,22 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 		PaymentMethod: req.PaymentMethod,
 	}
 
-	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
+	err = p.walletTransactionRepository.CreateTransaction(txCtx, transaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	go p.notificationWorker.PushToQueue(ctx, transaction, "Rút tiền thành công")
+	
+	// Send notification (outside transaction - fire and forget)
+	go func() {
+		p.notificationWorker.PushToQueue(ctx, transaction, "Rút tiền thành công")
+	}()
+	
 	return &paymentpb.WithdrawalRequest{
 		Id:              withdrawal.Id,
 		WalletId:        withdrawal.WalletId,
@@ -375,25 +464,42 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 }
 
 func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error) {
+	// Validate amount
+	if req.Amount <= 0 {
+		return nil, fmt.Errorf("invalid amount: must be greater than 0")
+	}
+
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	// Create transaction context
+	txCtx := context.WithValue(ctx, "tx", tx)
 
 	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByUserId(ctx, userID)
+	// Get wallet with proper locking - use correct method
+	wallet, err := p.walletRepository.GetWalletByUserId(txCtx, userID)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
 
 	// Check balance
 	if wallet.Balance < req.Amount {
+		tx.Rollback()
 		return nil, fmt.Errorf("insufficient balance")
 	}
-	transactionCode := fmt.Sprintf("DEP%d%d", time.Now().UnixNano(), wallet.Id)
+	
+	// Generate transaction code with correct prefix
+	transactionCode := fmt.Sprintf("PAY%d%d", time.Now().UnixNano(), wallet.Id)
 
 	transaction := &entity.WalletTransaction{
-		WalletId:        req.WalletId,
+		WalletId:        wallet.Id, // ✅ Fixed: Use wallet.Id instead of req.WalletId
 		Type:            "PAYMENT",
 		Amount:          -req.Amount,
 		Status:          "COMPLETED",
@@ -402,37 +508,45 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 		TransactionCode: transactionCode,
 	}
 
-	err = p.walletTransactionRepository.CreateTransaction(ctx, transaction)
+	err = p.walletTransactionRepository.CreateTransaction(txCtx, transaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	// Update wallet balance
+	// Update wallet balance within transaction context
 	oldBalance := wallet.Balance
 	wallet.Balance -= req.Amount
-	err = p.walletRepository.UpdateWallet(ctx, wallet)
+	err = p.walletRepository.UpdateWallet(txCtx, wallet)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update wallet balance: %w", err)
 	}
 
-	// Create audit log
+	// Create audit log within transaction context
 	auditLog := &entity.WalletAuditLog{
-		WalletId:   req.WalletId,
+		WalletId:   wallet.Id, // ✅ Fixed: Use wallet.Id instead of req.WalletId
 		OldBalance: oldBalance,
 		NewBalance: wallet.Balance,
 		Reason:     fmt.Sprintf("Payment for %s:%s", req.RelatedService, req.RelatedId),
-		ChangedBy:  0, // System
+		ChangedBy:  userID, // Use actual user ID instead of 0
 	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, auditLog)
+	err = p.walletAuditLogRepository.CreateAuditLog(txCtx, auditLog)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create audit log: %w", err)
 	}
 
-	// Commit transaction
+	// Commit transaction - if this fails, everything is rolled back
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	go p.notificationWorker.PushToQueue(ctx, transaction, "Thanh toán thành công")
+
+	// Send notification (outside transaction - fire and forget)
+	go func() {
+		p.notificationWorker.PushToQueue(ctx, transaction, "Thanh toán thành công")
+	}()
+
 	return &paymentpb.WalletTransaction{
 		Id:       transaction.Id,
 		WalletId: transaction.WalletId,
@@ -548,176 +662,6 @@ func (p *paymentUsecase) ExportWalletData(ctx context.Context, req *paymentpb.Re
 	}, nil
 }
 
-func (p *paymentUsecase) GetDealTransactionsDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.DealTransactionsDashboard, error) {
-	totalIncome, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, string(entity.TransactionTypeDealIncome))
-	if err != nil {
-		return nil, err
-	}
-
-	totalExpense, err := p.walletTransactionRepository.GetTotalAmountByType(ctx, 0, string(entity.TransactionTypeDealExpense))
-	if err != nil {
-		return nil, err
-	}
-
-	pendingCount, err := p.walletTransactionRepository.GetTransactionCountByStatus(ctx, 0, "DEAL_PENDING")
-	if err != nil {
-		return nil, err
-	}
-
-	var alerts []string
-	if pendingCount > 0 {
-		alerts = append(alerts, fmt.Sprintf("You have %d pending deal transactions", pendingCount))
-	}
-
-	return &paymentpb.DealTransactionsDashboard{
-		TotalIncome:         totalIncome,
-		TotalExpense:        totalExpense,
-		PendingTransactions: int32(pendingCount),
-		Alerts:              alerts,
-	}, nil
-}
-
-func (p *paymentUsecase) GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) (*paymentpb.DealTransactionList, error) {
-	transactions, total, err := p.walletTransactionRepository.GetDealTransactions(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &paymentpb.DealTransactionList{
-		Transactions: transactions,
-		Total:        uint32(total),
-	}, nil
-}
-
-func (p *paymentUsecase) GetDealTransaction(ctx context.Context, req *paymentpb.GetDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	transaction, err := p.walletTransactionRepository.GetDealTransactionById(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
-
-func (p *paymentUsecase) CreateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	// Start transaction
-	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
-
-	// Create deal transaction record
-	transaction := &entity.WalletTransaction{
-		Type:           entity.TransactionTypeDealIncome,
-		Amount:         req.Amount,
-		Status:         entity.TransactionStatusPending,
-		RelatedService: "DEAL",
-		RelatedId:      fmt.Sprintf("%d", req.Id),
-	}
-
-	err := p.walletTransactionRepository.CreateTransaction(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-func (p *paymentUsecase) UpdateDealTransaction(ctx context.Context, req *paymentpb.DealTransaction) (*paymentpb.DealTransaction, error) {
-	// Get existing transaction
-	transaction, err := p.walletTransactionRepository.GetDealTransactionById(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Update fields
-	transaction.Amount = req.Amount
-	transaction.Status = req.Status
-	transaction.Description = req.Description
-	transaction.Type = req.Type
-
-	err = p.walletTransactionRepository.UpdateDealTransaction(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
-
-func (p *paymentUsecase) ApproveDealTransaction(ctx context.Context, req *paymentpb.ApproveDealTransactionRequest) (*paymentpb.DealTransaction, error) {
-	// Start transaction
-	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
-
-	// Get deal transaction
-	transaction, err := p.walletTransactionRepository.GetDealTransactionById(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get associated wallet transaction
-	walletTx, err := p.walletTransactionRepository.GetTransactionByDealId(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, walletTx.WalletId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check balance for expense transactions
-	if walletTx.Amount < 0 && wallet.Balance < -walletTx.Amount {
-		return nil, fmt.Errorf("insufficient balance")
-	}
-
-	// Update wallet balance
-	oldBalance := wallet.Balance
-	wallet.Balance += walletTx.Amount
-	err = p.walletRepository.UpdateWallet(ctx, wallet)
-	if err != nil {
-		return nil, err
-	}
-
-	// Update transaction status
-	transaction.Status = "COMPLETED"
-	transaction.ApprovedBy = req.ApprovedBy
-	err = p.walletTransactionRepository.UpdateDealTransaction(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	// Update wallet transaction status
-	walletTx.Status = "COMPLETED"
-	err = p.walletTransactionRepository.UpdateTransaction(ctx, walletTx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create audit log
-	auditLog := &entity.WalletAuditLog{
-		WalletId:   wallet.Id,
-		OldBalance: oldBalance,
-		NewBalance: wallet.Balance,
-		Reason:     fmt.Sprintf("Deal transaction %d approved", req.Id),
-		ChangedBy:  req.ApprovedBy,
-	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, auditLog)
-	if err != nil {
-		return nil, err
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
-
 func (p *paymentUsecase) GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error) {
 	types, err := p.walletTransactionRepository.GetTransactionTypes(ctx)
 	if err != nil {
@@ -757,15 +701,35 @@ func (p *paymentUsecase) DeleteTransactionType(ctx context.Context, req *payment
 }
 
 func (p *paymentUsecase) CreateWallet(ctx context.Context, req *paymentpb.CreateWalletRequest) (*paymentpb.CreateWalletResponse, error) {
+	// Validate request
+	if req.UserId == 0 {
+		return nil, fmt.Errorf("user ID cannot be zero")
+	}
+	if req.Balance < 0 {
+		return nil, fmt.Errorf("initial balance cannot be negative")
+	}
+	if req.Currency == "" {
+		return nil, fmt.Errorf("currency cannot be empty")
+	}
+
+	// Check if wallet already exists for this user
+	existingWallet, err := p.walletRepository.GetWalletByUserId(ctx, req.UserId)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to check existing wallet: %w", err)
+	}
+	if existingWallet != nil {
+		return nil, fmt.Errorf("wallet already exists for user %d", req.UserId)
+	}
+
 	wallet := &entity.Wallet{
 		UserId:   req.UserId,
 		Balance:  req.Balance,
 		Currency: req.Currency,
 	}
 
-	wallet, err := p.walletRepository.CreateWallet(ctx, wallet)
+	wallet, err = p.walletRepository.CreateWallet(ctx, wallet)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create wallet: %w", err)
 	}
 
 	return &paymentpb.CreateWalletResponse{
@@ -773,8 +737,8 @@ func (p *paymentUsecase) CreateWallet(ctx context.Context, req *paymentpb.Create
 	}, nil
 }
 
-func (p *paymentUsecase) GetWallet(ctx context.Context, req *paymentpb.GetWalletRequest) (*paymentpb.Wallet, error) {
-	wallet, err := p.walletRepository.GetWalletByUserId(ctx, req.Id)
+func (p *paymentUsecase) GetWalletByUserId(ctx context.Context, req *paymentpb.GetWalletByUserIdRequest) (*paymentpb.Wallet, error) {
+	wallet, err := p.walletRepository.GetWalletByUserId(ctx, req.UserId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -790,47 +754,85 @@ func (p *paymentUsecase) GetWallet(ctx context.Context, req *paymentpb.GetWallet
 	}, nil
 }
 
-func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error) {
-	// Start transaction
-	tx := p.walletRepository.BeginTx(ctx)
-	defer tx.Rollback()
-
-	// Get transaction by code
-	transaction, err := p.walletTransactionRepository.GetTransactionByCode(ctx, transactionCode)
+func (p *paymentUsecase) GetWalletByWalletId(ctx context.Context, req *paymentpb.GetWalletByWalletIdRequest) (*paymentpb.Wallet, error) {
+	wallet, err := p.walletRepository.GetWalletById(ctx, req.WalletId)
 	if err != nil {
 		return nil, err
 	}
+
+	return &paymentpb.Wallet{
+		Id:       wallet.Id,
+		UserId:   wallet.UserId,
+		Balance:  wallet.Balance,
+		Currency: wallet.Currency,
+	}, nil
+}
+
+func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error) {
+	// Validate inputs
+	if transactionCode == "" {
+		return nil, fmt.Errorf("transaction code cannot be empty")
+	}
+	if amount <= 0 {
+		return nil, fmt.Errorf("amount must be greater than 0")
+	}
+
+	// Start transaction
+	tx := p.walletRepository.BeginTx(ctx)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	// Create transaction context
+	txCtx := context.WithValue(ctx, "tx", tx)
+
+	// Get transaction by code within transaction context
+	transaction, err := p.walletTransactionRepository.GetTransactionByCode(txCtx, transactionCode)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get transaction by code: %w", err)
+	}
+
+	// Validate amount
 	if transaction.Amount != amount {
-		return nil, fmt.Errorf("transaction amount mismatch")
+		tx.Rollback()
+		return nil, fmt.Errorf("transaction amount mismatch: expected %f, got %f", transaction.Amount, amount)
 	}
 
 	// Check if transaction is already completed
 	if transaction.Status == entity.TransactionStatusCompleted {
+		tx.Rollback()
 		return nil, fmt.Errorf("transaction already completed")
 	}
 
-	// Get wallet
-	wallet, err := p.walletRepository.GetWalletByIdForUpdate(ctx, transaction.WalletId)
+	// Get wallet with proper locking within transaction context
+	wallet, err := p.walletRepository.GetWalletByIdForUpdate(txCtx, transaction.WalletId)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
 
-	// Update wallet balance
+	// Update wallet balance within transaction context
 	oldBalance := wallet.Balance
 	wallet.Balance += transaction.Amount
-	err = p.walletRepository.UpdateWallet(ctx, wallet)
+	err = p.walletRepository.UpdateWallet(txCtx, wallet)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update wallet balance: %w", err)
 	}
 
-	// Update transaction status
+	// Update transaction status within transaction context
 	transaction.Status = entity.TransactionStatusCompleted
-	err = p.walletTransactionRepository.UpdateTransaction(ctx, transaction)
+	err = p.walletTransactionRepository.UpdateTransaction(txCtx, transaction)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update transaction status: %w", err)
 	}
 
-	// Create audit log
+	// Create audit log within transaction context
 	auditLog := &entity.WalletAuditLog{
 		WalletId:   transaction.WalletId,
 		OldBalance: oldBalance,
@@ -838,16 +840,22 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 		Reason:     fmt.Sprintf("Deposit completed via %s", transaction.PaymentMethod),
 		ChangedBy:  0, // System
 	}
-	err = p.walletAuditLogRepository.CreateAuditLog(ctx, auditLog)
+	err = p.walletAuditLogRepository.CreateAuditLog(txCtx, auditLog)
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create audit log: %w", err)
 	}
 
-	// Commit transaction
+	// Commit transaction - if this fails, everything is rolled back
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	go p.notificationWorker.PushToQueue(ctx, transaction, "Nạp tiền thành công")
+
+	// Send notification (outside transaction - fire and forget)
+	go func() {
+		p.notificationWorker.PushToQueue(ctx, transaction, "Nạp tiền thành công")
+	}()
+
 	return &paymentpb.WalletTransaction{
 		Id:       transaction.Id,
 		WalletId: transaction.WalletId,

@@ -74,15 +74,15 @@ func (r *BudgetPostgresRepository) SearchBudgetConfigs(ctx context.Context, orga
 	}
 
 	// Apply pagination
-	offset := (searchDTO.Page - 1) * searchDTO.Limit
-	if err := query.Offset(offset).Limit(searchDTO.Limit).Find(&configs).Error; err != nil {
+	offset := searchDTO.Page * searchDTO.Size
+	if err := query.Offset(offset).Limit(searchDTO.Size).Find(&configs).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to search budget configs: %w", err)
 	}
 
 	return configs, total, nil
 }
 
-func (r *BudgetPostgresRepository) GetBudgetList(ctx context.Context, organizationID uint64, page, limit int) ([]*dto.BudgetListDTO, int64, error) {
+func (r *BudgetPostgresRepository) GetBudgetList(ctx context.Context, organizationID uint64, page, size int) ([]*dto.BudgetListDTO, int64, error) {
 	var total int64
 	var budgetList []*dto.BudgetListDTO
 
@@ -141,8 +141,8 @@ func (r *BudgetPostgresRepository) GetBudgetList(ctx context.Context, organizati
 	}
 
 	// Apply pagination
-	offset := (page - 1) * limit
-	if err := query.Offset(offset).Limit(limit).Find(&budgetList).Error; err != nil {
+	offset := page * size
+	if err := query.Offset(offset).Limit(size).Find(&budgetList).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to get budget list: %w", err)
 	}
 

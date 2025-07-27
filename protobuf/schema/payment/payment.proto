@@ -17,7 +17,9 @@ service PaymentService {
   // Wallet Transactions
   rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse) {}
 
-  rpc GetWallet(GetWalletRequest) returns (Wallet) {} 
+  rpc GetWalletByUserId(GetWalletByUserIdRequest) returns (Wallet) {} 
+
+  rpc GetWalletByWalletId(GetWalletByWalletIdRequest) returns (Wallet) {} 
 
   rpc GetWalletTransactions(GetWalletTransactionsRequest) returns (WalletTransactionList) {
     option (google.api.http) = {
@@ -195,8 +197,12 @@ message WalletTransactionList {
   uint32 total = 2;
 }
 
-message GetWalletRequest {
-  uint32 id = 1;
+message GetWalletByUserIdRequest {
+  uint32 userId = 1;
+}
+
+message GetWalletByWalletIdRequest {
+  uint32 walletId = 1;
 }
 
 message GetWalletResponse {
