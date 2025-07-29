@@ -69,6 +69,7 @@ message Friend {
     optional sharepb.ProfileItem createdUser = 8;
     optional sharepb.ProfileItem receiverUser = 9;
     string createdAt = 10;
+
 }
 
 message FriendRequestDTO {
@@ -84,6 +85,7 @@ message FriendListRequest {
     int32 page = 1;
     int32 size = 2;
     string text = 3;
+    uint32 organizationId = 4;
 }
 
 message FriendListResponse {

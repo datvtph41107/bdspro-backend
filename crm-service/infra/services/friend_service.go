@@ -2,28 +2,33 @@ package grpc_service
 
 import (
 	"context"
+	"fmt"
+	crmpb "pb/types/crm"
+	organizationpb "pb/types/organization"
+	sharedpb "pb/types/shared"
+	"strings"
+
 	"crm/data"
 	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharedpb "pb/types/shared"
-	"strings"
 )
 
 type FriendService struct {
 	crmpb.UnimplementedFriendServiceServer
-	UC           *usecase.FriendUsecase
-	userClient   *client.UserClient
-	FriendMapper *mapper.FriendMapper
+	UC                 *usecase.FriendUsecase
+	userClient         *client.UserClient
+	FriendMapper       *mapper.FriendMapper
+	organizationClient *client.OrganizationClient
 }
 
-func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient, friendMapper *mapper.FriendMapper) *FriendService {
+func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient, friendMapper *mapper.FriendMapper, organizationClient *client.OrganizationClient) *FriendService {
 	return &FriendService{
-		UC:           uc,
-		userClient:   userClient,
-		FriendMapper: friendMapper,
+		UC:                 uc,
+		userClient:         userClient,
+		FriendMapper:       friendMapper,
+		organizationClient: organizationClient,
 	}
 }
 
@@ -48,7 +53,30 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
-
+	if req.OrganizationId != 0 {
+		userIds := make([]uint32, 0, len(userPbs))
+		for _, user := range userPbs {
+			userIds = append(userIds, uint32(user.Id))
+		}
+		checkUsers, err := s.organizationClient.CheckUsersInOrganization(ctx, req.OrganizationId, userIds)
+		if err != nil {
+			return nil, err
+		}
+		userMap := make(map[uint32]*organizationpb.CheckUserInOrganization)
+		for _, user := range checkUsers {
+			userMap[user.UserId] = user
+		}
+		for _, user := range userPbs {
+			if u, ok := userMap[uint32(user.Id)]; ok && u != nil {
+				fmt.Println("check", u)
+				fmt.Println("user", user)
+				user.IsMember = u.IsExist
+				user.JoinedAt = u.JoinedAt
+			} else {
+				fmt.Printf("❌ user %d not in userMap\n", user.Id)
+			}
+		}
+	}
 	return &crmpb.FriendProfileListResponse{
 		Data:  userPbs,
 		Total: int32(total),

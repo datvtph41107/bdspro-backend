@@ -344,6 +344,12 @@
         },
         "phone": {
           "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     }

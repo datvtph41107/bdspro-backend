@@ -29,6 +29,7 @@ type OrganizationMemberUsecase interface {
 	GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error)
+	CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint32) ([]*dto.CheckUserInOrganization, error)
 	// GetOrganizationOfMember(ctx context.Context) (*entity.Organization, error)
 }
 
@@ -128,7 +129,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Context, organizationMembers []*entity.OrganizationMember) ([]*entity.OrganizationMember, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	
+
 	// Authorization check
 	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
 	if err != nil {
@@ -137,7 +138,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
 	}
-	
+
 	// Organization validation
 	organization, err := u.organizationRepository.FindById(ctx, uint32(organizationId))
 	if err != nil {
@@ -146,34 +147,34 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	if organization == nil {
 		return nil, custom_error.InvalidOrganizationID()
 	}
-	
+
 	// Check current member count
 	currentCount, err := u.organizationMemberRepository.CountMemberByOrganizationId(ctx, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if adding new members would exceed limit
 	if currentCount+uint32(len(organizationMembers)) > uint32(env.MAX_ORGANIZATION_MEMBERS) {
 		return nil, custom_error.Forbidden("Adding these members would exceed the maximum number of organization members")
 	}
-	
+
 	// Check for duplicates and validate members
 	userIds := make([]uint32, len(organizationMembers))
 	for i, member := range organizationMembers {
 		userIds[i] = member.UserID
 	}
-	
+
 	// Check existing members to avoid duplicates
 	existingMembers, err := u.organizationMemberRepository.FindByUserIdsAndOrganizationId(ctx, userIds, uint32(organizationId))
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if len(existingMembers) > 0 {
 		return nil, status.Errorf(codes.AlreadyExists, "Some members already exist in the organization")
 	}
-	
+
 	// Prepare members for creation
 	validMembers := make([]*entity.OrganizationMember, 0, len(organizationMembers))
 	for _, member := range organizationMembers {
@@ -181,13 +182,13 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 		member.Status = entity.OrganizationMemberStatusPending
 		validMembers = append(validMembers, member)
 	}
-	
+
 	// Create members in batch
 	createdMembers, err := u.organizationMemberRepository.CreateOrganizationMemberBatch(ctx, validMembers)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Log batch member creation
 	u.logWorker.Push(OrganizationLogEvent{
 		OrganizationId: uint32(organizationId),
@@ -195,7 +196,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 		LogType:        "MEMBER_CREATE_BATCH",
 		LogData:        "Added multiple members to organization",
 	})
-	
+
 	return createdMembers, nil
 }
 
@@ -375,4 +376,33 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context
 		return 0, "", "", err
 	}
 	return role.Id, member.JoinedAt.Format(time.RFC3339), role.Name, nil
+}
+
+func (u *organizationMemberUsecase) CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint32) ([]*dto.CheckUserInOrganization, error) {
+	members, err := u.organizationMemberRepository.FindByUserIdsAndOrganizationId(ctx, userIds, organizationId)
+	if err != nil {
+		return nil, err
+	}
+	mapUserIds := make(map[uint32]*entity.OrganizationMember)
+	for _, member := range members {
+		mapUserIds[member.UserID] = member
+	}
+	checkUsers := make([]*dto.CheckUserInOrganization, len(userIds))
+	for i, userId := range userIds {
+		member, ok := mapUserIds[userId]
+		if !ok {
+			checkUsers[i] = &dto.CheckUserInOrganization{
+				UserId:   userId,
+				IsExist:  false,
+				JoinedAt: "",
+			}
+		} else {
+			checkUsers[i] = &dto.CheckUserInOrganization{
+				UserId:   userId,
+				IsExist:  true,
+				JoinedAt: member.JoinedAt.Format(time.RFC3339),
+			}
+		}
+	}
+	return checkUsers, nil
 }

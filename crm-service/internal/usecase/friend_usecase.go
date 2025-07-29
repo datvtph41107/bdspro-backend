@@ -5,24 +5,27 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"errors"
+	"pb/clients"
+	shared_dto "pb/dto"
+	shared_enum "pb/enums"
+
 	"crm/data"
 	"crm/internal/domain"
 	"crm/internal/enums"
 	iusecase "crm/internal/interface"
 	"crm/internal/repo"
-	"errors"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 )
 
 type FriendUsecase struct {
-	repo               repo.FriendRepo
-	contact            repo.ContactRepo
-	blockRepo          repo.BlockRepo
-	followRepo         repo.FollowRepo
-	blockService       *BlockUsecase
-	notificationClient iusecase.INotificationClient
-	userClient         iusecase.UserClient
+	repo                     repo.FriendRepo
+	contact                  repo.ContactRepo
+	blockRepo                repo.BlockRepo
+	followRepo               repo.FollowRepo
+	blockService             *BlockUsecase
+	notificationClient       iusecase.INotificationClient
+	userClient               iusecase.UserClient
+	organizationMemberClient clients.OrganizationMemberGrpcClient
 }
 
 func NewFriendUsecase(repo repo.FriendRepo,

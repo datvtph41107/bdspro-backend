@@ -60,6 +60,7 @@ service OrganizationMemberService {
         };
     }
 
+    rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
 }
 
 message Empty {}
@@ -138,3 +139,18 @@ message GetCurrentOrganizationMemberRoleResponse {
     string joinDate = 2 [json_name = "joinDate"];
     string roleName = 3 [json_name = "roleName"];
 }
+
+message CheckUsersInOrganizationRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    repeated uint32 userIds = 2 [json_name = "userIds"];
+}
+message CheckUserInOrganization {
+    uint32 userId = 1 [json_name = "userId"];
+    bool isExist = 2 [json_name = "isExist"];
+    string joinedAt = 3 [json_name = "joinedAt"];
+}
+
+message CheckUsersInOrganizationResponse {
+    repeated CheckUserInOrganization data = 1 [json_name = "data"];
+}
+

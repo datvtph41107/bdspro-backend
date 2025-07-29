@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	organizationpb "pb/types/organization"
 	"time"
+
+	organizationpb "pb/types/organization"
 
 	"google.golang.org/grpc"
 )

@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"crm/config"
 	crm_config "crm/config"
@@ -17,6 +16,8 @@ import (
 	crm_internal_interface "crm/internal/interface"
 	crm_internal_repo "crm/internal/repo"
 	crm_internal_usecase "crm/internal/usecase"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -92,7 +93,9 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewStageUsecase,
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
+	crm_infra_client.NewOrganizationClient,
 )
+
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

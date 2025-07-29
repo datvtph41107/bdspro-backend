@@ -92,7 +92,7 @@ membership-grpc:
 file-http:
 	cd file-service && air http
 crm:
-	cd crm-service && go run main.go grpc
+	cd crm-service && air grpc
 marketing-grpc:
 	cd marketing-service && air grpc
 

@@ -246,6 +246,33 @@
         }
       }
     },
+    "organizationpbCheckUserInOrganization": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isExist": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "organizationpbCheckUsersInOrganizationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbCheckUserInOrganization"
+          }
+        }
+      }
+    },
     "organizationpbCreateOrganizationMemberBatchRequest": {
       "type": "object",
       "properties": {
@@ -445,6 +472,12 @@
           "type": "boolean"
         },
         "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
           "type": "string"
         }
       }
