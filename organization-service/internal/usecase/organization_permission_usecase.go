@@ -46,7 +46,7 @@ func (u *organizationPermissionUsecase) CreateNewPermission(ctx context.Context,
 	}
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (u *organizationPermissionUsecase) UpdatePermission(ctx context.Context, pe
 	if organization == nil {
 		return nil, custom_error.RecordNotFound("Organization not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_ORGANIZATION_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (u *organizationPermissionUsecase) DeletePermission(ctx context.Context, pe
 	if organization == nil {
 		return custom_error.RecordNotFound("Organization not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.DELETE_ORGANIZATION_PERMISSION)
 	if err != nil {
 		return err
 	}

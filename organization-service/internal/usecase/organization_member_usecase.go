@@ -77,7 +77,7 @@ func (u *organizationMemberUsecase) FindByUserIdAndOrganizationIdWithRole(ctx co
 func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_MEMBER_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +108,12 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	if exist != nil {
 		return nil, status.Errorf(codes.AlreadyExists, "Organization member already exists")
 	}
+
+	// Kiểm tra không cho phép thêm chủ sở hữu của tổ chức
+	if organizationMember.UserID == organization.CreatedBy {
+		return nil, custom_error.Forbidden("Cannot add organization owner as a member")
+	}
+
 	organizationMember.OrganizationID = uint32(organizationId)
 	organizationMember.Status = entity.OrganizationMemberStatusPending
 	member, err := u.organizationMemberRepository.CreateOrganizationMember(ctx, organizationMember)
@@ -131,7 +137,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 
 	// Authorization check
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_MEMBER_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +181,13 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 		return nil, status.Errorf(codes.AlreadyExists, "Some members already exist in the organization")
 	}
 
+	// Kiểm tra không cho phép thêm chủ sở hữu của tổ chức vào danh sách thành viên
+	for _, member := range organizationMembers {
+		if member.UserID == organization.CreatedBy {
+			return nil, custom_error.Forbidden("Cannot add organization owner as a member")
+		}
+	}
+
 	// Prepare members for creation
 	validMembers := make([]*entity.OrganizationMember, 0, len(organizationMembers))
 	for _, member := range organizationMembers {
@@ -203,7 +216,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_ORGANIZATION_MEMBER_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +233,20 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	}
 	if exist == nil {
 		return nil, custom_error.RecordNotFound("Organization member not found")
+	}
+
+	// Kiểm tra không cho phép thay đổi role của chủ sở hữu tổ chức
+	organization, err := u.organizationRepository.FindById(ctx, exist.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	if organization == nil {
+		return nil, custom_error.RecordNotFound("Organization not found")
+	}
+
+	// Nếu thành viên cần cập nhật là chủ sở hữu của tổ chức
+	if exist.UserID == organization.CreatedBy {
+		return nil, custom_error.Forbidden("Cannot modify the organization owner's role")
 	}
 
 	member, err := u.organizationMemberRepository.UpdateOrganizationMember(ctx, organizationMember)
@@ -251,12 +278,27 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 		return nil, custom_error.RecordNotFound("Organization member not found")
 	}
 
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, member.OrganizationID, env.ADMIN_ROLE_KEY)
+	// Kiểm tra quyền admin
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, member.OrganizationID, env.DELETE_ORGANIZATION_MEMBER_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
 	if !hasRole {
 		return nil, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Kiểm tra không cho phép xóa chủ sở hữu của tổ chức
+	organization, err := u.organizationRepository.FindById(ctx, member.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	if organization == nil {
+		return nil, custom_error.RecordNotFound("Organization not found")
+	}
+
+	// Nếu thành viên cần xóa là chủ sở hữu của tổ chức
+	if member.UserID == organization.CreatedBy {
+		return nil, custom_error.Forbidden("Cannot delete the organization owner")
 	}
 
 	deletedMember, err := u.organizationMemberRepository.DeleteOrganizationMember(ctx, member)
@@ -279,7 +321,7 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.GET_ORGANIZATION_MEMBERS_PERMISSION)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -324,7 +366,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, uint32(profileId), uint32(currentOrgId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(profileId), uint32(currentOrgId), env.GET_CURRENT_ORGANIZATION_MEMBER_PERMISSION)
 	if err != nil {
 		return nil, 0, err
 	}

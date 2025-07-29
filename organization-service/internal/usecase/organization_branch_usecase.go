@@ -52,7 +52,7 @@ func (u *organizationBranchUsecase) CreateOrganizationBranch(ctx context.Context
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	planId := _utils.GetPlanIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (u *organizationBranchUsecase) UpdateOrganizationBranch(ctx context.Context
 	if branch == nil {
 		return nil, custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (u *organizationBranchUsecase) DeleteOrganizationBranch(ctx context.Context
 	if organizationBranch == nil {
 		return custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.DELETE_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (u *organizationBranchUsecase) GetOrganizationBranchDetail(ctx context.Cont
 	}
 
 	// Kiểm tra quyền truy cập - chỉ admin hoặc manager của chi nhánh mới được xem
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.GET_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (u *organizationBranchUsecase) AddMemberToOrganizationBranch(ctx context.Co
 	if organizationBranch == nil {
 		return nil, custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.ADD_MEMBER_TO_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (u *organizationBranchUsecase) RemoveMemberFromOrganizationBranch(ctx conte
 	if organizationBranch == nil {
 		return custom_error.RecordNotFound("Organization branch not found")
 	}
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.REMOVE_MEMBER_FROM_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (u *organizationBranchUsecase) GetOrganizationBranchMembers(ctx context.Con
 		return nil, 0, custom_error.RecordNotFound("Organization branch not found")
 	}
 
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.GET_ORGANIZATION_BRANCH_MEMBERS_PERMISSION)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -254,7 +254,7 @@ func (u *organizationBranchUsecase) GetOrganizationBranches(ctx context.Context,
 func (u *organizationBranchUsecase) UpdateIsActive(ctx context.Context, id uint32, isActive bool) error {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := u.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_IS_ACTIVE_ORGANIZATION_BRANCH_PERMISSION)
 	if err != nil {
 		return err
 	}

@@ -12,7 +12,6 @@ import (
 
 type OrganizationAuthUsecase interface {
 	HasPermission(ctx context.Context, userId uint32, organizationId uint32, permission string) (bool, error)
-	HasRole(ctx context.Context, userId uint32, organizationId uint32, role string) (bool, error)
 	IsMemberOrganization(ctx context.Context, userId uint32, organizationId uint32) (bool, error)
 	IsSystemAdmin(ctx context.Context) error
 }
@@ -54,16 +53,6 @@ func (u *organizationAuthUsecase) HasPermission(ctx context.Context, userId uint
 	return false, nil
 }
 
-func (u *organizationAuthUsecase) HasRole(ctx context.Context, userId uint32, organizationId uint32, roleKey string) (bool, error) {
-	organizationMember, err := u.organizationMemberRepository.FindByUserIdAndOrganizationIdWithRole(ctx, userId, organizationId)
-	if err != nil {
-		return false, err
-	}
-	if organizationMember == nil {
-		return false, nil
-	}
-	return organizationMember.GetRoleKey() == roleKey, nil
-}
 
 func (u *organizationAuthUsecase) IsMemberOrganization(ctx context.Context, userId uint32, organizationId uint32) (bool, error) {
 	organizationMember, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, userId, organizationId)

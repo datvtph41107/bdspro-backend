@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 
+	"organization/env"
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
@@ -184,7 +185,7 @@ func (u *groupDealUsecase) CreateOrganizationDeal(ctx context.Context, organizat
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
 	// Kiểm tra quyền - chỉ admin hoặc leader của tổ chức mới được tạo thương vụ
-	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), "CREATE_DEAL")
+	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), env.CREATE_DEAL_PERMISSION)
 	if err != nil || !hasPermission {
 		return nil, custom_error.Forbidden("you are not allowed to create deal for this organization")
 	}
@@ -453,7 +454,7 @@ func (u *groupDealUsecase) UpdateOrganizationDealStatus(ctx context.Context, org
 	}
 
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), "UPDATE_DEAL_STATUS")
+	hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(organizationId), env.UPDATE_DEAL_PERMISSION)
 	if err != nil || !hasPermission {
 		return custom_error.Forbidden("you are not allowed to update deal status for this organization")
 	}

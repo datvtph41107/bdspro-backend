@@ -78,7 +78,7 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-	hasRole, err := o.organizationAuthUsecase.HasRole(ctx, currentUserId, uint32(organizationId), env.ADMIN_ROLE_KEY)
+	hasRole, err := o.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_ORGANIZATION_PERMISSION)
 	if err != nil {
 		return nil, err
 	}
