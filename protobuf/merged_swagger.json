@@ -514,6 +514,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -648,6 +667,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -1474,6 +1512,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -4919,6 +4976,306 @@
         ]
       }
     },
+    "/v2/bdspro/v2/project-build": {
+      "post": {
+        "tags": [
+          "ProjectBuildService"
+        ],
+        "operationId": "ProjectBuildService_CreateProjectBuild",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProjectBuild"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProjectBuild"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/bdspro/v2/project-build/detail/{id}": {
+      "get": {
+        "tags": [
+          "ProjectBuildService"
+        ],
+        "operationId": "ProjectBuildService_GetProjectBuildById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProjectBuild"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/bdspro/v2/project-build/items": {
+      "get": {
+        "tags": [
+          "ProjectBuildService"
+        ],
+        "operationId": "ProjectBuildService_GetProjectBuild",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproListItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/bdspro/v2/project-build/{id}": {
+      "put": {
+        "tags": [
+          "ProjectBuildService"
+        ],
+        "operationId": "ProjectBuildService_UpdateProjectBuild",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProjectBuildServiceUpdateProjectBuildBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProjectBuild"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ProjectBuildService"
+        ],
+        "operationId": "ProjectBuildService_DeleteProjectBuild",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/bdspro/v2/sharing-access/asset": {
       "get": {
         "tags": [
@@ -5176,6 +5533,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -7262,6 +7638,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -7315,6 +7710,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -7457,6 +7871,76 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/crm/contact/edit/{id}": {
+      "put": {
+        "tags": [
+          "ContactService"
+        ],
+        "operationId": "ContactService_Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbContactServiceUpdateBody"
+            }
           },
           {
             "name": "Authorization",
@@ -7663,6 +8147,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -7736,55 +8239,6 @@
       }
     },
     "/v2/crm/contact/{id}": {
-      "put": {
-        "tags": [
-          "ContactService"
-        ],
-        "operationId": "ContactService_Update",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/crmpbContactServiceUpdateBody"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/crmpbContactDTO"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
       "delete": {
         "tags": [
           "ContactService"
@@ -7809,6 +8263,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -8267,6 +8740,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8319,6 +8811,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -8425,6 +8936,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8521,6 +9051,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8573,6 +9122,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -8732,6 +9300,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8879,6 +9466,18 @@
             "type": "string"
           },
           {
+            "name": "organizationId",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8934,6 +9533,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -8987,6 +9605,18 @@
             "type": "string"
           },
           {
+            "name": "organizationId",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -9038,6 +9668,18 @@
             "name": "text",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "Authorization",
@@ -9103,6 +9745,71 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/crmpbFriendRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/crm/friend/with-lead": {
+      "get": {
+        "tags": [
+          "FriendService"
+        ],
+        "operationId": "FriendService_FriendListWithLead",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbFriendListResponse"
             }
           },
           "default": {
@@ -9469,7 +10176,7 @@
         "tags": [
           "LeadService"
         ],
-        "operationId": "LeadService_AssignCharge",
+        "operationId": "LeadService_AssignPerson",
         "parameters": [
           {
             "name": "body",
@@ -9533,6 +10240,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -9624,6 +10350,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -9973,6 +10718,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -10724,6 +11488,42 @@
             "type": "string"
           },
           {
+            "name": "triggerProfile.id",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "triggerProfile.fullName",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.avatar",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.tickVerified",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "triggerProfile.phone",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.isMember",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "triggerProfile.joinedAt",
+            "in": "query",
+            "type": "string"
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -10893,6 +11693,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -10936,9 +11755,12 @@
             "format": "uint64"
           },
           {
-            "name": "active",
-            "in": "query",
-            "type": "boolean"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RuleServiceActiveBody"
+            }
           },
           {
             "name": "Authorization",
@@ -11334,6 +12156,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -14918,6 +15759,234 @@
         ]
       }
     },
+    "/v2/org/color": {
+      "get": {
+        "tags": [
+          "ColorService"
+        ],
+        "operationId": "ColorService_GetColors",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetColorsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ColorService"
+        ],
+        "operationId": "ColorService_CreateColor",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateColorRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateColorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/color/{id}": {
+      "get": {
+        "tags": [
+          "ColorService"
+        ],
+        "operationId": "ColorService_GetColor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetColorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "ColorService"
+        ],
+        "operationId": "ColorService_UpdateColor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ColorServiceUpdateColorBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateColorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ColorService"
+        ],
+        "operationId": "ColorService_DeleteColor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDeleteColorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/deal": {
       "get": {
         "tags": [
@@ -15455,7 +16524,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetAcceptedMembersResponse"
+              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
             }
           },
           "default": {
@@ -15718,7 +16787,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetInvitationsByDealResponse"
+              "$ref": "#/definitions/organizationpbGetInvitationsByDealResponse"
             }
           },
           "default": {
@@ -15948,7 +17017,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationSearchMembersResponse"
+              "$ref": "#/definitions/organizationpbSearchMembersResponse"
             }
           },
           "default": {
@@ -18540,7 +19609,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationSendInvitationRequest"
+              "$ref": "#/definitions/organizationpbSendInvitationRequest"
             }
           },
           {
@@ -18555,7 +19624,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationSendInvitationResponse"
+              "$ref": "#/definitions/organizationpbSendInvitationResponse"
             }
           },
           "default": {
@@ -18584,7 +19653,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationAcceptInvitationRequest"
+              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
             }
           },
           {
@@ -18599,7 +19668,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationAcceptInvitationResponse"
+              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
             }
           },
           "default": {
@@ -18628,7 +19697,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationConfirmWithdrawalRequest"
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
             }
           },
           {
@@ -18643,7 +19712,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationConfirmWithdrawalResponse"
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
             }
           },
           "default": {
@@ -18697,7 +19766,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetPendingInvitationsResponse"
+              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
             }
           },
           "default": {
@@ -18726,7 +19795,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationRejectInvitationRequest"
+              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
             }
           },
           {
@@ -18741,7 +19810,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationRejectInvitationResponse"
+              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
             }
           },
           "default": {
@@ -18770,7 +19839,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationRemoveFromDealRequest"
+              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
             }
           },
           {
@@ -18785,7 +19854,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationRemoveFromDealResponse"
+              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
             }
           },
           "default": {
@@ -18814,7 +19883,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationResendInvitationRequest"
+              "$ref": "#/definitions/organizationpbResendInvitationRequest"
             }
           },
           {
@@ -18829,7 +19898,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationResendInvitationResponse"
+              "$ref": "#/definitions/organizationpbResendInvitationResponse"
             }
           },
           "default": {
@@ -18858,7 +19927,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationWithdrawFromDealRequest"
+              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
             }
           },
           {
@@ -18873,7 +19942,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationWithdrawFromDealResponse"
+              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
             }
           },
           "default": {
@@ -18916,7 +19985,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetInvitationResponse"
+              "$ref": "#/definitions/organizationpbGetInvitationResponse"
             }
           },
           "default": {
@@ -19600,6 +20669,188 @@
         ]
       }
     },
+    "/v2/org/organization/current": {
+      "get": {
+        "tags": [
+          "OrganizationService"
+        ],
+        "operationId": "OrganizationService_GetOwnedOrganization",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOwnedOrganizationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/organization/current/dashboard": {
+      "get": {
+        "tags": [
+          "OrganizationService"
+        ],
+        "operationId": "OrganizationService_GetCurrentDashboard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDashboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/organization/deals/current": {
+      "get": {
+        "tags": [
+          "GroupDealService"
+        ],
+        "operationId": "GroupDealService_GetOrganizationDealsCurrent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationDealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/organization/log/{id}": {
       "get": {
         "tags": [
@@ -19938,6 +21189,43 @@
         "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
         "parameters": [
           {
+            "name": "id",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -19994,42 +21282,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbCreateOrganizationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/organization/owned": {
-      "get": {
-        "tags": [
-          "OrganizationService"
-        ],
-        "operationId": "OrganizationService_GetOwnedOrganization",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetOwnedOrganizationResponse"
             }
           },
           "default": {
@@ -20586,6 +21838,79 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbUpdateRoleWithMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/organization/roles/current": {
+      "get": {
+        "tags": [
+          "OrganizationRoleService"
+        ],
+        "operationId": "OrganizationRoleService_GetRolesCurrent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetRolesResponse"
             }
           },
           "default": {
@@ -22343,6 +23668,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -22510,6 +23854,25 @@
             "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -24026,6 +25389,25 @@
             "format": "int64"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
             "name": "Authorization",
             "in": "header",
             "description": "Bearer token for authentication",
@@ -24220,6 +25602,26 @@
           "type": "boolean"
         },
         "isBroadcast": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ColorServiceUpdateColorBody": {
+      "properties": {
+        "backgroundColor": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
           "type": "boolean"
         },
         "name": {
@@ -24433,6 +25835,13 @@
     },
     "FollowServiceAddFollowBody": {
       "properties": {
+        "ids": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "page": {
           "format": "int64",
           "type": "integer"
@@ -24440,12 +25849,25 @@
         "size": {
           "format": "int64",
           "type": "integer"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       },
       "type": "object"
     },
     "FriendServiceFriendAcceptBody": {
       "properties": {
+        "ids": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "page": {
           "format": "int64",
           "type": "integer"
@@ -24453,6 +25875,12 @@
         "size": {
           "format": "int64",
           "type": "integer"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -25178,8 +26606,8 @@
         },
         "permissionIds": {
           "items": {
-            "format": "int64",
-            "type": "integer"
+            "format": "uint64",
+            "type": "string"
           },
           "type": "array"
         }
@@ -25210,8 +26638,8 @@
         },
         "permissionIds": {
           "items": {
-            "format": "int64",
-            "type": "integer"
+            "format": "uint64",
+            "type": "string"
           },
           "type": "array"
         }
@@ -25223,6 +26651,9 @@
         "address": {
           "type": "string"
         },
+        "approveInvestor": {
+          "type": "boolean"
+        },
         "businessDomainIds": {
           "items": {
             "format": "int64",
@@ -25233,7 +26664,13 @@
         "businessLicenseUrl": {
           "type": "string"
         },
+        "description": {
+          "type": "string"
+        },
         "email": {
+          "type": "string"
+        },
+        "foundedAt": {
           "type": "string"
         },
         "logoUrl": {
@@ -25246,7 +26683,8 @@
           "type": "string"
         },
         "status": {
-          "type": "string"
+          "format": "int64",
+          "type": "integer"
         },
         "taxCode": {
           "type": "string"
@@ -25513,6 +26951,43 @@
       },
       "type": "object"
     },
+    "ProjectBuildServiceUpdateProjectBuildBody": {
+      "properties": {
+        "apartments": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproApartment",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "attributes": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproApartmentAttribute",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "numApartment": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numFloor": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "projectId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RateServiceUpdateHiddenBody": {
       "properties": {
         "hidden": {
@@ -25573,6 +27048,14 @@
         "status": {
           "format": "int64",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "RuleServiceActiveBody": {
+      "properties": {
+        "active": {
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -27100,6 +28583,9 @@
         "createdUser": {
           "$ref": "#/definitions/sharepbProfileItem"
         },
+        "dealInvitation": {
+          "$ref": "#/definitions/organizationpbDealInvitationMember"
+        },
         "groupId": {
           "format": "uint64",
           "type": "string"
@@ -27459,6 +28945,9 @@
           "format": "uint64",
           "type": "string"
         },
+        "stageNote": {
+          "type": "string"
+        },
         "updatedAt": {
           "type": "string"
         },
@@ -27492,6 +28981,9 @@
         },
         "id": {
           "format": "uint64",
+          "type": "string"
+        },
+        "note": {
           "type": "string"
         },
         "pipeline": {
@@ -27535,12 +29027,18 @@
         "stageId": {
           "format": "uint64",
           "type": "string"
+        },
+        "stageNote": {
+          "type": "string"
         }
       },
       "type": "object"
     },
     "crmpbLeadManagerItem": {
       "properties": {
+        "assignNote": {
+          "type": "string"
+        },
         "chargePersonAvatar": {
           "type": "string"
         },
@@ -27574,6 +29072,9 @@
         "leadPhone": {
           "type": "string"
         },
+        "note": {
+          "type": "string"
+        },
         "pipelineId": {
           "format": "uint64",
           "type": "string"
@@ -27597,6 +29098,9 @@
         },
         "stageId": {
           "format": "uint64",
+          "type": "string"
+        },
+        "stageNote": {
           "type": "string"
         },
         "updatedAt": {
@@ -27777,6 +29281,9 @@
         },
         "stageId": {
           "format": "uint64",
+          "type": "string"
+        },
+        "stageNote": {
           "type": "string"
         }
       },
@@ -28041,6 +29548,9 @@
           "format": "int32",
           "type": "integer"
         },
+        "triggerProfile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
         "triggerValue": {
           "type": "string"
         }
@@ -28092,6 +29602,9 @@
         "trigger": {
           "format": "int32",
           "type": "integer"
+        },
+        "triggerProfile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "triggerValue": {
           "type": "string"
@@ -28529,7 +30042,7 @@
       },
       "type": "object"
     },
-    "organizationAcceptInvitationRequest": {
+    "organizationpbAcceptInvitationRequest": {
       "properties": {
         "invitationId": {
           "format": "uint64",
@@ -28538,293 +30051,7 @@
       },
       "type": "object"
     },
-    "organizationAcceptInvitationResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationConfirmWithdrawalRequest": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationConfirmWithdrawalResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationDealInvitation": {
-      "properties": {
-        "createdAt": {
-          "format": "date-time",
-          "type": "string"
-        },
-        "dealId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "id": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "inviteeId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "inviterId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationDealInvitationMember": {
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "joinedAt": {
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        },
-        "userId": {
-          "format": "uint64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationGetAcceptedMembersResponse": {
-      "properties": {
-        "members": {
-          "items": {
-            "$ref": "#/definitions/organizationDealInvitationMember",
-            "type": "object"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "organizationGetInvitationResponse": {
-      "properties": {
-        "invitation": {
-          "$ref": "#/definitions/organizationDealInvitation"
-        }
-      },
-      "type": "object"
-    },
-    "organizationGetInvitationsByDealResponse": {
-      "properties": {
-        "invitations": {
-          "items": {
-            "$ref": "#/definitions/organizationDealInvitation",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "total": {
-          "format": "int64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationGetPendingInvitationsResponse": {
-      "properties": {
-        "invitations": {
-          "items": {
-            "$ref": "#/definitions/organizationDealInvitation",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "total": {
-          "format": "int64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationRejectInvitationRequest": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationRejectInvitationResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationRemoveFromDealRequest": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationRemoveFromDealResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationResendInvitationRequest": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationResendInvitationResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationSearchMembersResponse": {
-      "properties": {
-        "members": {
-          "items": {
-            "$ref": "#/definitions/organizationDealInvitationMember",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "total": {
-          "format": "int64",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationSendInvitationRequest": {
-      "properties": {
-        "dealId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "inviteeId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "inviterId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationSendInvitationResponse": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "organizationWithdrawFromDealRequest": {
-      "properties": {
-        "invitationId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "organizationWithdrawFromDealResponse": {
+    "organizationpbAcceptInvitationResponse": {
       "properties": {
         "invitationId": {
           "format": "uint64",
@@ -29033,6 +30260,92 @@
       },
       "type": "object"
     },
+    "organizationpbCheckUserInOrganization": {
+      "properties": {
+        "isExist": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "userId": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCheckUsersInOrganizationResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbCheckUserInOrganization",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbColor": {
+      "properties": {
+        "backgroundColor": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbConfirmWithdrawalRequest": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbConfirmWithdrawalResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbCreateBusinessDomainRequest": {
       "properties": {
         "code": {
@@ -29051,6 +30364,35 @@
       "type": "object"
     },
     "organizationpbCreateBusinessDomainResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateColorRequest": {
+      "properties": {
+        "backgroundColor": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateColorResponse": {
       "properties": {
         "id": {
           "format": "int64",
@@ -29220,8 +30562,8 @@
         },
         "permissionIds": {
           "items": {
-            "format": "int64",
-            "type": "integer"
+            "format": "uint64",
+            "type": "string"
           },
           "type": "array"
         }
@@ -29249,8 +30591,8 @@
         },
         "permissionIds": {
           "items": {
-            "format": "int64",
-            "type": "integer"
+            "format": "uint64",
+            "type": "string"
           },
           "type": "array"
         }
@@ -29306,10 +30648,10 @@
     },
     "organizationpbCreateOrganizationMemberBatchRequest": {
       "properties": {
-        "members": {
+        "userIds": {
           "items": {
-            "$ref": "#/definitions/organizationpbCreateOrganizationMemberRequest",
-            "type": "object"
+            "format": "uint64",
+            "type": "string"
           },
           "type": "array"
         }
@@ -29359,6 +30701,9 @@
         "address": {
           "type": "string"
         },
+        "approveInvestor": {
+          "type": "boolean"
+        },
         "businessDomainIds": {
           "items": {
             "format": "int64",
@@ -29369,7 +30714,13 @@
         "businessLicenseUrl": {
           "type": "string"
         },
+        "description": {
+          "type": "string"
+        },
         "email": {
+          "type": "string"
+        },
+        "foundedAt": {
           "type": "string"
         },
         "logoUrl": {
@@ -29380,6 +30731,10 @@
         },
         "phone": {
           "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
         },
         "taxCode": {
           "type": "string"
@@ -29461,6 +30816,47 @@
       },
       "type": "object"
     },
+    "organizationpbDashboardResponse": {
+      "properties": {
+        "totalAsset": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalClicked": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalNewsfeed": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalPost": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalProduct": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalProject": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalSchedule": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalTransaction": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalViewHome": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbDealCommissionServiceAddInternalNoteBody": {
       "properties": {
         "actionType": {
@@ -29531,6 +30927,74 @@
           "type": "string"
         },
         "id": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbDealInvitation": {
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "inviteeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "inviterId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbDealInvitationMember": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "userId": {
           "format": "uint64",
           "type": "string"
         }
@@ -29775,6 +31239,15 @@
       },
       "type": "object"
     },
+    "organizationpbDeleteColorResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbDeleteDealMilestoneResponse": {
       "properties": {
         "id": {
@@ -29948,9 +31421,21 @@
       "title": "Response cho thống kê tài chính",
       "type": "object"
     },
+    "organizationpbGetAcceptedMembersResponse": {
+      "properties": {
+        "members": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbGetActiveBusinessDomainsResponse": {
       "properties": {
-        "businessDomains": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbBusinessDomain",
             "type": "object"
@@ -29962,7 +31447,7 @@
     },
     "organizationpbGetAllBusinessDomainsResponse": {
       "properties": {
-        "businessDomains": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbBusinessDomain",
             "type": "object"
@@ -29976,6 +31461,30 @@
       "properties": {
         "businessDomain": {
           "$ref": "#/definitions/organizationpbBusinessDomain"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetColorResponse": {
+      "properties": {
+        "color": {
+          "$ref": "#/definitions/organizationpbColor"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetColorsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbColor",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -30056,6 +31565,18 @@
           "format": "int64",
           "title": "Tổng số item",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetDealMemberByIdsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "type": "object"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -30300,9 +31821,33 @@
       },
       "type": "object"
     },
+    "organizationpbGetInvitationResponse": {
+      "properties": {
+        "invitation": {
+          "$ref": "#/definitions/organizationpbDealInvitation"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetInvitationsByDealResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitation",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbGetOrganizationBranchMembersResponse": {
       "properties": {
-        "members": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbOrganizationBranchMember",
             "type": "object"
@@ -30318,7 +31863,7 @@
     },
     "organizationpbGetOrganizationBranchesResponse": {
       "properties": {
-        "branches": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbOrganizationBranch",
             "type": "object"
@@ -30456,6 +32001,22 @@
       },
       "type": "object"
     },
+    "organizationpbGetPendingInvitationsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitation",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbGetPermissionsResponse": {
       "properties": {
         "data": {
@@ -30482,7 +32043,7 @@
     },
     "organizationpbGetRolesResponse": {
       "properties": {
-        "roles": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbRole",
             "type": "object"
@@ -31136,6 +32697,9 @@
           "format": "int64",
           "type": "integer"
         },
+        "description": {
+          "type": "string"
+        },
         "email": {
           "type": "string"
         },
@@ -31149,6 +32713,9 @@
         "managerId": {
           "format": "int64",
           "type": "integer"
+        },
+        "managerUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "name": {
           "type": "string"
@@ -31183,6 +32750,9 @@
         "id": {
           "format": "int64",
           "type": "integer"
+        },
+        "user": {
+          "$ref": "#/definitions/sharepbProfileItem"
         },
         "userId": {
           "format": "int64",
@@ -31297,11 +32867,83 @@
       },
       "type": "object"
     },
+    "organizationpbRejectInvitationRequest": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbRejectInvitationResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbRemoveFromDealRequest": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbRemoveFromDealResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbRemoveMemberFromOrganizationBranchResponse": {
       "properties": {
         "id": {
           "format": "int64",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbResendInvitationRequest": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbResendInvitationResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -31331,6 +32973,60 @@
             "type": "object"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbSearchMembersResponse": {
+      "properties": {
+        "members": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbSendInvitationRequest": {
+      "properties": {
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "inviteeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "inviterId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbSendInvitationResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -31428,6 +33124,15 @@
       "type": "string"
     },
     "organizationpbUpdateBusinessDomainResponse": {
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbUpdateColorResponse": {
       "properties": {
         "id": {
           "format": "int64",
@@ -31648,6 +33353,30 @@
         "id": {
           "format": "int64",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbWithdrawFromDealRequest": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbWithdrawFromDealResponse": {
+      "properties": {
+        "invitationId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -36870,6 +38599,12 @@
           "format": "uint64",
           "type": "string"
         },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
         "phone": {
           "type": "string"
         },
@@ -37819,6 +39554,9 @@
       "name": "ProductService"
     },
     {
+      "name": "ProjectBuildService"
+    },
+    {
       "name": "BdsproPublicService"
     },
     {
@@ -37883,6 +39621,9 @@
     },
     {
       "name": "BusinessDomainService"
+    },
+    {
+      "name": "ColorService"
     },
     {
       "name": "GroupDealService"

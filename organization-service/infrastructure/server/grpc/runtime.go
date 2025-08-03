@@ -43,6 +43,7 @@ type GRPCServer struct {
 	dealInvitationHandler          *handler.DealInvitationHandler
 	dealCommissionHandler          *handler.DealCommissionHandler
 	dealTransactionHandler         *handler.DealTransactionHandler
+	colorHandler                   *handler.ColorHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -122,6 +123,7 @@ func (s *GRPCServer) Start() {
 		s.dealInvitationHandler,
 		s.dealCommissionHandler,
 		s.dealTransactionHandler,
+		s.colorHandler,
 	)
 
 	g.Add(start, stop)
@@ -157,6 +159,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
 	dealTransactionHandler *handler.DealTransactionHandler,
+	colorHandler *handler.ColorHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -191,6 +194,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterDealInvitationServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
 			organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
+			organizationpb.RegisterColorServiceServer(s, colorHandler)
 		},
 		unaryInts,
 		streamInts,
