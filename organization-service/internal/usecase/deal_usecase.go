@@ -31,6 +31,8 @@ type DealUsecase interface {
 	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
 	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
 	AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error
+	UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error
+	GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error)
 }
 
 type groupDealUsecase struct {
@@ -709,4 +711,12 @@ func (u *groupDealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, m
 	}
 
 	return nil
+}
+
+func (u *groupDealUsecase) UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error {
+	return u.groupDealRepository.UpdateSetting(ctx, dealID, setting)
+}
+
+func (u *groupDealUsecase) GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error) {
+	return u.dealMemberRepository.GetDealMembers(ctx, dealID)
 }

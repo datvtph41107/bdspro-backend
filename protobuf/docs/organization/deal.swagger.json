@@ -129,153 +129,6 @@
         ]
       }
     },
-    "/v2/org/deal/{dealId_1}/history": {
-      "get": {
-        "summary": "API lấy danh sách lịch sử",
-        "operationId": "InternalNoteService_GetDealHistory",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetDealHistoryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "dealId_1",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "actionTypes",
-            "description": "Lọc theo loại hành động (optional)",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "page",
-            "description": "Trang hiện tại",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "limit",
-            "description": "Số lượng item mỗi trang",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "InternalNoteService"
-        ]
-      }
-    },
-    "/v2/org/deal/{dealId_1}/internal-note": {
-      "post": {
-        "summary": "API thêm ghi chú nội bộ",
-        "operationId": "InternalNoteService_AddInternalNote",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbAddInternalNoteResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "dealId_1",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbInternalNoteServiceAddInternalNoteBody"
-            }
-          }
-        ],
-        "tags": [
-          "InternalNoteService"
-        ]
-      }
-    },
-    "/v2/org/deal/{dealId_1}/member/{memberId}/commission": {
-      "put": {
-        "summary": "API cập nhật hoa hồng cho deal member",
-        "operationId": "DealCommissionService_UpdateDealMemberCommission",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbUpdateDealMemberCommissionResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "dealId_1",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "memberId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbDealCommissionServiceUpdateDealMemberCommissionBody"
-            }
-          }
-        ],
-        "tags": [
-          "DealCommissionService"
-        ]
-      }
-    },
     "/v2/org/deal/{dealId}/commission/stats": {
       "get": {
         "summary": "API lấy thống kê lợi nhuận và hoa hồng",
@@ -311,7 +164,7 @@
     "/v2/org/deal/{dealId}/history": {
       "get": {
         "summary": "API lấy danh sách lịch sử",
-        "operationId": "DealCommissionService_GetDealHistory",
+        "operationId": "InternalNoteService_GetDealHistory",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -355,7 +208,7 @@
             "format": "int64"
           },
           {
-            "name": "limit",
+            "name": "size",
             "description": "Số lượng item mỗi trang",
             "in": "query",
             "required": false,
@@ -364,14 +217,14 @@
           }
         ],
         "tags": [
-          "DealCommissionService"
+          "InternalNoteService"
         ]
       }
     },
     "/v2/org/deal/{dealId}/internal-note": {
       "post": {
         "summary": "API thêm ghi chú nội bộ",
-        "operationId": "DealCommissionService_AddInternalNote",
+        "operationId": "InternalNoteService_AddInternalNote",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -399,19 +252,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbDealCommissionServiceAddInternalNoteBody"
+              "$ref": "#/definitions/InternalNoteServiceAddInternalNoteBody"
             }
           }
         ],
         "tags": [
-          "DealCommissionService"
+          "InternalNoteService"
         ]
       }
     },
     "/v2/org/deal/{dealId}/member/{memberId}/commission": {
       "put": {
         "summary": "API cập nhật hoa hồng cho deal member",
-        "operationId": "GroupDealService_UpdateDealMemberCommission",
+        "operationId": "DealCommissionService_UpdateDealMemberCommission",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -446,12 +299,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbGroupDealServiceUpdateDealMemberCommissionBody"
+              "$ref": "#/definitions/DealCommissionServiceUpdateDealMemberCommissionBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealCommissionService"
         ]
       }
     },
@@ -539,6 +392,46 @@
         ],
         "tags": [
           "DealCommissionService"
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/setting": {
+      "put": {
+        "summary": "API cập nhật cài đặt thương vụ",
+        "operationId": "GroupDealService_UpdateDealSetting",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateDealSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateDealSettingBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
         ]
       }
     },
@@ -1147,6 +1040,25 @@
     }
   },
   "definitions": {
+    "DealCommissionServiceUpdateDealMemberCommissionBody": {
+      "type": "object",
+      "properties": {
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        }
+      }
+    },
     "DealCommissionServiceUpdateDealMemberNoteBody": {
       "type": "object",
       "properties": {
@@ -1323,6 +1235,37 @@
       },
       "title": "API cho tổ chức"
     },
+    "GroupDealServiceUpdateDealSettingBody": {
+      "type": "object",
+      "properties": {
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "GroupDealServiceUpdateGroupDealBody": {
       "type": "object",
       "properties": {
@@ -1363,6 +1306,20 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "InternalNoteServiceAddInternalNoteBody": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "Nội dung ghi chú"
+        },
+        "actionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hành động (từ enum ActionType)"
         }
       }
     },
@@ -1561,39 +1518,6 @@
         }
       }
     },
-    "organizationpbDealCommissionServiceAddInternalNoteBody": {
-      "type": "object",
-      "properties": {
-        "content": {
-          "type": "string",
-          "title": "Nội dung ghi chú"
-        },
-        "actionType": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Loại hành động (từ enum ActionType)"
-        }
-      }
-    },
-    "organizationpbDealCommissionServiceUpdateDealMemberCommissionBody": {
-      "type": "object",
-      "properties": {
-        "commissionValue": {
-          "type": "number",
-          "format": "double",
-          "title": "Giá trị hoa hồng"
-        },
-        "commissionType": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Loại hoa hồng (10: %, 20: VND)"
-        },
-        "note": {
-          "type": "string",
-          "title": "Ghi chú"
-        }
-      }
-    },
     "organizationpbDealHistoryItem": {
       "type": "object",
       "properties": {
@@ -1769,11 +1693,7 @@
     "organizationpbGetDealHistoryResponse": {
       "type": "object",
       "properties": {
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "items": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -1784,16 +1704,6 @@
           "type": "integer",
           "format": "int64",
           "title": "Tổng số item"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Trang hiện tại"
-        },
-        "limit": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Số lượng item mỗi trang"
         }
       }
     },
@@ -1976,25 +1886,6 @@
         }
       }
     },
-    "organizationpbGroupDealServiceUpdateDealMemberCommissionBody": {
-      "type": "object",
-      "properties": {
-        "commissionValue": {
-          "type": "number",
-          "format": "double",
-          "title": "Giá trị hoa hồng"
-        },
-        "commissionType": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Loại hoa hồng (10: %, 20: VND)"
-        },
-        "note": {
-          "type": "string",
-          "title": "Ghi chú"
-        }
-      }
-    },
     "organizationpbInfoInvestmentResponse": {
       "type": "object",
       "properties": {
@@ -2045,20 +1936,6 @@
         "amountRest": {
           "type": "number",
           "format": "double"
-        }
-      }
-    },
-    "organizationpbInternalNoteServiceAddInternalNoteBody": {
-      "type": "object",
-      "properties": {
-        "content": {
-          "type": "string",
-          "title": "Nội dung ghi chú"
-        },
-        "actionType": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Loại hành động (từ enum ActionType)"
         }
       }
     },
@@ -2115,6 +1992,15 @@
             "type": "object",
             "$ref": "#/definitions/organizationpbDealMemberCommissionUpdate"
           }
+        }
+      }
+    },
+    "organizationpbUpdateDealSettingResponse": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

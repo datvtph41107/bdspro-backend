@@ -6,6 +6,7 @@ import (
 
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
+	"organization/internal/enums"
 	"organization/internal/usecase"
 )
 
@@ -74,16 +75,24 @@ func (h *InternalNoteHandler) GetDealHistory(ctx context.Context, req *organizat
 	if err := h.internalNoteValidator.ValidateGetDealHistoryRequest(req); err != nil {
 		return nil, err
 	}
-
-	// Transform request
-	actionTypes, page, limit := h.internalNoteTransformer.TransformGetDealHistoryRequest(req)
-
+	page := req.Page
+	if page == 0 {
+		page = 0
+	}
+	size := req.Size
+	if size == 0 {
+		size = 10
+	}
+	actionTypes := make([]enums.ActionType, len(req.ActionTypes))
+	for i, actionType := range req.ActionTypes {
+		actionTypes[i] = enums.ActionType(actionType)
+	}
 	// Get deal history
-	notes, total, err := h.internalNoteUsecase.GetDealHistory(ctx, req.DealId, actionTypes, page, limit)
+	notes, total, err := h.internalNoteUsecase.GetDealHistory(ctx, req.DealId, actionTypes, page, size)
 	if err != nil {
 		return nil, err
 	}
 
 	// Transform response
-	return h.internalNoteTransformer.TransformGetDealHistoryResponse(req.DealId, notes, total, page, limit), nil
-} 
+	return h.internalNoteTransformer.TransformGetDealHistoryResponse(req.DealId, notes, total, req.Page, req.Size), nil
+}

@@ -51,10 +51,10 @@ func (r *InternalNotePostgresRepository) Create(ctx context.Context, note *entit
 	return note, nil
 }
 
-func (r *InternalNotePostgresRepository) GetByDealID(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, limit uint32) ([]*entity.InternalNote, uint32, error) {
+func (r *InternalNotePostgresRepository) GetByDealID(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, size uint32) ([]*entity.InternalNote, uint32, error) {
 	var models []InternalNoteModel
 	var total int64
-	
+
 	query := r.db.WithContext(ctx).Where("deal_id = ?", dealID)
 	
 	// Lọc theo action types nếu có
@@ -68,10 +68,10 @@ func (r *InternalNotePostgresRepository) GetByDealID(ctx context.Context, dealID
 	}
 	
 	// Lấy dữ liệu có phân trang
-	offset := (page - 1) * limit
+	offset := page * size
 	if err := query.Order("created_at DESC").
 		Offset(int(offset)).
-		Limit(int(limit)).
+		Limit(int(size)).
 		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}

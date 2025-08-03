@@ -5,12 +5,14 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"time"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
 	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
+	"organization/internal/dto"
 	"organization/internal/enums"
 	"organization/internal/usecase"
 )
@@ -461,6 +463,52 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 	}
 
 	return &organizationpb.CancelDealResponse{Id: req.Id}, nil
+}
+
+func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
+	
+	fromDate, err := time.Parse(time.DateOnly, req.FromDate)	
+	if err != nil {
+		return nil, err
+	}
+	toDate, err := time.Parse(time.DateOnly, req.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	err = h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), &dto.DealSetting{
+		FromDate:                fromDate,
+		ToDate:                  toDate,
+		AllowSharing:            req.AllowSharing,
+		MemberCanAddTransaction: req.MemberCanAddTransaction,
+		OnlyOwnerGetCommission:  req.OnlyOwnerGetCommission,
+		InternalNote:            req.InternalNote,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.UpdateDealSettingResponse{DealId: req.DealId}, nil
+}
+
+func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.GetDealMembersResponse, error) {
+	members, err := h.DealUsecase.GetDealMembers(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make([]*organizationpb.DealMember, len(members))
+	for i, member := range members {
+		response[i] = &organizationpb.DealMember{
+			DealId: member.DealID,
+			MemberId: member.MemberID,
+			MemberType: uint32(member.MemberType),
+			AmountCommit: member.AmountCommit,
+			CommissionValue: member.CommissionValue,
+			CommissionType: uint32(member.CommissionType),
+			Note: member.Note,
+		}
+	}
+	return &organizationpb.GetDealMembersResponse{Data: response}, nil
 }
 
 // Helper functions để lấy ID từ context

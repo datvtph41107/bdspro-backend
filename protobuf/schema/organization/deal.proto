@@ -133,10 +133,10 @@ service GroupDealService {
         };
     }
 
-    // API cập nhật hoa hồng cho deal member
-    rpc UpdateDealMemberCommission(UpdateDealMemberCommissionRequest) returns (UpdateDealMemberCommissionResponse) {
+       // API cập nhật cài đặt thương vụ
+    rpc UpdateDealSetting(UpdateDealSettingRequest) returns (UpdateDealSettingResponse) {
         option (google.api.http) = {
-            put: "/v2/org/deal/{dealId}/member/{memberId}/commission"
+            put: "/v2/org/deal/{dealId}/setting"
             body: "*"
         };
     }
@@ -174,20 +174,7 @@ service DealCommissionService {
         };
     }
 
-    // API thêm ghi chú nội bộ
-    rpc AddInternalNote(AddInternalNoteRequest) returns (AddInternalNoteResponse) {
-        option (google.api.http) = {
-            post: "/v2/org/deal/{dealId}/internal-note"
-            body: "*"
-        };
-    }
-
-    // API lấy danh sách lịch sử
-    rpc GetDealHistory(GetDealHistoryRequest) returns (GetDealHistoryResponse) {
-        option (google.api.http) = {
-            get: "/v2/org/deal/{dealId}/history"
-        };
-    }
+ 
 }
 
 service InternalNoteService {
@@ -486,15 +473,12 @@ message GetDealHistoryRequest {
     uint64 dealId = 1;
     repeated uint32 actionTypes = 2; // Lọc theo loại hành động (optional)
     uint32 page = 3;                // Trang hiện tại
-    uint32 limit = 4;               // Số lượng item mỗi trang
+    uint32 size = 4;               // Số lượng item mỗi trang
 }
 
 message GetDealHistoryResponse {
-    uint64 dealId = 1;
-    repeated DealHistoryItem items = 2;
-    uint32 total = 3;               // Tổng số item
-    uint32 page = 4;                // Trang hiện tại
-    uint32 limit = 5;               // Số lượng item mỗi trang
+    repeated DealHistoryItem data = 1;
+    uint32 total = 2;               // Tổng số item
 }
 
 // API cho tổ chức
@@ -563,4 +547,20 @@ message GetGroupDealsV2Request {
 message GetGroupDealsV2Response {
     repeated GroupDeal data = 1 [json_name = "data"];
     uint32 total = 2;
+}
+
+message UpdateDealSettingRequest {
+    uint64 dealId = 1;
+    string fromDate = 2;
+    string toDate = 3;
+    bool allowSharing = 4;
+    bool memberCanAddTransaction = 5;
+    bool onlyOwnerGetCommission = 6;
+    string internalNote = 7;
+    uint64 ownerId = 8;
+    uint32 status = 9;
+}
+
+message UpdateDealSettingResponse {
+    uint64 dealId = 1;
 }

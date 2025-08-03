@@ -1,10 +1,11 @@
 package transformer
 
 import (
-	"organization/internal/domain/entity"
-	"organization/internal/enums"
 	organizationpb "pb/types/organization"
 	"time"
+
+	"organization/internal/domain/entity"
+	"organization/internal/enums"
 )
 
 type InternalNoteTransformer interface {
@@ -50,35 +51,32 @@ func (t *internalNoteTransformer) TransformGetDealHistoryRequest(req *organizati
 	if page == 0 {
 		page = 1
 	}
-	limit := req.Limit
-	if limit == 0 {
-		limit = 20
+	size := req.Size
+	if size == 0 {
+		size = 10
 	}
 
-	return actionTypes, page, limit
+	return actionTypes, page, size
 }
 
 func (t *internalNoteTransformer) TransformGetDealHistoryResponse(dealID uint64, notes []*entity.InternalNote, total, page, limit uint32) *organizationpb.GetDealHistoryResponse {
 	items := make([]*organizationpb.DealHistoryItem, len(notes))
 	for i, note := range notes {
 		items[i] = &organizationpb.DealHistoryItem{
-			Id:         note.ID,
-			DealId:     note.DealID,
-			ActorId:    note.ActorID,
-			ActorName:  "", // Sẽ được populate từ User service
+			Id:          note.ID,
+			DealId:      note.DealID,
+			ActorId:     note.ActorID,
+			ActorName:   "", // Sẽ được populate từ User service
 			ActorAvatar: "", // Sẽ được populate từ User service
-			ActionType: uint32(note.ActionType),
-			ActionName: enums.ActionTypeMap[note.ActionType],
-			Content:    note.Content,
-			CreatedAt:  note.CreatedAt.Format(time.RFC3339),
+			ActionType:  uint32(note.ActionType),
+			ActionName:  enums.ActionTypeMap[note.ActionType],
+			Content:     note.Content,
+			CreatedAt:   note.CreatedAt.Format(time.RFC3339),
 		}
 	}
 
 	return &organizationpb.GetDealHistoryResponse{
-		DealId: dealID,
-		Items:  items,
-		Total:  total,
-		Page:   page,
-		Limit:  limit,
+		Data:  items,
+		Total: total,
 	}
-} 
+}

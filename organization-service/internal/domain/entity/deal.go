@@ -2,6 +2,8 @@ package entity
 
 import (
 	_models "common/models"
+	"time"
+
 	"organization/internal/enums"
 )
 
@@ -33,6 +35,14 @@ type Deal struct {
 	MemberIds      []uint64     `gorm:"-"`
 	CustomerIds    []uint64     `gorm:"-"`
 	PartnerIds     []uint64     `gorm:"-"`
+
+	// Setting
+	FromDate                time.Time
+	ToDate                  time.Time
+	AllowSharing            bool
+	MemberCanAddTransaction bool
+	OnlyOwnerGetCommission  bool
+	InternalNote            string
 }
 
 func (d *Deal) TableName() string {

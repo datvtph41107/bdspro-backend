@@ -12,7 +12,7 @@ import (
 
 type InternalNoteUsecase interface {
 	AddInternalNote(ctx context.Context, dealID uint64, content string, actionType enums.ActionType) (*entity.InternalNote, error)
-	GetDealHistory(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, limit uint32) ([]*entity.InternalNote, uint32, error)
+	GetDealHistory(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, size uint32) ([]*entity.InternalNote, uint32, error)
 }
 
 type internalNoteUsecase struct {
@@ -78,7 +78,7 @@ func (u *internalNoteUsecase) AddInternalNote(ctx context.Context, dealID uint64
 	return createdNote, nil
 }
 
-func (u *internalNoteUsecase) GetDealHistory(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, limit uint32) ([]*entity.InternalNote, uint32, error) {
+func (u *internalNoteUsecase) GetDealHistory(ctx context.Context, dealID uint64, actionTypes []enums.ActionType, page, size uint32) ([]*entity.InternalNote, uint32, error) {
 	// Kiểm tra deal có tồn tại không
 	deal, err := u.dealRepository.GetByID(ctx, dealID)
 	if err != nil {
@@ -89,7 +89,7 @@ func (u *internalNoteUsecase) GetDealHistory(ctx context.Context, dealID uint64,
 	}
 
 	// Lấy lịch sử
-	notes, total, err := u.internalNoteRepository.GetByDealID(ctx, dealID, actionTypes, page, limit)
+	notes, total, err := u.internalNoteRepository.GetByDealID(ctx, dealID, actionTypes, page, size)
 	if err != nil {
 		return nil, 0, err
 	}

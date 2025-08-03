@@ -91,12 +91,12 @@ func (v *internalNoteValidator) ValidateGetDealHistoryRequest(req *organizationp
 		})
 	}
 
-	if req.Limit < 0 || req.Limit > 100 {
+	if req.Size < 0 || req.Size > 100 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "limit",
-					Description: "limit must be between 0 and 100",
+					Field:       "size",
+					Description: "size must be between 0 and 100",
 				},
 			},
 		})

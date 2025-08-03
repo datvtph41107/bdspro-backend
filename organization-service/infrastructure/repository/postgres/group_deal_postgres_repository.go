@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"organization/internal/domain/entity"
+	"organization/internal/dto"
 	"organization/internal/enums"
 
 	"gorm.io/gorm"
@@ -191,4 +192,10 @@ func (r *GroupDealPostgresRepository) UpdateStatusAndCancelReason(ctx context.Co
 			"status":        status,
 			"cancel_reason": cancelReason,
 		}).Error
+}
+
+func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error {
+	return r.db.WithContext(ctx).Model(&entity.Deal{}).
+		Where("id = ? AND is_deleted = ?", id, false).
+		Updates(setting).Error
 }

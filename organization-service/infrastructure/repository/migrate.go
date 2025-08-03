@@ -37,6 +37,8 @@ func AutoMigrate() {
 		&entity.DealMember{},
 		&entity.DealTransaction{},
 		&postgres.DealMemberModel{},
+		&postgres.InternalNoteModel{},
+		&entity.Color{},
 	)
 	if err != nil {
 		panic(err)

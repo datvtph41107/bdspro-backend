@@ -44,6 +44,7 @@ type GRPCServer struct {
 	dealCommissionHandler          *handler.DealCommissionHandler
 	dealTransactionHandler         *handler.DealTransactionHandler
 	colorHandler                   *handler.ColorHandler
+	internalNoteHandler            *handler.InternalNoteHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -70,6 +71,8 @@ func NewGRPCServer(
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
 	dealTransactionHandler *handler.DealTransactionHandler,
+	colorHandler *handler.ColorHandler,
+	internalNoteHandler *handler.InternalNoteHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -96,6 +99,8 @@ func NewGRPCServer(
 		dealCommissionHandler:          dealCommissionHandler,
 		dealTransactionHandler:         dealTransactionHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
+		colorHandler:                   colorHandler,
+		internalNoteHandler:            internalNoteHandler,
 	}
 }
 
@@ -124,6 +129,7 @@ func (s *GRPCServer) Start() {
 		s.dealCommissionHandler,
 		s.dealTransactionHandler,
 		s.colorHandler,
+		s.internalNoteHandler,
 	)
 
 	g.Add(start, stop)
@@ -160,6 +166,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	dealCommissionHandler *handler.DealCommissionHandler,
 	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
+	internalNoteHandler *handler.InternalNoteHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -195,6 +202,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
 			organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)
+			organizationpb.RegisterInternalNoteServiceServer(s, internalNoteHandler)
 		},
 		unaryInts,
 		streamInts,
