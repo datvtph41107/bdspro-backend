@@ -25,7 +25,7 @@ type FriendUsecase struct {
 	blockService             *BlockUsecase
 	notificationClient       iusecase.INotificationClient
 	userClient               iusecase.UserClient
-	organizationMemberClient clients.OrganizationMemberGrpcClient
+	organizationMemberClient clients.OrganizationClient
 }
 
 func NewFriendUsecase(repo repo.FriendRepo,

@@ -31,7 +31,7 @@ type OrganizationMemberUsecase interface {
 	GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMember(ctx context.Context, dto _dto.Pagable) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error)
-	CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint32) ([]*dto.CheckUserInOrganization, error)
+	CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint64) ([]*dto.CheckUserInOrganization, error)
 	// GetOrganizationOfMember(ctx context.Context) (*entity.Organization, error)
 }
 
@@ -169,12 +169,6 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 		)
 	}
 
-	// Check for duplicates and validate members
-	userIds := make([]uint32, len(organizationMembers))
-	for i, member := range organizationMembers {
-		userIds[i] = member.UserID
-	}
-
 	// Check existing members to avoid duplicates
 	existingMembers, err := u.organizationMemberRepository.FindByUserIdsAndOrganizationId(ctx, userIds, uint32(organizationId))
 	if err != nil {
@@ -183,13 +177,6 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 
 	if len(existingMembers) > 0 {
 		return nil, status.Errorf(codes.AlreadyExists, "Some members already exist in the organization")
-	}
-
-	// Kiểm tra không cho phép thêm chủ sở hữu của tổ chức vào danh sách thành viên
-	for _, member := range organizationMembers {
-		if member.UserID == organization.CreatedBy {
-			return nil, custom_error.Forbidden("Cannot add organization owner as a member")
-		}
 	}
 
 	// Prepare members for creation
@@ -427,7 +414,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context
 	return role.Id, member.JoinedAt.Format(time.RFC3339), role.Name, nil
 }
 
-func (u *organizationMemberUsecase) CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint32) ([]*dto.CheckUserInOrganization, error) {
+func (u *organizationMemberUsecase) CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint64) ([]*dto.CheckUserInOrganization, error) {
 	members, err := u.organizationMemberRepository.FindByUserIdsAndOrganizationId(ctx, userIds, organizationId)
 	if err != nil {
 		return nil, err
@@ -438,6 +425,7 @@ func (u *organizationMemberUsecase) CheckUsersInOrganization(ctx context.Context
 	}
 	checkUsers := make([]*dto.CheckUserInOrganization, len(userIds))
 	for i, userId := range userIds {
+		userId := uint32(userId)
 		member, ok := mapUserIds[userId]
 		if !ok {
 			checkUsers[i] = &dto.CheckUserInOrganization{

@@ -110,7 +110,7 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 	return dealMemberMap, nil
 }
 
-func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint32) ([]*organizationpb.CheckUserInOrganization, error) {
+func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {
 	if c.client == nil {
 		return nil, errors.New("organization client not avaiable")
 	}

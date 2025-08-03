@@ -51,7 +51,7 @@ message OrganizationItem {
 
 message CheckUsersInOrganizationRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];
-    repeated uint32 userIds = 2 [json_name = "userIds"];
+    repeated uint64 userIds = 2 [json_name = "userIds"];
 }
 message CheckUserInOrganization {
     uint32 userId = 1 [json_name = "userId"];

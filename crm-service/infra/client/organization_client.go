@@ -20,7 +20,7 @@ func NewOrganizationClient() *OrganizationClient {
 	}
 }
 
-func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint32) ([]*organizationpb.CheckUserInOrganization, error) {
+func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {
 	return c.Client.CheckUsersInOrganization(ctx, organizationID, userIds)
 }
 

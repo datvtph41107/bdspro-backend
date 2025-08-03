@@ -66,9 +66,9 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 	}
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
 	if req.OrganizationId != 0 {
-		userIds := make([]uint32, 0, len(userPbs))
+		userIds := make([]uint64, 0, len(userPbs))
 		for _, user := range userPbs {
-			userIds = append(userIds, uint32(user.Id))
+			userIds = append(userIds, user.Id)
 		}
 		checkUsers, err := s.organizationClient.CheckUsersInOrganization(ctx, req.OrganizationId, userIds)
 		if err != nil {
