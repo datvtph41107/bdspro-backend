@@ -944,6 +944,74 @@
         ]
       }
     },
+    "/v2/org/organization/deals/current": {
+      "get": {
+        "operationId": "GroupDealService_GetOrganizationDealsCurrent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationDealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/organization/{organizationId}/deal": {
       "post": {
         "summary": "API tạo thương vụ cho tổ chức",
@@ -1459,6 +1527,10 @@
         "isManual": {
           "type": "boolean",
           "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1891,6 +1963,16 @@
         "isManual": {
           "type": "boolean",
           "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

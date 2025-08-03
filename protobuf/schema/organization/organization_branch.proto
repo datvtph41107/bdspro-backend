@@ -3,9 +3,9 @@ syntax = "proto3";
 package organizationpb;
 
 import "google/api/annotations.proto";
-import "validate/validate.proto";
+import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 
 
@@ -124,10 +124,11 @@ message GetOrganizationBranchMembersRequest {
 message OrganizationBranchMember {
     uint32 id = 1;
     uint32 userId = 2;
+    optional sharepb.ProfileItem user = 3;
 }
 
 message GetOrganizationBranchMembersResponse {
-    repeated OrganizationBranchMember members = 1;
+    repeated OrganizationBranchMember data = 1;
     uint32 total = 2;
 }
 
@@ -151,7 +152,7 @@ message OrganizationBranch {
 }
 
 message GetOrganizationBranchesResponse {
-    repeated OrganizationBranch branches = 1;
+    repeated OrganizationBranch data = 1;
     uint32 total = 2;
 }
 
@@ -188,4 +189,6 @@ message OrganizationBranchDetail {
     string createdAt = 12;
     string updatedAt = 13;
     uint32 createdBy = 14;
+    optional sharepb.ProfileItem managerUser = 15;
+    string description = 16;
 }

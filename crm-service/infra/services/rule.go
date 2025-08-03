@@ -4,6 +4,7 @@ import (
 	_dto "common/dto"
 	_routes "common/routes"
 	"context"
+	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -14,12 +15,14 @@ import (
 
 type RuleService struct {
 	crmpb.UnimplementedRuleServiceServer
-	UC *usecase.RuleUsecase
+	UC         *usecase.RuleUsecase
+	UserClient *client.UserClient
 }
 
-func NewRuleService(uc *usecase.RuleUsecase) *RuleService {
+func NewRuleService(uc *usecase.RuleUsecase, userClient *client.UserClient) *RuleService {
 	return &RuleService{
-		UC: uc,
+		UC:         uc,
+		UserClient: userClient,
 	}
 }
 
@@ -49,6 +52,8 @@ func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) 
 	for i, rule := range rules {
 		rulesPb[i] = mapper.RuleDomainToPb(&rule)
 	}
+
+	s.UserClient.MapToRulePb(ctx, rulesPb)
 
 	return &crmpb.RuleListDTO{
 		Data:  rulesPb,
@@ -147,6 +152,7 @@ func (s *RuleService) Delete(ctx context.Context, req *sharepb.IdRequest) (*shar
 // @Accept json
 // @Produce json
 // @Param id path int true "ID"
+// @Param active body crmpb.ActiveRuleRequest false "Active"
 // @Security BearerAuth
 // @Router /rule/{id}/active [put]
 func (s *RuleService) Active(ctx context.Context, req *crmpb.ActiveRuleRequest) (*sharepb.SubmitResponse, error) {

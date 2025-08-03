@@ -34,16 +34,16 @@ type DealUsecase interface {
 }
 
 type groupDealUsecase struct {
-	groupDealRepository   repository.GroupDealRepository
-	investmentRepository  repository.InvestmentRepository
-	bankAccountRepository repository.BankAccountRepository
-	documentRepository    repository.DocumentRepository
-	groupAuthUsecase      GroupAuthUsecase
-	logWorker             *LogWorker
-	transaction           iusecase.ITransaction
-	notiClient            iusecase.INotiClient
-	dealMemberRepository  repository.DealMemberRepository
-	userClient            iusecase.IUserClient
+	groupDealRepository     repository.GroupDealRepository
+	investmentRepository    repository.InvestmentRepository
+	bankAccountRepository   repository.BankAccountRepository
+	documentRepository      repository.DocumentRepository
+	groupAuthUsecase        GroupAuthUsecase
+	logWorker               *LogWorker
+	transaction             iusecase.ITransaction
+	notiClient              iusecase.INotiClient
+	dealMemberRepository    repository.DealMemberRepository
+	userClient              iusecase.IUserClient
 	organizationAuthUsecase OrganizationAuthUsecase
 }
 
@@ -61,16 +61,16 @@ func NewGroupDealUsecase(
 	organizationAuthUsecase OrganizationAuthUsecase,
 ) DealUsecase {
 	return &groupDealUsecase{
-		groupDealRepository:   groupDealRepository,
-		investmentRepository:  investmentRepository,
-		bankAccountRepository: bankAccountRepository,
-		documentRepository:    documentRepository,
-		groupAuthUsecase:      groupAuthUsecase,
-		logWorker:             logWorker,
-		transaction:           transaction,
-		notiClient:            notiClient,
-		dealMemberRepository:  dealMemberRepository,
-		userClient:            userClient,
+		groupDealRepository:     groupDealRepository,
+		investmentRepository:    investmentRepository,
+		bankAccountRepository:   bankAccountRepository,
+		documentRepository:      documentRepository,
+		groupAuthUsecase:        groupAuthUsecase,
+		logWorker:               logWorker,
+		transaction:             transaction,
+		notiClient:              notiClient,
+		dealMemberRepository:    dealMemberRepository,
+		userClient:              userClient,
 		organizationAuthUsecase: organizationAuthUsecase,
 	}
 }
@@ -78,15 +78,24 @@ func NewGroupDealUsecase(
 func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
+	var createdDeal *entity.Deal
+	// var ownerType = enums.OwnerTypeOrganization
+	var ownerId uint64
 	switch deal.OwnerType {
 	case enums.OwnerTypeGroup:
 		err := u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
 		if err != nil {
 			return nil, custom_error.Forbidden("you are not allowed to create deal")
 		}
+		ownerId = deal.OwnerId
+	case enums.OwnerTypeOrganization:
+		currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
+		hasPermission, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), uint32(currentOrgId), "CREATE_DEAL")
+		if err != nil || !hasPermission {
+			return nil, custom_error.Forbidden("you are not allowed to create deal for this organization")
+		}
+		ownerId = currentOrgId
 	}
-
-	var createdDeal *entity.Deal
 
 	// todo: nhớ check xem các member có nằm trong group không
 	// todo: xử lý user có thể vừa là khách, đối tác, thành viên
@@ -157,6 +166,8 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			}
 		}
 
+		deal.OwnerId = ownerId
+		// deal.OwnerType = deal.OwnerType
 		// tạo deal
 		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
 		if err != nil {
@@ -385,7 +396,7 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 		return nil, err
 	}
 
-	err = u.groupAuthUsecase.CanAccessGroup(ctx, uint32(deal.OwnerId))
+ 	err = u.groupAuthUsecase.CanAccessGroup(ctx, uint32(deal.OwnerId))
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to get deal")
 	}

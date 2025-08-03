@@ -1,13 +1,12 @@
 package transformer
 
 import (
+	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
 	"organization/internal/enums"
 	organizationpb "pb/types/organization"
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DealInvitationTransformer interface {
@@ -77,7 +76,7 @@ func (t *dealInvitationTransformer) AcceptInvitationRequestToEntity(req *organiz
 
 func (t *dealInvitationTransformer) RejectInvitationRequestToEntity(req *organizationpb.RejectInvitationRequest) *entity.DealInvitation {
 	return &entity.DealInvitation{
-		ID:     req.InvitationId,
+		ID:      req.InvitationId,
 		Message: req.Reason,
 	}
 }
@@ -90,14 +89,14 @@ func (t *dealInvitationTransformer) ResendInvitationRequestToEntity(req *organiz
 
 func (t *dealInvitationTransformer) WithdrawFromDealRequestToEntity(req *organizationpb.WithdrawFromDealRequest) *entity.DealInvitation {
 	return &entity.DealInvitation{
-		ID:     req.InvitationId,
+		ID:      req.InvitationId,
 		Message: req.Reason,
 	}
 }
 
 func (t *dealInvitationTransformer) RemoveFromDealRequestToEntity(req *organizationpb.RemoveFromDealRequest) *entity.DealInvitation {
 	return &entity.DealInvitation{
-		ID:     req.InvitationId,
+		ID:      req.InvitationId,
 		Message: req.Reason,
 	}
 }
@@ -164,7 +163,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 	if invitation == nil {
 		return nil
 	}
-	
+
 	// Convert DealMemberType to string
 	var role string
 	switch invitation.MemberType {
@@ -180,16 +179,16 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 
 	return &organizationpb.GetInvitationResponse{
 		Invitation: &organizationpb.DealInvitation{
-			Id:         invitation.ID,
-			DealId:     invitation.DealID,
-			InviterId:  invitation.InviterID,
-			InviteeId:  invitation.InviteeID,
-			Status:     string(invitation.Status),
-			Message:    invitation.Message,
-			Role:       role,
-			Reason:     "", // DealInvitation entity doesn't have Reason field
-			CreatedAt:  timestamppb.New(invitation.CreatedAt),
-			UpdatedAt:  timestamppb.New(invitation.UpdatedAt),
+			Id:        invitation.ID,
+			DealId:    invitation.DealID,
+			InviterId: invitation.InviterID,
+			InviteeId: invitation.InviteeID,
+			Status:    uint32(invitation.Status),
+			Message:   invitation.Message,
+			Role:      role,
+			Reason:    "", // DealInvitation entity doesn't have Reason field
+			CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
 		},
 	}
 }
@@ -215,10 +214,10 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 			Name:     member.Invitee.FullName,
 			Email:    "", // ProfileItem doesn't have email field
 			Role:     role,
-			JoinedAt: timestamppb.New(member.DealInvitation.CreatedAt),
+			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
 		}
 	}
-	
+
 	return &organizationpb.GetAcceptedMembersResponse{
 		Members: result,
 	}
@@ -245,10 +244,10 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 			Name:     member.Invitee.FullName,
 			Email:    "", // ProfileItem doesn't have email field
 			Role:     role,
-			JoinedAt: timestamppb.New(member.DealInvitation.CreatedAt),
+			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
 		}
 	}
-	
+
 	return &organizationpb.SearchMembersResponse{
 		Members: result,
 		Total:   int64(total),
@@ -272,21 +271,21 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 		}
 
 		result[i] = &organizationpb.DealInvitation{
-			Id:         invitation.DealInvitation.ID,
-			DealId:     invitation.DealInvitation.DealID,
-			InviterId:  invitation.DealInvitation.InviterID,
-			InviteeId:  invitation.DealInvitation.InviteeID,
-			Status:     string(invitation.DealInvitation.Status),
-			Message:    invitation.DealInvitation.Message,
-			Role:       role,
-			Reason:     "", // DealInvitation entity doesn't have Reason field
-			CreatedAt:  timestamppb.New(invitation.DealInvitation.CreatedAt),
-			UpdatedAt:  timestamppb.New(invitation.DealInvitation.UpdatedAt),
+			Id:        invitation.DealInvitation.ID,
+			DealId:    invitation.DealInvitation.DealID,
+			InviterId: invitation.DealInvitation.InviterID,
+			InviteeId: invitation.DealInvitation.InviteeID,
+			Status:    uint32(invitation.DealInvitation.Status),
+			Message:   invitation.DealInvitation.Message,
+			Role:      role,
+			Reason:    "", // DealInvitation entity doesn't have Reason field
+			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
 		}
 	}
 	return &organizationpb.GetPendingInvitationsResponse{
-		Invitations: result,
-		Total:       int64(total),
+		Data:  result,
+		Total: int64(total),
 	}
 }
 
@@ -307,20 +306,20 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 		}
 
 		result[i] = &organizationpb.DealInvitation{
-			Id:         invitation.DealInvitation.ID,
-			DealId:     invitation.DealInvitation.DealID,
-			InviterId:  invitation.DealInvitation.InviterID,
-			InviteeId:  invitation.DealInvitation.InviteeID,
-			Status:     string(invitation.DealInvitation.Status),
-			Message:    invitation.DealInvitation.Message,
-			Role:       role,
-			Reason:     "", // DealInvitation entity doesn't have Reason field
-			CreatedAt:  timestamppb.New(invitation.DealInvitation.CreatedAt),
-			UpdatedAt:  timestamppb.New(invitation.DealInvitation.UpdatedAt),
+			Id:        invitation.DealInvitation.ID,
+			DealId:    invitation.DealInvitation.DealID,
+			InviterId: invitation.DealInvitation.InviterID,
+			InviteeId: invitation.DealInvitation.InviteeID,
+			Status:    uint32(invitation.DealInvitation.Status),
+			Message:   invitation.DealInvitation.Message,
+			Role:      role,
+			Reason:    "", // DealInvitation entity doesn't have Reason field
+			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
 		}
 	}
 	return &organizationpb.GetInvitationsByDealResponse{
-		Invitations: result,
-		Total:       int64(total),
+		Data:  result,
+		Total: int64(total),
 	}
-} 
+}

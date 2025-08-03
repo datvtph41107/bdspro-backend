@@ -4,8 +4,9 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 import "organization/business_domain.proto";
+import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service OrganizationService {
     rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
@@ -42,11 +43,28 @@ service OrganizationService {
 
     rpc GetOwnedOrganization(GetOwnedOrganizationRequest) returns (GetOwnedOrganizationResponse) {
         option (google.api.http) = {
-            get: "/v2/org/organization/owned"
+            get: "/v2/org/organization/current"
         };
     }
     
+    rpc GetCurrentDashboard(sharepb.IdRequest) returns (DashboardResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/current/dashboard"
+        };
+    }
     
+}
+
+message DashboardResponse {
+    uint32 totalProduct = 1; 
+    uint32 totalNewsfeed = 2;
+    uint32 totalPost = 3;
+    uint32 totalProject = 4;
+    uint32 totalAsset = 5;
+    uint32 totalSchedule = 6;
+    uint32 totalTransaction = 7;
+    uint32 totalClicked = 8;
+    uint32 totalViewHome = 9;
 }
 
 message CreateOrganizationRequest {
@@ -59,6 +77,10 @@ message CreateOrganizationRequest {
     optional string website = 7 [json_name = "website"];
     optional string logoUrl = 8 [json_name = "logoUrl"];
     repeated uint32 businessDomainIds = 9 [json_name = "businessDomainIds"];
+    optional string description = 10 [json_name = "description"];
+    string foundedAt = 11 [json_name = "foundedAt"];
+    uint32 status = 12 [json_name = "status"];
+    optional bool approveInvestor = 13 [json_name = "approveInvestor"];
 }
 
 message CreateOrganizationResponse {
@@ -75,8 +97,11 @@ message UpdateOrganizationRequest {
     optional string email = 7 [json_name = "email"];
     optional string website = 8 [json_name = "website"];
     optional string logoUrl = 9 [json_name = "logoUrl"];
-    optional string status = 10 [json_name = "status"];
+    optional uint32 status = 10 [json_name = "status"];
     repeated uint32 businessDomainIds = 11 [json_name = "businessDomainIds"];
+    optional string description = 12 [json_name = "description"];
+    string foundedAt = 13 [json_name = "foundedAt"];
+    optional bool approveInvestor = 14 [json_name = "approveInvestor"];
 }
 
 message UpdateOrganizationResponse {

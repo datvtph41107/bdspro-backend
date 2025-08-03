@@ -17,4 +17,5 @@ type DealInvitationRepository interface {
 	CountPendingByInviteeID(ctx context.Context, inviteeID uint64) (uint32, error)
 	Delete(ctx context.Context, id uint64) error
 	ExistsByDealIDAndInviteeID(ctx context.Context, dealID, inviteeID uint64) (bool, error)
-} 
+	GetByIds(ctx context.Context, dealId uint64, ids []uint64) ([]*entity.DealInvitation, error)
+}

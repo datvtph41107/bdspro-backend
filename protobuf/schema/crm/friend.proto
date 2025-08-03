@@ -6,6 +6,7 @@ option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
+import "organization/deal_invitation.proto";
 
 service FriendService {
     rpc FriendList(FriendListRequest) returns (FriendProfileListResponse) {
@@ -56,6 +57,11 @@ service FriendService {
             get: "/v2/crm/friend/info"
         };
     };
+    rpc FriendListWithLead(FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/with-lead"
+        };
+    };
 }
 
 message Friend {
@@ -69,7 +75,7 @@ message Friend {
     optional sharepb.ProfileItem createdUser = 8;
     optional sharepb.ProfileItem receiverUser = 9;
     string createdAt = 10;
-
+    optional organizationpb.DealInvitationMember dealInvitation = 11;
 }
 
 message FriendRequestDTO {
@@ -86,6 +92,7 @@ message FriendListRequest {
     int32 size = 2;
     string text = 3;
     uint32 organizationId = 4;
+    optional uint64 dealId = 5;
 }
 
 message FriendListResponse {

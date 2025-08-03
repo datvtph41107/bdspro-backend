@@ -344,7 +344,7 @@ func (r *PostgreNewsFeed) GetReelTx(ctx context.Context, tx *gorm.DB) *gorm.DB {
 		Select(`news_feeds.*, nfm.url as reel_url`).
 		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
 		Where("news_feeds.deleted_at is null and news_feeds.is_reel = true and nfm.type = 'video'").
-		Order("news_feeds.created_at desc").
+		Order("news_feeds.rank_feed desc").
 		Group("news_feeds.id, nfm.id")
 }
 

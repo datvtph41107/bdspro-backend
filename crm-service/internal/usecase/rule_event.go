@@ -217,6 +217,6 @@ func (u *RuleEventUsecase) TriggerSwitchStage(c context.Context, customer dto.Cu
 	if err != nil {
 		return err
 	}
-	_, err = u.customerRepo.SwitchStage(c, customer.CustomerID, &stageID)
+	_, err = u.customerRepo.SwitchStage(c, customer.CustomerID, &stageID, "Tương tác hệ thống")
 	return err
 }

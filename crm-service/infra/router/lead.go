@@ -205,7 +205,7 @@ func (r *LeadRouter) SwitchStage(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, err := r.UC.SwitchStage(c, id, dto.StageID)
+	result, err := r.UC.SwitchStage(c, id, dto.StageID, "")
 	_routes.RouteResult(c, result, err)
 }
 

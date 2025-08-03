@@ -74,6 +74,9 @@ func (c *UserClient) GetMapProfileByIds(ctx context.Context, in *sharepb.GetProf
 func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*organizationpb.GroupDeal) {
 	profileIds := make([]uint64, 0)
 	for _, deal := range deals {
+		if deal.ChargePersonId != 0 {
+			profileIds = append(profileIds, uint64(deal.ChargePersonId))
+		}
 		if deal.Members != nil {
 			for _, member := range deal.Members {
 				profileIds = append(profileIds, uint64(member.Id))
@@ -122,6 +125,10 @@ func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*organizatio
 			}
 			deal.Partners = partners
 		}
+		chargePerson := profileMap[deal.ChargePersonId]
+		if chargePerson != nil {
+			deal.ChargePersonName = chargePerson.FullName
+		}
 	}
 
 }
@@ -154,5 +161,67 @@ func (c *UserClient) MapToInvestPb(ctx context.Context, invests []*organizationp
 			}
 		}
 
+	}
+}
+
+func (c *UserClient) MapToOrganizationBranchDetailPb(ctx context.Context, branch *organizationpb.OrganizationBranchDetail) {
+	if branch.ManagerId < 1 {
+		return
+	}
+	ids := make([]uint64, 1)
+	ids[0] = uint64(branch.ManagerId)
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	if len(profiles.Profiles) > 0 {
+		branch.ManagerUser = profiles.Profiles[0]
+	}
+}
+
+func (c *UserClient) MapToOrganizationBranchMemberPb(ctx context.Context, members []*organizationpb.OrganizationBranchMember) {
+	if len(members) < 1 {
+		return
+	}
+	ids := make([]uint64, len(members))
+	for i, member := range members {
+		ids[i] = uint64(member.UserId)
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		p.Phone = ""
+		profileMap[p.Id] = p
+	}
+	if len(profiles.Profiles) > 0 {
+		for i, member := range members {
+			if p, ok := profileMap[uint64(member.UserId)]; ok {
+				members[i].User = p
+			}
+		}
+	}
+}
+
+func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*organizationpb.DealInvitation) {
+	ids := make([]uint64, len(invitations))
+	for i, invitation := range invitations {
+		ids[i] = uint64(invitation.InviteeId)
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		p.Phone = ""
+		profileMap[p.Id] = p
+	}
+	for _, invitation := range invitations {
+		if p, ok := profileMap[uint64(invitation.InviteeId)]; ok {
+			invitation.Profile = p
+		}
 	}
 }

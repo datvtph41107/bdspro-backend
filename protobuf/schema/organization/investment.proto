@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package organizationpb;
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 import "shared/common.proto";
 import "google/api/annotations.proto";
 import "organization/deal.proto";

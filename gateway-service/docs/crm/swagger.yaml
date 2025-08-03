@@ -11,6 +11,13 @@ definitions:
       message:
         type: string
     type: object
+  crmpb.ActiveRuleRequest:
+    properties:
+      active:
+        type: boolean
+      id:
+        type: integer
+    type: object
   crmpb.ContactDTO:
     properties:
       avatar:
@@ -2368,6 +2375,30 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật quy tắc
+      tags:
+      - Quy tắc
+  /rule/{id}/active:
+    put:
+      consumes:
+      - application/json
+      description: Active quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Active
+        in: body
+        name: active
+        schema:
+          $ref: '#/definitions/crmpb.ActiveRuleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Active quy tắc
       tags:
       - Quy tắc
   /rule/{ownerId}/{ownerType}:

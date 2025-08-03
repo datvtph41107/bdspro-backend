@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service GroupDealService {
     rpc CreateGroupDeal(CreateGroupDealRequest) returns (CreateGroupDealResponse) {
@@ -61,6 +61,12 @@ service GroupDealService {
     rpc GetOrganizationDeals(GetOrganizationDealsRequest) returns (GetOrganizationDealsResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/{organizationId}/deals"
+        };
+    }
+
+    rpc GetOrganizationDealsCurrent(sharepb.IdRequest) returns (GetOrganizationDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/deals/current"
         };
     }
 
@@ -221,6 +227,7 @@ message CreateGroupDealRequest {
     uint64 chargePersonId = 16;
     bool isUnilateral = 17;  // Đơn phương (gỡ khỏi thương vụ)
     bool isManual = 18;      // Nhập tay (dành cho doanh thu)
+    uint32 ownerType = 19;
 }
 
 message CreateGroupDealResponse {
@@ -327,6 +334,9 @@ message GroupDeal {
     optional string cancelReason = 21;
     bool isUnilateral = 22;  // Đơn phương (gỡ khỏi thương vụ)
     bool isManual = 23;      // Nhập tay (dành cho doanh thu)
+    string statusName = 24;
+    string chargePersonName = 25;
+    uint64 chargePersonId = 26;
 }
 
 message DocumentItem {

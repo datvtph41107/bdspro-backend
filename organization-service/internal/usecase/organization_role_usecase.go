@@ -1,6 +1,7 @@
 	package usecase
 
 import (
+	_dto "common/dto"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -17,13 +18,14 @@ import (
 type OrganizationRoleUsecase interface {
 	CreateNewRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	UpdateRole(ctx context.Context, model *entity.OrganizationRole) (*entity.OrganizationRole, error)
-	UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error)
+	UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) (*entity.OrganizationRole, error)
 	DeleteRole(ctx context.Context, roleId uint32) error
 	GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error)
+	GetRoleCurrent(ctx context.Context, dto _dto.Pagable) ([]*entity.OrganizationRole, uint32, error)
 	GetRoles(ctx context.Context, page, size int) ([]*entity.OrganizationRole, uint32, error)
 	GetRole(ctx context.Context, roleId uint32) (*entity.OrganizationRole, error)
 	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
-	CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error)
+	CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) (*entity.OrganizationRole, error)
 }
 
 type organizationRoleUsecase struct {
@@ -98,6 +100,23 @@ func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *enti
 	return role, nil
 }
 
+func (u *organizationRoleUsecase) GetRoleCurrent(ctx context.Context, dto _dto.Pagable) ([]*entity.OrganizationRole, uint32, error) {
+	// currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	// hasRole, err := u.organizationAuthUsecase.IsMemberOrganization(ctx, currentUserId, uint32(organizationId))
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+	// if !hasRole {
+	// 	return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	// }
+	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), dto.GetPage(), dto.GetSize())
+	if err != nil {
+		return nil, 0, err
+	}
+	return roles, total, nil
+}
+
 func (u *organizationRoleUsecase) GetRoleByOrganizationId(ctx context.Context) ([]*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
@@ -143,7 +162,7 @@ func (u *organizationRoleUsecase) UpdateRole(ctx context.Context, model *entity.
 	return role, nil
 }
 
-func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) (*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.UPDATE_ORGANIZATION_ROLE_PERMISSION)
@@ -336,7 +355,7 @@ func (u *organizationRoleUsecase) AddPermissionToRole(ctx context.Context, roleI
 	return nil
 }
 
-func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) (*entity.OrganizationRole, error) {
+func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) (*entity.OrganizationRole, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_ROLE_WITH_MEMBERS_PERMISSION)
@@ -400,14 +419,14 @@ func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, 
 
 	// Assign permissions to the role
 	for _, permissionId := range permissionIds {
-		permission, err := u.organizationPermissionRepository.FindById(ctx, permissionId)
+		permission, err := u.organizationPermissionRepository.FindById(ctx, uint32(permissionId))
 		if err != nil {
 			return nil, err
 		}
 		if permission == nil {
 			return nil, custom_error.RecordNotFound("Permission not found")
 		}
-		err = u.organizationRoleRepository.AddPermissionToRole(ctx, role.Id, permissionId)
+		err = u.organizationRoleRepository.AddPermissionToRole(ctx, role.Id, uint32(permissionId))
 		if err != nil {
 			return nil, err
 		}

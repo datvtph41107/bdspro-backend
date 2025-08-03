@@ -42,23 +42,24 @@ func NewOrganizationUsecase(
 }
 
 func (o *organizationUsecase) CreateOrganization(ctx context.Context, organization *entity.Organization, member *entity.OrganizationMember) (*entity.Organization, *entity.OrganizationMember, error) {
-	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	// currentUserId := _utils.GetProfileIdWithContext(ctx)
 
-	organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, uint32(currentUserId))
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(organizationByUserId) >= 1 {
-		return nil, nil, custom_error.UserOnlyOneOrganization()
-	}
+	// organizationByUserId, err := o.OrganizationRepository.FindByUserId(ctx, uint32(currentUserId))
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	// if len(organizationByUserId) >= 1 {
+	// 	return nil, nil, custom_error.UserOnlyOneOrganization()
+	// }
 
-	org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
-	if err != nil {
-		return nil, nil, err
-	}
-	if org != nil {
-		return nil, nil, custom_error.InvalidTaxCode()
-	}
+	// org, err := o.OrganizationRepository.FindByTaxCode(ctx, organization.TaxCode)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	// if org != nil {
+	// 	return nil, nil, custom_error.InvalidTaxCode()
+	// }
+	var err error
 
 	organization, member, err = o.OrganizationRepository.CreateOrganizationWithMember(ctx, organization, member)
 	if err != nil {

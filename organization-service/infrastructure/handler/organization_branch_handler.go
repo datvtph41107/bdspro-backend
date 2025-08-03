@@ -4,6 +4,7 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
+	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/usecase"
@@ -14,17 +15,20 @@ type OrganizationBranchHandler struct {
 	usecase     usecase.OrganizationBranchUsecase
 	validator   validator.OrganizationBranchValidator
 	transformer transformer.OrganizationBranchTransformer
+	userClient  *client.UserClient
 }
 
 func NewOrganizationBranchHandler(
 	usecase usecase.OrganizationBranchUsecase,
 	validator validator.OrganizationBranchValidator,
 	transformer transformer.OrganizationBranchTransformer,
+	userClient *client.UserClient,
 ) *OrganizationBranchHandler {
 	return &OrganizationBranchHandler{
 		usecase:     usecase,
 		validator:   validator,
 		transformer: transformer,
+		userClient:  userClient,
 	}
 }
 
@@ -111,7 +115,7 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Cont
 		return nil, err
 	}
 
-	return &organizationpb.OrganizationBranchDetail{
+	result := &organizationpb.OrganizationBranchDetail{
 		Id:          branch.Id,
 		Name:        branch.Name,
 		Address:     branch.Address,
@@ -126,7 +130,10 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Cont
 		CreatedAt:   branch.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:   branch.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		CreatedBy:   branch.CreatedBy,
-	}, nil
+		Description: branch.Description,
+	}
+	h.userClient.MapToOrganizationBranchDetailPb(ctx, result)
+	return result, nil
 }
 
 // @Summary Thêm thành viên vào chi nhánh
@@ -134,6 +141,7 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchDetail(ctx context.Cont
 // @Tags Chi nhánh
 // @Accept json
 // @Produce json
+// @Param id path uint32 true "ID chi nhánh"
 // @Param organization_branch body organizationpb.AddMemberToOrganizationBranchRequest true "Thông tin chi nhánh"
 // @Security BearerAuth
 // @Router /organization/branch/{id}/member [post]
@@ -177,9 +185,10 @@ func (h *OrganizationBranchHandler) RemoveMemberFromOrganizationBranch(ctx conte
 // @Tags Chi nhánh
 // @Accept json
 // @Produce json
+// @Param id path uint32 true "ID chi nhánh"
 // @Param organization_branch query organizationpb.GetOrganizationBranchMembersRequest true "Thông tin chi nhánh"
 // @Security BearerAuth
-// @Router /organization/branch/{id}/member [get]
+// @Router /organization/branch/{id}/members [get]
 func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Context, req *organizationpb.GetOrganizationBranchMembersRequest) (*organizationpb.GetOrganizationBranchMembersResponse, error) {
 	if err := h.validator.ValidateGetOrganizationBranchMembers(req); err != nil {
 		return nil, err
@@ -205,9 +214,11 @@ func (h *OrganizationBranchHandler) GetOrganizationBranchMembers(ctx context.Con
 			UserId: member.UserId,
 		}
 	}
+
+	h.userClient.MapToOrganizationBranchMemberPb(ctx, membersResponse)
 	return &organizationpb.GetOrganizationBranchMembersResponse{
-		Members: membersResponse,
-		Total:   total,
+		Data:  membersResponse,
+		Total: total,
 	}, nil
 }
 
@@ -248,8 +259,8 @@ func (h *OrganizationBranchHandler) GetOrganizationBranches(ctx context.Context,
 		}
 	}
 	return &organizationpb.GetOrganizationBranchesResponse{
-		Branches: branchesResponse,
-		Total:    total,
+		Data:  branchesResponse,
+		Total: total,
 	}, nil
 }
 

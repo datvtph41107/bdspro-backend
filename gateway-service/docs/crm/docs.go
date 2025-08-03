@@ -2187,6 +2187,44 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/rule/{id}/active": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Active quy tắc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Quy tắc"
+                ],
+                "summary": "Active quy tắc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Active",
+                        "name": "active",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/crmpb.ActiveRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/rule/{ownerId}/{ownerType}": {
             "get": {
                 "security": [
@@ -2491,6 +2529,17 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "crmpb.ActiveRuleRequest": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         },

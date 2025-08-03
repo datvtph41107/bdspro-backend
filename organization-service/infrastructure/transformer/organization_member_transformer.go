@@ -10,13 +10,13 @@ import (
 type OrganizationMemberTransformer interface {
 	CreateOrganizationMemberRequestToEntity(request *organizationpb.CreateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToCreateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.CreateOrganizationMemberResponse
-	CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember
+	// CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember
 	EntitiesToCreateOrganizationMemberBatchResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.CreateOrganizationMemberBatchResponse
 	UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToDeleteOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.DeleteOrganizationMemberResponse
-	EntityToGetOrganizationMembersResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse
+	EntityToGetOrganizationMembersResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse
 	// EntityToGetOrganizationOfMemberResponse(organization *entity.Organization) *organizationpb.GetOrganizationMembersResponse
 }
 
@@ -40,13 +40,13 @@ func (o *organizationMemberTransformer) EntityToCreateOrganizationMemberResponse
 	}
 }
 
-func (o *organizationMemberTransformer) CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember {
-	entities := make([]*entity.OrganizationMember, len(request.Members))
-	for i, memberRequest := range request.Members {
-		entities[i] = o.CreateOrganizationMemberRequestToEntity(memberRequest)
-	}
-	return entities
-}
+// func (o *organizationMemberTransformer) CreateOrganizationMemberBatchRequestToEntities(request *organizationpb.CreateOrganizationMemberBatchRequest) []*entity.OrganizationMember {
+// 	entities := make([]*entity.OrganizationMember, len(request.Members))
+// 	for i, memberRequest := range request.Members {
+// 		entities[i] = o.CreateOrganizationMemberRequestToEntity(memberRequest)
+// 	}
+// 	return entities
+// }
 
 func (o *organizationMemberTransformer) EntitiesToCreateOrganizationMemberBatchResponse(organizationMembers []*entity.OrganizationMember) *organizationpb.CreateOrganizationMemberBatchResponse {
 	ids := make([]uint32, len(organizationMembers))
@@ -83,7 +83,7 @@ func (o *organizationMemberTransformer) EntityToDeleteOrganizationMemberResponse
 	}
 }
 
-func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse {
+func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse {
 	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
 	for i, member := range members {
 		membersResponse[i] = &organizationpb.OrganizationMember{
@@ -93,8 +93,12 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 			Status:   getStatusString(member.OrganizationMember.Status),
 			RoleName: member.OrganizationMember.RoleName,
 		}
-		if member.Profile != nil {
-			membersResponse[i].Profile = member.Profile
+		profile := member.Profile
+		if profile != nil {
+			if hidePhone {
+				profile.Phone = ""
+			}
+			membersResponse[i].Profile = profile
 		}
 	}
 	return &organizationpb.GetOrganizationMembersResponse{

@@ -82,7 +82,7 @@
     },
     "/v2/crm/lead/assign-person": {
       "post": {
-        "operationId": "LeadService_AssignCharge",
+        "operationId": "LeadService_AssignPerson",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -150,6 +150,29 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -217,6 +240,29 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -494,6 +540,29 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -803,6 +872,9 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "stageNote": {
+          "type": "string"
         }
       }
     },
@@ -874,6 +946,12 @@
         },
         "chargePerson": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "stageNote": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },
@@ -940,6 +1018,15 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "stageNote": {
+          "type": "string"
+        },
+        "assignNote": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },
@@ -1117,6 +1204,9 @@
         "stageId": {
           "type": "string",
           "format": "uint64"
+        },
+        "stageNote": {
+          "type": "string"
         }
       }
     },

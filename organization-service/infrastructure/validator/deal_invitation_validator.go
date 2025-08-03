@@ -50,16 +50,16 @@ func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organiz
 		})
 	}
 
-	if request.InviterId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "inviter_id",
-					Description: "inviter_id is required",
-				},
-			},
-		})
-	}
+	// if request.InviterId == 0 {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "inviter_id",
+	// 				Description: "inviter_id is required",
+	// 			},
+	// 		},
+	// 	})
+	// }
 
 	if request.InviteeId == 0 {
 		details = append(details, &errdetails.BadRequest{
@@ -299,4 +299,4 @@ func (v *dealInvitationValidator) ValidateGetInvitationsByDealRequest(request *o
 	}
 
 	return nil
-} 
+}

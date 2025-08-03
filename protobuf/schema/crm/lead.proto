@@ -43,7 +43,7 @@ service LeadService {
       delete: "/v2/crm/lead/{id}"
     };
   };
-  rpc AssignCharge (LeadAssignPersonRequest) returns (LeadDTO) {
+  rpc AssignPerson (LeadAssignPersonRequest) returns (LeadDTO) {
     option (google.api.http) = {
       post: "/v2/crm/lead/assign-person"
       body: "*"
@@ -124,6 +124,7 @@ message LeadNoteRequest {
 message LeadStageRequest {
   uint64 leadId = 1;
   uint64 stageId = 2;
+  string stageNote = 3;
 }
 
 message LeadAssignCrmRequest {
@@ -172,6 +173,8 @@ message LeadDetailDTO {
   string sourceName = 14;
   string priorityName = 15;
   optional sharepb.ProfileItem chargePerson = 21;
+  string stageNote = 22;
+  string note = 24;
 }
 
 message LeadManagerRequest {
@@ -202,6 +205,9 @@ message LeadManagerItem {
 
   optional uint64 profileId = 17;
   optional uint64 chargePersonId = 18;
+  string stageNote = 19;
+  string assignNote = 20;
+  string note = 21;
 }
 message LeadManagerResponse {
   repeated LeadManagerItem data = 1;

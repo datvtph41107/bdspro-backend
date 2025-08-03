@@ -61,22 +61,22 @@ init:
 	cd crm-service && go mod tidy
 	cd marketing-service && go mod tidy
 
-gateway-http:
-	cd gateway-service && air http
+gateway:
+	cd gateway-service && go run main.go http
 crm-grpc:
 	cd crm-service && air grpc
-bdspro-grpc:
-	cd bdspro-service && air grpc 
+bdspro:
+	cd bdspro-service && go run main.go grpc
 user-http:
 	cd user-service && air http
-user-grpc:
-	cd user-service && air grpc
+user:
+	cd user-service && go run main.go grpc
 organization:
-	cd organization-service && air grpc
+	cd organization-service && go run main.go grpc-server
 notification:
 	cd notification-service && air grpc
 social:
-	cd social-service && air grpc
+	cd social-service && go run main.go grpc
 appointment:
 	cd appointment-service && air grpc
 chat-http:

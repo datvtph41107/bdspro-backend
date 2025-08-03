@@ -1,8 +1,10 @@
 package handler
 
 import (
+	_dto "common/dto"
 	"context"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
@@ -178,23 +180,22 @@ func (h *OrganizationRoleHandler) CreateNewRoleWithMembers(ctx context.Context, 
 	return h.OrganizationRoleTransformer.EntityToCreateNewRoleWithMembersResponse(role, req.MemberIds, req.PermissionIds), nil
 }
 
-// @Summary Cập nhật vai trò với thành viên và quyền
-// @Description Cập nhật vai trò và gán thành viên cùng quyền
+// @Summary Lấy danh sách vai trò của tổ chức hiện tại user đang request
+// @Description Lấy danh sách vai trò của tổ chức hiện tại user đang request
 // @Tags Vai trò
 // @Accept json
 // @Produce json
-// @Param request body organizationpb.UpdateRoleWithMembersRequest true "Thông tin vai trò"
 // @Security BearerAuth
-// @Param id path int true "ID của vai trò"
-// @Router /organization/role/{id}/with-members [put]
-func (h *OrganizationRoleHandler) UpdateRoleWithMembers(ctx context.Context, req *organizationpb.UpdateRoleWithMembersRequest) (*organizationpb.UpdateRoleWithMembersResponse, error) {
-	role := h.OrganizationRoleTransformer.UpdateRoleWithMembersRequestToEntity(req)
-	if err := h.OrganizationRoleValidator.ValidateUpdateRoleWithMembersRequest(req); err != nil {
-		return nil, err
+// @Router /organization/roles/current [get]
+func (h *OrganizationRoleHandler) GetRolesCurrent(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetRolesResponse, error) {
+	dto := _dto.Pagable{
+		Page: int(req.Page),
+		Size: int(req.Size),
 	}
-	role, err := h.OrganizationRoleUsecase.UpdateRoleWithMembers(ctx, role, req.MemberIds, req.PermissionIds)
+
+	roles, total, err := h.OrganizationRoleUsecase.GetRoleCurrent(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationRoleTransformer.EntityToUpdateRoleWithMembersResponse(role), nil
+	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, total), nil
 }

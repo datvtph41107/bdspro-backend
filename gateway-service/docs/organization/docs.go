@@ -15,6 +15,173 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/business-domain": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả lĩnh vực hoạt động",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Lấy tất cả lĩnh vực hoạt động",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo mới một lĩnh vực hoạt động",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Tạo lĩnh vực hoạt động",
+                "parameters": [
+                    {
+                        "description": "Thông tin lĩnh vực hoạt động",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateBusinessDomainRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/business-domain/active": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách các lĩnh vực hoạt động đang active",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Lấy lĩnh vực hoạt động đang active",
+                "responses": {}
+            }
+        },
+        "/business-domain/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin chi tiết lĩnh vực hoạt động theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Lấy chi tiết lĩnh vực hoạt động",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lĩnh vực hoạt động",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin lĩnh vực hoạt động",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Cập nhật lĩnh vực hoạt động",
+                "parameters": [
+                    {
+                        "description": "Thông tin lĩnh vực hoạt động",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateBusinessDomainRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của lĩnh vực hoạt động",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa lĩnh vực hoạt động (soft delete)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lĩnh vực hoạt động"
+                ],
+                "summary": "Xóa lĩnh vực hoạt động",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lĩnh vực hoạt động",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/deal": {
             "get": {
                 "security": [
@@ -92,6 +259,789 @@ const docTemplate = `{
                         "description": "Thành công",
                         "schema": {
                             "$ref": "#/definitions/organizationpb.CreateGroupDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi lời mời tham gia thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Gửi lời mời tham gia thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin lời mời",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.SendInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.SendInvitationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/accept": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xác nhận lời mời tham gia thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Xác nhận lời mời",
+                "parameters": [
+                    {
+                        "description": "Thông tin xác nhận",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.AcceptInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.AcceptInvitationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/confirm-withdrawal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xác nhận rút khỏi thương vụ (dành cho admin/phụ trách)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Xác nhận rút khỏi thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin xác nhận",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.ConfirmWithdrawalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.ConfirmWithdrawalResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/pending": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách lời mời đang chờ xác nhận",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Lấy danh sách lời mời đang chờ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "inviteeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetPendingInvitationsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/reject": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Từ chối lời mời tham gia thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Từ chối lời mời",
+                "parameters": [
+                    {
+                        "description": "Thông tin từ chối",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.RejectInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.RejectInvitationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/remove": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gỡ khỏi thương vụ (dành cho admin/phụ trách)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Gỡ khỏi thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin gỡ khỏi",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.RemoveFromDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.RemoveFromDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/resend": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi lại lời mời tham gia thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Gửi lại lời mời",
+                "parameters": [
+                    {
+                        "description": "Thông tin gửi lại",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.ResendInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.ResendInvitationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm thành viên + sort theo thương vụ chung",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Tìm kiếm thành viên",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.SearchMembersResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rút khỏi thương vụ (dành cho thành viên)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Rút khỏi thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin rút khỏi",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.WithdrawFromDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.WithdrawFromDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal-invitation/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin lời mời theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Lấy lời mời theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của lời mời",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetInvitationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/commission/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thống kê về lợi nhuận mục tiêu, tổng tiền đã chia, số người đã chia",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hoa hồng"
+                ],
+                "summary": "Lấy thống kê lợi nhuận và hoa hồng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetDealCommissionStatsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách lịch sử của deal với phân trang và lọc theo loại hành động",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ghi chú nội bộ"
+                ],
+                "summary": "Lấy danh sách lịch sử",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Lọc theo loại hành động",
+                        "name": "actionTypes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Số lượng item mỗi trang",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetDealHistoryResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/internal-note": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm ghi chú nội bộ cho deal",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ghi chú nội bộ"
+                ],
+                "summary": "Thêm ghi chú nội bộ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin ghi chú",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.AddInternalNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.AddInternalNoteResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/member/{memberId}/commission": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật hoa hồng cho deal member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hoa hồng"
+                ],
+                "summary": "Cập nhật hoa hồng cho deal member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID thành viên",
+                        "name": "memberId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin hoa hồng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMemberCommissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMemberCommissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/member/{memberId}/note": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật ghi chú cho deal member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hoa hồng"
+                ],
+                "summary": "Cập nhật ghi chú cho deal member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID thành viên",
+                        "name": "memberId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin ghi chú",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMemberNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMemberNoteResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/members/commission": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật hoa hồng cho nhiều deal members cùng lúc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hoa hồng"
+                ],
+                "summary": "Cập nhật hoa hồng cho nhiều deal members",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin hoa hồng cho nhiều members",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMembersCommissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMembersCommissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{deal_id}/accepted-members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên đã chấp nhận lời mời tham gia thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Lấy danh sách thành viên đã accept",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thương vụ",
+                        "name": "deal_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetAcceptedMembersResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{deal_id}/invitations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách lời mời theo thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lời mời thương vụ"
+                ],
+                "summary": "Lấy danh sách lời mời theo thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetInvitationsByDealResponse"
                         }
                     }
                 }
@@ -238,6 +1188,52 @@ const docTemplate = `{
                         "description": "Thành công",
                         "schema": {
                             "$ref": "#/definitions/organizationpb.BankAccountItem"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{id}/cancel": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hủy thương vụ với lý do",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Hủy thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Lý do hủy",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CancelDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CancelDealResponse"
                         }
                     }
                 }
@@ -855,6 +1851,156 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/group/{groupId}/deal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo thương vụ cho nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Tạo thương vụ cho nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin thương vụ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupDealV2Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateGroupDealV2Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/{groupId}/deal/{dealId}/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật trạng thái thương vụ cho nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Cập nhật trạng thái thương vụ cho nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealStatusV2Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateGroupDealStatusV2Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/{groupId}/deals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thương vụ của nhóm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy danh sách thương vụ của nhóm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nhóm",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Kích thước",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetGroupDealsV2Response"
+                        }
+                    }
+                }
+            }
+        },
         "/group/{id}": {
             "get": {
                 "security": [
@@ -1128,6 +2274,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/investment/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "confirm form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "confirm form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
         "/investment/{id}/reject": {
             "post": {
                 "security": [
@@ -1146,6 +2329,43 @@ const docTemplate = `{
                     "Investment"
                 ],
                 "summary": "reject form khai báo góp vốn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investment/{id}/unconfirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "unconfirm form khai báo góp vốn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "unconfirm form khai báo góp vốn",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1271,6 +2491,34 @@ const docTemplate = `{
             }
         },
         "/organization/branch/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy chi tiết chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Lấy chi tiết chi nhánh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID chi nhánh",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
             "put": {
                 "security": [
                     {
@@ -1333,42 +2581,6 @@ const docTemplate = `{
             }
         },
         "/organization/branch/{id}/member": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách thành viên của chi nhánh",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chi nhánh"
-                ],
-                "summary": "Lấy danh sách thành viên của chi nhánh",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            },
             "post": {
                 "security": [
                     {
@@ -1387,6 +2599,13 @@ const docTemplate = `{
                 ],
                 "summary": "Thêm thành viên vào chi nhánh",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID chi nhánh",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Thông tin chi nhánh",
                         "name": "organization_branch",
@@ -1427,6 +2646,51 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/organizationpb.RemoveMemberFromOrganizationBranchRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên của chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chi nhánh"
+                ],
+                "summary": "Lấy danh sách thành viên của chi nhánh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID chi nhánh",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -1485,6 +2749,48 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/organization/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tổ chức của người dùng hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy tổ chức của người dùng hiện tại",
+                "responses": {}
+            }
+        },
+        "/organization/current/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy dashboard của tổ chức hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy dashboard của tổ chức hiện tại",
+                "responses": {}
+            }
+        },
         "/organization/member": {
             "get": {
                 "security": [
@@ -1504,6 +2810,12 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID để lọc thành viên",
+                        "name": "roleId",
+                        "in": "query"
+                    },
                     {
                         "type": "integer",
                         "description": "Page number",
@@ -1550,6 +2862,38 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/organizationpb.CreateOrganizationMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/member/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nhiều thành viên tổ chức cùng lúc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thành viên"
+                ],
+                "summary": "Tạo nhiều thành viên tổ chức cùng lúc",
+                "parameters": [
+                    {
+                        "description": "Danh sách thông tin thành viên",
+                        "name": "organizationMembers",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationMemberBatchRequest"
                         }
                     }
                 ],
@@ -1680,27 +3024,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "responses": {}
-            }
-        },
-        "/organization/owned": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy tổ chức của người dùng hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức"
-                ],
-                "summary": "Lấy tổ chức của người dùng hiện tại",
                 "responses": {}
             }
         },
@@ -1894,6 +3217,38 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/organization/role/with-members": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo vai trò mới và gán thành viên cùng quyền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vai trò"
+                ],
+                "summary": "Tạo vai trò với thành viên và quyền",
+                "parameters": [
+                    {
+                        "description": "Thông tin vai trò với thành viên và quyền",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateNewRoleWithMembersRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/organization/role/{id}": {
             "get": {
                 "security": [
@@ -1989,6 +3344,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/organization/roles/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách vai trò của tổ chức hiện tại user đang request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vai trò"
+                ],
+                "summary": "Lấy danh sách vai trò của tổ chức hiện tại user đang request",
+                "responses": {}
+            }
+        },
         "/organization/{id}": {
             "put": {
                 "security": [
@@ -2019,6 +3395,156 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/organization/{organizationId}/deal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo thương vụ cho tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Tạo thương vụ cho tổ chức",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tổ chức",
+                        "name": "organizationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin thương vụ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationDealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.CreateOrganizationDealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{organizationId}/deal/{dealId}/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật trạng thái thương vụ cho tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Cập nhật trạng thái thương vụ cho tổ chức",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tổ chức",
+                        "name": "organizationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateOrganizationDealStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateOrganizationDealStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{organizationId}/deals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thương vụ của tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy danh sách thương vụ của tổ chức",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tổ chức",
+                        "name": "organizationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Kích thước",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetOrganizationDealsResponse"
+                        }
+                    }
+                }
             }
         }
     },
@@ -2078,6 +3604,10 @@ const docTemplate = `{
                 "changedAt": {
                     "type": "string"
                 },
+                "confirmed": {
+                    "description": "For tracking confirmation status",
+                    "type": "boolean"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -2094,11 +3624,22 @@ const docTemplate = `{
                 "investType": {
                     "$ref": "#/definitions/enums.DealMemberType"
                 },
+                "memberID": {
+                    "type": "integer"
+                },
                 "note": {
                     "type": "string"
                 },
+                "proxyUserID": {
+                    "description": "For proxy investments (when admin creates on behalf of user)",
+                    "type": "integer"
+                },
                 "status": {
                     "$ref": "#/definitions/enums.ApprovedStatus"
+                },
+                "transferProofImage": {
+                    "description": "URL to transfer proof image",
+                    "type": "string"
                 },
                 "transferTime": {
                     "type": "string"
@@ -2150,6 +3691,61 @@ const docTemplate = `{
                 "DocOwnerInvest"
             ]
         },
+        "organizationpb.AcceptInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.AcceptInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "organizationpb.AddInternalNoteRequest": {
+            "type": "object",
+            "properties": {
+                "actionType": {
+                    "description": "Loại hành động (từ enum ActionType)",
+                    "type": "integer"
+                },
+                "content": {
+                    "description": "Nội dung ghi chú",
+                    "type": "string"
+                },
+                "dealId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.AddInternalNoteResponse": {
+            "type": "object",
+            "properties": {
+                "actionType": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "noteId": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.AddMemberToOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -2178,11 +3774,66 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.CancelDealRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.CancelDealResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.CheckOrganizationIsExistRequest": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "organizationpb.ConfirmWithdrawalRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.ConfirmWithdrawalResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "organizationpb.CreateBusinessDomainRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -2218,6 +3869,14 @@ const docTemplate = `{
                 },
                 "groupId": {
                     "type": "integer"
+                },
+                "isManual": {
+                    "description": "Nhập tay (dành cho doanh thu)",
+                    "type": "boolean"
+                },
+                "isUnilateral": {
+                    "description": "Đơn phương (gỡ khỏi thương vụ)",
+                    "type": "boolean"
                 },
                 "memberIds": {
                     "type": "array",
@@ -2255,6 +3914,81 @@ const docTemplate = `{
             }
         },
         "organizationpb.CreateGroupDealResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateGroupDealV2Request": {
+            "type": "object",
+            "properties": {
+                "bankAccount": {
+                    "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "bankAccountId": {
+                    "type": "integer"
+                },
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "customerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "dealType": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "groupId": {
+                    "type": "integer"
+                },
+                "isManual": {
+                    "description": "Nhập tay (dành cho doanh thu)",
+                    "type": "boolean"
+                },
+                "isUnilateral": {
+                    "description": "Đơn phương (gỡ khỏi thương vụ)",
+                    "type": "boolean"
+                },
+                "memberIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "partnerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "organizationpb.CreateGroupDealV2Response": {
             "type": "object",
             "properties": {
                 "id": {
@@ -2313,6 +4047,29 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.CreateNewRoleWithMembersRequest": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "memberIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "organizationpb.CreateOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -2340,6 +4097,92 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.CreateOrganizationDealRequest": {
+            "type": "object",
+            "properties": {
+                "bankAccount": {
+                    "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "bankAccountId": {
+                    "type": "integer"
+                },
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "customerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "dealType": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "isManual": {
+                    "description": "Nhập tay (dành cho doanh thu)",
+                    "type": "boolean"
+                },
+                "isUnilateral": {
+                    "description": "Đơn phương (gỡ khỏi thương vụ)",
+                    "type": "boolean"
+                },
+                "memberIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "partnerIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "organizationpb.CreateOrganizationDealResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.CreateOrganizationMemberBatchRequest": {
+            "type": "object",
+            "properties": {
+                "userIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "organizationpb.CreateOrganizationMemberRequest": {
             "type": "object",
             "properties": {
@@ -2360,10 +4203,25 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
+                "approveInvestor": {
+                    "type": "boolean"
+                },
+                "businessDomainIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "businessLicenseUrl": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
                     "type": "string"
                 },
                 "logoUrl": {
@@ -2374,6 +4232,9 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "integer"
                 },
                 "taxCode": {
                     "type": "string"
@@ -2400,6 +4261,12 @@ const docTemplate = `{
         "organizationpb.CreateRoleRequest": {
             "type": "object",
             "properties": {
+                "domainType": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
                 "key": {
                     "type": "string"
                 },
@@ -2414,6 +4281,117 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "organizationpb.DealHistoryItem": {
+            "type": "object",
+            "properties": {
+                "actionName": {
+                    "description": "Tên hành động",
+                    "type": "string"
+                },
+                "actionType": {
+                    "description": "Loại hành động",
+                    "type": "integer"
+                },
+                "actorAvatar": {
+                    "description": "Avatar người thực hiện",
+                    "type": "string"
+                },
+                "actorId": {
+                    "description": "ID người thực hiện",
+                    "type": "integer"
+                },
+                "actorName": {
+                    "description": "Tên người thực hiện",
+                    "type": "string"
+                },
+                "content": {
+                    "description": "Nội dung chi tiết",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "Thời gian tạo",
+                    "type": "string"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DealInvitation": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "inviteeId": {
+                    "type": "integer"
+                },
+                "inviterId": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                }
+            }
+        },
+        "organizationpb.DealInvitationMember": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "joinedAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DealMemberCommissionUpdate": {
+            "type": "object",
+            "properties": {
+                "commissionType": {
+                    "type": "integer"
+                },
+                "commissionValue": {
+                    "type": "number"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
                 }
             }
         },
@@ -2458,6 +4436,71 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.GetAcceptedMembersResponse": {
+            "type": "object",
+            "properties": {
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealInvitationMember"
+                    }
+                }
+            }
+        },
+        "organizationpb.GetDealCommissionStatsResponse": {
+            "type": "object",
+            "properties": {
+                "commissionPercentage": {
+                    "description": "Phần trăm đã chia",
+                    "type": "number"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "memberCount": {
+                    "description": "Số người đã chia",
+                    "type": "integer"
+                },
+                "remainingProfit": {
+                    "description": "Lợi nhuận còn lại",
+                    "type": "number"
+                },
+                "targetProfit": {
+                    "description": "Lợi nhuận mục tiêu",
+                    "type": "number"
+                },
+                "totalCommission": {
+                    "description": "Tổng tiền đã chia",
+                    "type": "number"
+                }
+            }
+        },
+        "organizationpb.GetDealHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealHistoryItem"
+                    }
+                },
+                "limit": {
+                    "description": "Số lượng item mỗi trang",
+                    "type": "integer"
+                },
+                "page": {
+                    "description": "Trang hiện tại",
+                    "type": "integer"
+                },
+                "total": {
+                    "description": "Tổng số item",
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.GetGroupDealResponse": {
             "type": "object",
             "properties": {
@@ -2467,6 +4510,56 @@ const docTemplate = `{
             }
         },
         "organizationpb.GetGroupDealsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.GroupDeal"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.GetGroupDealsV2Response": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.GroupDeal"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.GetInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "invitation": {
+                    "$ref": "#/definitions/organizationpb.DealInvitation"
+                }
+            }
+        },
+        "organizationpb.GetInvitationsByDealResponse": {
+            "type": "object",
+            "properties": {
+                "invitations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealInvitation"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.GetOrganizationDealsResponse": {
             "type": "object",
             "properties": {
                 "data": {
@@ -2494,11 +4587,28 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.GetPendingInvitationsResponse": {
+            "type": "object",
+            "properties": {
+                "invitations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealInvitation"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.GroupDeal": {
             "type": "object",
             "properties": {
                 "bankAccount": {
                     "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "cancelReason": {
+                    "type": "string"
                 },
                 "createdAt": {
                     "type": "string"
@@ -2523,6 +4633,14 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "isManual": {
+                    "description": "Nhập tay (dành cho doanh thu)",
+                    "type": "boolean"
+                },
+                "isUnilateral": {
+                    "description": "Đơn phương (gỡ khỏi thương vụ)",
+                    "type": "boolean"
                 },
                 "members": {
                     "type": "array",
@@ -2615,6 +4733,50 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.RejectInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.RejectInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "organizationpb.RemoveFromDealRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.RemoveFromDealResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "organizationpb.RemoveMemberFromOrganizationBranchRequest": {
             "type": "object",
             "properties": {
@@ -2623,6 +4785,76 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "integer"
+                }
+            }
+        },
+        "organizationpb.ResendInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.ResendInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "organizationpb.SearchMembersResponse": {
+            "type": "object",
+            "properties": {
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealInvitationMember"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.SendInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "inviteeId": {
+                    "type": "integer"
+                },
+                "inviterId": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.SendInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2647,11 +4879,142 @@ const docTemplate = `{
                 "investType": {
                     "type": "integer"
                 },
+                "memberId": {
+                    "description": "ID of the deal member making the investment",
+                    "type": "integer"
+                },
                 "note": {
+                    "type": "string"
+                },
+                "proxyUserId": {
+                    "description": "For proxy investments",
+                    "type": "integer"
+                },
+                "transferProofImage": {
+                    "description": "URL to transfer proof image",
                     "type": "string"
                 },
                 "transferTime": {
                     "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateBusinessDomainRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateDealMemberCommissionRequest": {
+            "type": "object",
+            "properties": {
+                "commissionType": {
+                    "description": "Loại hoa hồng (10: %, 20: VND)",
+                    "type": "integer"
+                },
+                "commissionValue": {
+                    "description": "Giá trị hoa hồng",
+                    "type": "number"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "description": "Ghi chú",
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateDealMemberCommissionResponse": {
+            "type": "object",
+            "properties": {
+                "commissionType": {
+                    "type": "integer"
+                },
+                "commissionValue": {
+                    "type": "number"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateDealMemberNoteRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateDealMemberNoteResponse": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.UpdateDealMembersCommissionRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealMemberCommissionUpdate"
+                    }
+                }
+            }
+        },
+        "organizationpb.UpdateDealMembersCommissionResponse": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealMemberCommissionUpdate"
+                    }
                 }
             }
         },
@@ -2695,6 +5058,28 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealStatusV2Request": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "groupId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateGroupDealStatusV2Response": {
+            "type": "object",
+            "properties": {
+                "dealId": {
                     "type": "integer"
                 }
             }
@@ -2771,6 +5156,28 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.UpdateOrganizationDealStatusRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.UpdateOrganizationDealStatusResponse": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.UpdateOrganizationMemberRequest": {
             "type": "object",
             "properties": {
@@ -2788,10 +5195,25 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
+                "approveInvestor": {
+                    "type": "boolean"
+                },
+                "businessDomainIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "businessLicenseUrl": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
                     "type": "string"
                 },
                 "id": {
@@ -2807,7 +5229,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "taxCode": {
                     "type": "string"
@@ -2834,8 +5256,14 @@ const docTemplate = `{
         "organizationpb.UpdateRoleRequest": {
             "type": "object",
             "properties": {
+                "domainType": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
                 },
                 "key": {
                     "type": "string"
@@ -2848,6 +5276,28 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "organizationpb.WithdrawFromDealRequest": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.WithdrawFromDealResponse": {
+            "type": "object",
+            "properties": {
+                "invitationId": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2909,6 +5359,19 @@ const docTemplate = `{
                 },
                 "tickVerified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
                 }
             }
         }

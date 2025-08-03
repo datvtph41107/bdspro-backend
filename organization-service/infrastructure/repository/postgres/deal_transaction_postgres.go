@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// @bind: organization/internal/domain/repository.DealTransactionRepository
 type DealTransactionPostgresRepository struct {
 	db *gorm.DB
 }
@@ -48,7 +49,7 @@ func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dea
 	var transactions []*entity.DealTransaction
 	var total int64
 	query := r.db.WithContext(ctx).Debug().Model(&entity.DealTransaction{})
-	
+
 	if transactionType != nil {
 		query = query.Where("type = ?", *transactionType)
 	}
@@ -104,7 +105,7 @@ func (r *DealTransactionPostgresRepository) GetFinancialSummary(ctx context.Cont
 	var totalRevenue float64
 	err := r.db.WithContext(ctx).
 		Model(&entity.DealTransaction{}).
-		Where("deal_id = ? AND type = ? AND status = ?", 
+		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, enums.TransactionTypeRevenue, enums.ApprovedStatusApproved).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&totalRevenue).Error
@@ -116,7 +117,7 @@ func (r *DealTransactionPostgresRepository) GetFinancialSummary(ctx context.Cont
 	var totalExpense float64
 	err = r.db.WithContext(ctx).
 		Model(&entity.DealTransaction{}).
-		Where("deal_id = ? AND type = ? AND status = ?", 
+		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, enums.TransactionTypeExpense, enums.ApprovedStatusApproved).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&totalExpense).Error
@@ -158,7 +159,7 @@ func (r *DealTransactionPostgresRepository) GetTotalAmountByType(ctx context.Con
 	var total float64
 	err := r.db.WithContext(ctx).
 		Model(&entity.DealTransaction{}).
-		Where("deal_id = ? AND type = ? AND status = ?", 
+		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, transactionType, enums.ApprovedStatusApproved).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&total).Error
@@ -166,4 +167,4 @@ func (r *DealTransactionPostgresRepository) GetTotalAmountByType(ctx context.Con
 		return 0, fmt.Errorf("failed to calculate total amount: %w", err)
 	}
 	return total, nil
-} 
+}

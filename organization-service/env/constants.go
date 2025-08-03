@@ -6,7 +6,7 @@ var (
 	USER_CONTEXT             = "user_id"
 	ADMIN_ROLE_KEY           = "admin"
 	ADMIN_ROLE_NAME          = "Admin"
-	MAX_ORGANIZATION_MEMBERS = 10
+	MAX_ORGANIZATION_MEMBERS = 100
 
 	// Organization Log Types
 	LOG_TYPE_ORGANIZATION_CREATE = "ORGANIZATION_CREATE"

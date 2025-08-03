@@ -130,6 +130,49 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "triggerProfile.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "triggerProfile.fullName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.avatar",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.tickVerified",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "triggerProfile.phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "triggerProfile.isMember",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "triggerProfile.joinedAt",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -233,6 +276,29 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -303,10 +369,12 @@
             "format": "uint64"
           },
           {
-            "name": "active",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RuleServiceActiveBody"
+            }
           }
         ],
         "tags": [
@@ -316,6 +384,14 @@
     }
   },
   "definitions": {
+    "RuleServiceActiveBody": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
     "crmpbRuleDTO": {
       "type": "object",
       "properties": {
@@ -353,6 +429,9 @@
         },
         "triggerValue": {
           "type": "string"
+        },
+        "triggerProfile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -405,6 +484,9 @@
         },
         "triggerValue": {
           "type": "string"
+        },
+        "triggerProfile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -433,6 +515,33 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     },

@@ -49,7 +49,7 @@ func RoleEntityToModel(entity *entity.OrganizationRole) *OrganizationRoleModel {
 	permissions := make([]*OrganizationPermissionModel, len(entity.PermissionIds))
 	for i, permission := range entity.PermissionIds {
 		permissions[i] = &OrganizationPermissionModel{
-			Id: permission,
+			Id: uint32(permission),
 		}
 	}
 	return &OrganizationRoleModel{
@@ -177,7 +177,7 @@ func (r *OrganizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 	var total int64
 
 	// Get total count
-	err := r.db.Model(&OrganizationRoleModel{}).Where("organization_id = ? AND is_deleted = ?", organizationId, false).Count(&total).Error
+	err := r.db.Model(&OrganizationRoleModel{}).Where("organization_id = ? AND deleted_at IS NULL", organizationId).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -185,9 +185,9 @@ func (r *OrganizationRoleRepository) FindByOrganizationIdWithPagination(ctx cont
 	// Get paginated data with permissions
 	offset := page * size
 	err = r.db.WithContext(ctx).
-		Table("organization_roles").
-		Preload("Permissions").
-		Where("organization_id = ? AND is_deleted = ?", organizationId, false).
+		Model(&OrganizationRoleModel{}).
+		Where("organization_id = ? AND deleted_at IS NULL", organizationId).
+		Order("updated_at DESC").
 		Offset(offset).
 		Limit(size).
 		Find(&models).Error

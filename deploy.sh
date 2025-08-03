@@ -1,4 +1,5 @@
 #!/bin/bash
+start=$(date +%s)
 
 # Kiểm tra xem có tham số đầu vào không
 if [ -z "$1" ]; then
@@ -200,3 +201,7 @@ docker-compose up -d ${payload_build}
 # fi
 
 echo "Deployment và build thành công!"
+end=$(date +%s)
+elapsed=$((end - start))
+
+echo "Thời gian thực thi: $elapsed giây"

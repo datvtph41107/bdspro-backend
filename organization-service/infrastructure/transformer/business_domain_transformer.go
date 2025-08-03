@@ -73,7 +73,7 @@ func (t *businessDomainTransformer) EntitiesToGetAllBusinessDomainsResponse(enti
 		businessDomains[i] = t.EntityToBusinessDomain(entity)
 	}
 	return &organizationpb.GetAllBusinessDomainsResponse{
-		BusinessDomains: businessDomains,
+		Data: businessDomains,
 	}
 }
 
@@ -83,7 +83,7 @@ func (t *businessDomainTransformer) EntitiesToGetActiveBusinessDomainsResponse(e
 		businessDomains[i] = t.EntityToBusinessDomain(entity)
 	}
 	return &organizationpb.GetActiveBusinessDomainsResponse{
-		BusinessDomains: businessDomains,
+		Data: businessDomains,
 	}
 }
 

@@ -3,7 +3,6 @@ syntax = "proto3";
 package pb_bdspro;
 import "user/profile.proto";
 import "google/protobuf/timestamp.proto";
-import "bdspro/project_build.proto";
 import "bdspro/project.proto";
 import "bdspro/developer.proto";
 import "bdspro/amenity.proto";
@@ -239,4 +238,15 @@ message ProductItem {
 	uint64 ownerType = 7;
 	uint64 createdAt = 8;
 	uint64 updatedAt = 9;
+}
+
+message ProjectBuild {
+    uint64 id = 1;
+    string name = 2;
+    uint32 numFloor = 3;
+    uint32 numApartment = 4;
+    string note = 5;
+    uint64 projectId = 6;
+    repeated Apartment apartments = 7;
+    repeated ApartmentAttribute attributes = 8;
 }

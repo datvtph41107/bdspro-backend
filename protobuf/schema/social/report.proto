@@ -6,7 +6,6 @@ option go_package = "pb/types/social;pb_social";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "validate/validate.proto";
 
 service ReportService {
     rpc SubmitReport(ReportRequest) returns (ReportResponse) {

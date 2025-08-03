@@ -2,11 +2,14 @@ syntax = "proto3";
 
 package organizationpb;
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
+import "organization/deal_invitation.proto";
 
 service InternalOrganizationService {
     rpc GetOrganizationByIds(GetOrganizationByIdsRequest) returns (GetOrganizationByIdsResponse);
     rpc GetGroupByIds(GetGroupByIdsRequest) returns (GetGroupByIdsResponse);
+    rpc GetDealMemberByIds(GetDealMemberByIdsRequest) returns (GetDealMemberByIdsResponse);
+    rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
 }
 
 message GetOrganizationByIdsRequest {
@@ -25,6 +28,15 @@ message GetGroupByIdsResponse {
     repeated GroupItem groups = 1;
 }
 
+message GetDealMemberByIdsRequest {
+    uint64 dealId = 1;
+    repeated uint64 ids = 2;
+}
+
+message GetDealMemberByIdsResponse {
+    repeated DealInvitationMember data = 1;
+}
+
 message GroupItem {
     uint64 id = 1;
     string name = 2;
@@ -36,3 +48,18 @@ message OrganizationItem {
     string name = 2;
     string avatar = 3;
 }
+
+message CheckUsersInOrganizationRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    repeated uint32 userIds = 2 [json_name = "userIds"];
+}
+message CheckUserInOrganization {
+    uint32 userId = 1 [json_name = "userId"];
+    bool isExist = 2 [json_name = "isExist"];
+    string joinedAt = 3 [json_name = "joinedAt"];
+}
+
+message CheckUsersInOrganizationResponse {
+    repeated CheckUserInOrganization data = 1 [json_name = "data"];
+}
+

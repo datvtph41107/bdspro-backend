@@ -14,6 +14,7 @@ type ListUsecase struct {
 	docTypeRepo      repo.DocTypeRepo
 	projectRepo      repo.ProjectRepo
 	amenityRepo      repo.AmenityRepo
+	projectBuildRepo repo.ProjectBuildRepo
 }
 
 func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
@@ -21,12 +22,14 @@ func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
 	docTypeRepo repo.DocTypeRepo,
 	projectRepo repo.ProjectRepo,
 	amenityRepo repo.AmenityRepo,
+	projectBuildRepo repo.ProjectBuildRepo,
 ) *ListUsecase {
 	return &ListUsecase{propertyTypeRepo: propertyTypeRepo,
-		regionRepo:  regionRepo,
-		docTypeRepo: docTypeRepo,
-		projectRepo: projectRepo,
-		amenityRepo: amenityRepo,
+		regionRepo:       regionRepo,
+		docTypeRepo:      docTypeRepo,
+		projectRepo:      projectRepo,
+		amenityRepo:      amenityRepo,
+		projectBuildRepo: projectBuildRepo,
 	}
 }
 
@@ -49,4 +52,8 @@ func (s *ListUsecase) ListProject(c context.Context, dto *dto.ProjectSearchDTO) 
 
 func (s *ListUsecase) ListAmenity(c context.Context, dto *dto.AmenitySearchDTO) ([]domain.AmenityItem, error) {
 	return s.amenityRepo.GetAll(c, dto)
+}
+
+func (s *ListUsecase) ListProjectBuild(c context.Context, dto *dto.TextSearchRequest) ([]domain.ProjectBuild, int64, error) {
+	return s.projectBuildRepo.Search(c, dto)
 }

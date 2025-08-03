@@ -30,6 +30,9 @@ func (client *NotificationClient) SendReminder(c context.Context, customerID uin
 }
 
 func (client *NotificationClient) CreateHistory(c context.Context, entity *shared_dto.HistoryDTO) error {
+	if client.Client == nil {
+		return nil
+	}
 	return client.Client.CreateHistory(c, entity)
 }
 

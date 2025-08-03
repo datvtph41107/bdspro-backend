@@ -106,6 +106,7 @@ func (r *LeadPostgre) Update(ctx context.Context, id uint64, entity *domain.Lead
 func (r *LeadPostgre) Delete(ctx context.Context, id uint64) error {
 	return r.db.
 		WithContext(ctx).
+		Model(&domain.LeadEntity{}).
 		Where("id = ?", id).
 		Update("deleted_at", time.Now()).
 		Error
@@ -154,12 +155,13 @@ func (r *LeadPostgre) Assign(c context.Context, id uint64, dto *dto.LeadDTO) (*d
 	return &customer, err
 }
 
-func (r *LeadPostgre) SwitchStage(c context.Context, id uint64, stageID *uint64) (*domain.LeadEntity, error) {
+func (r *LeadPostgre) SwitchStage(c context.Context, id uint64, stageID *uint64, note string) (*domain.LeadEntity, error) {
 	customer := domain.LeadEntity{}
 	err := r.db.WithContext(c).
 		Model(&domain.LeadEntity{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("stage_id", stageID).
+		Update("stage_note", note).
 		Error
 	return &customer, err
 }
@@ -187,32 +189,46 @@ func (r *LeadPostgre) GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRul
 
 	query := `
 	SELECT
-		c.id AS customer_id,
+		l.id AS lead_id,
+		l.contact_id,
+		l.pipeline_id,
+		l.stage_id,
+		l.charge_person_id,
+		l.owner_id,
+		l.owner_type,
+		l.charge_person_type,
+		l.priority,
+		l.assign_note,
+		l.stage_note,
+		l.updated_at,
+
+		-- Contact fields
 		c.full_name,
 		c.phone,
 		c.email,
 		c.address,
-		c.note,
 		c.birthday,
-		c.pipeline_id,
-		c.stage_id,
-		c.charge_person_id,
-		c.updated_at,
-		c.owner_id,
-		c.owner_type,
+		c.note,
+
+		-- Stage fields
 		s.stage_name,
+
+		-- Rule fields
 		r.id AS rule_id,
 		r.rule_name,
 		r.condition,
 		r.condition_value,
 		r.trigger,
 		r.trigger_value
-		FROM customers c
-		JOIN stage s ON c.stage_id = s.id
-		JOIN rules r ON s.rule_id = r.id
-		WHERE c.stage_id IS NOT NULL
-		AND s.rule_id IS NOT NULL
-		AND r.active = true;
+
+	FROM customers l
+	JOIN tb_contact c ON l.contact_id = c.id
+	JOIN stage s ON l.stage_id = s.id
+	JOIN rules r ON s.rule_id = r.id
+
+	WHERE l.stage_id IS NOT NULL
+	AND s.rule_id IS NOT NULL
+	AND r.active = true;
 	`
 	err := r.db.WithContext(c).
 		Raw(query).

@@ -1,9 +1,11 @@
 package transformer
 
 import (
+	_utils "common/utils"
 	organizationpb "pb/types/organization"
 
 	"organization/internal/domain/entity"
+	"organization/internal/enums"
 )
 
 type OrganizationTransformer interface {
@@ -38,11 +40,15 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 		Website:            request.Website,
 		LogoUrl:            request.LogoUrl,
 		BusinessDomainIds:  request.BusinessDomainIds,
+		Description:        request.Description,
+		FoundedAt:          _utils.ParseStringToTime(request.FoundedAt),
+		Status:             enums.EMemberStatus(request.Status),
+		ApproveInvestor:    *request.ApproveInvestor,
 	}
 }
 
 func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization {
-	return &entity.Organization{
+	result := &entity.Organization{
 		ID:                 request.Id,
 		Name:               request.Name,
 		TaxCode:            request.TaxCode,
@@ -53,7 +59,16 @@ func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *org
 		Website:            request.Website,
 		LogoUrl:            request.LogoUrl,
 		BusinessDomainIds:  request.BusinessDomainIds,
+		Description:        request.Description,
+		FoundedAt:          _utils.ParseStringToTime(request.FoundedAt),
+		ApproveInvestor:    *request.ApproveInvestor,
 	}
+
+	if request.Status != nil {
+		result.Status = enums.EMemberStatus(*request.Status)
+	}
+
+	return result
 }
 
 func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse {

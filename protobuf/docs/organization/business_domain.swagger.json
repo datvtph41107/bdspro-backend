@@ -279,7 +279,7 @@
     "organizationpbGetActiveBusinessDomainsResponse": {
       "type": "object",
       "properties": {
-        "businessDomains": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -291,7 +291,7 @@
     "organizationpbGetAllBusinessDomainsResponse": {
       "type": "object",
       "properties": {
-        "businessDomains": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

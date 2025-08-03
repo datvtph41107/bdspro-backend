@@ -16,7 +16,7 @@ type OrganizationRoleTransformer interface {
 	EntityToGetRoleResponse(entity *entity.OrganizationRole) *organizationpb.GetRoleResponse
 	UpdateRoleRequestToEntity(req *organizationpb.UpdateRoleRequest) *entity.OrganizationRole
 	CreateNewRoleWithMembersRequestToEntity(req *organizationpb.CreateNewRoleWithMembersRequest) *entity.OrganizationRole
-	EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) *organizationpb.CreateNewRoleWithMembersResponse
+	EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) *organizationpb.CreateNewRoleWithMembersResponse
 	UpdateRoleWithMembersRequestToEntity(req *organizationpb.UpdateRoleWithMembersRequest) *entity.OrganizationRole
 	EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse
 }
@@ -34,6 +34,7 @@ func (t *organizationRoleTransformer) CreateRoleRequestToEntity(req *organizatio
 		OrganizationId: req.OrganizationId,
 		IsDefault:      req.IsDefault,
 		DomainType:     enums.DomainType(req.DomainType),
+		PermissionIds:  req.PermissionIds,
 	}
 }
 
@@ -73,7 +74,7 @@ func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.O
 		}
 	}
 	return &organizationpb.GetRolesResponse{
-		Roles: rolesResponse,
+		Data:  rolesResponse,
 		Total: total,
 	}
 }
@@ -117,7 +118,7 @@ func (t *organizationRoleTransformer) CreateNewRoleWithMembersRequestToEntity(re
 	}
 }
 
-func (t *organizationRoleTransformer) EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint32) *organizationpb.CreateNewRoleWithMembersResponse {
+func (t *organizationRoleTransformer) EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) *organizationpb.CreateNewRoleWithMembersResponse {
 	return &organizationpb.CreateNewRoleWithMembersResponse{
 		Id:            entity.Id,
 		Name:          entity.Name,

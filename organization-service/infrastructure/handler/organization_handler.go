@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 	"time"
 
 	"organization/env"
@@ -149,7 +150,7 @@ func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req 
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Router /organization/owned [get]
+// @Router /organization/current [get]
 func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *organizationpb.GetOwnedOrganizationRequest) (*organizationpb.GetOwnedOrganizationResponse, error) {
 	organization, err := h.OrganizationUsecase.GetOwnedOrganization(ctx)
 	if err != nil {
@@ -182,4 +183,29 @@ func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *org
 		}
 	}
 	return response, nil
+}
+
+// @Summary Lấy dashboard của tổ chức hiện tại
+// @Description Lấy dashboard của tổ chức hiện tại
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Router /organization/current/dashboard [get]
+func (h *OrganizationHandler) GetCurrentDashboard(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.DashboardResponse, error) {
+	// dashboard, err := h.OrganizationUsecase.GetCurrentDashboard(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return &organizationpb.DashboardResponse{
+		TotalProduct:     100,
+		TotalNewsfeed:    115,
+		TotalPost:        212,
+		TotalProject:     162,
+		TotalAsset:       200,
+		TotalSchedule:    12,
+		TotalTransaction: 5,
+		TotalClicked:     129200,
+		TotalViewHome:    14200,
+	}, nil
 }

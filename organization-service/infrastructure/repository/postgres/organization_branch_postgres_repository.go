@@ -24,6 +24,7 @@ type OrganizationBranchModel struct {
 	IsDeleted      bool       `gorm:"default:false"`
 	IsActive       bool       `gorm:"default:true;column:is_active"`
 	Type           string     `gorm:"column:type;index:idx_org_branches_type"`
+	Description    string     `gorm:"column:description"`
 	TotalMember    uint32     `gorm:"-"`
 	TotalAsset     uint32     `gorm:"-"`
 	TotalDeal      uint32     `gorm:"-"`
@@ -136,7 +137,7 @@ func (r *OrganizationBranchPostgres) GetOrganizationBranchByOrganizationIdWithPa
 		OrganizationBranchModel
 		TotalMember uint32 `gorm:"column:total_member"`
 	}
-	
+
 	var models []OrganizationBranchWithMemberCount
 	if err := r.db.WithContext(ctx).
 		Select("organization_branches.*, COUNT(organization_branch_members.id) as total_member").
@@ -148,14 +149,14 @@ func (r *OrganizationBranchPostgres) GetOrganizationBranchByOrganizationIdWithPa
 		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
-	
+
 	entities := make([]*entity.OrganizationBranch, len(models))
 	for i, model := range models {
 		branch := OrganizationBranchModelToEntity(&model.OrganizationBranchModel)
 		branch.TotalMember = model.TotalMember
 		entities[i] = branch
 	}
-	
+
 	var count int64
 	if err := r.db.WithContext(ctx).
 		Model(&OrganizationBranchModel{}).

@@ -4,6 +4,7 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
+	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/usecase"
@@ -14,17 +15,20 @@ type DealInvitationHandler struct {
 	dealInvitationUsecase     usecase.DealInvitationUsecase
 	dealInvitationTransformer transformer.DealInvitationTransformer
 	dealInvitationValidator   validator.DealInvitationValidator
+	userClient                *client.UserClient
 }
 
 func NewDealInvitationHandler(
-	dealInvitationUsecase 	usecase.DealInvitationUsecase,
+	dealInvitationUsecase usecase.DealInvitationUsecase,
 	dealInvitationTransformer transformer.DealInvitationTransformer,
 	dealInvitationValidator validator.DealInvitationValidator,
+	userClient *client.UserClient,
 ) *DealInvitationHandler {
 	return &DealInvitationHandler{
 		dealInvitationUsecase:     dealInvitationUsecase,
 		dealInvitationTransformer: dealInvitationTransformer,
 		dealInvitationValidator:   dealInvitationValidator,
+		userClient:                userClient,
 	}
 }
 
@@ -335,5 +339,8 @@ func (h *DealInvitationHandler) GetInvitationsByDeal(ctx context.Context, req *o
 		return nil, err
 	}
 
-	return h.dealInvitationTransformer.EntitiesToGetInvitationsByDealResponse(invitations, total), nil
-} 
+	pbs := h.dealInvitationTransformer.EntitiesToGetInvitationsByDealResponse(invitations, total)
+	h.userClient.MapToDealInvitationPb(ctx, pbs.Data)
+
+	return pbs, nil
+}

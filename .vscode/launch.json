@@ -15,7 +15,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/user-service",
-      "args": ["grpc"]
+      "args": ["grpc-server"]
     },
     {
       "name": "🧪 Debug BDSPro HTTP",

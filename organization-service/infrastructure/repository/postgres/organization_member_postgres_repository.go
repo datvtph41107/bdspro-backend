@@ -159,21 +159,21 @@ func (r *OrganizationMemberPostgresRepository) CreateOrganizationMemberBatch(ctx
 	for i, member := range organizationMembers {
 		models[i] = OrganizationMemberEntityToModel(member)
 	}
-	
+
 	err := r.db.WithContext(ctx).Create(&models).Error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	entities := make([]*entity.OrganizationMember, len(models))
 	for i, model := range models {
 		entities[i] = OrganizationMemberModelToEntity(model)
 	}
-	
+
 	return entities, nil
 }
 
-func (r *OrganizationMemberPostgresRepository) FindByUserIdsAndOrganizationId(ctx context.Context, userIds []uint32, organizationId uint32) ([]*entity.OrganizationMember, error) {
+func (r *OrganizationMemberPostgresRepository) FindByUserIdsAndOrganizationId(ctx context.Context, userIds []uint64, organizationId uint32) ([]*entity.OrganizationMember, error) {
 	var organizationMembers []*OrganizationMemberModel
 	err := r.db.WithContext(ctx).Where("user_id IN ? AND organization_id = ? AND is_deleted = ?", userIds, organizationId, false).Find(&organizationMembers).Error
 	if err != nil {

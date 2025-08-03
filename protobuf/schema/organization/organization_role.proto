@@ -3,10 +3,10 @@ syntax = "proto3";
 package organizationpb;
 
 import "google/api/annotations.proto";
-import "validate/validate.proto";
 import "organization/organization_permission.proto";
+import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service OrganizationRoleService {
     rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {
@@ -32,6 +32,12 @@ service OrganizationRoleService {
     rpc GetRoles(GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/role"
+        };
+    }
+
+    rpc GetRolesCurrent(sharepb.IdRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/roles/current"
         };
     }
 
@@ -81,7 +87,7 @@ message UpdateRoleRequest {
     uint32 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
-    repeated uint32 permissionIds = 4 [json_name = "permissionIds"];
+    repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
     bool isDefault = 5 [json_name = "isDefault"];
     uint32 domainType = 6 [json_name = "domainType"];
 }
@@ -114,7 +120,7 @@ message Role {
 }
 
 message GetRolesResponse {
-    repeated Role roles = 1 [json_name = "roles"];
+    repeated Role data = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
 }
 
@@ -139,7 +145,7 @@ message CreateNewRoleWithMembersRequest {
     string name = 1 [json_name = "name"];
     string key = 2 [json_name = "key"];
     repeated uint32 memberIds = 3 [json_name = "memberIds"];
-    repeated uint32 permissionIds = 4 [json_name = "permissionIds"];
+    repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
 }
 
 message CreateNewRoleWithMembersResponse {
@@ -147,7 +153,7 @@ message CreateNewRoleWithMembersResponse {
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
     repeated uint32 memberIds = 4 [json_name = "memberIds"];
-    repeated uint32 permissionIds = 5 [json_name = "permissionIds"];
+    repeated uint64 permissionIds = 5 [json_name = "permissionIds"];
 }
 
 message UpdateRoleWithMembersRequest {
@@ -155,7 +161,7 @@ message UpdateRoleWithMembersRequest {
     string name = 2 [json_name = "name"];
     string key = 3 [json_name = "key"];
     repeated uint32 memberIds = 4 [json_name = "memberIds"];
-    repeated uint32 permissionIds = 5 [json_name = "permissionIds"];
+    repeated uint64 permissionIds = 5 [json_name = "permissionIds"];
     bool isDefault = 6 [json_name = "isDefault"];
     uint32 domainType = 7 [json_name = "domainType"];
 }

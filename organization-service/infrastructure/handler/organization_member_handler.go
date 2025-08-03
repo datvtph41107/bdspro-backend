@@ -1,9 +1,11 @@
 package handler
 
 import (
+	_dto "common/dto"
 	"context"
 	"fmt"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
@@ -86,8 +88,7 @@ func (h *OrganizationMemberHandler) CreateOrganizationMemberBatch(ctx context.Co
 		return nil, err
 	}
 
-	organizationMembers := h.OrganizationMemberTransformer.CreateOrganizationMemberBatchRequestToEntities(req)
-	createdMembers, err := h.OrganizationMemberUsecase.CreateOrganizationMemberBatch(ctx, organizationMembers)
+	createdMembers, err := h.OrganizationMemberUsecase.CreateOrganizationMemberBatch(ctx, req.UserIds)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +166,7 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 		return nil, err
 	}
 
-	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
+	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total, true), nil
 }
 
 // @Summary Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
@@ -177,12 +178,16 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 // @Param size query int false "Page size"
 // @Security BearerAuth
 // @Router /organization/members/me [get]
-func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetOrganizationMembersResponse, error) {
-	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, 0, 50)
+func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
+	dto := _dto.Pagable{
+		Page: int(req.Page),
+		Size: int(req.Size),
+	}
+	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
-	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total), nil
+	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total, false), nil
 }
 
 func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetCurrentOrganizationMemberRoleResponse, error) {

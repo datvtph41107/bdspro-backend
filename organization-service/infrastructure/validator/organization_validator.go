@@ -8,7 +8,7 @@ import (
 	organizationpb "pb/types/organization"
 
 	"organization/internal/custom_error"
-	"organization/internal/domain/entity"
+	"organization/internal/enums"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -198,11 +198,11 @@ func (o *organizationValidator) ValidateUpdateOrganizationRequest(request *organ
 		}
 	}
 
-	if request.Status != nil && *request.Status != "" {
-		validStatuses := map[string]bool{
-			entity.OrganizationStatusActive:   true,
-			entity.OrganizationStatusInactive: true,
-			entity.OrganizationStatusPending:  true,
+	if request.Status != nil {
+		validStatuses := map[uint32]bool{
+			uint32(enums.MemberStatusPending):  true,
+			uint32(enums.MemberStatusActive):   true,
+			uint32(enums.MemberStatusInActive): true,
 		}
 		if !validStatuses[*request.Status] {
 			return status.Errorf(codes.InvalidArgument, "invalid status. Must be one of: active, inactive, pending")

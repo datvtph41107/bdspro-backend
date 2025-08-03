@@ -106,6 +106,9 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 // @Router /lead/detail/{id} [get]
 func (s *LeadService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.LeadDetailDTO, error) {
 	result, err := s.UC.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
 	leadPb := s.LeadMapper.LeadDetailToPb(result)
 	s.BdsproClient.MapProductPbByIds(ctx, leadPb)
 	s.UserClient.PbChargePersonToLeadDetail(ctx, leadPb)
@@ -204,6 +207,9 @@ func (s *LeadService) AssignPerson(ctx context.Context, req *crmpb.LeadAssignPer
 		ChargeType:     enums.EOwnerType(req.ChargePersonType),
 		AssignNote:     req.NoteAssign,
 	})
+	if err != nil {
+		return nil, err
+	}
 	return s.LeadMapper.LeadToPb(result), err
 }
 
@@ -231,8 +237,18 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 // @Security BearerAuth
 // @Router /lead/stage [put]
 func (s *LeadService) Stage(ctx context.Context, req *crmpb.LeadStageRequest) (*crmpb.LeadDTO, error) {
-	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId)
-	return s.LeadMapper.LeadToPb(result), err
+	if req.LeadId == 0 || req.StageId == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "leadId and stageID is required",
+		}
+	}
+
+	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId, req.StageNote)
+	if err != nil {
+		return nil, err
+	}
+	return s.LeadMapper.LeadToPb(result), nil
 }
 
 // @Summary Gán liên hệ vào CRM

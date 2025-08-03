@@ -5,9 +5,9 @@ import "time"
 type OrganizationBranchType string
 
 const (
-	OrganizationBranchTypeBranch     OrganizationBranchType = "branch"      // Chi nhánh
-	OrganizationBranchTypeDepartment OrganizationBranchType = "department"  // Phòng ban
-	OrganizationBranchTypeStore      OrganizationBranchType = "store"       // Cửa hàng
+	OrganizationBranchTypeBranch     OrganizationBranchType = "branch"     // Chi nhánh
+	OrganizationBranchTypeDepartment OrganizationBranchType = "department" // Phòng ban
+	OrganizationBranchTypeStore      OrganizationBranchType = "store"      // Cửa hàng
 )
 
 type OrganizationBranch struct {
@@ -22,9 +22,10 @@ type OrganizationBranch struct {
 	UpdatedAt      time.Time
 	CreatedBy      uint32
 	IsActive       bool
+	Description    string
 	Type           OrganizationBranchType
 	TotalMember    uint32
 	TotalAsset     uint32
 
-	TotalDeal      uint32
+	TotalDeal uint32
 }

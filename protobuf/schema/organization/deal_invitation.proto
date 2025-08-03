@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-package organization;
+package organizationpb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service DealInvitationService {
   rpc SendInvitation(SendInvitationRequest) returns (SendInvitationResponse) {
@@ -195,7 +196,7 @@ message GetPendingInvitationsRequest {
 }
 
 message GetPendingInvitationsResponse {
-  repeated DealInvitation invitations = 1;
+  repeated DealInvitation data = 1;
   int64 total = 2;
 }
 
@@ -206,7 +207,7 @@ message GetInvitationsByDealRequest {
 }
 
 message GetInvitationsByDealResponse {
-  repeated DealInvitation invitations = 1;
+  repeated DealInvitation data = 1;
   int64 total = 2;
 }
 
@@ -215,12 +216,13 @@ message DealInvitation {
   uint64 dealId = 2;
   uint64 inviterId = 3;
   uint64 inviteeId = 4;
-  string status = 5;
+  uint32 status = 5;
   string message = 6;
   string role = 7;
   string reason = 8;
-  google.protobuf.Timestamp createdAt = 9;
-  google.protobuf.Timestamp updatedAt = 10;
+  string createdAt = 9;
+  string updatedAt = 10;
+  optional sharepb.ProfileItem profile = 11;
 }
 
 message DealInvitationMember {
@@ -228,5 +230,6 @@ message DealInvitationMember {
   string name = 2;
   string email = 3;
   string role = 4;
-  google.protobuf.Timestamp joinedAt = 5;
+  string joinedAt = 5;
+  uint32 status = 6;
 } 

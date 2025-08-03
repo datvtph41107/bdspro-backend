@@ -20,7 +20,7 @@ type LeadRepo interface {
 	ExistedWithPipelineID(ctx context.Context, pipelineID uint64) (bool, error)
 	UpdateNote(ctx context.Context, id uint64, note string) (*domain.LeadEntity, error)
 	Assign(c context.Context, id uint64, dto *dto.LeadDTO) (*domain.LeadEntity, error)
-	SwitchStage(c context.Context, id uint64, stageID *uint64) (*domain.LeadEntity, error)
+	SwitchStage(c context.Context, id uint64, stageID *uint64, note string) (*domain.LeadEntity, error)
 	GetOwnerWithRule(c context.Context) ([]dto.CustomerWithRuleDTO, error)
 	// UpdateAutoTrigger(c context.Context, id uint64) (*domain.CustomerEntity, error)
 	CareExpiredTime(c context.Context, organizationId uint64) (int64, error)

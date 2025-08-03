@@ -1,6 +1,7 @@
 package grpc_service
 
 import (
+	_dto "common/dto"
 	"context"
 	"fmt"
 	crmpb "pb/types/crm"
@@ -13,22 +14,26 @@ import (
 	"crm/infra/mapper"
 	"crm/internal/enums"
 	"crm/internal/usecase"
+	"errors"
 )
 
 type FriendService struct {
 	crmpb.UnimplementedFriendServiceServer
 	UC                 *usecase.FriendUsecase
 	userClient         *client.UserClient
-	FriendMapper       *mapper.FriendMapper
 	organizationClient *client.OrganizationClient
+	FriendMapper       *mapper.FriendMapper
 }
 
-func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient, friendMapper *mapper.FriendMapper, organizationClient *client.OrganizationClient) *FriendService {
+func NewFriendService(uc *usecase.FriendUsecase,
+	userClient *client.UserClient,
+	organizationClient *client.OrganizationClient,
+	friendMapper *mapper.FriendMapper) *FriendService {
 	return &FriendService{
 		UC:                 uc,
 		userClient:         userClient,
-		FriendMapper:       friendMapper,
 		organizationClient: organizationClient,
+		FriendMapper:       friendMapper,
 	}
 }
 
@@ -46,12 +51,19 @@ func NewFriendService(uc *usecase.FriendUsecase, userClient *client.UserClient, 
 func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendProfileListResponse, error) {
 	query := data.FriendRequest{
 		Text: strings.TrimSpace(strings.ToLower(req.Text)),
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
 	}
 	result, total, err := s.UC.FriendList(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
+	if req.DealId != nil {
+		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	}
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
 	if req.OrganizationId != 0 {
 		userIds := make([]uint32, 0, len(userPbs))
@@ -79,6 +91,42 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 	}
 	return &crmpb.FriendProfileListResponse{
 		Data:  userPbs,
+		Total: int32(total),
+	}, err
+}
+
+// @Summary Lấy danh sách bạn bè
+// @Description Lấy danh sách tất cả bạn bè của người dùng
+// @Tags Bạn bè
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query crmpb.FriendListRequest false "Tên hoặc số điện thoại"
+// @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Failure 404 {string} string "Không tìm thấy"
+// @Router /friend/with-lead [get]
+func (s *FriendService) FriendListWithLead(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+	if req.DealId == nil {
+		return nil, errors.New("dealId is required")
+	}
+	query := data.FriendRequest{
+		Text: strings.TrimSpace(strings.ToLower(req.Text)),
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	}
+	result, total, err := s.UC.FriendList(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	pbs := s.FriendMapper.ListFriendToPb(result)
+	s.userClient.PbUserToReceiverFriends(ctx, pbs)
+	s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+
+	return &crmpb.FriendListResponse{
+		Data:  pbs,
 		Total: int32(total),
 	}, err
 }

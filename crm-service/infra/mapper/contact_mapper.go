@@ -79,6 +79,7 @@ func (m *ContactMapper) ContactItemToPb(contact *domain.ContactItem) *crmpb.Cont
 		Blocked:       contact.Blocked,
 		ContactStatus: uint32(contact.Status),
 		StatusName:    enums.StatusContactMap[contact.Status],
+		Note:          contact.Note,
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
 	}

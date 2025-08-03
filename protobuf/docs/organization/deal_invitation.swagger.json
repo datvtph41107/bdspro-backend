@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetAcceptedMembersResponse"
+              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
             }
           },
           "default": {
@@ -54,7 +54,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetInvitationsByDealResponse"
+              "$ref": "#/definitions/organizationpbGetInvitationsByDealResponse"
             }
           },
           "default": {
@@ -99,7 +99,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationSearchMembersResponse"
+              "$ref": "#/definitions/organizationpbSearchMembersResponse"
             }
           },
           "default": {
@@ -150,7 +150,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationSendInvitationResponse"
+              "$ref": "#/definitions/organizationpbSendInvitationResponse"
             }
           },
           "default": {
@@ -166,7 +166,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationSendInvitationRequest"
+              "$ref": "#/definitions/organizationpbSendInvitationRequest"
             }
           }
         ],
@@ -182,7 +182,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationAcceptInvitationResponse"
+              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
             }
           },
           "default": {
@@ -198,7 +198,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationAcceptInvitationRequest"
+              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
             }
           }
         ],
@@ -214,7 +214,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationConfirmWithdrawalResponse"
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
             }
           },
           "default": {
@@ -230,7 +230,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationConfirmWithdrawalRequest"
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
             }
           }
         ],
@@ -246,7 +246,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetPendingInvitationsResponse"
+              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
             }
           },
           "default": {
@@ -291,7 +291,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationRejectInvitationResponse"
+              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
             }
           },
           "default": {
@@ -307,7 +307,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationRejectInvitationRequest"
+              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
             }
           }
         ],
@@ -323,7 +323,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationRemoveFromDealResponse"
+              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
             }
           },
           "default": {
@@ -339,7 +339,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationRemoveFromDealRequest"
+              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
             }
           }
         ],
@@ -355,7 +355,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationResendInvitationResponse"
+              "$ref": "#/definitions/organizationpbResendInvitationResponse"
             }
           },
           "default": {
@@ -371,7 +371,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationResendInvitationRequest"
+              "$ref": "#/definitions/organizationpbResendInvitationRequest"
             }
           }
         ],
@@ -387,7 +387,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationWithdrawFromDealResponse"
+              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
             }
           },
           "default": {
@@ -403,7 +403,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationWithdrawFromDealRequest"
+              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
             }
           }
         ],
@@ -419,7 +419,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationGetInvitationResponse"
+              "$ref": "#/definitions/organizationpbGetInvitationResponse"
             }
           },
           "default": {
@@ -445,7 +445,7 @@
     }
   },
   "definitions": {
-    "organizationAcceptInvitationRequest": {
+    "organizationpbAcceptInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -454,28 +454,7 @@
         }
       }
     },
-    "organizationAcceptInvitationResponse": {
-      "type": "object",
-      "properties": {
-        "invitationId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "success": {
-          "type": "boolean"
-        }
-      }
-    },
-    "organizationConfirmWithdrawalRequest": {
-      "type": "object",
-      "properties": {
-        "invitationId": {
-          "type": "string",
-          "format": "uint64"
-        }
-      }
-    },
-    "organizationConfirmWithdrawalResponse": {
+    "organizationpbAcceptInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -487,7 +466,28 @@
         }
       }
     },
-    "organizationDealInvitation": {
+    "organizationpbConfirmWithdrawalRequest": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "organizationpbConfirmWithdrawalResponse": {
+      "type": "object",
+      "properties": {
+        "invitationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "organizationpbDealInvitation": {
       "type": "object",
       "properties": {
         "id": {
@@ -507,7 +507,8 @@
           "format": "uint64"
         },
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "message": {
           "type": "string"
@@ -519,16 +520,17 @@
           "type": "string"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
-    "organizationDealInvitationMember": {
+    "organizationpbDealInvitationMember": {
       "type": "object",
       "properties": {
         "userId": {
@@ -545,39 +547,42 @@
           "type": "string"
         },
         "joinedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
-    "organizationGetAcceptedMembersResponse": {
+    "organizationpbGetAcceptedMembersResponse": {
       "type": "object",
       "properties": {
         "members": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationDealInvitationMember"
+            "$ref": "#/definitions/organizationpbDealInvitationMember"
           }
         }
       }
     },
-    "organizationGetInvitationResponse": {
+    "organizationpbGetInvitationResponse": {
       "type": "object",
       "properties": {
         "invitation": {
-          "$ref": "#/definitions/organizationDealInvitation"
+          "$ref": "#/definitions/organizationpbDealInvitation"
         }
       }
     },
-    "organizationGetInvitationsByDealResponse": {
+    "organizationpbGetInvitationsByDealResponse": {
       "type": "object",
       "properties": {
-        "invitations": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationDealInvitation"
+            "$ref": "#/definitions/organizationpbDealInvitation"
           }
         },
         "total": {
@@ -586,14 +591,14 @@
         }
       }
     },
-    "organizationGetPendingInvitationsResponse": {
+    "organizationpbGetPendingInvitationsResponse": {
       "type": "object",
       "properties": {
-        "invitations": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationDealInvitation"
+            "$ref": "#/definitions/organizationpbDealInvitation"
           }
         },
         "total": {
@@ -602,7 +607,7 @@
         }
       }
     },
-    "organizationRejectInvitationRequest": {
+    "organizationpbRejectInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -614,7 +619,7 @@
         }
       }
     },
-    "organizationRejectInvitationResponse": {
+    "organizationpbRejectInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -626,7 +631,7 @@
         }
       }
     },
-    "organizationRemoveFromDealRequest": {
+    "organizationpbRemoveFromDealRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -638,7 +643,7 @@
         }
       }
     },
-    "organizationRemoveFromDealResponse": {
+    "organizationpbRemoveFromDealResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -650,7 +655,7 @@
         }
       }
     },
-    "organizationResendInvitationRequest": {
+    "organizationpbResendInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -659,7 +664,7 @@
         }
       }
     },
-    "organizationResendInvitationResponse": {
+    "organizationpbResendInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -674,14 +679,14 @@
         }
       }
     },
-    "organizationSearchMembersResponse": {
+    "organizationpbSearchMembersResponse": {
       "type": "object",
       "properties": {
         "members": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationDealInvitationMember"
+            "$ref": "#/definitions/organizationpbDealInvitationMember"
           }
         },
         "total": {
@@ -690,7 +695,7 @@
         }
       }
     },
-    "organizationSendInvitationRequest": {
+    "organizationpbSendInvitationRequest": {
       "type": "object",
       "properties": {
         "dealId": {
@@ -713,7 +718,7 @@
         }
       }
     },
-    "organizationSendInvitationResponse": {
+    "organizationpbSendInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -728,7 +733,7 @@
         }
       }
     },
-    "organizationWithdrawFromDealRequest": {
+    "organizationpbWithdrawFromDealRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -740,7 +745,7 @@
         }
       }
     },
-    "organizationWithdrawFromDealResponse": {
+    "organizationpbWithdrawFromDealResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -777,6 +782,33 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     }

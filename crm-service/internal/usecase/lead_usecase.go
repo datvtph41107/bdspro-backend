@@ -150,12 +150,16 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 	// 	return nil, err
 	// }
 
-	lead := &domain.LeadEntity{
-		Source:           enums.ESourceLead(dto.Source),
-		ChargePersonID:   dto.ChargePersonID,
-		ChargePersonType: enums.EOwnerType(enums.EOwnerTypeMember),
+	lead, err := u.leadRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
 	}
-	err := u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+
+	lead.Source = enums.ESourceLead(dto.Source)
+	lead.ChargePersonID = dto.ChargePersonID
+	lead.ChargePersonType = enums.EOwnerType(enums.EOwnerTypeMember)
+
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		// update lead
 		if dto.StageID != nil {
 			stage, err := u.stageRepo.GetByID(ctx, *dto.StageID)
@@ -312,7 +316,7 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 	return customer, nil
 }
 
-func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint64) (*domain.LeadEntity, error) {
+func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint64, note string) (*domain.LeadEntity, error) {
 	// todo: check xem có quyền chuyển trạng thái lead không
 	customer, err := u.leadRepo.GetByID(ctx, id)
 	if err != nil {
@@ -324,7 +328,7 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 		return nil, err
 	}
 
-	customer, err = u.leadRepo.SwitchStage(ctx, id, stageID)
+	customer, err = u.leadRepo.SwitchStage(ctx, id, stageID, note)
 	if err != nil {
 		return nil, err
 	}

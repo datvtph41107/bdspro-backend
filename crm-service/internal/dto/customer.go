@@ -44,25 +44,25 @@ type LeadDTO struct {
 }
 
 type CustomerWithRuleDTO struct {
-	CustomerID     uint64           `json:"customerId" db:"customer_id"`
-	FullName       string           `json:"fullName" db:"full_name"`
-	Phone          string           `json:"phone" db:"phone"`
-	Email          string           `json:"email" db:"email"`
-	Address        string           `json:"address" db:"address"`
-	Note           string           `json:"note" db:"note"`
-	Birthday       *time.Time       `json:"birthday" db:"birthday"`
-	PipelineID     *uint64          `json:"pipelineId" db:"pipeline_id"`
-	StageID        *uint64          `json:"stageId" db:"stage_id"`
-	StageName      string           `json:"stageName" db:"stage_name"`
-	ChargePersonId uint64           `json:"chargePersonId" db:"charge_person_id"`
-	RuleID         uint64           `json:"ruleId" db:"rule_id"`
-	RuleName       string           `json:"ruleName" db:"rule_name"`
-	Condition      enums.ECondition `json:"condition" db:"condition"`
-	ConditionValue string           `json:"conditionValue" db:"condition_value"`
-	Trigger        enums.ERule      `json:"trigger" db:"trigger"`
-	TriggerValue   string           `json:"triggerValue" db:"trigger_value"`
-	OwnerID        uint64           `json:"ownerId" db:"owner_id"`
-	OwnerType      enums.EOwnerType `json:"ownerType" db:"owner_type"`
-	UpdatedAt      time.Time        `json:"updatedAt" db:"updated_at"`
-	TriggerToDay   bool             `json:"triggerToDay" db:"trigger_to_day"`
+	// Phone          string             `json:"phone" db:"phone"`
+	CustomerID     uint64             `json:"customerId" db:"customer_id"`
+	FullName       string             `json:"fullName" db:"full_name"`
+	Email          string             `json:"email" db:"email"`
+	Address        string             `json:"address" db:"address"`
+	Note           string             `json:"note" db:"note"`
+	Birthday       *time.Time         `json:"birthday" db:"birthday"`
+	PipelineID     *uint64            `json:"pipelineId" db:"pipeline_id"`
+	StageID        *uint64            `json:"stageId" db:"stage_id"`
+	StageName      string             `json:"stageName" db:"stage_name"`
+	ChargePersonId uint64             `json:"chargePersonId" db:"charge_person_id"`
+	RuleID         uint64             `json:"ruleId" db:"rule_id"`
+	RuleName       string             `json:"ruleName" db:"rule_name"`
+	Condition      enums.ECondition   `json:"condition" db:"condition"`
+	ConditionValue string             `json:"conditionValue" db:"condition_value"`
+	Trigger        enums.ERuleTrigger `json:"trigger" db:"trigger"`
+	TriggerValue   string             `json:"triggerValue" db:"trigger_value"`
+	OwnerID        uint64             `json:"ownerId" db:"owner_id"`
+	OwnerType      enums.EOwnerType   `json:"ownerType" db:"owner_type"`
+	UpdatedAt      time.Time          `json:"updatedAt" db:"updated_at"`
+	TriggerToDay   bool               `json:"triggerToDay" db:"trigger_to_day"`
 }

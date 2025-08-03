@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"organization/internal/enums"
 	"time"
 )
 
@@ -20,7 +21,9 @@ type Organization struct {
 	Email              *string
 	Website            *string
 	LogoUrl            *string
-	Status             string
+	Status             enums.EMemberStatus
+	FoundedAt          *time.Time
+	Description        *string
 	ApproveInvestor    bool
 	BusinessDomains    []*BusinessDomain
 	BusinessDomainIds  []uint32

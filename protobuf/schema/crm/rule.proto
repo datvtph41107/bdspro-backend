@@ -36,7 +36,8 @@ service RuleService {
   };
   rpc Active (ActiveRuleRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
-      put: "/v2/crm/rule/{id}/active"
+      put: "/v2/crm/rule/{id}/active",
+      body: "*"
     };
   };
 }
@@ -65,6 +66,7 @@ message RuleDTO {
   string conditionValue = 8;
   int32 trigger = 9;
   string triggerValue = 10;
+  sharepb.ProfileItem triggerProfile = 11;
 }
 
 message RuleListDTO {

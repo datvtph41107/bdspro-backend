@@ -4,7 +4,7 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service BusinessDomainService {
     rpc CreateBusinessDomain(CreateBusinessDomainRequest) returns (CreateBusinessDomainResponse) {
@@ -89,14 +89,14 @@ message GetAllBusinessDomainsRequest {
 }
 
 message GetAllBusinessDomainsResponse {
-    repeated BusinessDomain businessDomains = 1 [json_name = "businessDomains"];
+    repeated BusinessDomain data = 1;
 }
 
 message GetActiveBusinessDomainsRequest {
 }
 
 message GetActiveBusinessDomainsResponse {
-    repeated BusinessDomain businessDomains = 1 [json_name = "businessDomains"];
+    repeated BusinessDomain data = 1;
 }
 
 message BusinessDomain {

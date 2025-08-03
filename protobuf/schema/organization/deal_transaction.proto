@@ -7,7 +7,7 @@ import "bdspro/common.proto";
 import "shared/common.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 // Enum cho loại giao dịch
 enum TransactionType {

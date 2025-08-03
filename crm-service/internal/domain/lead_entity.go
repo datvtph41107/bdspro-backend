@@ -18,9 +18,11 @@ type LeadEntity struct {
 	ChargePersonType enums.EOwnerType  `json:"chargePersonType"`
 	OwnerID          *uint64           `json:"ownerId" binding:"required"`
 	OwnerType        enums.EOwnerType  `json:"ownerType" binding:"required"`
+	StageNote        string            `json:"stageNote"`
+	Note             string            `json:"note"`
 
 	Stage        *StageEntity        `gorm:"references:ID" json:"stage"`
-	Pipeline     *PipelineEntity     `gorm:"references:ID" json:"pipeline"`
+	Pipeline     *PipelineEntity     `gorm:"-" json:"pipeline"`
 	Documents    []DocumentEntity    `gorm:"foreignKey:LeadID" json:"documents"`
 	ProductCares []ProductCareEntity `gorm:"foreignKey:LeadID" json:"productCares"`
 	Contact      *ContactEntity      `gorm:"foreignKey:ContactID;references:ID" json:"contact"`

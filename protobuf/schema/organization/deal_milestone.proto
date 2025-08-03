@@ -5,7 +5,7 @@ package organizationpb;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service DealMilestoneService {
   rpc CreateDealMilestone(CreateDealMilestoneRequest) returns (DealMilestone) {

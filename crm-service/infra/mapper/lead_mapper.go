@@ -27,6 +27,8 @@ func (m *LeadMapper) LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDT
 		ChargePersonId: lead.ChargePersonID,
 		Priority:       uint32(lead.Priority),
 		PriorityName:   enums.PriorityMap[lead.Priority],
+		StageNote:      lead.StageNote,
+		Note:           lead.Note,
 	}
 	if lead.Stage != nil {
 		result.Stage = StageDomainToPb(lead.Stage)
@@ -48,6 +50,7 @@ func (m *LeadMapper) LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDT
 	}
 	if lead.Contact != nil {
 		result.Contact = m.ContactMapper.ContactToPb(lead.Contact)
+		result.Note = lead.Contact.Note
 	}
 
 	return result
@@ -66,9 +69,12 @@ func (m *LeadMapper) LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 		Priority:     int32(lead.Priority),
 		PriorityName: enums.PriorityMap[lead.Priority],
 		UpdatedAt:    _utils.FormatTimeToString(lead.UpdatedAt),
+		StageNote:    lead.StageNote,
+		Note:         lead.Note,
 	}
 	if lead.Contact != nil {
 		result.Contact = m.ContactMapper.ContactToPb(lead.Contact)
+		result.Note = lead.Contact.Note
 	}
 	if lead.Stage != nil {
 		result.Stage = StageDomainToPb(lead.Stage)
@@ -158,12 +164,16 @@ func (m *LeadMapper) LeadManagerToPb(lead *domain.LeadEntity) *crmpb.LeadManager
 		Priority:       uint64(lead.Priority),
 		CreatedAt:      _utils.FormatTimeToString(lead.CreatedAt),
 		UpdatedAt:      _utils.FormatTimeToString(lead.UpdatedAt),
+		StageNote:      lead.StageNote,
+		AssignNote:     lead.AssignNote,
+		Note:           lead.Note,
 	}
 	if lead.Contact != nil {
 		result.LeadName = lead.Contact.FullName
 		result.LeadPhone = lead.Contact.Phone
 		result.LeadAvatar = lead.Contact.Avatar
 		result.ProfileId = lead.Contact.ProfileID
+		result.Note = lead.Contact.Note
 	}
 
 	return result

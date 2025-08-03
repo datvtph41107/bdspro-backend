@@ -44,6 +44,10 @@ func (u *organizationAuthUsecase) HasPermission(ctx context.Context, userId uint
 		return false, err
 	}
 
+	if role == nil {
+		return false, custom_error.RecordNotFound("Organization member role not found")
+	}
+
 	for _, p := range role.Permissions {
 		if p.Key == permission {
 			return true, nil

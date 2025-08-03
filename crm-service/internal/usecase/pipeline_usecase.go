@@ -246,9 +246,9 @@ func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity,
 	}
 
 	var stage *domain.StageEntity
-	if pipeline.StageDefaultID != 0 {
+	if pipeline.StageDefaultID != nil {
 		for _, s := range stages {
-			if s.ID == pipeline.StageDefaultID {
+			if s.ID == *pipeline.StageDefaultID {
 				stage = &s
 				break
 			}

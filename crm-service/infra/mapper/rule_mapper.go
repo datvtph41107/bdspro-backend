@@ -20,7 +20,7 @@ func RulePbToDomain(req *crmpb.RuleDTO) *domain.RuleEntity {
 		Note:           req.Note,
 		Condition:      enums.ECondition(req.Condition),
 		ConditionValue: req.ConditionValue,
-		Trigger:        enums.ERule(req.Trigger),
+		Trigger:        enums.ERuleTrigger(req.Trigger),
 		TriggerValue:   req.TriggerValue,
 	}
 }

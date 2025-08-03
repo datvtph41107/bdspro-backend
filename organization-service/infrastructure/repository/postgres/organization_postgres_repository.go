@@ -7,6 +7,7 @@ import (
 
 	"organization/env"
 	"organization/internal/domain/entity"
+	"organization/internal/enums"
 
 	"gorm.io/gorm"
 )
@@ -26,9 +27,11 @@ type OrganizationModel struct {
 	Email               *string
 	Website             *string
 	LogoUrl             *string
-	Status              string `gorm:"index:idx_organizations_status_created_at"`
+	Status              uint32 `gorm:"index:idx_organizations_status_created_at"`
 	ApproveInvestor     bool   `gorm:"default:false"`
 	AccountBankInvestor *uint64
+	FoundedAt           *time.Time
+	Description         *string
 	BusinessDomains     []*BusinessDomainModel `gorm:"many2many:organization_business_domains;joinForeignKey:OrganizationID;joinReferences:BusinessDomainID"`
 	CreatedAt           time.Time              `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
 	UpdatedAt           time.Time              `gorm:"autoUpdateTime"`
@@ -58,12 +61,14 @@ func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
 		Email:              model.Email,
 		Website:            model.Website,
 		LogoUrl:            model.LogoUrl,
-		Status:             model.Status,
+		Status:             enums.EMemberStatus(model.Status),
 		BusinessDomains:    businessDomains,
 		CreatedAt:          model.CreatedAt,
 		UpdatedAt:          model.UpdatedAt,
 		CreatedBy:          model.CreatedBy,
 		UpdatedBy:          model.UpdatedBy,
+		FoundedAt:          model.FoundedAt,
+		Description:        model.Description,
 	}
 }
 
@@ -85,7 +90,7 @@ func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
 		Email:              entity.Email,
 		Website:            entity.Website,
 		LogoUrl:            entity.LogoUrl,
-		Status:             entity.Status,
+		Status:             uint32(entity.Status),
 		ApproveInvestor:    entity.ApproveInvestor,
 		BusinessDomains:    businessDomains,
 		CreatedAt:          entity.CreatedAt,
@@ -93,6 +98,8 @@ func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
 		CreatedBy:          entity.CreatedBy,
 		UpdatedBy:          entity.UpdatedBy,
 		IsDeleted:          false,
+		FoundedAt:          entity.FoundedAt,
+		Description:        entity.Description,
 	}
 }
 

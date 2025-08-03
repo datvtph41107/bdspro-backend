@@ -5,9 +5,11 @@ import (
 	"context"
 	"crm/env"
 	"crm/internal/domain"
+	"crm/internal/enums"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+	"strconv"
 
 	"pb/clients"
 )
@@ -18,7 +20,9 @@ type UserClient struct {
 }
 
 func NewUserClient() *UserClient {
-	return &UserClient{UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME)}
+	return &UserClient{
+		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+	}
 }
 
 func (c *UserClient) GetProfileByPhones(ctx context.Context, phones []string) (map[string]*domain.Profile, error) {
@@ -176,6 +180,8 @@ func (c *UserClient) PbChargePersonToLeadDetail(ctx context.Context, lead *crmpb
 	profileIDSet := make(map[uint64]struct{})
 	if lead.ChargePersonId != nil {
 		profileIDSet[*lead.ChargePersonId] = struct{}{}
+	} else {
+		return
 	}
 
 	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
@@ -189,13 +195,40 @@ func (c *UserClient) PbChargePersonToLeadDetail(ctx context.Context, lead *crmpb
 	}
 }
 
-func (c *UserClient) PbUserToFriends(ctx context.Context, friends []*crmpb.Friend, isCreatedBy bool) {
+func (c *UserClient) PbUserToReceiverFriends(ctx context.Context, friends []*crmpb.Friend) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
 	profileIDSet := make(map[uint64]struct{})
 	for _, friend := range friends {
-		if isCreatedBy {
-			profileIDSet[friend.CreatedBy] = struct{}{}
+		profileIDSet[friend.ReceiverId] = struct{}{}
+		profileIDSet[friend.CreatedBy] = struct{}{}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return
+	}
+
+	for _, friend := range friends {
+		if friend.CreatedBy == profileId {
+			if profile, ok := profileMap[friend.ReceiverId]; ok {
+				friend.ReceiverUser = profile
+			}
 		} else {
+			if profile, ok := profileMap[friend.CreatedBy]; ok {
+				friend.ReceiverUser = profile
+			}
+		}
+	}
+}
+
+func (c *UserClient) PbUserToFriends(ctx context.Context, friends []*crmpb.Friend, isCreatedBy bool) {
+	profileIDSet := make(map[uint64]struct{})
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	for _, friend := range friends {
+		if friend.CreatedBy == profileId {
 			profileIDSet[friend.ReceiverId] = struct{}{}
+		} else {
+			profileIDSet[friend.CreatedBy] = struct{}{}
 		}
 	}
 
@@ -205,13 +238,13 @@ func (c *UserClient) PbUserToFriends(ctx context.Context, friends []*crmpb.Frien
 	}
 
 	for _, friend := range friends {
-		if isCreatedBy {
-			if profile, ok := profileMap[friend.CreatedBy]; ok {
-				friend.CreatedUser = profile
-			}
-		} else {
+		if friend.CreatedBy == profileId {
 			if profile, ok := profileMap[friend.ReceiverId]; ok {
 				friend.ReceiverUser = profile
+			}
+		} else {
+			if profile, ok := profileMap[friend.CreatedBy]; ok {
+				friend.CreatedUser = profile
 			}
 		}
 	}
@@ -246,4 +279,34 @@ func (c *UserClient) ValidateProfileIds(ctx context.Context, profileIds []uint64
 	}
 
 	return len(response.Profiles) == len(profileIds), nil
+}
+
+func (c *UserClient) MapToRulePb(ctx context.Context, rules []*crmpb.RuleDTO) {
+	profileIDSet := make(map[uint64]struct{})
+	for _, rule := range rules {
+		if rule.Trigger == int32(enums.RuleThenAssignLead) {
+			key, err := strconv.ParseUint(rule.TriggerValue, 10, 64)
+			if err != nil {
+				continue
+			}
+			profileIDSet[key] = struct{}{}
+		}
+	}
+
+	profileMap, err := c.GetMapByIDs(ctx, profileIDSet)
+	if err != nil {
+		return
+	}
+
+	for _, rule := range rules {
+		if rule.Trigger == int32(enums.RuleThenAssignLead) {
+			key, err := strconv.ParseUint(rule.TriggerValue, 10, 64)
+			if err != nil {
+				continue
+			}
+			if profile, ok := profileMap[key]; ok {
+				rule.TriggerProfile = profile
+			}
+		}
+	}
 }

@@ -447,7 +447,7 @@
     "organizationpbGetOrganizationBranchMembersResponse": {
       "type": "object",
       "properties": {
-        "members": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -463,7 +463,7 @@
     "organizationpbGetOrganizationBranchesResponse": {
       "type": "object",
       "properties": {
-        "branches": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
@@ -567,6 +567,12 @@
         "createdBy": {
           "type": "integer",
           "format": "int64"
+        },
+        "managerUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -580,6 +586,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "user": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -634,6 +643,33 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     }

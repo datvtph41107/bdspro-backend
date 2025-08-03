@@ -192,7 +192,37 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 	products := s.ProductMapper.MapProductPbList(result)
 
 	return &pb_bdspro.SearchResponse{
-		Data:  products,
+		Data:          products,
 		TotalElements: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy danh sách tòa nhà trong dự án
+// @Description Lấy danh sách tòa nhà trong dự án
+// @Tags Sản phẩm
+// @Accept json
+// @Produce json
+// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Router /v2/bdspro/v2/list/project-build [get]
+func (s *BdsproPublicService) GetProjectBuild(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+	query := dto.TextSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+		Text: req.Text,
+	}
+	if err := copier.Copy(&query, req); err != nil {
+		return nil, err
+	}
+	result, total, err := s.ListUC.ListProjectBuild(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*pb_bdspro.ItemResponse, 0)
+	copier.Copy(&items, &result)
+	return &pb_bdspro.ListItemResponse{
+		Data:  items,
+		Total: uint32(total),
 	}, nil
 }

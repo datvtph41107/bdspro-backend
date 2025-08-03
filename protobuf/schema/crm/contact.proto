@@ -26,7 +26,7 @@ service ContactService {
   };
   rpc Update (ContactSaveDTO) returns (ContactDTO) {
     option (google.api.http) = {
-      put: "/v2/crm/contact/{id}"
+      put: "/v2/crm/contact/edit/{id}"
       body: "*"
     };
   };

@@ -40,17 +40,17 @@ func (o *organizationMemberValidator) ValidateCreateOrganizationMemberBatchReque
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
 
-	if len(request.Members) == 0 {
+	if len(request.UserIds) == 0 {
 		return status.Errorf(codes.InvalidArgument, "members list cannot be empty")
 	}
 
-	if len(request.Members) > 100 {
+	if len(request.UserIds) > 100 {
 		return status.Errorf(codes.InvalidArgument, "cannot create more than 100 members at once")
 	}
 
-	for i, member := range request.Members {
-		if err := o.ValidateCreateOrganizationMemberRequest(member); err != nil {
-			return status.Errorf(codes.InvalidArgument, "member at index %d: %v", i, err)
+	for i, userId := range request.UserIds {
+		if userId == 0 {
+			return status.Errorf(codes.InvalidArgument, "user id at index %d is required", i)
 		}
 	}
 
@@ -72,4 +72,3 @@ func (o *organizationMemberValidator) ValidateUpdateOrganizationMemberRequest(re
 
 	return nil
 }
-

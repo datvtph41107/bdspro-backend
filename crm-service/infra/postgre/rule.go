@@ -25,9 +25,12 @@ func (r *PostgreRule) Search(c context.Context, ownerId uint64, ownerType enums.
 
 	// query = query.Where("owner_id = ? AND owner_type = ?", ownerId, ownerType)
 
-	if err := query.Find(&entities).
+	if err := query.
+		Debug().
+		Order("updated_at DESC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
+		Find(&entities).
 		Error; err != nil {
 		return nil, 0, err
 	}
@@ -78,7 +81,7 @@ func (r *PostgreRule) GetByID(c context.Context, id uint64) (*domain.RuleEntity,
 func (r *PostgreRule) Active(c context.Context, id uint64, active bool) error {
 	return r.db.WithContext(c).
 		Model(&domain.RuleEntity{}).
-		Where("id = ?", id).
+		Where("id = ? and deleted_at is null", id).
 		Update("active", active).
 		Error
 }

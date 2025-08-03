@@ -91,3 +91,37 @@ func (c *OrganizationClient) GetGroupMapByIDs(ctx context.Context, groupIDSet ma
 
 	return groupMap, nil
 }
+
+func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint64, userIds []uint64) (map[uint64]*organizationpb.DealInvitationMember, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	dealMembers, err := c.client.GetDealMemberByIds(ctx, &organizationpb.GetDealMemberByIdsRequest{DealId: dealId, Ids: userIds})
+	if err != nil {
+		return nil, err
+	}
+
+	dealMemberMap := make(map[uint64]*organizationpb.DealInvitationMember)
+	for _, dealMember := range dealMembers.Data {
+		dealMemberMap[dealMember.UserId] = dealMember
+	}
+
+	return dealMemberMap, nil
+}
+
+func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint32) ([]*organizationpb.CheckUserInOrganization, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	users, err := c.client.CheckUsersInOrganization(ctx, &organizationpb.CheckUsersInOrganizationRequest{
+		OrganizationId: organizationID,
+		UserIds:        userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return users.Data, nil
+}

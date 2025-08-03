@@ -1,7 +1,10 @@
 package handler
 
 import (
+	_dto "common/dto"
+	_utils "common/utils"
 	"context"
+	"errors"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
@@ -159,7 +162,9 @@ func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *organizationp
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total), nil
+	response := h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total)
+	h.UserClient.MapMemberToDealPb(ctx, response.Data)
+	return response, nil
 }
 
 // @Summary Cập nhật trạng thái thương vụ
@@ -238,7 +243,6 @@ func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.I
 	}, nil
 }
 
-
 func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizationpb.AddMemberToDealRequest) (*organizationpb.AddMemberToDealResponse, error) {
 	if err := h.GroupDealValidator.ValidateAddMemberToDealRequest(req); err != nil {
 		return nil, err
@@ -250,7 +254,7 @@ func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizatio
 	}
 
 	return &organizationpb.AddMemberToDealResponse{
-		DealId: req.DealId,
+		DealId:   req.DealId,
 		MemberId: req.MemberId,
 	}, nil
 }
@@ -268,9 +272,9 @@ func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizatio
 func (h *GroupDealHandler) CreateOrganizationDeal(ctx context.Context, req *organizationpb.CreateOrganizationDealRequest) (*organizationpb.CreateOrganizationDealResponse, error) {
 	// Lấy organizationId từ path parameter
 	organizationId := getOrganizationIdFromContext(ctx)
-	
+
 	deal := h.GroupDealTransformer.CreateOrganizationDealRequestToEntity(req)
-	
+
 	createdDeal, err := h.DealUsecase.CreateOrganizationDeal(ctx, organizationId, deal)
 	if err != nil {
 		return nil, err
@@ -292,9 +296,9 @@ func (h *GroupDealHandler) CreateOrganizationDeal(ctx context.Context, req *orga
 func (h *GroupDealHandler) CreateGroupDealV2(ctx context.Context, req *organizationpb.CreateGroupDealV2Request) (*organizationpb.CreateGroupDealV2Response, error) {
 	// Lấy groupId từ path parameter
 	groupId := getGroupIdFromContext(ctx)
-	
+
 	deal := h.GroupDealTransformer.CreateGroupDealV2RequestToEntity(req)
-	
+
 	createdDeal, err := h.DealUsecase.CreateGroupDeal(ctx, groupId, deal)
 	if err != nil {
 		return nil, err
@@ -324,15 +328,43 @@ func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organi
 	if req.Size != nil {
 		size = int(*req.Size)
 	}
-	
 
-	
 	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, page, size)
 	if err != nil {
 		return nil, err
 	}
 
 	return h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total), nil
+}
+
+// @Summary Lấy danh sách thương vụ của tổ chức hiện tại mà người dùng request đến
+// @Description Lấy danh sách thương vụ của tổ chức hiện tại
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param request query sharepb.IdRequest true "Thông tin lấy danh sách thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetOrganizationDealsResponse "Thành công"
+// @Router /organization/deals/current [get]
+func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
+	organizationId := getOrganizationIdFromContext(ctx)
+	if organizationId == 0 {
+		return nil, errors.New("organizationId is required")
+	}
+
+	pagable := _dto.Pagable{
+		Page: int(req.GetPage()),
+		Size: int(req.GetSize()),
+	}
+
+	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, pagable.GetPage(), pagable.GetSize())
+	if err != nil {
+		return nil, err
+	}
+
+	response := h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total)
+	h.UserClient.MapMemberToDealPb(ctx, response.Data)
+	return response, nil
 }
 
 // @Summary Lấy danh sách thương vụ của nhóm
@@ -356,14 +388,14 @@ func (h *GroupDealHandler) GetGroupDealsV2(ctx context.Context, req *organizatio
 	if req.Size != nil {
 		size = int(*req.Size)
 	}
-	
+
 	if page <= 0 {
 		page = 1
 	}
 	if size <= 0 {
 		size = 10
 	}
-	
+
 	deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, groupId, page, size)
 	if err != nil {
 		return nil, err
@@ -434,7 +466,7 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 // Helper functions để lấy ID từ context
 func getOrganizationIdFromContext(ctx context.Context) uint64 {
 	// Implementation sẽ được thêm sau khi có middleware
-	return 0
+	return _utils.GetOrganizationIdFromContext(ctx)
 }
 
 func getGroupIdFromContext(ctx context.Context) uint64 {

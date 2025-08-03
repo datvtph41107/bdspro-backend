@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	_dto "common/dto"
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	sharepb "pb/types/shared"
 	"time"
 
@@ -23,11 +25,11 @@ import (
 type OrganizationMemberUsecase interface {
 	FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId uint32, organizationId uint32) (*entity.OrganizationMember, error)
 	CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
-	CreateOrganizationMemberBatch(ctx context.Context, organizationMembers []*entity.OrganizationMember) ([]*entity.OrganizationMember, error)
+	CreateOrganizationMemberBatch(ctx context.Context, userIds []uint64) ([]*entity.OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	DeleteOrganizationMember(ctx context.Context, memberId uint32) (*entity.OrganizationMember, error)
 	GetOrganizationMembers(ctx context.Context, page, size int, roleId *uint32) ([]*dto.OrganizationMemberWithProfile, uint32, error)
-	GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
+	GetCurrentOrganizationMember(ctx context.Context, dto _dto.Pagable) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 	GetCurrentOrganizationMemberRole(ctx context.Context) (uint32, string, string, error)
 	CheckUsersInOrganization(ctx context.Context, organizationId uint32, userIds []uint32) ([]*dto.CheckUserInOrganization, error)
 	// GetOrganizationOfMember(ctx context.Context) (*entity.Organization, error)
@@ -132,7 +134,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	return member, nil
 }
 
-func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Context, organizationMembers []*entity.OrganizationMember) ([]*entity.OrganizationMember, error) {
+func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Context, userIds []uint64) ([]*entity.OrganizationMember, error) {
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 
@@ -161,8 +163,10 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	}
 
 	// Check if adding new members would exceed limit
-	if currentCount+uint32(len(organizationMembers)) > uint32(env.MAX_ORGANIZATION_MEMBERS) {
-		return nil, custom_error.Forbidden("Adding these members would exceed the maximum number of organization members")
+	if currentCount+uint32(len(userIds)) > uint32(env.MAX_ORGANIZATION_MEMBERS) {
+		return nil, custom_error.Forbidden(
+			fmt.Sprintf("Adding these members would exceed the maximum number of organization members %d", currentCount),
+		)
 	}
 
 	// Check for duplicates and validate members
@@ -189,10 +193,13 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	}
 
 	// Prepare members for creation
-	validMembers := make([]*entity.OrganizationMember, 0, len(organizationMembers))
-	for _, member := range organizationMembers {
-		member.OrganizationID = uint32(organizationId)
-		member.Status = entity.OrganizationMemberStatusPending
+	validMembers := make([]*entity.OrganizationMember, 0, len(userIds))
+	for _, userId := range userIds {
+		member := &entity.OrganizationMember{
+			UserID:         uint32(userId),
+			OrganizationID: uint32(organizationId),
+			Status:         entity.OrganizationMemberStatusPending,
+		}
 		validMembers = append(validMembers, member)
 	}
 
@@ -363,7 +370,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 	return membersWithProfiles, total, nil
 }
 
-func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Context, page, size int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
+func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Context, req _dto.Pagable) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	currentOrgId := _utils.GetOrganizationIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, uint32(profileId), uint32(currentOrgId), env.GET_CURRENT_ORGANIZATION_MEMBER_PERMISSION)
@@ -374,7 +381,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), page, size, nil)
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), req.GetPage(), req.GetSize(), nil)
 	if err != nil {
 		return nil, 0, err
 	}

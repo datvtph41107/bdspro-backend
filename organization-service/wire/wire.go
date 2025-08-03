@@ -1,9 +1,10 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
 	"organization/config"
 	organization_config "organization/config"
@@ -16,8 +17,6 @@ import (
 	organization_internal_domain_repository "organization/internal/domain/repository"
 	organization_internal_interface "organization/internal/interface"
 	organization_internal_usecase "organization/internal/usecase"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -28,8 +27,10 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_interface.INotiClient), new(*organization_infrastructure_client.NotificationClient)),
 	wire.Bind(new(organization_internal_interface.IUserClient), new(*organization_infrastructure_client.UserClient)),
 	wire.Bind(new(organization_internal_domain_repository.BankAccountRepository), new(*organization_infrastructure_repository_postgres.BankAccountPostgresRepository)),
+	wire.Bind(new(organization_internal_domain_repository.BusinessDomainRepository), new(*organization_infrastructure_repository_postgres.BusinessDomainPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.DealMemberRepository), new(*organization_infrastructure_repository_postgres.DealMemberPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.DealMilestoneRepository), new(*organization_infrastructure_repository_postgres.DealMilestonePostgresRepository)),
+	wire.Bind(new(organization_internal_domain_repository.DealTransactionRepository), new(*organization_infrastructure_repository_postgres.DealTransactionPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.DocumentRepository), new(*organization_infrastructure_repository_postgres.DocumentPostgresRepository)),
 	wire.Bind(new(organization_internal_interface.ITransaction), new(*organization_infrastructure_repository_postgres.PostgresTransaction)),
 	wire.Bind(new(organization_internal_domain_repository.GroupChatRepository), new(*organization_infrastructure_repository_postgres.GroupChatPostgresRepository)),
@@ -43,17 +44,20 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.InvestmentRepository), new(*organization_infrastructure_repository_postgres.InvestmentPostgres)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationBranchMemberRepository), new(*organization_infrastructure_repository_postgres.OrganizationBranchMemberRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationBranchRepository), new(*organization_infrastructure_repository_postgres.OrganizationBranchPostgres)),
+	wire.Bind(new(organization_internal_domain_repository.OrganizationBusinessDomainRepository), new(*organization_infrastructure_repository_postgres.OrganizationBusinessDomainPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationLogActivityRepository), new(*organization_infrastructure_repository_postgres.OrganizationLogActivityPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationMemberRepository), new(*organization_infrastructure_repository_postgres.OrganizationMemberPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_infrastructure_repository_postgres.OrganizationRoleRepository)),
-	wire.Bind(new(organization_internal_domain_repository.BusinessDomainRepository), new(*organization_infrastructure_repository_postgres.BusinessDomainPostgresRepository)),
-	wire.Bind(new(organization_internal_domain_repository.OrganizationBusinessDomainRepository), new(*organization_infrastructure_repository_postgres.OrganizationBusinessDomainPostgresRepository)),
-	wire.Bind(new(organization_internal_domain_repository.DealTransactionRepository), new(*organization_infrastructure_repository_postgres.DealTransactionPostgresRepository)),
 	organization_infrastructure_transformer.NewBankAccountMapper,
 	organization_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_infrastructure_client.NewBdsproClient,
+	organization_infrastructure_handler.NewBusinessDomainHandler,
+	organization_infrastructure_repository_postgres.NewBusinessDomainPostgresRepository,
+	organization_infrastructure_transformer.NewBusinessDomainTransformer,
+	organization_internal_usecase.NewBusinessDomainUsecase,
+	organization_infrastructure_validator.NewBusinessDomainValidator,
 	organization_infrastructure_client.NewChatClient,
 	organization_config.NewConfigApp,
 	organization_infrastructure_handler.NewDealCommissionHandler,
@@ -139,6 +143,7 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewOrganizationBranchTransformer,
 	organization_internal_usecase.NewOrganizationBranchUsecase,
 	organization_infrastructure_validator.NewOrganizationBranchValidator,
+	organization_infrastructure_repository_postgres.NewOrganizationBusinessDomainPostgresRepository,
 	organization_infrastructure_handler.NewOrganizationHandler,
 	organization_infrastructure_handler.NewOrganizationLogActivityHandler,
 	organization_infrastructure_repository_postgres.NewOrganizationLogActivityPostgresRepository,
@@ -167,14 +172,7 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_validator.NewOrganizationValidator,
 	organization_infrastructure_repository_postgres.NewPostgresTransaction,
 	organization_infrastructure_client.NewUserClient,
-	organization_infrastructure_handler.NewBusinessDomainHandler,
-	organization_infrastructure_repository_postgres.NewBusinessDomainPostgresRepository,
-	organization_infrastructure_repository_postgres.NewOrganizationBusinessDomainPostgresRepository,
-	organization_infrastructure_transformer.NewBusinessDomainTransformer,
-	organization_internal_usecase.NewBusinessDomainUsecase,
-	organization_infrastructure_validator.NewBusinessDomainValidator,
 )
-
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

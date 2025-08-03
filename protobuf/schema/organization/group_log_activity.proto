@@ -4,7 +4,7 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service GroupLogActivityService {
     

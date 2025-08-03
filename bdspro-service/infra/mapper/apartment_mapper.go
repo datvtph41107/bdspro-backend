@@ -25,3 +25,25 @@ func (m *ApartmentMapper) MapApartmentPb(apartment *domain.Apartment) *pb_bdspro
 		BuildId:         apartment.BuildID,
 	}
 }
+
+func (m *ApartmentMapper) MapApartmentPbItem(apartment *domain.ApartmentItem) *pb_bdspro.Apartment {
+	return &pb_bdspro.Apartment{
+		Id:   apartment.ID,
+		Name: apartment.Name,
+		// Note:            apartment.Note,
+		Floor:           int32(*apartment.Floor),
+		Ordinal:         int32(apartment.Ordinal),
+		ApartmentAttrId: apartment.ApartmentAttrID,
+		Status:          int32(apartment.Status),
+		Archived:        int32(apartment.Archived),
+		BuildId:         apartment.BuildID,
+	}
+}
+
+func (m *ApartmentMapper) MapApartmentPbItems(apartments []domain.ApartmentItem) []*pb_bdspro.Apartment {
+	pbs := make([]*pb_bdspro.Apartment, len(apartments))
+	for i, apartment := range apartments {
+		pbs[i] = m.MapApartmentPbItem(&apartment)
+	}
+	return pbs
+}

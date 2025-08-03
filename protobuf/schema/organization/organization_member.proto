@@ -3,10 +3,9 @@ syntax = "proto3";
 package organizationpb;
 
 import "google/api/annotations.proto";
-import "validate/validate.proto";
 import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 
 
@@ -48,7 +47,7 @@ service OrganizationMemberService {
     //     };
     // }
 
-    rpc GetCurrentOrganizationMembers(Empty) returns (GetOrganizationMembersResponse) {
+    rpc GetCurrentOrganizationMembers(sharepb.IdRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/members/me"
         };
@@ -59,8 +58,6 @@ service OrganizationMemberService {
             get: "/v2/organization/member/me"
         };
     }
-
-    rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
 }
 
 message Empty {}
@@ -89,7 +86,7 @@ message CreateOrganizationMemberResponse {
 }
 
 message CreateOrganizationMemberBatchRequest {
-    repeated CreateOrganizationMemberRequest members = 1 [json_name = "members"];
+    repeated uint64 userIds = 1;
 }
 
 message CreateOrganizationMemberBatchResponse {
@@ -139,18 +136,3 @@ message GetCurrentOrganizationMemberRoleResponse {
     string joinDate = 2 [json_name = "joinDate"];
     string roleName = 3 [json_name = "roleName"];
 }
-
-message CheckUsersInOrganizationRequest {
-    uint32 organizationId = 1 [json_name = "organizationId"];
-    repeated uint32 userIds = 2 [json_name = "userIds"];
-}
-message CheckUserInOrganization {
-    uint32 userId = 1 [json_name = "userId"];
-    bool isExist = 2 [json_name = "isExist"];
-    string joinedAt = 3 [json_name = "joinedAt"];
-}
-
-message CheckUsersInOrganizationResponse {
-    repeated CheckUserInOrganization data = 1 [json_name = "data"];
-}
-

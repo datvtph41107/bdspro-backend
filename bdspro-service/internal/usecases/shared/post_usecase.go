@@ -28,6 +28,7 @@ type PostUsecase struct {
 	PostMediaRepo  repo.PostMediaRepo
 	AssetRepo      repo.AssetRepo
 	PlanUsecase    usecases.PlanUsecase
+	RequestUsecase *RequestUsecase
 }
 
 func NewSharedPostUsecase(repo repo.PostRepo,
@@ -91,6 +92,11 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		numDate = 30
 	}
 
+	ownerId, ownerType, err := s.RequestUsecase.GetOwnerIDAndType(c)
+	if err != nil {
+		return nil, err
+	}
+
 	// status := enums.EPostSelling
 	// if dto.TransactionType == 2 {
 	// 	status = enums.EPostRenting
@@ -108,6 +114,11 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		ExpiredAt:       dto.ExpiredAt,
 		// Status:          enums.EPostPublic,
 		Hidden: dto.Hidden,
+		// todo:
+		OwnerType: ownerType,
+	}
+	if ownerId != nil {
+		entity.OwnerID = *ownerId
 	}
 	if entity.ExpiredAt == nil {
 		expired := time.Now().Add(time.Duration(numDate) * 24 * time.Hour)

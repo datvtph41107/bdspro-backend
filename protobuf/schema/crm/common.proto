@@ -38,6 +38,7 @@ message LeadDTO {
     string priorityName = 30;
     optional sharepb.ProfileItem profileInfo = 31;
     string updatedAt = 32;
+    string stageNote = 33;
 }
 
 message PipelineDTO {

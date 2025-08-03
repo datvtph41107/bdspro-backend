@@ -13,7 +13,7 @@ type PipelineEntity struct {
 	Active         bool             `json:"active"`
 	OwnerID        uint64           `json:"ownerId" binding:"required"`
 	OwnerType      enums.EOwnerType `json:"ownerType" binding:"required"`
-	StageDefaultID uint64           `json:"stageDefaultId"`
+	StageDefaultID *uint64          `json:"stageDefaultId"`
 	IsDefault      bool             `gorm:"not null;default:false" json:"isDefault"`
 	IsCustom       bool             `gorm:"not null;default:false" json:"isCustom"`
 	DefaultStage   *StageEntity     `gorm:"foreignKey:StageDefaultID" json:"defaultStage"`

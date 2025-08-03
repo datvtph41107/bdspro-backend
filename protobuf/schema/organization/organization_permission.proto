@@ -3,9 +3,8 @@ syntax = "proto3";
 package organizationpb;
 
 import "google/api/annotations.proto";
-import "validate/validate.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service OrganizationPermissionService {
   

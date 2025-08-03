@@ -40,17 +40,17 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *organizat
 	result := &entity.Deal{
 		Name: request.Name,
 		// Amount:  request.Amount,
-		Status:        enums.DealStatus(request.Status),
-		TargetProfit:  request.TargetProfit,
-		DealType:      enums.DealType(request.DealType),
-		Note:          request.Note,
-		BankAccountID: request.BankAccountId,
-		CustomerIds:   request.CustomerIds,
-		PartnerIds:    request.PartnerIds,
-		MemberIds:     request.MemberIds,
-		ProductIds:    request.ProductIds,
-		OwnerId:       request.OwnerId,
-		// OwnerType:     enums.OwnerTypeGroup,
+		Status:         enums.DealStatus(request.Status),
+		TargetProfit:   request.TargetProfit,
+		DealType:       enums.DealType(request.DealType),
+		Note:           request.Note,
+		BankAccountID:  request.BankAccountId,
+		CustomerIds:    request.CustomerIds,
+		PartnerIds:     request.PartnerIds,
+		MemberIds:      request.MemberIds,
+		ProductIds:     request.ProductIds,
+		OwnerId:        request.OwnerId,
+		OwnerType:      enums.OwnerType(request.OwnerType),
 		ChargePersonID: &request.ChargePersonId,
 		IsUnilateral:   request.IsUnilateral,
 		IsManual:       request.IsManual,
@@ -227,11 +227,16 @@ func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *
 		Name:         deal.Name,
 		TargetProfit: deal.TargetProfit,
 		Status:       uint32(deal.Status),
+		StatusName:   enums.DealStatusMap[deal.Status],
 		DealType:     uint32(deal.DealType),
 		OwnerId:      uint32(deal.OwnerId),
 		OwnerType:    uint32(deal.OwnerType),
 		Note:         deal.Note,
 		CancelReason: deal.CancelReason,
+	}
+
+	if deal.ChargePersonID != nil {
+		response.ChargePersonId = *deal.ChargePersonID
 	}
 
 	// Add other fields as needed

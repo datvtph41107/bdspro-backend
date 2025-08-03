@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 
-option go_package = "types/organizationpb";
+option go_package = "pb/types/organization;organizationpb";
 
 service DealProductService {
     rpc AttachDealProduct(AttachDealProductRequest) returns (sharepb.SubmitResponse) {

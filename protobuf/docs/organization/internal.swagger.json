@@ -17,6 +17,70 @@
   ],
   "paths": {},
   "definitions": {
+    "organizationpbCheckUserInOrganization": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isExist": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "organizationpbCheckUsersInOrganizationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbCheckUserInOrganization"
+          }
+        }
+      }
+    },
+    "organizationpbDealInvitationMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetDealMemberByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDealInvitationMember"
+          }
+        }
+      }
+    },
     "organizationpbGetGroupByIdsResponse": {
       "type": "object",
       "properties": {
