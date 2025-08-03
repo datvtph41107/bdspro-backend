@@ -9,22 +9,28 @@ import (
 
 type InternalOrganizationHandler struct {
 	organizationpb.UnimplementedInternalOrganizationServiceServer
-	organizationRepo   repository.OrganizationRepository
-	groupRepo          repository.GroupRepository
-	mapper             *transformer.InternalOrganizationMapper
-	dealInvitationRepo repository.DealInvitationRepository
+	organizationRepo       repository.OrganizationRepository
+	groupRepo              repository.GroupRepository
+	mapper                 *transformer.InternalOrganizationMapper
+	dealInvitationRepo     repository.DealInvitationRepository
+	groupMemberRepo        repository.GroupMemberRepository
+	organizationMemberRepo repository.OrganizationMemberRepository
 }
 
 func NewInternalOrganizationHandler(
 	organizationRepo repository.OrganizationRepository,
 	groupRepo repository.GroupRepository,
 	dealInvitationRepo repository.DealInvitationRepository,
+	groupMemberRepo repository.GroupMemberRepository,
+	organizationMemberRepo repository.OrganizationMemberRepository,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
-		organizationRepo:   organizationRepo,
-		groupRepo:          groupRepo,
-		dealInvitationRepo: dealInvitationRepo,
-		mapper:             mapper,
+		organizationRepo:       organizationRepo,
+		groupRepo:              groupRepo,
+		dealInvitationRepo:     dealInvitationRepo,
+		mapper:                 mapper,
+		groupMemberRepo:        groupMemberRepo,
+		organizationMemberRepo: organizationMemberRepo,
 	}
 }
 
@@ -50,13 +56,35 @@ func (h *InternalOrganizationHandler) GetGroupByIds(ctx context.Context, req *or
 	}, nil
 }
 
-func (h *InternalOrganizationHandler) GetDealMemberByIds(ctx context.Context, req *organizationpb.GetDealMemberByIdsRequest) (*organizationpb.GetDealMemberByIdsResponse, error) {
-	dealMembers, err := h.dealInvitationRepo.GetByIds(ctx, req.DealId, req.Ids)
+func (h *InternalOrganizationHandler) GetDealMemberByIds(ctx context.Context, req *organizationpb.GetMemberByIdsRequest) (*organizationpb.GetDealMemberByIdsResponse, error) {
+	dealMembers, err := h.dealInvitationRepo.GetByIds(ctx, req.GroupId, req.Ids)
 	if err != nil {
 		return nil, err
 	}
 	pbDealMembers := h.mapper.DealInvitationsToPb(dealMembers)
 	return &organizationpb.GetDealMemberByIdsResponse{
 		Data: pbDealMembers,
+	}, nil
+}
+
+func (h *InternalOrganizationHandler) GetGroupMemberByIds(ctx context.Context, req *organizationpb.GetMemberByIdsRequest) (*organizationpb.GetGroupMemberByIdsResponse, error) {
+	groupMembers, err := h.groupMemberRepo.GetByGroupIDAndUserIDs(ctx, uint32(req.GroupId), req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	pbGroupMembers := h.mapper.GroupMembersToPb(groupMembers)
+	return &organizationpb.GetGroupMemberByIdsResponse{
+		Data: pbGroupMembers,
+	}, nil
+}
+
+func (h *InternalOrganizationHandler) GetOrganizationMemberByIds(ctx context.Context, req *organizationpb.GetMemberByIdsRequest) (*organizationpb.GetOrganizationMemberByIdsResponse, error) {
+	organizationMembers, err := h.organizationMemberRepo.FindByUserIdsAndOrganizationId(ctx, req.Ids, uint32(req.GroupId))
+	if err != nil {
+		return nil, err
+	}
+	pbOrganizationMembers := h.mapper.OrganizationMembersToPb(organizationMembers)
+	return &organizationpb.GetOrganizationMemberByIdsResponse{
+		Data: pbOrganizationMembers,
 	}, nil
 }

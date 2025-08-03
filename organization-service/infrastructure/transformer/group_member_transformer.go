@@ -14,6 +14,7 @@ type GroupMemberTransformer interface {
 	EntityToUpdateGroupMemberResponse(member *entity.GroupMember) *organizationpb.UpdateGroupMemberResponse
 	EntityToGetGroupMemberResponse(member *entity.GroupMember) *organizationpb.GetGroupMemberResponse
 	EntityToGetGroupMembersResponse(members []*dto.GroupMemberWithProfile) *organizationpb.GetGroupMembersResponse
+	EntitiesToCreateGroupMemberBatchResponse(members []*entity.GroupMember) *organizationpb.CreateGroupMemberBatchResponse
 }
 
 type groupMemberTransformer struct{}
@@ -75,6 +76,14 @@ func (t *groupMemberTransformer) EntityToGetGroupMembersResponse(members []*dto.
 			Role:    string(member.GroupMember.Role),
 			Profile: profile,
 		})
+	}
+
+	return response
+}
+
+func (t *groupMemberTransformer) EntitiesToCreateGroupMemberBatchResponse(members []*entity.GroupMember) *organizationpb.CreateGroupMemberBatchResponse {
+	response := &organizationpb.CreateGroupMemberBatchResponse{
+		Ids: make([]uint32, 0, len(members)),
 	}
 
 	return response

@@ -58,6 +58,27 @@ func (h *GroupMemberHandler) CreateGroupMember(ctx context.Context, request *org
 	return h.groupMemberTransformer.EntityToCreateGroupMemberResponse(createdMember), nil
 }
 
+// @Summary Tạo nhiều thành viên nhóm cùng lúc
+// @Description Tạo nhiều thành viên nhóm cùng lúc
+// @Tags Thành viên
+// @Accept json
+// @Produce json
+// @Param members body organizationpb.CreateGroupMemberBatchRequest true "Danh sách thành viên nhóm"
+// @Security BearerAuth
+// @Router /group-member/batch [post]
+func (h *GroupMemberHandler) CreateGroupMemberBatch(ctx context.Context, req *organizationpb.CreateGroupMemberBatchRequest) (*organizationpb.CreateGroupMemberBatchResponse, error) {
+	if err := h.groupMemberValidator.ValidateCreateGroupMemberBatchRequest(req); err != nil {
+		return nil, err
+	}
+
+	createdMembers, err := h.groupMemberUsecase.CreateGroupMemberBatch(ctx, req.GroupId, req.UserIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.groupMemberTransformer.EntitiesToCreateGroupMemberBatchResponse(createdMembers), nil
+}
+
 // @Summary Cập nhật thành viên nhóm
 // @Description Cập nhật thành viên nhóm
 // @Tags Thành viên

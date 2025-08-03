@@ -50,6 +50,23 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 	return h.OrganizationRoleTransformer.EntityToCreateRoleResponse(role), nil
 }
 
+// @Summary Lấy danh sách thành viên của vai trò thương vụ
+// @Description Lấy danh sách thành viên của vai trò thương vụ
+// @Tags Vai trò
+// @Accept json
+// @Produce json
+// @Param id path int true "ID của vai trò"
+// @Security BearerAuth
+// @Router /organization/role/deal-members [get]
+func (h *OrganizationRoleHandler) GetRoleDealMembers(ctx context.Context, req *organizationpb.GetRoleRequest) (*organizationpb.GetRolesResponse, error) {
+	// roles, err := h.OrganizationRoleUsecase.GetRoleDealMembers(ctx, req.Id)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, 0), nil
+	return nil, nil
+}
+
 // @Summary Cập nhật vai trò
 // @Description Cập nhật vai trò
 // @Tags Vai trò

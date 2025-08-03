@@ -552,7 +552,7 @@
           "type": "string"
         },
         "role": {
-          "type": "string"
+          "$ref": "#/definitions/organizationpbRole"
         },
         "reason": {
           "type": "string"
@@ -648,6 +648,28 @@
         }
       }
     },
+    "organizationpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "childrens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbPermission"
+          }
+        }
+      }
+    },
     "organizationpbRejectInvitationRequest": {
       "type": "object",
       "properties": {
@@ -717,6 +739,38 @@
         },
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "organizationpbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "color": {
+          "$ref": "#/definitions/organizationpbColor"
         }
       }
     },

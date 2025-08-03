@@ -38,7 +38,7 @@ func NewFriendService(uc *usecase.FriendUsecase,
 }
 
 // @Summary Lấy danh sách bạn bè
-// @Description Lấy danh sách tất cả bạn bè của người dùng
+// @Description Lấy danh sách tất cả bạn bè của người dùng. trong đó truyền: organizationId nếu muốn xem bạn bè có thuộc tổ chức không, groupId nếu muốn xem bạn bè có thuộc nhóm không, dealId nếu muốn xem bạn bè có thuộc thương vụ không
 // @Tags Bạn bè
 // @Accept json
 // @Produce json
@@ -65,12 +65,14 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
 	}
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
-	if req.OrganizationId != 0 {
+	// s.userClient.PbUserToReceiverFriends(ctx, pbs)
+
+	if req.OrganizationId != nil {
 		userIds := make([]uint64, 0, len(userPbs))
 		for _, user := range userPbs {
 			userIds = append(userIds, user.Id)
 		}
-		checkUsers, err := s.organizationClient.CheckUsersInOrganization(ctx, req.OrganizationId, userIds)
+		checkUsers, err := s.organizationClient.CheckUsersInOrganization(ctx, uint32(*req.OrganizationId), userIds)
 		if err != nil {
 			return nil, err
 		}
@@ -89,14 +91,20 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 			}
 		}
 	}
+	if req.GroupId != nil {
+		// s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, userPbs)
+	}
+	if req.DealId != nil {
+		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	}
 	return &crmpb.FriendProfileListResponse{
 		Data:  userPbs,
 		Total: int32(total),
 	}, err
 }
 
-// @Summary Lấy danh sách bạn bè
-// @Description Lấy danh sách tất cả bạn bè của người dùng
+// @Summary Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc thương vụ không
+// @Description Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc thương vụ không
 // @Tags Bạn bè
 // @Accept json
 // @Produce json
@@ -105,8 +113,52 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 // @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
-// @Router /friend/with-lead [get]
-func (s *FriendService) FriendListWithLead(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+// @Router /friend/with-member [get]
+func (s *FriendService) FriendListWithMember(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+	// if req.DealId == nil {
+	// 	return nil, errors.New("dealId is required")
+	// }
+	query := data.FriendRequest{
+		Text: strings.TrimSpace(strings.ToLower(req.Text)),
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	}
+	result, total, err := s.UC.FriendList(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	pbs := s.FriendMapper.ListFriendToPb(result)
+	s.userClient.PbUserToReceiverFriends(ctx, pbs)
+	if req.DealId != nil {
+		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	}
+	if req.OrganizationId != nil {
+		s.organizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, pbs)
+	}
+	if req.GroupId != nil {
+		s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, pbs)
+	}
+
+	return &crmpb.FriendListResponse{
+		Data:  pbs,
+		Total: int32(total),
+	}, err
+}
+
+// @Summary Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc nhóm không
+// @Description Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc nhóm không
+// @Tags Bạn bè
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query crmpb.FriendListRequest false "Tên hoặc số điện thoại"
+// @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Failure 404 {string} string "Không tìm thấy"
+// @Router /friend/with-group [get]
+func (s *FriendService) FriendListWithGroup(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	if req.DealId == nil {
 		return nil, errors.New("dealId is required")
 	}
@@ -122,9 +174,41 @@ func (s *FriendService) FriendListWithLead(ctx context.Context, req *crmpb.Frien
 		return nil, err
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
-	s.userClient.PbUserToReceiverFriends(ctx, pbs)
-	s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	s.userClient.PbUserToFriends(ctx, pbs, false)
+	return &crmpb.FriendListResponse{
+		Data:  pbs,
+		Total: int32(total),
+	}, err
+}
 
+// @Summary Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc tổ chức không
+// @Description Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc tổ chức không
+// @Tags Bạn bè
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query crmpb.FriendListRequest false "Tên hoặc số điện thoại"
+// @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Failure 404 {string} string "Không tìm thấy"
+// @Router /friend/with-organization [get]
+func (s *FriendService) FriendListWithOrganization(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+	if req.OrganizationId == nil {
+		return nil, errors.New("organizationId is required")
+	}
+	query := data.FriendRequest{
+		Text: strings.TrimSpace(strings.ToLower(req.Text)),
+		Pagable: _dto.Pagable{
+			Page: int(req.Page),
+			Size: int(req.Size),
+		},
+	}
+	result, total, err := s.UC.FriendList(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	pbs := s.FriendMapper.ListFriendToPb(result)
+	s.userClient.PbUserToFriends(ctx, pbs, false)
 	return &crmpb.FriendListResponse{
 		Data:  pbs,
 		Total: int32(total),

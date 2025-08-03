@@ -163,6 +163,8 @@ definitions:
         type: array
       id:
         type: integer
+      note:
+        type: string
       pipeline:
         $ref: '#/definitions/crmpb.PipelineDTO'
       pipelineId:
@@ -187,6 +189,8 @@ definitions:
         $ref: '#/definitions/crmpb.StageDTO'
       stageId:
         type: integer
+      stageNote:
+        type: string
     type: object
   crmpb.LeadNoteRequest:
     properties:
@@ -246,6 +250,8 @@ definitions:
         type: integer
       stageId:
         type: integer
+      stageNote:
+        type: string
     type: object
   crmpb.ListFriendGroupsResponse:
     properties:
@@ -344,6 +350,8 @@ definitions:
         type: string
       trigger:
         type: integer
+      triggerProfile:
+        $ref: '#/definitions/sharepb.ProfileItem'
       triggerValue:
         type: string
     type: object
@@ -514,7 +522,7 @@ definitions:
       ruleName:
         type: string
       trigger:
-        $ref: '#/definitions/enums.ERule'
+        $ref: '#/definitions/enums.ERuleTrigger'
       triggerValue:
         type: string
       updatedAt:
@@ -588,7 +596,7 @@ definitions:
     - EOwnerTypeMember
     - EOwnerTypeGroup
     - EOwnerTypeOrgnization
-  enums.ERule:
+  enums.ERuleTrigger:
     enum:
     - 10
     - 20
@@ -1033,6 +1041,10 @@ definitions:
         type: string
       id:
         type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
       phone:
         type: string
       tickVerified:
@@ -1624,8 +1636,19 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách tất cả bạn bè của người dùng
+      description: 'Lấy danh sách tất cả bạn bè của người dùng. trong đó truyền: organizationId
+        nếu muốn xem bạn bè có thuộc tổ chức không, groupId nếu muốn xem bạn bè có
+        thuộc nhóm không, dealId nếu muốn xem bạn bè có thuộc thương vụ không'
       parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
       - in: query
         name: page
         type: integer
@@ -1802,6 +1825,147 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
+  /friend/with-group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc nhóm không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc nhóm không
+      tags:
+      - Bạn bè
+  /friend/with-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc thương vụ không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc thương vụ không
+      tags:
+      - Bạn bè
+  /friend/with-organization:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc tổ chức không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc tổ chức không
       tags:
       - Bạn bè
   /invitation/list:

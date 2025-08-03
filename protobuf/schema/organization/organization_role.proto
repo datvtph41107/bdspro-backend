@@ -42,6 +42,12 @@ service OrganizationRoleService {
         };
     }
 
+    rpc GetRoleDealMembers(GetRoleRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/role/deal-members"
+        };
+    }
+
     rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/role/{id}"

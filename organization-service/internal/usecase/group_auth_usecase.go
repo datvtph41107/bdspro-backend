@@ -37,9 +37,9 @@ func (u *groupAuthUsecase) IsLeaderGroup(ctx context.Context, groupId uint32, us
 		return custom_error.RecordNotFound(fmt.Sprintf("group %d not found", groupId))
 	}
 
-	if group.CreatedBy != userId {
-		return custom_error.Forbidden(fmt.Sprintf("user %d is not leader of group %d", userId, groupId))
-	}
+	// if group.CreatedBy != userId {
+	// 	return custom_error.Forbidden(fmt.Sprintf("user %d is not leader of group %d", userId, groupId))
+	// }
 
 	return nil
 }

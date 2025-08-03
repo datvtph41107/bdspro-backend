@@ -97,7 +97,10 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 		return nil, errors.New("organization client not avaiable")
 	}
 
-	dealMembers, err := c.client.GetDealMemberByIds(ctx, &organizationpb.GetDealMemberByIdsRequest{DealId: dealId, Ids: userIds})
+	dealMembers, err := c.client.GetDealMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: dealId,
+		Ids:     userIds,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +111,48 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 	}
 
 	return dealMemberMap, nil
+}
+
+func (c *OrganizationClient) GetGroupMemberByIds(ctx context.Context, groupId uint64, userIds []uint64) (map[uint64]*organizationpb.GroupMember, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	groupMembers, err := c.client.GetGroupMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: groupId,
+		Ids:     userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	groupMemberMap := make(map[uint64]*organizationpb.GroupMember)
+	for _, groupMember := range groupMembers.Data {
+		groupMemberMap[uint64(groupMember.UserId)] = groupMember
+	}
+
+	return groupMemberMap, nil
+}
+
+func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, userIds []uint64) (map[uint64]*organizationpb.OrganizationMember, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	organizationMembers, err := c.client.GetOrganizationMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: organizationId,
+		Ids:     userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	organizationMemberMap := make(map[uint64]*organizationpb.OrganizationMember)
+	for _, organizationMember := range organizationMembers.Data {
+		organizationMemberMap[uint64(organizationMember.UserId)] = organizationMember
+	}
+
+	return organizationMemberMap, nil
 }
 
 func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {

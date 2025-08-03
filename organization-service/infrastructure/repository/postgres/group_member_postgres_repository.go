@@ -75,6 +75,21 @@ func (r *GroupMemberPostgresRepository) Create(ctx context.Context, member *enti
 	return GroupMemberModelToEntity(model), nil
 }
 
+func (r *GroupMemberPostgresRepository) CreateBatch(ctx context.Context, members []*entity.GroupMember) ([]*entity.GroupMember, error) {
+	models := make([]*GroupMemberModel, len(members))
+	for i, member := range members {
+		models[i] = GroupMemberEntityToModel(member)
+	}
+	if err := r.db.WithContext(ctx).Create(models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupMember, len(models))
+	for i, model := range models {
+		entities[i] = GroupMemberModelToEntity(model)
+	}
+	return entities, nil
+}
+
 func (r *GroupMemberPostgresRepository) Update(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {
 	model := GroupMemberEntityToModel(member)
 	if err := r.db.WithContext(ctx).Model(&GroupMemberModel{}).Where("id = ?", model.Id).Updates(model).Error; err != nil {
@@ -141,4 +156,16 @@ func (r *GroupMemberPostgresRepository) GetByGroupIDAndUserID(ctx context.Contex
 		return nil, err
 	}
 	return GroupMemberModelToEntity(model), nil
+}
+
+func (r *GroupMemberPostgresRepository) GetByGroupIDAndUserIDs(ctx context.Context, groupID uint32, userIDs []uint64) ([]*entity.GroupMember, error) {
+	var models []*GroupMemberModel
+	if err := r.db.WithContext(ctx).Where("group_id = ? AND user_id IN (?) AND is_deleted = ?", groupID, userIDs, false).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.GroupMember, len(models))
+	for i, model := range models {
+		entities[i] = GroupMemberModelToEntity(model)
+	}
+	return entities, nil
 }

@@ -7,9 +7,9 @@ import (
 type OrganizationMemberStatus uint32
 
 const (
-	OrganizationMemberStatusActive   OrganizationMemberStatus = 1
-	OrganizationMemberStatusInactive OrganizationMemberStatus = 2
-	OrganizationMemberStatusPending  OrganizationMemberStatus = 3
+	OrganizationMemberStatusActive   OrganizationMemberStatus = 10
+	OrganizationMemberStatusInactive OrganizationMemberStatus = 20
+	OrganizationMemberStatusPending  OrganizationMemberStatus = 30
 )
 
 type OrganizationMember struct {

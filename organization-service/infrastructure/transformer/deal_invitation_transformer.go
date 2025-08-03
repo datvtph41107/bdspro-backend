@@ -66,11 +66,11 @@ func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizat
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	
+
 	if req.ColorId != nil {
 		invitation.ColorId = req.ColorId
 	}
-	
+
 	return invitation
 }
 
@@ -171,17 +171,17 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 	}
 
 	// Convert DealMemberType to string
-	var role string
-	switch invitation.MemberType {
-	case enums.DealMemberTypeCustomer:
-		role = "customer"
-	case enums.DealMemberTypePartner:
-		role = "partner"
-	case enums.DealMemberTypeMember:
-		role = "member"
-	default:
-		role = "member"
-	}
+	// var role string
+	// switch invitation.MemberType {
+	// case enums.DealMemberTypeCustomer:
+	// 	role = "customer"
+	// case enums.DealMemberTypePartner:
+	// 	role = "partner"
+	// case enums.DealMemberTypeMember:
+	// 	role = "member"
+	// default:
+	// 	role = "member"
+	// }
 
 	invitationResponse := &organizationpb.DealInvitation{
 		Id:        invitation.ID,
@@ -190,12 +190,12 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 		InviteeId: invitation.InviteeID,
 		Status:    uint32(invitation.Status),
 		Message:   invitation.Message,
-		Role:      role,
+		// Role:      role,
 		Reason:    "", // DealInvitation entity doesn't have Reason field
 		CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
 	}
-	
+
 	if invitation.Color != nil {
 		invitationResponse.Color = &organizationpb.Color{
 			Id:              uint32(invitation.Color.ID),
@@ -206,9 +206,20 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 			IsActive:        invitation.Color.IsActive,
 		}
 	}
-	
+
 	return &organizationpb.GetInvitationResponse{
-		Invitation: invitationResponse,
+		Invitation: &organizationpb.DealInvitation{
+			Id:        invitation.ID,
+			DealId:    invitation.DealID,
+			InviterId: invitation.InviterID,
+			InviteeId: invitation.InviteeID,
+			Status:    uint32(invitation.Status),
+			Message:   invitation.Message,
+			// Role:      role,
+			Reason:    "", // DealInvitation entity doesn't have Reason field
+			CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
+		},
 	}
 }
 
@@ -277,17 +288,17 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 	result := make([]*organizationpb.DealInvitation, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
-		var role string
-		switch invitation.DealInvitation.MemberType {
-		case enums.DealMemberTypeCustomer:
-			role = "customer"
-		case enums.DealMemberTypePartner:
-			role = "partner"
-		case enums.DealMemberTypeMember:
-			role = "member"
-		default:
-			role = "member"
-		}
+		// var role string
+		// switch invitation.DealInvitation.MemberType {
+		// case enums.DealMemberTypeCustomer:
+		// 	role = "customer"
+		// case enums.DealMemberTypePartner:
+		// 	role = "partner"
+		// case enums.DealMemberTypeMember:
+		// 	role = "member"
+		// default:
+		// 	role = "member"
+		// }
 
 		invitationResponse := &organizationpb.DealInvitation{
 			Id:        invitation.DealInvitation.ID,
@@ -296,12 +307,12 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 			InviteeId: invitation.DealInvitation.InviteeID,
 			Status:    uint32(invitation.DealInvitation.Status),
 			Message:   invitation.DealInvitation.Message,
-			Role:      role,
+			// Role:      role,
 			Reason:    "", // DealInvitation entity doesn't have Reason field
 			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
 			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
 		}
-		
+
 		if invitation.DealInvitation.Color != nil {
 			invitationResponse.Color = &organizationpb.Color{
 				Id:              uint32(invitation.DealInvitation.Color.ID),
@@ -312,7 +323,7 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 				IsActive:        invitation.DealInvitation.Color.IsActive,
 			}
 		}
-		
+
 		result[i] = invitationResponse
 	}
 	return &organizationpb.GetPendingInvitationsResponse{
@@ -325,17 +336,17 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 	result := make([]*organizationpb.DealInvitation, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
-		var role string
-		switch invitation.DealInvitation.MemberType {
-		case enums.DealMemberTypeCustomer:
-			role = "customer"
-		case enums.DealMemberTypePartner:
-			role = "partner"
-		case enums.DealMemberTypeMember:
-			role = "member"
-		default:
-			role = "member"
-		}
+		// var role string
+		// switch invitation.DealInvitation.MemberType {
+		// case enums.DealMemberTypeCustomer:
+		// 	role = "customer"
+		// case enums.DealMemberTypePartner:
+		// 	role = "partner"
+		// case enums.DealMemberTypeMember:
+		// 	role = "member"
+		// default:
+		// 	role = "member"
+		// }
 
 		invitationResponse := &organizationpb.DealInvitation{
 			Id:        invitation.DealInvitation.ID,
@@ -344,12 +355,12 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 			InviteeId: invitation.DealInvitation.InviteeID,
 			Status:    uint32(invitation.DealInvitation.Status),
 			Message:   invitation.DealInvitation.Message,
-			Role:      role,
+			// Role:      role,
 			Reason:    "", // DealInvitation entity doesn't have Reason field
 			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
 			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
 		}
-		
+
 		if invitation.DealInvitation.Color != nil {
 			invitationResponse.Color = &organizationpb.Color{
 				Id:              uint32(invitation.DealInvitation.Color.ID),
@@ -360,7 +371,7 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 				IsActive:        invitation.DealInvitation.Color.IsActive,
 			}
 		}
-		
+
 		result[i] = invitationResponse
 	}
 	return &organizationpb.GetInvitationsByDealResponse{

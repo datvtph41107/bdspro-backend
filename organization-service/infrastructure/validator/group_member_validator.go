@@ -6,11 +6,14 @@ import (
 	"organization/internal/custom_error"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/protoadapt"
 )
 
 type GroupMemberValidator interface {
 	ValidateCreateGroupMemberRequest(request *organizationpb.CreateGroupMemberRequest) error
+	ValidateCreateGroupMemberBatchRequest(request *organizationpb.CreateGroupMemberBatchRequest) error
 	ValidateUpdateGroupMemberRequest(request *organizationpb.UpdateGroupMemberRequest) error
 	ValidateDeleteGroupMemberRequest(request *organizationpb.DeleteGroupMemberRequest) error
 	ValidateGetGroupMemberRequest(request *organizationpb.GetGroupMemberRequest) error
@@ -58,6 +61,28 @@ func (v *groupMemberValidator) ValidateCreateGroupMemberRequest(request *organiz
 	if len(details) > 0 {
 		return custom_error.InvalidRequest(details...)
 	}
+	return nil
+}
+
+func (v *groupMemberValidator) ValidateCreateGroupMemberBatchRequest(request *organizationpb.CreateGroupMemberBatchRequest) error {
+	if request == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if len(request.UserIds) == 0 {
+		return status.Errorf(codes.InvalidArgument, "members list cannot be empty")
+	}
+
+	if len(request.UserIds) > 100 {
+		return status.Errorf(codes.InvalidArgument, "cannot create more than 100 members at once")
+	}
+
+	for i, userId := range request.UserIds {
+		if userId == 0 {
+			return status.Errorf(codes.InvalidArgument, "user id at index %d is required", i)
+		}
+	}
+
 	return nil
 }
 

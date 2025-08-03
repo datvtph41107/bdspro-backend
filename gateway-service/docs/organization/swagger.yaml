@@ -171,6 +171,29 @@ definitions:
       id:
         type: integer
     type: object
+  organizationpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
   organizationpb.ConfirmWithdrawalRequest:
     properties:
       invitationId:
@@ -231,6 +254,8 @@ definitions:
       note:
         type: string
       ownerId:
+        type: integer
+      ownerType:
         type: integer
       partnerIds:
         items:
@@ -315,6 +340,15 @@ definitions:
       name:
         type: string
     type: object
+  organizationpb.CreateGroupMemberBatchRequest:
+    properties:
+      groupId:
+        type: integer
+      userIds:
+        items:
+          type: integer
+        type: array
+    type: object
   organizationpb.CreateGroupMemberRequest:
     properties:
       groupId:
@@ -335,6 +369,8 @@ definitions:
     type: object
   organizationpb.CreateNewRoleWithMembersRequest:
     properties:
+      colorId:
+        type: integer
       key:
         type: string
       memberIds:
@@ -474,6 +510,8 @@ definitions:
     type: object
   organizationpb.CreateRoleRequest:
     properties:
+      colorId:
+        type: integer
       domainType:
         type: integer
       isDefault:
@@ -519,8 +557,10 @@ definitions:
     type: object
   organizationpb.DealInvitation:
     properties:
+      color:
+        $ref: '#/definitions/organizationpb.Color'
       createdAt:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       dealId:
         type: integer
       id:
@@ -531,25 +571,29 @@ definitions:
         type: integer
       message:
         type: string
+      profile:
+        $ref: '#/definitions/sharepb.ProfileItem'
       reason:
         type: string
       role:
-        type: string
+        $ref: '#/definitions/organizationpb.Role'
       status:
-        type: string
+        type: integer
       updatedAt:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
     type: object
   organizationpb.DealInvitationMember:
     properties:
       email:
         type: string
       joinedAt:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       name:
         type: string
       role:
         type: string
+      status:
+        type: integer
       userId:
         type: integer
     type: object
@@ -619,18 +663,10 @@ definitions:
     type: object
   organizationpb.GetDealHistoryResponse:
     properties:
-      dealId:
-        type: integer
-      items:
+      data:
         items:
           $ref: '#/definitions/organizationpb.DealHistoryItem'
         type: array
-      limit:
-        description: Số lượng item mỗi trang
-        type: integer
-      page:
-        description: Trang hiện tại
-        type: integer
       total:
         description: Tổng số item
         type: integer
@@ -665,7 +701,7 @@ definitions:
     type: object
   organizationpb.GetInvitationsByDealResponse:
     properties:
-      invitations:
+      data:
         items:
           $ref: '#/definitions/organizationpb.DealInvitation'
         type: array
@@ -692,7 +728,7 @@ definitions:
     type: object
   organizationpb.GetPendingInvitationsResponse:
     properties:
-      invitations:
+      data:
         items:
           $ref: '#/definitions/organizationpb.DealInvitation'
         type: array
@@ -704,6 +740,10 @@ definitions:
       bankAccount:
         $ref: '#/definitions/organizationpb.BankAccountItem'
       cancelReason:
+        type: string
+      chargePersonId:
+        type: integer
+      chargePersonName:
         type: string
       createdAt:
         type: string
@@ -753,6 +793,8 @@ definitions:
         type: number
       status:
         type: integer
+      statusName:
+        type: string
       targetProfit:
         type: number
       totalAmount:
@@ -786,6 +828,19 @@ definitions:
         type: number
       totalInvestment:
         type: integer
+    type: object
+  organizationpb.Permission:
+    properties:
+      childrens:
+        items:
+          $ref: '#/definitions/organizationpb.Permission'
+        type: array
+      id:
+        type: integer
+      key:
+        type: string
+      name:
+        type: string
     type: object
   organizationpb.RejectInvitationRequest:
     properties:
@@ -836,6 +891,25 @@ definitions:
       success:
         type: boolean
     type: object
+  organizationpb.Role:
+    properties:
+      color:
+        $ref: '#/definitions/organizationpb.Color'
+      domainType:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/organizationpb.Permission'
+        type: array
+    type: object
   organizationpb.SearchMembersResponse:
     properties:
       members:
@@ -847,6 +921,8 @@ definitions:
     type: object
   organizationpb.SendInvitationRequest:
     properties:
+      colorId:
+        type: integer
       dealId:
         type: integer
       inviteeId:
@@ -1127,6 +1203,8 @@ definitions:
     type: object
   organizationpb.UpdateRoleRequest:
     properties:
+      colorId:
+        type: integer
       domainType:
         type: integer
       id:
@@ -1191,26 +1269,14 @@ definitions:
         type: string
       id:
         type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
       phone:
         type: string
       tickVerified:
         type: boolean
-    type: object
-  timestamppb.Timestamp:
-    properties:
-      nanos:
-        description: |-
-          Non-negative fractions of a second at nanosecond resolution. Negative
-          second values with fractions must still have non-negative nanos values
-          that count forward in time. Must be from 0 to 999,999,999
-          inclusive.
-        type: integer
-      seconds:
-        description: |-
-          Represents seconds of UTC time since Unix epoch
-          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-          9999-12-31T23:59:59Z inclusive.
-        type: integer
     type: object
 info:
   contact: {}
@@ -2153,6 +2219,26 @@ paths:
       summary: Cập nhật thành viên nhóm
       tags:
       - Thành viên
+  /group-member/batch:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhiều thành viên nhóm cùng lúc
+      parameters:
+      - description: Danh sách thành viên nhóm
+        in: body
+        name: members
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupMemberBatchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nhiều thành viên nhóm cùng lúc
+      tags:
+      - Thành viên
   /group-member/list/{groupId}:
     get:
       consumes:
@@ -3076,6 +3162,46 @@ paths:
       summary: Lấy dashboard của tổ chức hiện tại
       tags:
       - Tổ chức
+  /organization/deals/current:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ của tổ chức hiện tại
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: ids
+        type: array
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetOrganizationDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ của tổ chức hiện tại mà người dùng request
+        đến
+      tags:
+      - Thương vụ
   /organization/member:
     get:
       consumes:
@@ -3408,6 +3534,25 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật vai trò
+      tags:
+      - Vai trò
+  /organization/role/deal-members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của vai trò thương vụ
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của vai trò thương vụ
       tags:
       - Vai trò
   /organization/role/with-members:

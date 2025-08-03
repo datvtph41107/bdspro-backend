@@ -98,8 +98,8 @@ func NewGRPCServer(
 		dealInvitationHandler:          dealInvitationHandler,
 		dealCommissionHandler:          dealCommissionHandler,
 		dealTransactionHandler:         dealTransactionHandler,
-		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 		colorHandler:                   colorHandler,
+		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 		internalNoteHandler:            internalNoteHandler,
 	}
 }

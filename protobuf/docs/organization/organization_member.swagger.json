@@ -405,7 +405,8 @@
           "type": "string"
         },
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"

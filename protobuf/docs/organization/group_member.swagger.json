@@ -48,6 +48,38 @@
         ]
       }
     },
+    "/v2/org/group-member/batch": {
+      "post": {
+        "operationId": "GroupMemberService_CreateGroupMemberBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GroupMemberService"
+        ]
+      }
+    },
     "/v2/org/group-member/list/{groupId}": {
       "get": {
         "operationId": "GroupMemberService_GetGroupMembers",
@@ -197,6 +229,34 @@
       "properties": {
         "role": {
           "type": "string"
+        }
+      }
+    },
+    "organizationpbCreateGroupMemberBatchRequest": {
+      "type": "object",
+      "properties": {
+        "userIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "organizationpbCreateGroupMemberBatchResponse": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },

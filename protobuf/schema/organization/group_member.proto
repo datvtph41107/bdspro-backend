@@ -16,6 +16,13 @@ service GroupMemberService {
         };
     }
 
+    rpc CreateGroupMemberBatch(CreateGroupMemberBatchRequest) returns (CreateGroupMemberBatchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/group-member/batch"
+            body: "*"
+        };
+    }
+
     rpc UpdateGroupMember(UpdateGroupMemberRequest) returns (UpdateGroupMemberResponse) {
         option (google.api.http) = {
             put: "/v2/org/group-member/{id}"
@@ -50,6 +57,15 @@ message CreateGroupMemberRequest {
 
 message CreateGroupMemberResponse {
     uint32 id = 1;
+}
+
+message CreateGroupMemberBatchRequest {
+    repeated uint64 userIds = 1;
+    uint64 groupId = 2;
+}
+
+message CreateGroupMemberBatchResponse {
+    repeated uint32 ids = 1;
 }
 
 message UpdateGroupMemberRequest {

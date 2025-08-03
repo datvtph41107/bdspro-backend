@@ -90,7 +90,7 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 			Id:       member.OrganizationMember.ID,
 			UserId:   member.OrganizationMember.UserID,
 			RoleId:   member.OrganizationMember.RoleId, // Add roleId field
-			Status:   getStatusString(member.OrganizationMember.Status),
+			Status:   uint32(member.OrganizationMember.Status),
 			RoleName: member.OrganizationMember.RoleName,
 		}
 		profile := member.Profile

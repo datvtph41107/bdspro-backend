@@ -925,7 +925,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách tất cả bạn bè của người dùng",
+                "description": "Lấy danh sách tất cả bạn bè của người dùng. trong đó truyền: organizationId nếu muốn xem bạn bè có thuộc tổ chức không, groupId nếu muốn xem bạn bè có thuộc nhóm không, dealId nếu muốn xem bạn bè có thuộc thương vụ không",
                 "consumes": [
                     "application/json"
                 ],
@@ -937,6 +937,21 @@ const docTemplate = `{
                 ],
                 "summary": "Lấy danh sách bạn bè",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
                     {
                         "type": "integer",
                         "name": "page",
@@ -1204,6 +1219,231 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Không tìm thấy lời mời",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/with-group": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc nhóm không",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc nhóm không",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách bạn bè",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/with-member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc thương vụ không",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc thương vụ không",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách bạn bè",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend/with-organization": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn bè có thuộc tổ chức không",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bạn bè"
+                ],
+                "summary": "Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc tổ chức không",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "dealId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách bạn bè",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.FriendDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
                         "schema": {
                             "type": "string"
                         }
@@ -2764,6 +3004,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "note": {
+                    "type": "string"
+                },
                 "pipeline": {
                     "$ref": "#/definitions/crmpb.PipelineDTO"
                 },
@@ -2799,6 +3042,9 @@ const docTemplate = `{
                 },
                 "stageId": {
                     "type": "integer"
+                },
+                "stageNote": {
+                    "type": "string"
                 }
             }
         },
@@ -2889,6 +3135,9 @@ const docTemplate = `{
                 },
                 "stageId": {
                     "type": "integer"
+                },
+                "stageNote": {
+                    "type": "string"
                 }
             }
         },
@@ -3039,6 +3288,9 @@ const docTemplate = `{
                 },
                 "trigger": {
                     "type": "integer"
+                },
+                "triggerProfile": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
                 },
                 "triggerValue": {
                     "type": "string"
@@ -3300,7 +3552,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "trigger": {
-                    "$ref": "#/definitions/enums.ERule"
+                    "$ref": "#/definitions/enums.ERuleTrigger"
                 },
                 "triggerValue": {
                     "type": "string"
@@ -3396,7 +3648,7 @@ const docTemplate = `{
                 "EOwnerTypeOrgnization"
             ]
         },
-        "enums.ERule": {
+        "enums.ERuleTrigger": {
             "type": "integer",
             "enum": [
                 10,
@@ -4060,6 +4312,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "isMember": {
+                    "type": "boolean"
+                },
+                "joinedAt": {
+                    "type": "string"
                 },
                 "phone": {
                     "type": "string"

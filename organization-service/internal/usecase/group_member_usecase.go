@@ -19,6 +19,7 @@ import (
 
 type GroupMemberUsecase interface {
 	CreateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error)
+	CreateGroupMemberBatch(ctx context.Context, groupId uint64, userIds []uint64) ([]*entity.GroupMember, error)
 	UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error)
 	DeleteGroupMember(ctx context.Context, id uint32) error
 	GetGroupMemberByID(ctx context.Context, id uint32) (*entity.GroupMember, error)
@@ -88,6 +89,54 @@ func (u *groupMemberUsecase) CreateGroupMember(ctx context.Context, member *enti
 	})
 
 	return createdMember, nil
+}
+
+func (u *groupMemberUsecase) CreateGroupMemberBatch(ctx context.Context, groupId uint64, userIds []uint64) ([]*entity.GroupMember, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(groupId), uint32(currentUserId))
+	if err != nil {
+		return nil, err
+	}
+
+	existedMember, err := u.groupMemberRepository.GetByGroupIDAndUserIDs(ctx, uint32(groupId), userIds)
+	if err != nil {
+		return nil, err
+	}
+	if len(existedMember) > 0 {
+		return nil, custom_error.RecordNotFound(fmt.Sprintf("some users %v are already a member of group %d", userIds, groupId))
+	}
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, userId := range userIds {
+			err = u.groupChatUsecase.AddUserToGroupChat(newCtx, uint32(groupId), uint32(userId))
+			if err != nil {
+				fmt.Printf("error add user to group chat: %v", err)
+			}
+		}
+	}()
+	members := make([]*entity.GroupMember, len(userIds))
+	for i, userId := range userIds {
+		members[i] = &entity.GroupMember{
+			GroupId:   uint32(groupId),
+			UserId:    uint32(userId),
+			CreatedBy: uint32(currentUserId),
+			UpdatedBy: uint32(currentUserId),
+		}
+	}
+	createdMembers, err := u.groupMemberRepository.CreateBatch(ctx, members)
+	if err != nil {
+		return nil, err
+	}
+
+	// u.logWorker.Push(LogEvent{
+	// 	GroupId: createdMember.GroupId,
+	// 	ActorId: createdMember.CreatedBy,
+	// 	LogType: "CREATE_MEMBER",
+	// 	LogData: "Added new member to group",
+	// })
+
+	return createdMembers, nil
 }
 
 func (u *groupMemberUsecase) UpdateGroupMember(ctx context.Context, member *entity.GroupMember) (*entity.GroupMember, error) {

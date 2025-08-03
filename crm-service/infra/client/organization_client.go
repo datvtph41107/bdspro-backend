@@ -56,3 +56,67 @@ func (c *OrganizationClient) MapDealMemberToFriend(ctx context.Context, dealId u
 
 	return nil
 }
+
+func (c *OrganizationClient) MapGroupMemberToFriend(ctx context.Context, groupId uint64, userPbs []*crmpb.Friend) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	profileIDSet := make(map[uint64]struct{})
+	for _, userPb := range userPbs {
+		profileIDSet[userPb.ReceiverId] = struct{}{}
+		profileIDSet[userPb.CreatedBy] = struct{}{}
+	}
+
+	userIds := make([]uint64, 0, len(profileIDSet))
+	for userId := range profileIDSet {
+		userIds = append(userIds, userId)
+	}
+
+	groupMemberMap, err := c.Client.GetGroupMemberByIds(ctx, groupId, userIds)
+	if err != nil {
+		return err
+	}
+
+	for _, friend := range userPbs {
+		if friend.CreatedBy == profileId {
+			if profile, ok := groupMemberMap[friend.ReceiverId]; ok {
+				friend.GroupMember = profile
+			}
+		} else {
+			if profile, ok := groupMemberMap[friend.CreatedBy]; ok {
+				friend.GroupMember = profile
+			}
+		}
+	}
+	return nil
+}
+
+func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, userPbs []*crmpb.Friend) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	profileIDSet := make(map[uint64]struct{})
+	for _, userPb := range userPbs {
+		profileIDSet[userPb.ReceiverId] = struct{}{}
+		profileIDSet[userPb.CreatedBy] = struct{}{}
+	}
+
+	userIds := make([]uint64, 0, len(profileIDSet))
+	for userId := range profileIDSet {
+		userIds = append(userIds, userId)
+	}
+
+	organizationMemberMap, err := c.Client.GetOrganizationMemberByIds(ctx, organizationId, userIds)
+	if err != nil {
+		return err
+	}
+
+	for _, friend := range userPbs {
+		if friend.CreatedBy == profileId {
+			if profile, ok := organizationMemberMap[friend.ReceiverId]; ok {
+				friend.OrganizationMember = profile
+			}
+		} else {
+			if profile, ok := organizationMemberMap[friend.CreatedBy]; ok {
+				friend.OrganizationMember = profile
+			}
+		}
+	}
+	return nil
+}

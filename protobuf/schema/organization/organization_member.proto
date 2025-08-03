@@ -122,7 +122,7 @@ message OrganizationMember {
     uint32 role = 3 [json_name = "role"];
     uint32 roleId = 4 [json_name = "roleId"];
     string roleName = 5 [json_name = "roleName"];
-    string status = 6 [json_name = "status"];
+    uint32 status = 6 [json_name = "status"];
     sharepb.ProfileItem profile = 7 [json_name = "profile"];
 }
 
