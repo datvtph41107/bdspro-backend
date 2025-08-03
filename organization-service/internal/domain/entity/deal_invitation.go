@@ -37,9 +37,11 @@ type DealInvitation struct {
 	UpdatedAt    time.Time            `gorm:"not null"`
 	CreatedBy    uint64               `gorm:"not null"`
 	UpdatedBy    uint64               `gorm:"not null"`
+	ColorId      *uint32              `gorm:"index"`
 
 	// Relations
 	Deal    *Deal       `gorm:"foreignKey:DealID;references:ID"`
+	Color   *Color      `gorm:"foreignKey:ColorId;references:ID"`
 	Inviter interface{} `gorm:"-"` // Sẽ được populate từ User service
 	Invitee interface{} `gorm:"-"` // Sẽ được populate từ User service
 }

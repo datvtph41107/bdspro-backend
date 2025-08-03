@@ -11,4 +11,6 @@ type OrganizationRole struct {
 	Permissions    []*OrganizationPermission
 	IsDefault      bool
 	DomainType     enums.DomainType
+	ColorId        *uint32
+	Color          *Color
 }

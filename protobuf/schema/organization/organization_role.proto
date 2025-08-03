@@ -5,6 +5,7 @@ package organizationpb;
 import "google/api/annotations.proto";
 import "organization/organization_permission.proto";
 import "shared/common.proto";
+import "organization/color.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -77,6 +78,7 @@ message CreateRoleRequest {
     repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
     bool isDefault = 5 [json_name = "isDefault"];
     uint32 domainType = 6 [json_name = "domainType"];
+    optional uint32 colorId = 7 [json_name = "colorId"];
 }
 
 message CreateRoleResponse {
@@ -90,6 +92,7 @@ message UpdateRoleRequest {
     repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
     bool isDefault = 5 [json_name = "isDefault"];
     uint32 domainType = 6 [json_name = "domainType"];
+    optional uint32 colorId = 7 [json_name = "colorId"];
 }
 
 message UpdateRoleResponse {    
@@ -117,6 +120,7 @@ message Role {
     repeated Permission permissions = 4 [json_name = "permissions"];
     bool isDefault = 5 [json_name = "isDefault"];
     uint32 domainType = 6 [json_name = "domainType"];
+    optional Color color = 7 [json_name = "color"];
 }
 
 message GetRolesResponse {
@@ -146,6 +150,7 @@ message CreateNewRoleWithMembersRequest {
     string key = 2 [json_name = "key"];
     repeated uint32 memberIds = 3 [json_name = "memberIds"];
     repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
+    optional uint32 colorId = 5 [json_name = "colorId"];
 }
 
 message CreateNewRoleWithMembersResponse {
@@ -164,6 +169,7 @@ message UpdateRoleWithMembersRequest {
     repeated uint64 permissionIds = 5 [json_name = "permissionIds"];
     bool isDefault = 6 [json_name = "isDefault"];
     uint32 domainType = 7 [json_name = "domainType"];
+    optional uint32 colorId = 8 [json_name = "colorId"];
 }
 
 message UpdateRoleWithMembersResponse {

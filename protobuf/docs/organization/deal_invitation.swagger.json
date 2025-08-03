@@ -466,6 +466,44 @@
         }
       }
     },
+    "organizationpbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "organizationpbConfirmWithdrawalRequest": {
       "type": "object",
       "properties": {
@@ -527,6 +565,9 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "color": {
+          "$ref": "#/definitions/organizationpbColor"
         }
       }
     },
@@ -715,6 +756,10 @@
         },
         "role": {
           "type": "string"
+        },
+        "colorId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

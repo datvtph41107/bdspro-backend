@@ -28,7 +28,7 @@ func NewOrganizationRoleTransformer() OrganizationRoleTransformer {
 }
 
 func (t *organizationRoleTransformer) CreateRoleRequestToEntity(req *organizationpb.CreateRoleRequest) *entity.OrganizationRole {
-	return &entity.OrganizationRole{
+	role := &entity.OrganizationRole{
 		Name:           req.Name,
 		Key:            req.Key,
 		OrganizationId: req.OrganizationId,
@@ -36,10 +36,14 @@ func (t *organizationRoleTransformer) CreateRoleRequestToEntity(req *organizatio
 		DomainType:     enums.DomainType(req.DomainType),
 		PermissionIds:  req.PermissionIds,
 	}
+	if req.ColorId != nil {
+		role.ColorId = req.ColorId
+	}
+	return role
 }
 
 func (t *organizationRoleTransformer) UpdateRoleRequestToEntity(req *organizationpb.UpdateRoleRequest) *entity.OrganizationRole {
-	return &entity.OrganizationRole{
+	role := &entity.OrganizationRole{
 		Id:            req.Id,
 		Name:          req.Name,
 		Key:           req.Key,
@@ -47,6 +51,10 @@ func (t *organizationRoleTransformer) UpdateRoleRequestToEntity(req *organizatio
 		IsDefault:     req.IsDefault,
 		DomainType:    enums.DomainType(req.DomainType),
 	}
+	if req.ColorId != nil {
+		role.ColorId = req.ColorId
+	}
+	return role
 }
 
 func (t *organizationRoleTransformer) EntityToCreateRoleResponse(entity *entity.OrganizationRole) *organizationpb.CreateRoleResponse {
@@ -66,12 +74,25 @@ func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.O
 				Key:  permission.Key,
 			}
 		}
-		rolesResponse[i] = &organizationpb.Role{
+		roleResponse := &organizationpb.Role{
 			Id:          role.Id,
 			Name:        role.Name,
 			Key:         role.Key,
 			Permissions: permissions,
+			IsDefault:   role.IsDefault,
+			DomainType:  uint32(role.DomainType),
 		}
+		if role.Color != nil {
+			roleResponse.Color = &organizationpb.Color{
+				Id:              uint32(role.Color.ID),
+				Name:            role.Color.Name,
+				ContentColor:    role.Color.ContentColor,
+				BackgroundColor: role.Color.BackgroundColor,
+				Description:     role.Color.Description,
+				IsActive:        role.Color.IsActive,
+			}
+		}
+		rolesResponse[i] = roleResponse
 	}
 	return &organizationpb.GetRolesResponse{
 		Data:  rolesResponse,
@@ -101,21 +122,38 @@ func (t *organizationRoleTransformer) EntityToGetRoleResponse(entity *entity.Org
 		}
 	}
 
+	role := &organizationpb.Role{
+		Id:          entity.Id,
+		Name:        entity.Name,
+		Key:         entity.Key,
+		Permissions: permissions,
+		IsDefault:   entity.IsDefault,
+		DomainType:  uint32(entity.DomainType),
+	}
+	if entity.Color != nil {
+		role.Color = &organizationpb.Color{
+			Id:              uint32(entity.Color.ID),
+			Name:            entity.Color.Name,
+			ContentColor:    entity.Color.ContentColor,
+			BackgroundColor: entity.Color.BackgroundColor,
+			Description:     entity.Color.Description,
+			IsActive:        entity.Color.IsActive,
+		}
+	}
 	return &organizationpb.GetRoleResponse{
-		Role: &organizationpb.Role{
-			Id:          entity.Id,
-			Name:        entity.Name,
-			Key:         entity.Key,
-			Permissions: permissions,
-		},
+		Role: role,
 	}
 }
 
 func (t *organizationRoleTransformer) CreateNewRoleWithMembersRequestToEntity(req *organizationpb.CreateNewRoleWithMembersRequest) *entity.OrganizationRole {
-	return &entity.OrganizationRole{
+	role := &entity.OrganizationRole{
 		Name: req.Name,
 		Key:  req.Key,
 	}
+	if req.ColorId != nil {
+		role.ColorId = req.ColorId
+	}
+	return role
 }
 
 func (t *organizationRoleTransformer) EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) *organizationpb.CreateNewRoleWithMembersResponse {
@@ -129,7 +167,7 @@ func (t *organizationRoleTransformer) EntityToCreateNewRoleWithMembersResponse(e
 }
 
 func (t *organizationRoleTransformer) UpdateRoleWithMembersRequestToEntity(req *organizationpb.UpdateRoleWithMembersRequest) *entity.OrganizationRole {
-	return &entity.OrganizationRole{
+	role := &entity.OrganizationRole{
 		Id:            req.Id,
 		Name:          req.Name,
 		Key:           req.Key,
@@ -137,6 +175,10 @@ func (t *organizationRoleTransformer) UpdateRoleWithMembersRequestToEntity(req *
 		IsDefault:     req.IsDefault,
 		DomainType:    enums.DomainType(req.DomainType),
 	}
+	if req.ColorId != nil {
+		role.ColorId = req.ColorId
+	}
+	return role
 }
 
 func (t *organizationRoleTransformer) EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse {

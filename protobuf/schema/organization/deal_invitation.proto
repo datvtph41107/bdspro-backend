@@ -5,6 +5,7 @@ package organizationpb;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "shared/common.proto";
+import "organization/color.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -95,6 +96,7 @@ message SendInvitationRequest {
   uint64 inviteeId = 3;
   string message = 4;
   string role = 5;
+  optional uint32 colorId = 6;
 }
 
 message SendInvitationResponse {
@@ -223,6 +225,7 @@ message DealInvitation {
   string createdAt = 9;
   string updatedAt = 10;
   optional sharepb.ProfileItem profile = 11;
+  optional Color color = 12;
 }
 
 message DealInvitationMember {
