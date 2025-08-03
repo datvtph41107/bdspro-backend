@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 
@@ -55,10 +56,8 @@ func (r *ColorPostgresRepository) GetAll(ctx context.Context, page, size int, is
 	}
 
 	// Apply pagination
-	if page > 0 && size > 0 {
-		offset := (page - 1) * size
-		query = query.Offset(offset).Limit(size)
-	}
+	offset := page * size
+	query = query.Offset(offset).Limit(size)
 
 	// Get data
 	if err := query.Order("created_at DESC").Find(&colors).Error; err != nil {
@@ -66,4 +65,4 @@ func (r *ColorPostgresRepository) GetAll(ctx context.Context, page, size int, is
 	}
 
 	return colors, total, nil
-} 
+}
