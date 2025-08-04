@@ -22,16 +22,17 @@ type AppointmentModel struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
-	Title            string
-	StartTime        time.Time
-	EndTime          time.Time
-	Place            string
-	ParticipantIds   string
-	DealId           uint32
-	ProductIds       string
-	Description      string
-	ReminderSchedule string
-	Status           uint32
+	Title              string
+	StartTime          time.Time
+	EndTime            time.Time
+	Place              string
+	ParticipantIds     string
+	DealId             uint32
+	ProductIds         string
+	Description        string
+	ReminderSchedule   string
+	Status             uint32
+	TransactionIds     string
 
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
@@ -44,6 +45,7 @@ func (a *AppointmentModel) TableName() string {
 func AppointmentModelToEntity(a *AppointmentModel) *entity.Appointment {
 	participantIds := make([]uint32, 0)
 	productIds := make([]uint32, 0)
+	transactionIds := make([]uint32, 0)
 	for _, id := range strings.Split(a.ParticipantIds, ",") {
 		participantId, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -58,50 +60,63 @@ func AppointmentModelToEntity(a *AppointmentModel) *entity.Appointment {
 		}
 		productIds = append(productIds, uint32(productId))
 	}
+	for _, id := range strings.Split(a.TransactionIds, ",") {
+		transactionId, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			continue
+		}
+		transactionIds = append(transactionIds, uint32(transactionId))
+	}
 	return &entity.Appointment{
-		Id:               a.Id,
-		CreatedBy:        a.CreatedBy,
-		UpdatedBy:        a.UpdatedBy,
-		CreatedAt:        a.CreatedAt,
-		UpdatedAt:        a.UpdatedAt,
-		Title:            a.Title,
-		StartTime:        a.StartTime,
-		EndTime:          a.EndTime,
-		Place:            a.Place,
-		ParticipantIds:   participantIds,
-		DealId:           a.DealId,
-		ProductIds:       productIds,
-		Description:      a.Description,
-		ReminderSchedule: a.ReminderSchedule,
-		Status:           a.Status,
+		Id:                 a.Id,
+		CreatedBy:          a.CreatedBy,
+		UpdatedBy:          a.UpdatedBy,
+		CreatedAt:          a.CreatedAt,
+		UpdatedAt:          a.UpdatedAt,
+		Title:              a.Title,
+		StartTime:          a.StartTime,
+		EndTime:            a.EndTime,
+		Place:              a.Place,
+		ParticipantIds:     participantIds,
+		DealId:             a.DealId,
+		ProductIds:         productIds,
+		Description:        a.Description,
+		ReminderSchedule:   a.ReminderSchedule,
+		Status:             a.Status,
+		TransactionIds:     transactionIds,
 	}
 }
 
 func EntityToAppointmentModel(a *entity.Appointment) *AppointmentModel {
 	participantIds := make([]string, 0)
 	productIds := make([]string, 0)
+	transactionIds := make([]string, 0)
 	for _, id := range a.ParticipantIds {
 		participantIds = append(participantIds, strconv.FormatUint(uint64(id), 10))
 	}
 	for _, id := range a.ProductIds {
 		productIds = append(productIds, strconv.FormatUint(uint64(id), 10))
 	}
+	for _, id := range a.TransactionIds {
+		transactionIds = append(transactionIds, strconv.FormatUint(uint64(id), 10))
+	}
 	return &AppointmentModel{
-		Id:               a.Id,
-		CreatedBy:        a.CreatedBy,
-		UpdatedBy:        a.UpdatedBy,
-		CreatedAt:        a.CreatedAt,
-		UpdatedAt:        a.UpdatedAt,
-		Title:            a.Title,
-		StartTime:        a.StartTime,
-		EndTime:          a.EndTime,
-		Place:            a.Place,
-		ParticipantIds:   strings.Join(participantIds, ","),
-		DealId:           a.DealId,
-		ProductIds:       strings.Join(productIds, ","),
-		Description:      a.Description,
-		ReminderSchedule: a.ReminderSchedule,
-		Status:           a.Status,
+		Id:                 a.Id,
+		CreatedBy:          a.CreatedBy,
+		UpdatedBy:          a.UpdatedBy,
+		CreatedAt:          a.CreatedAt,
+		UpdatedAt:          a.UpdatedAt,
+		Title:              a.Title,
+		StartTime:          a.StartTime,
+		EndTime:            a.EndTime,
+		Place:              a.Place,
+		ParticipantIds:     strings.Join(participantIds, ","),
+		DealId:             a.DealId,
+		ProductIds:         strings.Join(productIds, ","),
+		Description:        a.Description,
+		ReminderSchedule:   a.ReminderSchedule,
+		Status:             a.Status,
+		TransactionIds:     strings.Join(transactionIds, ","),
 	}
 }
 

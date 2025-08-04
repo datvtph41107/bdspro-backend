@@ -6,6 +6,8 @@ option go_package = "pb/types/organization;organizationpb";
 import "organization/deal_invitation.proto";
 import "organization/group_member.proto";
 import "organization/organization_member.proto";
+import "organization/deal_transaction.proto";
+import "organization/deal.proto";
 
 service InternalOrganizationService {
     rpc GetOrganizationByIds(GetOrganizationByIdsRequest) returns (GetOrganizationByIdsResponse);
@@ -14,6 +16,8 @@ service InternalOrganizationService {
     rpc GetGroupMemberByIds(GetMemberByIdsRequest) returns (GetGroupMemberByIdsResponse);
     rpc GetOrganizationMemberByIds(GetMemberByIdsRequest) returns (GetOrganizationMemberByIdsResponse);
     rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
+    rpc GetDealTransactionsByIds(GetDealTransactionsByIdsRequest) returns (GetDealTransactionsByIdsResponse);
+    rpc GetDealById(GetDealByIdRequest) returns (GetDealByIdResponse);
 }
 
 message GetOrganizationByIdsRequest {
@@ -74,4 +78,22 @@ message CheckUserInOrganization {
 message CheckUsersInOrganizationResponse {
     repeated CheckUserInOrganization data = 1 [json_name = "data"];
 }
+
+message GetDealByIdRequest {
+    uint64 id = 1;
+}
+
+message GetDealByIdResponse {
+    GroupDeal deal = 1;
+}
+
+message GetDealTransactionsByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetDealTransactionsByIdsResponse {
+    repeated DealTransactionResponse dealTransactions = 1;
+}
+
+
 

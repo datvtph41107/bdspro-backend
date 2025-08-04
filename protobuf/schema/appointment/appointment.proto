@@ -2,9 +2,18 @@ syntax = "proto3";
 
 package appointment;
 
+import "google/protobuf/empty.proto";
+import "organization/deal_transaction.proto";
+import "organization/organization.proto";
+import "organization/deal.proto";
+import "organization/deal_invitation.proto";
+import "bdspro/common.proto";
+
 option go_package = "github.com/tuandq2112/protobuf/schema/appointment";
 
 import "google/api/annotations.proto";
+
+
 service AppointmentService {
 
   rpc CreateAppointment(CreateAppointmentRequest) returns (Appointment) {
@@ -51,6 +60,11 @@ message Appointment {
   string description = 10;
   string reminderSchedule = 11;
   uint32 status = 12;
+  repeated uint32 transactionIds = 13;
+  organizationpb.GroupDeal deal = 14;
+  repeated organizationpb.DealTransactionResponse dealTransactions = 15;
+  repeated organizationpb.DealInvitationMember participants = 16;
+  repeated pb_bdspro.ProductResponse products = 17;
 }
 
 message CreateAppointmentRequest {
@@ -64,6 +78,7 @@ message CreateAppointmentRequest {
   string description = 8;
   string reminderSchedule = 9;
   uint32 status = 10;
+  repeated uint32 transactionIds = 11; 
 }
 
 message GetAppointmentRequest {
@@ -82,6 +97,7 @@ message UpdateAppointmentRequest {
   string description = 9;
   string reminderSchedule = 10;
   uint32 status = 11;
+  repeated uint32 transactionIds = 12;
 }
 
 message DeleteAppointmentRequest {

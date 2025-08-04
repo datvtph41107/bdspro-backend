@@ -9468,11 +9468,17 @@
           {
             "name": "organizationId",
             "in": "query",
-            "type": "integer",
-            "format": "int64"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
             "in": "query",
             "type": "string",
             "format": "uint64"
@@ -9607,11 +9613,17 @@
           {
             "name": "organizationId",
             "in": "query",
-            "type": "integer",
-            "format": "int64"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
             "in": "query",
             "type": "string",
             "format": "uint64"
@@ -9672,11 +9684,17 @@
           {
             "name": "organizationId",
             "in": "query",
-            "type": "integer",
-            "format": "int64"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
             "in": "query",
             "type": "string",
             "format": "uint64"
@@ -9788,11 +9806,88 @@
           {
             "name": "organizationId",
             "in": "query",
-            "type": "integer",
-            "format": "int64"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbFriendListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/crm/friend/with-member": {
+      "get": {
+        "tags": [
+          "FriendService"
+        ],
+        "operationId": "FriendService_FriendListWithMember",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
             "in": "query",
             "type": "string",
             "format": "uint64"
@@ -17947,6 +18042,50 @@
         ]
       }
     },
+    "/v2/org/group-member/batch": {
+      "post": {
+        "tags": [
+          "GroupMemberService"
+        ],
+        "operationId": "GroupMemberService_CreateGroupMemberBatch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberBatchRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCreateGroupMemberBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/group-member/list/{groupId}": {
       "get": {
         "tags": [
@@ -21483,6 +21622,48 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbAddPermissionToRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/organization/role/deal-members": {
+      "get": {
+        "tags": [
+          "OrganizationRoleService"
+        ],
+        "operationId": "OrganizationRoleService_GetRoleDealMembers",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetRolesResponse"
             }
           },
           "default": {
@@ -25352,6 +25533,13 @@
         },
         "title": {
           "type": "string"
+        },
+        "transactionIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -27044,9 +27232,19 @@
     },
     "appointmentAppointment": {
       "properties": {
+        "deal": {
+          "$ref": "#/definitions/organizationpbGroupDeal"
+        },
         "dealId": {
           "format": "int64",
           "type": "integer"
+        },
+        "dealTransactions": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealTransactionResponse",
+            "type": "object"
+          },
+          "type": "array"
         },
         "description": {
           "type": "string"
@@ -27065,6 +27263,13 @@
           },
           "type": "array"
         },
+        "participants": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "place": {
           "type": "string"
         },
@@ -27072,6 +27277,13 @@
           "items": {
             "format": "int64",
             "type": "integer"
+          },
+          "type": "array"
+        },
+        "products": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproProductResponse",
+            "type": "object"
           },
           "type": "array"
         },
@@ -27087,6 +27299,13 @@
         },
         "title": {
           "type": "string"
+        },
+        "transactionIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -27132,6 +27351,13 @@
         },
         "title": {
           "type": "string"
+        },
+        "transactionIds": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -28535,6 +28761,9 @@
           "format": "uint64",
           "type": "string"
         },
+        "groupMember": {
+          "$ref": "#/definitions/organizationpbGroupMember"
+        },
         "groupReceiverId": {
           "format": "uint64",
           "type": "string"
@@ -28542,6 +28771,9 @@
         "id": {
           "format": "uint64",
           "type": "string"
+        },
+        "organizationMember": {
+          "$ref": "#/definitions/organizationpbOrganizationMember"
         },
         "receiverId": {
           "format": "uint64",
@@ -30418,6 +30650,34 @@
       },
       "type": "object"
     },
+    "organizationpbCreateGroupMemberBatchRequest": {
+      "properties": {
+        "groupId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "userIds": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCreateGroupMemberBatchResponse": {
+      "properties": {
+        "ids": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbCreateGroupMemberRequest": {
       "properties": {
         "groupId": {
@@ -30887,7 +31147,7 @@
           "type": "string"
         },
         "role": {
-          "type": "string"
+          "$ref": "#/definitions/organizationpbRole"
         },
         "status": {
           "format": "int64",
@@ -31427,6 +31687,14 @@
       },
       "type": "object"
     },
+    "organizationpbGetDealByIdResponse": {
+      "properties": {
+        "deal": {
+          "$ref": "#/definitions/organizationpbGroupDeal"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbGetDealCommissionStatsResponse": {
       "properties": {
         "commissionPercentage": {
@@ -31527,6 +31795,18 @@
         "milestones": {
           "items": {
             "$ref": "#/definitions/organizationpbDealMilestone",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetDealTransactionsByIdsResponse": {
+      "properties": {
+        "dealTransactions": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealTransactionResponse",
             "type": "object"
           },
           "type": "array"
@@ -31638,6 +31918,18 @@
         "total": {
           "format": "int64",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetGroupMemberByIdsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbGroupMember",
+            "type": "object"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -31870,6 +32162,18 @@
       },
       "type": "object"
     },
+    "organizationpbGetOrganizationMemberByIdsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbOrganizationMember",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbGetOrganizationMembersResponse": {
       "properties": {
         "data": {
@@ -31986,12 +32290,28 @@
     },
     "organizationpbGroupDeal": {
       "properties": {
-        "amount": {
-          "format": "double",
-          "type": "number"
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "chargePersonId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
         },
         "createdAt": {
           "type": "string"
+        },
+        "customers": {
+          "items": {
+            "$ref": "#/definitions/sharepbProfileItem",
+            "type": "object"
+          },
+          "type": "array"
         },
         "dealType": {
           "format": "int64",
@@ -32000,11 +32320,36 @@
         "dealTypeName": {
           "type": "string"
         },
+        "documents": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDocumentItem",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "id": {
           "format": "int64",
           "type": "integer"
         },
+        "isManual": {
+          "title": "Nhập tay (dành cho doanh thu)",
+          "type": "boolean"
+        },
+        "isUnilateral": {
+          "title": "Đơn phương (gỡ khỏi thương vụ)",
+          "type": "boolean"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/definitions/sharepbProfileItem",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "name": {
+          "type": "string"
+        },
+        "note": {
           "type": "string"
         },
         "numMember": {
@@ -32019,9 +32364,16 @@
           "format": "int64",
           "type": "integer"
         },
+        "partners": {
+          "items": {
+            "$ref": "#/definitions/sharepbProfileItem",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "products": {
           "items": {
-            "$ref": "#/definitions/pb_bdsproProductItem",
+            "$ref": "#/definitions/pb_bdsproProductAttachment",
             "type": "object"
           },
           "type": "array"
@@ -32033,6 +32385,13 @@
         "status": {
           "format": "int64",
           "type": "integer"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "format": "double",
+          "type": "number"
         },
         "totalAmount": {
           "format": "double",
@@ -32712,7 +33071,8 @@
           "type": "string"
         },
         "status": {
-          "type": "string"
+          "format": "int64",
+          "type": "integer"
         },
         "userId": {
           "format": "int64",

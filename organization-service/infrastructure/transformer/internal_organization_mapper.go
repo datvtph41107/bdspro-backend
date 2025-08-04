@@ -1,12 +1,12 @@
 package transformer
 
 import (
-	"organization/internal/domain/entity"
 	organizationpb "pb/types/organization"
+
+	"organization/internal/domain/entity"
 )
 
-type InternalOrganizationMapper struct {
-}
+type InternalOrganizationMapper struct{}
 
 func NewInternalOrganizationMapper() *InternalOrganizationMapper {
 	return &InternalOrganizationMapper{}
@@ -101,3 +101,38 @@ func (m *InternalOrganizationMapper) OrganizationMemberToPb(organizationMember *
 		// JoinedAt: organizationMember.JoinedAt,
 	}
 }
+
+func (m *InternalOrganizationMapper) GroupDealToPb(deal *entity.Deal) *organizationpb.GroupDeal {
+	return &organizationpb.GroupDeal{
+		Id:        uint32(deal.ID),
+		Name:      deal.Name,
+		Status:    uint32(deal.Status),
+		OwnerId:   uint32(deal.OwnerId),
+		OwnerType: uint32(deal.OwnerType),
+	}
+}
+
+func (m *InternalOrganizationMapper) DealTransactionsToPb(dealTransactions []*entity.DealTransaction) []*organizationpb.DealTransactionResponse {
+	pbDealTransactions := make([]*organizationpb.DealTransactionResponse, len(dealTransactions))
+	for i, dealTransaction := range dealTransactions {
+		pbDealTransactions[i] = m.DealTransactionToPb(dealTransaction)
+	}
+	return pbDealTransactions
+}
+
+func (m *InternalOrganizationMapper) DealTransactionToPb(dealTransaction *entity.DealTransaction) *organizationpb.DealTransactionResponse {
+	return &organizationpb.DealTransactionResponse{
+		Id:          dealTransaction.ID,
+		DealId:      dealTransaction.DealID,
+		Type:        organizationpb.TransactionType(dealTransaction.Type),
+		Amount:      dealTransaction.Amount,
+		Description: dealTransaction.Description,
+		Category:    dealTransaction.Category,
+		Note:        dealTransaction.Note,
+		Status:      organizationpb.ApprovedStatus(dealTransaction.Status),
+		CreatedBy:   dealTransaction.CreatedBy,
+		CreatedAt:   dealTransaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   dealTransaction.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+

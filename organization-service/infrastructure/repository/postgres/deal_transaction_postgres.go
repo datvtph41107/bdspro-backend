@@ -3,10 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
 	"organization/internal/enums"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -45,6 +46,17 @@ func (r *DealTransactionPostgresRepository) GetByID(ctx context.Context, id uint
 	return &transaction, nil
 }
 
+func (r *DealTransactionPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealTransaction, error) {
+	var transactions []*entity.DealTransaction
+	err := r.db.WithContext(ctx).
+		Where("id IN ?", ids).
+		Find(&transactions).Error
+	if err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
 func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, size int) ([]*entity.DealTransaction, int64, error) {
 	var transactions []*entity.DealTransaction
 	var total int64
@@ -72,7 +84,6 @@ func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dea
 		Offset(offset).
 		Limit(size).
 		Find(&transactions).Error
-
 	if err != nil {
 		return nil, 0, err
 	}

@@ -12,6 +12,7 @@ type DealTransactionRepository interface {
 	Update(ctx context.Context, transaction *entity.DealTransaction) error
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*entity.DealTransaction, error)
+	GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealTransaction, error)
 	GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, limit int) ([]*entity.DealTransaction, int64, error)
 	Approve(ctx context.Context, id uint64, approvedBy uint64, status enums.ApprovedStatus, rejectReason string) error
 	

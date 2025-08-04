@@ -170,3 +170,30 @@ func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organ
 
 	return users.Data, nil
 }
+
+func (c *OrganizationClient) GetDealById(ctx context.Context, dealId uint64) (*organizationpb.GroupDeal, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	deal, err := c.client.GetDealById(ctx, &organizationpb.GetDealByIdRequest{Id: dealId})
+	if err != nil {
+		return nil, err
+	}
+
+	return deal.Deal, nil
+}
+
+func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
+	if c.client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	dealTransactions, err := c.client.GetDealTransactionsByIds(ctx, &organizationpb.GetDealTransactionsByIdsRequest{Ids: dealIds})
+	if err != nil {
+		return nil, err
+	}
+
+	return dealTransactions.DealTransactions, nil
+}
+

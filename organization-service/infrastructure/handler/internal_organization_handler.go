@@ -15,6 +15,8 @@ type InternalOrganizationHandler struct {
 	dealInvitationRepo     repository.DealInvitationRepository
 	groupMemberRepo        repository.GroupMemberRepository
 	organizationMemberRepo repository.OrganizationMemberRepository
+	dealRepo               repository.GroupDealRepository
+	dealTransactionRepo    repository.DealTransactionRepository
 }
 
 func NewInternalOrganizationHandler(
@@ -23,6 +25,8 @@ func NewInternalOrganizationHandler(
 	dealInvitationRepo repository.DealInvitationRepository,
 	groupMemberRepo repository.GroupMemberRepository,
 	organizationMemberRepo repository.OrganizationMemberRepository,
+	dealRepo repository.GroupDealRepository,
+	dealTransactionRepo repository.DealTransactionRepository,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
 		organizationRepo:       organizationRepo,
@@ -31,6 +35,8 @@ func NewInternalOrganizationHandler(
 		mapper:                 mapper,
 		groupMemberRepo:        groupMemberRepo,
 		organizationMemberRepo: organizationMemberRepo,
+		dealRepo:               dealRepo,
+		dealTransactionRepo:    dealTransactionRepo,
 	}
 }
 
@@ -88,3 +94,27 @@ func (h *InternalOrganizationHandler) GetOrganizationMemberByIds(ctx context.Con
 		Data: pbOrganizationMembers,
 	}, nil
 }
+
+
+func (h *InternalOrganizationHandler) GetDealById(ctx context.Context, req *organizationpb.GetDealByIdRequest) (*organizationpb.GetDealByIdResponse, error) {
+	deal, err := h.dealRepo.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	pbDeal := h.mapper.GroupDealToPb(deal)
+	return &organizationpb.GetDealByIdResponse{
+		Deal: pbDeal,
+	}, nil
+}
+
+func (h *InternalOrganizationHandler) GetDealTransactionsByIds(ctx context.Context, req *organizationpb.GetDealTransactionsByIdsRequest) (*organizationpb.GetDealTransactionsByIdsResponse, error) {
+	dealTransactions, err := h.dealTransactionRepo.GetByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	pbDealTransactions := h.mapper.DealTransactionsToPb(dealTransactions)
+	return &organizationpb.GetDealTransactionsByIdsResponse{
+		DealTransactions: pbDealTransactions,
+	}, nil
+}
+

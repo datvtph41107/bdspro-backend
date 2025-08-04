@@ -4,9 +4,9 @@ import (
 	"context"
 	appointmentpb "pb/types/appointment"
 
-	"github.com/tuandq2112/appointment-service/internal/usecase"
 	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
 	"github.com/tuandq2112/appointment-service/internal/interface/validator"
+	"github.com/tuandq2112/appointment-service/internal/usecase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -42,7 +42,7 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(createdAppointment), nil
+	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil, nil), nil
 }
 
 func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *appointmentpb.GetAppointmentRequest) (*appointmentpb.Appointment, error) {
@@ -55,7 +55,7 @@ func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *appointmen
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(appointment), nil
+	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.DealTransactions, appointment.Participants), nil
 }
 
 func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appointmentpb.UpdateAppointmentRequest) (*appointmentpb.Appointment, error) {
@@ -70,7 +70,7 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(updatedAppointment), nil
+	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil, nil), nil
 }
 
 func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *appointmentpb.DeleteAppointmentRequest) (*appointmentpb.DeleteAppointmentResponse, error) {
@@ -107,4 +107,4 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *appointm
 	}
 
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
-} 
+}

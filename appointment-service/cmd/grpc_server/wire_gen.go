@@ -8,6 +8,7 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
+	"github.com/tuandq2112/appointment-service/internal/infrastructure/client"
 	"github.com/tuandq2112/appointment-service/internal/infrastructure/repository"
 	"github.com/tuandq2112/appointment-service/internal/interface/handler"
 	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
@@ -22,7 +23,9 @@ import (
 
 func InitializeGRPCServer() *grpc.GRPCServer {
 	appointmentRepository := repository.NewAppointmentRepository()
-	appointmentUsecase := usecase.NewAppointmentUsecase(appointmentRepository)
+	organizationClient := client.NewOrganizationClient()
+	bdsproClient := client.NewBdsproClient()
+	appointmentUsecase := usecase.NewAppointmentUsecase(appointmentRepository, organizationClient, bdsproClient)
 	appointmentTransformer := transformer.NewAppointmentTransformer()
 	appointmentValidator := validator.NewAppointmentValidator()
 	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator)
@@ -39,6 +42,8 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 var repositorySet = wire.NewSet(repository.NewAppointmentRepository, repository.NewAppointmentReminderRepository)
 
 var usecaseSet = wire.NewSet(usecase.NewAppointmentUsecase, usecase.NewAppointmentReminderUsecase)
+
+var clientSet = wire.NewSet(client.NewOrganizationClient, client.NewBdsproClient)
 
 var transformerSet = wire.NewSet(transformer.NewAppointmentTransformer)
 

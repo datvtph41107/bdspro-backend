@@ -3,6 +3,7 @@ package clients
 import (
 	_middleware "common/middleware"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	pb_bdspro "pb/types/bdspro"
@@ -42,4 +43,17 @@ func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
 		bdsproClient.Client = client
 	}()
 	return bdsproClient
+}
+
+func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductInternalResponse, error) {
+	if c.Client == nil {
+		return nil, errors.New("bdspro client not avaiable")
+	}
+
+	response, err := c.Client.GetDetailByIds(ctx, &pb_bdspro.IdRequest{Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
