@@ -35,3 +35,4 @@ func (c *organizationClient) GetDealTransactionsByIds(ctx context.Context, dealI
 func (c *organizationClient) GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealInvitationMember, error) {
 	return c.client.GetDealMemberByIds(ctx, dealId, ids)
 }
+

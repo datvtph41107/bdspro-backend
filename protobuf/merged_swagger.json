@@ -27282,7 +27282,7 @@
         },
         "products": {
           "items": {
-            "$ref": "#/definitions/pb_bdsproProductResponse",
+            "$ref": "#/definitions/pb_bdsproProductAttachment",
             "type": "object"
           },
           "type": "array"

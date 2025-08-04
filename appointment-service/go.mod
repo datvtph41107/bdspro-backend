@@ -9,7 +9,6 @@ replace pb => ../protobuf
 replace common => ../common
 
 require (
-	common v0.0.0-00010101000000-000000000000
 	github.com/google/wire v0.6.0
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/oklog/run v1.1.0

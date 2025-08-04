@@ -64,7 +64,7 @@ message Appointment {
   organizationpb.GroupDeal deal = 14;
   repeated organizationpb.DealTransactionResponse dealTransactions = 15;
   repeated organizationpb.DealInvitationMember participants = 16;
-  repeated pb_bdspro.ProductResponse products = 17;
+  repeated pb_bdspro.ProductAttachment products = 17;
 }
 
 message CreateAppointmentRequest {

@@ -10,7 +10,7 @@ import (
 type AppointmentDTO struct {
 	Appointment *entity.Appointment
 	Deal *organizationpb.GroupDeal
-	Products []*pb_bdspro.ProductResponse
+	Products []*pb_bdspro.ProductAttachment
 	DealTransactions []*organizationpb.DealTransactionResponse
 	Participants []*organizationpb.DealInvitationMember
 }

@@ -10,6 +10,7 @@ import (
 
 type BdsproClient interface {
 	GetProductByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductInternalResponse, error)
+	GetProductAttachmentByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductAttachmentResponse, error)
 }
 
 type bdsproClient struct {
@@ -24,4 +25,8 @@ func NewBdsproClient() BdsproClient {
 
 func (c *bdsproClient) GetProductByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductInternalResponse, error) {
 	return c.client.GetProductByIds(ctx, ids)
+}
+
+func (c *bdsproClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductAttachmentResponse, error) {
+	return c.client.GetProductAttachmentByIds(ctx, ids)
 }

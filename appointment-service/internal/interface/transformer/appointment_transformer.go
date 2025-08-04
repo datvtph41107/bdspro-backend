@@ -13,7 +13,7 @@ import (
 type AppointmentTransformer interface {
 	CreateAppointmentRequestToEntity(req *appointmentpb.CreateAppointmentRequest) *entity.Appointment
 	UpdateAppointmentRequestToEntity(req *appointmentpb.UpdateAppointmentRequest) *entity.Appointment
-	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductResponse, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment
+	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment
 	EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.ListAppointmentsResponse
 }
 
@@ -61,7 +61,7 @@ func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointme
 	}
 }
 
-func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductResponse, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment {
+func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment {
 	return &appointmentpb.Appointment{
 		Id:                 appointment.Id,
 		Title:              appointment.Title,

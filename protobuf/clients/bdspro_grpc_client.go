@@ -57,3 +57,16 @@ func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*
 
 	return response, nil
 }
+
+func (c *BdsproGrpcClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductAttachmentResponse, error) {
+	if c.Client == nil {
+		return nil, errors.New("bdspro client not avaiable")
+	}
+
+	response, err := c.Client.GetProductAttachmentByIds(ctx, &pb_bdspro.IdRequest{Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
