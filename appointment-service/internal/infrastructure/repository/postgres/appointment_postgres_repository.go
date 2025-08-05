@@ -22,17 +22,17 @@ type AppointmentModel struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
-	Title              string
-	StartTime          time.Time
-	EndTime            time.Time
-	Place              string
-	ParticipantIds     string
-	DealId             uint32
-	ProductIds         string
-	Description        string
-	ReminderSchedule   string
-	Status             uint32
-	TransactionIds     string
+	Title            string
+	StartTime        time.Time
+	EndTime          time.Time
+	Place            string
+	ParticipantIds   string
+	DealId           uint32
+	ProductIds       string
+	Description      string
+	ReminderSchedule uint32
+	Mode             uint32
+	TransactionIds   string
 
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
@@ -68,22 +68,22 @@ func AppointmentModelToEntity(a *AppointmentModel) *entity.Appointment {
 		transactionIds = append(transactionIds, uint32(transactionId))
 	}
 	return &entity.Appointment{
-		Id:                 a.Id,
-		CreatedBy:          a.CreatedBy,
-		UpdatedBy:          a.UpdatedBy,
-		CreatedAt:          a.CreatedAt,
-		UpdatedAt:          a.UpdatedAt,
-		Title:              a.Title,
-		StartTime:          a.StartTime,
-		EndTime:            a.EndTime,
-		Place:              a.Place,
-		ParticipantIds:     participantIds,
-		DealId:             a.DealId,
-		ProductIds:         productIds,
-		Description:        a.Description,
-		ReminderSchedule:   a.ReminderSchedule,
-		Status:             a.Status,
-		TransactionIds:     transactionIds,
+		Id:               a.Id,
+		CreatedBy:        a.CreatedBy,
+		UpdatedBy:        a.UpdatedBy,
+		CreatedAt:        a.CreatedAt,
+		UpdatedAt:        a.UpdatedAt,
+		Title:            a.Title,
+		StartTime:        a.StartTime,
+		EndTime:          a.EndTime,
+		Place:            a.Place,
+		ParticipantIds:   participantIds,
+		DealId:           a.DealId,
+		ProductIds:       productIds,
+		Description:      a.Description,
+		ReminderSchedule: a.ReminderSchedule,
+		Mode:             a.Mode,
+		TransactionIds:   transactionIds,
 	}
 }
 
@@ -101,22 +101,22 @@ func EntityToAppointmentModel(a *entity.Appointment) *AppointmentModel {
 		transactionIds = append(transactionIds, strconv.FormatUint(uint64(id), 10))
 	}
 	return &AppointmentModel{
-		Id:                 a.Id,
-		CreatedBy:          a.CreatedBy,
-		UpdatedBy:          a.UpdatedBy,
-		CreatedAt:          a.CreatedAt,
-		UpdatedAt:          a.UpdatedAt,
-		Title:              a.Title,
-		StartTime:          a.StartTime,
-		EndTime:            a.EndTime,
-		Place:              a.Place,
-		ParticipantIds:     strings.Join(participantIds, ","),
-		DealId:             a.DealId,
-		ProductIds:         strings.Join(productIds, ","),
-		Description:        a.Description,
-		ReminderSchedule:   a.ReminderSchedule,
-		Status:             a.Status,
-		TransactionIds:     strings.Join(transactionIds, ","),
+		Id:               a.Id,
+		CreatedBy:        a.CreatedBy,
+		UpdatedBy:        a.UpdatedBy,
+		CreatedAt:        a.CreatedAt,
+		UpdatedAt:        a.UpdatedAt,
+		Title:            a.Title,
+		StartTime:        a.StartTime,
+		EndTime:          a.EndTime,
+		Place:            a.Place,
+		ParticipantIds:   strings.Join(participantIds, ","),
+		DealId:           a.DealId,
+		ProductIds:       strings.Join(productIds, ","),
+		Description:      a.Description,
+		ReminderSchedule: a.ReminderSchedule,
+		Mode:             a.Mode,
+		TransactionIds:   strings.Join(transactionIds, ","),
 	}
 }
 

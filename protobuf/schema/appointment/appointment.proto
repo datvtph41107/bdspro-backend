@@ -58,8 +58,8 @@ message Appointment {
   uint32 dealId = 8;
   repeated uint32 productIds = 9;
   string description = 10;
-  string reminderSchedule = 11;
-  uint32 status = 12;
+  uint32 reminderSchedule = 11;
+  uint32 mode = 12;
   repeated uint32 transactionIds = 13;
   organizationpb.GroupDeal deal = 14;
   repeated organizationpb.DealTransactionResponse dealTransactions = 15;
@@ -76,8 +76,8 @@ message CreateAppointmentRequest {
   uint32 dealId = 6;
   repeated uint32 productIds = 7;
   string description = 8;
-  string reminderSchedule = 9;
-  uint32 status = 10;
+  uint32 reminderSchedule = 9;
+  uint32 mode = 10;
   repeated uint32 transactionIds = 11; 
 }
 
@@ -95,8 +95,8 @@ message UpdateAppointmentRequest {
   uint32 dealId = 7;
   repeated uint32 productIds = 8;
   string description = 9;
-  string reminderSchedule = 10;
-  uint32 status = 11;
+  uint32 reminderSchedule = 10;
+  uint32 mode = 11;
   repeated uint32 transactionIds = 12;
 }
 

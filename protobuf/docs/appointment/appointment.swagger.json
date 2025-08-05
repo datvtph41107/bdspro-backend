@@ -245,9 +245,10 @@
           "type": "string"
         },
         "reminderSchedule": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
-        "status": {
+        "mode": {
           "type": "integer",
           "format": "int64"
         },
@@ -301,9 +302,10 @@
           "type": "string"
         },
         "reminderSchedule": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
-        "status": {
+        "mode": {
           "type": "integer",
           "format": "int64"
         },
@@ -377,9 +379,10 @@
           "type": "string"
         },
         "reminderSchedule": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
-        "status": {
+        "mode": {
           "type": "integer",
           "format": "int64"
         },
@@ -459,8 +462,9 @@
         "email": {
           "type": "string"
         },
-        "role": {
-          "type": "string"
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         },
         "joinedAt": {
           "type": "string"

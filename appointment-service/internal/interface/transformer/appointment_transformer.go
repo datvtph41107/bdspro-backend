@@ -28,17 +28,17 @@ func (t *appointmentTransformer) CreateAppointmentRequestToEntity(req *appointme
 	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
 
 	return &entity.Appointment{
-		Title:              req.Title,
-		Description:        req.Description,
-		StartTime:          startTime,
-		EndTime:            endTime,
-		Status:             req.Status,
-		Place:              req.Place,
-		ParticipantIds:     req.ParticipantIds,
-		DealId:             req.DealId,
-		ProductIds:         req.ProductIds,
-		ReminderSchedule:   req.ReminderSchedule,
-		TransactionIds:     req.TransactionIds,
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Mode:             req.Mode,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
+		TransactionIds:   req.TransactionIds,
 	}
 }
 
@@ -46,39 +46,39 @@ func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointme
 	startTime, _ := time.Parse(time.RFC3339, req.StartTime)
 	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
 	return &entity.Appointment{
-		Id:                 req.Id,
-		Title:              req.Title,
-		Description:        req.Description,
-		StartTime:          startTime,
-		EndTime:            endTime,
-		Status:             req.Status,
-		Place:              req.Place,
-		ParticipantIds:     req.ParticipantIds,
-		DealId:             req.DealId,
-		ProductIds:         req.ProductIds,
-		ReminderSchedule:   req.ReminderSchedule,
-		TransactionIds:     req.TransactionIds,
+		Id:               req.Id,
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Mode:             req.Mode,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
+		TransactionIds:   req.TransactionIds,
 	}
 }
 
 func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment {
 	return &appointmentpb.Appointment{
-		Id:                 appointment.Id,
-		Title:              appointment.Title,
-		Description:        appointment.Description,
-		StartTime:          appointment.StartTime.Format(time.RFC3339),
-		EndTime:            appointment.EndTime.Format(time.RFC3339),
-		Status:             appointment.Status,
-		Place:              appointment.Place,
-		ParticipantIds:     appointment.ParticipantIds,
-		DealId:             appointment.DealId,
-		ProductIds:         appointment.ProductIds,
-		ReminderSchedule:   appointment.ReminderSchedule,
-		TransactionIds:     appointment.TransactionIds,
-		Deal:               deal,
-		Products:           products,
-		DealTransactions:   dealTransactions,
-		Participants:       participants,
+		Id:               appointment.Id,
+		Title:            appointment.Title,
+		Description:      appointment.Description,
+		StartTime:        appointment.StartTime.Format(time.RFC3339),
+		EndTime:          appointment.EndTime.Format(time.RFC3339),
+		Mode:             appointment.Mode,
+		Place:            appointment.Place,
+		ParticipantIds:   appointment.ParticipantIds,
+		DealId:           appointment.DealId,
+		ProductIds:       appointment.ProductIds,
+		ReminderSchedule: appointment.ReminderSchedule,
+		TransactionIds:   appointment.TransactionIds,
+		Deal:             deal,
+		Products:         products,
+		DealTransactions: dealTransactions,
+		Participants:     participants,
 	}
 }
 
@@ -92,4 +92,3 @@ func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments [
 		Total: total,
 	}
 }
-	
