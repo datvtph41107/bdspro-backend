@@ -343,6 +343,12 @@ message GroupDeal {
     string statusName = 24;
     string chargePersonName = 25;
     uint64 chargePersonId = 26;
+    string fromDate = 27;
+    string toDate = 28; 
+    bool allowSharing = 29;
+    bool memberCanAddTransaction = 30;
+    bool onlyOwnerGetCommission = 31;
+    string internalNote = 32;
 }
 
 message DocumentItem {
@@ -578,6 +584,8 @@ message UpdateDealSettingRequest {
     string internalNote = 7;
     uint64 ownerId = 8;
     uint32 status = 9;
+    BankAccountItem bankAccount = 10;
+
 }
 
 message UpdateDealSettingResponse {

@@ -42,7 +42,7 @@ message GetMemberByIdsRequest {
 }
 
 message GetDealMemberByIdsResponse {
-    repeated DealInvitationMember data = 1;
+    repeated DealMember data = 1;
 }
 
 message GetGroupMemberByIdsResponse {

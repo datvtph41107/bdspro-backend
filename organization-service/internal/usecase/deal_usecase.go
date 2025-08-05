@@ -309,7 +309,6 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -402,9 +401,8 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 		return nil, err
 	}
 
-	err = u.groupAuthUsecase.CanAccessGroup(ctx, uint32(deal.OwnerId))
-	if err != nil {
-		return nil, custom_error.Forbidden("you are not allowed to get deal")
+	if deal == nil {
+		return nil, custom_error.RecordNotFound("deal not found")
 	}
 
 	deal, err = u.groupDealRepository.DetailByID(ctx, id)
@@ -735,6 +733,7 @@ func (u *groupDealUsecase) BeforeAccess(ctx context.Context, dealID uint64) erro
 
 	return nil
 }
+
 func (u *groupDealUsecase) GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error) {
 	err := u.BeforeAccess(ctx, dealID)
 	if err != nil {

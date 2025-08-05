@@ -474,14 +474,23 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 	if err != nil {
 		return nil, err
 	}
-	err = h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), &dto.DealSetting{
+
+	dto:=&dto.DealSetting{
 		FromDate:                fromDate,
 		ToDate:                  toDate,
 		AllowSharing:            req.AllowSharing,
 		MemberCanAddTransaction: req.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  req.OnlyOwnerGetCommission,
 		InternalNote:            req.InternalNote,
-	})
+		OwnerId:                 req.OwnerId,
+		Status:                  enums.DealStatus(req.Status),
+	}
+	if req.BankAccount != nil {
+		dto.BankName = req.BankAccount.BankName
+		dto.AccountNumber = req.BankAccount.AccountNumber
+		dto.AccountName = req.BankAccount.AccountName
+	}	
+	err = h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
 	if err != nil {
 		return nil, err
 	}

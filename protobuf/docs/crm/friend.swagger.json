@@ -845,6 +845,9 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "dealMember": {
+          "$ref": "#/definitions/organizationpbDealInvitationMember"
         }
       }
     },

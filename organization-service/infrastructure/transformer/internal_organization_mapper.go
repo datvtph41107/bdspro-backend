@@ -137,3 +137,18 @@ func (m *InternalOrganizationMapper) DealTransactionToPb(dealTransaction *entity
 	}
 }
 
+func (m *InternalOrganizationMapper) DealMembersToPb(dealMembers []*entity.DealMember) []*organizationpb.DealMember {
+	pbDealMembers := make([]*organizationpb.DealMember, len(dealMembers))
+	for i, dealMember := range dealMembers {
+		pbDealMembers[i] = m.DealMemberToPb(dealMember)
+	}
+	return pbDealMembers
+}
+
+func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMember) *organizationpb.DealMember {
+	return &organizationpb.DealMember{
+		DealId:  uint64(dealMember.DealID),
+		MemberId: uint64(dealMember.MemberID),
+		MemberType: uint32(dealMember.MemberType),
+	}
+}

@@ -215,7 +215,30 @@ func (r *GroupDealPostgresRepository) UpdateStatusAndCancelReason(ctx context.Co
 }
 
 func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error {
-	return r.db.WithContext(ctx).Model(&entity.Deal{}).
-		Where("id = ? AND is_deleted = ?", id, false).
-		Updates(setting).Error
+	tx := r.db.WithContext(ctx).Begin()
+	var model *entity.Deal
+	err := tx.Model(&entity.Deal{}).Where("id = ?", id).First(&model).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	
+	err = tx.Model(&entity.Deal{}).Where("id = ? AND is_deleted = ?", id, false).Updates(model).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	
+	err = tx.Model(&entity.BankAccount{}).Where("id = ?", model.BankAccountID).Updates(map[string]interface{}{
+		"bank_name":      setting.BankName,
+		"account_number": setting.AccountNumber,
+		"account_name":   setting.AccountName,
+	}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

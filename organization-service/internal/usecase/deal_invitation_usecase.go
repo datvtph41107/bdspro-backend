@@ -53,6 +53,7 @@ type DealInvitationUsecase interface {
 
 type dealInvitationUsecase struct {
 	dealInvitationRepository repository.DealInvitationRepository
+	dealMemberRepository     repository.DealMemberRepository
 	dealRepository           repository.GroupDealRepository
 	groupAuthUsecase         GroupAuthUsecase
 	logWorker                *LogWorker
@@ -63,6 +64,7 @@ type dealInvitationUsecase struct {
 
 func NewDealInvitationUsecase(
 	dealInvitationRepository repository.DealInvitationRepository,
+	dealMemberRepository repository.DealMemberRepository,
 	dealRepository repository.GroupDealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
@@ -72,6 +74,7 @@ func NewDealInvitationUsecase(
 ) DealInvitationUsecase {
 	return &dealInvitationUsecase{
 		dealInvitationRepository: dealInvitationRepository,
+		dealMemberRepository:     dealMemberRepository,
 		dealRepository:           dealRepository,
 		groupAuthUsecase:         groupAuthUsecase,
 		logWorker:                logWorker,
@@ -83,7 +86,6 @@ func NewDealInvitationUsecase(
 
 func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *entity.DealInvitation) (*entity.DealInvitation, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
-
 	// Kiểm tra quyền - chỉ leader mới được gửi lời mời
 	deal, err := u.dealRepository.GetByID(ctx, invitation.DealID)
 	if err != nil {
@@ -93,11 +95,7 @@ func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *
 		return nil, custom_error.RecordNotFound("deal not found")
 	}
 
-	// err = u.groupAuthUsecase.IsLeaderGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
-	// if err != nil {
-	// 	return nil, custom_error.Forbidden("you are not allowed to send invitation")
-	// }
-
+	
 	// Kiểm tra xem đã có lời mời cho user này chưa
 	exists, err := u.dealInvitationRepository.ExistsByDealIDAndInviteeID(ctx, invitation.DealID, invitation.InviteeID)
 	if err != nil {
@@ -204,13 +202,25 @@ func (u *dealInvitationUsecase) AcceptInvitation(ctx context.Context, invitation
 			return err
 		}
 
-		// TODO: Thêm vào deal_members khi có repository
-		// dealMember := &entity.DealMember{
-		//     DealID:       invitation.DealID,
-		//     MemberID:     invitation.InviteeID,
-		//     MemberType:   invitation.MemberType,
-		//     AmountCommit: 0,
-		// }
+			// Tạo deal member khi accept invitation
+	amountCommit := 0.0
+	if invitation.AmountCommit != nil {
+		amountCommit = *invitation.AmountCommit
+	}
+	dealMember := &entity.DealMember{
+		DealID:          invitation.DealID,
+		MemberID:        invitation.InviteeID,
+		MemberType:      invitation.MemberType,
+		AmountCommit:    amountCommit,
+		CommissionValue: 0, // Mặc định 0
+		CommissionType:  enums.CommissionTypePercent,
+		Note:            invitation.Message,
+		IsUnilateral:    false,
+	}
+	_, err = u.dealMemberRepository.CreateMember(ctx, dealMember)
+	if err != nil {
+		return err
+	}
 
 		return nil
 	})
@@ -420,17 +430,35 @@ func (u *dealInvitationUsecase) WithdrawFromDeal(ctx context.Context, invitation
 		return err
 	}
 
-	// Cập nhật trạng thái
-	now := time.Now()
-	invitation.Status = entity.DealInvitationStatusWithdrawn
-	invitation.WithdrawnAt = &now
-	invitation.UpdatedBy = currentUserId
-	invitation.Message = reason
+	// Thực hiện transaction đảm bảo ACID
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		// Cập nhật trạng thái invitation
+		now := time.Now()
+		invitation.Status = entity.DealInvitationStatusWithdrawn
+		invitation.WithdrawnAt = &now
+		invitation.UpdatedBy = currentUserId
+		invitation.Message = reason
 
-	_, err = u.dealInvitationRepository.Update(ctx, invitation)
-	if err != nil {
-		return err
-	}
+		_, err = u.dealInvitationRepository.Update(ctx, invitation)
+		if err != nil {
+			return err
+		}
+
+		// Xóa deal member nếu đã tồn tại
+		existingMember, err := u.dealMemberRepository.GetByDealIDAndMemberID(ctx, invitation.DealID, invitation.InviteeID)
+		if err != nil {
+			return err
+		}
+		if existingMember != nil {
+			// Xóa hẳn deal member
+			err = u.dealMemberRepository.DeleteMember(ctx, invitation.DealID, invitation.InviteeID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	// Log activity
 	u.logWorker.Push(LogEvent{
@@ -477,15 +505,35 @@ func (u *dealInvitationUsecase) RemoveFromDeal(ctx context.Context, invitationID
 	//     return custom_error.BadRequest("cannot remove member with unapproved investments")
 	// }
 
-	// Cập nhật trạng thái
-	invitation.Status = entity.DealInvitationStatusWithdrawn
-	invitation.UpdatedBy = currentUserId
-	invitation.Message = reason
+	// Thực hiện transaction đảm bảo ACID
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		// Cập nhật trạng thái invitation
+		now := time.Now()
+		invitation.Status = entity.DealInvitationStatusWithdrawn
+		invitation.WithdrawnAt = &now
+		invitation.UpdatedBy = currentUserId
+		invitation.Message = reason
 
-	_, err = u.dealInvitationRepository.Update(ctx, invitation)
-	if err != nil {
-		return err
-	}
+		_, err = u.dealInvitationRepository.Update(ctx, invitation)
+		if err != nil {
+			return err
+		}
+
+		// Xóa deal member nếu đã tồn tại
+		existingMember, err := u.dealMemberRepository.GetByDealIDAndMemberID(ctx, invitation.DealID, invitation.InviteeID)
+		if err != nil {
+			return err
+		}
+		if existingMember != nil {
+			// Xóa hẳn deal member
+			err = u.dealMemberRepository.DeleteMember(ctx, invitation.DealID, invitation.InviteeID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	// Log activity
 	u.logWorker.Push(LogEvent{
@@ -585,6 +633,8 @@ func (u *dealInvitationUsecase) SearchMembers(ctx context.Context, dealID uint64
 
 	return invitationsWithProfiles, total, nil
 }
+
+
 
 // Helper methods
 func (u *dealInvitationUsecase) GetInvitationByID(ctx context.Context, invitationID uint64) (*entity.DealInvitation, error) {

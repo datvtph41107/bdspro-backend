@@ -1,9 +1,11 @@
 package transformer
 
 import (
+	organizationpb "pb/types/organization"
+	"time"
+
 	"organization/internal/domain/entity"
 	"organization/internal/enums"
-	organizationpb "pb/types/organization"
 )
 
 type GroupDealTransformer interface {
@@ -223,20 +225,30 @@ func (t *groupDealTransformer) EntityToPb(deal *entity.Deal) *organizationpb.Gro
 
 func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal {
 	response := &organizationpb.GroupDeal{
-		Id:           uint32(deal.ID),
-		Name:         deal.Name,
-		TargetProfit: deal.TargetProfit,
-		Status:       uint32(deal.Status),
-		StatusName:   enums.DealStatusMap[deal.Status],
-		DealType:     uint32(deal.DealType),
-		OwnerId:      uint32(deal.OwnerId),
-		OwnerType:    uint32(deal.OwnerType),
-		Note:         deal.Note,
-		CancelReason: deal.CancelReason,
+		Id:                      uint32(deal.ID),
+		Name:                    deal.Name,
+		TargetProfit:            deal.TargetProfit,
+		Status:                  uint32(deal.Status),
+		StatusName:              enums.DealStatusMap[deal.Status],
+		DealType:                uint32(deal.DealType),
+		OwnerId:                 uint32(deal.OwnerId),
+		OwnerType:               uint32(deal.OwnerType),
+		Note:                    deal.Note,
+		CancelReason:            deal.CancelReason,
+		FromDate:                deal.FromDate.Format(time.RFC3339),
+		ToDate:                  deal.ToDate.Format(time.RFC3339),
+		AllowSharing:            deal.AllowSharing,
+		MemberCanAddTransaction: deal.MemberCanAddTransaction,
+		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,
+		InternalNote:            deal.InternalNote,
 	}
 
 	if deal.ChargePersonID != nil {
 		response.ChargePersonId = *deal.ChargePersonID
+	}
+
+	if deal.BankAccount != nil {
+		response.BankAccount = t.BankAccountMapper.EntityToPb(deal.BankAccount)
 	}
 
 	// Add other fields as needed

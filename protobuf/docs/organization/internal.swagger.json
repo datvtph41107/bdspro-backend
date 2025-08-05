@@ -99,6 +99,54 @@
         }
       }
     },
+    "organizationpbDealMember": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        },
+        "memberName": {
+          "type": "string",
+          "title": "profile"
+        },
+        "memberAvatar": {
+          "type": "string"
+        },
+        "memberPhone": {
+          "type": "string"
+        },
+        "memberVerified": {
+          "type": "boolean"
+        }
+      }
+    },
     "organizationpbDealTransactionResponse": {
       "type": "object",
       "properties": {
@@ -201,7 +249,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitationMember"
+            "$ref": "#/definitions/organizationpbDealMember"
           }
         }
       }
@@ -378,6 +426,24 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
         }
       }
     },

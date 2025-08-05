@@ -55,6 +55,9 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*entity.DealMember, error) {
 	var model DealMemberModel
 	if err := r.db.WithContext(ctx).Where("deal_id = ? AND member_id = ?", dealID, memberID).First(&model).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -69,6 +72,10 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 		Note:            model.Note,
 		IsUnilateral:   model.IsUnilateral,
 	}, nil
+}
+
+func (r *DealMemberPostgresRepository) DeleteMember(ctx context.Context, dealID, memberID uint64) error {
+	return r.db.WithContext(ctx).Where("deal_id = ? AND member_id = ?", dealID, memberID).Delete(&DealMemberModel{}).Error
 }
 
 func (r *DealMemberPostgresRepository) UpdateCommission(ctx context.Context, dealID, memberID uint64, commissionValue float64, commissionType enums.CommissionType, note string) error {
@@ -184,4 +191,21 @@ func (r *DealMemberPostgresRepository) GetCommissionStats(ctx context.Context, d
 		RemainingProfit:      remainingProfit,
 		CommissionPercentage: commissionPercentage,
 	}, nil
+}
+func (r *DealMemberPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealMember, error) {
+	var models []DealMemberModel
+	if err := r.db.WithContext(ctx).Where("id IN (?)", ids).Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	members := make([]*entity.DealMember, len(models))
+	for i, model := range models {
+		members[i] = &entity.DealMember{
+			ID:              model.ID,
+			DealID:          model.DealID,
+			MemberID:        model.MemberID,
+			MemberType:      model.MemberType,
+		}
+	}
+	return members, nil
 }

@@ -14,6 +14,10 @@ type DealSetting struct {
 	InternalNote            string
 	OwnerId                 uint64
 	Status                  enums.DealStatus
+	Name                    string
+	BankName                string
+	AccountNumber           string
+	AccountName             string
 }
 
 type SummaryRequest struct {

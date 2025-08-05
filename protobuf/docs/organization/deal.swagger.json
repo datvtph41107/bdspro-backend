@@ -1503,6 +1503,9 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
         }
       }
     },
@@ -2135,6 +2138,24 @@
         "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
         }
       }
     },

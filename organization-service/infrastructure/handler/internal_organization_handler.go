@@ -17,6 +17,7 @@ type InternalOrganizationHandler struct {
 	organizationMemberRepo repository.OrganizationMemberRepository
 	dealRepo               repository.GroupDealRepository
 	dealTransactionRepo    repository.DealTransactionRepository
+	dealMemberRepo	repository.DealMemberRepository
 }
 
 func NewInternalOrganizationHandler(
@@ -27,6 +28,7 @@ func NewInternalOrganizationHandler(
 	organizationMemberRepo repository.OrganizationMemberRepository,
 	dealRepo repository.GroupDealRepository,
 	dealTransactionRepo repository.DealTransactionRepository,
+	dealMemberRepo repository.DealMemberRepository,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
 		organizationRepo:       organizationRepo,
@@ -37,6 +39,7 @@ func NewInternalOrganizationHandler(
 		organizationMemberRepo: organizationMemberRepo,
 		dealRepo:               dealRepo,
 		dealTransactionRepo:    dealTransactionRepo,
+		dealMemberRepo:         dealMemberRepo,
 	}
 }
 
@@ -63,11 +66,11 @@ func (h *InternalOrganizationHandler) GetGroupByIds(ctx context.Context, req *or
 }
 
 func (h *InternalOrganizationHandler) GetDealMemberByIds(ctx context.Context, req *organizationpb.GetMemberByIdsRequest) (*organizationpb.GetDealMemberByIdsResponse, error) {
-	dealMembers, err := h.dealInvitationRepo.GetByIds(ctx, req.GroupId, req.Ids)
+	dealMembers, err := h.dealMemberRepo.GetByIds(ctx, req.Ids)
 	if err != nil {
 		return nil, err
 	}
-	pbDealMembers := h.mapper.DealInvitationsToPb(dealMembers)
+	pbDealMembers := h.mapper.DealMembersToPb(dealMembers)
 	return &organizationpb.GetDealMemberByIdsResponse{
 		Data: pbDealMembers,
 	}, nil
