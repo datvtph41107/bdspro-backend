@@ -39,6 +39,7 @@ func (t *appointmentTransformer) CreateAppointmentRequestToEntity(req *appointme
 		ProductIds:       req.ProductIds,
 		ReminderSchedule: req.ReminderSchedule,
 		TransactionIds:   req.TransactionIds,
+		OptionExtend:     req.OptionExtend,
 	}
 }
 
@@ -57,6 +58,7 @@ func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointme
 		DealId:           req.DealId,
 		ProductIds:       req.ProductIds,
 		ReminderSchedule: req.ReminderSchedule,
+		OptionExtend:     req.OptionExtend,
 		TransactionIds:   req.TransactionIds,
 	}
 }
@@ -74,6 +76,7 @@ func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity
 		DealId:           appointment.DealId,
 		ProductIds:       appointment.ProductIds,
 		ReminderSchedule: appointment.ReminderSchedule,
+		OptionExtend:     appointment.OptionExtend,
 		TransactionIds:   appointment.TransactionIds,
 		Deal:             deal,
 		Products:         products,

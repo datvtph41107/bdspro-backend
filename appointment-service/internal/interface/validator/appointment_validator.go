@@ -28,25 +28,25 @@ func NewAppointmentValidator() AppointmentValidator {
 func (v *appointmentValidator) ValidateCreateAppointmentRequest(req *appointmentpb.CreateAppointmentRequest) error {
 	details := []protoadapt.MessageV1{}
 
-	if req.Title == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "title",
-					Description: "title is required",
-				},
-			},
-		})
-	} else if len(req.Title) > 255 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "title",
-					Description: "title must not exceed 255 characters",
-				},
-			},
-		})
-	}
+	// if req.Title == "" {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "title",
+	// 				Description: "title is required",
+	// 			},
+	// 		},
+	// 	})
+	// } else if len(req.Title) > 255 {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "title",
+	// 				Description: "title must not exceed 255 characters",
+	// 			},
+	// 		},
+	// 	})
+	// }
 
 	if req.Description == "" {
 		details = append(details, &errdetails.BadRequest{

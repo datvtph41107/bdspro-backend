@@ -22,7 +22,7 @@ type dealCostUsecase struct {
 }
 
 func NewDealCostUsecase(repo repository.DealCostRepository, costTypeRepo repository.CostTypeRepository) DealCostUsecase {
-	return &dealCostUsecase{repo: repo}
+	return &dealCostUsecase{repo: repo, costTypeRepo: costTypeRepo}
 }
 
 func (u *dealCostUsecase) Create(ctx context.Context, dealCost *entity.DealCost) error {

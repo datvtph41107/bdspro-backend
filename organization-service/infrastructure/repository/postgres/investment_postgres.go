@@ -101,11 +101,24 @@ func (r *InvestmentPostgres) GetByID(ctx context.Context, id uint64) (*entity.In
 	err := r.db.WithContext(ctx).
 		Model(&entity.Investment{}).
 		Where("id = ? and deleted_at is null", id).
-		Preload("AttachDocument", "doc_owner = ?", enums.DocOwnerInvest).
+		// Preload("AttachDocument", "doc_owner = ?", enums.DocOwnerInvest).
 		First(&investment).Error
 	if err != nil {
 		return nil, err
 	}
+
+	// Lấy các attach documents liên quan đến investment này
+	var attachDocs []entity.AttachDocument
+	err = r.db.WithContext(ctx).
+		Model(&entity.AttachDocument{}).
+		Where("owner_id = ? AND doc_owner = ?", id, enums.DocOwnerInvest).
+		Find(&attachDocs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	investment.AttachDocument = attachDocs
+
 	return &investment, nil
 }
 

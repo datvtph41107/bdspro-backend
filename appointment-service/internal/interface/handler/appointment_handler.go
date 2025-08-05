@@ -30,6 +30,15 @@ func NewAppointmentHandler(
 	}
 }
 
+// @Summary Tạo lịch hẹn
+// @Description Tạo lịch hẹn
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param appointment body appointmentpb.CreateAppointmentRequest true "Thông tin lịch hẹn"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.Appointment "Thành công"
+// @Router /v2/appointment [post]
 func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *appointmentpb.CreateAppointmentRequest) (*appointmentpb.Appointment, error) {
 	if err := h.Validator.ValidateCreateAppointmentRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -45,6 +54,15 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *appoint
 	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil, nil), nil
 }
 
+// @Summary Lấy lịch hẹn
+// @Description Lấy lịch hẹn
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param id path uint32 true "ID lịch hẹn"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.Appointment "Thành công"
+// @Router /v2/appointment/{id} [get]
 func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *appointmentpb.GetAppointmentRequest) (*appointmentpb.Appointment, error) {
 	if err := h.Validator.ValidateGetAppointmentRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -58,6 +76,16 @@ func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *appointmen
 	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.DealTransactions, appointment.Participants), nil
 }
 
+// @Summary Cập nhật lịch hẹn
+// @Description Cập nhật lịch hẹn
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param id path uint32 true "ID lịch hẹn"
+// @Param appointment body appointmentpb.UpdateAppointmentRequest true "Thông tin lịch hẹn"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.Appointment "Thành công"
+// @Router /v2/appointment/{id} [put]
 func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appointmentpb.UpdateAppointmentRequest) (*appointmentpb.Appointment, error) {
 	if err := h.Validator.ValidateUpdateAppointmentRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -73,6 +101,15 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appoint
 	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil, nil), nil
 }
 
+// @Summary Xóa lịch hẹn
+// @Description Xóa lịch hẹn
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param id path uint32 true "ID lịch hẹn"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.DeleteAppointmentResponse "Thành công"
+// @Router /v2/appointment/{id} [delete]
 func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *appointmentpb.DeleteAppointmentRequest) (*appointmentpb.DeleteAppointmentResponse, error) {
 	if err := h.Validator.ValidateDeleteAppointmentRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -87,6 +124,16 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *appoint
 	}, nil
 }
 
+// @Summary Lấy danh sách lịch hẹn
+// @Description Lấy danh sách lịch hẹn
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param page query uint32 false "Trang"
+// @Param size query uint32 false "Kích thước trang"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.ListAppointmentsResponse "Thành công"
+// @Router /v2/appointment [get]
 func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *appointmentpb.ListAppointmentsRequest) (*appointmentpb.ListAppointmentsResponse, error) {
 	if err := h.Validator.ValidateListAppointmentsRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

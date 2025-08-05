@@ -19,5 +19,6 @@ type Appointment struct {
 	Description      string
 	ReminderSchedule uint32
 	Mode             uint32
+	OptionExtend     uint32
 	TransactionIds   []uint32
 }

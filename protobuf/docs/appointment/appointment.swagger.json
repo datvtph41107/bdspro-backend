@@ -258,6 +258,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "optionExtend": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -339,6 +343,10 @@
             "type": "object",
             "$ref": "#/definitions/pb_bdsproProductAttachment"
           }
+        },
+        "optionExtend": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -383,6 +391,10 @@
           "format": "int64"
         },
         "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "optionExtend": {
           "type": "integer",
           "format": "int64"
         },
