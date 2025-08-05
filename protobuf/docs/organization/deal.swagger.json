@@ -395,6 +395,45 @@
         ]
       }
     },
+    "/v2/org/deal/{dealId}/products": {
+      "post": {
+        "operationId": "GroupDealService_SaveDealProduct",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSaveDealProductResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceSaveDealProductBody"
+            }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{dealId}/setting": {
       "put": {
         "summary": "API cập nhật cài đặt thương vụ",
@@ -428,6 +467,127 @@
             "schema": {
               "$ref": "#/definitions/GroupDealServiceUpdateDealSettingBody"
             }
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/summary": {
+      "get": {
+        "operationId": "GroupDealService_Summary",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "amountPending",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountApproved",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountRejected",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numPending",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numApproved",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numRejected",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numInvestment",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numMemberSubmit",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountTarget",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "percentDone",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountTotal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountCost",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "amountProfit",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "numTransaction",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -658,6 +818,74 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/deal/{id}/products": {
+      "get": {
+        "operationId": "GroupDealService_GetDealProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetDealProductsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1235,6 +1463,18 @@
       },
       "title": "API cho tổ chức"
     },
+    "GroupDealServiceSaveDealProductBody": {
+      "type": "object",
+      "properties": {
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "GroupDealServiceUpdateDealSettingBody": {
       "type": "object",
       "properties": {
@@ -1723,6 +1963,18 @@
         }
       }
     },
+    "organizationpbGetDealProductsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductAttachment"
+          }
+        }
+      }
+    },
     "organizationpbGetGroupDealsResponse": {
       "type": "object",
       "properties": {
@@ -1936,6 +2188,80 @@
         "amountRest": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "organizationpbSaveDealProductResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbSummaryResponse": {
+      "type": "object",
+      "properties": {
+        "amountPending": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountApproved": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRejected": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRest": {
+          "type": "number",
+          "format": "double"
+        },
+        "numPending": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numApproved": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numRejected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numInvestment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numMemberSubmit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountTarget": {
+          "type": "number",
+          "format": "double"
+        },
+        "percentDone": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountTotal": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "numTransaction": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

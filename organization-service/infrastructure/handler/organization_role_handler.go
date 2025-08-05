@@ -59,12 +59,11 @@ func (h *OrganizationRoleHandler) CreateRole(ctx context.Context, req *organizat
 // @Security BearerAuth
 // @Router /organization/role/deal-members [get]
 func (h *OrganizationRoleHandler) GetRoleDealMembers(ctx context.Context, req *organizationpb.GetRoleRequest) (*organizationpb.GetRolesResponse, error) {
-	// roles, err := h.OrganizationRoleUsecase.GetRoleDealMembers(ctx, req.Id)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, 0), nil
-	return nil, nil
+	roles, err := h.OrganizationRoleUsecase.GetRoleDealMembers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationRoleTransformer.EntityToGetRolesResponse(roles, 0), nil
 }
 
 // @Summary Cập nhật vai trò

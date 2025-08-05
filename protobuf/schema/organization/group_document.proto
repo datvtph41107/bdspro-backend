@@ -89,7 +89,7 @@ message GetGroupDocumentsRequest {
 }
 
 message GetGroupDocumentsResponse {
-    repeated GroupDocument documents = 1;
+    repeated GroupDocument data = 1;
     uint32 total = 2;
 }
 

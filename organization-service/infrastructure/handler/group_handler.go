@@ -101,7 +101,7 @@ func (h *GroupHandler) DeleteGroup(ctx context.Context, req *organizationpb.Dele
 // @Produce json
 // @Param id path int true "ID của nhóm"
 // @Security BearerAuth
-// @Router /group/{id} [get]
+// @Router /group [get]
 func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGroupRequest) (*organizationpb.GetGroupResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupRequest(req); err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGro
 // @Param page query int false "Trang"
 // @Param size query int false "Kích thước trang"
 // @Security BearerAuth
-// @Router /group [get]
+// @Router /group/by-member [get]
 func (h *GroupHandler) GetGroupByUserId(ctx context.Context, req *organizationpb.GetGroupByUserIdRequest) (*organizationpb.GetGroupsResponse, error) {
 	groups, err := h.GroupUsecase.GetGroupByUserId(ctx)
 	if err != nil {

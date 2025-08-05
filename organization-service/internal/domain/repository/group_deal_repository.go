@@ -1,6 +1,7 @@
 package repository
 
 import (
+	_dto "common/dto"
 	"context"
 
 	"organization/internal/domain/entity"
@@ -19,4 +20,6 @@ type GroupDealRepository interface {
 	UpdateStatus(ctx context.Context, id uint64, status enums.DealStatus) error
 	UpdateStatusAndCancelReason(ctx context.Context, id uint64, status enums.DealStatus, cancelReason string) error
 	UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error
+	CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error)
+	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 }

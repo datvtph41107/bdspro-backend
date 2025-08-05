@@ -45,6 +45,8 @@ type GRPCServer struct {
 	dealTransactionHandler         *handler.DealTransactionHandler
 	colorHandler                   *handler.ColorHandler
 	internalNoteHandler            *handler.InternalNoteHandler
+	dealCostHandler                *handler.DealCostHandler
+	costTypeHandler                *handler.CostTypeHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -73,6 +75,8 @@ func NewGRPCServer(
 	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
+	dealCostHandler *handler.DealCostHandler,
+	costTypeHandler *handler.CostTypeHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -101,6 +105,8 @@ func NewGRPCServer(
 		colorHandler:                   colorHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 		internalNoteHandler:            internalNoteHandler,
+		dealCostHandler:                dealCostHandler,
+		costTypeHandler:                costTypeHandler,
 	}
 }
 
@@ -130,6 +136,8 @@ func (s *GRPCServer) Start() {
 		s.dealTransactionHandler,
 		s.colorHandler,
 		s.internalNoteHandler,
+		s.dealCostHandler,
+		s.costTypeHandler,
 	)
 
 	g.Add(start, stop)
@@ -167,6 +175,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
+	dealCostHandler *handler.DealCostHandler,
+	costTypeHandler *handler.CostTypeHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -203,6 +213,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)
 			organizationpb.RegisterInternalNoteServiceServer(s, internalNoteHandler)
+			organizationpb.RegisterDealCostServiceServer(s, dealCostHandler)
+			organizationpb.RegisterCostTypeServiceServer(s, costTypeHandler)
 		},
 		unaryInts,
 		streamInts,

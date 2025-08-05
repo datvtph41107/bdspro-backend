@@ -4,6 +4,7 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "organization/deal_invitation.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -47,7 +48,7 @@ service OrganizationMemberService {
     //     };
     // }
 
-    rpc GetCurrentOrganizationMembers(sharepb.IdRequest) returns (GetOrganizationMembersResponse) {
+    rpc GetCurrentOrganizationMembers(sharepb.FriendListRequest) returns (GetOrganizationMembersResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/members/me"
         };
@@ -124,6 +125,7 @@ message OrganizationMember {
     string roleName = 5 [json_name = "roleName"];
     uint32 status = 6 [json_name = "status"];
     sharepb.ProfileItem profile = 7 [json_name = "profile"];
+    optional DealInvitationMember dealMember = 8 [json_name = "dealMember"];
 }
 
 message GetOrganizationMembersResponse {

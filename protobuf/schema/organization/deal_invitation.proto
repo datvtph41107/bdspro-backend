@@ -96,7 +96,7 @@ message SendInvitationRequest {
   uint64 inviterId = 2;
   uint64 inviteeId = 3;
   string message = 4;
-  string role = 5;
+  uint64 roleId = 5;
   optional uint32 colorId = 6;
 }
 
@@ -104,6 +104,7 @@ message SendInvitationResponse {
   uint64 invitationId = 1;
   bool success = 2;
   string message = 3;
+  uint64 roleId = 4;
 }
 
 message AcceptInvitationRequest {
@@ -233,7 +234,7 @@ message DealInvitationMember {
   uint64 userId = 1;
   string name = 2;
   string email = 3;
-  string role = 4;
+  uint64 roleId = 4;
   string joinedAt = 5;
   uint32 status = 6;
 } 

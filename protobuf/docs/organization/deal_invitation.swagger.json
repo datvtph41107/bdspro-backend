@@ -584,8 +584,9 @@
         "email": {
           "type": "string"
         },
-        "role": {
-          "type": "string"
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         },
         "joinedAt": {
           "type": "string"
@@ -808,8 +809,9 @@
         "message": {
           "type": "string"
         },
-        "role": {
-          "type": "string"
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         },
         "colorId": {
           "type": "integer",
@@ -829,6 +831,10 @@
         },
         "message": {
           "type": "string"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

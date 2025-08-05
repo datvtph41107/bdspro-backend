@@ -781,8 +781,9 @@
         "email": {
           "type": "string"
         },
-        "role": {
-          "type": "string"
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         },
         "joinedAt": {
           "type": "string"

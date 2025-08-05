@@ -1,4 +1,4 @@
-	package usecase
+package usecase
 
 import (
 	_dto "common/dto"
@@ -10,6 +10,7 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
+	"organization/internal/enums"
 	"organization/pkg/utils"
 
 	"gorm.io/gorm"
@@ -26,6 +27,7 @@ type OrganizationRoleUsecase interface {
 	GetRole(ctx context.Context, roleId uint32) (*entity.OrganizationRole, error)
 	AddPermissionToRole(ctx context.Context, roleId uint32, permissionId uint32) error
 	CreateNewRoleWithMembers(ctx context.Context, model *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) (*entity.OrganizationRole, error)
+	GetRoleDealMembers(ctx context.Context) ([]*entity.OrganizationRole, error)
 }
 
 type organizationRoleUsecase struct {
@@ -62,7 +64,7 @@ func (u *organizationRoleUsecase) CreateNewRole(ctx context.Context, model *enti
 	currentUserId := utils.GetUserID(ctx, env.USER_CONTEXT)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	hasRole, err := u.organizationAuthUsecase.HasPermission(ctx, currentUserId, uint32(organizationId), env.CREATE_ORGANIZATION_ROLE_PERMISSION)
-	if err != nil {	
+	if err != nil {
 		return nil, err
 	}
 	if !hasRole {
@@ -441,4 +443,12 @@ func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, 
 	})
 
 	return role, nil
+}
+
+func (u *organizationRoleUsecase) GetRoleDealMembers(ctx context.Context) ([]*entity.OrganizationRole, error) {
+	roles, err := u.organizationRoleRepository.FindByDomain(ctx, enums.DomainTypeDeal)
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
 }

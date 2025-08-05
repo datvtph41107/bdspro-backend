@@ -10,6 +10,15 @@ message ArchivedRequest {
   bool archived = 2;
 }
 
+message FriendListRequest {
+  int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional uint64 organizationId = 4;
+    optional uint64 dealId = 5;
+    optional uint64 groupId = 6;
+}
+
 message IdRequest {
   uint64 id = 1;
   uint32 page = 2;

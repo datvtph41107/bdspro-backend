@@ -24,6 +24,7 @@ type OrganizationMember struct {
 	Organization *Organization
 	Role         *OrganizationRole
 	RoleName     string
+	DealMember   *DealInvitation
 }
 
 func (m *OrganizationMember) GetRoleKey() string {

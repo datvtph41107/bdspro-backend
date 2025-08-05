@@ -24,13 +24,13 @@ var DealInvitationStatusMap = map[DealInvitationStatus]string{
 type DealInvitation struct {
 	ID           uint64               `gorm:"primaryKey;autoIncrement"`
 	DealID       uint64               `gorm:"not null;index"`
-	InviterID    uint64               `gorm:"not null"`            // Người gửi lời mời
-	InviteeID    uint64               `gorm:"not null;index"`      // Người được mời
-	MemberType   enums.DealMemberType `gorm:"not null;default:30"` // Loại thành viên (Member, Customer, Partner)
-	Status       DealInvitationStatus `gorm:"not null;default:10"`
+	InviterID    uint64               `gorm:"not null" json:"inviter_id"`       // Người gửi lời mời
+	InviteeID    uint64               `gorm:"not null;index" json:"invitee_id"` // Người được mời
+	MemberType   enums.DealMemberType `gorm:"not null;default:30"`              // Loại thành viên (Member, Customer, Partner)
+	Status       DealInvitationStatus `gorm:"not null;default:10" json:"status"`
 	Message      string               `gorm:"type:text"` // Lời nhắn khi gửi lời mời
 	AmountCommit *float64             `gorm:"default:0"` // Số tiền cam kết (nếu có)
-	InvitedAt    time.Time            `gorm:"not null"`
+	InvitedAt    time.Time            `gorm:"not null" json:"invited_at"`
 	RespondedAt  *time.Time           // Thời gian phản hồi
 	WithdrawnAt  *time.Time           // Thời gian rút khỏi
 	CreatedAt    time.Time            `gorm:"not null"`
@@ -38,6 +38,7 @@ type DealInvitation struct {
 	CreatedBy    uint64               `gorm:"not null"`
 	UpdatedBy    uint64               `gorm:"not null"`
 	ColorId      *uint32              `gorm:"index"`
+	RoleId       uint64               `gorm:"column:role_id" json:"role_id"`
 
 	// Relations
 	Deal    *Deal       `gorm:"foreignKey:DealID;references:ID"`

@@ -6,6 +6,7 @@ import (
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
 	"organization/internal/enums"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -126,7 +127,7 @@ func (r *InvestmentPostgres) GetInvestments(ctx context.Context, req *dto.Invest
 	}
 
 	err = query.
-		Preload("AttachDocument", "doc_owner = ?", enums.DocOwnerInvest).
+		// Preload("AttachDocument", "doc_owner = ?", enums.DocOwnerInvest).
 		Find(&investments).Error
 	if err != nil {
 		return nil, 0, err
@@ -152,7 +153,7 @@ func (r *InvestmentPostgres) ChangeConfirmation(ctx context.Context, id uint64, 
 	err := r.db.WithContext(ctx).Model(&entity.Investment{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"confirmed":   confirmed,
+			"confirmed":  confirmed,
 			"changed_at": time.Now(),
 		}).Error
 	if err != nil {
@@ -161,29 +162,68 @@ func (r *InvestmentPostgres) ChangeConfirmation(ctx context.Context, id uint64, 
 	return id, nil
 }
 
-func (r *InvestmentPostgres) CountDashboard(ctx context.Context, req *dto.InvestmentDTO) (*dto.InfoInvestmentDTO, error) {
-	var result dto.InfoInvestmentDTO
+func (r *InvestmentPostgres) CountDashboard(ctx context.Context, summary *dto.SummaryRequest) (*dto.SummaryResponse, error) {
+	var result dto.SummaryResponse
+	var selectFields []string
+	var args []interface{}
 
-	// Get total amount and count by status
-	err := r.db.WithContext(ctx).Model(&entity.Investment{}).
-		Where("deal_id = ? and deleted_at is null", req.DealID).
-		Select(`
-			COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_pending,
-			COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_approved,
-			COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_rejected,
-			COUNT(CASE WHEN status = ? THEN 1 END) as num_pending,
-			COUNT(CASE WHEN status = ? THEN 1 END) as num_approved,
-			COUNT(CASE WHEN status = ? THEN 1 END) as num_rejected,
-			COUNT(*) as num_investment,
-			COUNT(DISTINCT member_id) as num_member_submit
-		`, 
-		enums.ApprovedStatusPending,
-		enums.ApprovedStatusApproved,
-		enums.ApprovedStatusRejected,
-		enums.ApprovedStatusPending,
-		enums.ApprovedStatusApproved,
-		enums.ApprovedStatusRejected,
-	).Scan(&result).Error
+	// Build SELECT fields and arguments dynamically
+	if summary.AmountPending || summary.All {
+		selectFields = append(selectFields, `COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_pending`)
+		args = append(args, enums.ApprovedStatusPending)
+	}
+	if summary.AmountApproved || summary.All {
+		selectFields = append(selectFields, `COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_approved`)
+		args = append(args, enums.ApprovedStatusApproved)
+	}
+	if summary.AmountRejected || summary.All {
+		selectFields = append(selectFields, `COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_rejected`)
+		args = append(args, enums.ApprovedStatusRejected)
+	}
+	if summary.NumPending || summary.All {
+		selectFields = append(selectFields, `COUNT(CASE WHEN status = ? THEN 1 END) as num_pending`)
+		args = append(args, enums.ApprovedStatusPending)
+	}
+	if summary.NumApproved || summary.All {
+		selectFields = append(selectFields, `COUNT(CASE WHEN status = ? THEN 1 END) as num_approved`)
+		args = append(args, enums.ApprovedStatusApproved)
+	}
+	if summary.NumRejected || summary.All {
+		selectFields = append(selectFields, `COUNT(CASE WHEN status = ? THEN 1 END) as num_rejected`)
+		args = append(args, enums.ApprovedStatusRejected)
+	}
+	if summary.NumInvestment || summary.All {
+		selectFields = append(selectFields, `COUNT(*) as num_investment`)
+	}
+	if summary.NumMemberSubmit || summary.All {
+		selectFields = append(selectFields, `COUNT(DISTINCT member_id) as num_member_submit`)
+	}
+	if summary.AmountCost || summary.All {
+		selectFields = append(selectFields, `COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as amount_cost`)
+		args = append(args, enums.ApprovedStatusApproved)
+	}
+	if summary.AmountCost || summary.All {
+		selectFields = append(selectFields,
+			`
+			(SELECT sum(dc.amount) FROM deal_costs dc
+			left join cost_types ct on ct.id = dc.cost_type_id 
+			WHERE deal_id = ? and ct.cost_type = 10 AND dc.deleted_at IS NULL 
+		) as amount_cost`)
+		args = append(args, summary.DealId)
+	}
+
+	// Nếu không có field nào được chọn, tránh query rỗng
+	if len(selectFields) == 0 {
+		return &result, nil
+	}
+
+	// Build query
+	err := r.db.WithContext(ctx).
+		Debug().
+		Model(&entity.Investment{}).
+		Where("deal_id = ? AND deleted_at IS NULL", summary.DealId).
+		Select(strings.Join(selectFields, ", "), args...).
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, err

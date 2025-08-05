@@ -154,6 +154,37 @@
         ]
       }
     },
+    "/v2/org/organization/role/detail/{id}": {
+      "get": {
+        "operationId": "OrganizationRoleService_GetRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationRoleService"
+        ]
+      }
+    },
     "/v2/org/organization/role/with-members": {
       "post": {
         "operationId": "OrganizationRoleService_CreateNewRoleWithMembers",
@@ -187,35 +218,6 @@
       }
     },
     "/v2/org/organization/role/{id}": {
-      "get": {
-        "operationId": "OrganizationRoleService_GetRole",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "OrganizationRoleService"
-        ]
-      },
       "delete": {
         "operationId": "OrganizationRoleService_DeleteRole",
         "responses": {

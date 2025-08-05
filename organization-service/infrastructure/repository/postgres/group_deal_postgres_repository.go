@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	_dto "common/dto"
 	"context"
 	"time"
 
@@ -74,6 +75,25 @@ type GroupDealPostgresRepository struct {
 
 func NewGroupDealPostgresRepository(db *gorm.DB) *GroupDealPostgresRepository {
 	return &GroupDealPostgresRepository{db: db}
+}
+
+func (r *GroupDealPostgresRepository) CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error) {
+	if err := r.db.WithContext(ctx).Create(dealProduct).Error; err != nil {
+		return nil, err
+	}
+	return dealProduct, nil
+}
+
+func (r *GroupDealPostgresRepository) GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error) {
+	var dealProducts []*entity.DealProduct
+	if err := r.db.WithContext(ctx).
+		Where("deal_id = ?", dealID).
+		Offset(pagable.GetOffset()).
+		Limit(pagable.GetLimit()).
+		Find(&dealProducts).Error; err != nil {
+		return nil, err
+	}
+	return dealProducts, nil
 }
 
 func (r *GroupDealPostgresRepository) Create(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {

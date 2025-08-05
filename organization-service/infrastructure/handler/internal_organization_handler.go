@@ -95,7 +95,6 @@ func (h *InternalOrganizationHandler) GetOrganizationMemberByIds(ctx context.Con
 	}, nil
 }
 
-
 func (h *InternalOrganizationHandler) GetDealById(ctx context.Context, req *organizationpb.GetDealByIdRequest) (*organizationpb.GetDealByIdResponse, error) {
 	deal, err := h.dealRepo.GetByID(ctx, req.Id)
 	if err != nil {
@@ -117,4 +116,3 @@ func (h *InternalOrganizationHandler) GetDealTransactionsByIds(ctx context.Conte
 		DealTransactions: pbDealTransactions,
 	}, nil
 }
-

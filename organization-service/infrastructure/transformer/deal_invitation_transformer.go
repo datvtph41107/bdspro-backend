@@ -4,7 +4,6 @@ import (
 	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
-	"organization/internal/enums"
 	organizationpb "pb/types/organization"
 	"time"
 )
@@ -43,28 +42,29 @@ func NewDealInvitationTransformer() DealInvitationTransformer {
 // Request to Entity transformations
 func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizationpb.SendInvitationRequest) *entity.DealInvitation {
 	// Convert string role to DealMemberType enum
-	var memberType enums.DealMemberType
-	switch req.Role {
-	case "customer":
-		memberType = enums.DealMemberTypeCustomer
-	case "partner":
-		memberType = enums.DealMemberTypePartner
-	case "member":
-		memberType = enums.DealMemberTypeMember
-	default:
-		memberType = enums.DealMemberTypeMember // default
-	}
+	// var memberType enums.DealMemberType
+	// switch req.Role {
+	// case "customer":
+	// 	memberType = enums.DealMemberTypeCustomer
+	// case "partner":
+	// 	memberType = enums.DealMemberTypePartner
+	// case "member":
+	// 	memberType = enums.DealMemberTypeMember
+	// default:
+	// 	memberType = enums.DealMemberTypeMember // default
+	// }
 
 	invitation := &entity.DealInvitation{
-		DealID:     req.DealId,
-		InviterID:  req.InviterId,
-		InviteeID:  req.InviteeId,
-		Message:    req.Message,
-		MemberType: memberType,
-		Status:     entity.DealInvitationStatusInvited,
-		InvitedAt:  time.Now(),
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		DealID:    req.DealId,
+		InviterID: req.InviterId,
+		InviteeID: req.InviteeId,
+		Message:   req.Message,
+		RoleId:    req.RoleId,
+		// MemberType: memberType,
+		Status:    entity.DealInvitationStatusInvited,
+		InvitedAt: time.Now(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if req.ColorId != nil {
@@ -119,6 +119,7 @@ func (t *dealInvitationTransformer) EntityToSendInvitationResponse(invitation *e
 		InvitationId: invitation.ID,
 		Success:      true,
 		Message:      "Invitation sent successfully",
+		RoleId:       invitation.RoleId,
 	}
 }
 
@@ -227,23 +228,23 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 	result := make([]*organizationpb.DealInvitationMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
-		var role string
-		switch member.DealInvitation.MemberType {
-		case enums.DealMemberTypeCustomer:
-			role = "customer"
-		case enums.DealMemberTypePartner:
-			role = "partner"
-		case enums.DealMemberTypeMember:
-			role = "member"
-		default:
-			role = "member"
-		}
+		// var role string
+		// switch member.DealInvitation.MemberType {
+		// case enums.DealMemberTypeCustomer:
+		// 	role = "customer"
+		// case enums.DealMemberTypePartner:
+		// 	role = "partner"
+		// case enums.DealMemberTypeMember:
+		// 	role = "member"
+		// default:
+		// 	role = "member"
+		// }
 
 		result[i] = &organizationpb.DealInvitationMember{
 			UserId:   member.DealInvitation.InviteeID,
 			Name:     member.Invitee.FullName,
 			Email:    "", // ProfileItem doesn't have email field
-			Role:     role,
+			RoleId:   member.RoleId,
 			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
 		}
 	}
@@ -257,23 +258,23 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 	result := make([]*organizationpb.DealInvitationMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
-		var role string
-		switch member.DealInvitation.MemberType {
-		case enums.DealMemberTypeCustomer:
-			role = "customer"
-		case enums.DealMemberTypePartner:
-			role = "partner"
-		case enums.DealMemberTypeMember:
-			role = "member"
-		default:
-			role = "member"
-		}
+		// var role string
+		// switch member.DealInvitation.MemberType {
+		// case enums.DealMemberTypeCustomer:
+		// 	role = "customer"
+		// case enums.DealMemberTypePartner:
+		// 	role = "partner"
+		// case enums.DealMemberTypeMember:
+		// 	role = "member"
+		// default:
+		// 	role = "member"
+		// }
 
 		result[i] = &organizationpb.DealInvitationMember{
 			UserId:   member.DealInvitation.InviteeID,
 			Name:     member.Invitee.FullName,
 			Email:    "", // ProfileItem doesn't have email field
-			Role:     role,
+			RoleId:   member.RoleId,
 			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
 		}
 	}

@@ -132,7 +132,9 @@ func InitializeApp() (*config.ConfigApp, error) {
 	projectBuildUsecase := usecases.NewProjectBuildUsecase(postgreProjectBuild)
 	projectBuildMapper := mapper.NewProjectBuildMapper(apartmentMapper, apartmentAttributeMapper)
 	projectBuildService := service.NewProjectBuildService(projectBuildUsecase, projectBuildMapper)
-	configApp := config.NewConfigApp(routerManager, org_routerRouterManager, groupManager, publicRouter, postService, productService, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService)
+	transactionValidator := validator.NewTransactionValidator()
+	transactionHandler := service.NewTransactionHandler(transactionUsecase, transactionTransformer, transactionValidator)
+	configApp := config.NewConfigApp(routerManager, org_routerRouterManager, groupManager, publicRouter, postService, productService, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler)
 	return configApp, nil
 }
 

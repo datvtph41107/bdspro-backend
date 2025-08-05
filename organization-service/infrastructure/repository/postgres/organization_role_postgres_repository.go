@@ -23,6 +23,8 @@ type OrganizationRoleModel struct {
 	DomainType     int                            `gorm:"default:0;index"`
 	DeletedAt      *time.Time                     `gorm:"index"`
 	IsDeleted      bool                           `gorm:"default:false"`
+	Color          *entity.Color                  `gorm:"foreignKey:ColorId"`
+	ColorId        *uint32                        ``
 }
 
 func (OrganizationRoleModel) TableName() string {
@@ -212,4 +214,12 @@ func (r *OrganizationRoleRepository) AddPermissionToRole(ctx context.Context, ro
 		"organization_role_model_id":       roleId,
 		"organization_permission_model_id": permissionId,
 	}).Error
+}
+
+func (r *OrganizationRoleRepository) FindByDomain(ctx context.Context, domain enums.DomainType) ([]*entity.OrganizationRole, error) {
+	var models []*OrganizationRoleModel
+	if err := r.db.WithContext(ctx).Preload("Color").Where("domain_type = ? AND is_deleted = ?", domain, false).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	return RoleModelsToEntities(models), nil
 }

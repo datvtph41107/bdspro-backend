@@ -121,6 +121,14 @@
       "env": {
         "CONFIG_FILE": "${workspaceFolder}/config/release.yml"
       }
+    },
+    {
+      "name": "🧪 Debug Appointment",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/appointment-service",
+      "args": ["grpc"]
     }
   ]
 }

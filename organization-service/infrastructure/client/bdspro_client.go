@@ -78,3 +78,11 @@ func (c *BdsproClient) MapProductToDealPb(ctx context.Context, deals []*organiza
 		}
 	}
 }
+
+func (c *BdsproClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) ([]*bdspropb.ProductAttachment, error) {
+	products, err := c.client.GetProductAttachmentByIds(ctx, &bdspropb.IdRequest{Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	return products.Data, nil
+}

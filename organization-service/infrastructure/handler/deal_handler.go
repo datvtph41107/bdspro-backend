@@ -5,9 +5,9 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
-	"time"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
+	"time"
 
 	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
@@ -466,8 +466,7 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 }
 
 func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
-	
-	fromDate, err := time.Parse(time.DateOnly, req.FromDate)	
+	fromDate, err := time.Parse(time.DateOnly, req.FromDate)
 	if err != nil {
 		return nil, err
 	}
@@ -499,16 +498,115 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*or
 	response := make([]*organizationpb.DealMember, len(members))
 	for i, member := range members {
 		response[i] = &organizationpb.DealMember{
-			DealId: member.DealID,
-			MemberId: member.MemberID,
-			MemberType: uint32(member.MemberType),
-			AmountCommit: member.AmountCommit,
+			DealId:          member.DealID,
+			MemberId:        member.MemberID,
+			MemberType:      uint32(member.MemberType),
+			AmountCommit:    member.AmountCommit,
 			CommissionValue: member.CommissionValue,
-			CommissionType: uint32(member.CommissionType),
-			Note: member.Note,
+			CommissionType:  uint32(member.CommissionType),
+			Note:            member.Note,
 		}
 	}
 	return &organizationpb.GetDealMembersResponse{Data: response}, nil
+}
+
+// @Summary Thêm sản phẩm thương vụ
+// @Description Thêm sản phẩm thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param dealId path uint64 true "ID thương vụ"
+// @Param productIds body []uint64 true "Danh sách ID sản phẩm"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.SaveDealProductResponse "Thành công"
+// @Router /deal/{dealId}/products [post]
+func (h *GroupDealHandler) SaveDealProduct(ctx context.Context, req *organizationpb.SaveDealProductRequest) (*organizationpb.SaveDealProductResponse, error) {
+	_, err := h.DealUsecase.SaveDealProduct(ctx, req.DealId, req.ProductIds)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.SaveDealProductResponse{Status: 1}, nil
+}
+
+// @Summary Lấy danh sách sản phẩm thương vụ
+// @Description Lấy danh sách sản phẩm thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param dealId path uint64 true "ID thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetDealProductsResponse "Thành công"
+// @Router /deal/{dealId}/products [get]
+func (h *GroupDealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetDealProductsResponse, error) {
+	pagable := _dto.Pagable{
+		Page: int(req.GetPage()),
+		Size: int(req.GetSize()),
+	}
+	products, err := h.DealUsecase.GetDealProducts(ctx, req.Id, pagable)
+	if err != nil {
+		return nil, err
+	}
+	productIds := make([]uint64, len(products))
+	for i, product := range products {
+		productIds[i] = product.ProductID
+	}
+	productAttachments, err := h.BdsproClient.GetProductAttachmentByIds(ctx, productIds)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.GetDealProductsResponse{Data: productAttachments}, nil
+}
+
+// @Summary Tổng quan thương vụ
+// @Description Tổng quan thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param dealId path uint64 true "ID thương vụ"
+// @Param query query organizationpb.SummaryRequest true "Thông tin tổng quan"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.SummaryResponse "Thành công"
+// @Router /deal/{dealId}/summary [get]
+func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.SummaryRequest) (*organizationpb.SummaryResponse, error) {
+	summary, err := h.DealUsecase.Summary(ctx, &dto.SummaryRequest{
+		DealId:          req.DealId,
+		AmountPending:   req.AmountPending,
+		AmountApproved:  req.AmountApproved,
+		AmountRejected:  req.AmountRejected,
+		NumPending:      req.NumPending,
+		NumApproved:     req.NumApproved,
+		NumRejected:     req.NumRejected,
+		NumInvestment:   req.NumInvestment,
+		NumMemberSubmit: req.NumMemberSubmit,
+		AmountTarget:    req.AmountTarget,
+		PercentDone:     req.PercentDone,
+		AmountCost:      req.AmountCost,
+		AmountProfit:    req.AmountProfit,
+		AmountTotal:     req.AmountTotal,
+		NumTransaction:  req.NumTransaction,
+		All:             req.All,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.SummaryResponse{
+		AmountPending:   summary.AmountPending,
+		AmountApproved:  summary.AmountApproved,
+		AmountRejected:  summary.AmountRejected,
+		AmountRest:      summary.AmountRest,
+		NumPending:      summary.NumPending,
+		NumApproved:     summary.NumApproved,
+		NumRejected:     summary.NumRejected,
+		NumInvestment:   summary.NumInvestment,
+		NumMemberSubmit: summary.NumMemberSubmit,
+		AmountTarget:    summary.AmountTarget,
+		PercentDone:     summary.PercentDone,
+		AmountCost:      summary.AmountCost,
+		AmountProfit:    5000000000,
+		AmountTotal:     10000000000,
+		NumTransaction:  6,
+	}, nil
 }
 
 // Helper functions để lấy ID từ context

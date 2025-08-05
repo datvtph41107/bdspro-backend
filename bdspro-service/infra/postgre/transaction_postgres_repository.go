@@ -151,7 +151,6 @@ func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) e
 	result := r.db.WithContext(ctx).Model(&domain.Transaction{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted": true,
 			"deleted_at": time.Now(),
 		})
 	if result.Error != nil {
@@ -164,7 +163,7 @@ func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) e
 }
 
 func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.TransactionFilters) ([]*domain.Transaction, int64, error) {
-	query := r.db.WithContext(ctx).Model(&domain.Transaction{}).Where("is_deleted = false")
+	query := r.db.WithContext(ctx).Model(&domain.Transaction{}).Where("deleted_at is null")
 
 	if filters.TransactionType != nil {
 		query = query.Where("transaction_type = ?", *filters.TransactionType)

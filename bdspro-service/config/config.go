@@ -67,6 +67,7 @@ type ConfigApp struct {
 	AssetLegalService        *service.AssetLegalService
 	ProductUsecase           *shared_usecase.ProductUsecase
 	ProjectBuildService      *service.ProjectBuildService
+	TransactionService       *service.TransactionHandler
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
 	// IncomeDocumentServer    *service.IncomeDocumentServer
@@ -105,6 +106,7 @@ func NewConfigApp(
 	// AssetSplitHistoryServer *service.AssetSplitHistoryServer,
 	assetLegalService *service.AssetLegalService,
 	projectBuildService *service.ProjectBuildService,
+	transactionService *service.TransactionHandler,
 ) *ConfigApp {
 	return &ConfigApp{
 		// GrpcServer:        GrpcServer,
@@ -124,6 +126,7 @@ func NewConfigApp(
 		AssetLegalService:        assetLegalService,
 		ProductUsecase:           productUsecase,
 		ProjectBuildService:      projectBuildService,
+		TransactionService:       transactionService,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

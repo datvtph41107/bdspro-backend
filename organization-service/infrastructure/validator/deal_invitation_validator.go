@@ -73,22 +73,23 @@ func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organiz
 	}
 
 	// Validate role
-	if request.Role != "" {
-		validRoles := map[string]bool{
-			"customer": true,
-			"partner":  true,
-			"member":   true,
-		}
-		if !validRoles[request.Role] {
-			details = append(details, &errdetails.BadRequest{
-				FieldViolations: []*errdetails.BadRequest_FieldViolation{
-					{
-						Field:       "role",
-						Description: "role must be one of: customer, partner, member",
-					},
+	if request.RoleId == 0 {
+		// validRoles := map[string]bool{
+		// 	"customer": true,
+		// 	"partner":  true,
+		// 	"member":   true,
+		// }
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "role",
+					Description: "role must be one of: customer, partner, member",
 				},
-			})
-		}
+			},
+		})
+		// if !validRoles[request.RoleId] {
+
+		// }
 	}
 
 	// Validate message length

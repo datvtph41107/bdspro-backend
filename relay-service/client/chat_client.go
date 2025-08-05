@@ -69,7 +69,7 @@ func (c *ChatClient) GetMembersOfRoom(ctx context.Context, conversationId uint64
 	request := &sharepb.IdRequest{
 		Id: conversationId,
 	}
-	response, err := c.Client.GetRoomMembers(ctx, request)
+	response, err := c.Client.GetMembersOfRoom(ctx, request)
 	if err != nil {
 		return nil, err
 	}

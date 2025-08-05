@@ -206,6 +206,28 @@ definitions:
       success:
         type: boolean
     type: object
+  organizationpb.CostTypeDTO:
+    properties:
+      costType:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      isCustom:
+        type: boolean
+      typeName:
+        type: string
+    type: object
+  organizationpb.CostTypeListDTO:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.CostTypeDTO'
+        type: array
+      total:
+        type: integer
+    type: object
   organizationpb.CreateBusinessDomainRequest:
     properties:
       code:
@@ -527,6 +549,28 @@ definitions:
           type: integer
         type: array
     type: object
+  organizationpb.DealCostDTO:
+    properties:
+      amount:
+        type: number
+      confirmedAt:
+        type: string
+      costName:
+        type: string
+      costTypeId:
+        type: integer
+      costTypeName:
+        type: string
+      dealId:
+        type: integer
+      id:
+        type: integer
+      note:
+        type: string
+      status:
+        description: enums.ApprovedStatus
+        type: integer
+    type: object
   organizationpb.DealHistoryItem:
     properties:
       actionName:
@@ -590,8 +634,8 @@ definitions:
         type: string
       name:
         type: string
-      role:
-        type: string
+      roleId:
+        type: integer
       status:
         type: integer
       userId:
@@ -670,6 +714,13 @@ definitions:
       total:
         description: Tổng số item
         type: integer
+    type: object
+  organizationpb.GetDealProductsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_bdspro.ProductAttachment'
+        type: array
     type: object
   organizationpb.GetGroupDealResponse:
     properties:
@@ -910,6 +961,11 @@ definitions:
           $ref: '#/definitions/organizationpb.Permission'
         type: array
     type: object
+  organizationpb.SaveDealProductResponse:
+    properties:
+      status:
+        type: integer
+    type: object
   organizationpb.SearchMembersResponse:
     properties:
       members:
@@ -931,8 +987,8 @@ definitions:
         type: integer
       message:
         type: string
-      role:
-        type: string
+      roleId:
+        type: integer
     type: object
   organizationpb.SendInvitationResponse:
     properties:
@@ -940,6 +996,8 @@ definitions:
         type: integer
       message:
         type: string
+      roleId:
+        type: integer
       success:
         type: boolean
     type: object
@@ -970,6 +1028,39 @@ definitions:
         type: string
       transferTime:
         type: string
+    type: object
+  organizationpb.SummaryResponse:
+    properties:
+      amountApproved:
+        type: number
+      amountCost:
+        type: number
+      amountPending:
+        type: number
+      amountProfit:
+        type: number
+      amountRejected:
+        type: number
+      amountRest:
+        type: number
+      amountTarget:
+        type: number
+      amountTotal:
+        type: number
+      numApproved:
+        type: integer
+      numInvestment:
+        type: integer
+      numMemberSubmit:
+        type: integer
+      numPending:
+        type: integer
+      numRejected:
+        type: integer
+      numTransaction:
+        type: integer
+      percentDone:
+        type: number
     type: object
   organizationpb.UpdateBusinessDomainRequest:
     properties:
@@ -1261,6 +1352,8 @@ definitions:
       sourceTypeName:
         type: string
     type: object
+  sharepb.Empty:
+    type: object
   sharepb.ProfileItem:
     properties:
       avatar:
@@ -1390,6 +1483,110 @@ paths:
       summary: Lấy lĩnh vực hoạt động đang active
       tags:
       - Lĩnh vực hoạt động
+  /cost-type:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách loại chi phí
+      parameters:
+      - in: query
+        name: costType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: typeName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.CostTypeListDTO'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách loại chi phí
+      tags:
+      - CostType
+    post:
+      consumes:
+      - application/json
+      description: Tạo loại chi phí
+      parameters:
+      - description: Loại chi phí
+        in: body
+        name: costType
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CostTypeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.CostTypeDTO'
+      security:
+      - BearerAuth: []
+      summary: Tạo loại chi phí
+      tags:
+      - CostType
+  /cost-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa loại chi phí
+      parameters:
+      - description: ID loại chi phí
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Xóa loại chi phí
+      tags:
+      - CostType
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật loại chi phí
+      parameters:
+      - description: ID loại chi phí
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Loại chi phí
+        in: body
+        name: costType
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CostTypeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.CostTypeDTO'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật loại chi phí
+      tags:
+      - CostType
   /deal:
     get:
       consumes:
@@ -1440,6 +1637,99 @@ paths:
       summary: Tạo thương vụ
       tags:
       - Thương vụ
+  /deal-cost:
+    post:
+      consumes:
+      - application/json
+      description: Tạo Chi phí/Doanh thu thương vụ
+      parameters:
+      - description: Deal cost data
+        in: body
+        name: dealCost
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealCostDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.DealCostDTO'
+      security:
+      - BearerAuth: []
+      summary: Tạo Chi phí/Doanh thu thương vụ
+      tags:
+      - DealCost
+  /deal-cost/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa Chi phí/Doanh thu thương vụ
+      parameters:
+      - description: Deal cost ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Xóa Chi phí/Doanh thu thương vụ
+      tags:
+      - DealCost
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật Chi phí/Doanh thu thương vụ
+      parameters:
+      - description: Deal cost data
+        in: body
+        name: dealCost
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealCostDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.DealCostDTO'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật Chi phí/Doanh thu thương vụ
+      tags:
+      - DealCost
+  /deal-cost/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy Chi phí/Doanh thu thương vụ theo ID
+      parameters:
+      - description: Deal cost ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.DealCostDTO'
+      security:
+      - BearerAuth: []
+      summary: Lấy Chi phí/Doanh thu thương vụ theo ID
+      tags:
+      - DealCost
   /deal-invitation:
     post:
       consumes:
@@ -1929,6 +2219,130 @@ paths:
       summary: Cập nhật hoa hồng cho nhiều deal members
       tags:
       - Hoa hồng
+  /deal/{dealId}/products:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách sản phẩm thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealProductsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách sản phẩm thương vụ
+      tags:
+      - Thương vụ
+    post:
+      consumes:
+      - application/json
+      description: Thêm sản phẩm thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Danh sách ID sản phẩm
+        in: body
+        name: productIds
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SaveDealProductResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm sản phẩm thương vụ
+      tags:
+      - Thương vụ
+  /deal/{dealId}/summary:
+    get:
+      consumes:
+      - application/json
+      description: Tổng quan thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - in: query
+        name: all
+        type: boolean
+      - in: query
+        name: amountApproved
+        type: boolean
+      - in: query
+        name: amountCost
+        type: boolean
+      - in: query
+        name: amountPending
+        type: boolean
+      - in: query
+        name: amountProfit
+        type: boolean
+      - in: query
+        name: amountRejected
+        type: boolean
+      - in: query
+        name: amountTarget
+        type: boolean
+      - in: query
+        name: amountTotal
+        type: boolean
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: numApproved
+        type: boolean
+      - in: query
+        name: numInvestment
+        type: boolean
+      - in: query
+        name: numMemberSubmit
+        type: boolean
+      - in: query
+        name: numPending
+        type: boolean
+      - in: query
+        name: numRejected
+        type: boolean
+      - in: query
+        name: numTransaction
+        type: boolean
+      - in: query
+        name: percentDone
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SummaryResponse'
+      security:
+      - BearerAuth: []
+      summary: Tổng quan thương vụ
+      tags:
+      - Thương vụ
   /deal/{id}:
     delete:
       consumes:
@@ -2101,18 +2515,24 @@ paths:
       summary: Cập nhật trạng thái thương vụ
       tags:
       - Thương vụ
-  /group:
+  /deal/deal-cost/{dealId}:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách nhóm của user hiện tại
+      description: Tìm kiếm Chi phí/Doanh thu thương vụ
       parameters:
-      - description: Trang
-        in: query
+      - description: Deal ID
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
         name: page
         type: integer
-      - description: Kích thước trang
-        in: query
+      - in: query
         name: size
         type: integer
       produces:
@@ -2120,7 +2540,26 @@ paths:
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách nhóm của user hiện tại
+      summary: Tìm kiếm Chi phí/Doanh thu thương vụ
+      tags:
+      - DealCost
+  /group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy nhóm
       tags:
       - Nhóm
     post:
@@ -2390,24 +2829,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Xóa nhóm
-      tags:
-      - Nhóm
-    get:
-      consumes:
-      - application/json
-      description: Lấy nhóm
-      parameters:
-      - description: ID của nhóm
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Lấy nhóm
       tags:
       - Nhóm
     put:

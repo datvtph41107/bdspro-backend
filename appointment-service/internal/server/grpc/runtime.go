@@ -65,7 +65,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	streamInts := []grpc.StreamServerInterceptor{}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
-		fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),
+		// fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),
+		fmt.Sprintf(":%s", appconfig.GRPC_PORT),
 		func(s *grpc.Server) {
 			logger.Info("Registering AppointmentServiceServer")
 			pb.RegisterAppointmentServiceServer(s, appointmentHandler)

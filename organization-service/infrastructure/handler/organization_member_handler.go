@@ -20,16 +20,19 @@ type OrganizationMemberHandler struct {
 	OrganizationMemberUsecase     usecase.OrganizationMemberUsecase
 	OrganizationMemberTransformer transformer.OrganizationMemberTransformer
 	OrganizationMemberValidator   validator.OrganizationMemberValidator
+	internalOrganizationService   *InternalOrganizationHandler
 }
 
 func NewOrganizationMemberHandler(organizationMemberUsecase usecase.OrganizationMemberUsecase,
 	organizationMemberTransformer transformer.OrganizationMemberTransformer,
 	organizationMemberValidator validator.OrganizationMemberValidator,
+	internalOrganizationService *InternalOrganizationHandler,
 ) *OrganizationMemberHandler {
 	return &OrganizationMemberHandler{
 		OrganizationMemberUsecase:     organizationMemberUsecase,
 		OrganizationMemberTransformer: organizationMemberTransformer,
 		OrganizationMemberValidator:   organizationMemberValidator,
+		internalOrganizationService:   internalOrganizationService,
 	}
 }
 
@@ -178,15 +181,27 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 // @Param size query int false "Page size"
 // @Security BearerAuth
 // @Router /organization/members/me [get]
-func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
+func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *sharepb.FriendListRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	dto := _dto.Pagable{
 		Page: int(req.Page),
 		Size: int(req.Size),
 	}
-	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, dto)
+	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, dto, req.DealId)
 	if err != nil {
 		return nil, err
 	}
+
+	// if req.DealId != nil {
+	// 	dealMembers, err := h.internalOrganizationService.GetDealMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+	// 		Ids: []uint64{*req.DealId},
+	// 	})
+
+	// 	// if err != nil {
+	// 	// 	return nil, err
+	// 	// }
+	// 	members = append(members, dealMembers...)
+	// }
+
 	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total, false), nil
 }
 

@@ -90,7 +90,7 @@ func (t *groupDocumentTransformer) EntityToGetGroupDocumentsResponse(documents [
 		}
 	}
 	return &organizationpb.GetGroupDocumentsResponse{
-		Documents: documentsResponse,
-		Total:     total,
+		Data:  documentsResponse,
+		Total: total,
 	}
 }

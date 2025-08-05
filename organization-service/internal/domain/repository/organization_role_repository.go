@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"organization/internal/domain/entity"
+	"organization/internal/enums"
 )
 
 type OrganizationRoleRepository interface {
@@ -13,6 +14,7 @@ type OrganizationRoleRepository interface {
 	Update(ctx context.Context, role *entity.OrganizationRole) (*entity.OrganizationRole, error)
 	Delete(ctx context.Context, id uint32) error
 	GetByKey(ctx context.Context, key string) (*entity.OrganizationRole, error)
+	FindByDomain(ctx context.Context, domain enums.DomainType) ([]*entity.OrganizationRole, error)
 	FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationRole, error)
 	FindByOrganizationIdAndKey(ctx context.Context, organizationId uint32, key string) (*entity.OrganizationRole, error)
 	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int) ([]*entity.OrganizationRole, uint32, error)

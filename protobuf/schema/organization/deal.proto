@@ -114,6 +114,12 @@ service GroupDealService {
         };
     }
 
+    rpc Summary(SummaryRequest) returns (SummaryResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{dealId}/summary"
+        };
+    }
+
     rpc AccountInvestment(sharepb.IdDTO) returns (BankAccountItem) {
         option (google.api.http) = {
             get: "/v2/org/deal/{id}/bank-account"
@@ -138,6 +144,19 @@ service GroupDealService {
         option (google.api.http) = {
             put: "/v2/org/deal/{dealId}/setting"
             body: "*"
+        };
+    }
+
+    rpc SaveDealProduct(SaveDealProductRequest) returns (SaveDealProductResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/deal/{dealId}/products"
+            body: "*"
+        };
+    }
+
+    rpc GetDealProducts(sharepb.IdRequest) returns (GetDealProductsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/{id}/products"
         };
     }
 }
@@ -563,4 +582,54 @@ message UpdateDealSettingRequest {
 
 message UpdateDealSettingResponse {
     uint64 dealId = 1;
+}
+
+message SaveDealProductRequest {
+    uint64 dealId = 1;
+    repeated uint64 productIds = 2;
+}
+
+message SaveDealProductResponse {
+    uint32 status = 1;
+}
+
+message GetDealProductsResponse {
+    repeated pb_bdspro.ProductAttachment data = 1;
+}
+
+message SummaryRequest {
+    uint64 dealId = 1;
+    bool amountPending = 2;
+    bool amountApproved = 3;
+    bool amountRejected = 4;
+    bool numPending = 5;
+    bool numApproved = 6;
+    bool numRejected = 7;
+    bool numInvestment = 8;
+    bool numMemberSubmit = 9;
+    bool amountTarget = 10;
+    bool percentDone = 11;
+    bool amountTotal = 12;
+    bool amountCost = 13;
+    bool amountProfit = 14;
+    bool numTransaction = 15;
+    bool all = 16;
+}
+
+message SummaryResponse {
+    double amountPending = 1;
+    double amountApproved = 2;
+    double amountRejected = 3;
+    double amountRest = 4;
+    uint32 numPending = 5;
+    uint32 numApproved = 6;
+    uint32 numRejected = 7;
+    uint32 numInvestment = 8;
+    uint32 numMemberSubmit = 9;
+    double amountTarget = 10;
+    double percentDone = 11;
+    double amountTotal = 12;
+    double amountCost = 13;
+    double amountProfit = 14;
+    uint32 numTransaction = 15;
 }

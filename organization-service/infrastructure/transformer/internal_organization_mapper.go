@@ -63,6 +63,7 @@ func (m *InternalOrganizationMapper) DealInvitationToPb(dealInvitation *entity.D
 	return &organizationpb.DealInvitationMember{
 		UserId: uint64(dealInvitation.InviteeID),
 		Status: uint32(dealInvitation.Status),
+		RoleId: dealInvitation.RoleId,
 		// JoinedAt: dealInvitation.RespondedAt,
 	}
 }

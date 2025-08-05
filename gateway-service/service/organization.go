@@ -36,5 +36,7 @@ func RegisterOrganizationService(ctx context.Context, mux *runtime.ServeMux, env
 	_ = organizationpb.RegisterDealCommissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterBusinessDomainServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterColorServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterDealCostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = organizationpb.RegisterCostTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterInternalNoteServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

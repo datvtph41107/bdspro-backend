@@ -269,7 +269,7 @@
     "organizationpbGetGroupDocumentsResponse": {
       "type": "object",
       "properties": {
-        "documents": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",

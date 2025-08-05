@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_dto "common/dto"
 	_utils "common/utils"
 	"context"
 
@@ -29,10 +30,13 @@ type DealUsecase interface {
 	UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error
 	CancelDeal(ctx context.Context, id uint64, reason string) error
 	InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error)
+	Summary(ctx context.Context, dto *dto.SummaryRequest) (*dto.SummaryResponse, error)
 	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
 	AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error
 	UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error
 	GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error)
+	SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error)
+	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 }
 
 type groupDealUsecase struct {
@@ -398,7 +402,7 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 		return nil, err
 	}
 
- 	err = u.groupAuthUsecase.CanAccessGroup(ctx, uint32(deal.OwnerId))
+	err = u.groupAuthUsecase.CanAccessGroup(ctx, uint32(deal.OwnerId))
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to get deal")
 	}
@@ -571,8 +575,8 @@ func (u *groupDealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.
 		return nil, err
 	}
 
-	info, err := u.investmentRepository.CountDashboard(ctx, &dto.InvestmentDTO{
-		DealID: id,
+	info, err := u.investmentRepository.CountDashboard(ctx, &dto.SummaryRequest{
+		DealId: id,
 	})
 	if err != nil {
 		return nil, err
@@ -717,6 +721,90 @@ func (u *groupDealUsecase) UpdateDealSetting(ctx context.Context, dealID uint64,
 	return u.groupDealRepository.UpdateSetting(ctx, dealID, setting)
 }
 
+func (u *groupDealUsecase) BeforeAccess(ctx context.Context, dealID uint64) error {
+	deal, err := u.groupDealRepository.DetailByID(ctx, dealID)
+	if err != nil {
+		return err
+	}
+
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err = u.groupAuthUsecase.IsMemberGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+	if err != nil {
+		return custom_error.Forbidden("you are not allowed to get account investment")
+	}
+
+	return nil
+}
 func (u *groupDealUsecase) GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error) {
+	err := u.BeforeAccess(ctx, dealID)
+	if err != nil {
+		return nil, err
+	}
+
 	return u.dealMemberRepository.GetDealMembers(ctx, dealID)
+}
+
+func (u *groupDealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error) {
+	err := u.BeforeAccess(ctx, dealID)
+	if err != nil {
+		return nil, err
+	}
+
+	dealProducts := make([]*entity.DealProduct, len(productIDs))
+	for i, productID := range productIDs {
+		dealProducts[i] = &entity.DealProduct{
+			DealID:    dealID,
+			ProductID: productID,
+		}
+	}
+	return u.groupDealRepository.CreateDealProduct(ctx, dealProducts)
+}
+
+func (u *groupDealUsecase) GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error) {
+	err := u.BeforeAccess(ctx, dealID)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.groupDealRepository.GetDealProducts(ctx, dealID, pagable)
+}
+
+func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest) (*dto.SummaryResponse, error) {
+	deal, err := u.groupDealRepository.GetByID(ctx, req.DealId)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := u.investmentRepository.CountDashboard(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	percentDone := 0.0
+	if deal.TargetProfit > 0 && (req.AmountApproved || req.All) {
+		percentDone = float64(info.AmountApproved) / float64(deal.TargetProfit)
+	}
+
+	amountRest := 0.0
+	if deal.TargetProfit > info.AmountApproved && (req.AmountApproved || req.All) {
+		amountRest = deal.TargetProfit - info.AmountApproved
+	}
+
+	return &dto.SummaryResponse{
+		AmountPending:   info.AmountPending,
+		AmountApproved:  info.AmountApproved,
+		AmountRejected:  info.AmountRejected,
+		NumPending:      info.NumPending,
+		NumApproved:     info.NumApproved,
+		NumRejected:     info.NumRejected,
+		NumInvestment:   info.NumInvestment,
+		NumMemberSubmit: info.NumMemberSubmit,
+		AmountTarget:    deal.TargetProfit,
+		PercentDone:     percentDone,
+		AmountRest:      amountRest,
+		AmountCost:      info.AmountCost,
+		AmountProfit:    info.AmountProfit,
+		AmountTotal:     info.AmountTotal,
+		NumTransaction:  info.NumTransaction,
+	}, nil
 }

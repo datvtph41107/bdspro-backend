@@ -11,7 +11,7 @@ import "organization/organization_member.proto";
 import "organization/group_member.proto";
 
 service FriendService {
-    rpc FriendList(FriendListRequest) returns (FriendProfileListResponse) {
+    rpc FriendList(sharepb.FriendListRequest) returns (FriendProfileListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/list"
         };
@@ -44,12 +44,12 @@ service FriendService {
             body: "*"
         };
     };
-    rpc FriendSent(FriendListRequest) returns (FriendListResponse) {
+    rpc FriendSent(sharepb.FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/request/sent"
         };
     };
-    rpc FriendReceived(FriendListRequest) returns (FriendListResponse) {
+    rpc FriendReceived(sharepb.FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/request/received"
         };
@@ -59,12 +59,12 @@ service FriendService {
             get: "/v2/crm/friend/info"
         };
     };
-    rpc FriendListWithLead(FriendListRequest) returns (FriendListResponse) {
+    rpc FriendListWithLead(sharepb.FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/with-lead"
         };
     };
-    rpc FriendListWithMember(FriendListRequest) returns (FriendListResponse) {
+    rpc FriendListWithMember(sharepb.FriendListRequest) returns (FriendListResponse) {
         option (google.api.http) = {
             get: "/v2/crm/friend/with-member"
         };
@@ -94,15 +94,6 @@ message FriendRequestDTO {
 message FriendRequestResponse {
     Friend data = 1;
     int32 status = 2;
-}
-
-message FriendListRequest {
-    int32 page = 1;
-    int32 size = 2;
-    string text = 3;
-    optional uint64 organizationId = 4;
-    optional uint64 dealId = 5;
-    optional uint64 groupId = 6;
 }
 
 message FriendListResponse {

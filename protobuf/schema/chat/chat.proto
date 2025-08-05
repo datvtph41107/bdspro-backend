@@ -181,7 +181,7 @@ service ChatService {
     };
   };
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
-  rpc GetRoomMembers(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
+  rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
 }
 
 message UnreadCountResponse {

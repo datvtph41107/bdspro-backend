@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -226,35 +228,63 @@ func (r *OrganizationMemberPostgresRepository) CountMemberByOrganizationId(ctx c
 	return uint32(count), nil
 }
 
-func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32) ([]*entity.OrganizationMember, uint32, error) {
+func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32, dealId *uint64) ([]*entity.OrganizationMember, uint32, error) {
 	var results []struct {
-		ID             uint32     `gorm:"column:id"`
-		UserID         uint32     `gorm:"column:user_id"`
-		OrganizationID uint32     `gorm:"column:organization_id"`
-		RoleId         uint32     `gorm:"column:role"`
-		Status         uint32     `gorm:"column:status"`
-		JoinedAt       time.Time  `gorm:"column:joined_at"`
-		RemovedAt      *time.Time `gorm:"column:removed_at"`
-		RoleKey        string     `gorm:"column:role_key"`
-		RoleName       string     `gorm:"column:role_name"`
-		Permissions    string     `gorm:"column:permissions"`
+		ID             uint32          `gorm:"column:id"`
+		UserID         uint32          `gorm:"column:user_id"`
+		OrganizationID uint32          `gorm:"column:organization_id"`
+		RoleId         uint32          `gorm:"column:role"`
+		Status         uint32          `gorm:"column:status"`
+		JoinedAt       time.Time       `gorm:"column:joined_at"`
+		RemovedAt      *time.Time      `gorm:"column:removed_at"`
+		RoleKey        string          `gorm:"column:role_key"`
+		RoleName       string          `gorm:"column:role_name"`
+		Permissions    string          `gorm:"column:permissions"`
+		DealMember     json.RawMessage `gorm:"column:deal_member"`
 	}
 
+	dealSelect := ""
+	if dealId != nil {
+		dealSelect = ", row_to_json(di) as deal_member "
+	}
 	query := r.db.WithContext(ctx).
+		Debug().
 		Table("organization_members om").
-		Select("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key as role_key, or2.name as role_name, string_agg(op.key, ',') as permissions").
+		Select(fmt.Sprintf(`om.id, 
+		om.user_id, 
+		om.organization_id, 
+		om.role, 
+		om.status, 
+		om.joined_at, 
+		om.removed_at, 
+		or2.key as role_key, 
+		or2.name as role_name, 
+		string_agg(op.key, ',') as permissions
+		%s`, dealSelect)).
 		Joins("left join organization_roles or2 on om.role = or2.id").
 		Joins("left join role_permissions rp on or2.id = rp.organization_role_model_id").
-		Joins("left join organization_permissions op on rp.organization_permission_model_id = op.id").
-		Where("om.organization_id = ? AND om.is_deleted = ?", organizationId, false).
-		Group("om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name")
+		Joins("left join organization_permissions op on rp.organization_permission_model_id = op.id")
+
+	groupBy := "om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name"
+	if dealId != nil {
+		query = query.Joins("left join deal_invitations di on om.user_id = di.invitee_id and di.deal_id = ?", dealId)
+		groupBy += ", di.id"
+	}
+
+	query = query.
+		Where("om.organization_id = ? AND om.deleted_at is null", organizationId).
+		Group(groupBy)
 
 	// Add role filter if roleId is provided
 	if roleId != nil {
 		query = query.Where("om.role = ?", *roleId)
 	}
 
-	if err := query.Offset(page * size).Limit(size).Find(&results).Error; err != nil {
+	if err := query.
+		Order("om.id desc").
+		Offset(page * size).
+		Limit(size).
+		Find(&results).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -284,6 +314,15 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 					Key: permission,
 				}
 			}
+		}
+
+		if result.DealMember != nil {
+			dealMember := &entity.DealInvitation{}
+			err := json.Unmarshal(result.DealMember, dealMember)
+			if err != nil {
+				return nil, 0, err
+			}
+			member.DealMember = dealMember
 		}
 
 		entities[i] = member

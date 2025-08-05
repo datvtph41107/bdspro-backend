@@ -28,6 +28,7 @@ type DealInvitationModel struct {
 	UpdatedAt    time.Time `gorm:"not null"`
 	CreatedBy    uint64    `gorm:"not null"`
 	UpdatedBy    uint64    `gorm:"not null"`
+	RoleId       uint64    `gorm:"not null"`
 }
 
 func (DealInvitationModel) TableName() string {
@@ -100,7 +101,7 @@ func (r *DealInvitationPostgresRepository) GetByDealID(ctx context.Context, deal
 	}
 
 	// Get paginated results
-	if err := r.db.WithContext(ctx).Where("deal_id = ?", dealID).Offset(offset).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("deal_id = ?", dealID).Order("created_at desc").Offset(offset).Limit(size).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -203,6 +204,7 @@ func (r *DealInvitationPostgresRepository) entityToModel(entity *entity.DealInvi
 		UpdatedAt:    entity.UpdatedAt,
 		CreatedBy:    entity.CreatedBy,
 		UpdatedBy:    entity.UpdatedBy,
+		RoleId:       entity.RoleId,
 	}
 }
 
@@ -223,6 +225,7 @@ func (r *DealInvitationPostgresRepository) modelToEntity(model *DealInvitationMo
 		UpdatedAt:    model.UpdatedAt,
 		CreatedBy:    model.CreatedBy,
 		UpdatedBy:    model.UpdatedBy,
+		RoleId:       model.RoleId,
 	}
 }
 

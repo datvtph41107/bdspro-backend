@@ -744,8 +744,8 @@ func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetLis
 		})
 	}
 	return &chatpb.GetListParticipantResponse{
-		Participants: pbParticipants,
-		Total:        total,
+		Data:  pbParticipants,
+		Total: int32(total),
 	}, nil
 }
 

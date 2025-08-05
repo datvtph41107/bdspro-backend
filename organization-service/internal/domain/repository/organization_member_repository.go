@@ -17,5 +17,5 @@ type OrganizationMemberRepository interface {
 	DeleteOrganizationMember(ctx context.Context, member *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error)
 	CountMemberByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error)
-	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32) ([]*entity.OrganizationMember, uint32, error)
+	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32, dealId *uint64) ([]*entity.OrganizationMember, uint32, error)
 }
