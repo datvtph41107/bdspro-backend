@@ -22,4 +22,5 @@ type GroupDealRepository interface {
 	UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error
 	CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
+	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 }

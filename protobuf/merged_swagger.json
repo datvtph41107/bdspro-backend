@@ -16082,6 +16082,230 @@
         ]
       }
     },
+    "/v2/org/cost-type": {
+      "get": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_List",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "typeName",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "costType",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCostTypeListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Create",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCostTypeDTO"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCostTypeDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/cost-type/{id}": {
+      "put": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbCostTypeServiceUpdateBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbCostTypeDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/deal": {
       "get": {
         "tags": [
@@ -16136,6 +16360,247 @@
         ]
       }
     },
+    "/v2/org/deal-cost": {
+      "post": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Create",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostDTO"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-cost/detail/{id}": {
+      "get": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Detail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-cost/{id}": {
+      "put": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostServiceUpdateBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/deal/add-member": {
       "post": {
         "tags": [
@@ -16164,6 +16629,61 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbAddMemberToDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal/deal-cost/{dealId}": {
+      "get": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Search",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealCostListDTO"
             }
           },
           "default": {
@@ -16441,6 +16961,57 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/allow-manual-input": {
+      "put": {
+        "tags": [
+          "GroupDealService"
+        ],
+        "operationId": "GroupDealService_UpdateAllowManualInput",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceUpdateAllowManualInputBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateAllowManualInputResponse"
             }
           },
           "default": {
@@ -16890,6 +17461,57 @@
         ]
       }
     },
+    "/v2/org/deal/{dealId}/products": {
+      "post": {
+        "tags": [
+          "GroupDealService"
+        ],
+        "operationId": "GroupDealService_SaveDealProduct",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupDealServiceSaveDealProductBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSaveDealProductResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/deal/{dealId}/search-members": {
       "get": {
         "tags": [
@@ -16986,6 +17608,124 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbUpdateDealSettingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal/{dealId}/summary": {
+      "get": {
+        "tags": [
+          "GroupDealService"
+        ],
+        "operationId": "GroupDealService_Summary",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "amountPending",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountApproved",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountRejected",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numPending",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numApproved",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numRejected",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numInvestment",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numMemberSubmit",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountTarget",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "percentDone",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountTotal",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountCost",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "amountProfit",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "numTransaction",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSummaryResponse"
             }
           },
           "default": {
@@ -17418,6 +18158,80 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbGetDealMemberProductsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal/{id}/products": {
+      "get": {
+        "tags": [
+          "GroupDealService"
+        ],
+        "operationId": "GroupDealService_GetDealProducts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetDealProductsResponse"
             }
           },
           "default": {
@@ -21201,27 +22015,16 @@
         "operationId": "OrganizationMemberService_GetCurrentOrganizationMembers",
         "parameters": [
           {
-            "name": "id",
-            "in": "query",
-            "type": "string",
-            "format": "uint64"
-          },
-          {
             "name": "page",
             "in": "query",
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           },
           {
             "name": "size",
             "in": "query",
             "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "type": "string"
+            "format": "int32"
           },
           {
             "name": "text",
@@ -21229,13 +22032,22 @@
             "type": "string"
           },
           {
-            "name": "ids",
+            "name": "organizationId",
             "in": "query",
-            "type": "array",
-            "items": {
-              "format": "uint64",
-              "type": "string"
-            }
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "Authorization",
@@ -21680,6 +22492,49 @@
         ]
       }
     },
+    "/v2/org/organization/role/detail/{id}": {
+      "get": {
+        "tags": [
+          "OrganizationRoleService"
+        ],
+        "operationId": "OrganizationRoleService_GetRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/organization/role/with-members": {
       "post": {
         "tags": [
@@ -21725,47 +22580,6 @@
       }
     },
     "/v2/org/organization/role/{id}": {
-      "get": {
-        "tags": [
-          "OrganizationRoleService"
-        ],
-        "operationId": "OrganizationRoleService_GetRole",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
       "put": {
         "tags": [
           "OrganizationRoleService"
@@ -25504,6 +26318,10 @@
         "endTime": {
           "type": "string"
         },
+        "mode": {
+          "format": "int64",
+          "type": "integer"
+        },
         "participantIds": {
           "items": {
             "format": "int64",
@@ -25522,14 +26340,11 @@
           "type": "array"
         },
         "reminderSchedule": {
-          "type": "string"
+          "format": "int64",
+          "type": "integer"
         },
         "startTime": {
           "type": "string"
-        },
-        "status": {
-          "format": "int64",
-          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -26127,10 +26942,36 @@
       "title": "API cho tổ chức",
       "type": "object"
     },
+    "GroupDealServiceSaveDealProductBody": {
+      "properties": {
+        "productIds": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GroupDealServiceUpdateAllowManualInputBody": {
+      "properties": {
+        "allowManualInput": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "GroupDealServiceUpdateDealSettingBody": {
       "properties": {
+        "allowManualInput": {
+          "type": "boolean"
+        },
         "allowSharing": {
           "type": "boolean"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
         },
         "fromDate": {
           "type": "string"
@@ -27256,6 +28097,10 @@
           "format": "int64",
           "type": "integer"
         },
+        "mode": {
+          "format": "int64",
+          "type": "integer"
+        },
         "participantIds": {
           "items": {
             "format": "int64",
@@ -27288,14 +28133,11 @@
           "type": "array"
         },
         "reminderSchedule": {
-          "type": "string"
+          "format": "int64",
+          "type": "integer"
         },
         "startTime": {
           "type": "string"
-        },
-        "status": {
-          "format": "int64",
-          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -27322,6 +28164,10 @@
         "endTime": {
           "type": "string"
         },
+        "mode": {
+          "format": "int64",
+          "type": "integer"
+        },
         "participantIds": {
           "items": {
             "format": "int64",
@@ -27340,14 +28186,11 @@
           "type": "array"
         },
         "reminderSchedule": {
-          "type": "string"
+          "format": "int64",
+          "type": "integer"
         },
         "startTime": {
           "type": "string"
-        },
-        "status": {
-          "format": "int64",
-          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -30523,6 +31366,62 @@
       },
       "type": "object"
     },
+    "organizationpbCostTypeDTO": {
+      "properties": {
+        "costType": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCostTypeListDTO": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbCostTypeDTO",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbCostTypeServiceUpdateBody": {
+      "properties": {
+        "costType": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbCreateBusinessDomainRequest": {
       "properties": {
         "code": {
@@ -31070,6 +31969,94 @@
       },
       "type": "object"
     },
+    "organizationpbDealCostDTO": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "title": "enums.ApprovedStatus",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbDealCostListDTO": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealCostDTO",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "totalElements": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbDealCostServiceUpdateBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "title": "enums.ApprovedStatus",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbDealHistoryItem": {
       "properties": {
         "actionName": {
@@ -31170,7 +32157,8 @@
         "name": {
           "type": "string"
         },
-        "role": {
+        "roleId": {
+          "format": "uint64",
           "type": "string"
         },
         "status": {
@@ -31750,7 +32738,7 @@
       "properties": {
         "data": {
           "items": {
-            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "$ref": "#/definitions/organizationpbDealMember",
             "type": "object"
           },
           "type": "array"
@@ -31795,6 +32783,18 @@
         "milestones": {
           "items": {
             "$ref": "#/definitions/organizationpbDealMilestone",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbGetDealProductsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_bdsproProductAttachment",
             "type": "object"
           },
           "type": "array"
@@ -31892,7 +32892,7 @@
     },
     "organizationpbGetGroupDocumentsResponse": {
       "properties": {
-        "documents": {
+        "data": {
           "items": {
             "$ref": "#/definitions/organizationpbGroupDocument",
             "type": "object"
@@ -32290,6 +33290,9 @@
     },
     "organizationpbGroupDeal": {
       "properties": {
+        "allowSharing": {
+          "type": "boolean"
+        },
         "bankAccount": {
           "$ref": "#/definitions/organizationpbBankAccountItem"
         },
@@ -32327,9 +33330,15 @@
           },
           "type": "array"
         },
+        "fromDate": {
+          "type": "string"
+        },
         "id": {
           "format": "int64",
           "type": "integer"
+        },
+        "internalNote": {
+          "type": "string"
         },
         "isManual": {
           "title": "Nhập tay (dành cho doanh thu)",
@@ -32337,6 +33346,9 @@
         },
         "isUnilateral": {
           "title": "Đơn phương (gỡ khỏi thương vụ)",
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
           "type": "boolean"
         },
         "members": {
@@ -32355,6 +33367,9 @@
         "numMember": {
           "format": "int64",
           "type": "integer"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
         },
         "ownerId": {
           "format": "int64",
@@ -32392,6 +33407,9 @@
         "targetProfit": {
           "format": "double",
           "type": "number"
+        },
+        "toDate": {
+          "type": "string"
         },
         "totalAmount": {
           "format": "double",
@@ -33052,6 +34070,9 @@
     },
     "organizationpbOrganizationMember": {
       "properties": {
+        "dealMember": {
+          "$ref": "#/definitions/organizationpbDealInvitationMember"
+        },
         "id": {
           "format": "int64",
           "type": "integer"
@@ -33216,6 +34237,15 @@
       },
       "type": "object"
     },
+    "organizationpbSaveDealProductResponse": {
+      "properties": {
+        "status": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbSearchMembersResponse": {
       "properties": {
         "members": {
@@ -33253,7 +34283,8 @@
         "message": {
           "type": "string"
         },
-        "role": {
+        "roleId": {
+          "format": "uint64",
           "type": "string"
         }
       },
@@ -33266,6 +34297,10 @@
           "type": "string"
         },
         "message": {
+          "type": "string"
+        },
+        "roleId": {
+          "format": "uint64",
           "type": "string"
         },
         "success": {
@@ -33322,6 +34357,71 @@
       },
       "type": "object"
     },
+    "organizationpbSummaryResponse": {
+      "properties": {
+        "amountApproved": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountCost": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountPending": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountProfit": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountRejected": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountRest": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountTarget": {
+          "format": "double",
+          "type": "number"
+        },
+        "amountTotal": {
+          "format": "double",
+          "type": "number"
+        },
+        "numApproved": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numInvestment": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numMemberSubmit": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numPending": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numRejected": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "numTransaction": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "percentDone": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbSwitchGroupResponse": {
       "properties": {
         "isSuccess": {
@@ -33365,6 +34465,15 @@
       ],
       "title": "Enum cho loại giao dịch",
       "type": "string"
+    },
+    "organizationpbUpdateAllowManualInputResponse": {
+      "properties": {
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "organizationpbUpdateBusinessDomainResponse": {
       "properties": {
@@ -39878,6 +40987,9 @@
       "name": "ColorService"
     },
     {
+      "name": "CostTypeService"
+    },
+    {
       "name": "GroupDealService"
     },
     {
@@ -39885,6 +40997,9 @@
     },
     {
       "name": "InternalNoteService"
+    },
+    {
+      "name": "DealCostService"
     },
     {
       "name": "DealInvitationService"

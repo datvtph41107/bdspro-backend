@@ -159,6 +159,13 @@ service GroupDealService {
             get: "/v2/org/deal/{id}/products"
         };
     }
+
+    rpc UpdateAllowManualInput(UpdateAllowManualInputRequest) returns (UpdateAllowManualInputResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/deal/{dealId}/allow-manual-input"
+            body: "*"
+        };
+    }
 }
 
 service DealCommissionService {
@@ -585,7 +592,7 @@ message UpdateDealSettingRequest {
     uint64 ownerId = 8;
     uint32 status = 9;
     BankAccountItem bankAccount = 10;
-
+    bool allowManualInput = 11;
 }
 
 message UpdateDealSettingResponse {
@@ -640,4 +647,13 @@ message SummaryResponse {
     double amountCost = 13;
     double amountProfit = 14;
     uint32 numTransaction = 15;
+}
+
+message UpdateAllowManualInputRequest {
+    uint64 dealId = 1;
+    bool allowManualInput = 2;
+}
+
+message UpdateAllowManualInputResponse {
+    uint64 dealId = 1;
 }

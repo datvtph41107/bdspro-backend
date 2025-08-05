@@ -242,3 +242,7 @@ func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint
 
 	return tx.Commit().Error
 }
+
+func (r *GroupDealPostgresRepository) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
+	return r.db.WithContext(ctx).Model(&entity.Deal{}).Where("id = ?", dealID).Update("allow_manual_input", allowManualInput).Error
+}

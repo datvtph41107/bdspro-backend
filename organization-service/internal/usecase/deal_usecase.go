@@ -37,6 +37,7 @@ type DealUsecase interface {
 	GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error)
 	SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
+	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 }
 
 type groupDealUsecase struct {
@@ -806,4 +807,7 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		AmountTotal:     info.AmountTotal,
 		NumTransaction:  info.NumTransaction,
 	}, nil
+}
+func (u *groupDealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
+	return u.groupDealRepository.UpdateAllowManualInput(ctx, dealID, allowManualInput)
 }

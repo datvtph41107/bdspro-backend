@@ -484,6 +484,7 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 		InternalNote:            req.InternalNote,
 		OwnerId:                 req.OwnerId,
 		Status:                  enums.DealStatus(req.Status),
+		AllowManualInput:        req.AllowManualInput,
 	}
 	if req.BankAccount != nil {
 		dto.BankName = req.BankAccount.BankName
@@ -496,6 +497,15 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 	}
 
 	return &organizationpb.UpdateDealSettingResponse{DealId: req.DealId}, nil
+}
+
+func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *organizationpb.UpdateAllowManualInputRequest) (*organizationpb.UpdateAllowManualInputResponse, error) {
+	err := h.DealUsecase.UpdateAllowManualInput(ctx, req.DealId, req.AllowManualInput)
+	if err != nil {
+		return nil, err
+	}
+
+	return &organizationpb.UpdateAllowManualInputResponse{DealId: req.DealId}, nil
 }
 
 func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.GetDealMembersResponse, error) {

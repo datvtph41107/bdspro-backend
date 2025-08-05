@@ -18,6 +18,7 @@ type DealSetting struct {
 	BankName                string
 	AccountNumber           string
 	AccountName             string
+	AllowManualInput        bool
 }
 
 type SummaryRequest struct {
