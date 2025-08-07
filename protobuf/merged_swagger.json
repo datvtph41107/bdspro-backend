@@ -26322,6 +26322,10 @@
           "format": "int64",
           "type": "integer"
         },
+        "optionExtend": {
+          "format": "int64",
+          "type": "integer"
+        },
         "participantIds": {
           "items": {
             "format": "int64",
@@ -28101,6 +28105,10 @@
           "format": "int64",
           "type": "integer"
         },
+        "optionExtend": {
+          "format": "int64",
+          "type": "integer"
+        },
         "participantIds": {
           "items": {
             "format": "int64",
@@ -28165,6 +28173,10 @@
           "type": "string"
         },
         "mode": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "optionExtend": {
           "format": "int64",
           "type": "integer"
         },
@@ -31612,6 +31624,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "status": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -33272,6 +33287,9 @@
     },
     "organizationpbGroup": {
       "properties": {
+        "additionalInfo": {
+          "type": "string"
+        },
         "avatarUrl": {
           "type": "string"
         },
@@ -33282,7 +33300,17 @@
           "format": "int64",
           "type": "integer"
         },
+        "memberCount": {
+          "format": "int64",
+          "type": "integer"
+        },
         "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "userRole": {
           "type": "string"
         }
       },

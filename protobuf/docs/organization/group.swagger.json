@@ -236,6 +236,9 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "status": {
+          "type": "string"
         }
       }
     },
@@ -295,6 +298,19 @@
           "type": "string"
         },
         "avatarUrl": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "memberCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userRole": {
+          "type": "string"
+        },
+        "additionalInfo": {
           "type": "string"
         }
       }

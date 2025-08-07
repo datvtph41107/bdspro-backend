@@ -4,6 +4,7 @@ import (
 	grouppb "pb/types/organization"
 
 	"organization/internal/domain/entity"
+	"organization/internal/dto"
 )
 
 type GroupTransformer interface {
@@ -13,6 +14,7 @@ type GroupTransformer interface {
 	EntityToUpdateGroupResponse(group *entity.Group) *grouppb.UpdateGroupResponse
 	EntityToGetGroupResponse(group *entity.Group) *grouppb.GetGroupResponse
 	EntityToGetGroupsResponse(groups []*entity.Group, total uint32) *grouppb.GetGroupsResponse
+	EntityToGetGroupsWithDetailsResponse(groups []*dto.GroupWithDetails, total uint32) *grouppb.GetGroupsResponse
 }
 
 type groupTransformer struct{}
@@ -22,11 +24,18 @@ func NewGroupTransformer() GroupTransformer {
 }
 
 func (t *groupTransformer) CreateGroupRequestToEntity(request *grouppb.CreateGroupRequest) *entity.Group {
-	return &entity.Group{
+	group := &entity.Group{
 		Name:        request.Name,
 		Description: request.Description,
 		AvatarUrl:   request.AvatarUrl,
 	}
+
+	// Map status if provided
+	if request.Status != "" {
+		group.Status = entity.GroupStatus(request.Status)
+	}
+
+	return group
 }
 
 func (t *groupTransformer) UpdateGroupRequestToEntity(request *grouppb.UpdateGroupRequest) *entity.Group {
@@ -56,6 +65,7 @@ func (t *groupTransformer) EntityToGetGroupResponse(group *entity.Group) *groupp
 			Name:        group.Name,
 			Description: group.Description,
 			AvatarUrl:   group.AvatarUrl,
+			Status:      string(group.Status),
 		},
 	}
 }
@@ -68,6 +78,28 @@ func (t *groupTransformer) EntityToGetGroupsResponse(groups []*entity.Group, tot
 			Name:        group.Name,
 			Description: group.Description,
 			AvatarUrl:   group.AvatarUrl,
+			Status:      string(group.Status),
+		}
+	}
+	return &grouppb.GetGroupsResponse{
+		Data:  groupsResponse,
+		Total: total,
+	}
+}
+
+func (t *groupTransformer) EntityToGetGroupsWithDetailsResponse(groups []*dto.GroupWithDetails, total uint32) *grouppb.GetGroupsResponse {
+	groupsResponse := make([]*grouppb.Group, len(groups))
+	for i, groupWithDetails := range groups {
+		group := groupWithDetails.Group
+		groupsResponse[i] = &grouppb.Group{
+			Id:             group.Id,
+			Name:           group.Name,
+			Description:    group.Description,
+			AvatarUrl:      group.AvatarUrl,
+			Status:         groupWithDetails.GroupStatus,
+			MemberCount:    groupWithDetails.MemberCount,
+			UserRole:       groupWithDetails.UserRole,
+			AdditionalInfo: groupWithDetails.AdditionalInfo,
 		}
 	}
 	return &grouppb.GetGroupsResponse{

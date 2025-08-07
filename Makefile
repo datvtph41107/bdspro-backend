@@ -65,19 +65,19 @@ gateway:
 	cd gateway-service && air http
 crm-grpc:
 	cd crm-service && air grpc
-bdspro:
+bdspro-grpc:
 	cd bdspro-service && air grpc
 user-http:
 	cd user-service && air http
-user:
+user-grpc:
 	cd user-service && air grpc
-organization:
+organization-grpc:
 	cd organization-service && air grpc-server
-notification:
+notification-grpc:
 	cd notification-service && air grpc
-social:
+social-grpc:
 	cd social-service && air grpc
-appointment:
+appointment-grpc:
 	cd appointment-service && air grpc
 chat-http:
 	cd chat-service && air grpc
@@ -91,7 +91,7 @@ membership-grpc:
 	cd membership-service && air grpc
 file-http:
 	cd file-service && air http
-crm:
+crm-grpc:
 	cd crm-service && air grpc
 marketing-grpc:
 	cd marketing-service && air grpc

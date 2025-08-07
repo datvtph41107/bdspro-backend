@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
+	"organization/internal/dto"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -17,6 +18,8 @@ type GroupUsecase interface {
 	GetGroupByID(ctx context.Context, id uint32) (*entity.Group, error)
 	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, uint32, error)
 	GetGroupByUserId(ctx context.Context) ([]*entity.Group, error)
+	GetGroupByUserIdWithDetails(ctx context.Context) ([]*dto.GroupWithDetails, error)
+	GetGroupsWithDetails(ctx context.Context, offset, limit int) ([]*dto.GroupWithDetails, uint32, error)
 }
 
 type groupUsecase struct {
@@ -46,6 +49,11 @@ func (u *groupUsecase) CreateGroup(ctx context.Context, group *entity.Group) (*e
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 	group.CreatedBy = uint32(currentUserId)
 	group.UpdatedBy = uint32(currentUserId)
+
+	// Set default status if not provided
+	if group.Status == "" {
+		group.Status = entity.GroupStatusActive
+	}
 
 	createdGroup, err := u.groupRepository.Create(ctx, group)
 	if err != nil {
@@ -136,4 +144,14 @@ func (u *groupUsecase) GetGroups(ctx context.Context, page, size int) ([]*entity
 func (u *groupUsecase) GetGroupByUserId(ctx context.Context) ([]*entity.Group, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 	return u.groupRepository.FindByUserId(ctx, uint32(currentUserId))
+}
+
+func (u *groupUsecase) GetGroupByUserIdWithDetails(ctx context.Context) ([]*dto.GroupWithDetails, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	return u.groupRepository.FindByUserIdWithDetails(ctx, uint32(currentUserId))
+}
+
+func (u *groupUsecase) GetGroupsWithDetails(ctx context.Context, page, size int) ([]*dto.GroupWithDetails, uint32, error) {
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	return u.groupRepository.ListWithDetails(ctx, page, size, uint32(currentUserId))
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"organization/internal/domain/entity"
+	"organization/internal/dto"
 )
 
 type GroupRepository interface {
@@ -14,4 +15,6 @@ type GroupRepository interface {
 	List(ctx context.Context, offset, limit int, currentUserId uint32) ([]*entity.Group, uint32, error)
 	FindByUserId(ctx context.Context, userId uint32) ([]*entity.Group, error)
 	GetByIds(ctx context.Context, ids []uint64) ([]*entity.Group, error)
+	FindByUserIdWithDetails(ctx context.Context, userId uint32) ([]*dto.GroupWithDetails, error)
+	ListWithDetails(ctx context.Context, offset, limit int, currentUserId uint32) ([]*dto.GroupWithDetails, uint32, error)
 }

@@ -92,7 +92,7 @@ func (c *OrganizationClient) GetGroupMapByIDs(ctx context.Context, groupIDSet ma
 	return groupMap, nil
 }
 
-func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint64, userIds []uint64) (map[uint64]*organizationpb.DealInvitationMember, error) {
+func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint64, userIds []uint64) (map[uint64]*organizationpb.DealMember, error) {
 	if c.client == nil {
 		return nil, errors.New("organization client not avaiable")
 	}
@@ -105,9 +105,9 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 		return nil, err
 	}
 
-	dealMemberMap := make(map[uint64]*organizationpb.DealInvitationMember)
+	dealMemberMap := make(map[uint64]*organizationpb.DealMember)
 	for _, dealMember := range dealMembers.Data {
-		dealMemberMap[dealMember.UserId] = dealMember
+		dealMemberMap[uint64(dealMember.MemberId)] = dealMember
 	}
 
 	return dealMemberMap, nil
@@ -196,4 +196,3 @@ func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealI
 
 	return dealTransactions.DealTransactions, nil
 }
-

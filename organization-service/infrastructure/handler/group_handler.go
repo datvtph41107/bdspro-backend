@@ -123,7 +123,7 @@ func (h *GroupHandler) GetGroup(ctx context.Context, req *organizationpb.GetGrou
 // @Param page query int false "Trang"
 // @Param size query int false "Kích thước trang"
 // @Security BearerAuth
-// @Router /group/by-member [get]
+// @Router /group [get]
 func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGroupsRequest) (*organizationpb.GetGroupsResponse, error) {
 	if err := h.GroupValidator.ValidateGetGroupsRequest(req); err != nil {
 		return nil, err
@@ -138,12 +138,12 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGro
 		size = int(*req.Size)
 	}
 
-	groups, total, err := h.GroupUsecase.GetGroups(ctx, page, size)
+	groups, total, err := h.GroupUsecase.GetGroupsWithDetails(ctx, page, size)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupTransformer.EntityToGetGroupsResponse(groups, total), nil
+	return h.GroupTransformer.EntityToGetGroupsWithDetailsResponse(groups, total), nil
 }
 
 // @Summary Lấy danh sách nhóm của user hiện tại
@@ -156,9 +156,9 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGro
 // @Security BearerAuth
 // @Router /group/by-member [get]
 func (h *GroupHandler) GetGroupByUserId(ctx context.Context, req *organizationpb.GetGroupByUserIdRequest) (*organizationpb.GetGroupsResponse, error) {
-	groups, err := h.GroupUsecase.GetGroupByUserId(ctx)
+	groups, err := h.GroupUsecase.GetGroupByUserIdWithDetails(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return h.GroupTransformer.EntityToGetGroupsResponse(groups, uint32(len(groups))), nil
+	return h.GroupTransformer.EntityToGetGroupsWithDetailsResponse(groups, uint32(len(groups))), nil
 }

@@ -10,7 +10,6 @@ import (
 func AutoMigrate() {
 	// db := database.NewPostgresDB(config.DB_DNS)
 	db := _db.DB
-
 	// Migrate các models hiện có
 	err := db.AutoMigrate(&postgres.GroupChatModel{},
 		&postgres.OrganizationLogActivityModel{},
