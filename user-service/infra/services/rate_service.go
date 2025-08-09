@@ -170,3 +170,21 @@ func (s *RateService) GetRateStats(ctx context.Context, req *sharepb.IdRequest) 
 	}
 	return s.rateMapper.EntityToPbRateStats(&stats), nil
 }
+
+// @Summary Lấy thông tin đánh giá
+// @Description Lấy thông tin đánh giá
+// @Tags Rate
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID"
+// @Success 200 {object} userpb.Rate
+// @Router /v2/user/rate/{id} [get]
+func (s *RateService) GetRate(ctx context.Context, req *sharepb.IdRequest) (*userpb.Rate, error) {
+	rate, err := s.rateUsecase.GetRate(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	// s.client.GetRate(ctx, req)
+	return s.rateMapper.EntityToPbRate(rate), nil
+}

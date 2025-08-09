@@ -9,6 +9,7 @@ import (
 	"user/config"
 	user_config "user/config"
 	user_infra_client "user/infra/client"
+	user_infra_handler "user/infra/handler"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
 	user_infra_repo "user/infra/repo"
@@ -30,6 +31,7 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	wire.Bind(new(user_internal_repo.RateRepo), new(*user_infra_postgres.RatePostgres)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
+	wire.Bind(new(user_internal_repo.ReportRepo), new(*user_infra_repo.ReportRepo)),
 	user_infra_postgres.NewAttachPostgres,
 	user_infra_routes.NewAuthRoutes,
 	user_internal_services_auth.NewAuthService,
@@ -79,6 +81,14 @@ var wireSet = wire.NewSet(
 	user_internal_usecases.NewRateUsecase,
 	user_internal_services_auth.NewRedisService,
 	user_internal_dto.NewRefreshResponse,
+	user_infra_handler.NewReportHandler,
+	user_infra_mapper.NewReportMapper,
+	user_infra_handler.NewReportProofHandler,
+	user_infra_mapper.NewReportProofMapper,
+	user_infra_handler.NewReportReasonHandler,
+	user_infra_repo.NewReportRepo,
+	user_internal_services_user.NewReportService,
+	user_internal_usecases.NewReportUsecase,
 	user_internal_dto.NewRequestLoginResponse,
 	user_infra_postgres.NewTransactionGorm,
 	user_internal_models_auth.NewUserOTPRepository,

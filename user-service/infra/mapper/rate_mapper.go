@@ -95,6 +95,15 @@ func (m *RateMapper) EntityToPbRate(rate *user_model.Rate) *userpb.Rate {
 		})
 	}
 
+	if rate.CreatedUser != nil && !rate.Anonymous {
+		result.CreatedUser = &sharepb.ProfileItem{
+			Id:           rate.CreatedUser.ProfileID,
+			FullName:     rate.CreatedUser.FullName,
+			Avatar:       rate.CreatedUser.Avatar,
+			TickVerified: rate.CreatedUser.TickVerified,
+		}
+	}
+
 	return result
 }
 

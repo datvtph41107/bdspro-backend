@@ -1423,161 +1423,6 @@
                 }
             }
         },
-        "/v1/user/rate": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo đánh giá mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Tạo đánh giá",
-                "parameters": [
-                    {
-                        "description": "Thông tin đánh giá",
-                        "name": "rate",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user_model.Rate"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/rate/list/{targetId}/{targetType}": {
-            "get": {
-                "description": "Lấy danh sách đánh giá theo targetId và targetType",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Lấy danh sách đánh giá",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID của target",
-                        "name": "targetId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Loại của target, 10: user, 20: group, 30: organization",
-                        "name": "targetType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Trang hiện tại",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Số lượng trên mỗi trang",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Điểm đánh giá, 1: 1 sao, 2: 2 sao, 3: 3 sao, 4: 4 sao, 5: 5 sao",
-                        "name": "score",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "ID của đánh giá cha",
-                        "name": "parentId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/rate/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật đánh giá theo id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Cập nhật đánh giá",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID của đánh giá",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin đánh giá",
-                        "name": "rate",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user_model.Rate"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa đánh giá theo id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Xóa đánh giá",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID của đánh giá",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v2/user/auth/switch-account": {
             "post": {
                 "security": [
@@ -1964,6 +1809,41 @@
             }
         },
         "/v2/user/rate/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Lấy thông tin đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Rate"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -2039,6 +1919,356 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo báo cáo người dùng mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Tạo báo cáo",
+                "parameters": [
+                    {
+                        "description": "Thông tin báo cáo",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ReportResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/admin-note": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật ghi chú nội bộ hoặc công khai cho báo cáo (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Cập nhật ghi chú admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin ghi chú admin",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminNoteResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin chi tiết báo cáo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Lấy thông tin chi tiết báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID báo cáo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ReportResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/list/{userId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách báo cáo theo userId",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Lấy danh sách báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trạng thái báo cáo",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID nguyên nhân",
+                        "name": "reasonId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetReportsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/reasons": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nguyên nhân báo cáo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report-Reason"
+                ],
+                "summary": "Lấy danh sách nguyên nhân báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Từ khóa tìm kiếm",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetReportReasonsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin báo cáo (chỉ khi chưa duyệt)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Cập nhật báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID báo cáo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ReportResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa báo cáo (chỉ khi chưa duyệt)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Xóa báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID báo cáo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.DeleteReportResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/report/{id}/respond": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Duyệt hoặc từ chối báo cáo (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Phản hồi báo cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID báo cáo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Phản hồi",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.RespondToReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ReportResponse"
                         }
                     }
                 }
@@ -2511,26 +2741,6 @@
                 }
             }
         },
-        "user_model.AttachEntity": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "imageType": {
-                    "type": "string"
-                },
-                "imageUrl": {
-                    "type": "string"
-                },
-                "rate": {
-                    "$ref": "#/definitions/user_model.Rate"
-                },
-                "rateId": {
-                    "type": "integer"
-                }
-            }
-        },
         "user_model.CertificationEntity": {
             "type": "object",
             "properties": {
@@ -2683,72 +2893,6 @@
                 }
             }
         },
-        "user_model.Rate": {
-            "type": "object",
-            "required": [
-                "comment",
-                "score",
-                "targetId",
-                "targetType"
-            ],
-            "properties": {
-                "anonymous": {
-                    "type": "boolean"
-                },
-                "approvedAt": {
-                    "type": "string"
-                },
-                "approvedBy": {
-                    "type": "integer"
-                },
-                "attachs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/user_model.AttachEntity"
-                    }
-                },
-                "comment": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "hidden": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "parentId": {
-                    "type": "integer"
-                },
-                "rootId": {
-                    "type": "integer"
-                },
-                "score": {
-                    "type": "integer",
-                    "maximum": 5,
-                    "minimum": 1
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
-                    "description": "10: user 20: group 30: organization",
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
         "user_model.RateStats": {
             "type": "object",
             "properties": {
@@ -2821,6 +2965,42 @@
                 }
             }
         },
+        "userpb.AdminNoteRequest": {
+            "type": "object",
+            "properties": {
+                "adminNote": {
+                    "description": "Ghi chú nội bộ admin",
+                    "type": "string"
+                },
+                "isInternal": {
+                    "description": "Ghi chú nội bộ hay công khai",
+                    "type": "boolean"
+                },
+                "reportId": {
+                    "description": "ID báo cáo cần cập nhật ghi chú",
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.AdminNoteResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "report": {
+                    "description": "Báo cáo đã được cập nhật",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/userpb.Report"
+                        }
+                    ]
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "userpb.Attach": {
             "type": "object",
             "properties": {
@@ -2858,6 +3038,106 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "userpb.CreateReportRequest": {
+            "type": "object",
+            "properties": {
+                "additionalInfo": {
+                    "description": "Thông tin bổ sung",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Mức độ ưu tiên",
+                    "type": "integer"
+                },
+                "proofDocs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportProof"
+                    }
+                },
+                "reasonId": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "description": "User bị báo cáo",
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.DeleteReportResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "userpb.GetReportReasonsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportReason"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.GetReportsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Keep reports for now until protobuf regeneration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.Report"
+                    }
+                },
+                "hasNext": {
+                    "description": "Có trang tiếp theo",
+                    "type": "boolean"
+                },
+                "hasPrev": {
+                    "description": "Có trang trước",
+                    "type": "boolean"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "summary": {
+                    "description": "Thống kê tóm tắt",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/userpb.ReportStats"
+                        }
+                    ]
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPages": {
+                    "type": "integer"
                 }
             }
         },
@@ -3081,6 +3361,355 @@
                 }
             }
         },
+        "userpb.Report": {
+            "type": "object",
+            "properties": {
+                "adminNote": {
+                    "description": "Ghi chú nội bộ admin",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Mô tả chi tiết từ người báo cáo",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "description": "IP address của người báo cáo",
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Mức độ ưu tiên (1=thấp, 5=cao)",
+                    "type": "integer"
+                },
+                "proofDocs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportProof"
+                    }
+                },
+                "reason": {
+                    "$ref": "#/definitions/userpb.ReportReason"
+                },
+                "reasonId": {
+                    "type": "integer"
+                },
+                "reportStatus": {
+                    "type": "integer"
+                },
+                "reporter": {
+                    "description": "Thông tin user báo cáo",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/userpb.ReportUser"
+                        }
+                    ]
+                },
+                "reporterId": {
+                    "description": "User báo cáo",
+                    "type": "integer"
+                },
+                "resolvedAt": {
+                    "description": "Thời gian xử lý xong",
+                    "type": "string"
+                },
+                "resolvedBy": {
+                    "description": "Admin xử lý",
+                    "type": "integer"
+                },
+                "response": {
+                    "description": "Phản hồi từ admin",
+                    "type": "string"
+                },
+                "statusText": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "user": {
+                    "description": "Thông tin user bị báo cáo",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/userpb.ReportUser"
+                        }
+                    ]
+                },
+                "userAgent": {
+                    "description": "User agent của người báo cáo",
+                    "type": "string"
+                },
+                "userId": {
+                    "description": "User bị báo cáo",
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportProof": {
+            "type": "object",
+            "properties": {
+                "fileName": {
+                    "type": "string"
+                },
+                "fileSize": {
+                    "type": "integer"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mimeType": {
+                    "type": "string"
+                },
+                "reportId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportReason": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "report": {
+                    "$ref": "#/definitions/userpb.Report"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "userpb.ReportStats": {
+            "type": "object",
+            "properties": {
+                "approvalRate": {
+                    "description": "Tỷ lệ chấp nhận (%)",
+                    "type": "number"
+                },
+                "approvedReports": {
+                    "type": "integer"
+                },
+                "avgResponseTime": {
+                    "description": "Thời gian phản hồi TB (giờ)",
+                    "type": "number"
+                },
+                "inProgressReports": {
+                    "description": "Báo cáo đang xử lý",
+                    "type": "integer"
+                },
+                "pendingReports": {
+                    "type": "integer"
+                },
+                "rejectedReports": {
+                    "type": "integer"
+                },
+                "statsByAdmin": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportStatsByAdmin"
+                    }
+                },
+                "statsByDate": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportStatsByDate"
+                    }
+                },
+                "statsByPriority": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportStatsByPriority"
+                    }
+                },
+                "statsByReason": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportStatsByReason"
+                    }
+                },
+                "totalReports": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportStatsByAdmin": {
+            "type": "object",
+            "properties": {
+                "adminId": {
+                    "type": "integer"
+                },
+                "adminName": {
+                    "type": "string"
+                },
+                "avgResponseTime": {
+                    "type": "number"
+                },
+                "handledCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportStatsByDate": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "pending": {
+                    "type": "integer"
+                },
+                "resolved": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ReportStatsByPriority": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "priorityName": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.ReportStatsByReason": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "percentage": {
+                    "description": "Phần trăm",
+                    "type": "number"
+                },
+                "reasonId": {
+                    "type": "integer"
+                },
+                "reasonName": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.ReportUser": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Địa chỉ",
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "isVerified": {
+                    "description": "Tài khoản đã xác thực",
+                    "type": "boolean"
+                },
+                "lastLogin": {
+                    "description": "Lần đăng nhập cuối",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "userType": {
+                    "description": "Loại user (1=individual, 2=business)",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Username/handle",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.RespondToReportRequest": {
+            "type": "object",
+            "properties": {
+                "adminNote": {
+                    "description": "Ghi chú nội bộ",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "response": {
+                    "description": "Phản hồi công khai",
+                    "type": "string"
+                },
+                "sendNotification": {
+                    "description": "Gửi thông báo cho user",
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "1=pending, 2=approved, 3=rejected",
+                    "type": "integer"
+                }
+            }
+        },
         "userpb.SwitchAccountRequest": {
             "type": "object",
             "properties": {
@@ -3105,6 +3734,32 @@
                     "type": "boolean"
                 },
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.UpdateReportRequest": {
+            "type": "object",
+            "properties": {
+                "additionalInfo": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "proofDocs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.ReportProof"
+                    }
+                },
+                "reasonId": {
                     "type": "integer"
                 }
             }

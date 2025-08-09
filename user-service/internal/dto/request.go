@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	_dto "common/dto"
 	"user/enums"
 
 	"github.com/go-playground/validator/v10"
@@ -128,4 +129,45 @@ type ProfileIDsRequest struct {
 
 type SwitchOrganizationRequest struct {
 	OrganizationID uint32 `json:"organizationId" binding:"required" validate:"required"`
+}
+
+// ReportCreateRequest đại diện cho yêu cầu tạo báo cáo
+// @swagger:model
+type ReportCreateRequest struct {
+	ReasonID  uint64   `json:"reasonId" binding:"required" validate:"required"`
+	UserID    uint64   `json:"userId" binding:"required" validate:"required"`
+	ProofDocs []string `json:"proofDocs,omitempty"`
+}
+
+// ReportUpdateRequest đại diện cho yêu cầu cập nhật báo cáo
+// @swagger:model
+type ReportUpdateRequest struct {
+	ReasonID  uint64   `json:"reasonId,omitempty"`
+	ProofDocs []string `json:"proofDocs,omitempty"`
+}
+
+// ReportListRequest đại diện cho yêu cầu lấy danh sách báo cáo
+// @swagger:model
+type ReportListRequest struct {
+	_dto.Pagable
+	UserID   *uint64 `json:"userId,omitempty" form:"userId"`
+	Status   *uint32 `json:"status,omitempty" form:"status"`
+	ReasonID *uint64 `json:"reasonId,omitempty" form:"reasonId"`
+}
+
+// ReportResponseRequest đại diện cho yêu cầu phản hồi báo cáo
+// @swagger:model
+type ReportResponseRequest struct {
+	Status           uint32 `json:"status" binding:"required" validate:"required"`
+	Response         string `json:"response,omitempty"`
+	AdminNote        string `json:"adminNote,omitempty"`        // Ghi chú nội bộ admin
+	SendNotification bool   `json:"sendNotification,omitempty"` // Có gửi thông báo cho user không
+}
+
+// AdminNoteRequest đại diện cho yêu cầu cập nhật ghi chú admin
+// @swagger:model
+type AdminNoteRequest struct {
+	ReportID   uint64 `json:"reportId" binding:"required" validate:"required"`
+	AdminNote  string `json:"adminNote" binding:"required" validate:"required"`
+	IsInternal bool   `json:"isInternal,omitempty"` // Ghi chú nội bộ hay công khai
 }

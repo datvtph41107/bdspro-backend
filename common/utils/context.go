@@ -4,6 +4,7 @@ import (
 	_constants "common/constants"
 	"context"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -78,4 +79,43 @@ func GetUserIDFromContext(ctx context.Context) uint64 {
 
 func SetUserIDToContext(ctx context.Context, userID uint64) context.Context {
 	return context.WithValue(ctx, UserIDKey, userID)
+}
+
+// Helper function to create proper context from gin context for HTTP routes
+// This bridges the gap between HTTP middleware and gRPC middleware patterns
+func CreateContextFromGin(c *gin.Context) context.Context {
+	ctx := c.Request.Context()
+
+	// Get profile ID from gin context and set to proper context
+	if profileId, exists := c.Get("profileId"); exists {
+		if pid, ok := profileId.(uint64); ok {
+			ctx = context.WithValue(ctx, _constants.ProfileIDKey, pid)
+		}
+	}
+
+	// Get organization ID from gin context and set to proper context
+	if organizationId, exists := c.Get("organizationId"); exists {
+		if orgId, ok := organizationId.(*uint64); ok && orgId != nil {
+			ctx = context.WithValue(ctx, _constants.OrganizationIDKey, *orgId)
+		}
+	}
+
+	// Get plan ID if available
+	if planId, exists := c.Get("planId"); exists {
+		if pid, ok := planId.(*uint64); ok && pid != nil {
+			ctx = context.WithValue(ctx, _constants.PlanIDKey, *pid)
+		}
+	}
+
+	// Get auth ID if available
+	if claims, exists := c.Get("claims"); exists {
+		if principal, ok := claims.(*Principal); ok {
+			ctx = context.WithValue(ctx, _constants.AuthIDKey, principal.UserID)
+			ctx = context.WithValue(ctx, _constants.RoleKey, principal.Role)
+			ctx = context.WithValue(ctx, _constants.TypeKey, principal.Type)
+			ctx = context.WithValue(ctx, _constants.SessionKey, uint64(principal.Session))
+		}
+	}
+
+	return ctx
 }

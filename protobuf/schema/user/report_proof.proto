@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package user;
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+// Report Proof service definition
+service ReportProofService {
+  // Thêm file chứng minh vào báo cáo
+  rpc AddReportProof(AddReportProofRequest) returns (ReportProofResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/report/{reportId}/proof"
+      body: "*"
+    };
+  }
+
+  // Lấy danh sách file chứng minh của báo cáo
+  rpc GetReportProofs(GetReportProofsRequest) returns (GetReportProofsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/{reportId}/proof"
+    };
+  }
+
+  // Lấy thông tin chi tiết file chứng minh
+  rpc GetReportProof(GetReportProofRequest) returns (ReportProofResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/proof/{id}"
+    };
+  }
+
+  // Cập nhật thông tin file chứng minh
+  rpc UpdateReportProof(UpdateReportProofRequest) returns (ReportProofResponse) {
+    option (google.api.http) = {
+      put: "/v2/user/report/proof/{id}"
+      body: "*"
+    };
+  }
+
+  // Xóa file chứng minh
+  rpc DeleteReportProof(DeleteReportProofRequest) returns (DeleteReportProofResponse) {
+    option (google.api.http) = {
+      delete: "/v2/user/report/proof/{id}"
+    };
+  }
+}
+
+// ReportProof entity
+message ReportProof {
+  uint64 id = 1;
+  uint64 reportId = 2;
+  string fileName = 3;
+  string fileUrl = 4;
+  string fileType = 5;
+  uint64 fileSize = 6;
+  string mimeType = 7;
+}
+
+// Request/Response messages
+message AddReportProofRequest {
+  uint64 reportId = 1;
+  string fileName = 2;
+  string fileUrl = 3;
+  string fileType = 4;
+  optional uint64 fileSize = 5;
+  optional string mimeType = 6;
+}
+
+message GetReportProofRequest {
+  uint64 id = 1;
+}
+
+message GetReportProofsRequest {
+  uint64 reportId = 1;
+  optional int32 page = 2;
+  optional int32 size = 3;
+}
+
+message GetReportProofsResponse {
+  repeated ReportProof proofs = 1;
+  uint64 reportId = 2;
+  int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message UpdateReportProofRequest {
+  uint64 id = 1;
+  optional string fileName = 2;
+  optional string fileUrl = 3;
+  optional string fileType = 4;
+  optional uint64 fileSize = 5;
+  optional string mimeType = 6;
+}
+
+message DeleteReportProofRequest {
+  uint64 id = 1;
+}
+
+message DeleteReportProofResponse {
+  string message = 1;
+}
+
+message ReportProofResponse {
+  ReportProof proof = 1;
+} 

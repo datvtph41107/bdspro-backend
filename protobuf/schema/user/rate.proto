@@ -14,6 +14,11 @@ service RateService {
       body: "*"
     };
   };
+  rpc GetRate(sharepb.IdRequest) returns (Rate) {
+    option (google.api.http) = {
+      get: "/v2/user/rate/{id}"
+    };
+  };
   rpc GetRateList(GetRateListRequest) returns (RateList) {
     option (google.api.http) = {
       get: "/v2/user/rate/list/{targetId}/{targetType}"

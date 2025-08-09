@@ -44,6 +44,10 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		userpb.RegisterAuthServiceServer(s, app.AuthService)
 		userpb.RegisterRateServiceServer(s, app.RateService)
+		// V2 Services (protobuf-based)
+		userpb.RegisterReportServiceServer(s, app.ReportHandler)
+		userpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
+		userpb.RegisterReportProofServiceServer(s, app.ReportProofHandler)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

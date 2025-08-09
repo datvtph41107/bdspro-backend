@@ -1,7 +1,7 @@
 package user_service
 
 import (
-	_jwt "common/jwt"
+	_utils "common/utils"
 	"errors"
 	user_repo "user/infra/repo"
 	"user/internal/dto"
@@ -19,7 +19,8 @@ func NewRateService(rateRepo *user_repo.RateRepo) *RateService {
 }
 
 func (s *RateService) Create(c *gin.Context, rate *user_model.Rate) (*user_model.Rate, error) {
-	profileId := _jwt.GetProfileId(c)
+	ctx := _utils.CreateContextFromGin(c)
+	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	rate.CreatedBy = &profileId
 
@@ -44,7 +45,8 @@ func (s *RateService) List(c *gin.Context, targetID uint64, targetType uint8, dt
 }
 
 func (s *RateService) Update(c *gin.Context, id uint64, rate *user_model.Rate) (*user_model.Rate, error) {
-	profileId := _jwt.GetProfileId(c)
+	ctx := _utils.CreateContextFromGin(c)
+	profileId := _utils.GetProfileIdWithContext(ctx)
 	rate.UpdatedBy = &profileId
 
 	if rate.CreatedBy != nil && *rate.CreatedBy != profileId {
@@ -58,6 +60,7 @@ func (s *RateService) Update(c *gin.Context, id uint64, rate *user_model.Rate) (
 }
 
 func (s *RateService) Delete(c *gin.Context, id uint64) error {
-	profileId := _jwt.GetProfileId(c)
+	ctx := _utils.CreateContextFromGin(c)
+	profileId := _utils.GetProfileIdWithContext(ctx)
 	return s.RateRepo.Delete(c, profileId, id)
 }

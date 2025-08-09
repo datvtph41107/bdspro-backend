@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package user;
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+// Report Reason service definition
+service ReportReasonService {
+  // Lấy danh sách nguyên nhân báo cáo
+  rpc GetReportReasons(GetReportReasonsRequest) returns (GetReportReasonsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/reasons"
+    };
+  }
+
+  // Tạo nguyên nhân báo cáo mới (admin)
+  rpc CreateReportReason(CreateReportReasonRequest) returns (ReportReasonResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/report/reasons"
+      body: "*"
+    };
+  }
+
+  // Lấy thông tin chi tiết nguyên nhân báo cáo
+  rpc GetReportReason(GetReportReasonRequest) returns (ReportReasonResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/reasons/{id}"
+    };
+  }
+
+  // Cập nhật nguyên nhân báo cáo (admin)
+  rpc UpdateReportReason(UpdateReportReasonRequest) returns (ReportReasonResponse) {
+    option (google.api.http) = {
+      put: "/v2/user/report/reasons/{id}"
+      body: "*"
+    };
+  }
+
+  // Xóa nguyên nhân báo cáo (admin)
+  rpc DeleteReportReason(DeleteReportReasonRequest) returns (DeleteReportReasonResponse) {
+    option (google.api.http) = {
+      delete: "/v2/user/report/reasons/{id}"
+    };
+  }
+
+  // Kích hoạt/vô hiệu hóa nguyên nhân báo cáo (admin)
+  rpc ToggleReportReason(ToggleReportReasonRequest) returns (ReportReasonResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/report/reasons/{id}/toggle"
+      body: "*"
+    };
+  }
+}
+
+// ReportReason entity
+message ReportReason {
+  uint64 id = 1;
+  string reason = 2;
+  string description = 3;
+  bool is_active = 4;
+  int32 sort_order = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  uint64 created_by = 8;
+  uint64 updated_by = 9;
+}
+
+// Request/Response messages
+message GetReportReasonsRequest {
+  optional bool is_active = 1;
+  optional int32 page = 2;
+  optional int32 size = 3;
+  optional string search = 4;
+}
+
+message GetReportReasonsResponse {
+  repeated ReportReason data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message CreateReportReasonRequest {
+  string reason = 1;
+  optional string description = 2;
+  optional bool is_active = 3;
+  optional int32 sort_order = 4;
+}
+
+message GetReportReasonRequest {
+  uint64 id = 1;
+}
+
+message UpdateReportReasonRequest {
+  uint64 id = 1;
+  optional string reason = 2;
+  optional string description = 3;
+  optional bool is_active = 4;
+  optional int32 sort_order = 5;
+}
+
+message DeleteReportReasonRequest {
+  uint64 id = 1;
+}
+
+message DeleteReportReasonResponse {
+  string message = 1;
+}
+
+message ToggleReportReasonRequest {
+  uint64 id = 1;
+  bool is_active = 2;
+}
+
+message ReportReasonResponse {
+  ReportReason reason = 1;
+} 

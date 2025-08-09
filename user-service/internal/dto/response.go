@@ -178,3 +178,92 @@ type JwtTokenProperties struct {
 // 	// 	Fullname: e.FullName,
 // 	// }
 // }
+
+// ReportResponse đại diện cho phản hồi báo cáo
+type ReportResponse struct {
+	ID           uint64                `json:"id"`
+	ReasonID     uint64                `json:"reasonId"`
+	Reason       ReportReasonResponse  `json:"reason"`
+	ReportStatus uint32                `json:"reportStatus"`
+	StatusText   string                `json:"statusText"`
+	UserID       uint64                `json:"userId"`
+	User         ReportUserResponse    `json:"user"`
+	ProofDocs    []ReportProofResponse `json:"proofDocs"`
+	Response     string                `json:"response,omitempty"`
+	CreatedAt    *time.Time            `json:"createdAt"`
+	UpdatedAt    *time.Time            `json:"updatedAt"`
+}
+
+// ReportReasonResponse đại diện cho phản hồi nguyên nhân báo cáo
+type ReportReasonResponse struct {
+	ID     uint64 `json:"id"`
+	Reason string `json:"reason"`
+}
+
+// ReportUserResponse đại diện cho phản hồi thông tin user trong báo cáo
+type ReportUserResponse struct {
+	ProfileId uint64 `json:"profileId"`
+	Phone     string `json:"phone"`
+	FullName  string `json:"fullName"`
+	Avatar    string `json:"avatar"`
+}
+
+// ReportProofResponse đại diện cho phản hồi bằng chứng báo cáo
+type ReportProofResponse struct {
+	ID       uint64 `json:"id"`
+	ReportID uint64 `json:"reportId"`
+	FileName string `json:"fileName"`
+	FileUrl  string `json:"fileUrl"`
+	FileType string `json:"fileType"`
+}
+
+// ReportListResponse đại diện cho phản hồi danh sách báo cáo
+type ReportListResponse struct {
+	Reports []ReportResponse `json:"reports"`
+	Total   int64            `json:"total"`
+	Page    int              `json:"page"`
+	Size    int              `json:"size"`
+}
+
+// MakeReportResponse tạo response từ model
+func MakeReportResponse(report *user_model.Report, proofDocs []user_model.ReportProof) *ReportResponse {
+	proofResponses := make([]ReportProofResponse, len(proofDocs))
+	for i, proof := range proofDocs {
+		proofResponses[i] = ReportProofResponse{
+			ID:       proof.ID,
+			ReportID: proof.ReportID,
+			FileName: proof.FileName,
+			FileUrl:  proof.FileUrl,
+			FileType: proof.FileType,
+		}
+	}
+
+	return &ReportResponse{
+		ID:       report.ID,
+		ReasonID: report.ReasonID,
+		Reason: ReportReasonResponse{
+			ID:     report.Reason.ID,
+			Reason: report.Reason.Reason,
+		},
+		ReportStatus: uint32(report.ReportStatus),
+		StatusText:   enums.ApproveStatusMap[report.ReportStatus],
+		UserID:       report.UserID,
+		User: ReportUserResponse{
+			ProfileId: report.User.ProfileID,
+			Phone:     report.User.Phone,
+			FullName:  report.User.FullName,
+			Avatar:    report.User.Avatar,
+		},
+		ProofDocs: proofResponses,
+		CreatedAt: report.CreatedAt,
+		UpdatedAt: report.UpdatedAt,
+	}
+}
+
+// AdminNoteResponse đại diện cho phản hồi cập nhật ghi chú admin
+// @swagger:model
+type AdminNoteResponse struct {
+	Success bool            `json:"success"`
+	Message string          `json:"message"`
+	Report  *ReportResponse `json:"report,omitempty"`
+}

@@ -117,6 +117,7 @@ func (r *RatePostgres) GetByID(ctx context.Context, id uint64) (*user_model.Rate
 	var rate user_model.Rate
 	if err := r.db.WithContext(ctx).
 		Preload("Attachs").
+		Preload("CreatedUser").
 		First(&rate, id).Error; err != nil {
 		return nil, err
 	}

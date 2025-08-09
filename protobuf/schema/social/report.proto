@@ -14,11 +14,6 @@ service ReportService {
             body: "*"
         };
     }
-    rpc GetAllReportReason(google.protobuf.Empty) returns (ReportReasonResponse) {
-        option (google.api.http) = {
-            get: "/v2/social/report/reasons"
-        };
-    }
     rpc GetReportMe(ReportMessageRequest) returns (ReportMessageResponse) {
         option (google.api.http) = {
             get: "/v2/social/report/me"

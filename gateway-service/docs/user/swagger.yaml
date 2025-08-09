@@ -324,19 +324,6 @@ definitions:
       tickVerified:
         type: boolean
     type: object
-  user_model.AttachEntity:
-    properties:
-      id:
-        type: integer
-      imageType:
-        type: string
-      imageUrl:
-        type: string
-      rate:
-        $ref: '#/definitions/user_model.Rate'
-      rateId:
-        type: integer
-    type: object
   user_model.CertificationEntity:
     properties:
       approveUserId:
@@ -437,52 +424,6 @@ definitions:
       updatedBy:
         type: integer
     type: object
-  user_model.Rate:
-    properties:
-      anonymous:
-        type: boolean
-      approvedAt:
-        type: string
-      approvedBy:
-        type: integer
-      attachs:
-        items:
-          $ref: '#/definitions/user_model.AttachEntity'
-        type: array
-      comment:
-        type: string
-      createdAt:
-        type: string
-      createdBy:
-        description: gorm.Model
-        type: integer
-      hidden:
-        type: boolean
-      id:
-        type: integer
-      parentId:
-        type: integer
-      rootId:
-        type: integer
-      score:
-        maximum: 5
-        minimum: 1
-        type: integer
-      targetId:
-        type: integer
-      targetType:
-        description: '10: user 20: group 30: organization'
-        type: integer
-      updatedAt:
-        type: string
-      updatedBy:
-        type: integer
-    required:
-    - comment
-    - score
-    - targetId
-    - targetType
-    type: object
   user_model.RateStats:
     properties:
       averageScore:
@@ -530,6 +471,29 @@ definitions:
       total:
         type: integer
     type: object
+  userpb.AdminNoteRequest:
+    properties:
+      adminNote:
+        description: Ghi chú nội bộ admin
+        type: string
+      isInternal:
+        description: Ghi chú nội bộ hay công khai
+        type: boolean
+      reportId:
+        description: ID báo cáo cần cập nhật ghi chú
+        type: integer
+    type: object
+  userpb.AdminNoteResponse:
+    properties:
+      message:
+        type: string
+      report:
+        allOf:
+        - $ref: '#/definitions/userpb.Report'
+        description: Báo cáo đã được cập nhật
+      success:
+        type: boolean
+    type: object
   userpb.Attach:
     properties:
       id:
@@ -555,6 +519,72 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  userpb.CreateReportRequest:
+    properties:
+      additionalInfo:
+        description: Thông tin bổ sung
+        type: string
+      description:
+        type: string
+      priority:
+        description: Mức độ ưu tiên
+        type: integer
+      proofDocs:
+        items:
+          $ref: '#/definitions/userpb.ReportProof'
+        type: array
+      reasonId:
+        type: integer
+      userId:
+        description: User bị báo cáo
+        type: integer
+    type: object
+  userpb.DeleteReportResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  userpb.GetReportReasonsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.ReportReason'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  userpb.GetReportsResponse:
+    properties:
+      data:
+        description: Keep reports for now until protobuf regeneration
+        items:
+          $ref: '#/definitions/userpb.Report'
+        type: array
+      hasNext:
+        description: Có trang tiếp theo
+        type: boolean
+      hasPrev:
+        description: Có trang trước
+        type: boolean
+      page:
+        type: integer
+      size:
+        type: integer
+      summary:
+        allOf:
+        - $ref: '#/definitions/userpb.ReportStats'
+        description: Thống kê tóm tắt
+      total:
+        type: integer
+      totalPages:
+        type: integer
     type: object
   userpb.ProfessionItem:
     properties:
@@ -701,6 +731,240 @@ definitions:
       totalReviews:
         type: integer
     type: object
+  userpb.Report:
+    properties:
+      adminNote:
+        description: Ghi chú nội bộ admin
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        description: Mô tả chi tiết từ người báo cáo
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        description: IP address của người báo cáo
+        type: string
+      priority:
+        description: Mức độ ưu tiên (1=thấp, 5=cao)
+        type: integer
+      proofDocs:
+        items:
+          $ref: '#/definitions/userpb.ReportProof'
+        type: array
+      reason:
+        $ref: '#/definitions/userpb.ReportReason'
+      reasonId:
+        type: integer
+      reportStatus:
+        type: integer
+      reporter:
+        allOf:
+        - $ref: '#/definitions/userpb.ReportUser'
+        description: Thông tin user báo cáo
+      reporterId:
+        description: User báo cáo
+        type: integer
+      resolvedAt:
+        description: Thời gian xử lý xong
+        type: string
+      resolvedBy:
+        description: Admin xử lý
+        type: integer
+      response:
+        description: Phản hồi từ admin
+        type: string
+      statusText:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      user:
+        allOf:
+        - $ref: '#/definitions/userpb.ReportUser'
+        description: Thông tin user bị báo cáo
+      userAgent:
+        description: User agent của người báo cáo
+        type: string
+      userId:
+        description: User bị báo cáo
+        type: integer
+    type: object
+  userpb.ReportProof:
+    properties:
+      fileName:
+        type: string
+      fileSize:
+        type: integer
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      mimeType:
+        type: string
+      reportId:
+        type: integer
+    type: object
+  userpb.ReportReason:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      reason:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  userpb.ReportResponse:
+    properties:
+      message:
+        type: string
+      report:
+        $ref: '#/definitions/userpb.Report'
+      success:
+        type: boolean
+    type: object
+  userpb.ReportStats:
+    properties:
+      approvalRate:
+        description: Tỷ lệ chấp nhận (%)
+        type: number
+      approvedReports:
+        type: integer
+      avgResponseTime:
+        description: Thời gian phản hồi TB (giờ)
+        type: number
+      inProgressReports:
+        description: Báo cáo đang xử lý
+        type: integer
+      pendingReports:
+        type: integer
+      rejectedReports:
+        type: integer
+      statsByAdmin:
+        items:
+          $ref: '#/definitions/userpb.ReportStatsByAdmin'
+        type: array
+      statsByDate:
+        items:
+          $ref: '#/definitions/userpb.ReportStatsByDate'
+        type: array
+      statsByPriority:
+        items:
+          $ref: '#/definitions/userpb.ReportStatsByPriority'
+        type: array
+      statsByReason:
+        items:
+          $ref: '#/definitions/userpb.ReportStatsByReason'
+        type: array
+      totalReports:
+        type: integer
+    type: object
+  userpb.ReportStatsByAdmin:
+    properties:
+      adminId:
+        type: integer
+      adminName:
+        type: string
+      avgResponseTime:
+        type: number
+      handledCount:
+        type: integer
+    type: object
+  userpb.ReportStatsByDate:
+    properties:
+      count:
+        type: integer
+      date:
+        type: string
+      pending:
+        type: integer
+      resolved:
+        type: integer
+    type: object
+  userpb.ReportStatsByPriority:
+    properties:
+      count:
+        type: integer
+      priority:
+        type: integer
+      priorityName:
+        type: string
+    type: object
+  userpb.ReportStatsByReason:
+    properties:
+      count:
+        type: integer
+      percentage:
+        description: Phần trăm
+        type: number
+      reasonId:
+        type: integer
+      reasonName:
+        type: string
+    type: object
+  userpb.ReportUser:
+    properties:
+      address:
+        description: Địa chỉ
+        type: string
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      isVerified:
+        description: Tài khoản đã xác thực
+        type: boolean
+      lastLogin:
+        description: Lần đăng nhập cuối
+        type: string
+      phone:
+        type: string
+      profileId:
+        type: integer
+      userType:
+        description: Loại user (1=individual, 2=business)
+        type: integer
+      username:
+        description: Username/handle
+        type: string
+    type: object
+  userpb.RespondToReportRequest:
+    properties:
+      adminNote:
+        description: Ghi chú nội bộ
+        type: string
+      id:
+        type: integer
+      response:
+        description: Phản hồi công khai
+        type: string
+      sendNotification:
+        description: Gửi thông báo cho user
+        type: boolean
+      status:
+        description: 1=pending, 2=approved, 3=rejected
+        type: integer
+    type: object
   userpb.SwitchAccountRequest:
     properties:
       groupId:
@@ -717,6 +981,23 @@ definitions:
       hidden:
         type: boolean
       id:
+        type: integer
+    type: object
+  userpb.UpdateReportRequest:
+    properties:
+      additionalInfo:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      priority:
+        type: integer
+      proofDocs:
+        items:
+          $ref: '#/definitions/userpb.ReportProof'
+        type: array
+      reasonId:
         type: integer
     type: object
 info:
@@ -1629,108 +1910,6 @@ paths:
       summary: Xem thông tin public của người dùng
       tags:
       - Profile
-  /v1/user/rate:
-    post:
-      consumes:
-      - application/json
-      description: Tạo đánh giá mới
-      parameters:
-      - description: Thông tin đánh giá
-        in: body
-        name: rate
-        required: true
-        schema:
-          $ref: '#/definitions/user_model.Rate'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tạo đánh giá
-      tags:
-      - Rate
-  /v1/user/rate/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa đánh giá theo id
-      parameters:
-      - description: ID của đánh giá
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Xóa đánh giá
-      tags:
-      - Rate
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật đánh giá theo id
-      parameters:
-      - description: ID của đánh giá
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Thông tin đánh giá
-        in: body
-        name: rate
-        required: true
-        schema:
-          $ref: '#/definitions/user_model.Rate'
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Cập nhật đánh giá
-      tags:
-      - Rate
-  /v1/user/rate/list/{targetId}/{targetType}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách đánh giá theo targetId và targetType
-      parameters:
-      - description: ID của target
-        in: path
-        name: targetId
-        required: true
-        type: string
-      - description: 'Loại của target, 10: user, 20: group, 30: organization'
-        in: path
-        name: targetType
-        required: true
-        type: string
-      - description: Trang hiện tại
-        in: query
-        name: page
-        type: integer
-      - description: Số lượng trên mỗi trang
-        in: query
-        name: size
-        type: integer
-      - description: 'Điểm đánh giá, 1: 1 sao, 2: 2 sao, 3: 3 sao, 4: 4 sao, 5: 5
-          sao'
-        in: query
-        name: score
-        type: integer
-      - description: ID của đánh giá cha
-        in: query
-        name: parentId
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      summary: Lấy danh sách đánh giá
-      tags:
-      - Rate
   /v2/user/auth/switch-account:
     post:
       consumes:
@@ -1853,6 +2032,28 @@ paths:
       security:
       - BearerAuth: []
       summary: Xóa đánh giá
+      tags:
+      - Rate
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin đánh giá
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.Rate'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin đánh giá
       tags:
       - Rate
     put:
@@ -2022,6 +2223,226 @@ paths:
       summary: Lấy thông tin đánh giá
       tags:
       - Rate
+  /v2/user/report:
+    post:
+      consumes:
+      - application/json
+      description: Tạo báo cáo người dùng mới
+      parameters:
+      - description: Thông tin báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.CreateReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo báo cáo
+      tags:
+      - Report
+  /v2/user/report/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa báo cáo (chỉ khi chưa duyệt)
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.DeleteReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa báo cáo
+      tags:
+      - Report
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin báo cáo (chỉ khi chưa duyệt)
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdateReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật báo cáo
+      tags:
+      - Report
+  /v2/user/report/{id}/respond:
+    post:
+      consumes:
+      - application/json
+      description: Duyệt hoặc từ chối báo cáo (chỉ dành cho admin)
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Phản hồi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.RespondToReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Phản hồi báo cáo
+      tags:
+      - Report
+  /v2/user/report/admin-note:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật ghi chú nội bộ hoặc công khai cho báo cáo (chỉ dành cho
+        admin)
+      parameters:
+      - description: Thông tin ghi chú admin
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.AdminNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.AdminNoteResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật ghi chú admin
+      tags:
+      - Report
+  /v2/user/report/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết báo cáo
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin chi tiết báo cáo
+      tags:
+      - Report
+  /v2/user/report/list/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách báo cáo theo userId
+      parameters:
+      - description: ID người dùng
+        in: query
+        name: userId
+        type: integer
+      - description: Trạng thái báo cáo
+        in: query
+        name: status
+        type: integer
+      - description: ID nguyên nhân
+        in: query
+        name: reasonId
+        type: integer
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetReportsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách báo cáo
+      tags:
+      - Report
+  /v2/user/report/reasons:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nguyên nhân báo cáo
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Từ khóa tìm kiếm
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetReportReasonsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nguyên nhân báo cáo
+      tags:
+      - Report-Reason
 securityDefinitions:
   BearerAuth:
     in: header

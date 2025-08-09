@@ -7,18 +7,18 @@ import (
 
 type Rate struct {
 	_models.BaseEntity
-	Anonymous  bool           `gorm:"not null" json:"anonymous"`
-	TargetID   uint64         `gorm:"not null" json:"targetId" binding:"required"`
-	TargetType uint8          `gorm:"default:10;not null" json:"targetType" binding:"required"` // 10: user 20: group 30: organization
-	Score      uint8          `gorm:"not null" json:"score" binding:"required,gte=1,lte=5"`
-	Comment    string         `gorm:"type:text" json:"comment,omitempty" binding:"required"`
-	ParentID   *uint64        `json:"parentId,omitempty"`
-	Attachs    []AttachEntity `gorm:"foreignKey:RateID" json:"attachs,omitempty"`
-	RootID     *uint64        `json:"rootId,omitempty"`
-	Hidden     bool           `gorm:"default:false" json:"hidden"`
-	ApprovedAt *time.Time     `json:"approvedAt"`
-	ApprovedBy *uint64        `json:"approvedBy"`
-	// CreatedUser UserItem       `gorm:"foreignKey:CreatedBy" json:"createdUser,omitempty"`
+	Anonymous   bool           `gorm:"not null" json:"anonymous"`
+	TargetID    uint64         `gorm:"not null" json:"targetId" binding:"required"`
+	TargetType  uint8          `gorm:"default:10;not null" json:"targetType" binding:"required"` // 10: user 20: group 30: organization
+	Score       uint8          `gorm:"not null" json:"score" binding:"required,gte=1,lte=5"`
+	Comment     string         `gorm:"type:text" json:"comment,omitempty" binding:"required"`
+	ParentID    *uint64        `json:"parentId,omitempty"`
+	Attachs     []AttachEntity `gorm:"foreignKey:RateID" json:"attachs,omitempty"`
+	RootID      *uint64        `json:"rootId,omitempty"`
+	Hidden      bool           `gorm:"default:false" json:"hidden"`
+	ApprovedAt  *time.Time     `json:"approvedAt"`
+	ApprovedBy  *uint64        `json:"approvedBy"`
+	CreatedUser *UserItem      `gorm:"foreignKey:CreatedBy" json:"createdUser,omitempty"`
 }
 
 type RateItem struct {

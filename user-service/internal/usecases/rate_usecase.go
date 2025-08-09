@@ -10,6 +10,8 @@ import (
 	iusecase "user/internal/interface"
 	user_model "user/internal/models/user"
 	"user/internal/repo"
+
+	"gorm.io/gorm"
 )
 
 type RateUsecase struct {
@@ -49,7 +51,7 @@ func (u *RateUsecase) CreateRate(ctx context.Context, rate *user_model.Rate) (*u
 		rate.TargetID,
 		rate.TargetType,
 	)
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 	if existRate != nil {
@@ -144,4 +146,12 @@ func (u *RateUsecase) GetRateStats(ctx context.Context, id uint64) (user_model.R
 		return user_model.RateStats{}, err
 	}
 	return stats, nil
+}
+
+func (u *RateUsecase) GetRate(ctx context.Context, id uint64) (*user_model.Rate, error) {
+	rate, err := u.rateRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return rate, nil
 }
