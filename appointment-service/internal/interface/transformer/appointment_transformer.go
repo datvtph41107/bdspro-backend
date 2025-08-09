@@ -4,6 +4,7 @@ import (
 	appointmentpb "pb/types/appointment"
 	pb_bdspro "pb/types/bdspro"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 	"time"
 
 	"github.com/tuandq2112/appointment-service/internal/domain/entity"
@@ -13,7 +14,7 @@ import (
 type AppointmentTransformer interface {
 	CreateAppointmentRequestToEntity(req *appointmentpb.CreateAppointmentRequest) *entity.Appointment
 	UpdateAppointmentRequestToEntity(req *appointmentpb.UpdateAppointmentRequest) *entity.Appointment
-	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment
+	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*sharepb.ProfileItem) *appointmentpb.Appointment
 	EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.ListAppointmentsResponse
 }
 
@@ -40,6 +41,7 @@ func (t *appointmentTransformer) CreateAppointmentRequestToEntity(req *appointme
 		ReminderSchedule: req.ReminderSchedule,
 		TransactionIds:   req.TransactionIds,
 		OptionExtend:     req.OptionExtend,
+		Status:           req.Status,
 	}
 }
 
@@ -60,10 +62,11 @@ func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointme
 		ReminderSchedule: req.ReminderSchedule,
 		OptionExtend:     req.OptionExtend,
 		TransactionIds:   req.TransactionIds,
+		Status:           req.Status,
 	}
 }
 
-func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*organizationpb.DealInvitationMember) *appointmentpb.Appointment {
+func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*sharepb.ProfileItem) *appointmentpb.Appointment {
 	return &appointmentpb.Appointment{
 		Id:               appointment.Id,
 		Title:            appointment.Title,
@@ -77,6 +80,7 @@ func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity
 		ProductIds:       appointment.ProductIds,
 		ReminderSchedule: appointment.ReminderSchedule,
 		OptionExtend:     appointment.OptionExtend,
+		Status:           appointment.Status,
 		TransactionIds:   appointment.TransactionIds,
 		Deal:             deal,
 		Products:         products,

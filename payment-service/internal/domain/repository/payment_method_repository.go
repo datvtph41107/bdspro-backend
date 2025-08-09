@@ -5,7 +5,7 @@ import (
 
 	paymentpb "pb/types/payment"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
+	"payment/internal/domain/entity"
 )
 
 type PaymentMethodRepository interface {

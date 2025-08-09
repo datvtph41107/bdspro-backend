@@ -7,9 +7,9 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/enums"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
+	"payment/internal/domain/entity"
+	"payment/internal/enums"
+	"payment/internal/infrastructure/client"
 )
 
 type NotificationDTO struct {

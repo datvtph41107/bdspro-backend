@@ -315,6 +315,10 @@ definitions:
         type: string
       id:
         type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
       phone:
         type: string
       tickVerified:
@@ -437,6 +441,10 @@ definitions:
     properties:
       anonymous:
         type: boolean
+      approvedAt:
+        type: string
+      approvedBy:
+        type: integer
       attachs:
         items:
           $ref: '#/definitions/user_model.AttachEntity'
@@ -1989,6 +1997,29 @@ paths:
           schema:
             $ref: '#/definitions/userpb.RateList'
       summary: Lấy danh sách đánh giá
+      tags:
+      - Rate
+  /v2/user/rate/stats/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin đánh giá
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.RateStats'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin đánh giá
       tags:
       - Rate
 securityDefinitions:

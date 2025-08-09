@@ -137,3 +137,11 @@ func (u *RateUsecase) UpdateHidden(ctx context.Context, id uint64, hidden bool) 
 
 	return u.rateRepo.UpdateHidden(ctx, id, hidden)
 }
+
+func (u *RateUsecase) GetRateStats(ctx context.Context, id uint64) (user_model.RateStats, error) {
+	stats, err := u.rateRepo.CountInfo(ctx, id, 10)
+	if err != nil {
+		return user_model.RateStats{}, err
+	}
+	return stats, nil
+}

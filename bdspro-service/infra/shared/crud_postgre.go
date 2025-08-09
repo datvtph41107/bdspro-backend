@@ -14,11 +14,11 @@ type PostgreCrud[T any, D common.DTO] struct {
 	Repo common.IOwnerRepo[T, D]
 }
 
-func (r *PostgreCrud[T, D]) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) (*gorm.DB, error) {
+func (r *PostgreCrud[T, D]) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto D) (*gorm.DB, error) {
 	return r.DB.Model(new(T)).Where("deleted_at IS NULL"), nil
 }
 
-func (r *PostgreCrud[T, D]) Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) ([]T, int64, error) {
+func (r *PostgreCrud[T, D]) Search(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto D) ([]T, int64, error) {
 	var entities []T
 	var total int64
 

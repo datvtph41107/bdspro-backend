@@ -4,7 +4,7 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
 	"bdspro/internal/repo"
-	"bdspro/internal/usecases"
+	transaction_usecase "bdspro/internal/usecases/transaction"
 	"context"
 	bdspropb "pb/types/bdspro"
 	"time"
@@ -15,13 +15,13 @@ import (
 
 type TransactionHandler struct {
 	bdspropb.UnimplementedTransactionServiceServer
-	TransactionUsecase usecases.TransactionUsecase
+	TransactionUsecase transaction_usecase.TransactionUsecase
 	Transformer        mapper.TransactionTransformer
 	Validator          validator.TransactionValidator
 }
 
 func NewTransactionHandler(
-	transactionUsecase usecases.TransactionUsecase,
+	transactionUsecase transaction_usecase.TransactionUsecase,
 	transformer mapper.TransactionTransformer,
 	validator validator.TransactionValidator,
 ) *TransactionHandler {

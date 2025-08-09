@@ -19,9 +19,9 @@ func (m *SharingAccessMapper) SharingAccessToDomain(dto *pb_bdspro.SharingAccess
 	return &domain.SharingAccess{
 		DomainID:    dto.DomainId,
 		Domain:      enums.EDomainAccess(dto.Domain),
-		FromType:    enums.EOwnerType(dto.FromType),
+		FromType:    enums.EOwnerOf(dto.FromType),
 		FromId:      dto.FromId,
-		ToType:      enums.EOwnerType(dto.ToType),
+		ToType:      enums.EOwnerOf(dto.ToType),
 		ToId:        dto.ToId,
 		Fields:      dto.Fields,
 		Permissions: dto.Permissions,
@@ -81,8 +81,8 @@ func (m *SharingAccessMapper) SharingAccessToSearchDTO(pb_dto *pb_bdspro.Sharing
 		},
 		DomainID: pb_dto.DomainId,
 		Domain:   enums.EDomainAccess(pb_dto.Domain),
-		FromType: enums.EOwnerType(pb_dto.FromType),
-		ToType:   enums.EOwnerType(pb_dto.ToType),
+		FromType: enums.EOwnerOf(pb_dto.FromType),
+		ToType:   enums.EOwnerOf(pb_dto.ToType),
 	}
 
 	return &result

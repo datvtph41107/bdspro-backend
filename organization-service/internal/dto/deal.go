@@ -18,6 +18,7 @@ type DealSetting struct {
 	BankName                string
 	AccountNumber           string
 	AccountName             string
+	BankId                  uint64
 	AllowManualInput        bool
 }
 

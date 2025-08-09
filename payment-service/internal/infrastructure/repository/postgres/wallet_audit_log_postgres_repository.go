@@ -4,19 +4,20 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
+
 	"gorm.io/gorm"
 )
 
 type WalletAuditLogModel struct {
-	ID          uint32 `gorm:"primaryKey"`
-	WalletId    uint32
-	OldBalance  float64
-	NewBalance  float64
-	Reason      string
-	ChangedBy   uint32
-	ChangedAt   time.Time
+	ID         uint32 `gorm:"primaryKey"`
+	WalletId   uint32
+	OldBalance float64
+	NewBalance float64
+	Reason     string
+	ChangedBy  uint32
+	ChangedAt  time.Time
 
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
@@ -28,25 +29,25 @@ func (m *WalletAuditLogModel) TableName() string {
 
 func WalletAuditLogModelToEntity(m *WalletAuditLogModel) *entity.WalletAuditLog {
 	return &entity.WalletAuditLog{
-		Id:          m.ID,
-		WalletId:    m.WalletId,
-		OldBalance:  m.OldBalance,
-		NewBalance:  m.NewBalance,
-		Reason:      m.Reason,
-		ChangedBy:   m.ChangedBy,
-		ChangedAt:   m.ChangedAt,
+		Id:         m.ID,
+		WalletId:   m.WalletId,
+		OldBalance: m.OldBalance,
+		NewBalance: m.NewBalance,
+		Reason:     m.Reason,
+		ChangedBy:  m.ChangedBy,
+		ChangedAt:  m.ChangedAt,
 	}
 }
 
 func WalletAuditLogEntityToModel(e *entity.WalletAuditLog) *WalletAuditLogModel {
 	return &WalletAuditLogModel{
-		ID:          e.Id,
-		WalletId:    e.WalletId,
-		OldBalance:  e.OldBalance,
-		NewBalance:  e.NewBalance,
-		Reason:      e.Reason,
-		ChangedBy:   e.ChangedBy,
-		ChangedAt:   e.ChangedAt,
+		ID:         e.Id,
+		WalletId:   e.WalletId,
+		OldBalance: e.OldBalance,
+		NewBalance: e.NewBalance,
+		Reason:     e.Reason,
+		ChangedBy:  e.ChangedBy,
+		ChangedAt:  e.ChangedAt,
 	}
 }
 
@@ -85,11 +86,10 @@ func (r *walletAuditLogRepository) DeleteWalletAuditLog(ctx context.Context, req
 	if err := r.db.WithContext(ctx).Model(&WalletAuditLogModel{}).
 		Where("id = ?", req.Id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error; err != nil {
 		return nil, err
 	}
 	return req, nil
 }
-

@@ -1,0 +1,229 @@
+basePath: /v2/transaction
+definitions:
+  transactionpb.OwnerType:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    - 40
+    type: integer
+    x-enum-comments:
+      OwnerType_OWNER_TYPE_DEAL: Thương vụ
+      OwnerType_OWNER_TYPE_GROUP: Nhóm
+      OwnerType_OWNER_TYPE_ORGANIZATION: Tổ chức
+      OwnerType_OWNER_TYPE_USER: Người dùng
+    x-enum-varnames:
+    - OwnerType_OWNER_TYPE_UNKNOWN
+    - OwnerType_OWNER_TYPE_USER
+    - OwnerType_OWNER_TYPE_GROUP
+    - OwnerType_OWNER_TYPE_ORGANIZATION
+    - OwnerType_OWNER_TYPE_DEAL
+  transactionpb.TransactionMethod:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    - 70
+    - 80
+    type: integer
+    x-enum-comments:
+      TransactionMethod_TRANSACTION_METHOD_BUY: Mua
+      TransactionMethod_TRANSACTION_METHOD_COST: Chi phí
+      TransactionMethod_TRANSACTION_METHOD_DEPOSIT: Đặt cọc
+      TransactionMethod_TRANSACTION_METHOD_INVESTMENT: Góp vốn
+      TransactionMethod_TRANSACTION_METHOD_RENT: Cho thuê
+      TransactionMethod_TRANSACTION_METHOD_REVENUE: Thu nhập
+      TransactionMethod_TRANSACTION_METHOD_SALE: Bán
+      TransactionMethod_TRANSACTION_METHOD_SIGN: Ký hợp đồng
+    x-enum-varnames:
+    - TransactionMethod_TRANSACTION_METHOD_UNKNOWN
+    - TransactionMethod_TRANSACTION_METHOD_SIGN
+    - TransactionMethod_TRANSACTION_METHOD_COST
+    - TransactionMethod_TRANSACTION_METHOD_REVENUE
+    - TransactionMethod_TRANSACTION_METHOD_INVESTMENT
+    - TransactionMethod_TRANSACTION_METHOD_DEPOSIT
+    - TransactionMethod_TRANSACTION_METHOD_RENT
+    - TransactionMethod_TRANSACTION_METHOD_SALE
+    - TransactionMethod_TRANSACTION_METHOD_BUY
+  transactionpb.TransactionResponse:
+    properties:
+      method:
+        $ref: '#/definitions/transactionpb.TransactionMethod'
+      note:
+        type: string
+      status:
+        $ref: '#/definitions/transactionpb.TransactionStatus'
+      transactionId:
+        type: integer
+      transactionName:
+        type: string
+      value:
+        type: number
+    type: object
+  transactionpb.TransactionStatus:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      TransactionStatus_TRANSACTION_STATUS_APPROVED: Đã xác nhận
+      TransactionStatus_TRANSACTION_STATUS_PENDING: Chờ xác nhận
+      TransactionStatus_TRANSACTION_STATUS_REJECTED: Từ chối
+    x-enum-varnames:
+    - TransactionStatus_TRANSACTION_STATUS_UNKNOWN
+    - TransactionStatus_TRANSACTION_STATUS_PENDING
+    - TransactionStatus_TRANSACTION_STATUS_APPROVED
+    - TransactionStatus_TRANSACTION_STATUS_REJECTED
+info:
+  contact: {}
+  description: Transaction Service
+  title: Transaction Service
+  version: "1.0"
+paths:
+  /{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Duyệt giao dịch
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction approved successfully
+          schema:
+            $ref: '#/definitions/transactionpb.TransactionResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Transaction not found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - BearerAuth: []
+      summary: Duyệt giao dịch
+      tags:
+      - TransactionService
+  /list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách giao dịch
+      parameters:
+      - enum:
+        - 0
+        - 10
+        - 20
+        - 30
+        - 40
+        - 50
+        - 60
+        - 70
+        - 80
+        in: query
+        name: method
+        type: integer
+        x-enum-comments:
+          TransactionMethod_TRANSACTION_METHOD_BUY: Mua
+          TransactionMethod_TRANSACTION_METHOD_COST: Chi phí
+          TransactionMethod_TRANSACTION_METHOD_DEPOSIT: Đặt cọc
+          TransactionMethod_TRANSACTION_METHOD_INVESTMENT: Góp vốn
+          TransactionMethod_TRANSACTION_METHOD_RENT: Cho thuê
+          TransactionMethod_TRANSACTION_METHOD_REVENUE: Thu nhập
+          TransactionMethod_TRANSACTION_METHOD_SALE: Bán
+          TransactionMethod_TRANSACTION_METHOD_SIGN: Ký hợp đồng
+        x-enum-varnames:
+        - TransactionMethod_TRANSACTION_METHOD_UNKNOWN
+        - TransactionMethod_TRANSACTION_METHOD_SIGN
+        - TransactionMethod_TRANSACTION_METHOD_COST
+        - TransactionMethod_TRANSACTION_METHOD_REVENUE
+        - TransactionMethod_TRANSACTION_METHOD_INVESTMENT
+        - TransactionMethod_TRANSACTION_METHOD_DEPOSIT
+        - TransactionMethod_TRANSACTION_METHOD_RENT
+        - TransactionMethod_TRANSACTION_METHOD_SALE
+        - TransactionMethod_TRANSACTION_METHOD_BUY
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - enum:
+        - 0
+        - 10
+        - 20
+        - 30
+        in: query
+        name: status
+        type: integer
+        x-enum-comments:
+          TransactionStatus_TRANSACTION_STATUS_APPROVED: Đã xác nhận
+          TransactionStatus_TRANSACTION_STATUS_PENDING: Chờ xác nhận
+          TransactionStatus_TRANSACTION_STATUS_REJECTED: Từ chối
+        x-enum-varnames:
+        - TransactionStatus_TRANSACTION_STATUS_UNKNOWN
+        - TransactionStatus_TRANSACTION_STATUS_PENDING
+        - TransactionStatus_TRANSACTION_STATUS_APPROVED
+        - TransactionStatus_TRANSACTION_STATUS_REJECTED
+      - in: query
+        name: toId
+        type: integer
+      - enum:
+        - 0
+        - 10
+        - 20
+        - 30
+        - 40
+        in: query
+        name: toOf
+        type: integer
+        x-enum-comments:
+          OwnerType_OWNER_TYPE_DEAL: Thương vụ
+          OwnerType_OWNER_TYPE_GROUP: Nhóm
+          OwnerType_OWNER_TYPE_ORGANIZATION: Tổ chức
+          OwnerType_OWNER_TYPE_USER: Người dùng
+        x-enum-varnames:
+        - OwnerType_OWNER_TYPE_UNKNOWN
+        - OwnerType_OWNER_TYPE_USER
+        - OwnerType_OWNER_TYPE_GROUP
+        - OwnerType_OWNER_TYPE_ORGANIZATION
+        - OwnerType_OWNER_TYPE_DEAL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction list
+          schema:
+            $ref: '#/definitions/transactionpb.TransactionResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách giao dịch
+      tags:
+      - TransactionService
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

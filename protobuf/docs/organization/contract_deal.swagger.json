@@ -1,0 +1,607 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "organization/contract_deal.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "DealContractService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/org/contract/deal/sign": {
+      "post": {
+        "summary": "Giao dịch ký hợp đồng",
+        "operationId": "DealContractService_SignContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbSignContractRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{dealId}": {
+      "get": {
+        "summary": "Lấy danh sách giao dịch",
+        "operationId": "DealContractService_GetContracts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "type",
+            "description": " - CONTRACT_TYPE_EXPENSE: Chi phí\n - CONTRACT_TYPE_REVENUE: Doanh thu",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "CONTRACT_TYPE_UNKNOWN",
+              "CONTRACT_TYPE_EXPENSE",
+              "CONTRACT_TYPE_REVENUE"
+            ],
+            "default": "CONTRACT_TYPE_UNKNOWN"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{dealId}/financial-summary": {
+      "get": {
+        "summary": "Lấy thống kê tài chính",
+        "operationId": "DealContractService_GetFinancialSummary",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbFinancialSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}": {
+      "get": {
+        "summary": "Lấy chi tiết giao dịch",
+        "operationId": "DealContractService_GetContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      },
+      "delete": {
+        "summary": "Xóa giao dịch",
+        "operationId": "DealContractService_DeleteContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      },
+      "put": {
+        "summary": "Cập nhật giao dịch",
+        "operationId": "DealContractService_UpdateContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealContractServiceUpdateContractBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}/approve": {
+      "put": {
+        "summary": "Phê duyệt/từ chối giao dịch",
+        "operationId": "DealContractService_ApproveContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealContractServiceApproveContractBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}/transfer": {
+      "post": {
+        "summary": "Giao dịch mua/bán/thuê",
+        "operationId": "DealContractService_TransferContract",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealContractServiceTransferContractBody"
+            }
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "DealContractServiceApproveContractBody": {
+      "type": "object",
+      "properties": {
+        "rejectReason": {
+          "type": "string"
+        }
+      },
+      "title": "Request phê duyệt giao dịch"
+    },
+    "DealContractServiceTransferContractBody": {
+      "type": "object",
+      "title": "Request mua/bán/thuê"
+    },
+    "DealContractServiceUpdateContractBody": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      },
+      "title": "Request cập nhật giao dịch"
+    },
+    "organizationpbContractStatus": {
+      "type": "string",
+      "enum": [
+        "CONTRACT_STATUS_UNKNOWN",
+        "CONTRACT_STATUS_PENDING",
+        "CONTRACT_STATUS_APPROVED",
+        "CONTRACT_STATUS_REJECTED"
+      ],
+      "default": "CONTRACT_STATUS_UNKNOWN",
+      "description": "- CONTRACT_STATUS_PENDING: Chờ xác nhận\n - CONTRACT_STATUS_APPROVED: Đã xác nhận\n - CONTRACT_STATUS_REJECTED: Từ chối",
+      "title": "Enum cho trạng thái phê duyệt"
+    },
+    "organizationpbContractType": {
+      "type": "string",
+      "enum": [
+        "CONTRACT_TYPE_UNKNOWN",
+        "CONTRACT_TYPE_EXPENSE",
+        "CONTRACT_TYPE_REVENUE"
+      ],
+      "default": "CONTRACT_TYPE_UNKNOWN",
+      "description": "- CONTRACT_TYPE_EXPENSE: Chi phí\n - CONTRACT_TYPE_REVENUE: Doanh thu",
+      "title": "Enum cho loại giao dịch"
+    },
+    "organizationpbDealContractListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDealContractResponse"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Response cho danh sách giao dịch"
+    },
+    "organizationpbDealContractResp": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "organizationpbDealContractResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "type": {
+          "$ref": "#/definitions/organizationpbContractType"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "$ref": "#/definitions/organizationpbContractStatus"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "approvedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "approvedAt": {
+          "type": "string"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Response cho giao dịch"
+    },
+    "organizationpbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbFinancialSummaryResponse": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalExpense": {
+          "type": "number",
+          "format": "double"
+        },
+        "netProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitMargin": {
+          "type": "number",
+          "format": "double"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitStatus": {
+          "type": "string"
+        },
+        "warningMessages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "Response cho thống kê tài chính"
+    },
+    "organizationpbSignContractRequest": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "signedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "signedAt": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "contractName": {
+          "type": "string"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        }
+      },
+      "title": "Request ký hợp đồng"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

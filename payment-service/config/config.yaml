@@ -10,6 +10,7 @@ whitelist:
   - /pb_payment.PaymentService/TransferBetweenWallets
   - /pb_payment.PaymentService/GetWalletByUserId
   - /pb_payment.PaymentService/GetWalletByWalletId
+  - /pb_payment.BankService/GetAll
 sepay:
   api_key: Apikey APi cuc xin
 grpc:

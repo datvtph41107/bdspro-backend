@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
+	"payment/internal/domain/entity"
 )
 
 type WalletsRepository interface {

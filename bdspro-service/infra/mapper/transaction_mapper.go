@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	"bdspro/internal/domain"
+	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/enums"
 	_models "common/models"
 	"time"
@@ -10,10 +10,10 @@ import (
 )
 
 type TransactionTransformer interface {
-	CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *domain.Transaction
-	UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *domain.Transaction
-	EntityToTransactionResponse(tx *domain.Transaction) *bdspropb.Transaction
-	EntityToListTransactionsResponse(txs []*domain.Transaction, total int32) *bdspropb.ListTransactionsResponse
+	CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *tx_domain.Tx
+	UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *tx_domain.Tx
+	EntityToTransactionResponse(tx *tx_domain.Tx) *bdspropb.Transaction
+	EntityToListTransactionsResponse(txs []*tx_domain.Tx, total int32) *bdspropb.ListTransactionsResponse
 	EntityToTransactionTypesResponse(types []string) *bdspropb.GetTransactionTypesResponse
 }
 
@@ -36,9 +36,9 @@ func NewTransactionTransformer(
 // 	return 10
 // }
 
-func (t *transactionTransformer) CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *domain.Transaction {
+func (t *transactionTransformer) CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *tx_domain.Tx {
 	transactionDate, _ := time.Parse(time.RFC3339, req.TransactionDate)
-	return &domain.Transaction{
+	return &tx_domain.Tx{
 		// OrganizationId:       req.OrganizationId,
 		OwnerId:              uint64(req.OwnerId),
 		Amount:               req.Amount,
@@ -56,9 +56,9 @@ func (t *transactionTransformer) CreateTransactionRequestToEntity(req *bdspropb.
 	}
 }
 
-func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *domain.Transaction {
+func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *tx_domain.Tx {
 	transactionDate, _ := time.Parse(time.RFC3339, req.TransactionDate)
-	return &domain.Transaction{
+	return &tx_domain.Tx{
 		BaseEntity: _models.BaseEntity{
 			ID: uint64(req.Id),
 		},
@@ -74,7 +74,7 @@ func (t *transactionTransformer) UpdateTransactionRequestToEntity(req *bdspropb.
 	}
 }
 
-func (t *transactionTransformer) EntityToTransactionResponse(tx *domain.Transaction) *bdspropb.Transaction {
+func (t *transactionTransformer) EntityToTransactionResponse(tx *tx_domain.Tx) *bdspropb.Transaction {
 	if tx == nil {
 		return nil
 	}
@@ -110,7 +110,7 @@ func (t *transactionTransformer) EntityToTransactionResponse(tx *domain.Transact
 	return result
 }
 
-func (t *transactionTransformer) EntityToListTransactionsResponse(txs []*domain.Transaction, total int32) *bdspropb.ListTransactionsResponse {
+func (t *transactionTransformer) EntityToListTransactionsResponse(txs []*tx_domain.Tx, total int32) *bdspropb.ListTransactionsResponse {
 	transactions := make([]*bdspropb.Transaction, 0, len(txs))
 	for _, tx := range txs {
 		transactions = append(transactions, t.EntityToTransactionResponse(tx))

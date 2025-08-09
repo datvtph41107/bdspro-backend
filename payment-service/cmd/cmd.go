@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	grpcserver "payment/cmd/grpc-server"
+
 	"github.com/spf13/cobra"
-	grpcserver "github.com/tuandq2112/payment-service/cmd/grpc-server"
 )
 
 var (

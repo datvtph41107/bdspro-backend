@@ -107,7 +107,7 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 
 	dealMemberMap := make(map[uint64]*organizationpb.DealMember)
 	for _, dealMember := range dealMembers.Data {
-		dealMemberMap[uint64(dealMember.MemberId)] = dealMember
+		dealMemberMap[dealMember.MemberId] = dealMember
 	}
 
 	return dealMemberMap, nil

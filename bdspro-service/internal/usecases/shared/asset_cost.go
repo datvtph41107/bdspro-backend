@@ -49,7 +49,7 @@ func (uc *AssetCostUsecase) Create(c context.Context, entity *domain.AssetCost) 
 	return uc.OwnerRepo.Create(c, entity)
 }
 
-func (uc *AssetCostUsecase) Find(c context.Context, ownerType enums.EOwnerType, dto *dto.AssetCostSearchDTO) ([]domain.AssetCost, int64, error) {
+func (uc *AssetCostUsecase) Find(c context.Context, ownerType enums.EOwnerOf, dto *dto.AssetCostSearchDTO) ([]domain.AssetCost, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	return uc.repo.Find(c, profileId, ownerType, dto)
 }

@@ -6,13 +6,14 @@ import (
 
 	paymentpb "pb/types/payment"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
+
 	"gorm.io/gorm"
 )
 
 type WalletTransactionModel struct {
-	ID                uint32    `gorm:"primaryKey"`
+	ID                uint32 `gorm:"primaryKey"`
 	WalletID          uint32
 	Type              entity.TransactionType
 	Amount            float64
@@ -34,17 +35,17 @@ func (m *WalletTransactionModel) TableName() string {
 
 func WalletTransactionModelToEntity(m *WalletTransactionModel) *entity.WalletTransaction {
 	return &entity.WalletTransaction{
-		Id:               m.ID,
-		WalletId:         m.WalletID,
-		Type:             m.Type,
-		Amount:           m.Amount,
-		Status:           m.Status,
-		RelatedService:   m.RelatedService,
-		RelatedId:        m.RelatedID,
+		Id:                m.ID,
+		WalletId:          m.WalletID,
+		Type:              m.Type,
+		Amount:            m.Amount,
+		Status:            m.Status,
+		RelatedService:    m.RelatedService,
+		RelatedId:         m.RelatedID,
 		ExternalPaymentId: m.ExternalPaymentID,
-		TransactionCode:  m.TransactionCode,
-		CreatedAt:        m.CreatedAt,
-		UpdatedAt:        m.UpdatedAt,
+		TransactionCode:   m.TransactionCode,
+		CreatedAt:         m.CreatedAt,
+		UpdatedAt:         m.UpdatedAt,
 	}
 }
 
@@ -77,7 +78,7 @@ func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walle
 	var total int64
 	page := 0
 	size := 10
-		query := r.db.WithContext(ctx).Model(&WalletTransactionModel{}).Where("wallet_id = ?", walletId)
+	query := r.db.WithContext(ctx).Model(&WalletTransactionModel{}).Where("wallet_id = ?", walletId)
 
 	if req != nil {
 		if req.Type != "" {
@@ -110,11 +111,11 @@ func (r *walletTransactionRepository) GetTransactions(ctx context.Context, walle
 	for i, model := range models {
 		entity := WalletTransactionModelToEntity(model)
 		transactions[i] = &paymentpb.WalletTransaction{
-			Id:               entity.Id,
-			WalletId:         entity.WalletId,
-			Type:             string(entity.Type),
-			Amount:           entity.Amount,
-			Status:           string(entity.Status),
+			Id:       entity.Id,
+			WalletId: entity.WalletId,
+			Type:     string(entity.Type),
+			Amount:   entity.Amount,
+			Status:   string(entity.Status),
 		}
 		transactions[i].RelatedService = entity.RelatedService
 		transactions[i].RelatedId = entity.RelatedId
@@ -191,11 +192,11 @@ func (r *walletTransactionRepository) GetTransactionsReport(ctx context.Context,
 	for i, model := range models {
 		entity := WalletTransactionModelToEntity(model)
 		transactions[i] = &paymentpb.WalletTransaction{
-			Id:               entity.Id,
-			WalletId:         entity.WalletId,
-			Type:             string(entity.Type),
-			Amount:           entity.Amount,
-			Status:           string(entity.Status),
+			Id:       entity.Id,
+			WalletId: entity.WalletId,
+			Type:     string(entity.Type),
+			Amount:   entity.Amount,
+			Status:   string(entity.Status),
 		}
 		transactions[i].RelatedService = entity.RelatedService
 		transactions[i].RelatedId = entity.RelatedId
@@ -250,12 +251,12 @@ func (r *walletTransactionRepository) GetDealTransactions(ctx context.Context, r
 	transactions := make([]*paymentpb.DealTransaction, len(models))
 	for i, model := range models {
 		transactions[i] = &paymentpb.DealTransaction{
-			Id:          model.ID,
-			Type:        string(model.Type),
-			Amount:      model.Amount,
-			Status:      string(model.Status),
-			CreatedAt:   model.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
+			Id:        model.ID,
+			Type:      string(model.Type),
+			Amount:    model.Amount,
+			Status:    string(model.Status),
+			CreatedAt: model.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: model.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 
@@ -268,19 +269,19 @@ func (r *walletTransactionRepository) GetDealTransactionById(ctx context.Context
 		return nil, err
 	}
 	return &paymentpb.DealTransaction{
-		Id:          model.ID,
-		Type:        string(model.Type),
-		Amount:      model.Amount,
-		Status:      string(model.Status),
-		CreatedAt:   model.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   model.UpdatedAt.Format(time.RFC3339),
+		Id:        model.ID,
+		Type:      string(model.Type),
+		Amount:    model.Amount,
+		Status:    string(model.Status),
+		CreatedAt: model.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: model.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
 func (r *walletTransactionRepository) UpdateDealTransaction(ctx context.Context, transaction *paymentpb.DealTransaction) error {
 	model := &WalletTransactionModel{
 		ID:     transaction.Id,
-		Type:   entity.TransactionType(transaction.Type)	,
+		Type:   entity.TransactionType(transaction.Type),
 		Amount: transaction.Amount,
 		Status: entity.TransactionStatus(transaction.Status),
 	}
@@ -288,13 +289,13 @@ func (r *walletTransactionRepository) UpdateDealTransaction(ctx context.Context,
 }
 
 type TransactionTypeModel struct {
-	ID          uint32 `gorm:"primaryKey"`
-	Name        string
-	Code        string
-	Category    string
-	IsActive    bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID        uint32 `gorm:"primaryKey"`
+	Name      string
+	Code      string
+	Category  string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (m *TransactionTypeModel) TableName() string {
@@ -345,7 +346,7 @@ func (r *walletTransactionRepository) UpdateTransactionType(ctx context.Context,
 func (r *walletTransactionRepository) DeleteTransactionType(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Delete(&TransactionTypeModel{}, id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
@@ -357,4 +358,3 @@ func (r *walletTransactionRepository) GetTransactionByCode(ctx context.Context, 
 	}
 	return WalletTransactionModelToEntity(&model), nil
 }
-

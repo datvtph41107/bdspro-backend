@@ -4,13 +4,14 @@
 package grpcserver
 
 import (
+	"payment/internal/infrastructure/client"
+	"payment/internal/infrastructure/database"
+	"payment/internal/infrastructure/repository"
+	"payment/internal/interface/handler"
+	"payment/internal/server/grpc"
+	"payment/internal/usecase"
+
 	"github.com/google/wire"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/database"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/repository"
-	"github.com/tuandq2112/payment-service/internal/interface/handler"
-	"github.com/tuandq2112/payment-service/internal/server/grpc"
-	"github.com/tuandq2112/payment-service/internal/usecase"
 )
 
 var databaseSet = wire.NewSet(

@@ -25,7 +25,7 @@ func NewPostgreUserCostType(DB *gorm.DB) *PostgreUserCostType {
 	return repo
 }
 
-func (r *PostgreUserCostType) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto *dto.AssetCostTypeSearchDTO) (*gorm.DB, error) {
+func (r *PostgreUserCostType) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto *dto.AssetCostTypeSearchDTO) (*gorm.DB, error) {
 	query := r.DB.Model(&domain.AssetCostType{}).
 		Where("deleted_at IS NULL and ((owner_id = ? and owner_type = ?) or owner_id is null)", profileId, enums.EOwnerTypeMember)
 	if dto.Text != "" {

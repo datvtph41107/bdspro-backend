@@ -6,11 +6,12 @@ import (
 	paymentpb "pb/types/payment"
 	"time"
 
-	"github.com/tuandq2112/payment-service/appconfig"
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
-	"github.com/tuandq2112/payment-service/pkg/utils"
+	"payment/appconfig"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
+	"payment/internal/infrastructure/client"
+	"payment/pkg/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -128,7 +129,7 @@ func (p *paymentUsecase) GetWalletTransactions(ctx context.Context, req *payment
 func (p *paymentUsecase) GetWalletTransactionsByWalletId(ctx context.Context, req *paymentpb.GetWalletTransactionsByWalletIdRequest) (*paymentpb.WalletTransactionList, error) {
 	// Get current user ID for security validation
 	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	
+
 	wallet, err := p.walletRepository.GetWalletById(ctx, req.WalletId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wallet: %w", err)
@@ -162,7 +163,7 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 	if req.Amount <= 0 {
 		return nil, fmt.Errorf("invalid amount: must be greater than 0")
 	}
-	
+
 	if req.FromWalletId == req.ToWalletId {
 		return nil, fmt.Errorf("cannot transfer to the same wallet")
 	}
@@ -204,7 +205,7 @@ func (p *paymentUsecase) TransferBetweenWallets(ctx context.Context, req *paymen
 	senderTransactionCode := fmt.Sprintf("TRF%d%d", now.UnixNano(), senderWallet.Id)
 	time.Sleep(1 * time.Nanosecond) // Ensure different timestamp
 	receiverTransactionCode := fmt.Sprintf("TRF%d%d", time.Now().UnixNano(), receiverWallet.Id)
-	
+
 	// Create sender transaction within transaction context
 	senderTransaction := &entity.WalletTransaction{
 		WalletId:        req.FromWalletId,
@@ -312,7 +313,7 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	}
 
 	userID := utils.GetUserID(ctx, appconfig.USER_CONTEXT)
-	
+
 	// Start transaction
 	tx := p.walletRepository.BeginTx(ctx)
 	defer func() {
@@ -356,12 +357,12 @@ func (p *paymentUsecase) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	
+
 	// Send notification (outside transaction - fire and forget)
 	go func() {
 		p.notificationWorker.PushToQueue(ctx, transaction, "Tạo giao dịch nạp tiền thành công")
 	}()
-	
+
 	return &paymentpb.WalletTransaction{
 		Id:              transaction.Id,
 		WalletId:        transaction.WalletId,
@@ -447,12 +448,12 @@ func (p *paymentUsecase) Withdraw(ctx context.Context, req *paymentpb.WithdrawRe
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	
+
 	// Send notification (outside transaction - fire and forget)
 	go func() {
 		p.notificationWorker.PushToQueue(ctx, transaction, "Rút tiền thành công")
 	}()
-	
+
 	return &paymentpb.WithdrawalRequest{
 		Id:              withdrawal.Id,
 		WalletId:        withdrawal.WalletId,
@@ -494,7 +495,7 @@ func (p *paymentUsecase) MakePayment(ctx context.Context, req *paymentpb.Payment
 		tx.Rollback()
 		return nil, fmt.Errorf("insufficient balance")
 	}
-	
+
 	// Generate transaction code with correct prefix
 	transactionCode := fmt.Sprintf("PAY%d%d", time.Now().UnixNano(), wallet.Id)
 

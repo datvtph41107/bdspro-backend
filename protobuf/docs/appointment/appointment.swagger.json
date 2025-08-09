@@ -262,6 +262,10 @@
         "optionExtend": {
           "type": "integer",
           "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -334,7 +338,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitationMember"
+            "$ref": "#/definitions/sharepbProfileItem"
           }
         },
         "products": {
@@ -345,6 +349,10 @@
           }
         },
         "optionExtend": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
           "type": "integer",
           "format": "int64"
         }
@@ -404,6 +412,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -458,32 +470,6 @@
         },
         "accountName": {
           "type": "string"
-        }
-      }
-    },
-    "organizationpbDealInvitationMember": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "roleId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "joinedAt": {
-          "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },

@@ -5,8 +5,9 @@ import (
 	paymentpb "pb/types/payment"
 	"regexp"
 
-	"github.com/tuandq2112/payment-service/appconfig"
-	"github.com/tuandq2112/payment-service/internal/usecase"
+	"payment/appconfig"
+	"payment/internal/usecase"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -23,10 +24,32 @@ func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase) *PaymentHandler {
 	}
 }
 
+// @Summary Lấy dashboard ví
+// @Description Lấy dashboard ví
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param empty body paymentpb.Empty true "Empty request"
+// @Success 200 {object} paymentpb.WalletDashboard "Wallet dashboard"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/dashboard [get]
 func (h *PaymentHandler) GetWalletDashboard(ctx context.Context, req *paymentpb.Empty) (*paymentpb.WalletDashboard, error) {
 	return h.paymentUsecase.GetWalletDashboard(ctx)
 }
 
+// @Summary Lấy danh sách giao dịch ví
+// @Description Lấy danh sách giao dịch ví
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param getWalletTransactionsRequest body paymentpb.GetWalletTransactionsRequest true "Request body"
+// @Success 200 {object} paymentpb.WalletTransactionList "Danh sách giao dịch ví"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/transactions [get]
 func (h *PaymentHandler) GetWalletTransactions(ctx context.Context, req *paymentpb.GetWalletTransactionsRequest) (*paymentpb.WalletTransactionList, error) {
 	return h.paymentUsecase.GetWalletTransactions(ctx, req)
 }
@@ -39,6 +62,17 @@ func (h *PaymentHandler) TransferBetweenWallets(ctx context.Context, req *paymen
 	return h.paymentUsecase.TransferBetweenWallets(ctx, req)
 }
 
+// @Summary Nạp tiền
+// @Description Nạp tiền
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param depositRequest body paymentpb.DepositRequest true "Request body"
+// @Success 200 {object} paymentpb.WalletTransaction "Giao dịch nạp tiền"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/deposit [post]
 func (h *PaymentHandler) Deposit(ctx context.Context, req *paymentpb.DepositRequest) (*paymentpb.WalletTransaction, error) {
 	return h.paymentUsecase.Deposit(ctx, req)
 }
@@ -47,48 +81,169 @@ func (h *PaymentHandler) Deposit(ctx context.Context, req *paymentpb.DepositRequ
 // 	return h.paymentUsecase.Withdraw(ctx, req)
 // }
 
+// @Summary Tạo giao dịch
+// @Description Tạo giao dịch
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param paymentRequest body paymentpb.PaymentRequest true "Request body"
+// @Success 200 {object} paymentpb.WalletTransaction "Giao dịch"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/payment [post]
 func (h *PaymentHandler) MakePayment(ctx context.Context, req *paymentpb.PaymentRequest) (*paymentpb.WalletTransaction, error) {
 	return h.paymentUsecase.MakePayment(ctx, req)
 }
 
+// @Summary Lấy danh sách phương thức thanh toán
+// @Description Lấy danh sách phương thức thanh toán
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param getPaymentMethodsRequest body paymentpb.GetPaymentMethodsRequest true "Request body"
+// @Success 200 {object} paymentpb.PaymentMethodList "Danh sách phương thức thanh toán"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /payment-methods [get]
 func (h *PaymentHandler) GetPaymentMethods(ctx context.Context, req *paymentpb.GetPaymentMethodsRequest) (*paymentpb.PaymentMethodList, error) {
 	return h.paymentUsecase.GetPaymentMethods(ctx, req)
 }
 
+// @Summary Tạo phương thức thanh toán
+// @Description Tạo phương thức thanh toán
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param paymentMethod body paymentpb.PaymentMethod true "Phương thức thanh toán"
+// @Success 200 {object} paymentpb.PaymentMethod "Phương thức thanh toán"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /payment-methods [post]
 func (h *PaymentHandler) CreatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
 	return h.paymentUsecase.CreatePaymentMethod(ctx, req)
 }
 
+// @Summary Cập nhật phương thức thanh toán
+// @Description Cập nhật phương thức thanh toán
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param paymentMethod body paymentpb.PaymentMethod true "Phương thức thanh toán"
+// @Success 200 {object} paymentpb.PaymentMethod "Phương thức thanh toán"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /payment-methods [put]
 func (h *PaymentHandler) UpdatePaymentMethod(ctx context.Context, req *paymentpb.PaymentMethod) (*paymentpb.PaymentMethod, error) {
 	return h.paymentUsecase.UpdatePaymentMethod(ctx, req)
 }
 
+// @Summary Xóa phương thức thanh toán
+// @Description Xóa phương thức thanh toán
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param deletePaymentMethodRequest body paymentpb.DeletePaymentMethodRequest true "Request body"
+// @Success 200 {object} paymentpb.Empty "Phương thức thanh toán"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /payment-methods [delete]
 func (h *PaymentHandler) DeletePaymentMethod(ctx context.Context, req *paymentpb.DeletePaymentMethodRequest) (*paymentpb.Empty, error) {
 	return h.paymentUsecase.DeletePaymentMethod(ctx, req)
 }
 
+// @Summary Lấy báo cáo ví
+// @Description Lấy báo cáo ví
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param walletId path string true "ID ví"
+// @Param reportRequest body paymentpb.ReportRequest true "Request body"
+// @Success 200 {object} paymentpb.ReportResponse "Báo cáo ví"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/{walletId}/report [get]
 func (h *PaymentHandler) GetWalletReport(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ReportResponse, error) {
 	return h.paymentUsecase.GetWalletReport(ctx, req)
 }
 
+// @Summary Xuất dữ liệu ví
+// @Description Xuất dữ liệu ví
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param walletId path string true "ID ví"
+// @Param reportRequest body paymentpb.ReportRequest true "Request body"
+// @Success 200 {object} paymentpb.ExportResponse "Dữ liệu ví"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /wallets/{walletId}/export [get]
 func (h *PaymentHandler) ExportWalletData(ctx context.Context, req *paymentpb.ReportRequest) (*paymentpb.ExportResponse, error) {
 	return h.paymentUsecase.ExportWalletData(ctx, req)
 }
 
-
-
+// @Summary Lấy danh sách loại giao dịch
+// @Description Lấy danh sách loại giao dịch
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param empty body paymentpb.Empty true "Empty request"
+// @Success 200 {object} paymentpb.TransactionTypeList "Danh sách loại giao dịch"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /transaction-types [get]
 func (h *PaymentHandler) GetTransactionTypes(ctx context.Context, req *paymentpb.Empty) (*paymentpb.TransactionTypeList, error) {
 	return h.paymentUsecase.GetTransactionTypes(ctx, req)
 }
 
+// @Summary Tạo loại giao dịch
+// @Description Tạo loại giao dịch
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param transactionType body paymentpb.TransactionType true "Loại giao dịch"
+// @Success 200 {object} paymentpb.TransactionType "Loại giao dịch"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /transaction-types [post]
 func (h *PaymentHandler) CreateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error) {
 	return h.paymentUsecase.CreateTransactionType(ctx, req)
 }
 
+// @Summary Cập nhật loại giao dịch
+// @Description Cập nhật loại giao dịch
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param transactionType body paymentpb.TransactionType true "Loại giao dịch"
+// @Success 200 {object} paymentpb.TransactionType "Loại giao dịch"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /transaction-types [put]
 func (h *PaymentHandler) UpdateTransactionType(ctx context.Context, req *paymentpb.TransactionType) (*paymentpb.TransactionType, error) {
 	return h.paymentUsecase.UpdateTransactionType(ctx, req)
 }
 
+// @Summary Xóa loại giao dịch
+// @Description Xóa loại giao dịch
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param deleteTransactionTypeRequest body paymentpb.DeleteTransactionTypeRequest true "Request body"
+// @Success 200 {object} paymentpb.Empty "Loại giao dịch"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /transaction-types [delete]
 func (h *PaymentHandler) DeleteTransactionType(ctx context.Context, req *paymentpb.DeleteTransactionTypeRequest) (*paymentpb.Empty, error) {
 	return h.paymentUsecase.DeleteTransactionType(ctx, req)
 }
@@ -105,13 +260,23 @@ func (h *PaymentHandler) GetWalletByWalletId(ctx context.Context, req *paymentpb
 	return h.paymentUsecase.GetWalletByWalletId(ctx, req)
 }
 
+// @Summary Webhook thanh toán Sepay
+// @Description Webhook thanh toán Sepay
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Param sepayWebhookRequest body paymentpb.SepayWebhookRequest true "Request body"
+// @Success 200 {object} paymentpb.Empty "Webhook thanh toán Sepay"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /sepay/webhook [post]
 func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayWebhookRequest) (*paymentpb.Empty, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "missing metadata")
 	}
 	authHeader := md.Get("grpcgateway-authorization")
-	
+
 	if authHeader[0] != appconfig.SepayAPIKey {
 		return nil, status.Error(codes.Unauthenticated, "invalid api key")
 	}
@@ -125,7 +290,7 @@ func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayW
 }
 
 func ExtractDepositCode(content string) string {
-    re := regexp.MustCompile(`DEP\d+`)
-    match := re.FindString(content)
-    return match
+	re := regexp.MustCompile(`DEP\d+`)
+	match := re.FindString(content)
+	return match
 }

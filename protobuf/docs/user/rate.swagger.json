@@ -217,6 +217,74 @@
         ]
       }
     },
+    "/v2/user/rate/stats/{id}": {
+      "get": {
+        "operationId": "RateService_GetRateStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbRateStats"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "RateService"
+        ]
+      }
+    },
     "/v2/user/rate/{id}": {
       "delete": {
         "operationId": "RateService_DeleteRate",
@@ -516,6 +584,39 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "userpbRateStats": {
+      "type": "object",
+      "properties": {
+        "totalReviews": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "star1Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star2Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star3Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star4Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star5Count": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     }

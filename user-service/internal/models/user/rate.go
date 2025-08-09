@@ -16,6 +16,8 @@ type Rate struct {
 	Attachs    []AttachEntity `gorm:"foreignKey:RateID" json:"attachs,omitempty"`
 	RootID     *uint64        `json:"rootId,omitempty"`
 	Hidden     bool           `gorm:"default:false" json:"hidden"`
+	ApprovedAt *time.Time     `json:"approvedAt"`
+	ApprovedBy *uint64        `json:"approvedBy"`
 	// CreatedUser UserItem       `gorm:"foreignKey:CreatedBy" json:"createdUser,omitempty"`
 }
 

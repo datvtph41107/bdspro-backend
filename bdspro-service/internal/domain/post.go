@@ -32,7 +32,7 @@ type Post struct {
 	Product         *Product              `gorm:"-" json:"product"`
 	MediaList       []PostMediaEntity     `json:"mediaList"`
 	OwnerID         uint64                `json:"ownerId"`
-	OwnerType       enums.EOwnerType      `gorm:"column:owner_type;default:10" json:"ownerType"`
+	OwnerType       enums.EOwnerOf        `gorm:"column:owner_type;default:10" json:"ownerType"`
 	// Asset           *Asset               `json:"asset"`
 }
 

@@ -5,8 +5,9 @@ import (
 
 	"time"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
+
 	"gorm.io/gorm"
 )
 
@@ -19,7 +20,7 @@ type WalletModel struct {
 	Currency  string
 
 	DeletedAt *time.Time `gorm:"index"`
-	IsDeleted bool       `gorm:"default:false"`	
+	IsDeleted bool       `gorm:"default:false"`
 }
 
 func (m *WalletModel) TableName() string {

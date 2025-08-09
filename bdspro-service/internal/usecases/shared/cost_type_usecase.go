@@ -50,7 +50,7 @@ func (uc *AssetCostTypeUsecase) Create(c context.Context, entity *domain.AssetCo
 	return uc.OwnerRepo.Create(c, entity)
 }
 
-func (uc *AssetCostTypeUsecase) SearchGroup(c context.Context, ownerType enums.EOwnerType, dto *dto.AssetCostTypeSearchDTO) ([]domain.AssetCostType, []domain.AssetCostType, error) {
+func (uc *AssetCostTypeUsecase) SearchGroup(c context.Context, ownerType enums.EOwnerOf, dto *dto.AssetCostTypeSearchDTO) ([]domain.AssetCostType, []domain.AssetCostType, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, _, err := uc.repo.Search(c, profileId, ownerType, dto)
 	if err != nil {

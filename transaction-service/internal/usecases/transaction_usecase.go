@@ -1,0 +1,294 @@
+package transaction_usecase
+
+import (
+	_utils "common/utils"
+	"context"
+	"errors"
+	"time"
+	tx_domain "tx/internal/domain"
+	"tx/internal/enums"
+	iusecase "tx/internal/interface"
+	"tx/internal/repo"
+)
+
+var (
+	ErrNotFound     = errors.New("transaction not found")
+	ErrInvalidState = errors.New("giao dịch đã kết thúc")
+)
+
+type TransactionUsecase interface {
+	CreateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
+	GetTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error)
+	UpdateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
+	DeleteTransaction(ctx context.Context, id uint64) error
+	ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error)
+	ApproveTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error)
+	RejectTransaction(ctx context.Context, id uint64) error
+	GetTransactionTypes(ctx context.Context) ([]string, error)
+
+	// method
+	CreateSignTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
+	// action
+	Transfer(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+	Approve(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+	Reject(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+	Sign(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+}
+
+type transactionUsecase struct {
+	transactionRepo repo.TransactionRepository
+	actionRepo      repo.ActionRepository
+	Transaction     iusecase.ITransaction
+}
+
+func NewTransactionUsecase(
+	transactionRepo repo.TransactionRepository,
+	actionRepo repo.ActionRepository,
+	transaction iusecase.ITransaction,
+) TransactionUsecase {
+	return &transactionUsecase{
+		transactionRepo: transactionRepo,
+		actionRepo:      actionRepo,
+		Transaction:     transaction,
+	}
+}
+
+func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
+	if !enums.IsValidMethod(tx.Method) {
+		return nil, errors.New("invalid method")
+	}
+
+	// Approve với ký và thu nhập
+	tx.Status = enums.TxStatusPending
+	if tx.Method == enums.EMethodSign || tx.Method == enums.EMethodRevenue {
+		tx.Status = enums.TxStatusDone
+	}
+
+	err := uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		_, err := uc.transactionRepo.Create(ctx, tx)
+		if err != nil {
+			return err
+		}
+		if tx.Method == enums.EMethodSign || tx.Method == enums.EMethodRevenue {
+			_, err = uc.actionRepo.Approve(ctx, &tx_domain.TxAction{
+				TxId:      tx.ID,
+				FromId:    tx.FromID,
+				FromOf:    tx.FromOf,
+				ToId:      tx.ToID,
+				ToOf:      tx.ToOf,
+				Action:    enums.EActionApprove,
+				Note:      tx.Note,
+				Timestamp: time.Now(),
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return tx, err
+}
+
+func (uc *transactionUsecase) GetTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error) {
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
+	if err != nil {
+		return nil, err
+	}
+	if tx == nil {
+		return nil, ErrNotFound
+	}
+	return tx, nil
+}
+
+func (uc *transactionUsecase) UpdateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
+	// Get existing transaction
+	existingTx, err := uc.transactionRepo.GetByID(ctx, &tx.ID)
+	if err != nil {
+		return nil, err
+	}
+	if existingTx == nil {
+		return nil, ErrNotFound
+	}
+
+	// Update only allowed fields
+	existingTx.Value = tx.Value
+	existingTx.TransactionName = tx.TransactionName
+	existingTx.Method = tx.Method
+	existingTx.Status = tx.Status
+	existingTx.Timestamp = tx.Timestamp
+
+	entity, err := uc.transactionRepo.Update(ctx, existingTx)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint64) error {
+	// Check if transaction exists
+	existingTx, err := uc.transactionRepo.GetByID(ctx, &id)
+	if err != nil {
+		return err
+	}
+	if existingTx == nil {
+		return ErrNotFound
+	}
+
+	return uc.transactionRepo.Delete(ctx, uint32(id))
+}
+
+func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
+	return uc.transactionRepo.List(ctx, filters)
+}
+
+func (uc *transactionUsecase) ApproveTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error) {
+	// Get existing transaction
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
+	if err != nil {
+		return nil, err
+	}
+	if tx == nil {
+		return nil, ErrNotFound
+	}
+
+	// Check if transaction can be approved
+	if tx.Status != enums.TxStatusPending {
+		return nil, ErrInvalidState
+	}
+
+	err = uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		currentUserId := _utils.GetProfileIdWithContext(ctx)
+		action := &tx_domain.TxAction{
+			TxId:      id,
+			FromId:    currentUserId,
+			FromOf:    enums.EOwnerUser,
+			ToId:      tx.ToID,
+			ToOf:      tx.ToOf,
+			Action:    enums.EActionApprove,
+			Note:      tx.Note,
+			Timestamp: time.Now(),
+		}
+		_, err = uc.actionRepo.Approve(ctx, action)
+		if err != nil {
+			return err
+		}
+		err = uc.transactionRepo.Approve(ctx, uint32(id), uint32(currentUserId))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+func (uc *transactionUsecase) RejectTransaction(ctx context.Context, id uint64) error {
+	// Get existing transaction
+	tx, err := uc.transactionRepo.GetByID(ctx, &id)
+	if err != nil {
+		return err
+	}
+	if tx == nil {
+		return ErrNotFound
+	}
+
+	// Check if transaction can be rejected
+	if tx.Status != enums.TxStatusPending {
+		return ErrInvalidState
+	}
+
+	err = uc.transactionRepo.Reject(ctx, uint32(id))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *transactionUsecase) GetTransactionTypes(ctx context.Context) ([]string, error) {
+	return uc.transactionRepo.GetTransactionTypes(ctx)
+}
+
+func (uc *transactionUsecase) Transfer(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
+	// action.Stat = enums.TxActionStatusPending
+	tx, err := uc.transactionRepo.GetByID(ctx, &action.TxId)
+	if err != nil {
+		return nil, err
+	}
+	if tx == nil {
+		return nil, ErrNotFound
+	}
+	action.Timestamp = time.Now()
+
+	return uc.transactionRepo.CreateAction(ctx, action)
+}
+
+func (uc *transactionUsecase) Approve(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
+	tx, err := uc.transactionRepo.GetByID(ctx, &action.TxId)
+	if err != nil {
+		return nil, err
+	}
+	if tx == nil {
+		return nil, ErrNotFound
+	}
+	action.Timestamp = time.Now()
+	action.Action = enums.EActionApprove
+	action.Note = tx.Note
+
+	uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		_, err := uc.actionRepo.Approve(ctx, action)
+		if err != nil {
+			return err
+		}
+
+		if tx.Method == enums.EMethodSign {
+			tx.Status = enums.TxStatusDone
+		}
+
+		_, err = uc.transactionRepo.Update(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return action, nil
+}
+
+func (uc *transactionUsecase) Reject(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
+	return nil, nil
+}
+
+func (uc *transactionUsecase) Sign(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
+	return nil, nil
+}
+
+func (uc *transactionUsecase) CreateSignTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
+	uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		tx.Method = enums.EMethodSign
+		tx.Status = enums.TxStatusPending
+		_, err := uc.transactionRepo.Create(ctx, tx)
+		if err != nil {
+			return err
+		}
+		_, err = uc.actionRepo.Sign(ctx, &tx_domain.TxAction{
+			TxId:      tx.ID,
+			FromId:    tx.FromID,
+			FromOf:    enums.EOwnerType(tx.FromOf),
+			ToId:      tx.ToID,
+			ToOf:      enums.EOwnerType(tx.ToOf),
+			Action:    enums.EActionSign,
+			Value:     tx.Value,
+			Note:      tx.Note,
+			Timestamp: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return tx, nil
+}

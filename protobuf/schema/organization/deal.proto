@@ -370,6 +370,7 @@ message BankAccountItem {
     string bankName = 2;
     string accountNumber = 3;
     string accountName = 4;
+    uint64 bankId = 5;
 }
 
 message InfoInvestmentResponse {

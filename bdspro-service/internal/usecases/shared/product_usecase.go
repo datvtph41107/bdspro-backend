@@ -3,11 +3,13 @@ package shared_usecase
 import (
 	"bdspro/infra/providers"
 	"bdspro/internal/domain"
+	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	iusecase "bdspro/internal/usecases/interface"
+	transaction_usecase "bdspro/internal/usecases/transaction"
 	"bdspro/internal/utils"
 	_dto "common/dto"
 	_routes "common/routes"
@@ -25,7 +27,7 @@ import (
 type IProductUsecase interface {
 	GetOwnerID(c context.Context) (*uint64, error)
 	HasPermission(c context.Context, productId *uint64, permission enums.EPermission) (bool, error)
-	GetOwnerType(c context.Context) enums.EOwnerType
+	GetOwnerType(c context.Context) enums.EOwnerOf
 	// CheckPermission(c context.Context, productID uint64, dto *dto.ProductSearchRequest) error
 }
 
@@ -46,11 +48,11 @@ type ProductUsecase struct {
 	ProductHistoryRepo repo.ProductHistoryRepo
 	MemberPlan         usecases.PlanUsecase
 	PostUsecase        *PostUsecase
-	OwnerType          enums.EOwnerType
+	OwnerType          enums.EOwnerOf
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 	NotificationClient iusecase.INotificationClient
 	Transaction        iusecase.ITransaction
-	TransactionUsecase usecases.TransactionUsecase
+	TransactionUsecase transaction_usecase.TransactionUsecase
 	AssetUsecase       *AssetUsecase
 	TransactionRepo    repo.TransactionRepository
 }
@@ -73,7 +75,7 @@ func NewProductUsecase(
 	productChildRepo repo.UProductChildRepo,
 	notificationClient iusecase.INotificationClient,
 	transaction iusecase.ITransaction,
-	transactionUsecase usecases.TransactionUsecase,
+	transactionUsecase transaction_usecase.TransactionUsecase,
 	transactionRepo repo.TransactionRepository,
 	assetUsecase *AssetUsecase,
 ) *ProductUsecase {
@@ -122,7 +124,7 @@ func MakeProductUsecase(
 	amenity repo.AmenityRepo,
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
-	ownerType enums.EOwnerType,
+	ownerType enums.EOwnerOf,
 	transactionRepo repo.TransactionRepository,
 ) *ProductUsecase {
 	return &ProductUsecase{
@@ -157,7 +159,7 @@ func (s *ProductUsecase) CheckPermission(c context.Context, productId *uint64, p
 	return nil
 }
 
-func (s *ProductUsecase) GetOwnerID(c context.Context, ownerType enums.EOwnerType) uint64 {
+func (s *ProductUsecase) GetOwnerID(c context.Context, ownerType enums.EOwnerOf) uint64 {
 	// if ownerType == enums.EOwnerTypeOrganization {
 	// 	return s.This.GetOwnerID(c)
 	// }
@@ -738,7 +740,7 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 // 	return nil
 // }
 
-func (s *ProductUsecase) ProductDeposite(c context.Context, dto *domain.Transaction) (*domain.Transaction, error) {
+func (s *ProductUsecase) ProductDeposite(c context.Context, dto *tx_domain.Tx) (*tx_domain.Tx, error) {
 	// sản phẩm đang cọc
 	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductDeposite)
 	if err != nil {
@@ -750,13 +752,13 @@ func (s *ProductUsecase) ProductDeposite(c context.Context, dto *domain.Transact
 		return nil, err
 	}
 
-	var tx *domain.Transaction
+	var tx *tx_domain.Tx
 	if dto.TransactionType == 10 && product.SaleTransactionID != nil {
 		tx, err = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
 	} else if dto.TransactionType == 20 && product.RentTransactionID != nil {
 		tx, err = s.TransactionRepo.GetByID(c, product.RentTransactionID)
 	} else {
-		tx = &domain.Transaction{}
+		tx = &tx_domain.Tx{}
 	}
 	if err != nil {
 		return nil, err
@@ -787,7 +789,7 @@ func (s *ProductUsecase) ProductDeposite(c context.Context, dto *domain.Transact
 			}
 		}
 
-		newTx := &domain.Transaction{
+		newTx := &tx_domain.Tx{
 			ProductID:         dto.ProductID,
 			ContactID:         dto.ContactID,
 			DepositeAmount:    dto.DepositeAmount,
@@ -903,7 +905,7 @@ func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.P
 	return entities, total, nil
 }
 
-func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) SearchByProductAccess(c context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.ProductRepo.SearchByProductAccess(c, targetID, targetType, dto)
 }
 

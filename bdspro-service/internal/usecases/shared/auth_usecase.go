@@ -13,7 +13,7 @@ func NewRequestUsecase() *RequestUsecase {
 	return &RequestUsecase{}
 }
 
-func (uc *RequestUsecase) GetOwnerIDAndType(c context.Context) (*uint64, enums.EOwnerType, error) {
+func (uc *RequestUsecase) GetOwnerIDAndType(c context.Context) (*uint64, enums.EOwnerOf, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	return &profileId, enums.EOwnerTypeMember, nil
 }

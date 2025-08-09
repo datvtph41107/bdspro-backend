@@ -65,6 +65,7 @@ var wireSet = wire.NewSet(
 	organization_internal_usecase.NewColorUsecase,
 	organization_infrastructure_validator.NewColorValidator,
 	organization_config.NewConfigApp,
+	organization_infrastructure_handler.NewContractDealHandler,
 	organization_infrastructure_handler.NewCostTypeHandler,
 	organization_infrastructure_transformer.NewCostTypeMapper,
 	organization_infrastructure_repository_postgres.NewCostTypeRepository,
@@ -184,7 +185,9 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewOrganizationTransformer,
 	organization_internal_usecase.NewOrganizationUsecase,
 	organization_infrastructure_validator.NewOrganizationValidator,
+	organization_infrastructure_client.NewPaymentClient,
 	organization_infrastructure_repository_postgres.NewPostgresTransaction,
+	organization_infrastructure_client.NewTransactionClient,
 	organization_infrastructure_client.NewUserClient,
 )
 func InitializeApp() (*config.ConfigApp, error) {

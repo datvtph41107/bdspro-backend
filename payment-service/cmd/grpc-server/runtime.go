@@ -1,8 +1,9 @@
 package grpcserver
 
 import (
+	"payment/appconfig"
+
 	"github.com/spf13/cobra"
-	"github.com/tuandq2112/payment-service/appconfig"
 )
 
 var GrpcServerCmd = &cobra.Command{

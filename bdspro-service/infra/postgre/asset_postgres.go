@@ -554,7 +554,7 @@ func (r *PostgreAsset) GetAssetPublish(profileId uint64) ([]domain.Asset, int64,
 	return assets, int64(len(assets)), nil
 }
 
-func (r *PostgreAsset) SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (r *PostgreAsset) SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	if err := r.DB.WithContext(ctx).Where("owner_user_id = ? and deleted_at is null", targetID).Find(&products).Error; err != nil {
 		return nil, 0, err

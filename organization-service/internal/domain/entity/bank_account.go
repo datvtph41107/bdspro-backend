@@ -10,6 +10,7 @@ type BankAccount struct {
 	OwnerID       uint64          `gorm:"not null"`
 	OwnerType     enums.OwnerType `gorm:"not null;default:10"`
 	BankName      string          `gorm:"not null"`
+	BankId        uint64          ``
 	AccountNumber string          `gorm:"not null"`
 	AccountName   string          `gorm:"not null"`
 	AccountType   uint            // 1: tài khoản, 2: thẻ

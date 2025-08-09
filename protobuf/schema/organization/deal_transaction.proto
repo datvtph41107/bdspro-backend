@@ -69,13 +69,6 @@ service DealTransactionService {
             body: "*"
         };
     }
-
-    // Lấy thống kê tài chính
-    rpc GetFinancialSummary(GetFinancialSummaryRequest) returns (FinancialSummaryResponse) {
-        option (google.api.http) = {
-            get: "/v2/org/deal/{dealId}/financial-summary"
-        };
-    }
 }
 
 // Request tạo giao dịch
@@ -125,11 +118,6 @@ message ApproveDealTransactionRequest {
     string rejectReason = 2;
 }
 
-// Request lấy thống kê tài chính
-message GetFinancialSummaryRequest {
-    uint64 dealId = 1;
-}
-
 // Response cho giao dịch
 message DealTransactionResponse {
     uint64 id = 1;
@@ -157,15 +145,3 @@ message DealTransactionListResponse {
     repeated DealTransactionResponse data = 1;
     int32 total = 2;
 }
-
-// Response cho thống kê tài chính
-message FinancialSummaryResponse {
-    uint64 dealId = 1;
-    double totalRevenue = 2;
-    double totalExpense = 3;
-    double netProfit = 4;
-    double profitMargin = 5;
-    double targetProfit = 6;
-    string profitStatus = 7;
-    repeated string warningMessages = 8;
-} 

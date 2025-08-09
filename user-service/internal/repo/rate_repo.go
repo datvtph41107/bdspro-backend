@@ -16,4 +16,5 @@ type RateRepo interface {
 	GetByProfileIdAndTargetIdAndTargetType(ctx context.Context, profileId uint64, targetId uint64, targetType uint8) (*user_model.Rate, error)
 	GetHistoryRate(ctx context.Context, rateId uint64, dto *_dto.Pagable) ([]user_model.RateItem, int64, error)
 	UpdateHidden(ctx context.Context, id uint64, hidden bool) error
+	CountInfo(ctx context.Context, targetId uint64, targetType uint8) (user_model.RateStats, error)
 }

@@ -43,6 +43,9 @@ func main() {
 	if moduleName == "notification" {
 		moduleName = "noti"
 	}
+	if moduleName == "transaction" {
+		moduleName = "tx"
+	}
 	writeWireFile(updatedFuncs, binds, rootPackage, prefix, wireFile, moduleName)
 	fmt.Println("✅ wire.go updated successfully!")
 

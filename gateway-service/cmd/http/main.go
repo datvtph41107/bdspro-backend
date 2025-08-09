@@ -74,6 +74,9 @@ var publicRoutes = []string{
 	"/v1/bdspro/v2/user/product/market",
 	"/v1/bdspro/v2/user/posts/publish",
 	"/v1/user/rate/list",
+	"/v1/user/oauth/zalo/login",
+	"/v1/user/oauth/facebook/login",
+	"/v1/user/oauth/google/login",
 	"/v1/public",
 	"/v1/file/swagger",
 	"/v1/file/upload",
@@ -115,6 +118,7 @@ var publicRoutes = []string{
 	"/v2/payment/sepay/webhook",
 	"/v2/user/rate/list",
 	"/v2/user/profile/search/public",
+	"/v2/payment/bank/all",
 	// "/v1/search/plan/list",
 }
 
@@ -188,6 +192,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterUserService(ctx, mux, env, opts)
 		service.RegisterChatService(ctx, mux, env, opts)
 		service.RegisterMarketingService(ctx, mux, env, opts)
+		service.RegisterTransactionService(ctx, mux, env, opts)
 
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 

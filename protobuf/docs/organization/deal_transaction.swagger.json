@@ -158,38 +158,6 @@
         ]
       }
     },
-    "/v2/org/deal/{dealId}/financial-summary": {
-      "get": {
-        "summary": "Lấy thống kê tài chính",
-        "operationId": "DealTransactionService_GetFinancialSummary",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbFinancialSummaryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "dealId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "DealTransactionService"
-        ]
-      }
-    },
     "/v2/org/deal/{dealId}/transactions": {
       "get": {
         "summary": "Lấy danh sách giao dịch",
@@ -456,45 +424,6 @@
         }
       },
       "title": "Response cho giao dịch"
-    },
-    "organizationpbFinancialSummaryResponse": {
-      "type": "object",
-      "properties": {
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "totalRevenue": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalExpense": {
-          "type": "number",
-          "format": "double"
-        },
-        "netProfit": {
-          "type": "number",
-          "format": "double"
-        },
-        "profitMargin": {
-          "type": "number",
-          "format": "double"
-        },
-        "targetProfit": {
-          "type": "number",
-          "format": "double"
-        },
-        "profitStatus": {
-          "type": "string"
-        },
-        "warningMessages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "title": "Response cho thống kê tài chính"
     },
     "organizationpbTransactionType": {
       "type": "string",

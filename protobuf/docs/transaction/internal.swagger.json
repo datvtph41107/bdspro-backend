@@ -1,0 +1,73 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "transaction/internal.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "InternalTransactionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "transactionpbActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbOwnerType": {
+      "type": "string",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "default": "OWNER_TYPE_UNKNOWN",
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    }
+  }
+}

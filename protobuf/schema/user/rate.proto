@@ -4,6 +4,7 @@ package userpb;
 option go_package = "pb/types/user;userpb";
 
 import "shared/common.proto";
+import "user/profile.proto";
 import "google/api/annotations.proto";
 
 service RateService {
@@ -38,6 +39,11 @@ service RateService {
     option (google.api.http) = {
       put: "/v2/user/rate/hidden/{id}"
       body: "*"
+    };
+  };
+  rpc GetRateStats(sharepb.IdRequest) returns (RateStats) {
+    option (google.api.http) = {
+      get: "/v2/user/rate/stats/{id}"
     };
   };
 }

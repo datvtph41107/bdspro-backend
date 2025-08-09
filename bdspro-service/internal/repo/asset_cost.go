@@ -10,5 +10,5 @@ import (
 
 type AssetCostRepo interface {
 	common.IOwnerRepo[domain.AssetCost, *dto.AssetCostSearchDTO]
-	Find(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto *dto.AssetCostSearchDTO) ([]domain.AssetCost, int64, error)
+	Find(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto *dto.AssetCostSearchDTO) ([]domain.AssetCost, int64, error)
 }

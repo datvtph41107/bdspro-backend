@@ -1,0 +1,215 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+import "google/protobuf/empty.proto";
+import "organization/deal.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+// Enum cho loại giao dịch
+enum ContractType {
+    CONTRACT_TYPE_UNKNOWN = 0;
+    CONTRACT_TYPE_EXPENSE = 10; // Chi phí
+    CONTRACT_TYPE_REVENUE = 20; // Doanh thu
+}
+
+// Enum cho trạng thái phê duyệt
+enum ContractStatus {
+    CONTRACT_STATUS_UNKNOWN = 0;
+    CONTRACT_STATUS_PENDING = 10;   // Chờ xác nhận
+    CONTRACT_STATUS_APPROVED = 20;  // Đã xác nhận
+    CONTRACT_STATUS_REJECTED = 30;  // Từ chối
+}
+
+service DealContractService {
+    // Cập nhật giao dịch
+    rpc UpdateContract(UpdateDealContractRequest) returns (DealContractResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/contract/deal/{id}"
+            body: "*"
+        };
+    }
+
+    // Xóa giao dịch
+    rpc DeleteContract(DeleteDealContractRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/org/contract/deal/{id}"
+        };
+    }
+
+    // Lấy chi tiết giao dịch
+    rpc GetContract(GetDealContractRequest) returns (DealContractResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/contract/deal/{id}"
+        };
+    }
+
+    // Lấy danh sách giao dịch
+    rpc GetContracts(GetDealContractsRequest) returns (DealContractListResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/contract/deal/{dealId}"
+        };
+    }
+
+    // Phê duyệt/từ chối giao dịch
+    rpc ApproveContract(ApproveDealContractRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v2/org/contract/deal/{id}/approve"
+            body: "*"
+        };
+    }
+
+    // Lấy thống kê tài chính
+    rpc GetFinancialSummary(GetFinancialSummaryRequest) returns (FinancialSummaryResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/contract/deal/{dealId}/financial-summary"
+        };
+    }
+
+    // Giao dịch ký hợp đồng
+    rpc SignContract(SignContractRequest) returns (DealContractResp) {
+        option (google.api.http) = {
+            post: "/v2/org/contract/deal/sign"
+            body: "*"
+        };
+    }
+
+    // Giao dịch mua/bán/thuê
+    rpc TransferContract(TransferContractRequest) returns (DealContractResp) {
+        option (google.api.http) = {
+            post: "/v2/org/contract/deal/{id}/transfer"
+            body: "*"
+        };
+    }
+
+    // // Giao dịch thu/chi
+    // rpc CostContract(CostContractRequest) returns (DealContractResponse) {
+    //     option (google.api.http) = {
+    //         post: "/v2/org/contract/deal/{id}/cost"
+    //         body: "*"
+    //     };
+    // }
+}
+
+// Request ký hợp đồng
+message SignContractRequest {
+    uint64 dealId = 1;
+    uint64 signedBy = 2;
+    string signedAt = 3;
+    string note = 4;
+    double amount = 5;
+    string contractName = 6;
+    repeated DocumentItem documentIds = 7;
+}
+
+
+// Request mua/bán/thuê
+message TransferContractRequest {
+    uint64 id = 1;
+}
+
+// Request thu/chi
+message CostContractRequest {
+    uint64 id = 1;
+}
+
+message DealContractResp {
+    uint64 transactionId = 1;
+}
+
+// Request tạo giao dịch
+message CreateDealContractRequest {
+    uint64 dealId = 1;
+    ContractType type = 2;
+    double amount = 3;
+    string description = 4;
+    string contractDate = 5;
+    string category = 6;
+    string note = 7;
+    repeated uint64 documentIds = 8;
+}
+
+// Request cập nhật giao dịch
+message UpdateDealContractRequest {
+    uint64 id = 1;
+    double amount = 2;
+    string description = 3;
+    string contractDate = 4;
+    string category = 5;
+    string note = 6;
+    repeated uint64 documentIds = 7;
+}
+
+// Request xóa giao dịch
+message DeleteDealContractRequest {
+    uint64 id = 1;
+}
+
+// Request lấy chi tiết giao dịch
+message GetDealContractRequest {
+    uint64 id = 1;
+}
+
+// Request lấy danh sách giao dịch
+message GetDealContractsRequest {
+    uint64 dealId = 1;
+    optional ContractType type = 2;
+    uint32 page = 3;
+    uint32 size = 4;
+}
+
+// Request phê duyệt giao dịch
+message ApproveDealContractRequest {
+    uint64 id = 1;
+    string rejectReason = 2;
+}
+
+// Response cho giao dịch
+message DealContractResponse {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    ContractType type = 3;
+    string typeName = 4;
+    double amount = 5;
+    string description = 6;
+    string contractDate = 7;
+    string category = 8;
+    string note = 9;
+    uint64 createdBy = 10;
+    ContractStatus status = 11;
+    string statusName = 12;
+    optional uint64 approvedBy = 13;
+    optional string approvedAt = 14;
+    string rejectReason = 15;
+    repeated uint64 documentIds = 16;
+    string createdAt = 17;
+    string updatedAt = 18;
+}
+
+// Response cho danh sách giao dịch
+message DealContractListResponse {
+    repeated DealContractResponse data = 1;
+    int32 total = 2;
+}
+
+// Request lấy thống kê tài chính
+message GetFinancialSummaryRequest {
+    uint64 dealId = 1;
+}
+
+
+// Response cho thống kê tài chính
+message FinancialSummaryResponse {
+    uint64 dealId = 1;
+    double totalRevenue = 2;
+    double totalExpense = 3;
+    double netProfit = 4;
+    double profitMargin = 5;
+    double targetProfit = 6;
+    string profitStatus = 7;
+    repeated string warningMessages = 8;
+} 

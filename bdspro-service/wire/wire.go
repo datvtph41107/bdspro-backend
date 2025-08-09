@@ -22,6 +22,7 @@ import (
 	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
+	bdspro_internal_usecases_transaction "bdspro/internal/usecases/transaction"
 )
 
 // Inject dependencies
@@ -171,7 +172,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_services.NewTransactionHandler,
 	bdspro_infra_postgre.NewTransactionPostgresRepository,
 	bdspro_infra_mapper.NewTransactionTransformer,
-	bdspro_internal_usecases.NewTransactionUsecase,
+	bdspro_internal_usecases_transaction.NewTransactionUsecase,
 	bdspro_infra_validator.NewTransactionValidator,
 	bdspro_infra_router_user.NewUAssetLegalRoute,
 	bdspro_internal_usecases.NewUPostMediaUsecase,

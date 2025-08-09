@@ -52,7 +52,7 @@ func (m *AssetCostMapper) AssetCostPbToDomain(pbAssetCost *pb_bdspro.AssetCostDT
 		Amount:      pbAssetCost.Amount,
 		Date:        _utils.ParseStringToTime(pbAssetCost.Date),
 		Description: pbAssetCost.Description,
-		OwnerType:   enums.EOwnerType(pbAssetCost.OwnerType),
+		OwnerType:   enums.EOwnerOf(pbAssetCost.OwnerType),
 		Type:        enums.ECostType(pbAssetCost.Type),
 		CostTypeID:  pbAssetCost.CostTypeId,
 	}

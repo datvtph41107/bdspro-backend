@@ -7,30 +7,35 @@ import (
 	"os/signal"
 	"syscall"
 
+	paymentpb "pb/types/payment"
+
+	"payment/appconfig"
+	"payment/internal/interface/handler"
+	"payment/internal/server/grpc/interceptors"
+
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
-	"github.com/tuandq2112/payment-service/appconfig"
-	"github.com/tuandq2112/payment-service/internal/interface/handler"
-	"github.com/tuandq2112/payment-service/internal/server/grpc/interceptors"
-	paymentpb "pb/types/payment"
 	"google.golang.org/grpc"
 )
 
 type GRPCServer struct {
-	paymentHandler *handler.PaymentHandler
+	paymentHandler  *handler.PaymentHandler
+	bankHandler     *handler.BankHandler
+	internalHandler *handler.InternalHandler
 
-	logger                         *flogging.FabricLogger
+	logger *flogging.FabricLogger
 }
 
 func NewGRPCServer(
 	paymentHandler *handler.PaymentHandler,
-
-
+	bankHandler *handler.BankHandler,
+	internalHandler *handler.InternalHandler,
 ) *GRPCServer {
 	return &GRPCServer{
-		paymentHandler: paymentHandler,
-
-		logger: flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		paymentHandler:  paymentHandler,
+		bankHandler:     bankHandler,
+		internalHandler: internalHandler,
+		logger:          flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
 
@@ -39,6 +44,8 @@ func (s *GRPCServer) Start() {
 
 	start, stop := buildGRPCServer(s.logger,
 		s.paymentHandler,
+		s.bankHandler,
+		s.internalHandler,
 	)
 
 	g.Add(start, stop)
@@ -53,10 +60,12 @@ func (s *GRPCServer) Start() {
 
 func buildGRPCServer(logger *flogging.FabricLogger,
 	paymentHandler *handler.PaymentHandler,
+	bankHandler *handler.BankHandler,
+	internalHandler *handler.InternalHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
-		interceptors.UnaryAuthInterceptor(logger, appconfig.Whitelist),
+		// interceptors.UnaryAuthInterceptor(logger, appconfig.Whitelist),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
@@ -66,6 +75,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		func(s *grpc.Server) {
 			logger.Info("Registering PaymentServiceServer")
 			paymentpb.RegisterPaymentServiceServer(s, paymentHandler)
+			paymentpb.RegisterBankServiceServer(s, bankHandler)
+			paymentpb.RegisterInternalServiceServer(s, internalHandler)
 		},
 		unaryInts,
 		streamInts,

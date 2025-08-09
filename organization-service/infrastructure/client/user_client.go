@@ -225,3 +225,28 @@ func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*o
 		}
 	}
 }
+
+func (c *UserClient) MapProfileToDealMember(ctx context.Context, members []*organizationpb.DealMember) {
+	ids := make([]uint64, len(members))
+	for i, member := range members {
+		ids[i] = uint64(member.MemberId)
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		p.Phone = ""
+		profileMap[p.Id] = p
+	}
+
+	for _, member := range members {
+		if p, ok := profileMap[uint64(member.MemberId)]; ok {
+			member.MemberName = p.FullName
+			member.MemberAvatar = p.Avatar
+			member.MemberPhone = p.Phone
+			member.MemberVerified = p.TickVerified
+		}
+	}
+}

@@ -32,6 +32,7 @@ type AppointmentModel struct {
 	Description      string
 	ReminderSchedule uint32
 	Mode             uint32
+	Status           uint32
 	TransactionIds   string
 
 	DeletedAt *time.Time `gorm:"index"`
@@ -83,6 +84,7 @@ func AppointmentModelToEntity(a *AppointmentModel) *entity.Appointment {
 		Description:      a.Description,
 		ReminderSchedule: a.ReminderSchedule,
 		Mode:             a.Mode,
+		Status:           a.Status,
 		TransactionIds:   transactionIds,
 	}
 }
@@ -116,6 +118,7 @@ func EntityToAppointmentModel(a *entity.Appointment) *AppointmentModel {
 		Description:      a.Description,
 		ReminderSchedule: a.ReminderSchedule,
 		Mode:             a.Mode,
+		Status:           a.Status,
 		TransactionIds:   strings.Join(transactionIds, ","),
 	}
 }

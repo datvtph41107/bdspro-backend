@@ -1,0 +1,66 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# cursor-rules.yml
+rules:
+  - description: "Go project with Clean Architecture and structured infra layer"
+    match: "**/*.go"
+    instructions: |
+      - Project tuân theo Clean Architecture, chia layer rõ ràng:
+
+        **1. config/**
+        - Chứa file cấu hình (YAML, ENV) và code load config.
+        - Không chứa logic business.
+        
+        **2. infra/**
+        - Layer triển khai hạ tầng, không chứa business logic.
+        - Các thư mục con:
+          - client/: Chứa code kết nối tới service bên ngoài (API client, gRPC client...).
+          - db/: Code kết nối database (khởi tạo connection pool, transaction management).
+          - impl/: Chứa implementation của các interface được định nghĩa ở internal/repo hoặc internal/interface.
+          - mapper/: Chuyển đổi giữa entity/domain và DTO hoặc schema DB.
+          - postgre/: Triển khai repository cho PostgreSQL (có thể chia nhỏ file theo bảng).
+          - router/: Định nghĩa HTTP routes, binding request/response DTO.
+          - services/: Chứa integration service implementation (ví dụ email service, file storage service).
+        - Quy tắc import:
+          - infra không import từ internal/usecase.
+          - infra có thể import internal/domain, internal/dto, internal/interface để implement.
+          - Không viết business logic ở đây, chỉ là triển khai kỹ thuật (technical detail).
+
+        **3. internal/**
+        - domain/: Entity và business object.
+        - dto/: Data Transfer Objects cho request/response.
+        - enums/: Enum/constant dùng chung.
+        - interface/: Định nghĩa interface cho repo, service, client...
+        - repo/: Repository interface (không chứa implementation).
+        - usecase/: Chứa business logic, gọi repository hoặc service qua interface.
+
+        **4. utils/**
+        - Hàm tiện ích dùng chung, không phụ thuộc vào business logic.
+
+        **5. cmd/**
+        - Entry point khởi chạy ứng dụng.
+
+      - **Quy tắc coding đặc biệt khi lấy thông tin user từ request**:
+        - Luôn import utils với alias `_utils`:
+          ```go
+          import _utils "common/utils"
+          ```
+        - Để lấy **profileId** của user:
+          ```go
+          profileID := _utils.GetUserIDFromContext(ctx)
+          ```
+        - Để lấy **organizationId** của tổ chức hiện tại:
+          ```go
+          organizationID := _utils.GetOrganizationIdFromContext(ctx)
+          ```
+        - Không được tự parse thông tin từ JWT hay context ngoài utils.
+        - Chỉ gọi các hàm này trong layer usecase, router, hoặc service cần thông tin user.
+
+      - DTO chỉ dùng để giao tiếp với router/controller.
+      - Mapper phải dùng để convert giữa DTO và domain/entity, không convert trực tiếp ở usecase.
+      - Repository implementation phải nằm trong infra/impl hoặc infra/postgre.
+      - Luôn tách interface và implementation ở các layer khác nhau.
+      - Viết test với `_test.go` và mock dependency qua interface.

@@ -5,6 +5,8 @@ import (
 	pb_bdspro "pb/types/bdspro"
 	organizationpb "pb/types/organization"
 
+	sharepb "pb/types/shared"
+
 	"github.com/tuandq2112/appointment-service/internal/domain/entity"
 	"github.com/tuandq2112/appointment-service/internal/domain/repository"
 	"github.com/tuandq2112/appointment-service/internal/dto"
@@ -23,10 +25,21 @@ type appointmentUsecase struct {
 	appointmentRepo    repository.AppointmentRepository
 	organizationClient client.OrganizationClient
 	bdsproClient       client.BdsproClient
+	userClient         *client.UserClient
 }
 
-func NewAppointmentUsecase(appointmentRepo repository.AppointmentRepository, organizationClient client.OrganizationClient, bdsproClient client.BdsproClient) AppointmentUsecase {
-	return &appointmentUsecase{appointmentRepo: appointmentRepo, organizationClient: organizationClient, bdsproClient: bdsproClient}
+func NewAppointmentUsecase(
+	appointmentRepo repository.AppointmentRepository,
+	organizationClient client.OrganizationClient,
+	bdsproClient client.BdsproClient,
+	userClient *client.UserClient,
+) AppointmentUsecase {
+	return &appointmentUsecase{
+		appointmentRepo:    appointmentRepo,
+		organizationClient: organizationClient,
+		bdsproClient:       bdsproClient,
+		userClient:         userClient,
+	}
 }
 
 func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error) {
@@ -68,10 +81,10 @@ func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[s
 	}
 	appointmentsDTO := make([]*dto.AppointmentDTO, 0)
 	for _, appointment := range appointments {
-		appointmentDTO, err := uc.mapAppointmentDTO(ctx, appointment)
-		if err != nil {
-			return nil, 0, err
-		}
+		appointmentDTO, _ := uc.mapAppointmentDTO(ctx, appointment)
+		// if err != nil {
+		// 	return nil, 0, err
+		// }
 		appointmentsDTO = append(appointmentsDTO, appointmentDTO)
 	}
 	return appointmentsDTO, total, nil
@@ -81,7 +94,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	dealId := uint64(appointment.DealId)
 	productIds := make([]uint64, len(appointment.ProductIds))
 	participantIds := make([]uint64, len(appointment.ParticipantIds))
-	
+
 	for i, id := range appointment.ProductIds {
 		productIds[i] = uint64(id)
 	}
@@ -94,7 +107,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		deal             *organizationpb.GroupDeal
 		products         *pb_bdspro.ProductAttachmentResponse
 		dealTransactions []*organizationpb.DealTransactionResponse
-		participants     map[uint64]*organizationpb.DealInvitationMember
+		participants     []*sharepb.ProfileItem
 		err              error
 	}
 
@@ -117,7 +130,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}()
 
 	go func() {
-		participants, err := uc.organizationClient.GetDealInvitationsByIds(ctx, dealId, participantIds)
+		participants, err := uc.userClient.GetProfileByIds(ctx, participantIds)
 		ch <- result{participants: participants, err: err}
 	}()
 
@@ -125,13 +138,13 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	var deal *organizationpb.GroupDeal
 	var products *pb_bdspro.ProductAttachmentResponse
 	var dealTransactions []*organizationpb.DealTransactionResponse
-	var participants map[uint64]*organizationpb.DealInvitationMember
+	var participants []*sharepb.ProfileItem
 
 	for i := 0; i < 4; i++ {
 		res := <-ch
-		if res.err != nil {
-			return nil, res.err
-		}
+		// if res.err != nil {
+		// 	return nil, res.err
+		// }
 		if res.deal != nil {
 			deal = res.deal
 		}
@@ -147,18 +160,22 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}
 
 	// Build participants array efficiently
-	participantsArray := make([]*organizationpb.DealInvitationMember, 0, len(appointment.ParticipantIds))
-	for _, participantId := range appointment.ParticipantIds {
-		if participant, exists := participants[uint64(participantId)]; exists {
-			participantsArray = append(participantsArray, participant)
-		}
+	participantsArray := make([]*sharepb.ProfileItem, 0, len(appointment.ParticipantIds))
+	for _, participant := range participants {
+		participantsArray = append(participantsArray, participant)
 	}
 
-	return &dto.AppointmentDTO{
+	out := &dto.AppointmentDTO{
 		Appointment:      appointment,
 		Deal:             deal,
-		Products:         products.Data,
 		DealTransactions: dealTransactions,
 		Participants:     participantsArray,
-	}, nil
+	}
+
+	if products != nil {
+		out.Products = products.Data
+	}
+
+	return out, nil
+
 }

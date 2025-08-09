@@ -11,7 +11,7 @@ type Sharing struct {
 	TargetID    uint64            `gorm:"column:target_id" json:"targetId"`
 	TargetType  enums.ETargetType `gorm:"column:target_type" json:"targetType"`
 	OwnerID     uint64            `gorm:"column:owner_id" json:"ownerId"`
-	OwnerType   enums.EOwnerType  `gorm:"column:owner_type" json:"ownerType"`
+	OwnerType   enums.EOwnerOf    `gorm:"column:owner_type" json:"ownerType"`
 	ShareID     uint64            `gorm:"column:share_id" json:"shareId"`
 	ShareType   string            `gorm:"column:share_type" json:"shareType"`
 	Permissions string            `gorm:"column:permissions" json:"permissions"`

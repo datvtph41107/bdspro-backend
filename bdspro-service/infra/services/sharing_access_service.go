@@ -47,7 +47,7 @@ func (s *SharingAccessService) BulkSave(ctx context.Context, req *pb_bdspro.Shar
 		return nil, err
 	}
 
-	entities, err := s.Usecase.BulkSave(ctx, req.DomainId, enums.EOwnerType(req.FromType), dtos)
+	entities, err := s.Usecase.BulkSave(ctx, req.DomainId, enums.EOwnerOf(req.FromType), dtos)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (s *SharingAccessService) SearchProduct(ctx context.Context, req *pb_bdspro
 			Message: "domainID and domain and fromType are required",
 		}
 	}
-	entities, err := s.Usecase.SearchForProduct(ctx, enums.EOwnerType(req.FromType), searchDTO)
+	entities, err := s.Usecase.SearchForProduct(ctx, enums.EOwnerOf(req.FromType), searchDTO)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *SharingAccessService) SearchAsset(ctx context.Context, req *pb_bdspro.S
 		return nil, err
 	}
 	entities, err := s.Usecase.SearchForAsset(ctx,
-		enums.EOwnerType(req.FromType),
+		enums.EOwnerOf(req.FromType),
 		searchDTO,
 	)
 	if err != nil {

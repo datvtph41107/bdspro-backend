@@ -11,9 +11,9 @@ type SharingAccess struct {
 	// Product     *ProductItem        `gorm:"foreignKey:ProductID" json:"product"`
 	DomainID    uint64              `json:"productId"`
 	Domain      enums.EDomainAccess `gorm:"column:domain;default:10" json:"domain"`
-	FromType    enums.EOwnerType    `gorm:"column:from_type;default:10" json:"fromType"`
+	FromType    enums.EOwnerOf      `gorm:"column:from_type;default:10" json:"fromType"`
 	FromId      uint64              `json:"fromId"`
-	ToType      enums.EOwnerType    `json:"toType"`
+	ToType      enums.EOwnerOf      `json:"toType"`
 	ToId        uint64              `json:"toId"`
 	Fields      string              `json:"fields"`
 	Commission  float32             `json:"commission"`

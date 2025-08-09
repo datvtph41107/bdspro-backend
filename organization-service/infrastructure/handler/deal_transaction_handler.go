@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"common/utils"
 	"context"
 	pb "pb/types/organization"
 
@@ -226,10 +225,4 @@ func (h *DealTransactionHandler) GetFinancialSummary(ctx context.Context, req *p
 	// Transform response
 	pbResponse := h.transformer.TransformToProtoFinancialSummary(summary)
 	return pbResponse, nil
-}
-
-// Helper function to get user ID from context
-func getUserIDFromContext(ctx context.Context) (uint64, error) {
-	userID := _utils.GetUserIDFromContext(ctx)
-	return userID, nil
 }

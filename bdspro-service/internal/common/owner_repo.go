@@ -8,8 +8,8 @@ import (
 )
 
 type IOwnerRepo[T any, D DTO] interface {
-	QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) (*gorm.DB, error)
-	Search(c context.Context, profileId uint64, ownerType enums.EOwnerType, dto D) ([]T, int64, error)
+	QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto D) (*gorm.DB, error)
+	Search(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto D) ([]T, int64, error)
 	GetByID(c context.Context, id uint64) (*T, error)
 	Detail(c context.Context, id uint64) (*T, error)
 	Create(c context.Context, entity *T) error

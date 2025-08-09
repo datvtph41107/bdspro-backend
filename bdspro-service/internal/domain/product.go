@@ -1,6 +1,7 @@
 package domain
 
 import (
+	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/enums"
 	_models "common/models"
 	"time"
@@ -44,14 +45,14 @@ type Product struct {
 	TransactionType   uint                     `gorm:"type:smallint;default:10" json:"transactionType"`
 	SaleStatus        enums.EProductSaleStatus `gorm:"type:smallint;not null;default:10" json:"saleStatus"` // 1=Chưa bán, 2=Đang bán, 3=Đã bán
 	SaleTransactionID *uint64                  `json:"saleTransactionId,omitempty"`
-	SaleTransaction   *Transaction             `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`
+	SaleTransaction   *tx_domain.Tx            `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`
 	SaleVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	RentStatus        enums.EProductRentStatus `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	RentTransactionID *uint64                  `json:"rentTransactionId,omitempty"`
-	RentTransaction   *Transaction             `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
+	RentTransaction   *tx_domain.Tx            `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
 	RentVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	OwnerID           uint64                   `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
-	OwnerType         enums.EOwnerType         `gorm:"type:smallint;not null;default:10" json:"ownerType"`
+	OwnerType         enums.EOwnerOf           `gorm:"type:smallint;not null;default:10" json:"ownerType"`
 	ProvinceID        *uint64                  `json:"provinceId,omitempty"`
 	Province          *Region                  `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	DistrictID        *uint64                  `json:"districtId,omitempty"`

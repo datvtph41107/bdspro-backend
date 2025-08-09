@@ -8,15 +8,15 @@ import (
 
 type AssetCost struct {
 	_models.BaseEntity
-	AssetID     uint64           `json:"assetId" binding:"required"`
-	OwnerID     uint64           `json:"ownerId"`
-	OwnerType   enums.EOwnerType `gorm:"default:10" json:"ownerType"`
-	Type        enums.ECostType  `gorm:"default:10" json:"type" binding:"required"`
-	CostTypeID  uint64           `json:"costTypeId"`
-	Amount      float64          `json:"amount" binding:"required"`
-	Date        *time.Time       `json:"date"` // ngày chi
-	Description string           `json:"description"`
-	CostType    *AssetCostType   `gorm:"foreignKey:CostTypeID;references:ID" json:"costType"`
+	AssetID     uint64          `json:"assetId" binding:"required"`
+	OwnerID     uint64          `json:"ownerId"`
+	OwnerType   enums.EOwnerOf  `gorm:"default:10" json:"ownerType"`
+	Type        enums.ECostType `gorm:"default:10" json:"type" binding:"required"`
+	CostTypeID  uint64          `json:"costTypeId"`
+	Amount      float64         `json:"amount" binding:"required"`
+	Date        *time.Time      `json:"date"` // ngày chi
+	Description string          `json:"description"`
+	CostType    *AssetCostType  `gorm:"foreignKey:CostTypeID;references:ID" json:"costType"`
 }
 
 func (AssetCost) TableName() string {

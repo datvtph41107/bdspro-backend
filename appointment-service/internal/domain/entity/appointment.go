@@ -20,5 +20,6 @@ type Appointment struct {
 	ReminderSchedule uint32
 	Mode             uint32
 	OptionExtend     uint32
+	Status           uint32
 	TransactionIds   []uint32
 }

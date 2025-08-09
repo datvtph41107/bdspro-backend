@@ -5,7 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/tuandq2112/payment-service/appconfig"
+	"payment/appconfig"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

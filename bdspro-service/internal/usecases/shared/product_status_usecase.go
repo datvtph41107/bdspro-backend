@@ -2,6 +2,7 @@ package shared_usecase
 
 import (
 	"bdspro/internal/domain"
+	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_routes "common/routes"
@@ -164,8 +165,8 @@ func (s *ProductUsecase) SaleStatusToSold(ctx context.Context, product *domain.P
 	return nil
 }
 
-func (s *ProductUsecase) EmptyTransaction(product *domain.Product, transactionType enums.TransactionType) *domain.Transaction {
-	return &domain.Transaction{
+func (s *ProductUsecase) EmptyTransaction(product *domain.Product, transactionType enums.TransactionType) *tx_domain.Tx {
+	return &tx_domain.Tx{
 		ProductID:         &product.ID,
 		OwnerId:           product.OwnerID,
 		OwnerType:         product.OwnerType,
@@ -174,7 +175,7 @@ func (s *ProductUsecase) EmptyTransaction(product *domain.Product, transactionTy
 	}
 }
 
-func (s *ProductUsecase) AttachContactToTransaction(trans *domain.Transaction, dto dto.StatusUpdate) *domain.Transaction {
+func (s *ProductUsecase) AttachContactToTransaction(trans *tx_domain.Tx, dto dto.StatusUpdate) *tx_domain.Tx {
 	if trans.ContactID == nil {
 		trans.ContactID = dto.ContactID
 		trans.DepositeNote = &dto.Note

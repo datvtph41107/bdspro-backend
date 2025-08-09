@@ -3,8 +3,9 @@ package repository
 import (
 	"log"
 
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/repository/postgres"
+	"payment/internal/domain/repository"
+	"payment/internal/infrastructure/repository/postgres"
+
 	"gorm.io/gorm"
 )
 

@@ -19,6 +19,8 @@ type DealTransactionUsecase interface {
 	GetTransactions(ctx context.Context, req *dto.GetDealTransactionsRequest, userID uint64) (*dto.DealTransactionListResponse, error)
 	ApproveTransaction(ctx context.Context, req *dto.ApproveDealTransactionRequest, userID uint64) error
 	GetFinancialSummary(ctx context.Context, dealID uint64, userID uint64) (*dto.DealFinancialSummary, error)
+	SignContract(ctx context.Context, req *dto.SignContractRequest, userID uint64) (*dto.DealContractResponse, error)
+	TransferContract(ctx context.Context, req *dto.TransferContractRequest, userID uint64) (*dto.DealContractResponse, error)
 }
 
 type dealTransactionUsecase struct {
@@ -262,4 +264,24 @@ func (u *dealTransactionUsecase) generateWarnings(summary *dto.DealFinancialSumm
 func (u *dealTransactionUsecase) sendTransactionNotification(ctx context.Context, dealID uint64, notificationType string, transactionID uint64) {
 	// Gửi thông báo cho admin/phụ trách
 	// Implementation sẽ được thêm sau
+}
+
+func (u *dealTransactionUsecase) SignContract(ctx context.Context, req *dto.SignContractRequest, userID uint64) (*dto.DealContractResponse, error) {
+	// Lấy transaction
+	// transaction, err := u.dealTransactionRepo.GetByID(ctx, req.ID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("transaction not found: %w", err)
+	// }
+
+	return nil, nil
+}
+
+func (u *dealTransactionUsecase) TransferContract(ctx context.Context, req *dto.TransferContractRequest, userID uint64) (*dto.DealContractResponse, error) {
+	// Lấy transaction
+	// transaction, err := u.dealTransactionRepo.GetByID(ctx, req.ID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("transaction not found: %w", err)
+	// }
+
+	return nil, nil
 }

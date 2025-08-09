@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	"bdspro/internal/domain"
+	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/enums"
 	_models "common/models"
 	pb_bdspro "pb/types/bdspro"
@@ -30,8 +30,8 @@ func NewDepositeMapper() *DepositeMapper {
 // 	return result
 // }
 
-func (m *DepositeMapper) MapDepositePbToDomain(deposite *pb_bdspro.DepositeRequest) *domain.Transaction {
-	return &domain.Transaction{
+func (m *DepositeMapper) MapDepositePbToDomain(deposite *pb_bdspro.DepositeRequest) *tx_domain.Tx {
+	return &tx_domain.Tx{
 		BaseEntity:      _models.BaseEntity{ID: deposite.Id},
 		ProductID:       &deposite.ProductId,
 		DepositeAmount:  &deposite.DepositeAmount,

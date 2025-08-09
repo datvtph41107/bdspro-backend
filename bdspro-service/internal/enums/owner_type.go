@@ -1,15 +1,16 @@
 package enums
 
-type EOwnerType = uint32
+type EOwnerOf = uint32
 
 const (
-	EOwnerTypeMember      EOwnerType = 10
-	EOwnerTypeGroup       EOwnerType = 20
-	EOwnerTypeOrgnization EOwnerType = 30
+	EOwnerOfMember      EOwnerOf = 10
+	EOwnerOfGroup       EOwnerOf = 20
+	EOwnerOfOrgnization EOwnerOf = 30
+	EOwnerOfUser        EOwnerOf = 40
 )
 
-var OwnerTypeNames = map[EOwnerType]string{
-	EOwnerTypeMember:      "Thành viên",
-	EOwnerTypeGroup:       "Nhóm",
-	EOwnerTypeOrgnization: "Tổ chức",
+var OwnerTypeNames = map[EOwnerOf]string{
+	EOwnerOfMember:      "Thành viên",
+	EOwnerOfGroup:       "Nhóm",
+	EOwnerOfOrgnization: "Tổ chức",
 }

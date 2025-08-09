@@ -5,10 +5,11 @@ import (
 
 	"context"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
-	"gorm.io/gorm"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
 	paymentpb "pb/types/payment"
+
+	"gorm.io/gorm"
 )
 
 type PaymentMethodModel struct {
@@ -108,7 +109,7 @@ func (r *paymentMethodRepository) DeletePaymentMethod(ctx context.Context, id ui
 	return r.db.WithContext(ctx).Model(&PaymentMethodModel{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"is_deleted":  true,
+			"is_deleted": true,
 			"deleted_at": time.Now(),
 		}).Error
 }
@@ -120,4 +121,3 @@ func (r *paymentMethodRepository) GetPaymentMethodById(ctx context.Context, id u
 	}
 	return PaymentMethodModelToEntity(&model), nil
 }
-

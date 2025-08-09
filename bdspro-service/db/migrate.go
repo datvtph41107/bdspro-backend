@@ -2,6 +2,7 @@ package db
 
 import (
 	"bdspro/internal/domain"
+	tx_domain "bdspro/internal/domain/transaction"
 	_db "common/db"
 )
 
@@ -27,7 +28,7 @@ func MigrateDomain() {
 		// &domain.RecordHistory{},
 		// &domain.SharingAccess{},
 		// &domain.Post{},
-		&domain.Transaction{},
+		&tx_domain.Tx{},
 		&domain.Product{},
 	)
 }

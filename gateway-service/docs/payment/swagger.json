@@ -1,963 +1,1180 @@
 {
-  "swagger": "2.0",
-  "info": {
-    "title": "payment/payment.proto",
-    "version": "version not set"
-  },
-  "tags": [
-    {
-      "name": "PaymentService"
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Payment Service",
+        "title": "Payment Service",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/v2/payment",
+    "paths": {
+        "/bank/all": {
+            "get": {
+                "description": "Lấy danh sách ngân hàng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bank"
+                ],
+                "summary": "Lấy danh sách ngân hàng",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/payment.BankList"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment-methods": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách phương thức thanh toán",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Lấy danh sách phương thức thanh toán",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "getPaymentMethodsRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.GetPaymentMethodsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phương thức thanh toán",
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentMethodList"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật phương thức thanh toán",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Cập nhật phương thức thanh toán",
+                "parameters": [
+                    {
+                        "description": "Phương thức thanh toán",
+                        "name": "paymentMethod",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentMethod"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Phương thức thanh toán",
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo phương thức thanh toán",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Tạo phương thức thanh toán",
+                "parameters": [
+                    {
+                        "description": "Phương thức thanh toán",
+                        "name": "paymentMethod",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentMethod"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Phương thức thanh toán",
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentMethod"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa phương thức thanh toán",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Xóa phương thức thanh toán",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "deletePaymentMethodRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.DeletePaymentMethodRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Phương thức thanh toán",
+                        "schema": {
+                            "$ref": "#/definitions/payment.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/sepay/webhook": {
+            "post": {
+                "description": "Webhook thanh toán Sepay",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Webhook thanh toán Sepay",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "sepayWebhookRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.SepayWebhookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook thanh toán Sepay",
+                        "schema": {
+                            "$ref": "#/definitions/payment.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction-types": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách loại giao dịch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Lấy danh sách loại giao dịch",
+                "parameters": [
+                    {
+                        "description": "Empty request",
+                        "name": "empty",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.Empty"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách loại giao dịch",
+                        "schema": {
+                            "$ref": "#/definitions/payment.TransactionTypeList"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật loại giao dịch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Cập nhật loại giao dịch",
+                "parameters": [
+                    {
+                        "description": "Loại giao dịch",
+                        "name": "transactionType",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.TransactionType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Loại giao dịch",
+                        "schema": {
+                            "$ref": "#/definitions/payment.TransactionType"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo loại giao dịch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Tạo loại giao dịch",
+                "parameters": [
+                    {
+                        "description": "Loại giao dịch",
+                        "name": "transactionType",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.TransactionType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Loại giao dịch",
+                        "schema": {
+                            "$ref": "#/definitions/payment.TransactionType"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa loại giao dịch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Xóa loại giao dịch",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "deleteTransactionTypeRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.DeleteTransactionTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Loại giao dịch",
+                        "schema": {
+                            "$ref": "#/definitions/payment.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy dashboard ví",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Lấy dashboard ví",
+                "parameters": [
+                    {
+                        "description": "Empty request",
+                        "name": "empty",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.Empty"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet dashboard",
+                        "schema": {
+                            "$ref": "#/definitions/payment.WalletDashboard"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/deposit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Nạp tiền",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Nạp tiền",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "depositRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.DepositRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Giao dịch nạp tiền",
+                        "schema": {
+                            "$ref": "#/definitions/payment.WalletTransaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/payment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo giao dịch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Tạo giao dịch",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "paymentRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.PaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Giao dịch",
+                        "schema": {
+                            "$ref": "#/definitions/payment.WalletTransaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách giao dịch ví",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Lấy danh sách giao dịch ví",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "getWalletTransactionsRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.GetWalletTransactionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách giao dịch ví",
+                        "schema": {
+                            "$ref": "#/definitions/payment.WalletTransactionList"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/{walletId}/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xuất dữ liệu ví",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Xuất dữ liệu ví",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID ví",
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "reportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dữ liệu ví",
+                        "schema": {
+                            "$ref": "#/definitions/payment.ExportResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/{walletId}/report": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy báo cáo ví",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Lấy báo cáo ví",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID ví",
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "reportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payment.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Báo cáo ví",
+                        "schema": {
+                            "$ref": "#/definitions/payment.ReportResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi yêu cầu không hợp lệ",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "schema": {
+                            "$ref": "#/definitions/status.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "payment.Bank": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.BankList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payment.Bank"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.DeletePaymentMethodRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.DeleteTransactionTypeRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.DepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "externalPaymentId": {
+                    "type": "string"
+                },
+                "paymentMethod": {
+                    "type": "string"
+                },
+                "walletId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.Empty": {
+            "type": "object"
+        },
+        "payment.ExportResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "format": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.GetPaymentMethodsRequest": {
+            "type": "object",
+            "properties": {
+                "organizationId": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.GetWalletTransactionsRequest": {
+            "type": "object",
+            "properties": {
+                "fromDate": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "toDate": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.PaymentMethod": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.PaymentMethodList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payment.PaymentMethod"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.PaymentRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "relatedId": {
+                    "type": "string"
+                },
+                "relatedService": {
+                    "type": "string"
+                },
+                "walletId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.ReportRequest": {
+            "type": "object",
+            "properties": {
+                "fromDate": {
+                    "type": "string"
+                },
+                "toDate": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "walletId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.ReportResponse": {
+            "type": "object",
+            "properties": {
+                "totalAmount": {
+                    "type": "number"
+                },
+                "totalTransactions": {
+                    "type": "integer"
+                },
+                "transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payment.WalletTransaction"
+                    }
+                }
+            }
+        },
+        "payment.SepayWebhookRequest": {
+            "type": "object",
+            "properties": {
+                "AccountNumber": {
+                    "type": "string"
+                },
+                "Accumulated": {
+                    "type": "number"
+                },
+                "Code": {
+                    "type": "string"
+                },
+                "Content": {
+                    "type": "string"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "Gateway": {
+                    "type": "string"
+                },
+                "Id": {
+                    "type": "integer"
+                },
+                "ReferenceCode": {
+                    "type": "string"
+                },
+                "SubAccount": {
+                    "type": "string"
+                },
+                "TransactionDate": {
+                    "type": "string"
+                },
+                "TransferAmount": {
+                    "type": "number"
+                },
+                "TransferType": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.TransactionType": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.TransactionTypeList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payment.TransactionType"
+                    }
+                }
+            }
+        },
+        "payment.WalletDashboard": {
+            "type": "object",
+            "properties": {
+                "alerts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "pendingTransactions": {
+                    "type": "integer"
+                },
+                "totalExpense": {
+                    "type": "number"
+                },
+                "totalIncome": {
+                    "type": "number"
+                }
+            }
+        },
+        "payment.WalletTransaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "externalPaymentId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "relatedId": {
+                    "type": "string"
+                },
+                "relatedService": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "transactionCode": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "walletId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "payment.WalletTransactionList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payment.WalletTransaction"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "status.Error": {
+            "type": "object"
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
-  ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "paths": {
-    "/v2/payment/payment-methods": {
-      "get": {
-        "summary": "Payment Methods",
-        "operationId": "PaymentService_GetPaymentMethods",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethodList"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      },
-      "post": {
-        "operationId": "PaymentService_CreatePaymentMethod",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/payment-methods/{id}": {
-      "delete": {
-        "operationId": "PaymentService_DeletePaymentMethod",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      },
-      "put": {
-        "operationId": "PaymentService_UpdatePaymentMethod",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PaymentServiceUpdatePaymentMethodBody"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/sepay/webhook": {
-      "post": {
-        "operationId": "PaymentService_SepayWebhook",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_paymentSepayWebhookRequest"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/transaction-types": {
-      "get": {
-        "summary": "// Deal Transactions\nrpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/dashboard\"\n  };\n}\nrpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions\"\n  };\n}\nrpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/{id}\"\n  };\n}\nrpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {\n  option (google.api.http) = {\n    put: \"/v2/payment/deal-transactions/{id}\"\n    body: \"*\"\n  };\n}\nrpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    post: \"/v2/payment/deal-transactions/{id}/approve\"\n    body: \"*\"\n  };\n}\nrpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/report\"\n  };\n}\nTransaction Types",
-        "operationId": "PaymentService_GetTransactionTypes",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionTypeList"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "PaymentService"
-        ]
-      },
-      "post": {
-        "operationId": "PaymentService_CreateTransactionType",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/transaction-types/{id}": {
-      "delete": {
-        "operationId": "PaymentService_DeleteTransactionType",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      },
-      "put": {
-        "operationId": "PaymentService_UpdateTransactionType",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PaymentServiceUpdateTransactionTypeBody"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/dashboard": {
-      "get": {
-        "summary": "Wallet Dashboard",
-        "operationId": "PaymentService_GetWalletDashboard",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletDashboard"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/deposit": {
-      "post": {
-        "operationId": "PaymentService_Deposit",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransaction"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_paymentDepositRequest"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/payment": {
-      "post": {
-        "operationId": "PaymentService_MakePayment",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransaction"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentRequest"
-            }
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/transactions": {
-      "get": {
-        "operationId": "PaymentService_GetWalletTransactions",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransactionList"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "fromDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "toDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/{walletId}/export": {
-      "get": {
-        "operationId": "PaymentService_ExportWalletData",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentExportResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "fromDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "toDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    },
-    "/v2/payment/wallets/{walletId}/report": {
-      "get": {
-        "summary": "Reports",
-        "operationId": "PaymentService_GetWalletReport",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_paymentReportResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "walletId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "fromDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "toDate",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PaymentService"
-        ]
-      }
-    }
-  },
-  "definitions": {
-    "PaymentServiceUpdatePaymentMethodBody": {
-      "type": "object",
-      "properties": {
-        "organizationId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      }
-    },
-    "PaymentServiceUpdateTransactionTypeBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentCreateWalletResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_paymentDepositRequest": {
-      "type": "object",
-      "properties": {
-        "walletId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "paymentMethod": {
-          "type": "string"
-        },
-        "externalPaymentId": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentEmpty": {
-      "type": "object",
-      "title": "Additional messages for request/response"
-    },
-    "pb_paymentExportResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "string",
-          "format": "byte"
-        },
-        "format": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentPaymentMethod": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "organizationId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentPaymentMethodList": {
-      "type": "object",
-      "properties": {
-        "paymentMethods": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_paymentPaymentMethod"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_paymentPaymentRequest": {
-      "type": "object",
-      "properties": {
-        "walletId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "relatedService": {
-          "type": "string"
-        },
-        "relatedId": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentReportResponse": {
-      "type": "object",
-      "properties": {
-        "totalAmount": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalTransactions": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "transactions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_paymentWalletTransaction"
-          }
-        }
-      }
-    },
-    "pb_paymentSepayWebhookRequest": {
-      "type": "object",
-      "properties": {
-        "Gateway": {
-          "type": "string"
-        },
-        "TransactionDate": {
-          "type": "string"
-        },
-        "AccountNumber": {
-          "type": "string"
-        },
-        "SubAccount": {
-          "type": "string"
-        },
-        "Code": {
-          "type": "string"
-        },
-        "Content": {
-          "type": "string"
-        },
-        "TransferType": {
-          "type": "string"
-        },
-        "Description": {
-          "type": "string"
-        },
-        "TransferAmount": {
-          "type": "number",
-          "format": "double"
-        },
-        "ReferenceCode": {
-          "type": "string"
-        },
-        "Accumulated": {
-          "type": "number",
-          "format": "double"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_paymentTransactionType": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentTransactionTypeList": {
-      "type": "object",
-      "properties": {
-        "types": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_paymentTransactionType"
-          }
-        }
-      }
-    },
-    "pb_paymentWallet": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "balance": {
-          "type": "number",
-          "format": "double"
-        },
-        "currency": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      },
-      "title": "Wallet related messages"
-    },
-    "pb_paymentWalletDashboard": {
-      "type": "object",
-      "properties": {
-        "balance": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalIncome": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalExpense": {
-          "type": "number",
-          "format": "double"
-        },
-        "pendingTransactions": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "alerts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pb_paymentWalletTransaction": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "walletId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "type": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "status": {
-          "type": "string"
-        },
-        "relatedService": {
-          "type": "string"
-        },
-        "relatedId": {
-          "type": "string"
-        },
-        "externalPaymentId": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "transactionCode": {
-          "type": "string"
-        }
-      }
-    },
-    "pb_paymentWalletTransactionList": {
-      "type": "object",
-      "properties": {
-        "transactions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_paymentWalletTransaction"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    }
-  }
 }

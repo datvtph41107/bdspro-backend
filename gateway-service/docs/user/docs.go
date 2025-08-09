@@ -1934,6 +1934,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/user/rate/stats/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin đánh giá",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate"
+                ],
+                "summary": "Lấy thông tin đánh giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.RateStats"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/user/rate/{id}": {
             "put": {
                 "security": [
@@ -2468,6 +2505,12 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "isMember": {
+                    "type": "boolean"
+                },
+                "joinedAt": {
+                    "type": "string"
+                },
                 "phone": {
                     "type": "string"
                 },
@@ -2659,6 +2702,12 @@ const docTemplate = `{
             "properties": {
                 "anonymous": {
                     "type": "boolean"
+                },
+                "approvedAt": {
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "type": "integer"
                 },
                 "attachs": {
                     "type": "array",

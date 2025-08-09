@@ -5,55 +5,56 @@ import (
 
 	"time"
 
-	"github.com/tuandq2112/payment-service/internal/domain/entity"
-	"github.com/tuandq2112/payment-service/internal/domain/repository"
+	"payment/internal/domain/entity"
+	"payment/internal/domain/repository"
+
 	"gorm.io/gorm"
 )
+
 type WithdrawalRequestModel struct {
-	ID        uint32 `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	WalletId  uint32
-	Amount    float64
-	Status    string
-	PaymentMethod string
+	ID              uint32 `gorm:"primaryKey"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	WalletId        uint32
+	Amount          float64
+	Status          string
+	PaymentMethod   string
 	BankAccountInfo string
-	RequestedBy uint32
-	ApprovedBy uint32
+	RequestedBy     uint32
+	ApprovedBy      uint32
 }
 
 func (m *WithdrawalRequestModel) TableName() string {
 	return "withdrawal_requests"
 }
 
-
 func WithdrawalRequestModelToEntity(m *WithdrawalRequestModel) *entity.WithdrawalRequest {
 	return &entity.WithdrawalRequest{
-		Id: m.ID,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
-		WalletId: m.WalletId,
-		Amount: m.Amount,
-		Status: m.Status,
-		PaymentMethod: m.PaymentMethod,
+		Id:              m.ID,
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
+		WalletId:        m.WalletId,
+		Amount:          m.Amount,
+		Status:          m.Status,
+		PaymentMethod:   m.PaymentMethod,
 		BankAccountInfo: m.BankAccountInfo,
-		RequestedBy: m.RequestedBy,
-		ApprovedBy: m.ApprovedBy,
+		RequestedBy:     m.RequestedBy,
+		ApprovedBy:      m.ApprovedBy,
 	}
 }
 
 func WithdrawalRequestEntityToModel(e *entity.WithdrawalRequest) *WithdrawalRequestModel {
 	return &WithdrawalRequestModel{
-		ID: e.Id,
-		CreatedAt: e.CreatedAt,
-		UpdatedAt: e.UpdatedAt,
-		WalletId: e.WalletId,
-		Amount: e.Amount,
-		Status: e.Status,
-		PaymentMethod: e.PaymentMethod,
+		ID:              e.Id,
+		CreatedAt:       e.CreatedAt,
+		UpdatedAt:       e.UpdatedAt,
+		WalletId:        e.WalletId,
+		Amount:          e.Amount,
+		Status:          e.Status,
+		PaymentMethod:   e.PaymentMethod,
 		BankAccountInfo: e.BankAccountInfo,
-		RequestedBy: e.RequestedBy,
-		ApprovedBy: e.ApprovedBy,
+		RequestedBy:     e.RequestedBy,
+		ApprovedBy:      e.ApprovedBy,
 	}
 }
 
@@ -84,4 +85,3 @@ func (r *withdrawalRequestsPostgresRepository) UpdateWithdrawalRequest(ctx conte
 	model := WithdrawalRequestEntityToModel(request)
 	return r.db.WithContext(ctx).Save(model).Error
 }
-

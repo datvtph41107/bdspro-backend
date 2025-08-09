@@ -44,7 +44,7 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeR
 		Type: req.Type,
 	}
 	copier.Copy(&searchDTO, &req)
-	result, total, err := s.Usecase.Search(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	result, total, err := s.Usecase.Search(c, enums.EOwnerOf(req.OwnerType), searchDTO)
 
 	pbdatas := []*pb_bdspro.AssetCostTypeDTO{}
 	copier.Copy(&pbdatas, &result)
@@ -64,7 +64,7 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeR
 // @Router /v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType} [get]
 func (s AssetCostTypeService) SearchGroup(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.GroupType, error) {
 	searchDTO := &dto.AssetCostTypeSearchDTO{}
-	incomes, spends, err := s.Usecase.SearchGroup(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	incomes, spends, err := s.Usecase.SearchGroup(c, enums.EOwnerOf(req.OwnerType), searchDTO)
 
 	pbincomes := s.Mapper.CostTypeToPbList(incomes)
 	pbspends := s.Mapper.CostTypeToPbList(spends)

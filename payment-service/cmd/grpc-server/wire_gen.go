@@ -8,18 +8,21 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/client"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/database"
-	"github.com/tuandq2112/payment-service/internal/infrastructure/repository"
-	"github.com/tuandq2112/payment-service/internal/interface/handler"
-	"github.com/tuandq2112/payment-service/internal/server/grpc"
-	"github.com/tuandq2112/payment-service/internal/usecase"
+	"payment/internal/infrastructure/client"
+	"payment/internal/infrastructure/database"
+	"payment/internal/infrastructure/repository"
+	"payment/internal/infrastructure/repository/postgres"
+	"payment/internal/interface/handler"
+	"payment/internal/server/grpc"
+	"payment/internal/usecase"
 )
 
 // Injectors from wire.go:
 
 func InitializeGRPCServer() *grpc.GRPCServer {
 	db := database.NewPostgresDB()
+	database.AutoMigrate(db)
+	bankRepository := postgres.NewBankPostgresRepository(db)
 	paymentMethodRepository := repository.NewPaymentRepository(db)
 	walletsRepository := repository.NewWalletRepository(db)
 	walletTransactionsRepository := repository.NewWalletTransactionRepository(db)
@@ -27,8 +30,11 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	withdrawalRequestsRepository := repository.NewWithdrawalRequestRepository(db)
 	notificationClient := client.NewNotificationClient()
 	paymentUsecase := usecase.NewPaymentUsecase(paymentMethodRepository, walletsRepository, walletTransactionsRepository, walletAuditLogRepository, withdrawalRequestsRepository, notificationClient)
+	bankUsecase := usecase.NewBankUsecase(bankRepository)
+	bankHandler := handler.NewBankHandler(bankUsecase)
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
-	grpcServer := grpc.NewGRPCServer(paymentHandler)
+	internalHandler := handler.NewInternalHandler(bankUsecase)
+	grpcServer := grpc.NewGRPCServer(paymentHandler, bankHandler, internalHandler)
 	return grpcServer
 }
 

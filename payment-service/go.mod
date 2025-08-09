@@ -1,4 +1,4 @@
-module github.com/tuandq2112/payment-service
+module payment
 
 go 1.24.1
 

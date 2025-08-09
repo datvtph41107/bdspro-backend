@@ -13,80 +13,80 @@ option go_package = "pb/types/organization;organizationpb";
 service DealInvitationService {
   rpc SendInvitation(SendInvitationRequest) returns (SendInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation"
+      post: "/v2/org/deal-invitation"
       body: "*"
     };
   }
 
   rpc AcceptInvitation(AcceptInvitationRequest) returns (AcceptInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/accept"
+      post: "/v2/org/deal-invitation/accept"
       body: "*"
     };
   }
 
   rpc RejectInvitation(RejectInvitationRequest) returns (RejectInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/reject"
+      post: "/v2/org/deal-invitation/reject"
       body: "*"
     };
   }
 
   rpc ResendInvitation(ResendInvitationRequest) returns (ResendInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/resend"
+      post: "/v2/org/deal-invitation/resend"
       body: "*"
     };
   }
 
   rpc GetAcceptedMembers(GetAcceptedMembersRequest) returns (GetAcceptedMembersResponse) {
     option (google.api.http) = {
-      get: "/v2/org/deal/{dealId}/accepted-members"
+      get: "/v2/org/deal-invitation/{dealId}/accepted-members"
     };
   }
 
   rpc WithdrawFromDeal(WithdrawFromDealRequest) returns (WithdrawFromDealResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/withdraw"
+      post: "/v2/org/deal-invitation/withdraw"
       body: "*"
     };
   }
 
   rpc RemoveFromDeal(RemoveFromDealRequest) returns (RemoveFromDealResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/remove"
+      post: "/v2/org/deal-invitation/remove"
       body: "*"
     };
   }
 
   rpc ConfirmWithdrawal(ConfirmWithdrawalRequest) returns (ConfirmWithdrawalResponse) {
     option (google.api.http) = {
-      post: "/v2/org/invitation/confirm-withdrawal"
+      post: "/v2/org/deal-invitation/confirm-withdrawal"
       body: "*"
     };
   }
 
   rpc SearchMembers(SearchMembersRequest) returns (SearchMembersResponse) {
     option (google.api.http) = {
-      get: "/v2/org/deal/{dealId}/search-members"
+      get: "/v2/org/deal-invitation/{dealId}/search-members"
     };
   }
 
   rpc GetInvitation(GetInvitationRequest) returns (GetInvitationResponse) {
     option (google.api.http) = {
-      get: "/v2/org/invitation/{id}"
+      get: "/v2/org/deal-invitation/{id}"
     };
   }
 
   rpc GetPendingInvitations(GetPendingInvitationsRequest) returns (GetPendingInvitationsResponse) {
     option (google.api.http) = {
-      get: "/v2/org/invitation/pending"
+      get: "/v2/org/deal-invitation/pending"
     };
   }
 
   rpc GetInvitationsByDeal(GetInvitationsByDealRequest) returns (GetInvitationsByDealResponse) {
     option (google.api.http) = {
-      get: "/v2/org/deal/{dealId}/invitations"
+      get: "/v2/org/deal-invitation/list/{dealId}"
     };
   }
 }

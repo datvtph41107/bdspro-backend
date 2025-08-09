@@ -10,8 +10,8 @@ type SharingAccessSearch struct {
 	_dto.Pagable
 	DomainID uint64              `form:"domainId"`
 	Domain   enums.EDomainAccess `form:"domain"`
-	FromType enums.EOwnerType    `form:"fromType"`
-	ToType   enums.EOwnerType    `form:"toType"`
+	FromType enums.EOwnerOf      `form:"fromType"`
+	ToType   enums.EOwnerOf      `form:"toType"`
 	// TargetType enums.ETargetType `form:"targetType"`
 }
 

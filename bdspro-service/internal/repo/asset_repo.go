@@ -38,5 +38,5 @@ type AssetRepo interface {
 	SearchOwner(ctx context.Context, ownerID uint64, ownerType uint32, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error)
 	GetAssetsWithChildCount(ctx context.Context, ownerID uint64, dto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error)
 	GetAssetPublish(profileId uint64) ([]domain.Asset, int64, error)
-	SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 }

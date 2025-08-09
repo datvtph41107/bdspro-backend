@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"bdspro/internal/domain"
-	"bdspro/internal/enums"
-	"bdspro/internal/repo"
+	tx_domain "tx/internal/domain"
+	"tx/internal/enums"
+	"tx/internal/repo"
 
 	"gorm.io/gorm"
 )
@@ -16,7 +16,7 @@ type TransactionPostgresRepository struct {
 	db *gorm.DB
 }
 
-// type domain.Transaction struct {
+// type tx_domain.Transaction struct {
 // 	_models.BaseEntity
 // 	OwnerId              uint64 `gorm:"index:idx_owner"`
 // 	OwnerType            enums.EOwnerType
@@ -40,12 +40,12 @@ type TransactionPostgresRepository struct {
 // 	Deposite             *domain.Deposite        `gorm:"foreignKey:DepositeID"`
 // }
 
-// func (t *domain.Transaction) TableName() string {
+// func (t *tx_domain.Transaction) TableName() string {
 // 	return "transactions"
 // }
 
-// func domain.TransactionToEntity(t *domain.Transaction) *domain.Transaction {
-// 	return &domain.Transaction{
+// func tx_domain.TransactionToEntity(t *tx_domain.Transaction) *tx_domain.Transaction {
+// 	return &tx_domain.Transaction{
 // 		BaseEntity: _models.BaseEntity{
 // 			ID: t.ID,
 // 		},
@@ -72,8 +72,8 @@ type TransactionPostgresRepository struct {
 // 	}
 // }
 
-// func EntityTodomain.Transaction(t *domain.Transaction) *domain.Transaction {
-// 	return &domain.Transaction{
+// func EntityTotx_domain.Transaction(t *tx_domain.Transaction) *tx_domain.Transaction {
+// 	return &tx_domain.Transaction{
 // 		BaseEntity: _models.BaseEntity{
 // 			ID: t.ID,
 // 		},
@@ -106,20 +106,20 @@ func NewTransactionPostgresRepository(db *gorm.DB) repo.TransactionRepository {
 	}
 }
 
-func (r *TransactionPostgresRepository) Create(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
-	// model := EntityTodomain.Transaction(tx)
+func (r *TransactionPostgresRepository) Create(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
+	// model := EntityTotx_domain.Transaction(tx)
 	err := GetDB(ctx, r.db).Create(tx).Error
 	if err != nil {
 		return nil, err
 	}
 
 	// tx.ID = model.ID
-	// entity := domain.TransactionToEntity(model)
+	// entity := tx_domain.TransactionToEntity(model)
 	return tx, nil
 }
 
-func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64) (*domain.Transaction, error) {
-	var model *domain.Transaction
+func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64) (*tx_domain.Tx, error) {
+	var model *tx_domain.Tx
 	if err := GetDB(ctx, r.db).
 		// Preload("Deposite", "deleted_at IS NULL").
 		First(&model, id).Error; err != nil {
@@ -131,10 +131,10 @@ func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64)
 	return model, nil
 }
 
-func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
-	// model := EntityTodomain.Transaction(tx)
+func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
+	// model := EntityTotx_domain.Transaction(tx)
 	// result := GetDB(ctx, r.db).
-	// 	Model(&domain.Transaction{}).
+	// 	Model(&tx_domain.Transaction{}).
 	// 	Where("id = ?", tx.ID).
 	// 	Updates(model)
 	result := GetDB(ctx, r.db).Save(tx)
@@ -148,7 +148,7 @@ func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *domain.T
 }
 
 func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	result := r.db.WithContext(ctx).Model(&domain.Transaction{}).
+	result := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"deleted_at": time.Now(),
@@ -162,8 +162,8 @@ func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) e
 	return nil
 }
 
-func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.TransactionFilters) ([]*domain.Transaction, int64, error) {
-	query := r.db.WithContext(ctx).Model(&domain.Transaction{}).Where("deleted_at is null")
+func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
+	query := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).Where("deleted_at is null")
 
 	if filters.TransactionType != nil {
 		query = query.Where("transaction_type = ?", *filters.TransactionType)
@@ -187,16 +187,16 @@ func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.
 		return nil, 0, err
 	}
 
-	var models []*domain.Transaction
+	var models []*tx_domain.Tx
 	err = query.Order("created_at DESC").
-		Offset((filters.Page) * filters.Size).
-		Limit(filters.Size).
+		Offset(filters.GetOffset()).
+		Limit(filters.GetLimit()).
 		Find(&models).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	transactions := make([]*domain.Transaction, len(models))
+	transactions := make([]*tx_domain.Tx, len(models))
 	for i, model := range models {
 		transactions[i] = model
 	}
@@ -205,13 +205,10 @@ func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.
 }
 
 func (r *TransactionPostgresRepository) Approve(ctx context.Context, id uint32, approvedBy uint32) error {
-	result := r.db.WithContext(ctx).Model(&domain.Transaction{}).
+	result := GetDB(ctx, r.db).Model(&tx_domain.Tx{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"approval_status": enums.ApprovalStatusApproved,
-			"approved_by":     approvedBy,
-			"approval_date":   time.Now(),
-			"updated_at":      time.Now(),
+			"status": enums.TxStatusDone,
 		})
 	if result.Error != nil {
 		return result.Error
@@ -223,10 +220,10 @@ func (r *TransactionPostgresRepository) Approve(ctx context.Context, id uint32, 
 }
 
 func (r *TransactionPostgresRepository) Reject(ctx context.Context, id uint32) error {
-	result := r.db.WithContext(ctx).Model(&domain.Transaction{}).
+	result := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"approval_status": enums.ApprovalStatusRejected,
+			"approval_status": enums.TxStatusCancel,
 			"updated_at":      time.Now(),
 		})
 	if result.Error != nil {
@@ -240,7 +237,7 @@ func (r *TransactionPostgresRepository) Reject(ctx context.Context, id uint32) e
 
 func (r *TransactionPostgresRepository) GetTransactionTypes(ctx context.Context) ([]string, error) {
 	var types []string
-	err := r.db.WithContext(ctx).Model(&domain.Transaction{}).
+	err := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).
 		Where("is_deleted = false").
 		Distinct().
 		Pluck("transaction_type", &types).Error
@@ -248,10 +245,10 @@ func (r *TransactionPostgresRepository) GetTransactionTypes(ctx context.Context)
 }
 
 func (r *TransactionPostgresRepository) CancelDeposite(ctx context.Context, id uint64) error {
-	result := GetDB(ctx, r.db).Model(&domain.Transaction{}).
+	result := GetDB(ctx, r.db).Model(&tx_domain.Tx{}).
 		Where("id = ? and deleted_at is null", id).
 		Updates(map[string]interface{}{
-			"transaction_status": enums.TransactionStatusCanceled,
+			"transaction_status": enums.TxStatusCancel,
 		})
 	if result.Error != nil {
 		return result.Error
@@ -260,4 +257,12 @@ func (r *TransactionPostgresRepository) CancelDeposite(ctx context.Context, id u
 		return nil
 	}
 	return nil
+}
+
+func (r *TransactionPostgresRepository) CreateAction(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
+	err := GetDB(ctx, r.db).Create(action).Error
+	if err != nil {
+		return nil, err
+	}
+	return action, nil
 }

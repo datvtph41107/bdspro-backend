@@ -84,7 +84,7 @@ func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain
 		Address:          asset.Address,
 		Description:      asset.Description,
 		PropertyTypeId:   asset.PropertyTypeId,
-		OwnerType:        enums.EOwnerType(asset.OwnerType),
+		OwnerType:        enums.EOwnerOf(asset.OwnerType),
 		// LegalItems:    asset.LegalStatus,
 	}
 	if asset.LegalItems != nil {

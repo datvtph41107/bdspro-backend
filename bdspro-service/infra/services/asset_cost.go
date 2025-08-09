@@ -40,7 +40,7 @@ func NewAssetCostService(
 // @Router /v2/bdspro/v2/asset/cost/{id}/{ownerType} [get]
 func (s AssetCostService) Search(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostListDTO, error) {
 	searchDTO := &dto.AssetCostSearchDTO{}
-	result, total, err := s.Ussecase.Find(c, enums.EOwnerType(req.OwnerType), searchDTO)
+	result, total, err := s.Ussecase.Find(c, enums.EOwnerOf(req.OwnerType), searchDTO)
 
 	pbdatas := s.Mapper.AssetCostToPbList(result)
 

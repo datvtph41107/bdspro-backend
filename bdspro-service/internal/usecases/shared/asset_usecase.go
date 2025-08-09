@@ -22,7 +22,7 @@ import (
 type IAssetUsecase interface {
 	GetOwnerID(c context.Context) (*uint64, error)
 	HasPermission(c context.Context, assetId *uint64, permission enums.EPermission) (bool, error)
-	GetOwnerType(c context.Context) enums.EOwnerType
+	GetOwnerType(c context.Context) enums.EOwnerOf
 }
 
 type AssetUsecase struct {
@@ -680,6 +680,6 @@ func (uc *AssetUsecase) GetPublish(ctx context.Context, profileId uint64) ([]dom
 	return assets, nil
 }
 
-func (s *AssetUsecase) SearchByAssetShare(c context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *AssetUsecase) SearchByAssetShare(c context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.AssetRepo.SearchByAssetShare(c, targetID, targetType, dto)
 }

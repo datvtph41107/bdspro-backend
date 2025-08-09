@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v2/org/deal/{dealId}/accepted-members": {
-      "get": {
-        "operationId": "DealInvitationService_GetAcceptedMembers",
+    "/v2/org/deal-invitation": {
+      "post": {
+        "operationId": "DealInvitationService_SendInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
+              "$ref": "#/definitions/organizationpbSendInvitationResponse"
             }
           },
           "default": {
@@ -35,11 +35,12 @@
         },
         "parameters": [
           {
-            "name": "dealId",
-            "in": "path",
+            "name": "body",
+            "in": "body",
             "required": true,
-            "type": "string",
-            "format": "uint64"
+            "schema": {
+              "$ref": "#/definitions/organizationpbSendInvitationRequest"
+            }
           }
         ],
         "tags": [
@@ -47,7 +48,71 @@
         ]
       }
     },
-    "/v2/org/deal/{dealId}/invitations": {
+    "/v2/org/deal-invitation/accept": {
+      "post": {
+        "operationId": "DealInvitationService_AcceptInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/confirm-withdrawal": {
+      "post": {
+        "operationId": "DealInvitationService_ConfirmWithdrawal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/list/{dealId}": {
       "get": {
         "operationId": "DealInvitationService_GetInvitationsByDeal",
         "responses": {
@@ -92,7 +157,211 @@
         ]
       }
     },
-    "/v2/org/deal/{dealId}/search-members": {
+    "/v2/org/deal-invitation/pending": {
+      "get": {
+        "operationId": "DealInvitationService_GetPendingInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "inviteeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/reject": {
+      "post": {
+        "operationId": "DealInvitationService_RejectInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/remove": {
+      "post": {
+        "operationId": "DealInvitationService_RemoveFromDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/resend": {
+      "post": {
+        "operationId": "DealInvitationService_ResendInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbResendInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbResendInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/withdraw": {
+      "post": {
+        "operationId": "DealInvitationService_WithdrawFromDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/{dealId}/accepted-members": {
+      "get": {
+        "operationId": "DealInvitationService_GetAcceptedMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealInvitationService"
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/{dealId}/search-members": {
       "get": {
         "operationId": "DealInvitationService_SearchMembers",
         "responses": {
@@ -143,276 +412,7 @@
         ]
       }
     },
-    "/v2/org/invitation": {
-      "post": {
-        "operationId": "DealInvitationService_SendInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/accept": {
-      "post": {
-        "operationId": "DealInvitationService_AcceptInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/confirm-withdrawal": {
-      "post": {
-        "operationId": "DealInvitationService_ConfirmWithdrawal",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/pending": {
-      "get": {
-        "operationId": "DealInvitationService_GetPendingInvitations",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "inviteeId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/reject": {
-      "post": {
-        "operationId": "DealInvitationService_RejectInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/remove": {
-      "post": {
-        "operationId": "DealInvitationService_RemoveFromDeal",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/resend": {
-      "post": {
-        "operationId": "DealInvitationService_ResendInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/withdraw": {
-      "post": {
-        "operationId": "DealInvitationService_WithdrawFromDeal",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
-            }
-          }
-        ],
-        "tags": [
-          "DealInvitationService"
-        ]
-      }
-    },
-    "/v2/org/invitation/{id}": {
+    "/v2/org/deal-invitation/{id}": {
       "get": {
         "operationId": "DealInvitationService_GetInvitation",
         "responses": {

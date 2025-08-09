@@ -11,7 +11,7 @@ import (
 type OrganizationClient interface {
 	GetDealById(ctx context.Context, dealId uint64) (*organizationpb.GroupDeal, error)
 	GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error)
-	GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealInvitationMember, error)
+	GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealMember, error)
 }
 
 type organizationClient struct {
@@ -32,7 +32,6 @@ func (c *organizationClient) GetDealTransactionsByIds(ctx context.Context, dealI
 	return c.client.GetDealTransactionsByIds(ctx, dealIds)
 }
 
-func (c *organizationClient) GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealInvitationMember, error) {
+func (c *organizationClient) GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealMember, error) {
 	return c.client.GetDealMemberByIds(ctx, dealId, ids)
 }
-

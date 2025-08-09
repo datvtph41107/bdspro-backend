@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package pb_payment;
+option go_package = "types/payment";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "payment/bank.proto";
+
+service InternalService {
+    rpc GetBankById(sharepb.IdRequest) returns (Bank);
+}

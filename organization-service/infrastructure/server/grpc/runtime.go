@@ -47,6 +47,7 @@ type GRPCServer struct {
 	internalNoteHandler            *handler.InternalNoteHandler
 	dealCostHandler                *handler.DealCostHandler
 	costTypeHandler                *handler.CostTypeHandler
+	dealContractHandler            *handler.ContractDealHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -77,6 +78,7 @@ func NewGRPCServer(
 	internalNoteHandler *handler.InternalNoteHandler,
 	dealCostHandler *handler.DealCostHandler,
 	costTypeHandler *handler.CostTypeHandler,
+	dealContractHandler *handler.ContractDealHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -107,6 +109,7 @@ func NewGRPCServer(
 		internalNoteHandler:            internalNoteHandler,
 		dealCostHandler:                dealCostHandler,
 		costTypeHandler:                costTypeHandler,
+		dealContractHandler:            dealContractHandler,
 	}
 }
 
@@ -138,6 +141,7 @@ func (s *GRPCServer) Start() {
 		s.internalNoteHandler,
 		s.dealCostHandler,
 		s.costTypeHandler,
+		s.dealContractHandler,
 	)
 
 	g.Add(start, stop)
@@ -177,6 +181,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	internalNoteHandler *handler.InternalNoteHandler,
 	dealCostHandler *handler.DealCostHandler,
 	costTypeHandler *handler.CostTypeHandler,
+	dealContractHandler *handler.ContractDealHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -215,6 +220,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterInternalNoteServiceServer(s, internalNoteHandler)
 			organizationpb.RegisterDealCostServiceServer(s, dealCostHandler)
 			organizationpb.RegisterCostTypeServiceServer(s, costTypeHandler)
+			organizationpb.RegisterDealContractServiceServer(s, dealContractHandler)
 		},
 		unaryInts,
 		streamInts,

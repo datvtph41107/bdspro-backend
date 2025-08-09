@@ -627,11 +627,11 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 // 	return results, total, nil
 // }
 
-func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
+func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
 	return nil, nil
 }
 
-func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.TotalSearchParser) ([]domain.Product, int64, error) {
 	return nil, 0, nil
 }
 
@@ -677,7 +677,7 @@ func (r *GormUserProductRepo) GetProductByID(ctx context.Context, productID *uin
 	return &product, nil
 }
 
-func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	query := r.DB.
 		Debug().
 		Model(domain.Product{}).

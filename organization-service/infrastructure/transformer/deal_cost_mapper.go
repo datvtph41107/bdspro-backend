@@ -19,14 +19,14 @@ func NewDealCostMapper() *DealCostMapper {
 
 func (m *DealCostMapper) DealCostModelToProto(e *entity.DealCost) *organizationpb.DealCostDTO {
 	result := &organizationpb.DealCostDTO{
-		Id:           e.ID,
-		DealId:       e.DealID,
-		Amount:       e.Amount,
-		ConfirmedAt:  _utils.FormatTimeToString(e.ConfirmedAt),
-		Note:         e.Note,
-		CostTypeId:   e.CostTypeID,
-		CostTypeName: e.CostName,
-		Status:       uint32(e.Status),
+		Id:          e.ID,
+		DealId:      e.DealID,
+		Amount:      e.Amount,
+		ConfirmedAt: _utils.FormatTimeToString(e.ConfirmedAt),
+		Note:        e.Note,
+		CostTypeId:  e.CostTypeID,
+		Status:      uint32(e.Status),
+		CostName:    e.CostName,
 	}
 
 	if e.CostType != nil {

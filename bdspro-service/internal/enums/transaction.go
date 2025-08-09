@@ -29,15 +29,22 @@ const (
 )
 
 // TransactionAction represents the type of action performed on a transaction
-type TransactionAction string
+type TransactionAction uint32
 
 const (
-	TransactionActionCreated  TransactionAction = "created"
-	TransactionActionUpdated  TransactionAction = "updated"
-	TransactionActionApproved TransactionAction = "approved"
-	TransactionActionCanceled TransactionAction = "canceled"
-	TransactionActionDeleted  TransactionAction = "deleted"
+	TransactionActionSign     TransactionAction = 10
+	TransactionActionUpdated  TransactionAction = 20
+	TransactionActionApproved TransactionAction = 30
+	TransactionActionCanceled TransactionAction = 40
+	TransactionActionDeleted  TransactionAction = 50
 )
+
+var TransactionActionMap = map[TransactionAction]string{
+	TransactionActionSign:     "Ký",
+	TransactionActionUpdated:  "updated",
+	TransactionActionApproved: "approved",
+	TransactionActionCanceled: "canceled",
+}
 
 // OwnerScope represents the scope of ownership
 type OwnerScope string

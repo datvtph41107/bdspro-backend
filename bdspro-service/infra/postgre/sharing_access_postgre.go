@@ -82,7 +82,7 @@ func (r *SharingAccessPostgre) GetAll() ([]domain.SharingAccess, error) {
 // 	return &
 // }
 
-func (r *SharingAccessPostgre) OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
+func (r *SharingAccessPostgre) OwnerSearchProduct(c context.Context, productId uint64, fromType enums.EOwnerOf, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
 	var entities *[]domain.SharingAccess
 	query := r.QueryList(r.DB, productId, fromType, dto)
 	if err := query.
@@ -109,7 +109,7 @@ func (r *SharingAccessPostgre) OwnerSearchProduct(c context.Context, productId u
 
 func (r *SharingAccessPostgre) QueryList(txt *gorm.DB,
 	assetId uint64,
-	fromType enums.EOwnerType,
+	fromType enums.EOwnerOf,
 	dto *dto.SharingAccessSearch,
 ) *gorm.DB {
 	query := txt.
@@ -129,7 +129,7 @@ func (r *SharingAccessPostgre) QueryList(txt *gorm.DB,
 	return query
 }
 
-func (r *SharingAccessPostgre) OwnerSearchAsset(c context.Context, assetId uint64, fromType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
+func (r *SharingAccessPostgre) OwnerSearchAsset(c context.Context, assetId uint64, fromType enums.EOwnerOf, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
 	var entities *[]domain.SharingAccess
 	query := r.DB.
 		Model(&domain.SharingAccess{}).

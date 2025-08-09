@@ -66,15 +66,15 @@ type ProductRepo interface {
 	// CancelDeposite(ctx context.Context, id uint64) error
 
 	// SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
-	SearchExport(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, error)
-	SmartSearch(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
+	SearchExport(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, error)
+	SmartSearch(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
 	Archived(ctx context.Context, productId *uint64, archived bool) error
 	SetRentStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error
 	SetSaleStatus(ctx context.Context, id *uint64, status enums.EProductSaleStatus) error
 	SetRentVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
 	SetSaleVisibility(ctx context.Context, id *uint64, vis enums.EVisibility) error
 	GetProductByID(ctx context.Context, productID *uint64) (*domain.Product, error)
-	SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error)
 	SyncData(ctx context.Context) error
 }

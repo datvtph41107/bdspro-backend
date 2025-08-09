@@ -24,6 +24,7 @@ type GroupDealHandler struct {
 	GroupDealValidator   validator.GroupDealValidator
 	BdsproClient         *client.BdsproClient
 	UserClient           *client.UserClient
+	PaymentClient        *client.PaymentClient
 }
 
 func NewGroupDealHandler(
@@ -32,6 +33,7 @@ func NewGroupDealHandler(
 	groupDealValidator validator.GroupDealValidator,
 	bdsproClient *client.BdsproClient,
 	userClient *client.UserClient,
+	paymentClient *client.PaymentClient,
 ) *GroupDealHandler {
 	return &GroupDealHandler{
 		DealUsecase:          groupDealUsecase,
@@ -39,6 +41,7 @@ func NewGroupDealHandler(
 		GroupDealValidator:   groupDealValidator,
 		BdsproClient:         bdsproClient,
 		UserClient:           userClient,
+		PaymentClient:        paymentClient,
 	}
 }
 
@@ -237,12 +240,20 @@ func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.I
 		return nil, err
 	}
 
-	return &organizationpb.BankAccountItem{
+	result := &organizationpb.BankAccountItem{
 		// Name:          account.AccountName,
 		BankName:      account.BankName,
 		AccountNumber: account.AccountNumber,
 		AccountName:   account.AccountName,
-	}, nil
+		BankId:        account.BankId,
+	}
+
+	bank, _ := h.PaymentClient.GetBankById(ctx, account.BankId)
+	if bank != nil {
+		result.BankName = bank.Name
+	}
+
+	return result, nil
 }
 
 func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizationpb.AddMemberToDealRequest) (*organizationpb.AddMemberToDealResponse, error) {
@@ -465,6 +476,16 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 	return &organizationpb.CancelDealResponse{Id: req.Id}, nil
 }
 
+// @Summary Cập nhật thông tin thương vụ
+// @Description Cập nhật thông tin thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "ID thương vụ"
+// @Param request body organizationpb.UpdateDealSettingRequest true "Thông tin cập nhật"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.UpdateDealSettingResponse "Thành công"
+// @Router /deal/{id}/setting [put]
 func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
 	fromDate, err := time.Parse(time.DateOnly, req.FromDate)
 	if err != nil {
@@ -475,7 +496,7 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 		return nil, err
 	}
 
-	dto:=&dto.DealSetting{
+	dto := &dto.DealSetting{
 		FromDate:                fromDate,
 		ToDate:                  toDate,
 		AllowSharing:            req.AllowSharing,
@@ -490,7 +511,8 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 		dto.BankName = req.BankAccount.BankName
 		dto.AccountNumber = req.BankAccount.AccountNumber
 		dto.AccountName = req.BankAccount.AccountName
-	}	
+		dto.BankId = req.BankAccount.BankId
+	}
 	err = h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
 	if err != nil {
 		return nil, err
@@ -499,6 +521,16 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 	return &organizationpb.UpdateDealSettingResponse{DealId: req.DealId}, nil
 }
 
+// @Summary Cập nhật cho phép nhập thủ công
+// @Description Cập nhật cho phép nhập thủ công
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "ID thương vụ"
+// @Param request body organizationpb.UpdateAllowManualInputRequest true "Thông tin cập nhật"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.UpdateAllowManualInputResponse "Thành công"
+// @Router /deal/{id}/allow-manual-input [put]
 func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *organizationpb.UpdateAllowManualInputRequest) (*organizationpb.UpdateAllowManualInputResponse, error) {
 	err := h.DealUsecase.UpdateAllowManualInput(ctx, req.DealId, req.AllowManualInput)
 	if err != nil {
@@ -508,6 +540,15 @@ func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *orga
 	return &organizationpb.UpdateAllowManualInputResponse{DealId: req.DealId}, nil
 }
 
+// @Summary Lấy danh sách thành viên thương vụ
+// @Description Lấy danh sách thành viên thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "ID thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetDealMembersResponse "Thành công"
+// @Router /deal/{id}/members [get]
 func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.GetDealMembersResponse, error) {
 	members, err := h.DealUsecase.GetDealMembers(ctx, req.Id)
 	if err != nil {
@@ -526,6 +567,7 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*or
 			Note:            member.Note,
 		}
 	}
+	h.UserClient.MapProfileToDealMember(ctx, response)
 	return &organizationpb.GetDealMembersResponse{Data: response}, nil
 }
 

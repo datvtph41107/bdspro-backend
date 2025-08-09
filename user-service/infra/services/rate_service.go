@@ -153,3 +153,20 @@ func (s *RateService) UpdateHidden(ctx context.Context, req *userpb.UpdateHidden
 	}
 	return &sharepb.Empty{}, nil
 }
+
+// @Summary Lấy thông tin đánh giá
+// @Description Lấy thông tin đánh giá
+// @Tags Rate
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID"
+// @Success 200 {object} userpb.RateStats
+// @Router /v2/user/rate/stats/{id} [get]
+func (s *RateService) GetRateStats(ctx context.Context, req *sharepb.IdRequest) (*userpb.RateStats, error) {
+	stats, err := s.rateUsecase.GetRateStats(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return s.rateMapper.EntityToPbRateStats(&stats), nil
+}

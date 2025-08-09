@@ -1679,6 +1679,10 @@
         },
         "accountName": {
           "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

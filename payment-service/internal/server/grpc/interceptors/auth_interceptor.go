@@ -2,10 +2,11 @@ package interceptors
 
 import (
 	"context"
+	"payment/appconfig"
+	"payment/pkg/utils"
 	"slices"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq2112/payment-service/appconfig"
-	"github.com/tuandq2112/payment-service/pkg/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

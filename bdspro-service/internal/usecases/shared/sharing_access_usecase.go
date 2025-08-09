@@ -42,7 +42,7 @@ func NewShareAccessUsecase(
 	}
 }
 
-func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, ownerType enums.EOwnerType, dtos []dto.SharingAccessRequest) (*[]domain.SharingAccess, error) {
+func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, ownerType enums.EOwnerOf, dtos []dto.SharingAccessRequest) (*[]domain.SharingAccess, error) {
 	var entities []domain.SharingAccess
 	product, err := s.ProductUsecase.RequiredOwner(c, domainId)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *SharingAccessUsecase) CanAccessAsset(c context.Context, assetId uint64)
 
 func (s *SharingAccessUsecase) BulkSave(c context.Context,
 	id uint64,
-	ownerType enums.EOwnerType,
+	ownerType enums.EOwnerOf,
 	dto *dto.SharingAccessBulk) (*[]domain.SharingAccess, error) {
 	var entities []domain.SharingAccess
 	var err error
@@ -215,7 +215,7 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 	return &entities, err
 }
 
-func (s *SharingAccessUsecase) SearchForProduct(c context.Context, ownerType enums.EOwnerType, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
+func (s *SharingAccessUsecase) SearchForProduct(c context.Context, ownerType enums.EOwnerOf, dto *dto.SharingAccessSearch) (*[]domain.SharingAccess, error) {
 	_, err := s.ProductUsecase.RequiredOwner(c, dto.DomainID)
 	if err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func (s *SharingAccessUsecase) SearchForProduct(c context.Context, ownerType enu
 }
 
 func (s *SharingAccessUsecase) SearchForAsset(ctx context.Context,
-	ownerType enums.EOwnerType,
+	ownerType enums.EOwnerOf,
 	dto *dto.SharingAccessSearch,
 ) (*[]domain.SharingAccess, error) {
 
