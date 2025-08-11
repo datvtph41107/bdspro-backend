@@ -4,10 +4,8 @@
     {
       "label": "🔌 Gateway HTTP (8000)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "gateway"
-      ],
+      "command": "cd shared/code && make gateway",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -20,10 +18,8 @@
     {
       "label": "👤 User HTTP (8001)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "user-http"
-      ],
+      "command": "cd shared/code && make user-http",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -36,10 +32,8 @@
     {
       "label": "👤 User gRPC (8201)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "user"
-      ],
+      "command": "cd shared/code && make user",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -52,10 +46,8 @@
     {
       "label": "🏘 BDSPro HTTP (8102)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "bdspro-http"
-      ],
+      "command": "cd shared/code && make bdspro-http",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -68,10 +60,8 @@
     {
       "label": "🏘 BDSPro gRPC (8202)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "bdspro"
-      ],
+      "command": "cd shared/code && make bdspro",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -84,10 +74,8 @@
     {
       "label": "📁 File ",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "file"
-      ],
+      "command": "cd shared/code && make file",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -98,10 +86,8 @@
     {
       "label": "💬 Chat gRPC (8208)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "chat"
-      ],
+      "command": "cd shared/code && make chat",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -112,10 +98,8 @@
     {
       "label": "🗺️ Map",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "map"
-      ],
+      "command": "cd shared/code && make map",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -126,10 +110,8 @@
     {
       "label": "🔔 Notification gRPC (8204)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "noti"
-      ],
+      "command": "cd shared/code && make noti",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -140,10 +122,8 @@
     {
       "label": "💳 Payment gRPC (8205)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "payment"
-      ],
+      "command": "cd shared/code && make payment",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -154,10 +134,8 @@
     {
       "label": "🧩 CRM gRPC (8206)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "crm"
-      ],
+      "command": "cd shared/code && make crm",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -168,10 +146,8 @@
     {
       "label": "🎟 Membership",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "membership"
-      ],
+      "command": "cd shared/code && make membership",
+      "args": [],
       "presentation": {
         "panel": "dedicated"
       }
@@ -179,10 +155,8 @@
     {
       "label": "🏢 Organization gRPC (8207)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "organization"
-      ],
+      "command": "cd shared/code && make organization",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -193,10 +167,8 @@
     {
       "label": "📡 Relay WS (8308)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "relay"
-      ],
+      "command": "cd shared/code && make relay",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -207,10 +179,8 @@
     {
       "label": "📅 Appointment gRPC (8213)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "appointment"
-      ],
+      "command": "cd shared/code && make appointment",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -221,10 +191,8 @@
     {
       "label": "🌐 Social gRPC (8209)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "social"
-      ],
+      "command": "cd shared/code && make social",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],
@@ -235,10 +203,8 @@
     {
       "label": "💳 Transaction gRPC (8214)",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "transaction"
-      ],
+      "command": "cd shared/code && make transaction",
+      "args": [],
       "problemMatcher": [
         "$go"
       ],

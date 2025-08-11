@@ -1,6 +1,6 @@
 module map
 
-replace common => ../common
+replace common => ../shared/common
 
 go 1.24.1
 

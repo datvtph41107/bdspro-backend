@@ -4,7 +4,7 @@ go 1.24.1
 
 toolchain go1.24.3
 
-replace common => ../common
+replace common => ../shared/common
 
 require (
 	common v0.0.0-00010101000000-000000000000
@@ -19,7 +19,7 @@ require (
 	pb v0.0.0-00010101000000-000000000000
 )
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
 require (
 	github.com/bytedance/sonic v1.13.1 // indirect

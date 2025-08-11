@@ -2,9 +2,9 @@ module organization
 
 go 1.24.1
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
-replace common => ../common
+replace common => ../shared/common
 
 replace chatservice => ../chat-service
 

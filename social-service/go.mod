@@ -2,9 +2,9 @@ module social
 
 go 1.24.1
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
-replace common => ../common
+replace common => ../shared/common
 
 require (
 	common v0.0.0-00010101000000-000000000000

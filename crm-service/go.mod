@@ -1,8 +1,8 @@
 module crm
 
-replace common => ../common
+replace common => ../shared/common
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
 replace crmpb => ../protobuf/types/crm
 

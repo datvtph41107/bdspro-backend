@@ -4,9 +4,9 @@ go 1.24.1
 
 toolchain go1.24.3
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
-replace common => ../common
+replace common => ../shared/common
 
 require (
 	github.com/google/wire v0.6.0

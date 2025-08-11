@@ -1,8 +1,8 @@
 module relay
 
-replace common => ../common
+replace common => ../shared/common
 
-replace pb => ../protobuf
+replace pb => ../shared/protobuf
 
 go 1.24.1
 
