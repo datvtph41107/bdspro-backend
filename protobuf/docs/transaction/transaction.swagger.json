@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionpbCreateTransactionResponse"
+              "$ref": "#/definitions/transactionpbTransactionResponse"
             }
           },
           "default": {
@@ -41,6 +41,74 @@
             "schema": {
               "$ref": "#/definitions/transactionpbCreateTransactionRequest"
             }
+          }
+        ],
+        "tags": [
+          "TransactionService"
+        ]
+      }
+    },
+    "/v2/transaction/deal/{id}": {
+      "get": {
+        "operationId": "TransactionService_ListProductTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -209,6 +277,38 @@
         ]
       }
     },
+    "/v2/transaction/product/action": {
+      "post": {
+        "operationId": "TransactionService_CreateProductAction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbActionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbCreateProductActionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TransactionService"
+        ]
+      }
+    },
     "/v2/transaction/{id}/approve": {
       "post": {
         "operationId": "TransactionService_ApproveTransaction",
@@ -331,6 +431,51 @@
         }
       }
     },
+    "transactionpbActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbCreateProductActionRequest": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "action": {
+          "type": "string"
+        },
+        "actionStatus": {
+          "type": "string"
+        },
+        "actionDate": {
+          "type": "string"
+        },
+        "actionNote": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string"
+        },
+        "toId": {
+          "type": "string"
+        },
+        "actionAmount": {
+          "type": "string"
+        },
+        "actionCurrency": {
+          "type": "string"
+        }
+      }
+    },
     "transactionpbCreateTransactionRequest": {
       "type": "object",
       "properties": {
@@ -353,14 +498,6 @@
           "type": "string"
         },
         "transactionCurrency": {
-          "type": "string"
-        }
-      }
-    },
-    "transactionpbCreateTransactionResponse": {
-      "type": "object",
-      "properties": {
-        "transactionId": {
           "type": "string"
         }
       }
@@ -429,12 +566,6 @@
           "type": "number",
           "format": "double"
         },
-        "note": {
-          "type": "string"
-        },
-        "profile": {
-          "$ref": "#/definitions/sharepbProfileItem"
-        },
         "fromId": {
           "type": "string",
           "format": "uint64"
@@ -448,6 +579,12 @@
         },
         "toOf": {
           "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
         }
       }
     },

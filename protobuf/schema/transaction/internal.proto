@@ -16,28 +16,27 @@ enum TransactionType {
 }
 
 service InternalTransactionService {
-    rpc SaveTransaction(SaveTransactionRequest) returns (ActionResponse);
-    rpc Transfer(TransferRequest) returns (ActionResponse);
-    rpc Approve(ApproveRequest) returns (ActionResponse);
-    rpc Reject(RejectRequest) returns (ActionResponse);
-    rpc Sign(SignRequest) returns (ActionResponse);
-    rpc CreateSignTransaction(SignRequest) returns (ActionResponse);
+    rpc CreateProductTransaction(CreateProductTransactionRequest) returns (TransactionResponse);
+    rpc CreateAction(CreateActionRequest) returns (ActionResponse);
+    rpc CreateDepositAction(CreateActionRequest) returns (ActionResponse);
+    rpc CreateSignAction(CreateActionRequest) returns (ActionResponse);
+    rpc CreatePaymentAction(CreateActionRequest) returns (ActionResponse);
+    rpc CreateHandoverAction(CreateActionRequest) returns (ActionResponse);
+    rpc GetTransaction(GetTransactionRequest) returns (TransactionListResponse);
+    rpc GetTransactionDetail(sharepb.IdRequest) returns (TransactionResponse);
 }
 
-
-message SaveTransactionRequest {
+message CreateActionRequest {
     uint64 id = 1;
-    string transaction_name = 2;
-    string description = 3;
-    string transaction_type = 4;
-    string transaction_status = 5;
-    string transaction_date = 6;
-    string transaction_amount = 7;
-    string transaction_currency = 8;
-}
-
-message SaveTransactionResponse {
-    string transaction_id = 1;
+    uint32 action = 2;
+    string note = 3;
+    uint64 fromId = 4;
+    uint32 fromOf = 5;
+    uint64 toId = 6;
+    uint32 toOf = 7;
+    double amount = 8;
+    string currency = 9;
+    uint64 transactionId = 10;
 }
 
 message ActionResponse {
@@ -45,13 +44,15 @@ message ActionResponse {
     string timestamp = 2;
 }
 
-message TransferRequest {
+message SaveTransactionRequest {
     uint64 id = 1;
-    uint64 from_id = 2;
-    uint64 to_id = 3;
-    double amount = 4;
-    string currency = 5;
-    string note = 6;
+    string transaction_name = 2;
+    string description = 3;
+    string transactionType = 4;
+    string transactionStatus = 5;
+    string timestamp = 6;
+    string value = 7;
+    string currency = 8;
 }
 
 message ApproveRequest {
@@ -64,21 +65,43 @@ message RejectRequest {
     string note = 2;
 }
 
-message SignRequest {
-    uint64 id = 1;
-    string contract_name = 2;
-    uint64 from_id = 3;
-    OwnerType from_of = 4;
-    uint64 to_id = 5;
-    OwnerType to_of = 6;
-    double amount = 7;
-    string note = 8;
+message CreateProductTransactionRequest {
+    uint64 fromId = 1;
+    uint64 toId = 2;
+    double amount = 3;
+    string currency = 4;
+    string note = 5;
+    string transactionType = 6;
+    uint64 dealId = 7;
+    uint64 customerId = 8;
+    uint64 productId = 9;
 }
 
-message CreateSignTransactionRequest {
-    uint64 id = 1;
-    string note = 2;
-    string to_id = 3;
-    string to_of = 4;
-    double amount = 5;
+message TransactionResponse {
+    uint64 transactionId = 1;
+    string transactionName = 2;
+    TransactionStatus status = 3;
+    TransactionMethod method = 4;
+    double value = 5;
+    uint64 fromId = 6;
+    OwnerType fromOf = 7;
+    uint64 toId = 8;
+    OwnerType toOf = 9;
+    sharepb.ProfileItem profile = 10;
+    string createdAt = 11;
+}
+
+message TransactionListResponse {
+    repeated TransactionResponse data = 1;
+    int64 total = 2;
+}
+
+message GetTransactionRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    uint64 dealId = 3;
+    uint64 productId = 5;
+    string fromDate = 6;
+    string toDate = 7;
+    string status = 8;
 }

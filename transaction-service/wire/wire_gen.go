@@ -14,6 +14,7 @@ import (
 	"tx/infra/handler"
 	"tx/infra/mapper"
 	"tx/infra/postgres"
+	"tx/infra/validator"
 	"tx/internal/interface"
 	"tx/internal/usecases"
 )
@@ -30,8 +31,10 @@ func InitializeApp() (*config.ConfigApp, error) {
 	transactionGorm := postgre.NewTransactionGorm(db)
 	transactionUsecase := transaction_usecase.NewTransactionUsecase(transactionRepository, actionRepository, transactionGorm)
 	userClient := client.NewUserClient()
-	transactionHandler := handler.NewTransactionHandler(transactionUsecase, userClient)
-	internalTransactionHandler := handler.NewInternalTransactionHandler(transactionUsecase)
+	transactionMapper := mapper.NewTransactionMapper()
+	transactionHandler := handler.NewTransactionHandler(transactionUsecase, userClient, transactionMapper)
+	transactionActionValidator := validator.NewTransactionActionValidator()
+	internalTransactionHandler := handler.NewInternalTransactionHandler(transactionUsecase, transactionActionValidator, transactionMapper)
 	configApp := config.NewConfigApp(transactionHandler, internalTransactionHandler)
 	return configApp, nil
 }
@@ -39,4 +42,4 @@ func InitializeApp() (*config.ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), config.NewConfigApp, handler.NewInternalTransactionHandler, postgre.NewTransactionActionPostgresRepository, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), config.NewConfigApp, handler.NewInternalTransactionHandler, postgre.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)

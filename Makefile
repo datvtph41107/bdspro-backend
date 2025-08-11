@@ -42,6 +42,8 @@ buf-task:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path task
 buf-marketing:
 	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path marketing	
+buf-transaction:
+	cd protobuf/schema && buf generate --template ./buf.gen.yaml --path transaction
 buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing
 	echo "done"	
 	
@@ -62,7 +64,7 @@ init:
 	cd marketing-service && go mod tidy
 
 gateway:
-	cd gateway-service && air http
+	cd gateway-service && go run main.go http
 crm-grpc:
 	cd crm-service && air grpc
 bdspro-grpc:
@@ -74,11 +76,21 @@ user-grpc:
 organization-grpc:
 	cd organization-service && air grpc-server
 notification-grpc:
+	cd gateway-service && go run main.go http
+bdspro:
+	cd bdspro-service && go run main.go grpc
+user:
+	cd user-service && go run main.go grpc
+organization:
+	cd organization-service && go run main.go grpc-server
+notification:
 	cd notification-service && air grpc
 social-grpc:
 	cd social-service && air grpc
 appointment-grpc:
 	cd appointment-service && air grpc
+appointment:
+	cd appointment-service && go run main.go grpc
 chat-http:
 	cd chat-service && air grpc
 chat-grpc:
@@ -91,11 +103,14 @@ membership-grpc:
 	cd membership-service && air grpc
 file-http:
 	cd file-service && air http
-crm-grpc:
-	cd crm-service && air grpc
+crm:
+	cd crm-service && go run main.go grpc
 marketing-grpc:
 	cd marketing-service && air grpc
-
+payment:
+	cd payment-service && go run main.go grpc
+transaction:
+	cd transaction-service && go run main.go grpc
 
 start-all:
 	@echo "Starting all services..."

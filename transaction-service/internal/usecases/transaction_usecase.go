@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 	tx_domain "tx/internal/domain"
+	"tx/internal/dto"
 	"tx/internal/enums"
 	iusecase "tx/internal/interface"
 	"tx/internal/repo"
@@ -17,22 +18,17 @@ var (
 )
 
 type TransactionUsecase interface {
-	CreateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
 	GetTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error)
 	UpdateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
 	DeleteTransaction(ctx context.Context, id uint64) error
-	ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error)
+	ListTransactions(ctx context.Context, filters *dto.TransactionFilters) ([]*tx_domain.Tx, int64, error)
 	ApproveTransaction(ctx context.Context, id uint64) (*tx_domain.Tx, error)
 	RejectTransaction(ctx context.Context, id uint64) error
 	GetTransactionTypes(ctx context.Context) ([]string, error)
 
 	// method
-	CreateSignTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
-	// action
-	Transfer(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
-	Approve(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
-	Reject(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
-	Sign(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+	CreateTransaction(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
+	CreateAction(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
 }
 
 type transactionUsecase struct {
@@ -69,21 +65,29 @@ func (uc *transactionUsecase) CreateTransaction(ctx context.Context, tx *tx_doma
 		if err != nil {
 			return err
 		}
-		if tx.Method == enums.EMethodSign || tx.Method == enums.EMethodRevenue {
-			_, err = uc.actionRepo.Approve(ctx, &tx_domain.TxAction{
-				TxId:      tx.ID,
-				FromId:    tx.FromID,
-				FromOf:    tx.FromOf,
-				ToId:      tx.ToID,
-				ToOf:      tx.ToOf,
-				Action:    enums.EActionApprove,
-				Note:      tx.Note,
-				Timestamp: time.Now(),
-			})
-			if err != nil {
-				return err
-			}
+		action := &tx_domain.TxAction{
+			TxId:      tx.ID,
+			FromId:    tx.FromID,
+			FromOf:    tx.FromOf,
+			ToId:      tx.ToID,
+			ToOf:      tx.ToOf,
+			Action:    enums.EActionDeposite,
+			Note:      tx.Note,
+			Timestamp: time.Now(),
 		}
+		if tx.Method == enums.EMethodSign || tx.Method == enums.EMethodRevenue {
+			action.Action = enums.EActionHandOver
+		}
+		action, err = uc.actionRepo.Approve(ctx, action)
+		if err != nil {
+			return err
+		}
+		tx.LastActionID = &action.ID
+		_, err = uc.transactionRepo.Update(ctx, tx)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -138,7 +142,7 @@ func (uc *transactionUsecase) DeleteTransaction(ctx context.Context, id uint64) 
 	return uc.transactionRepo.Delete(ctx, uint32(id))
 }
 
-func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
+func (uc *transactionUsecase) ListTransactions(ctx context.Context, filters *dto.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
 	return uc.transactionRepo.List(ctx, filters)
 }
 
@@ -165,7 +169,7 @@ func (uc *transactionUsecase) ApproveTransaction(ctx context.Context, id uint64)
 			FromOf:    enums.EOwnerUser,
 			ToId:      tx.ToID,
 			ToOf:      tx.ToOf,
-			Action:    enums.EActionApprove,
+			Action:    enums.EActionHandOver,
 			Note:      tx.Note,
 			Timestamp: time.Now(),
 		}
@@ -212,8 +216,7 @@ func (uc *transactionUsecase) GetTransactionTypes(ctx context.Context) ([]string
 	return uc.transactionRepo.GetTransactionTypes(ctx)
 }
 
-func (uc *transactionUsecase) Transfer(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
-	// action.Stat = enums.TxActionStatusPending
+func (uc *transactionUsecase) CreateAction(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error) {
 	tx, err := uc.transactionRepo.GetByID(ctx, &action.TxId)
 	if err != nil {
 		return nil, err
@@ -235,7 +238,7 @@ func (uc *transactionUsecase) Approve(ctx context.Context, action *tx_domain.TxA
 		return nil, ErrNotFound
 	}
 	action.Timestamp = time.Now()
-	action.Action = enums.EActionApprove
+	action.Action = enums.EAction(enums.EMethodApprove)
 	action.Note = tx.Note
 
 	uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
@@ -278,13 +281,59 @@ func (uc *transactionUsecase) CreateSignTransaction(ctx context.Context, tx *tx_
 			TxId:      tx.ID,
 			FromId:    tx.FromID,
 			FromOf:    enums.EOwnerType(tx.FromOf),
-			ToId:      tx.ToID,
-			ToOf:      enums.EOwnerType(tx.ToOf),
 			Action:    enums.EActionSign,
 			Value:     tx.Value,
 			Note:      tx.Note,
 			Timestamp: time.Now(),
 		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return tx, nil
+}
+
+func (uc *transactionUsecase) CreateTransferTransaction(ctx context.Context, req *tx_domain.TransferTransactionRequest) (*tx_domain.Tx, error) {
+	// Create transaction with transfer method
+	tx := &tx_domain.Tx{
+		TransactionName: "Chuyển tiền",
+		FromID:          req.FromID,
+		FromOf:          enums.EOwnerUser, // User type
+		ToID:            req.ToID,
+		ToOf:            enums.EOwnerDeal, // Deal type
+		Method:          enums.EMethodTransfer,
+		Value:           req.Amount,
+		Status:          enums.TxStatusPending,
+		Timestamp:       time.Now(),
+		Note:            req.Note,
+	}
+
+	uc.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		_, err := uc.transactionRepo.Create(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		action := &tx_domain.TxAction{
+			TxId:      tx.ID,
+			FromId:    req.FromID,
+			FromOf:    enums.EOwnerUser,
+			ToId:      req.ToID,
+			ToOf:      enums.EOwnerDeal,
+			Action:    enums.EActionDeposite,
+			Value:     req.Amount,
+			Note:      req.Note,
+			Timestamp: time.Now(),
+		}
+		// Create transfer action
+		_, err = uc.actionRepo.Transfer(ctx, action)
+		if err != nil {
+			return err
+		}
+
+		tx.LastActionID = &action.ID
+		_, err = uc.transactionRepo.Update(ctx, tx)
 		if err != nil {
 			return err
 		}

@@ -17,7 +17,11 @@ func NewTransactionActionPostgresRepository(db *gorm.DB) repo.ActionRepository {
 }
 
 func (r *TransactionActionPostgresRepository) Transfer(ctx context.Context, action *domain.TxAction) (*domain.TxAction, error) {
-	return nil, nil
+	err := GetDB(ctx, r.db).Create(action).Error
+	if err != nil {
+		return nil, err
+	}
+	return action, nil
 }
 
 func (r *TransactionActionPostgresRepository) Approve(ctx context.Context, action *domain.TxAction) (*domain.TxAction, error) {
@@ -29,8 +33,11 @@ func (r *TransactionActionPostgresRepository) Approve(ctx context.Context, actio
 }
 
 func (r *TransactionActionPostgresRepository) Reject(ctx context.Context, action *domain.TxAction) (*domain.TxAction, error) {
-	r.db.WithContext(ctx).Create(action)
-	return nil, nil
+	err := GetDB(ctx, r.db).Create(action).Error
+	if err != nil {
+		return nil, err
+	}
+	return action, nil
 }
 
 func (r *TransactionActionPostgresRepository) Sign(ctx context.Context, action *domain.TxAction) (*domain.TxAction, error) {

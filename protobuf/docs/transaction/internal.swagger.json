@@ -45,6 +45,33 @@
         }
       }
     },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
+    },
     "transactionpbActionResponse": {
       "type": "object",
       "properties": {
@@ -68,6 +95,91 @@
       ],
       "default": "OWNER_TYPE_UNKNOWN",
       "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "transactionpbTransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbTransactionResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "transactionpbTransactionMethod": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua"
+    },
+    "transactionpbTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/transactionpbTransactionStatus"
+        },
+        "method": {
+          "$ref": "#/definitions/transactionpbTransactionMethod"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbTransactionStatus": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối"
     }
   }
 }

@@ -12,6 +12,7 @@ import (
 	transaction_infra_handler "tx/infra/handler"
 	transaction_infra_mapper "tx/infra/mapper"
 	transaction_infra_postgres "tx/infra/postgres"
+	transaction_infra_validator "tx/infra/validator"
 	transaction_internal_usecases "tx/internal/usecases"
 	tx_internal_interface "tx/internal/interface"
 )
@@ -23,6 +24,7 @@ var wireSet = wire.NewSet(
 	transaction_config.NewConfigApp,
 	transaction_infra_handler.NewInternalTransactionHandler,
 	transaction_infra_postgres.NewTransactionActionPostgresRepository,
+	transaction_infra_validator.NewTransactionActionValidator,
 	transaction_infra_postgres.NewTransactionGorm,
 	transaction_infra_handler.NewTransactionHandler,
 	transaction_infra_mapper.NewTransactionMapper,

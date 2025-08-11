@@ -13,6 +13,7 @@ const (
 	EMethodRent       EMethod = 70
 	EMethodSale       EMethod = 80
 	EMethodBuy        EMethod = 90
+	EMethodTransfer   EMethod = 100
 )
 
 var MethodNames = map[EMethod]string{
@@ -24,6 +25,7 @@ var MethodNames = map[EMethod]string{
 	EMethodRent:       "Cho thuê",    // transfer(cọc), transfer(chuyển tiền), sign, approve/reject
 	EMethodSale:       "Bán",         // transfer(cọc), transfer(chuyển tiền), sign, approve/reject
 	EMethodBuy:        "Mua",         // transfer(cọc), transfer(chuyển tiền), sign, approve/reject
+	EMethodTransfer:   "Chuyển tiền", // transfer (Chuyển tiền)
 }
 
 // IsValidMethod checks if the given method is defined in MethodNames

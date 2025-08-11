@@ -10,5 +10,7 @@ type TransactionClient struct {
 }
 
 func NewTransactionClient() *TransactionClient {
-	return &TransactionClient{clients.NewTransactionGrpcClient(env.ENV_RUNTIME)}
+	return &TransactionClient{
+		TransactionGrpcClient: clients.NewTransactionGrpcClient(env.ENV_RUNTIME),
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tx_domain "tx/internal/domain"
+	"tx/internal/dto"
 	"tx/internal/enums"
 	"tx/internal/repo"
 
@@ -162,9 +163,15 @@ func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) e
 	return nil
 }
 
-func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
+func (r *TransactionPostgresRepository) List(ctx context.Context, filters *dto.TransactionFilters) ([]*tx_domain.Tx, int64, error) {
 	query := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).Where("deleted_at is null")
 
+	if filters.ToID != nil {
+		query = query.Where("to_id = ?", *filters.ToID)
+	}
+	if filters.ToOf != 0 {
+		query = query.Where("to_of = ?", filters.ToOf)
+	}
 	if filters.TransactionType != nil {
 		query = query.Where("transaction_type = ?", *filters.TransactionType)
 	}
@@ -189,6 +196,7 @@ func (r *TransactionPostgresRepository) List(ctx context.Context, filters *repo.
 
 	var models []*tx_domain.Tx
 	err = query.Order("created_at DESC").
+		Preload("LastAction").
 		Offset(filters.GetOffset()).
 		Limit(filters.GetLimit()).
 		Find(&models).Error

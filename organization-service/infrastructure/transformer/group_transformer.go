@@ -31,9 +31,9 @@ func (t *groupTransformer) CreateGroupRequestToEntity(request *grouppb.CreateGro
 	}
 
 	// Map status if provided
-	if request.Status != "" {
-		group.Status = entity.GroupStatus(request.Status)
-	}
+	// if request.Status != "" {
+	// 	group.Status = entity.GroupStatus(request.Status)
+	// }
 
 	return group
 }
@@ -65,7 +65,7 @@ func (t *groupTransformer) EntityToGetGroupResponse(group *entity.Group) *groupp
 			Name:        group.Name,
 			Description: group.Description,
 			AvatarUrl:   group.AvatarUrl,
-			Status:      string(group.Status),
+			// Status:      string(group.Status),
 		},
 	}
 }
@@ -78,7 +78,7 @@ func (t *groupTransformer) EntityToGetGroupsResponse(groups []*entity.Group, tot
 			Name:        group.Name,
 			Description: group.Description,
 			AvatarUrl:   group.AvatarUrl,
-			Status:      string(group.Status),
+			// Status:      string(group.Status),
 		}
 	}
 	return &grouppb.GetGroupsResponse{
@@ -92,14 +92,14 @@ func (t *groupTransformer) EntityToGetGroupsWithDetailsResponse(groups []*dto.Gr
 	for i, groupWithDetails := range groups {
 		group := groupWithDetails.Group
 		groupsResponse[i] = &grouppb.Group{
-			Id:             group.Id,
-			Name:           group.Name,
-			Description:    group.Description,
-			AvatarUrl:      group.AvatarUrl,
-			Status:         groupWithDetails.GroupStatus,
-			MemberCount:    groupWithDetails.MemberCount,
-			UserRole:       groupWithDetails.UserRole,
-			AdditionalInfo: groupWithDetails.AdditionalInfo,
+			Id:          group.Id,
+			Name:        group.Name,
+			Description: group.Description,
+			AvatarUrl:   group.AvatarUrl,
+			// Status:         groupWithDetails.GroupStatus,
+			// MemberCount:    groupWithDetails.MemberCount,
+			// UserRole:       groupWithDetails.UserRole,
+			// AdditionalInfo: groupWithDetails.AdditionalInfo,
 		}
 	}
 	return &grouppb.GetGroupsResponse{

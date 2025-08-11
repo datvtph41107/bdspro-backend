@@ -167,6 +167,8 @@ definitions:
         type: string
       accountNumber:
         type: string
+      bankId:
+        type: integer
       bankName:
         type: string
       name:
@@ -456,6 +458,8 @@ definitions:
         type: string
       name:
         type: string
+      status:
+        type: string
     type: object
   organizationpb.CreateNewRoleWithMembersRequest:
     properties:
@@ -616,6 +620,11 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  organizationpb.DealContractResp:
+    properties:
+      transactionId:
+        type: integer
     type: object
   organizationpb.DealContractResponse:
     properties:
@@ -1324,6 +1333,27 @@ definitions:
     - TransactionType_TRANSACTION_TYPE_UNKNOWN
     - TransactionType_TRANSACTION_TYPE_EXPENSE
     - TransactionType_TRANSACTION_TYPE_REVENUE
+  organizationpb.TransferContractRequest:
+    properties:
+      amount:
+        type: number
+      customerId:
+        type: integer
+      dealId:
+        type: integer
+      id:
+        type: integer
+      note:
+        type: string
+      productIds:
+        type: integer
+      timestamp:
+        type: string
+      transactionStep:
+        type: integer
+      transactionType:
+        type: integer
+    type: object
   organizationpb.UpdateAllowManualInputRequest:
     properties:
       allowManualInput:
@@ -2088,18 +2118,19 @@ paths:
       - application/json
       description: Mua/bán/thuê
       parameters:
-      - description: ID của giao dịch
-        in: path
-        name: id
+      - description: Yêu cầu mua/bán/thuê
+        in: body
+        name: request
         required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/organizationpb.TransferContractRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Giao dịch thương vụ đã mua/bán/thuê
           schema:
-            $ref: '#/definitions/organizationpb.DealContractResponse'
+            $ref: '#/definitions/organizationpb.DealContractResp'
         "400":
           description: Lỗi yêu cầu không hợp lệ
           schema:
@@ -3258,19 +3289,22 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy nhóm
+      description: Lấy danh sách nhóm của user hiện tại
       parameters:
-      - description: ID của nhóm
-        in: path
-        name: id
-        required: true
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
         type: integer
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy nhóm
+      summary: Lấy danh sách nhóm của user hiện tại
       tags:
       - Nhóm
     post:

@@ -88,7 +88,15 @@ type SignContractRequest struct {
 }
 
 type TransferContractRequest struct {
-	ID uint64 `json:"id" validate:"required"`
+	ID              uint64  `json:"id" validate:"required"`
+	Amount          float64 `json:"amount" validate:"required"`
+	CustomerID      uint64  `json:"customer_id" validate:"required"`
+	DealID          uint64  `json:"deal_id" validate:"required"`
+	Note            string  `json:"note"`
+	ProductIDs      uint64  `json:"product_ids" validate:"required"`
+	Timestamp       string  `json:"timestamp" validate:"required"`
+	TransactionStep uint32  `json:"transaction_step" validate:"required"`
+	TransactionType uint32  `json:"transaction_type" validate:"required"`
 }
 
 type DealContractResponse struct {

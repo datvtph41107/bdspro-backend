@@ -1,10 +1,9 @@
 package repo
 
 import (
-	_dto "common/dto"
 	"context"
-	"time"
 	tx_domain "tx/internal/domain"
+	"tx/internal/dto"
 )
 
 type TransactionRepository interface {
@@ -16,7 +15,7 @@ type TransactionRepository interface {
 
 	Delete(ctx context.Context, id uint32) error
 
-	List(ctx context.Context, filters *TransactionFilters) ([]*tx_domain.Tx, int64, error)
+	List(ctx context.Context, filters *dto.TransactionFilters) ([]*tx_domain.Tx, int64, error)
 
 	Approve(ctx context.Context, id uint32, approvedBy uint32) error
 
@@ -27,12 +26,4 @@ type TransactionRepository interface {
 	CancelDeposite(ctx context.Context, id uint64) error
 
 	CreateAction(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
-}
-type TransactionFilters struct {
-	_dto.Pagable
-	TransactionType   *string
-	ApprovalStatus    *string
-	TransactionStatus *uint32
-	StartDate         *time.Time
-	EndDate           *time.Time
 }

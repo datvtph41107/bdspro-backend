@@ -42,16 +42,16 @@ service DealContractService {
     }
 
     // Lấy chi tiết giao dịch
-    rpc GetContract(GetDealContractRequest) returns (DealContractResponse) {
+    rpc GetContract(sharepb.IdRequest) returns (DealContractResponse) {
         option (google.api.http) = {
-            get: "/v2/org/contract/deal/{id}"
+            get: "/v2/org/contract/deal/detail/{id}"
         };
     }
 
     // Lấy danh sách giao dịch
-    rpc GetContracts(GetDealContractsRequest) returns (DealContractListResponse) {
+    rpc GetContracts(sharepb.IdRequest) returns (DealContractListResponse) {
         option (google.api.http) = {
-            get: "/v2/org/contract/deal/{dealId}"
+            get: "/v2/org/contract/deal/list/{id}"
         };
     }
 
@@ -71,9 +71,9 @@ service DealContractService {
     }
 
     // Giao dịch ký hợp đồng
-    rpc SignContract(SignContractRequest) returns (DealContractResp) {
+    rpc CreateAction(ProductActionRequest) returns (DealContractResp) {
         option (google.api.http) = {
-            post: "/v2/org/contract/deal/sign"
+            post: "/v2/org/contract/deal/action"
             body: "*"
         };
     }
@@ -81,7 +81,7 @@ service DealContractService {
     // Giao dịch mua/bán/thuê
     rpc TransferContract(TransferContractRequest) returns (DealContractResp) {
         option (google.api.http) = {
-            post: "/v2/org/contract/deal/{id}/transfer"
+            post: "/v2/org/contract/deal/transfer"
             body: "*"
         };
     }
@@ -110,6 +110,14 @@ message SignContractRequest {
 // Request mua/bán/thuê
 message TransferContractRequest {
     uint64 id = 1;
+    double amount = 2;
+    uint64 customerId = 3;
+    uint64 dealId = 4;
+    string note = 5;
+    uint64 productId = 6;
+    string timestamp = 7;
+    uint32 transactionStep = 8;
+    uint32 transactionType = 9;
 }
 
 // Request thu/chi
@@ -154,14 +162,6 @@ message GetDealContractRequest {
     uint64 id = 1;
 }
 
-// Request lấy danh sách giao dịch
-message GetDealContractsRequest {
-    uint64 dealId = 1;
-    optional ContractType type = 2;
-    uint32 page = 3;
-    uint32 size = 4;
-}
-
 // Request phê duyệt giao dịch
 message ApproveDealContractRequest {
     uint64 id = 1;
@@ -170,24 +170,21 @@ message ApproveDealContractRequest {
 
 // Response cho giao dịch
 message DealContractResponse {
-    uint64 id = 1;
+    uint64 transactionId = 1;
     uint64 dealId = 2;
-    ContractType type = 3;
-    string typeName = 4;
-    double amount = 5;
-    string description = 6;
-    string contractDate = 7;
-    string category = 8;
-    string note = 9;
-    uint64 createdBy = 10;
-    ContractStatus status = 11;
-    string statusName = 12;
-    optional uint64 approvedBy = 13;
-    optional string approvedAt = 14;
-    string rejectReason = 15;
-    repeated uint64 documentIds = 16;
-    string createdAt = 17;
-    string updatedAt = 18;
+    string transactionName = 3;
+    double amount = 4;
+    uint64 customerId = 5;
+    string customerName = 6;
+    uint64 productId = 7;
+    string productName = 8;
+    uint64 staffId = 9;
+    string staffName = 10;
+    string createdAt = 11;
+    uint64 status = 12;
+    string statusName = 13;
+    string note = 14;
+    
 }
 
 // Response cho danh sách giao dịch
@@ -213,3 +210,12 @@ message FinancialSummaryResponse {
     string profitStatus = 7;
     repeated string warningMessages = 8;
 } 
+
+message ProductActionRequest {
+    uint64 dealId = 1;
+    uint64 productId = 2;
+    uint64 action = 3;
+    string note = 4;
+    double amount = 5;
+    string currency = 6;
+}

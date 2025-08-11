@@ -10,7 +10,7 @@ import (
 	"organization/internal/usecase"
 	contractpb "pb/types/organization"
 	pb "pb/types/organization"
-	transactionpb "pb/types/transaction"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,6 +20,7 @@ import (
 type ContractDealHandler struct {
 	contractpb.UnimplementedDealContractServiceServer
 	contractDealUsecase usecase.DealTransactionUsecase
+	dealActionUsecase   *usecase.DealActionUseCase
 	validator           validator.DealTransactionValidator
 	transformer         transformer.DealTransactionTransformer
 	transactionClient   *client.TransactionClient
@@ -27,12 +28,14 @@ type ContractDealHandler struct {
 
 func NewContractDealHandler(
 	contractDealUsecase usecase.DealTransactionUsecase,
+	dealActionUsecase *usecase.DealActionUseCase,
 	validator validator.DealTransactionValidator,
 	transformer transformer.DealTransactionTransformer,
 	transactionClient *client.TransactionClient,
 ) *ContractDealHandler {
 	return &ContractDealHandler{
 		contractDealUsecase: contractDealUsecase,
+		dealActionUsecase:   dealActionUsecase,
 		validator:           validator,
 		transformer:         transformer,
 		transactionClient:   transactionClient,
@@ -51,7 +54,7 @@ func NewContractDealHandler(
 // @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/{dealId} [post]
-func (h *ContractDealHandler) CreateTransaction(ctx context.Context, req *pb.CreateDealTransactionRequest) (*pb.DealTransactionResponse, error) {
+func (h *ContractDealHandler) CreateTransaction(ctx context.Context, req *pb.CreateDealTransactionRequest) (*pb.DealContractResponse, error) {
 	// Validate request
 	if err := h.validator.ValidateCreateRequest(req); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
@@ -90,7 +93,7 @@ func (h *ContractDealHandler) CreateTransaction(ctx context.Context, req *pb.Cre
 // @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/{id} [put]
-func (h *ContractDealHandler) UpdateTransaction(ctx context.Context, req *pb.UpdateDealTransactionRequest) (*pb.DealTransactionResponse, error) {
+func (h *ContractDealHandler) UpdateTransaction(ctx context.Context, req *pb.UpdateDealTransactionRequest) (*pb.DealContractResponse, error) {
 	// Validate request
 	if err := h.validator.ValidateUpdateRequest(req); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
@@ -158,30 +161,26 @@ func (h *ContractDealHandler) DeleteTransaction(ctx context.Context, req *pb.Del
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "ID của giao dịch"
-// @Success 200 {object} pb.DealTransactionResponse "Giao dịch thương vụ đã lấy"
+// @Success 200 {object} pb.DealContractResponse "Giao dịch thương vụ đã lấy"
 // @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
 // @Failure 500 {object} status.Error "Lỗi server"
-// @Router /contract/deal/{id} [get]
-func (h *ContractDealHandler) GetTransaction(ctx context.Context, req *pb.GetDealTransactionRequest) (*pb.DealTransactionResponse, error) {
+// @Router /contract/deal/detail/{id} [get]
+func (h *ContractDealHandler) GetContract(ctx context.Context, req *sharepb.IdRequest) (*pb.DealContractResponse, error) {
 	// Validate request
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "transaction ID is required")
 	}
 
-	// Get user ID from context
-	userID, err := getUserIDFromContext(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated: %v", err)
-	}
-
 	// Get transaction
-	response, err := h.contractDealUsecase.GetTransaction(ctx, req.Id, userID)
+	response, err := h.transactionClient.GetTransactionDetail(ctx, &sharepb.IdRequest{
+		Id: req.Id,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get transaction: %v", err)
 	}
 
 	// Transform response
-	pbResponse := h.transformer.TransformToProtoResponse(response)
+	pbResponse := h.transformer.TransactionResponseToPb(response)
 	return pbResponse, nil
 }
 
@@ -199,7 +198,7 @@ func (h *ContractDealHandler) GetTransaction(ctx context.Context, req *pb.GetDea
 // @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/{dealId} [get]
-func (h *ContractDealHandler) GetTransactions(ctx context.Context, req *pb.GetDealTransactionsRequest) (*pb.DealTransactionListResponse, error) {
+func (h *ContractDealHandler) GetTransactions(ctx context.Context, req *pb.GetDealTransactionsRequest) (*pb.DealContractListResponse, error) {
 	// Validate request
 	if req.DealId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "deal ID is required")
@@ -334,39 +333,41 @@ func getUserIDFromContext(ctx context.Context) (uint64, error) {
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/sign [post]
 func (h *ContractDealHandler) SignContract(ctx context.Context, req *pb.SignContractRequest) (*pb.DealContractResp, error) {
-	// Validate request
-	if req.DealId == 0 || req.SignedBy == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "deal ID and signed by are required")
-	}
-
-	// Get user ID from context
-	// userID, err := getUserIDFromContext(ctx)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Unauthenticated, "user not authenticated: %v", err)
+	// // Validate request
+	// if req.DealId == 0 || req.SignedBy == 0 {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "deal ID and signed by are required")
 	// }
 
-	// Sign contract
-	signReq := &transactionpb.SignRequest{
-		ContractName: "Ký hợp đồng",
-		FromId:       req.SignedBy,
-		FromOf:       transactionpb.OwnerType_OWNER_TYPE_USER,
-		ToId:         req.DealId,
-		ToOf:         transactionpb.OwnerType_OWNER_TYPE_DEAL,
-		Amount:       req.Amount,
-		Note:         req.Note,
-	}
-	if req.ContractName != "" {
-		signReq.ContractName = req.ContractName
-	}
-	response, err := h.transactionClient.CreateSignTransaction(ctx, signReq)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to sign contract: %v", err)
-	}
+	// // Get user ID from context
+	// // userID, err := getUserIDFromContext(ctx)
+	// // if err != nil {
+	// // 	return nil, status.Errorf(codes.Unauthenticated, "user not authenticated: %v", err)
+	// // }
 
-	// Transform response
-	return &pb.DealContractResp{
-		TransactionId: response.TransactionId,
-	}, nil
+	// // Sign contract
+	// signReq := &transactionpb.CreateActionRequest{
+	// 	TransactionId: req.DealId,
+	// 	FromId:        req.SignedBy,
+	// 	FromOf:        transactionpb.OwnerType_OWNER_TYPE_USER,
+	// 	ToId:          req.DealId,
+	// 	ToOf:          transactionpb.OwnerType_OWNER_TYPE_DEAL,
+	// 	Action:        transactionpb.Action_ACTION_SIGN,
+	// 	Value:         req.Amount,
+	// 	Note:          req.Note,
+	// }
+	// if req.ContractName != "" {
+	// 	signReq.ContractName = req.ContractName
+	// }
+	// response, err := h.transactionClient.CreateAction(ctx, signReq)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.Internal, "failed to sign contract: %v", err)
+	// }
+
+	// // Transform response
+	// return &pb.DealContractResp{
+	// 	TransactionId: response.TransactionId,
+	// }, nil
+	return nil, nil
 }
 
 // @Summary Mua/bán/thuê
@@ -375,11 +376,26 @@ func (h *ContractDealHandler) SignContract(ctx context.Context, req *pb.SignCont
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path int true "ID của giao dịch"
-// @Success 200 {object} pb.DealContractResponse "Giao dịch thương vụ đã mua/bán/thuê"
+// @Param request body pb.TransferContractRequest true "Yêu cầu mua/bán/thuê"
+// @Success 200 {object} pb.DealContractResp "Giao dịch thương vụ đã mua/bán/thuê"
 // @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/transfer [post]
 func (h *ContractDealHandler) TransferContract(ctx context.Context, req *pb.TransferContractRequest) (*pb.DealContractResp, error) {
-	return nil, nil
+	// Validate request
+	if req.DealId == 0 || req.CustomerId == 0 || req.ProductId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "deal ID, customer ID, and product IDs are required")
+	}
+
+	if req.Amount <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "amount must be greater than 0")
+	}
+
+	// Call usecase to handle transfer contract logic
+	response, err := h.dealActionUsecase.TransferContract(ctx, req)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to transfer contract: %v", err)
+	}
+
+	return response, nil
 }

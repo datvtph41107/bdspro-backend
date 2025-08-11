@@ -253,18 +253,20 @@ const docTemplate = `{
                 "summary": "Mua/bán/thuê",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID của giao dịch",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "Yêu cầu mua/bán/thuê",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.TransferContractRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Giao dịch thương vụ đã mua/bán/thuê",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.DealContractResponse"
+                            "$ref": "#/definitions/organizationpb.DealContractResp"
                         }
                     },
                     "400": {
@@ -2501,7 +2503,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy nhóm",
+                "description": "Lấy danh sách nhóm của user hiện tại",
                 "consumes": [
                     "application/json"
                 ],
@@ -2511,14 +2513,19 @@ const docTemplate = `{
                 "tags": [
                     "Nhóm"
                 ],
-                "summary": "Lấy nhóm",
+                "summary": "Lấy danh sách nhóm của user hiện tại",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID của nhóm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -5054,6 +5061,9 @@ const docTemplate = `{
                 "accountNumber": {
                     "type": "string"
                 },
+                "bankId": {
+                    "type": "integer"
+                },
                 "bankName": {
                     "type": "string"
                 },
@@ -5487,6 +5497,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -5730,6 +5743,14 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "organizationpb.DealContractResp": {
+            "type": "object",
+            "properties": {
+                "transactionId": {
+                    "type": "integer"
                 }
             }
         },
@@ -6801,6 +6822,38 @@ const docTemplate = `{
                 "TransactionType_TRANSACTION_TYPE_EXPENSE",
                 "TransactionType_TRANSACTION_TYPE_REVENUE"
             ]
+        },
+        "organizationpb.TransferContractRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "productIds": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "transactionStep": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                }
+            }
         },
         "organizationpb.UpdateAllowManualInputRequest": {
             "type": "object",

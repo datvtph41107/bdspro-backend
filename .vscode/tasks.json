@@ -231,6 +231,20 @@
       "presentation": {
         "panel": "dedicated"
       }
+    },
+    {
+      "label": "💳 Transaction gRPC (8214)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "transaction"
+      ],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
     }
   ]
 }

@@ -1,82 +1,207 @@
 package handler
 
 import (
-	_models "common/models"
 	"context"
+	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
+	"time"
+	"tx/infra/mapper"
+	"tx/infra/validator"
 	tx_domain "tx/internal/domain"
 	"tx/internal/enums"
 	usecase "tx/internal/usecases"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type InternalTransactionHandler struct {
 	transactionpb.UnimplementedInternalTransactionServiceServer
 	TransactionUsecase usecase.TransactionUsecase
+	Validator          validator.TransactionActionValidator
+	Mapper             *mapper.TransactionMapper
 }
 
-func NewInternalTransactionHandler(transactionUsecase usecase.TransactionUsecase) *InternalTransactionHandler {
+func NewInternalTransactionHandler(
+	transactionUsecase usecase.TransactionUsecase,
+	validator validator.TransactionActionValidator,
+	mapper *mapper.TransactionMapper,
+) *InternalTransactionHandler {
 	return &InternalTransactionHandler{
 		TransactionUsecase: transactionUsecase,
+		Validator:          validator,
+		Mapper:             mapper,
 	}
 }
 
-func (h *InternalTransactionHandler) Transfer(ctx context.Context, req *transactionpb.TransferRequest) (*transactionpb.ActionResponse, error) {
-	return nil, nil
-	// action, err := h.TransactionUsecase.CreateAction(ctx, &domain.TxAction{
-	// 	TxId:      req.Id,
-	// 	FromId:    req.FromId,
-	// 	ToId:      req.ToId,
-	// 	Method:    enums.EMethodTransfer,
-	// 	Note:      req.Note,
-	// 	Timestamp: time.Now(),
-	// })
-}
+// @bind: internal/usecases.TransactionUsecase
+func (h *InternalTransactionHandler) CreateAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
+	// Validate request
+	if err := h.Validator.ValidateCreateActionRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
-func (h *InternalTransactionHandler) Approve(ctx context.Context, req *transactionpb.ApproveRequest) (*transactionpb.ActionResponse, error) {
-	return nil, nil
-	// action, err := h.TransactionUsecase.CreateAction(ctx, &domain.TxAction{
-	// 	TxId:      req.Id,
-	// 	Method:    enums.EMethodApprove,
-	// 	Note:      req.Note,
-	// 	Timestamp: time.Now(),
-	// })
-}
-
-func (h *InternalTransactionHandler) Reject(ctx context.Context, req *transactionpb.RejectRequest) (*transactionpb.ActionResponse, error) {
-	return nil, nil
-	// action, err := h.TransactionUsecase.CreateAction(ctx, &domain.TxAction{
-	// 	TxId:      req.Id,
-	// 	Method:    enums.EMethodReject,
-	// 	Note:      req.Note,
-	// 	Timestamp: time.Now(),
-	// })
-}
-
-func (h *InternalTransactionHandler) Sign(ctx context.Context, req *transactionpb.SignRequest) (*transactionpb.ActionResponse, error) {
-	return nil, nil
-	// action, err := h.TransactionUsecase.CreateAction(ctx, &domain.TxAction{
-	// 	TxId:      req.Id,
-	// 	Method:    enums.EMethodSign,
-	// 	Note:      req.Note,
-	// 	Timestamp: time.Now(),
-	// })
-}
-
-func (h *InternalTransactionHandler) CreateSignTransaction(ctx context.Context, req *transactionpb.SignRequest) (*transactionpb.ActionResponse, error) {
-	tx, err := h.TransactionUsecase.CreateSignTransaction(ctx, &tx_domain.Tx{
-		BaseEntity:      _models.BaseEntity{ID: req.Id},
-		TransactionName: req.ContractName,
-		Note:            req.Note,
-		FromID:          req.FromId,
-		FromOf:          enums.EOwnerType(req.FromOf),
-		ToID:            req.ToId,
-		ToOf:            enums.EOwnerType(req.ToOf),
-		Value:           req.Amount,
+	tx, err := h.TransactionUsecase.CreateAction(ctx, &tx_domain.TxAction{
+		FromId: req.FromId,
+		TxId:   req.TransactionId,
+		FromOf: enums.EOwnerType(req.FromOf),
+		ToId:   req.ToId,
+		ToOf:   enums.EOwnerType(req.ToOf),
+		Action: enums.EAction(req.Action),
+		Value:  req.Amount,
+		Note:   req.Note,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &transactionpb.ActionResponse{
+		TransactionId: tx.ID,
+	}, nil
+}
+
+func (h *InternalTransactionHandler) CreateProductTransaction(ctx context.Context, req *transactionpb.CreateProductTransactionRequest) (*transactionpb.TransactionResponse, error) {
+	tx, err := h.TransactionUsecase.CreateTransaction(ctx, &tx_domain.Tx{
+		FromID:    req.FromId,
+		FromOf:    enums.EOwnerUser,
+		ToID:      req.ToId,
+		ToOf:      enums.EOwnerDeal,
+		Value:     req.Amount,
+		Note:      req.Note,
+		Method:    enums.EMethodBuy,
+		Timestamp: time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &transactionpb.TransactionResponse{
+		TransactionId: tx.ID,
+	}, nil
+}
+
+func (h *InternalTransactionHandler) CreateDepositAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
+	// Validate request
+	if err := h.Validator.ValidateCreateActionRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Create deposit action
+	action := &tx_domain.TxAction{
+		TxId:      req.TransactionId,
+		FromId:    req.FromId,
+		FromOf:    enums.EOwnerType(req.FromOf),
+		ToId:      req.ToId,
+		ToOf:      enums.EOwnerType(req.ToOf),
+		Action:    enums.EActionDeposite,
+		Value:     req.Amount,
+		Note:      req.Note,
+		Timestamp: time.Now(),
+	}
+
+	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create deposit action: %v", err)
+	}
+
+	return &transactionpb.ActionResponse{
+		TransactionId: createdAction.TxId,
+	}, nil
+}
+
+// @bind: internal/usecases.TransactionUsecase
+func (h *InternalTransactionHandler) CreateSignAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
+	// Validate request
+	if err := h.Validator.ValidateCreateActionRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Create sign action
+	action := &tx_domain.TxAction{
+		TxId:      req.TransactionId,
+		FromId:    req.FromId,
+		FromOf:    enums.EOwnerType(req.FromOf),
+		ToId:      req.ToId,
+		ToOf:      enums.EOwnerType(req.ToOf),
+		Action:    enums.EActionSign,
+		Value:     req.Amount,
+		Note:      req.Note,
+		Timestamp: time.Now(),
+	}
+
+	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create sign action: %v", err)
+	}
+
+	return &transactionpb.ActionResponse{
+		TransactionId: createdAction.TxId,
+	}, nil
+}
+
+// @bind: internal/usecases.TransactionUsecase
+func (h *InternalTransactionHandler) CreatePaymentAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
+	// Validate request
+	if err := h.Validator.ValidateCreateActionRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Create payment action
+	action := &tx_domain.TxAction{
+		TxId:      req.TransactionId,
+		FromId:    req.FromId,
+		FromOf:    enums.EOwnerType(req.FromOf),
+		ToId:      req.ToId,
+		ToOf:      enums.EOwnerType(req.ToOf),
+		Action:    enums.EActionPay,
+		Value:     req.Amount,
+		Note:      req.Note,
+		Timestamp: time.Now(),
+	}
+
+	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create payment action: %v", err)
+	}
+
+	return &transactionpb.ActionResponse{
+		TransactionId: createdAction.TxId,
+	}, nil
+}
+
+func (h *InternalTransactionHandler) CreateHandoverAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
+	// Validate request
+	if err := h.Validator.ValidateCreateActionRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Create handover action
+	action := &tx_domain.TxAction{
+		TxId:      req.TransactionId,
+		FromId:    req.FromId,
+		FromOf:    enums.EOwnerType(req.FromOf),
+		ToId:      req.ToId,
+		ToOf:      enums.EOwnerType(req.ToOf),
+		Action:    enums.EActionHandOver,
+		Value:     req.Amount,
+		Note:      req.Note,
+		Timestamp: time.Now(),
+	}
+
+	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create handover action: %v", err)
+	}
+
+	return &transactionpb.ActionResponse{
+		TransactionId: createdAction.TxId,
+	}, nil
+}
+
+func (h *InternalTransactionHandler) GetTransactionDetail(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.TransactionResponse, error) {
+	tx, err := h.TransactionUsecase.GetTransaction(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &transactionpb.TransactionResponse{
 		TransactionId: tx.ID,
 	}, nil
 }

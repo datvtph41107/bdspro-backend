@@ -40,6 +40,7 @@ func AutoMigrate() {
 		&entity.Color{},
 		&entity.DealCost{},
 		&entity.CostType{},
+		&entity.DealAction{},
 	)
 	if err != nil {
 		panic(err)

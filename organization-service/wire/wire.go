@@ -70,6 +70,8 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewCostTypeMapper,
 	organization_infrastructure_repository_postgres.NewCostTypeRepository,
 	organization_internal_usecase.NewCostTypeUsecase,
+	organization_infrastructure_repository_postgres.NewDealActionRepository,
+	organization_internal_usecase.NewDealActionUseCase,
 	organization_infrastructure_handler.NewDealCommissionHandler,
 	organization_infrastructure_transformer.NewDealCommissionTransformer,
 	organization_internal_usecase.NewDealCommissionUsecase,

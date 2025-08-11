@@ -19,11 +19,11 @@ func NewUserClient() *UserClient {
 
 func (c *UserClient) MapProfileToTransaction(ctx context.Context, transactions []*transactionpb.TransactionResponse) error {
 	ids := make(map[uint64]struct{})
-	for _, transaction := range transactions {
-		if transaction.FromOf == transactionpb.OwnerType_OWNER_TYPE_USER {
-			ids[transaction.FromId] = struct{}{}
-		}
-	}
+	// for _, transaction := range transactions {
+	// 	if transaction.FromO == transactionpb.OwnerType_OWNER_TYPE_USER {
+	// 		ids[transaction.FromId] = struct{}{}
+	// 	}
+	// }
 
 	profiles, err := c.Client.GetMapByIDs(ctx, ids)
 	if err != nil {

@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 import "transaction/type.proto";
+import "transaction/internal.proto";
 
 option go_package = "pb/types/transaction;transactionpb";
 
@@ -22,7 +23,7 @@ service TransactionService {
         };
     }
 
-    rpc CreateTransaction(CreateTransactionRequest) returns (CreateTransactionResponse) {
+    rpc CreateTransaction(CreateTransactionRequest) returns (TransactionResponse) {
         option (google.api.http) = {
             post: "/v2/transaction"
             body: "*"
@@ -36,12 +37,18 @@ service TransactionService {
         };
     }
 
-    // rpc CreateSignTransaction(CreateSignTransactionRequest) returns (CreateSignTransactionResponse) {
-    //     option (google.api.http) = {
-    //         post: "/v2/transaction/sign"
-    //         body: "*"
-    //     };
-    // }
+    rpc CreateProductAction(CreateProductActionRequest) returns (ActionResponse) {
+        option (google.api.http) = {
+            post: "/v2/transaction/product/action"
+            body: "*"
+        };
+    }
+
+    rpc ListProductTransactions(sharepb.IdRequest) returns (TransactionListResponse) {
+        option (google.api.http) = {
+            get: "/v2/transaction/deal/{id}"
+        };
+    }
 }
 
 message CreateTransactionRequest {
@@ -56,20 +63,6 @@ message CreateTransactionRequest {
 
 message CreateTransactionResponse {
     string transaction_id = 1;
-}
-
-message TransactionResponse {
-    uint64 transactionId = 1;
-    string transactionName = 2;
-    TransactionStatus status = 3;
-    TransactionMethod method = 4;
-    double value = 5;
-    string note = 6;
-    optional sharepb.ProfileItem profile = 7;
-    uint64 fromId = 8;
-    OwnerType fromOf = 9;
-    uint64 toId = 10;
-    OwnerType toOf = 11;
 }
 
 // message CreateSignTransactionRequest {
@@ -89,7 +82,14 @@ message TransactionListRequest {
     TransactionMethod method = 6;
 }
 
-message TransactionListResponse {
-    repeated TransactionResponse data = 1;
-    int64 total = 2;
+message CreateProductActionRequest {
+    uint64 transactionId = 1;
+    string action = 2;
+    string actionStatus = 3;
+    string actionDate = 4;
+    string actionNote = 5;
+    string fromId = 6;
+    string toId = 7;
+    string actionAmount = 8;
+    string actionCurrency = 9;
 }
