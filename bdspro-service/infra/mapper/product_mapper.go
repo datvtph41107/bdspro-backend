@@ -18,7 +18,7 @@ type ProductMapper struct {
 	ProjectMapper            *ProjectMapper
 	DeveloperMapper          *DeveloperMapper
 	DepositeMapper           *DepositeMapper
-	TransactionMapper        TransactionTransformer
+	// TransactionMapper        TransactionTransformer
 }
 
 func NewProductMapper(postMapper *PostMapper,
@@ -28,7 +28,7 @@ func NewProductMapper(postMapper *PostMapper,
 	projectMapper *ProjectMapper,
 	developerMapper *DeveloperMapper,
 	depositeMapper *DepositeMapper,
-	transactionMapper TransactionTransformer,
+	// transactionMapper TransactionTransformer,
 ) *ProductMapper {
 	result := &ProductMapper{
 		PostMapper:               postMapper,
@@ -38,7 +38,7 @@ func NewProductMapper(postMapper *PostMapper,
 		ProjectMapper:            projectMapper,
 		DeveloperMapper:          developerMapper,
 		DepositeMapper:           depositeMapper,
-		TransactionMapper:        transactionMapper,
+		// TransactionMapper:        transactionMapper,
 	}
 	postMapper.ProductMapper = result
 	return result
@@ -302,12 +302,12 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 
 	}
 
-	if product.SaleTransaction != nil {
-		result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
-	}
-	if product.RentTransaction != nil {
-		result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
-	}
+	// if product.SaleTransaction != nil {
+	// 	result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
+	// }
+	// if product.RentTransaction != nil {
+	// 	result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
+	// }
 
 	return result
 }
@@ -358,12 +358,12 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 		}
 	}
 
-	if product.SaleTransaction != nil {
-		result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
-	}
-	if product.RentTransaction != nil {
-		result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
-	}
+	// if product.SaleTransaction != nil {
+	// 	result.SaleTransaction = m.TransactionMapper.EntityToTransactionResponse(product.SaleTransaction)
+	// }
+	// if product.RentTransaction != nil {
+	// 	result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
+	// }
 
 	return result
 }
@@ -423,7 +423,7 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 		// RentStatus:      enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
 		RentVisibility: enums.EVisibility(req.RentVisibility),
-		// OwnerType:      enums.EOwnerType(req.OwnerType),
+		// OwnerType:      enums.EOwnerOf(req.OwnerType),
 	}
 
 	// PostCreate * PostSaveWithProduct
@@ -772,7 +772,6 @@ func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *doma
 		TargetProfit:  &req.TargetProfit,
 	}
 }
-
 
 // cmd := exec.Command("ffmpeg",
 // 			"-i", filePath,

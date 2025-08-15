@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"time"
 	"marketing/infrastructure/client"
 	"marketing/internal/domain/model"
 	"marketing/internal/domain/repository"
 	"marketing/internal/dto"
+	"time"
 
 	_utils "common/utils"
 	shared_enum "pb/enums"
@@ -73,7 +73,7 @@ func (u *campaignUsecase) createHistoryRecord(ctx context.Context, actionType sh
 // CreateCampaign creates a new advertising campaign and creates a wallet for it
 func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.CampaignCreateDTO) (*dto.CampaignResponseDTO, error) {
 	organizationID := _utils.GetOrganizationIdFromContext(ctx)
-	userID := _utils.GetUserIDFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 
 	// Validate terms acceptance
 	if !createDTO.TermsAccepted {
@@ -165,7 +165,7 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 
 // UpdateCampaign updates an existing advertising campaign
 func (u *campaignUsecase) UpdateCampaign(ctx context.Context, id uint64, updateDTO *dto.CampaignUpdateDTO) (*dto.CampaignResponseDTO, error) {
-	userID := _utils.GetUserIDFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 
 	// Get existing campaign
 	existingCampaign, err := u.campaignRepo.GetByID(ctx, id)

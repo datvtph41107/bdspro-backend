@@ -45,8 +45,6 @@ type GRPCServer struct {
 	dealTransactionHandler         *handler.DealTransactionHandler
 	colorHandler                   *handler.ColorHandler
 	internalNoteHandler            *handler.InternalNoteHandler
-	dealCostHandler                *handler.DealCostHandler
-	costTypeHandler                *handler.CostTypeHandler
 	dealContractHandler            *handler.ContractDealHandler
 	logger                         *flogging.FabricLogger
 }
@@ -76,8 +74,6 @@ func NewGRPCServer(
 	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
-	dealCostHandler *handler.DealCostHandler,
-	costTypeHandler *handler.CostTypeHandler,
 	dealContractHandler *handler.ContractDealHandler,
 ) *GRPCServer {
 	return &GRPCServer{
@@ -107,8 +103,6 @@ func NewGRPCServer(
 		colorHandler:                   colorHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 		internalNoteHandler:            internalNoteHandler,
-		dealCostHandler:                dealCostHandler,
-		costTypeHandler:                costTypeHandler,
 		dealContractHandler:            dealContractHandler,
 	}
 }
@@ -139,8 +133,6 @@ func (s *GRPCServer) Start() {
 		s.dealTransactionHandler,
 		s.colorHandler,
 		s.internalNoteHandler,
-		s.dealCostHandler,
-		s.costTypeHandler,
 		s.dealContractHandler,
 	)
 
@@ -179,8 +171,6 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
-	dealCostHandler *handler.DealCostHandler,
-	costTypeHandler *handler.CostTypeHandler,
 	dealContractHandler *handler.ContractDealHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
@@ -215,12 +205,11 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
 			organizationpb.RegisterDealInvitationServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
-			organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
+			// organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)
 			organizationpb.RegisterInternalNoteServiceServer(s, internalNoteHandler)
-			organizationpb.RegisterDealCostServiceServer(s, dealCostHandler)
-			organizationpb.RegisterCostTypeServiceServer(s, costTypeHandler)
-			organizationpb.RegisterDealContractServiceServer(s, dealContractHandler)
+			// organizationpb.RegisterDealCostServiceServer(s, dealCostHandler)
+			// organizationpb.RegisterDealContractServiceServer(s, dealContractHandler)
 		},
 		unaryInts,
 		streamInts,

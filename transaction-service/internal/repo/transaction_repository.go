@@ -11,6 +11,8 @@ type TransactionRepository interface {
 
 	GetByID(ctx context.Context, id *uint64) (*tx_domain.Tx, error)
 
+	SumByTransactionID(ctx context.Context, transactionID uint64) (float64, error)
+
 	Update(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error)
 
 	Delete(ctx context.Context, id uint32) error
@@ -26,4 +28,6 @@ type TransactionRepository interface {
 	CancelDeposite(ctx context.Context, id uint64) error
 
 	CreateAction(ctx context.Context, action *tx_domain.TxAction) (*tx_domain.TxAction, error)
+
+	GetByIDs(ctx context.Context, ids []uint64) ([]*tx_domain.Tx, error)
 }

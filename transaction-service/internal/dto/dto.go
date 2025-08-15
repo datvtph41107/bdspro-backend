@@ -16,3 +16,5 @@ type TransactionFilters struct {
 	ToID              *uint64
 	ToOf              enums.EOwnerType
 }
+
+// type TransactionAction

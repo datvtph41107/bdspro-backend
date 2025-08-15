@@ -15,7 +15,7 @@ type DealTransactionUsecase interface {
 	CreateTransaction(ctx context.Context, req *dto.CreateDealTransactionRequest, userID uint64) (*dto.DealTransactionResponse, error)
 	UpdateTransaction(ctx context.Context, req *dto.UpdateDealTransactionRequest, userID uint64) (*dto.DealTransactionResponse, error)
 	DeleteTransaction(ctx context.Context, transactionID uint64, userID uint64) error
-	GetTransaction(ctx context.Context, transactionID uint64, userID uint64) (*dto.DealTransactionResponse, error)
+	GetContractByID(ctx context.Context, contractId uint64) (*entity.DealTransaction, error)
 	GetTransactions(ctx context.Context, req *dto.GetDealTransactionsRequest, userID uint64) (*dto.DealTransactionListResponse, error)
 	ApproveTransaction(ctx context.Context, req *dto.ApproveDealTransactionRequest, userID uint64) error
 	GetFinancialSummary(ctx context.Context, dealID uint64, userID uint64) (*dto.DealFinancialSummary, error)
@@ -141,13 +141,13 @@ func (u *dealTransactionUsecase) DeleteTransaction(ctx context.Context, transact
 	return nil
 }
 
-func (u *dealTransactionUsecase) GetTransaction(ctx context.Context, transactionID uint64, userID uint64) (*dto.DealTransactionResponse, error) {
-	transaction, err := u.dealTransactionRepo.GetByID(ctx, transactionID)
+func (u *dealTransactionUsecase) GetContractByID(ctx context.Context, contractId uint64) (*entity.DealTransaction, error) {
+	transaction, err := u.dealTransactionRepo.GetByID(ctx, contractId)
 	if err != nil {
 		return nil, fmt.Errorf("transaction not found: %w", err)
 	}
 
-	return u.toResponse(transaction), nil
+	return transaction, nil
 }
 
 func (u *dealTransactionUsecase) GetTransactions(ctx context.Context, req *dto.GetDealTransactionsRequest, userID uint64) (*dto.DealTransactionListResponse, error) {
@@ -222,6 +222,8 @@ func (u *dealTransactionUsecase) toResponse(transaction *entity.DealTransaction)
 		RejectReason:    transaction.RejectReason,
 		CreatedAt:       transaction.CreatedAt,
 		UpdatedAt:       transaction.UpdatedAt,
+		CustomerID:      transaction.CustomerID,
+		TransactionID:   &transaction.ID,
 	}
 
 	// Lấy document IDs

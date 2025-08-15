@@ -2,7 +2,7 @@ package client
 
 import (
 	"organization/env"
-	clients "pb/clients"
+	"pb/clients"
 )
 
 type PaymentClient struct {

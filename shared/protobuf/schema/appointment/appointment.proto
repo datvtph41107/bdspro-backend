@@ -3,12 +3,12 @@ syntax = "proto3";
 package appointment;
 
 import "google/protobuf/empty.proto";
-import "organization/deal_transaction.proto";
 import "organization/organization.proto";
 import "organization/deal.proto";
 import "organization/deal_invitation.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
+import "transaction/internal.proto";
 
 option go_package = "github.com/tuandq2112/protobuf/schema/appointment";
 
@@ -63,7 +63,7 @@ message Appointment {
   uint32 mode = 12;
   repeated uint32 transactionIds = 13;
   organizationpb.GroupDeal deal = 14;
-  repeated organizationpb.DealTransactionResponse dealTransactions = 15;
+  repeated transactionpb.DealContractResponse dealTransactions = 15;
   repeated sharepb.ProfileItem participants = 16;
   repeated pb_bdspro.ProductAttachment products = 17;
   uint32 optionExtend = 18;

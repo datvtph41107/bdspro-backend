@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package organizationpb;
-option go_package = "pb/types/organization;organizationpb";
+package transactionpb;
+option go_package = "pb/types/transaction;transactionpb";
 
 import "google/api/annotations.proto";
 import "shared/common.proto";
@@ -22,24 +22,24 @@ message CostTypeListDTO {
   service CostTypeService {
     rpc Create(CostTypeDTO) returns (CostTypeDTO){
         option (google.api.http) = {
-            post: "/v2/org/cost-type"
+            post: "/v2/transaction/cost-type"
             body: "*"
         };
     };
     rpc Update(CostTypeDTO) returns (CostTypeDTO){
         option (google.api.http) = {
-            put: "/v2/org/cost-type/{id}"
+            put: "/v2/transaction/cost-type/{id}"
             body: "*"
         };
     };
     rpc Delete(sharepb.IdRequest) returns (sharepb.Empty){
         option (google.api.http) = {
-            delete: "/v2/org/cost-type/{id}"
+            delete: "/v2/transaction/cost-type/{id}"
         };
     };
     rpc List(CostTypeSearchDTO) returns (CostTypeListDTO){
         option (google.api.http) = {
-            get: "/v2/org/cost-type"
+            get: "/v2/transaction/cost-type"
         };
     };
 }

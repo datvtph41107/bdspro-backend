@@ -35,7 +35,7 @@ func NewAssetCostService(
 // @Tags Hợp đồng & Thu chi & Loại chi phí
 // @Produce json
 // @Param id path uint64 true "ID"
-// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param ownerType path enums.EOwnerOf true "Owner Type"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost/{id}/{ownerType} [get]
 func (s AssetCostService) Search(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetCostListDTO, error) {

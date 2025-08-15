@@ -421,6 +421,13 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customerName": {
+          "type": "string"
         }
       },
       "title": "Response cho giao dịch"

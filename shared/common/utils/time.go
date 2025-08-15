@@ -64,3 +64,8 @@ func FormatTimeToStringCustom(t *time.Time) string {
 	}
 	return t.Format(TimeFormat)
 }
+
+func TimeNowPtr() *time.Time {
+	now := time.Now()
+	return &now
+}

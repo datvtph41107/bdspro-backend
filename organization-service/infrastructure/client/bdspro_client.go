@@ -1,16 +1,11 @@
 package client
 
 import (
-	_middleware "common/middleware"
 	"context"
-	"fmt"
-	"log"
 	"organization/env"
+	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	organizationpb "pb/types/organization"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 // type BdsproClient interface {
@@ -18,35 +13,13 @@ import (
 // }
 
 type BdsproClient struct {
-	client bdspropb.ProductServiceClient
+	*clients.BdsproGrpcClient
 }
 
 func NewBdsproClient() *BdsproClient {
-	bdsproClient := &BdsproClient{client: nil}
-	go func() {
-		url := "localhost"
-		name := "bdspro_grpc"
-		if env.ENV_RUNTIME == "release" {
-			url = name
-		}
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := bdspropb.NewProductServiceClient(conn)
-		bdsproClient.client = client
-	}()
+	bdsproClient := &BdsproClient{
+		BdsproGrpcClient: clients.MakeBdsproGrpcClient(env.ENV_RUNTIME),
+	}
 	return bdsproClient
 }
 
@@ -60,7 +33,7 @@ func (c *BdsproClient) MapProductToDealPb(ctx context.Context, deals []*organiza
 		}
 	}
 
-	products, err := c.client.GetProductAttachmentByIds(ctx, &bdspropb.IdRequest{Ids: ids})
+	products, err := c.GetProductAttachmentByIds(ctx, ids)
 	if err != nil {
 		return
 	}
@@ -79,10 +52,24 @@ func (c *BdsproClient) MapProductToDealPb(ctx context.Context, deals []*organiza
 	}
 }
 
-func (c *BdsproClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) ([]*bdspropb.ProductAttachment, error) {
-	products, err := c.client.GetProductAttachmentByIds(ctx, &bdspropb.IdRequest{Ids: ids})
-	if err != nil {
-		return nil, err
-	}
-	return products.Data, nil
-}
+// func (c *BdsproClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) ([]*bdspropb.ProductAttachment, error) {
+// 	products, err := c.GetProductByIds(ctx, ids)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return products.Data, nil
+// }
+
+// func (c *BdsproClient) MapDealContractToPb(ctx context.Context, req *organizationpb.DealContractResponse) {
+// 	if req.ProductId == 0 {
+// 		return
+// 	}
+
+// 	product, err := c.GetProductAttachmentByIds(ctx, []uint64{req.ProductId})
+// 	if err != nil {
+// 		return
+// 	}
+// 	if product != nil && len(product.Data) > 0 {
+// 		req.Product = product.Data[0]
+// 	}
+// }

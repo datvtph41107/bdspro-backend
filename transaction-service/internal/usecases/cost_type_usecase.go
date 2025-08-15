@@ -1,10 +1,10 @@
-package usecase
+package transaction_usecase
 
 import (
 	"context"
-	"organization/internal/domain/entity"
-	"organization/internal/domain/repository"
-	"organization/internal/dto"
+	"tx/internal/domain/entity"
+	"tx/internal/dto"
+	"tx/internal/repo"
 )
 
 type CostTypeUsecase interface {
@@ -15,10 +15,10 @@ type CostTypeUsecase interface {
 }
 
 type costTypeUsecase struct {
-	repo repository.CostTypeRepository
+	repo repo.CostTypeRepository
 }
 
-func NewCostTypeUsecase(repo repository.CostTypeRepository) CostTypeUsecase {
+func NewCostTypeUsecase(repo repo.CostTypeRepository) CostTypeUsecase {
 	return &costTypeUsecase{repo: repo}
 }
 

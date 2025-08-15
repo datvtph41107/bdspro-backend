@@ -51,7 +51,7 @@ package usecases
 // 		copier.Copy(&entities, &dto.Datas)
 // 		for i := 0; i < len(entities); i++ {
 // 			entities[i].ProductID = productId
-// 			entities[i].TargetType = enums.EOwnerTypeOrgnization
+// 			entities[i].TargetType = enums.EOwnerOfOrgnization
 // 			entities[i].DeletedAt = nil
 // 		}
 

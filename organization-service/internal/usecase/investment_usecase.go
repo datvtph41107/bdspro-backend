@@ -16,7 +16,7 @@ import (
 type InvestmentUsecase struct {
 	investmentRepository repository.InvestmentRepository
 	dealRepository       repository.GroupDealRepository
-	groupAuthUsecase     GroupAuthUsecase	
+	groupAuthUsecase     GroupAuthUsecase
 	notiClient           iusecase.INotiClient
 }
 
@@ -158,7 +158,7 @@ func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.Investm
 			return nil, 0, errors.New("permission denied - need VIEW_INVESTMENT permission")
 		}
 		// Force filter by current user's member ID
-		userID := _utils.GetUserIDFromContext(ctx)
+		userID := _utils.GetProfileIdWithContext(ctx)
 		req.MemberID = userID
 	}
 
@@ -182,7 +182,7 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 	if err != nil {
 		return 0, err
 	}
-	//TODO: uncomment when notification service is ready	
+	//TODO: uncomment when notification service is ready
 	// Send notification in a separate goroutine
 	go func() {
 		// Create context with 10 second timeout for notification
@@ -193,7 +193,7 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 			TargetID:   investment.DealID,
 			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
 			IsMerge:    false,
-			UserId:     &investment.MemberID,	
+			UserId:     &investment.MemberID,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
 	}()
@@ -230,7 +230,7 @@ func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (ui
 			TargetID:   investment.DealID,
 			AttachData: []string{fmt.Sprintf("%d", investment.ID)},
 			IsMerge:    false,
-			UserId:     &investment.MemberID,	
+			UserId:     &investment.MemberID,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
 	}()
@@ -256,7 +256,7 @@ func (u *InvestmentUsecase) canViewInvestment(ctx context.Context, investment *e
 
 	// Users with VIEW_INVESTMENT can only view their own investments
 	if u.groupAuthUsecase.HasPermission(ctx, enums.PermissionViewInvestment) {
-		userID := _utils.GetUserIDFromContext(ctx)
+		userID := _utils.GetProfileIdWithContext(ctx)
 		return investment.MemberID == userID
 	}
 
@@ -274,6 +274,6 @@ func (u *InvestmentUsecase) canManageInvestment(ctx context.Context, investment 
 		return false
 	}
 
-	userID := _utils.GetUserIDFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	return investment.MemberID == userID
 }

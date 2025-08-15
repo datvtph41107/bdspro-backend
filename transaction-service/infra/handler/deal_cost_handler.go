@@ -3,22 +3,20 @@ package handler
 import (
 	_dto "common/dto"
 	"context"
-
-	"organization/infrastructure/transformer"
-	"organization/internal/dto"
-	"organization/internal/usecase"
-
-	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
+	transactionpb "pb/types/transaction"
+	"tx/infra/mapper"
+	"tx/internal/dto"
+	transaction_usecase "tx/internal/usecases"
 )
 
 type DealCostHandler struct {
-	organizationpb.UnimplementedDealCostServiceServer
-	usecase usecase.DealCostUsecase
-	mapper  *transformer.DealCostMapper
+	transactionpb.UnimplementedDealCostServiceServer
+	usecase transaction_usecase.DealCostUsecase
+	mapper  *mapper.DealCostMapper
 }
 
-func NewDealCostHandler(uc usecase.DealCostUsecase, mapper *transformer.DealCostMapper) *DealCostHandler {
+func NewDealCostHandler(uc transaction_usecase.DealCostUsecase, mapper *mapper.DealCostMapper) *DealCostHandler {
 	return &DealCostHandler{usecase: uc, mapper: mapper}
 }
 
@@ -28,10 +26,10 @@ func NewDealCostHandler(uc usecase.DealCostUsecase, mapper *transformer.DealCost
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param dealCost body organizationpb.DealCostDTO true "Deal cost data"
-// @Success 200 {object} organizationpb.DealCostDTO
+// @Param dealCost body transactionpb.DealCostDTO true "Deal cost data"
+// @Success 200 {object} transactionpb.DealCostDTO
 // @Router /deal-cost [post]
-func (h *DealCostHandler) Create(ctx context.Context, req *organizationpb.DealCostDTO) (*organizationpb.DealCostDTO, error) {
+func (h *DealCostHandler) Create(ctx context.Context, req *transactionpb.DealCostDTO) (*transactionpb.DealCostDTO, error) {
 	model := h.mapper.DealCostProtoToModel(req)
 	if err := h.usecase.Create(ctx, model); err != nil {
 		return nil, err
@@ -45,10 +43,10 @@ func (h *DealCostHandler) Create(ctx context.Context, req *organizationpb.DealCo
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param dealCost body organizationpb.DealCostDTO true "Deal cost data"
-// @Success 200 {object} organizationpb.DealCostDTO
+// @Param dealCost body transactionpb.DealCostDTO true "Deal cost data"
+// @Success 200 {object} transactionpb.DealCostDTO
 // @Router /deal-cost/{id} [put]
-func (h *DealCostHandler) Update(ctx context.Context, req *organizationpb.DealCostDTO) (*organizationpb.DealCostDTO, error) {
+func (h *DealCostHandler) Update(ctx context.Context, req *transactionpb.DealCostDTO) (*transactionpb.DealCostDTO, error) {
 	model := h.mapper.DealCostProtoToModel(req)
 	if err := h.usecase.Update(ctx, model); err != nil {
 		return nil, err
@@ -80,9 +78,9 @@ func (h *DealCostHandler) Delete(ctx context.Context, req *sharepb.IdRequest) (*
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "Deal cost ID"
-// @Success 200 {object} organizationpb.DealCostDTO
+// @Success 200 {object} transactionpb.DealCostDTO
 // @Router /deal-cost/detail/{id} [get]
-func (h *DealCostHandler) Detail(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.DealCostDTO, error) {
+func (h *DealCostHandler) Detail(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.DealCostDTO, error) {
 	model, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -97,9 +95,9 @@ func (h *DealCostHandler) Detail(ctx context.Context, req *sharepb.IdRequest) (*
 // @Produce json
 // @Security BearerAuth
 // @Param dealId path uint64 true "Deal ID"
-// @Param dto query organizationpb.DealCostSearchDTO true "Thông tin tìm kiếm"
+// @Param dto query transactionpb.DealCostSearchDTO true "Thông tin tìm kiếm"
 // @Router /deal/deal-cost/{dealId} [get]
-func (h *DealCostHandler) Search(ctx context.Context, req *organizationpb.DealCostSearchDTO) (*organizationpb.DealCostListDTO, error) {
+func (h *DealCostHandler) Search(ctx context.Context, req *transactionpb.DealCostSearchDTO) (*transactionpb.DealCostListDTO, error) {
 	search := &dto.DealCostSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: int(req.Page),
@@ -112,12 +110,12 @@ func (h *DealCostHandler) Search(ctx context.Context, req *organizationpb.DealCo
 		return nil, err
 	}
 
-	var data []*organizationpb.DealCostDTO
+	var data []*transactionpb.DealCostDTO
 	for _, item := range list {
 		data = append(data, h.mapper.DealCostModelToProto(item))
 	}
 
-	return &organizationpb.DealCostListDTO{
+	return &transactionpb.DealCostListDTO{
 		Data:          data,
 		TotalElements: uint32(len(data)),
 	}, nil

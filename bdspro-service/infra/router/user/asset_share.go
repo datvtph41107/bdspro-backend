@@ -45,7 +45,7 @@ func (r *AssetShareRouter) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.uc.Search(c, enums.EOwnerTypeMember, &dto)
+	result, total, err := r.uc.Search(c, enums.EOwnerOfMember, &dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

@@ -50,7 +50,7 @@ rules:
           ```
         - Để lấy **profileId** của user:
           ```go
-          profileID := _utils.GetUserIDFromContext(ctx)
+          profileID := _utils.GetProfileIdWithContext(ctx)
           ```
         - Để lấy **organizationId** của tổ chức hiện tại:
           ```go

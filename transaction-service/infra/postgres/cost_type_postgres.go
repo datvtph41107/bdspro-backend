@@ -1,11 +1,11 @@
-package postgres
+package postgre
 
 import (
 	"context"
-	"organization/internal/domain/entity"
-	"organization/internal/domain/repository"
-	"organization/internal/dto"
 	"time"
+	"tx/internal/domain/entity"
+	"tx/internal/dto"
+	"tx/internal/repo"
 
 	"gorm.io/gorm"
 )
@@ -14,7 +14,7 @@ type CostTypePostgreRepo struct {
 	db *gorm.DB
 }
 
-func NewCostTypeRepository(db *gorm.DB) repository.CostTypeRepository {
+func NewCostTypeRepository(db *gorm.DB) repo.CostTypeRepository {
 	return &CostTypePostgreRepo{db: db}
 }
 

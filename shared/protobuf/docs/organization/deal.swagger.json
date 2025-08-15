@@ -2210,6 +2210,12 @@
         },
         "internalNote": {
           "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },
@@ -2337,6 +2343,10 @@
         "numTransaction": {
           "type": "integer",
           "format": "int64"
+        },
+        "totalPayment": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

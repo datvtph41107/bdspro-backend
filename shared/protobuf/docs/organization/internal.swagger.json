@@ -17,18 +17,6 @@
   ],
   "paths": {},
   "definitions": {
-    "organizationpbApprovedStatus": {
-      "type": "string",
-      "enum": [
-        "APPROVED_STATUS_UNKNOWN",
-        "APPROVED_STATUS_PENDING",
-        "APPROVED_STATUS_APPROVED",
-        "APPROVED_STATUS_REJECTED"
-      ],
-      "default": "APPROVED_STATUS_UNKNOWN",
-      "description": "- APPROVED_STATUS_PENDING: Chờ xác nhận\n - APPROVED_STATUS_APPROVED: Đã xác nhận\n - APPROVED_STATUS_REJECTED: Từ chối",
-      "title": "Enum cho trạng thái phê duyệt"
-    },
     "organizationpbBankAccountItem": {
       "type": "object",
       "properties": {
@@ -151,75 +139,6 @@
         }
       }
     },
-    "organizationpbDealTransactionResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "type": {
-          "$ref": "#/definitions/organizationpbTransactionType"
-        },
-        "typeName": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "description": {
-          "type": "string"
-        },
-        "transactionDate": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "createdBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "$ref": "#/definitions/organizationpbApprovedStatus"
-        },
-        "statusName": {
-          "type": "string"
-        },
-        "approvedBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "approvedAt": {
-          "type": "string"
-        },
-        "rejectReason": {
-          "type": "string"
-        },
-        "documentIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      },
-      "title": "Response cho giao dịch"
-    },
     "organizationpbDocumentItem": {
       "type": "object",
       "properties": {
@@ -254,18 +173,6 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/organizationpbDealMember"
-          }
-        }
-      }
-    },
-    "organizationpbGetDealTransactionsByIdsResponse": {
-      "type": "object",
-      "properties": {
-        "dealTransactions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/organizationpbDealTransactionResponse"
           }
         }
       }
@@ -448,6 +355,12 @@
         },
         "internalNote": {
           "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },
@@ -537,17 +450,6 @@
           "$ref": "#/definitions/organizationpbDealInvitationMember"
         }
       }
-    },
-    "organizationpbTransactionType": {
-      "type": "string",
-      "enum": [
-        "TRANSACTION_TYPE_UNKNOWN",
-        "TRANSACTION_TYPE_EXPENSE",
-        "TRANSACTION_TYPE_REVENUE"
-      ],
-      "default": "TRANSACTION_TYPE_UNKNOWN",
-      "description": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu",
-      "title": "Enum cho loại giao dịch"
     },
     "pb_bdsproProductAttachment": {
       "type": "object",
@@ -651,6 +553,25 @@
         },
         "joinedAt": {
           "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     }

@@ -3,13 +3,11 @@ package shared_usecase
 import (
 	"bdspro/infra/providers"
 	"bdspro/internal/domain"
-	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	iusecase "bdspro/internal/usecases/interface"
-	transaction_usecase "bdspro/internal/usecases/transaction"
 	"bdspro/internal/utils"
 	_dto "common/dto"
 	_routes "common/routes"
@@ -52,9 +50,7 @@ type ProductUsecase struct {
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 	NotificationClient iusecase.INotificationClient
 	Transaction        iusecase.ITransaction
-	TransactionUsecase transaction_usecase.TransactionUsecase
 	AssetUsecase       *AssetUsecase
-	TransactionRepo    repo.TransactionRepository
 }
 
 func NewProductUsecase(
@@ -75,8 +71,6 @@ func NewProductUsecase(
 	productChildRepo repo.UProductChildRepo,
 	notificationClient iusecase.INotificationClient,
 	transaction iusecase.ITransaction,
-	transactionUsecase transaction_usecase.TransactionUsecase,
-	transactionRepo repo.TransactionRepository,
 	assetUsecase *AssetUsecase,
 ) *ProductUsecase {
 	result := &ProductUsecase{
@@ -98,8 +92,6 @@ func NewProductUsecase(
 		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
 		NotificationClient: notificationClient,
 		Transaction:        transaction,
-		TransactionUsecase: transactionUsecase,
-		TransactionRepo:    transactionRepo,
 		AssetUsecase:       assetUsecase,
 		// OwnerType:    ownerType,
 	}
@@ -125,7 +117,6 @@ func MakeProductUsecase(
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
 	ownerType enums.EOwnerOf,
-	transactionRepo repo.TransactionRepository,
 ) *ProductUsecase {
 	return &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -143,7 +134,6 @@ func MakeProductUsecase(
 		ProductHistoryRepo: ProductHistoryRepo,
 		PostUsecase:        PostUsecase,
 		OwnerType:          ownerType,
-		TransactionRepo:    transactionRepo,
 	}
 }
 
@@ -160,7 +150,7 @@ func (s *ProductUsecase) CheckPermission(c context.Context, productId *uint64, p
 }
 
 func (s *ProductUsecase) GetOwnerID(c context.Context, ownerType enums.EOwnerOf) uint64 {
-	// if ownerType == enums.EOwnerTypeOrganization {
+	// if ownerType == enums.EOwnerOfOrganization {
 	// 	return s.This.GetOwnerID(c)
 	// }
 
@@ -380,7 +370,7 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 
 func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	// profileId := _jwt.GetProfileId(c)
-	ownerID := s.GetOwnerID(c, enums.EOwnerTypeMember)
+	ownerID := s.GetOwnerID(c, enums.EOwnerOfMember)
 	// if err != nil {
 	// 	return nil, 0, err
 	// }
@@ -740,90 +730,92 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 // 	return nil
 // }
 
-func (s *ProductUsecase) ProductDeposite(c context.Context, dto *tx_domain.Tx) (*tx_domain.Tx, error) {
-	// sản phẩm đang cọc
-	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductDeposite)
-	if err != nil {
-		return nil, err
-	}
+// func (s *ProductUsecase) ProductDeposite(c context.Context, dto *tx_domain.Tx) (*tx_domain.Tx, error) {
+// 	// sản phẩm đang cọc
+// 	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductDeposite)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	product, err := s.ProductRepo.GetProductByID(c, dto.ProductID)
-	if err != nil {
-		return nil, err
-	}
+// 	product, err := s.ProductRepo.GetProductByID(c, dto.ProductID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var tx *tx_domain.Tx
-	if dto.TransactionType == 10 && product.SaleTransactionID != nil {
-		tx, err = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
-	} else if dto.TransactionType == 20 && product.RentTransactionID != nil {
-		tx, err = s.TransactionRepo.GetByID(c, product.RentTransactionID)
-	} else {
-		tx = &tx_domain.Tx{}
-	}
-	if err != nil {
-		return nil, err
-	}
+// 	var tx *tx_domain.Tx
+// 	// todo: transaction tại đây
+// 	// if dto.TransactionType == 10 && product.SaleTransactionID != nil {
+// 	// 	tx, err = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
+// 	// } else if dto.TransactionType == 20 && product.RentTransactionID != nil {
+// 	// 	tx, err = s.TransactionRepo.GetByID(c, product.RentTransactionID)
+// 	// } else {
+// 	// 	tx = &tx_domain.Tx{}
+// 	// }
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// typeName := "bán"
-	// if dto.TransactionType == 20 {
-	// 	typeName = "cho thuê"
-	// }
+// 	// typeName := "bán"
+// 	// if dto.TransactionType == 20 {
+// 	// 	typeName = "cho thuê"
+// 	// }
 
-	// todo: nếu đặt cọc khi giao dịch không phải nháp/hủy thì sẽ hủy giao dịch cũ đồng thời tạo giao dịch mới
-	// if tx.TransactionStatus != enums.TransactionStatusDraft &&
-	// 	tx.TransactionStatus != enums.TransactionStatusCanceled {
-	// 	return nil, &_routes.Except{
-	// 		Code:    400,
-	// 		Message: fmt.Sprintf("Chỉ đặt cọc với sản phẩm chưa %s\nhoặc đã hủy", typeName),
-	// 	}
-	// }
+// 	// todo: nếu đặt cọc khi giao dịch không phải nháp/hủy thì sẽ hủy giao dịch cũ đồng thời tạo giao dịch mới
+// 	// if tx.TransactionStatus != enums.TransactionStatusDraft &&
+// 	// 	tx.TransactionStatus != enums.TransactionStatusCanceled {
+// 	// 	return nil, &_routes.Except{
+// 	// 		Code:    400,
+// 	// 		Message: fmt.Sprintf("Chỉ đặt cọc với sản phẩm chưa %s\nhoặc đã hủy", typeName),
+// 	// 	}
+// 	// }
 
-	// var record *domain.Transaction
-	err = s.Transaction.WithTransaction(c, func(c context.Context) error {
-		if tx.TransactionStatus != enums.TransactionStatusDraft &&
-			tx.TransactionStatus != enums.TransactionStatusCanceled {
-			tx.TransactionStatus = enums.TransactionStatusCanceled
-			tx, err = s.TransactionRepo.Update(c, tx)
-			if err != nil {
-				return err
-			}
-		}
+// 	// var record *domain.Transaction
+// 	err = s.Transaction.WithTransaction(c, func(c context.Context) error {
+// 		if tx.TransactionStatus != enums.TransactionStatusDraft &&
+// 			tx.TransactionStatus != enums.TransactionStatusCanceled {
+// 			tx.TransactionStatus = enums.TransactionStatusCanceled
+// 			// todo: transaction
+// 			// tx, err = s.TransactionRepo.Update(c, tx)
+// 			// if err != nil {
+// 			// 	return err
+// 			// }
+// 		}
 
-		newTx := &tx_domain.Tx{
-			ProductID:         dto.ProductID,
-			ContactID:         dto.ContactID,
-			DepositeAmount:    dto.DepositeAmount,
-			DepositeNote:      dto.DepositeNote,
-			TransactionType:   dto.TransactionType,
-			TransactionStatus: enums.TransactionStatusDeposite,
-			OwnerId:           product.OwnerID,
-			OwnerType:         product.OwnerType,
-		}
-		newTx, err = s.TransactionRepo.Create(c, newTx)
-		if err != nil {
-			return err
-		}
-		if dto.TransactionType == 10 {
-			product.SaleTransactionID = &newTx.ID
-		} else {
-			product.RentTransactionID = &newTx.ID
-		}
-		if err := s.ProductRepo.Save(c, product); err != nil {
-			return err
-		}
-		return nil
-	})
+// 		newTx := &tx_domain.Tx{
+// 			ProductID:         dto.ProductID,
+// 			ContactID:         dto.ContactID,
+// 			DepositeAmount:    dto.DepositeAmount,
+// 			DepositeNote:      dto.DepositeNote,
+// 			TransactionType:   dto.TransactionType,
+// 			TransactionStatus: enums.TransactionStatusDeposite,
+// 			OwnerId:           product.OwnerID,
+// 			OwnerType:         product.OwnerType,
+// 		}
+// 		// newTx, err = s.TransactionRepo.Create(c, newTx)
+// 		// if err != nil {
+// 		// 	return err
+// 		// }
+// 		if dto.TransactionType == 10 {
+// 			product.SaleTransactionID = &newTx.ID
+// 		} else {
+// 			product.RentTransactionID = &newTx.ID
+// 		}
+// 		if err := s.ProductRepo.Save(c, product); err != nil {
+// 			return err
+// 		}
+// 		return nil
+// 	})
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// product.DepositeID = &record.ID
-	// if err := s.ProductRepo.Update(c, product.ID, product); err != nil {
-	// 	return nil, err
-	// }
-	return tx, nil
-}
+// 	// product.DepositeID = &record.ID
+// 	// if err := s.ProductRepo.Update(c, product.ID, product); err != nil {
+// 	// 	return nil, err
+// 	// }
+// 	return tx, nil
+// }
 
 func (s *ProductUsecase) RentVisibilityUpdate(c context.Context, dto dto.VisibilityUpdate) error {
 	err := s.CheckPermission(c, dto.ProductID, enums.PermissionProductUpdateVisibility)
@@ -848,10 +840,11 @@ func (s *ProductUsecase) CancelDeposite(c context.Context, transactionId uint64)
 		return err
 	}
 
-	transaction, err := s.TransactionRepo.GetByID(c, &transactionId)
-	if err != nil {
-		return err
-	}
+	// todo: transaction
+	// transaction, err := s.TransactionRepo.GetByID(c, &transactionId)
+	// if err != nil {
+	// 	return err
+	// }
 	// product, err := s.RequiredOwner(c, deposite.ProductID)
 	// if err != nil {
 	// 	return err
@@ -871,7 +864,8 @@ func (s *ProductUsecase) CancelDeposite(c context.Context, transactionId uint64)
 
 	// product.DepositeID = nil
 
-	return s.TransactionRepo.CancelDeposite(c, transaction.ID)
+	// return s.TransactionRepo.CancelDeposite(c, transaction.ID)
+	return nil
 }
 
 func (uc *ProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSearch) (*[]domain.PostItem, error) {
@@ -888,7 +882,7 @@ func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingA
 	// 	return nil, err
 	// }
 
-	entities, err := uc.ProductAccessRepo.OwnerSearchProduct(c, id, enums.EOwnerTypeMember, &dto)
+	entities, err := uc.ProductAccessRepo.OwnerSearchProduct(c, id, enums.EOwnerOfMember, &dto)
 	return entities, err
 }
 
@@ -1142,7 +1136,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 			},
 			TargetId:   *child.ParentId,
 			ActionType: shared_enum.HistoryProductDevide,
-			// TargetType: shared_enum.EOwnerType_Product,
+			// TargetType: shared_enum.EOwnerOf_Product,
 		})
 	}()
 

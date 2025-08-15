@@ -1,11 +1,11 @@
-package usecase
+package transaction_usecase
 
 import (
 	"context"
-	"organization/internal/domain/entity"
-	"organization/internal/domain/repository"
-	"organization/internal/dto"
-	"organization/internal/enums"
+	"tx/internal/domain/entity"
+	"tx/internal/dto"
+	"tx/internal/enums"
+	"tx/internal/repo"
 )
 
 type DealCostUsecase interface {
@@ -17,11 +17,11 @@ type DealCostUsecase interface {
 }
 
 type dealCostUsecase struct {
-	repo         repository.DealCostRepository
-	costTypeRepo repository.CostTypeRepository
+	repo         repo.DealCostRepository
+	costTypeRepo repo.CostTypeRepository
 }
 
-func NewDealCostUsecase(repo repository.DealCostRepository, costTypeRepo repository.CostTypeRepository) DealCostUsecase {
+func NewDealCostUsecase(repo repo.DealCostRepository, costTypeRepo repo.CostTypeRepository) DealCostUsecase {
 	return &dealCostUsecase{repo: repo, costTypeRepo: costTypeRepo}
 }
 

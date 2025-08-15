@@ -49,6 +49,7 @@ type groupDealUsecase struct {
 	logWorker               *LogWorker
 	transaction             iusecase.ITransaction
 	notiClient              iusecase.INotiClient
+	transactionClient       iusecase.TransactionClient
 	dealMemberRepository    repository.DealMemberRepository
 	userClient              iusecase.IUserClient
 	organizationAuthUsecase OrganizationAuthUsecase
@@ -66,6 +67,7 @@ func NewGroupDealUsecase(
 	dealMemberRepository repository.DealMemberRepository,
 	userClient iusecase.IUserClient,
 	organizationAuthUsecase OrganizationAuthUsecase,
+	transactionClient iusecase.TransactionClient,
 ) DealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository:     groupDealRepository,
@@ -79,6 +81,7 @@ func NewGroupDealUsecase(
 		dealMemberRepository:    dealMemberRepository,
 		userClient:              userClient,
 		organizationAuthUsecase: organizationAuthUsecase,
+		transactionClient:       transactionClient,
 	}
 }
 
@@ -790,6 +793,11 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		amountRest = deal.TargetProfit - info.AmountApproved
 	}
 
+	totalAmount, err := u.transactionClient.GetTotalAmountByDealID(ctx, req.DealId)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dto.SummaryResponse{
 		AmountPending:   info.AmountPending,
 		AmountApproved:  info.AmountApproved,
@@ -805,7 +813,8 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		AmountCost:      info.AmountCost,
 		AmountProfit:    info.AmountProfit,
 		AmountTotal:     info.AmountTotal,
-		NumTransaction:  info.NumTransaction,
+		NumTransaction:  totalAmount.NumTransaction,
+		TotalPayment:    totalAmount.TotalPayment,
 	}, nil
 }
 func (u *groupDealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {

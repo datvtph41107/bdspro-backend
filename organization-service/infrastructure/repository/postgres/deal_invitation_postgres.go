@@ -24,11 +24,12 @@ type DealInvitationModel struct {
 	InvitedAt    time.Time `gorm:"not null"`
 	RespondedAt  *time.Time
 	WithdrawnAt  *time.Time
-	CreatedAt    time.Time `gorm:"not null"`
-	UpdatedAt    time.Time `gorm:"not null"`
-	CreatedBy    uint64    `gorm:"not null"`
-	UpdatedBy    uint64    `gorm:"not null"`
-	RoleId       uint64    `gorm:"not null"`
+	CreatedAt    time.Time              `gorm:"not null"`
+	UpdatedAt    time.Time              `gorm:"not null"`
+	CreatedBy    uint64                 `gorm:"not null"`
+	UpdatedBy    uint64                 `gorm:"not null"`
+	RoleId       uint64                 `gorm:"not null"`
+	Role         *OrganizationRoleModel `gorm:"foreignKey:RoleId;references:ID"`
 }
 
 func (DealInvitationModel) TableName() string {
@@ -96,12 +97,22 @@ func (r *DealInvitationPostgresRepository) GetByDealID(ctx context.Context, deal
 	offset := page * size
 
 	// Count total
-	if err := r.db.WithContext(ctx).Model(&DealInvitationModel{}).Where("deal_id = ?", dealID).Count(&total).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Model(&DealInvitationModel{}).
+		Where("deal_id = ?", dealID).
+		Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// Get paginated results
-	if err := r.db.WithContext(ctx).Where("deal_id = ?", dealID).Order("created_at desc").Offset(offset).Limit(size).Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Model(&DealInvitationModel{}).
+		Preload("Role").
+		Where("deal_id = ?", dealID).
+		Order("created_at desc").
+		Offset(offset).
+		Limit(size).
+		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
 

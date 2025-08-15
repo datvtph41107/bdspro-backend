@@ -105,7 +105,7 @@ func (r *GroupDealPostgresRepository) Create(ctx context.Context, deal *entity.D
 			ProductID: productID,
 		}
 	}
-	if err := r.db.WithContext(ctx).Create(deal).Error; err != nil {
+	if err := GetDB(ctx, r.db).Create(deal).Error; err != nil {
 		return nil, err
 	}
 	return deal, nil
@@ -137,7 +137,8 @@ func (r *GroupDealPostgresRepository) GetByID(ctx context.Context, id uint64) (*
 
 func (r *GroupDealPostgresRepository) DetailByID(ctx context.Context, id uint64) (*entity.Deal, error) {
 	var model entity.Deal
-	if err := r.db.WithContext(ctx).
+	if err := GetDB(ctx, r.db).
+		Debug().
 		Preload("Products").
 		Preload("Members", "member_type = 30").
 		Preload("Customers", "member_type = 10").
@@ -223,13 +224,12 @@ func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint
 		return err
 	}
 
-	
 	err = tx.Model(&entity.Deal{}).Where("id = ? AND is_deleted = ?", id, false).Updates(model).Error
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	err = tx.Model(&entity.BankAccount{}).Where("id = ?", model.BankAccountID).Updates(map[string]interface{}{
 		"bank_name":      setting.BankName,
 		"account_number": setting.AccountNumber,

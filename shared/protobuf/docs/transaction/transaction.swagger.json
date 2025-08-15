@@ -438,7 +438,38 @@
           "type": "string",
           "format": "uint64"
         },
-        "timestamp": {
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "message": {
           "type": "string"
         }
       }
@@ -585,6 +616,13 @@
         },
         "createdAt": {
           "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbActionResponse"
+          }
         }
       }
     },

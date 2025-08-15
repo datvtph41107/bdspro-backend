@@ -1,9 +1,9 @@
-package repository
+package repo
 
 import (
 	"context"
-	"organization/internal/domain/entity"
-	"organization/internal/dto"
+	"tx/internal/domain/entity"
+	"tx/internal/dto"
 )
 
 type CostTypeRepository interface {

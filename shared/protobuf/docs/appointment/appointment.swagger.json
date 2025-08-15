@@ -331,7 +331,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealTransactionResponse"
+            "$ref": "#/definitions/transactionpbDealContractResponse"
           }
         },
         "participants": {
@@ -444,18 +444,6 @@
         }
       }
     },
-    "organizationpbApprovedStatus": {
-      "type": "string",
-      "enum": [
-        "APPROVED_STATUS_UNKNOWN",
-        "APPROVED_STATUS_PENDING",
-        "APPROVED_STATUS_APPROVED",
-        "APPROVED_STATUS_REJECTED"
-      ],
-      "default": "APPROVED_STATUS_UNKNOWN",
-      "description": "- APPROVED_STATUS_PENDING: Chờ xác nhận\n - APPROVED_STATUS_APPROVED: Đã xác nhận\n - APPROVED_STATUS_REJECTED: Từ chối",
-      "title": "Enum cho trạng thái phê duyệt"
-    },
     "organizationpbBankAccountItem": {
       "type": "object",
       "properties": {
@@ -470,77 +458,12 @@
         },
         "accountName": {
           "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
-    },
-    "organizationpbDealTransactionResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "type": {
-          "$ref": "#/definitions/organizationpbTransactionType"
-        },
-        "typeName": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "description": {
-          "type": "string"
-        },
-        "transactionDate": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "createdBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "$ref": "#/definitions/organizationpbApprovedStatus"
-        },
-        "statusName": {
-          "type": "string"
-        },
-        "approvedBy": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "approvedAt": {
-          "type": "string"
-        },
-        "rejectReason": {
-          "type": "string"
-        },
-        "documentIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      },
-      "title": "Response cho giao dịch"
     },
     "organizationpbDocumentItem": {
       "type": "object",
@@ -693,17 +616,6 @@
         }
       }
     },
-    "organizationpbTransactionType": {
-      "type": "string",
-      "enum": [
-        "TRANSACTION_TYPE_UNKNOWN",
-        "TRANSACTION_TYPE_EXPENSE",
-        "TRANSACTION_TYPE_REVENUE"
-      ],
-      "default": "TRANSACTION_TYPE_UNKNOWN",
-      "description": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu",
-      "title": "Enum cho loại giao dịch"
-    },
     "pb_bdsproProductAttachment": {
       "type": "object",
       "properties": {
@@ -808,6 +720,211 @@
           "type": "string"
         }
       }
+    },
+    "transactionpbActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbDealContractResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/pb_bdsproProductAttachment"
+        },
+        "staffId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "staffName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transaction": {
+          "$ref": "#/definitions/transactionpbTransactionResponse"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/transactionpbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbOwnerType": {
+      "type": "string",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "default": "OWNER_TYPE_UNKNOWN",
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "transactionpbTransactionMethod": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua"
+    },
+    "transactionpbTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/transactionpbTransactionStatus"
+        },
+        "method": {
+          "$ref": "#/definitions/transactionpbTransactionMethod"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbActionResponse"
+          }
+        }
+      }
+    },
+    "transactionpbTransactionStatus": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối"
+    },
+    "transactionpbTransactionType": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_TYPE_UNKNOWN",
+        "TRANSACTION_TYPE_EXPENSE",
+        "TRANSACTION_TYPE_REVENUE",
+        "TRANSACTION_TYPE_BUY",
+        "TRANSACTION_TYPE_SELL",
+        "TRANSACTION_TYPE_RENT",
+        "TRANSACTION_TYPE_NEGOTIATE"
+      ],
+      "default": "TRANSACTION_TYPE_UNKNOWN",
+      "title": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu\n - TRANSACTION_TYPE_BUY: Mua\n - TRANSACTION_TYPE_SELL: Bán\n - TRANSACTION_TYPE_RENT: Thuê\n - TRANSACTION_TYPE_NEGOTIATE: Góp vốn"
     }
   }
 }

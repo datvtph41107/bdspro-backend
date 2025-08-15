@@ -37,7 +37,7 @@ func NewAssetCostTypeServer(
 // @Param body query pb_bdspro.CostTypeRequest true "Body"
 // @Security BearerAuth
 // @Param assetId path uint64 true "ID"
-// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param ownerType path enums.EOwnerOf true "Owner Type"
 // @Router /v2/bdspro/v2/asset/cost-type/list/{assetId}/{ownerType} [get]
 func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeRequest) (*pb_bdspro.AssetCostTypeListDTO, error) {
 	searchDTO := &dto.AssetCostTypeSearchDTO{
@@ -59,7 +59,7 @@ func (s AssetCostTypeService) Search(c context.Context, req *pb_bdspro.CostTypeR
 // @Tags Hợp đồng & Thu chi & Loại chi phí
 // @Produce json
 // @Param id path uint64 true "ID"
-// @Param ownerType path enums.EOwnerType true "Owner Type"
+// @Param ownerType path enums.EOwnerOf true "Owner Type"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/cost-type/group/{id}/{ownerType} [get]
 func (s AssetCostTypeService) SearchGroup(c context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.GroupType, error) {

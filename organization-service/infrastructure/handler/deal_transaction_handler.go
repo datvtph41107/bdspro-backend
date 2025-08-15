@@ -1,29 +1,25 @@
 package handler
 
 import (
-	pb "pb/types/organization"
-
-	"organization/infrastructure/transformer"
-	"organization/infrastructure/validator"
 	"organization/internal/usecase"
 )
 
 type DealTransactionHandler struct {
-	pb.UnimplementedDealTransactionServiceServer
+	// pb.UnimplementedDealTransactionServiceServer
 	dealTransactionUsecase usecase.DealTransactionUsecase
-	validator              validator.DealTransactionValidator
-	transformer            transformer.DealTransactionTransformer
+	// validator              validator.DealTransactionValidator
+	// transformer            transformer.DealTransactionTransformer
 }
 
 func NewDealTransactionHandler(
 	dealTransactionUsecase usecase.DealTransactionUsecase,
-	validator validator.DealTransactionValidator,
-	transformer transformer.DealTransactionTransformer,
+	// validator validator.DealTransactionValidator,
+	// transformer transformer.DealTransactionTransformer,
 ) *DealTransactionHandler {
 	return &DealTransactionHandler{
 		dealTransactionUsecase: dealTransactionUsecase,
-		validator:              validator,
-		transformer:            transformer,
+		// validator:              validator,
+		// transformer:            transformer,
 	}
 }
 

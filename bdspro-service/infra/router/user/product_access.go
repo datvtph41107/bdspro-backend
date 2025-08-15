@@ -63,7 +63,7 @@ func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 		return
 	}
 
-	result, err := r.Usecase.BulkSave(c, id, enums.EOwnerTypeMember, &body)
+	result, err := r.Usecase.BulkSave(c, id, enums.EOwnerOfMember, &body)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -92,7 +92,7 @@ func (r *UserProductAccessRouter) BulkSave(c *gin.Context) {
 // 		return
 // 	}
 
-// 	result, err := r.UC.CreateBatch(c, id, enums.EOwnerTypeMember, body)
+// 	result, err := r.UC.CreateBatch(c, id, enums.EOwnerOfMember, body)
 // 	_routes.RouteResult(c, result, err)
 // }
 
@@ -187,7 +187,7 @@ func (r *UserProductAccessRouter) Search(c *gin.Context) {
 		return
 	}
 
-	results, err := r.Usecase.SearchForProduct(c, enums.EOwnerTypeMember, &dto)
+	results, err := r.Usecase.SearchForProduct(c, enums.EOwnerOfMember, &dto)
 	_routes.RouteResult(c, results, err)
 }
 

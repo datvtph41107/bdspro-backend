@@ -13,6 +13,10 @@ enum TransactionType {
     TRANSACTION_TYPE_UNKNOWN = 0;
     TRANSACTION_TYPE_EXPENSE = 10; // Chi phí
     TRANSACTION_TYPE_REVENUE = 20; // Doanh thu
+    TRANSACTION_TYPE_BUY = 30; // Mua
+    TRANSACTION_TYPE_SELL = 40; // Bán
+    TRANSACTION_TYPE_RENT = 50; // Thuê
+    TRANSACTION_TYPE_NEGOTIATE = 60; // Góp vốn
 }
 
 service InternalTransactionService {
@@ -24,6 +28,9 @@ service InternalTransactionService {
     rpc CreateHandoverAction(CreateActionRequest) returns (ActionResponse);
     rpc GetTransaction(GetTransactionRequest) returns (TransactionListResponse);
     rpc GetTransactionDetail(sharepb.IdRequest) returns (TransactionResponse);
+    rpc GetTransactionByIDs(sharepb.IdRequest) returns (TransactionListResponse);
+    rpc GetDealTransactionsByIds(sharepb.IdRequest) returns (GetDealTransactionsByIdsResponse);
+    rpc GetTotalAmountByDealID(sharepb.IdRequest) returns (DealTotalAmountResponse);
 }
 
 message CreateActionRequest {
@@ -31,9 +38,9 @@ message CreateActionRequest {
     uint32 action = 2;
     string note = 3;
     uint64 fromId = 4;
-    uint32 fromOf = 5;
+    OwnerType fromOf = 5;
     uint64 toId = 6;
-    uint32 toOf = 7;
+    OwnerType toOf = 7;
     double amount = 8;
     string currency = 9;
     uint64 transactionId = 10;
@@ -41,7 +48,16 @@ message CreateActionRequest {
 
 message ActionResponse {
     uint64 transactionId = 1;
-    string timestamp = 2;
+    string createdAt = 2;
+    uint64 fromId = 3;
+    OwnerType fromOf = 4;
+    uint64 toId = 5;
+    OwnerType toOf = 6;
+    uint32 action = 7;
+    double value = 8;
+    string note = 9;
+    string actionName = 10;
+    string message = 11;
 }
 
 message SaveTransactionRequest {
@@ -75,6 +91,10 @@ message CreateProductTransactionRequest {
     uint64 dealId = 7;
     uint64 customerId = 8;
     uint64 productId = 9;
+    OwnerType fromOf = 10;
+    OwnerType toOf = 11;
+    ActionResponse action = 12;
+    optional CreateActionRequest actionRequest = 13;
 }
 
 message TransactionResponse {
@@ -89,6 +109,7 @@ message TransactionResponse {
     OwnerType toOf = 9;
     sharepb.ProfileItem profile = 10;
     string createdAt = 11;
+    repeated ActionResponse actions = 12;
 }
 
 message TransactionListResponse {
@@ -104,4 +125,40 @@ message GetTransactionRequest {
     string fromDate = 6;
     string toDate = 7;
     string status = 8;
+}
+
+message DealContractResponse {
+    uint64 transactionId = 1;
+    uint64 dealId = 2;
+    string transactionName = 3;
+    double amount = 4;
+    uint64 customerId = 5;
+    sharepb.ProfileItem customer = 6;
+    uint64 productId = 7;
+    pb_bdspro.ProductAttachment product = 8;
+    uint64 staffId = 9;
+    string staffName = 10;
+    string createdAt = 11;
+    uint64 status = 12;
+    string statusName = 13;
+    string note = 14;
+    TransactionResponse transaction = 15;
+    TransactionType transactionType = 16;
+    string typeName = 17;
+    uint64 contractId = 18;
+    string code = 19;
+}
+
+message GetDealTransactionsByIdsResponse {
+    repeated DealContractResponse dealTransactions = 1;
+}
+
+message DealTotalAmountResponse {
+    uint64 dealId = 1;
+    double totalAmount = 2;
+    double totalRevenue = 3;
+    double totalExpense = 4;
+    double netAmount = 5;
+    double totalPayment = 6;
+    uint32 numTransaction = 7;
 }

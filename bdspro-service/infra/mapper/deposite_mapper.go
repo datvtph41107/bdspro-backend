@@ -1,12 +1,5 @@
 package mapper
 
-import (
-	tx_domain "bdspro/internal/domain/transaction"
-	"bdspro/internal/enums"
-	_models "common/models"
-	pb_bdspro "pb/types/bdspro"
-)
-
 type DepositeMapper struct{}
 
 func NewDepositeMapper() *DepositeMapper {
@@ -30,16 +23,16 @@ func NewDepositeMapper() *DepositeMapper {
 // 	return result
 // }
 
-func (m *DepositeMapper) MapDepositePbToDomain(deposite *pb_bdspro.DepositeRequest) *tx_domain.Tx {
-	return &tx_domain.Tx{
-		BaseEntity:      _models.BaseEntity{ID: deposite.Id},
-		ProductID:       &deposite.ProductId,
-		DepositeAmount:  &deposite.DepositeAmount,
-		DepositeNote:    &deposite.DepositeNote,
-		TransactionType: enums.TransactionType(deposite.TransactionType),
-		ContactID:       &deposite.ContactId,
-	}
-}
+// func (m *DepositeMapper) MapDepositePbToDomain(deposite *pb_bdspro.DepositeRequest) *tx_domain.Tx {
+// 	return &tx_domain.Tx{
+// 		BaseEntity:      _models.BaseEntity{ID: deposite.Id},
+// 		ProductID:       &deposite.ProductId,
+// 		DepositeAmount:  &deposite.DepositeAmount,
+// 		DepositeNote:    &deposite.DepositeNote,
+// 		TransactionType: enums.TransactionType(deposite.TransactionType),
+// 		ContactID:       &deposite.ContactId,
+// 	}
+// }
 
 // func (m *DepositeMapper) DepositeToDTO(deposite *pb_bdspro.DepositRequest) *domain.Deposite {
 // 	return &domain.Deposite{

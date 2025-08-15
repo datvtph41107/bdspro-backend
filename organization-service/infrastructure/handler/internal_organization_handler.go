@@ -4,7 +4,9 @@ import (
 	"context"
 	"organization/infrastructure/transformer"
 	"organization/internal/domain/repository"
+	"organization/internal/usecase"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 )
 
 type InternalOrganizationHandler struct {
@@ -17,7 +19,8 @@ type InternalOrganizationHandler struct {
 	organizationMemberRepo repository.OrganizationMemberRepository
 	dealRepo               repository.GroupDealRepository
 	dealTransactionRepo    repository.DealTransactionRepository
-	dealMemberRepo	repository.DealMemberRepository
+	dealMemberRepo         repository.DealMemberRepository
+	dealUsecase            usecase.DealUsecase
 }
 
 func NewInternalOrganizationHandler(
@@ -29,6 +32,7 @@ func NewInternalOrganizationHandler(
 	dealRepo repository.GroupDealRepository,
 	dealTransactionRepo repository.DealTransactionRepository,
 	dealMemberRepo repository.DealMemberRepository,
+	dealUsecase usecase.DealUsecase,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
 		organizationRepo:       organizationRepo,
@@ -40,6 +44,7 @@ func NewInternalOrganizationHandler(
 		dealRepo:               dealRepo,
 		dealTransactionRepo:    dealTransactionRepo,
 		dealMemberRepo:         dealMemberRepo,
+		dealUsecase:            dealUsecase,
 	}
 }
 
@@ -109,13 +114,12 @@ func (h *InternalOrganizationHandler) GetDealById(ctx context.Context, req *orga
 	}, nil
 }
 
-func (h *InternalOrganizationHandler) GetDealTransactionsByIds(ctx context.Context, req *organizationpb.GetDealTransactionsByIdsRequest) (*organizationpb.GetDealTransactionsByIdsResponse, error) {
-	dealTransactions, err := h.dealTransactionRepo.GetByIds(ctx, req.Ids)
+func (h *InternalOrganizationHandler) AddProductToDeal(ctx context.Context, req *organizationpb.AddProductToDealRequest) (*sharepb.SubmitResponse, error) {
+	_, err := h.dealUsecase.SaveDealProduct(ctx, req.DealId, []uint64{req.ProductId})
 	if err != nil {
 		return nil, err
 	}
-	pbDealTransactions := h.mapper.DealTransactionsToPb(dealTransactions)
-	return &organizationpb.GetDealTransactionsByIdsResponse{
-		DealTransactions: pbDealTransactions,
+	return &sharepb.SubmitResponse{
+		Message: "success",
 	}, nil
 }

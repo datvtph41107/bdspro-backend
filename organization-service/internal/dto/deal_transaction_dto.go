@@ -16,6 +16,7 @@ type CreateDealTransactionRequest struct {
 	Note            string                `json:"note"`
 	IsManual        bool                  `json:"is_manual"` // Đánh dấu doanh thu được nhập tay
 	DocumentIds     []uint64              `json:"document_ids"`
+	TransactionType enums.TransactionType `json:"transaction_type"`
 }
 
 type UpdateDealTransactionRequest struct {
@@ -62,6 +63,9 @@ type DealTransactionResponse struct {
 	DocumentIds     []uint64              `json:"document_ids"`
 	CreatedAt       *time.Time            `json:"created_at"`
 	UpdatedAt       *time.Time            `json:"updated_at"`
+	CustomerID      uint64                `json:"customer_id"`
+	CustomerName    string                `json:"customer_name"`
+	TransactionID   *uint64               `json:"transaction_id"`
 }
 
 type DealTransactionListResponse struct {

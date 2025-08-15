@@ -1,10 +1,10 @@
-package transformer
+package mapper
 
 import (
 	_models "common/models"
-	"organization/internal/domain/entity"
-	"organization/internal/enums"
-	pb "pb/types/organization"
+	transactionpb "pb/types/transaction"
+	"tx/internal/domain/entity"
+	"tx/internal/enums"
 )
 
 type CostTypeMapper struct{}
@@ -13,8 +13,8 @@ func NewCostTypeMapper() *CostTypeMapper {
 	return &CostTypeMapper{}
 }
 
-func (m *CostTypeMapper) CostTypeModelToProto(model *entity.CostType) *pb.CostTypeDTO {
-	return &pb.CostTypeDTO{
+func (m *CostTypeMapper) CostTypeModelToProto(model *entity.CostType) *transactionpb.CostTypeDTO {
+	return &transactionpb.CostTypeDTO{
 		Id:          model.ID,
 		TypeName:    model.TypeName,
 		IsCustom:    model.IsCustom,
@@ -23,7 +23,7 @@ func (m *CostTypeMapper) CostTypeModelToProto(model *entity.CostType) *pb.CostTy
 	}
 }
 
-func (m *CostTypeMapper) CostTypeProtoToModel(proto *pb.CostTypeDTO) *entity.CostType {
+func (m *CostTypeMapper) CostTypeProtoToModel(proto *transactionpb.CostTypeDTO) *entity.CostType {
 	return &entity.CostType{
 		BaseEntity:  _models.BaseEntity{ID: proto.Id},
 		TypeName:    proto.TypeName,

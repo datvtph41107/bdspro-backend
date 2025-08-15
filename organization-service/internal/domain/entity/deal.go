@@ -15,13 +15,13 @@ type Deal struct {
 
 	// GroupId        uint64
 	Name           string
-	TargetProfit   float64          // kỳ vọng lợi nhuận
-	Status         enums.DealStatus `gorm:"default:10"`
-	DealType       enums.DealType
-	Note           string
-	NumMember      uint32 `gorm:"-"`
+	TargetProfit   float64          `gorm:"column:target_profit;default:0"`
+	Status         enums.DealStatus `gorm:"column:status;default:10"`
+	DealType       enums.DealType   `gorm:"column:deal_type;default:10"`
+	Note           string           `gorm:"column:note;type:text"`
+	NumMember      uint32           `gorm:"-"`
 	ChargePersonID *uint64
-	CancelReason   *string          // Lý do hủy thương vụ
+	CancelReason   *string          `gorm:"type:text"`     // Lý do hủy thương vụ
 	IsUnilateral   bool             `gorm:"default:false"` // Đơn phương (gỡ khỏi thương vụ)
 	IsManual       bool             `gorm:"default:false"` // Nhập tay (dành cho doanh thu)
 	Products       []DealProduct    `gorm:"foreignKey:DealID;references:ID"`

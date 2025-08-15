@@ -27,7 +27,6 @@ func AutoMigrate() {
 		&postgres.BusinessDomainModel{},
 		&postgres.OrganizationBusinessDomainModel{},
 		&postgres.OrganizationModel{}, &entity.Deal{},
-		&entity.DealMember{},
 		&entity.DealProduct{},
 		&entity.AttachDocument{},
 		&entity.BankAccount{},

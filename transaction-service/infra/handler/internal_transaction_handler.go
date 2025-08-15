@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
@@ -17,20 +18,23 @@ import (
 
 type InternalTransactionHandler struct {
 	transactionpb.UnimplementedInternalTransactionServiceServer
-	TransactionUsecase usecase.TransactionUsecase
-	Validator          validator.TransactionActionValidator
-	Mapper             *mapper.TransactionMapper
+	TransactionUsecase  usecase.TransactionUsecase
+	DealContractUsecase *usecase.DealContractUsecase
+	Validator           validator.TransactionActionValidator
+	Mapper              *mapper.TransactionMapper
 }
 
 func NewInternalTransactionHandler(
 	transactionUsecase usecase.TransactionUsecase,
+	dealContractUsecase *usecase.DealContractUsecase,
 	validator validator.TransactionActionValidator,
 	mapper *mapper.TransactionMapper,
 ) *InternalTransactionHandler {
 	return &InternalTransactionHandler{
-		TransactionUsecase: transactionUsecase,
-		Validator:          validator,
-		Mapper:             mapper,
+		TransactionUsecase:  transactionUsecase,
+		DealContractUsecase: dealContractUsecase,
+		Validator:           validator,
+		Mapper:              mapper,
 	}
 }
 
@@ -61,14 +65,15 @@ func (h *InternalTransactionHandler) CreateAction(ctx context.Context, req *tran
 
 func (h *InternalTransactionHandler) CreateProductTransaction(ctx context.Context, req *transactionpb.CreateProductTransactionRequest) (*transactionpb.TransactionResponse, error) {
 	tx, err := h.TransactionUsecase.CreateTransaction(ctx, &tx_domain.Tx{
-		FromID:    req.FromId,
-		FromOf:    enums.EOwnerUser,
-		ToID:      req.ToId,
-		ToOf:      enums.EOwnerDeal,
-		Value:     req.Amount,
-		Note:      req.Note,
-		Method:    enums.EMethodBuy,
-		Timestamp: time.Now(),
+		FromID:     req.FromId,
+		FromOf:     enums.EOwnerUser,
+		ToID:       req.ToId,
+		ToOf:       enums.EOwnerDeal,
+		Value:      req.Amount,
+		Note:       req.Note,
+		Method:     enums.EMethodBuy,
+		Timestamp:  time.Now(),
+		LastAction: h.Mapper.CreateActionRequestToTxAction(req.ActionRequest),
 	})
 	if err != nil {
 		return nil, err
@@ -94,7 +99,7 @@ func (h *InternalTransactionHandler) CreateDepositAction(ctx context.Context, re
 		Action:    enums.EActionDeposite,
 		Value:     req.Amount,
 		Note:      req.Note,
-		Timestamp: time.Now(),
+		Timestamp: _utils.TimeNowPtr(),
 	}
 
 	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
@@ -116,15 +121,15 @@ func (h *InternalTransactionHandler) CreateSignAction(ctx context.Context, req *
 
 	// Create sign action
 	action := &tx_domain.TxAction{
-		TxId:      req.TransactionId,
-		FromId:    req.FromId,
-		FromOf:    enums.EOwnerType(req.FromOf),
-		ToId:      req.ToId,
-		ToOf:      enums.EOwnerType(req.ToOf),
-		Action:    enums.EActionSign,
-		Value:     req.Amount,
-		Note:      req.Note,
-		Timestamp: time.Now(),
+		TxId:   req.TransactionId,
+		FromId: req.FromId,
+		FromOf: enums.EOwnerType(req.FromOf),
+		ToId:   req.ToId,
+		ToOf:   enums.EOwnerType(req.ToOf),
+		Action: enums.EActionSign,
+		Value:  req.Amount,
+		Note:   req.Note,
+		// Timestamp: time.Now(),
 	}
 
 	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
@@ -154,7 +159,7 @@ func (h *InternalTransactionHandler) CreatePaymentAction(ctx context.Context, re
 		Action:    enums.EActionPay,
 		Value:     req.Amount,
 		Note:      req.Note,
-		Timestamp: time.Now(),
+		Timestamp: _utils.TimeNowPtr(),
 	}
 
 	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
@@ -183,7 +188,7 @@ func (h *InternalTransactionHandler) CreateHandoverAction(ctx context.Context, r
 		Action:    enums.EActionHandOver,
 		Value:     req.Amount,
 		Note:      req.Note,
-		Timestamp: time.Now(),
+		Timestamp: _utils.TimeNowPtr(),
 	}
 
 	createdAction, err := h.TransactionUsecase.CreateAction(ctx, action)
@@ -201,7 +206,27 @@ func (h *InternalTransactionHandler) GetTransactionDetail(ctx context.Context, r
 	if err != nil {
 		return nil, err
 	}
-	return &transactionpb.TransactionResponse{
-		TransactionId: tx.ID,
+	result := h.Mapper.TxToPb(tx)
+
+	for _, action := range tx.Actions {
+		at := h.Mapper.TxActionToResponse(&action)
+		result.Actions = append(result.Actions, at)
+	}
+
+	return result, nil
+}
+
+func (h *InternalTransactionHandler) GetTransactionByIDs(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.TransactionListResponse, error) {
+	txs, err := h.TransactionUsecase.GetTransactionByIDs(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	transactions := make([]*transactionpb.TransactionResponse, len(txs))
+	for i, tx := range txs {
+		transactions[i] = h.Mapper.TxToPb(tx)
+	}
+	return &transactionpb.TransactionListResponse{
+		Data:  transactions,
+		Total: int64(len(txs)),
 	}, nil
 }

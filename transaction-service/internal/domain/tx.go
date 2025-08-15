@@ -14,12 +14,13 @@ type Tx struct {
 	ToID            uint64
 	ToOf            enums.EOwnerType
 	Method          enums.EMethod
-	Value           float64
 	Status          enums.TxStatus
 	Timestamp       time.Time
 	LastActionID    *uint64
-	LastAction      *TxAction `gorm:"foreignKey:LastActionID"`
-	Note            string    `gorm:"-"`
+	LastAction      *TxAction  `gorm:"foreignKey:LastActionID"`
+	Actions         []TxAction `gorm:"foreignKey:TxId"`
+	Note            string     `gorm:"-"`
+	Value           float64    `gorm:"-"`
 }
 
 func (Tx) TableName() string {

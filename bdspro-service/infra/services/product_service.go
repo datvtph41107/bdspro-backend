@@ -19,14 +19,14 @@ import (
 
 type ProductService struct {
 	pb_bdspro.UnimplementedProductServiceServer
-	UC                *shared_usecase.ProductUsecase
-	ProductRepo       repo.ProductRepo
-	ProductMapper     *mapper.ProductMapper
-	ProductValidator  *validator.ProductValidator
-	UserClient        *client.UserClient
-	DepositeMapper    *mapper.DepositeMapper
-	TransactionMapper mapper.TransactionTransformer
-	PostMapper        *mapper.PostMapper
+	UC               *shared_usecase.ProductUsecase
+	ProductRepo      repo.ProductRepo
+	ProductMapper    *mapper.ProductMapper
+	ProductValidator *validator.ProductValidator
+	UserClient       *client.UserClient
+	DepositeMapper   *mapper.DepositeMapper
+	// TransactionMapper mapper.TransactionTransformer
+	PostMapper *mapper.PostMapper
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
@@ -35,18 +35,18 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	productValidator *validator.ProductValidator,
 	userClient *client.UserClient,
 	depositeMapper *mapper.DepositeMapper,
-	transactionMapper mapper.TransactionTransformer,
+	// transactionMapper mapper.TransactionTransformer,
 	postMapper *mapper.PostMapper,
 ) *ProductService {
 	return &ProductService{
-		UC:                uc,
-		ProductRepo:       productRepo,
-		ProductMapper:     productMapper,
-		ProductValidator:  productValidator,
-		UserClient:        userClient,
-		DepositeMapper:    depositeMapper,
-		TransactionMapper: transactionMapper,
-		PostMapper:        postMapper,
+		UC:               uc,
+		ProductRepo:      productRepo,
+		ProductMapper:    productMapper,
+		ProductValidator: productValidator,
+		UserClient:       userClient,
+		DepositeMapper:   depositeMapper,
+		// TransactionMapper: transactionMapper,
+		PostMapper: postMapper,
 	}
 }
 
@@ -196,26 +196,27 @@ func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChil
 // @Param body body pb_bdspro.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/deposite [post]
 func (s *ProductService) ProductDeposite(ctx context.Context, req *pb_bdspro.DepositeRequest) (*pb_bdspro.Transaction, error) {
-	dto := s.DepositeMapper.MapDepositePbToDomain(req)
+	// dto := s.DepositeMapper.MapDepositePbToDomain(req)
 
-	if dto.DepositeAmount == nil || *dto.DepositeAmount <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "deposite amount is required")
-	}
+	// if dto.DepositeAmount == nil || *dto.DepositeAmount <= 0 {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "deposite amount is required")
+	// }
 
-	if dto.ContactID == nil || *dto.ContactID == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "contactId is required")
-	}
+	// if dto.ContactID == nil || *dto.ContactID == 0 {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "contactId is required")
+	// }
 
-	if dto.TransactionType != enums.TransactionTypeSale && dto.TransactionType != enums.TransactionTypeRent {
-		return nil, status.Errorf(codes.InvalidArgument, "transactionType is invalid")
-	}
+	// if dto.TransactionType != enums.TransactionTypeSale && dto.TransactionType != enums.TransactionTypeRent {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "transactionType is invalid")
+	// }
 
-	result, err := s.UC.ProductDeposite(ctx, dto)
-	if err != nil {
-		return nil, err
-	}
-	transaction := s.TransactionMapper.EntityToTransactionResponse(result)
-	return transaction, nil
+	// result, err := s.UC.ProductDeposite(ctx, dto)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// transaction := s.TransactionMapper.EntityToTransactionResponse(result)
+	// return transaction, nil
+	return nil, nil
 }
 
 // @Summary Hủy cọc
@@ -471,7 +472,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 		return nil, err
 	}
 	productResponse := s.ProductMapper.MapDetailProductPb(product)
-	if product.OwnerID != 0 && product.OwnerType == enums.EOwnerTypeMember {
+	if product.OwnerID != 0 && product.OwnerType == enums.EOwnerOfMember {
 		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
 	return productResponse, nil

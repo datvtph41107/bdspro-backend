@@ -31,16 +31,25 @@ var AppProperties UserProperties
 type ConfigApp struct {
 	TransactionHandler         *handler.TransactionHandler
 	InternalTransactionHandler *handler.InternalTransactionHandler
+	ContractDealHandler        *handler.ContractDealHandler
+	DealCostHandler            *handler.DealCostHandler
+	CostTypeHandler            *handler.CostTypeHandler
 	Logger                     *flogging.FabricLogger
 }
 
 func NewConfigApp(
 	transactionHandler *handler.TransactionHandler,
 	internalTransactionHandler *handler.InternalTransactionHandler,
+	contractDealHandler *handler.ContractDealHandler,
+	dealCostHandler *handler.DealCostHandler,
+	costTypeHandler *handler.CostTypeHandler,
 ) *ConfigApp {
 	return &ConfigApp{
 		TransactionHandler:         transactionHandler,
 		InternalTransactionHandler: internalTransactionHandler,
+		ContractDealHandler:        contractDealHandler,
+		DealCostHandler:            dealCostHandler,
+		CostTypeHandler:            costTypeHandler,
 		Logger:                     flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

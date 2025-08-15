@@ -615,7 +615,9 @@ func (h *GroupDealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdR
 	if err != nil {
 		return nil, err
 	}
-	return &organizationpb.GetDealProductsResponse{Data: productAttachments}, nil
+	return &organizationpb.GetDealProductsResponse{
+		Data: productAttachments.Data,
+	}, nil
 }
 
 // @Summary Tổng quan thương vụ
@@ -666,7 +668,8 @@ func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.Summ
 		AmountCost:      summary.AmountCost,
 		AmountProfit:    5000000000,
 		AmountTotal:     10000000000,
-		NumTransaction:  6,
+		NumTransaction:  summary.NumTransaction,
+		TotalPayment:    summary.TotalPayment,
 	}, nil
 }
 

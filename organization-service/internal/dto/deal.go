@@ -1,6 +1,7 @@
 package dto
 
 import (
+	_dto "common/dto"
 	"organization/internal/enums"
 	"time"
 )
@@ -57,4 +58,9 @@ type SummaryResponse struct {
 	AmountProfit    float64 `json:"amount_profit"`
 	AmountTotal     float64 `json:"amount_total"`
 	NumTransaction  uint32  `json:"num_transaction"`
+	TotalPayment    float64 `json:"total_payment"`
+}
+
+type DealSearch struct {
+	_dto.Pagable
 }

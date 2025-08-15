@@ -30,7 +30,10 @@ type DealTransaction struct {
 	AttachDocuments []AttachDocument `gorm:"-"`
 
 	// Thông tin deal (relationship)
-	Deal *Deal `gorm:"foreignKey:DealID;references:ID"`
+	Deal          *Deal  `gorm:"foreignKey:DealID;references:ID"`
+	TransactionID uint64 `gorm:"index"`
+	CustomerID    uint64 `gorm:"index"`
+	// TransactionType enums.TransactionType `gorm:"-"`
 }
 
 func (DealTransaction) TableName() string {

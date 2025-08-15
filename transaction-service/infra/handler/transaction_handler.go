@@ -2,10 +2,10 @@ package handler
 
 import (
 	_dto "common/dto"
+	_utils "common/utils"
 	"context"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
-	"time"
 	"tx/infra/client"
 	"tx/infra/mapper"
 	tx_domain "tx/internal/domain"
@@ -147,7 +147,7 @@ func (h *TransactionHandler) CreateProductAction(ctx context.Context, req *trans
 		Action: enums.EActionHandOver,
 		// Value:     req.ActionAmount,
 		Note:      req.ActionNote,
-		Timestamp: time.Now(),
+		Timestamp: _utils.TimeNowPtr(),
 	})
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (h *TransactionHandler) ListProductTransactions(ctx context.Context, req *s
 	}
 	transactionsResponse := make([]*transactionpb.TransactionResponse, len(transactions))
 	for i, transaction := range transactions {
-		transactionsResponse[i] = h.TransactionMapper.TxToTransactionResponse(transaction)
+		transactionsResponse[i] = h.TransactionMapper.TxToPb(transaction)
 	}
 	return &transactionpb.TransactionListResponse{
 		Data:  transactionsResponse,

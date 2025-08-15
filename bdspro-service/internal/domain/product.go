@@ -1,7 +1,6 @@
 package domain
 
 import (
-	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/enums"
 	_models "common/models"
 	"time"
@@ -45,25 +44,25 @@ type Product struct {
 	TransactionType   uint                     `gorm:"type:smallint;default:10" json:"transactionType"`
 	SaleStatus        enums.EProductSaleStatus `gorm:"type:smallint;not null;default:10" json:"saleStatus"` // 1=Chưa bán, 2=Đang bán, 3=Đã bán
 	SaleTransactionID *uint64                  `json:"saleTransactionId,omitempty"`
-	SaleTransaction   *tx_domain.Tx            `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`
+	// SaleTransaction   *tx_domain.Tx            `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`
 	SaleVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"saleVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	RentStatus        enums.EProductRentStatus `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	RentTransactionID *uint64                  `json:"rentTransactionId,omitempty"`
-	RentTransaction   *tx_domain.Tx            `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
-	RentVisibility    enums.EVisibility        `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	OwnerID           uint64                   `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
-	OwnerType         enums.EOwnerOf           `gorm:"type:smallint;not null;default:10" json:"ownerType"`
-	ProvinceID        *uint64                  `json:"provinceId,omitempty"`
-	Province          *Region                  `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
-	DistrictID        *uint64                  `json:"districtId,omitempty"`
-	District          *Region                  `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
-	WardID            *uint64                  `json:"wardId,omitempty"`
-	Ward              *Region                  `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
-	Address           string                   `gorm:"size:255" json:"address,omitempty"`
-	GoogleMapLink     string                   `gorm:"size:255" json:"googleMapLink,omitempty"`
-	MediaList         []ProductMediaItem       `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
-	HouseInfo         *HouseInfo               `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
-	Archived          bool                     `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+	// RentTransaction   *tx_domain.Tx            `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
+	RentVisibility enums.EVisibility  `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	OwnerID        uint64             `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
+	OwnerType      enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerType"`
+	ProvinceID     *uint64            `json:"provinceId,omitempty"`
+	Province       *Region            `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
+	DistrictID     *uint64            `json:"districtId,omitempty"`
+	District       *Region            `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
+	WardID         *uint64            `json:"wardId,omitempty"`
+	Ward           *Region            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
+	Address        string             `gorm:"size:255" json:"address,omitempty"`
+	GoogleMapLink  string             `gorm:"size:255" json:"googleMapLink,omitempty"`
+	MediaList      []ProductMediaItem `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
+	HouseInfo      *HouseInfo         `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
+	Archived       bool               `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
 	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
 	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`
 	// OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)

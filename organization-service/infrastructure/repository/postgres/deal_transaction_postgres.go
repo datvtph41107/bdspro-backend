@@ -22,33 +22,33 @@ func NewDealTransactionPostgresRepository(db *gorm.DB) *DealTransactionPostgresR
 }
 
 func (r *DealTransactionPostgresRepository) Create(ctx context.Context, transaction *entity.DealTransaction) error {
-	return r.db.WithContext(ctx).Create(transaction).Error
+	return GetDB(ctx, r.db).Create(transaction).Error
 }
 
 func (r *DealTransactionPostgresRepository) Update(ctx context.Context, transaction *entity.DealTransaction) error {
-	return r.db.WithContext(ctx).Save(transaction).Error
+	return GetDB(ctx, r.db).Save(transaction).Error
 }
 
 func (r *DealTransactionPostgresRepository) Delete(ctx context.Context, id uint64) error {
-	return r.db.WithContext(ctx).Delete(&entity.DealTransaction{}, id).Error
+	return GetDB(ctx, r.db).Delete(&entity.DealTransaction{}, id).Error
 }
 
 func (r *DealTransactionPostgresRepository) GetByID(ctx context.Context, id uint64) (*entity.DealTransaction, error) {
 	var transaction entity.DealTransaction
-	err := r.db.WithContext(ctx).
-		Preload("AttachDocuments").
-		Preload("Deal").
-		Where("id = ?", id).
+	err := GetDB(ctx, r.db).
+		// Preload("AttachDocuments").
+		// Preload("Deal").
+		Where("id = ? and deleted_at is null", id).
 		First(&transaction).Error
 	if err != nil {
 		return nil, err
-	}
+	} 
 	return &transaction, nil
 }
 
 func (r *DealTransactionPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealTransaction, error) {
 	var transactions []*entity.DealTransaction
-	err := r.db.WithContext(ctx).
+	err := GetDB(ctx, r.db).
 		Where("id IN ?", ids).
 		Find(&transactions).Error
 	if err != nil {
@@ -60,7 +60,7 @@ func (r *DealTransactionPostgresRepository) GetByIds(ctx context.Context, ids []
 func (r *DealTransactionPostgresRepository) GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, size int) ([]*entity.DealTransaction, int64, error) {
 	var transactions []*entity.DealTransaction
 	var total int64
-	query := r.db.WithContext(ctx).Debug().Model(&entity.DealTransaction{})
+	query := GetDB(ctx, r.db).Debug().Model(&entity.DealTransaction{})
 
 	if transactionType != nil {
 		query = query.Where("type = ?", *transactionType)
@@ -99,7 +99,7 @@ func (r *DealTransactionPostgresRepository) Approve(ctx context.Context, id uint
 		"reject_reason": rejectReason,
 	}
 
-	return r.db.WithContext(ctx).
+	return GetDB(ctx, r.db).
 		Model(&entity.DealTransaction{}).
 		Where("id = ?", id).
 		Updates(updates).Error
@@ -108,13 +108,13 @@ func (r *DealTransactionPostgresRepository) Approve(ctx context.Context, id uint
 func (r *DealTransactionPostgresRepository) GetFinancialSummary(ctx context.Context, dealID uint64) (*dto.DealFinancialSummary, error) {
 	// Lấy thông tin deal để có target profit
 	var deal entity.Deal
-	if err := r.db.WithContext(ctx).Where("id = ?", dealID).First(&deal).Error; err != nil {
+	if err := GetDB(ctx, r.db).Where("id = ?", dealID).First(&deal).Error; err != nil {
 		return nil, fmt.Errorf("deal not found: %w", err)
 	}
 
 	// Tính tổng doanh thu (chỉ những transaction đã được approve)
 	var totalRevenue float64
-	err := r.db.WithContext(ctx).
+	err := GetDB(ctx, r.db).
 		Model(&entity.DealTransaction{}).
 		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, enums.TransactionTypeRevenue, enums.ApprovedStatusApproved).
@@ -126,7 +126,7 @@ func (r *DealTransactionPostgresRepository) GetFinancialSummary(ctx context.Cont
 
 	// Tính tổng chi phí (chỉ những transaction đã được approve)
 	var totalExpense float64
-	err = r.db.WithContext(ctx).
+	err = GetDB(ctx, r.db).
 		Model(&entity.DealTransaction{}).
 		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, enums.TransactionTypeExpense, enums.ApprovedStatusApproved).
@@ -168,7 +168,7 @@ func (r *DealTransactionPostgresRepository) GetFinancialSummary(ctx context.Cont
 
 func (r *DealTransactionPostgresRepository) GetTotalAmountByType(ctx context.Context, dealID uint64, transactionType enums.TransactionType) (float64, error) {
 	var total float64
-	err := r.db.WithContext(ctx).
+	err := GetDB(ctx, r.db).
 		Model(&entity.DealTransaction{}).
 		Where("deal_id = ? AND type = ? AND status = ?",
 			dealID, transactionType, enums.ApprovedStatusApproved).
@@ -178,4 +178,14 @@ func (r *DealTransactionPostgresRepository) GetTotalAmountByType(ctx context.Con
 		return 0, fmt.Errorf("failed to calculate total amount: %w", err)
 	}
 	return total, nil
+}
+
+func (r *DealTransactionPostgresRepository) GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*entity.DealTransaction, int64, error) {
+	var transactions []*entity.DealTransaction
+	var total int64
+	err := GetDB(ctx, r.db).Model(&entity.DealTransaction{}).Where("deal_id = ? and deleted_at is null", dealID).Find(&transactions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return transactions, total, nil
 }

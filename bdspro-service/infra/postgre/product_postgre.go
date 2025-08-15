@@ -4,7 +4,6 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	"bdspro/internal/repo"
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
@@ -16,24 +15,24 @@ import (
 // @bind: bdspro/internal/repo.ProductRepo
 type GormUserProductRepo struct {
 	crud3.BaseRepo[domain.Product]
-	PriceRepo       *GormProductPriceRepo
-	ProductAccess   *SharingAccessPostgre
-	ProductPrivate  *GormProductPrivateRepo
-	TransactionRepo repo.TransactionRepository
+	PriceRepo      *GormProductPriceRepo
+	ProductAccess  *SharingAccessPostgre
+	ProductPrivate *GormProductPrivateRepo
+	// TransactionRepo repo.TransactionRepository
 }
 
 func NewGormUserProductRepo(db *gorm.DB,
 	PriceRepo *GormProductPriceRepo,
 	ProductAccess *SharingAccessPostgre,
 	ProductPrivate *GormProductPrivateRepo,
-	TransactionRepo repo.TransactionRepository,
+	// TransactionRepo repo.TransactionRepository,
 ) *GormUserProductRepo {
 	return &GormUserProductRepo{
-		BaseRepo:        crud3.BaseRepo[domain.Product]{DB: db},
-		PriceRepo:       PriceRepo,
-		ProductAccess:   ProductAccess,
-		ProductPrivate:  ProductPrivate,
-		TransactionRepo: TransactionRepo,
+		BaseRepo:       crud3.BaseRepo[domain.Product]{DB: db},
+		PriceRepo:      PriceRepo,
+		ProductAccess:  ProductAccess,
+		ProductPrivate: ProductPrivate,
+		// TransactionRepo: TransactionRepo,
 	}
 }
 
@@ -195,12 +194,12 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		entity.PrivateData = privateData
 	}
 
-	if entity.SaleTransactionID != nil {
-		entity.SaleTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.SaleTransactionID)
-	}
-	if entity.RentTransactionID != nil {
-		entity.RentTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.RentTransactionID)
-	}
+	// if entity.SaleTransactionID != nil {
+	// 	entity.SaleTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.SaleTransactionID)
+	// }
+	// if entity.RentTransactionID != nil {
+	// 	entity.RentTransaction, _ = r.TransactionRepo.GetByID(ctx, entity.RentTransactionID)
+	// }
 
 	return entity, nil
 }
@@ -582,7 +581,7 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 		Error
 }
 
-// func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+// func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 // 	var results []domain.Product
 
 // 	query := r.DB.

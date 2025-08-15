@@ -55,7 +55,7 @@ func main() {
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/C", "cd .. && wire")
 	} else {
-		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("cd ../%s-service/wire && wire", rootPackage))
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("cd wire && wire"))
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

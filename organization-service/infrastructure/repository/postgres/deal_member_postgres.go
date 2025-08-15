@@ -14,9 +14,9 @@ type DealMemberModel struct {
 	MemberID        uint64               `gorm:"not null;index"`
 	MemberType      enums.DealMemberType `gorm:"not null;default:10"`
 	AmountCommit    float64              `gorm:"not null;default:0"`
-	CommissionValue float64              `gorm:"default:0"`  // Giá trị hoa hồng
-	CommissionType  enums.CommissionType `gorm:"default:10"` // Loại hoa hồng
-	Note            string               `gorm:"type:text"`  // Ghi chú
+	CommissionValue float64              `gorm:"default:0"`     // Giá trị hoa hồng
+	CommissionType  enums.CommissionType `gorm:"default:10"`    // Loại hoa hồng
+	Note            string               `gorm:"type:text"`     // Ghi chú
 	IsUnilateral    bool                 `gorm:"default:false"` // Đánh dấu gỡ khỏi thương vụ một cách đơn phương
 }
 
@@ -42,13 +42,13 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 		CommissionValue: dealMember.CommissionValue,
 		CommissionType:  dealMember.CommissionType,
 		Note:            dealMember.Note,
-		IsUnilateral:   dealMember.IsUnilateral,
+		IsUnilateral:    dealMember.IsUnilateral,
 	}
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
 	}
 
-	dealMember.ID = model.ID
+	// dealMember.ID = model.ID
 	return dealMember, nil
 }
 
@@ -62,7 +62,7 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 	}
 
 	return &entity.DealMember{
-		ID:              model.ID,
+		// ID:              model.ID,
 		DealID:          model.DealID,
 		MemberID:        model.MemberID,
 		MemberType:      model.MemberType,
@@ -70,7 +70,7 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 		CommissionValue: model.CommissionValue,
 		CommissionType:  model.CommissionType,
 		Note:            model.Note,
-		IsUnilateral:   model.IsUnilateral,
+		IsUnilateral:    model.IsUnilateral,
 	}, nil
 }
 
@@ -109,7 +109,7 @@ func (r *DealMemberPostgresRepository) UpdateMembersCommission(ctx context.Conte
 					"commission_value": member.CommissionValue,
 					"commission_type":  member.CommissionType,
 					"note":             member.Note,
-					"is_unilateral":   member.IsUnilateral,
+					"is_unilateral":    member.IsUnilateral,
 				}).Error
 			if err != nil {
 				return err
@@ -128,7 +128,7 @@ func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, dealI
 	members := make([]*entity.DealMember, len(models))
 	for i, model := range models {
 		members[i] = &entity.DealMember{
-			ID:              model.ID,
+			// ID:              model.ID,
 			DealID:          model.DealID,
 			MemberID:        model.MemberID,
 			MemberType:      model.MemberType,
@@ -136,7 +136,7 @@ func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, dealI
 			CommissionValue: model.CommissionValue,
 			CommissionType:  model.CommissionType,
 			Note:            model.Note,
-			IsUnilateral:   model.IsUnilateral,
+			IsUnilateral:    model.IsUnilateral,
 		}
 	}
 
@@ -201,10 +201,10 @@ func (r *DealMemberPostgresRepository) GetByIds(ctx context.Context, ids []uint6
 	members := make([]*entity.DealMember, len(models))
 	for i, model := range models {
 		members[i] = &entity.DealMember{
-			ID:              model.ID,
-			DealID:          model.DealID,
-			MemberID:        model.MemberID,
-			MemberType:      model.MemberType,
+			// ID:         model.ID,
+			DealID:     model.DealID,
+			MemberID:   model.MemberID,
+			MemberType: model.MemberType,
 		}
 	}
 	return members, nil

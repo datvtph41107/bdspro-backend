@@ -16,7 +16,8 @@ type TxAction struct {
 	Action    enums.EAction
 	Value     float64
 	Note      string
-	Timestamp time.Time
+	Message   string
+	Timestamp *time.Time
 }
 
 func (TxAction) TableName() string {

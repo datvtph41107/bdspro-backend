@@ -110,7 +110,7 @@ type CreateResponse struct {
 // 	RentStatus       int16            `gorm:"column:rent_status" json:"rentStatus"`
 // 	RentVisibility   int16            `gorm:"column:rent_visibility" json:"rentVisibility"`
 // 	OwnerID          *int64           `gorm:"column:owner_id" json:"ownerId"`
-// 	OwnerType        enums.EOwnerType `json:"ownerType"`
+// 	OwnerType        enums.EOwnerOf `json:"ownerType"`
 // 	PropertyTypeID   *int64           `gorm:"column:property_type_id" json:"propertyTypeId"`
 // 	DocTypeID        *int64           `gorm:"column:doc_type_id" json:"docTypeId"`
 // 	PositionURL      *string          `gorm:"column:position_url" json:"positionUrl"`

@@ -45,6 +45,9 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(interceptors)
 		transactionpb.RegisterInternalTransactionServiceServer(s, app.InternalTransactionHandler)
 		transactionpb.RegisterTransactionServiceServer(s, app.TransactionHandler)
+		transactionpb.RegisterDealContractServiceServer(s, app.ContractDealHandler)
+		transactionpb.RegisterDealCostServiceServer(s, app.DealCostHandler)
+		transactionpb.RegisterCostTypeServiceServer(s, app.CostTypeHandler)
 
 		log.Printf("Listen: %v", port)
 

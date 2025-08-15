@@ -2,7 +2,6 @@ package shared_usecase
 
 import (
 	"bdspro/internal/domain"
-	tx_domain "bdspro/internal/domain/transaction"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_routes "common/routes"
@@ -10,39 +9,39 @@ import (
 )
 
 func (s *ProductUsecase) MapProductStatus(c context.Context, product *domain.Product) error {
-	if product.SaleTransaction != nil {
-		switch product.SaleTransaction.TransactionStatus {
-		case enums.TransactionStatusDraft:
-			product.SaleStatus = enums.EProductNotSold
-		case enums.TransactionStatusDeposite:
-			product.SaleStatus = enums.EProductSelling
-		case enums.TransactionStatusSigned:
-			product.SaleStatus = enums.EProductSold
-		case enums.TransactionStatusCompleted:
-			product.SaleStatus = enums.EProductSold
-		case enums.TransactionStatusCanceled:
-			product.SaleStatus = enums.EProductNotSold
-		}
-	} else {
-		product.SaleStatus = enums.EProductNotSold
-	}
+	// if product.SaleTransaction != nil {
+	// 	switch product.SaleTransaction.TransactionStatus {
+	// 	case enums.TransactionStatusDraft:
+	// 		product.SaleStatus = enums.EProductNotSold
+	// 	case enums.TransactionStatusDeposite:
+	// 		product.SaleStatus = enums.EProductSelling
+	// 	case enums.TransactionStatusSigned:
+	// 		product.SaleStatus = enums.EProductSold
+	// 	case enums.TransactionStatusCompleted:
+	// 		product.SaleStatus = enums.EProductSold
+	// 	case enums.TransactionStatusCanceled:
+	// 		product.SaleStatus = enums.EProductNotSold
+	// 	}
+	// } else {
+	// 	product.SaleStatus = enums.EProductNotSold
+	// }
 
-	if product.RentTransaction != nil {
-		switch product.RentTransaction.TransactionStatus {
-		case enums.TransactionStatusDraft:
-			product.RentStatus = enums.EProductNotRent
-		case enums.TransactionStatusDeposite:
-			product.RentStatus = enums.EProductRenting
-		case enums.TransactionStatusSigned:
-			product.RentStatus = enums.EProductRenting
-		case enums.TransactionStatusCompleted:
-			product.RentStatus = enums.EProductRented
-		case enums.TransactionStatusCanceled:
-			product.RentStatus = enums.EProductNotRent
-		}
-	} else {
-		product.RentStatus = enums.EProductNotRent
-	}
+	// if product.RentTransaction != nil {
+	// 	switch product.RentTransaction.TransactionStatus {
+	// 	case enums.TransactionStatusDraft:
+	// 		product.RentStatus = enums.EProductNotRent
+	// 	case enums.TransactionStatusDeposite:
+	// 		product.RentStatus = enums.EProductRenting
+	// 	case enums.TransactionStatusSigned:
+	// 		product.RentStatus = enums.EProductRenting
+	// 	case enums.TransactionStatusCompleted:
+	// 		product.RentStatus = enums.EProductRented
+	// 	case enums.TransactionStatusCanceled:
+	// 		product.RentStatus = enums.EProductNotRent
+	// 	}
+	// } else {
+	// 	product.RentStatus = enums.EProductNotRent
+	// }
 
 	return nil
 }
@@ -65,9 +64,10 @@ func (s *ProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpdat
 	if err != nil {
 		return err
 	}
-	if product.SaleTransactionID != nil {
-		product.SaleTransaction, _ = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
-	}
+	// todo: transaction
+	// if product.SaleTransactionID != nil {
+	// 	product.SaleTransaction, _ = s.TransactionRepo.GetByID(c, product.SaleTransactionID)
+	// }
 
 	s.MapProductStatus(c, product)
 	if product.SaleStatus == newSaleStatus {
@@ -107,14 +107,15 @@ func (s *ProductUsecase) EmptySaleTransaction(c context.Context, product *domain
 }
 
 func (s *ProductUsecase) SaleStatusToNotSold(ctx context.Context, product *domain.Product) error {
-	if product.SaleTransaction != nil &&
-		product.SaleTransaction.TransactionStatus != enums.TransactionStatusCompleted {
-		product.SaleTransaction.TransactionStatus = enums.TransactionStatusCanceled
-		_, err := s.TransactionRepo.Update(ctx, product.SaleTransaction)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.SaleTransaction != nil &&
+	// 	product.SaleTransaction.TransactionStatus != enums.TransactionStatusCompleted {
+	// 	product.SaleTransaction.TransactionStatus = enums.TransactionStatusCanceled
+	// 	// todo: transaction
+	// 	// _, err := s.TransactionRepo.Update(ctx, product.SaleTransaction)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// }
 
 	err := s.EmptySaleTransaction(ctx, product)
 	if err != nil {
@@ -129,61 +130,63 @@ func (s *ProductUsecase) SaleStatusToSelling(c context.Context, dto dto.StatusUp
 }
 
 func (s *ProductUsecase) SaleStatusToSold(ctx context.Context, product *domain.Product, dto dto.StatusUpdate) error {
-	trans := product.SaleTransaction
+	// trans := product.SaleTransaction
 
-	if (trans == nil || trans.ContactID == nil) && dto.ContactID == nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không thể chuyển trạng thái sản phẩm thành đã bán khi không có người liên hệ",
-		}
-	}
+	// if (trans == nil || trans.ContactID == nil) && dto.ContactID == nil {
+	// 	return &_routes.Except{
+	// 		Code:    400,
+	// 		Message: "Không thể chuyển trạng thái sản phẩm thành đã bán khi không có người liên hệ",
+	// 	}
+	// }
 
-	if product.SaleTransaction != nil {
-		product.SaleTransaction.TransactionStatus = enums.TransactionStatusCompleted
-		s.AttachContactToTransaction(product.SaleTransaction, dto)
-		_, err := s.TransactionRepo.Update(ctx, product.SaleTransaction)
-		if err != nil {
-			return err
-		}
-	} else {
-		trans = s.EmptyTransaction(product, enums.TransactionTypeSale)
-		trans.TransactionStatus = enums.TransactionStatusCompleted
-		trans = s.AttachContactToTransaction(trans, dto)
-		_, err := s.TransactionRepo.Create(ctx, trans)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.SaleTransaction != nil {
+	// 	// todo: transaction
+	// 	// product.SaleTransaction.TransactionStatus = enums.TransactionStatusCompleted
+	// 	// s.AttachContactToTransaction(product.SaleTransaction, dto)
+	// 	// _, err := s.TransactionRepo.Update(ctx, product.SaleTransaction)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// } else {
+	// 	// todo: transaction
+	// 	// trans = s.EmptyTransaction(product, enums.TransactionTypeSale)
+	// 	// trans.TransactionStatus = enums.TransactionStatusCompleted
+	// 	// trans = s.AttachContactToTransaction(trans, dto)
+	// 	// _, err := s.TransactionRepo.Create(ctx, trans)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// }
 
-	if product.SaleTransactionID != &trans.ID {
-		product.SaleTransactionID = &trans.ID
-		err := s.ProductRepo.UpdateProduct(ctx, product.ID, product)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.SaleTransactionID != &trans.ID {
+	// 	product.SaleTransactionID = &trans.ID
+	// 	err := s.ProductRepo.UpdateProduct(ctx, product.ID, product)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
-func (s *ProductUsecase) EmptyTransaction(product *domain.Product, transactionType enums.TransactionType) *tx_domain.Tx {
-	return &tx_domain.Tx{
-		ProductID:         &product.ID,
-		OwnerId:           product.OwnerID,
-		OwnerType:         product.OwnerType,
-		TransactionType:   transactionType,
-		TransactionStatus: enums.TransactionStatusDraft,
-	}
-}
+// func (s *ProductUsecase) EmptyTransaction(product *domain.Product, transactionType enums.TransactionType) *tx_domain.Tx {
+// 	return &tx_domain.Tx{
+// 		ProductID:         &product.ID,
+// 		OwnerId:           product.OwnerID,
+// 		OwnerType:         product.OwnerType,
+// 		TransactionType:   transactionType,
+// 		TransactionStatus: enums.TransactionStatusDraft,
+// 	}
+// }
 
-func (s *ProductUsecase) AttachContactToTransaction(trans *tx_domain.Tx, dto dto.StatusUpdate) *tx_domain.Tx {
-	if trans.ContactID == nil {
-		trans.ContactID = dto.ContactID
-		trans.DepositeNote = &dto.Note
-		trans.Amount = dto.Amount
-		trans.ContactPhone = &dto.Phone
-	}
-	return trans
-}
+// func (s *ProductUsecase) AttachContactToTransaction(trans *tx_domain.Tx, dto dto.StatusUpdate) *tx_domain.Tx {
+// 	if trans.ContactID == nil {
+// 		trans.ContactID = dto.ContactID
+// 		trans.DepositeNote = &dto.Note
+// 		trans.Amount = dto.Amount
+// 		trans.ContactPhone = &dto.Phone
+// 	}
+// 	return trans
+// }
 
 func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdate) error {
 	// todo: không thể cập nhật trạng thái sản phẩm thành cọc ở api này. dung api deposite riêng
@@ -204,7 +207,8 @@ func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdat
 		return err
 	}
 	if product.RentTransactionID != nil {
-		product.RentTransaction, _ = s.TransactionRepo.GetByID(c, product.RentTransactionID)
+		// todo: transaction
+		// product.RentTransaction, _ = s.TransactionRepo.GetByID(c, product.RentTransactionID)
 	}
 
 	s.MapProductStatus(c, product)
@@ -235,14 +239,15 @@ func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdat
 }
 
 func (s *ProductUsecase) RentStatusToNotRent(ctx context.Context, product *domain.Product) error {
-	if product.RentTransaction != nil &&
-		product.RentTransaction.TransactionStatus != enums.TransactionStatusCompleted {
-		product.RentTransaction.TransactionStatus = enums.TransactionStatusCanceled
-		_, err := s.TransactionRepo.Update(ctx, product.RentTransaction)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.RentTransaction != nil &&
+	// 	product.RentTransaction.TransactionStatus != enums.TransactionStatusCompleted {
+	// 	product.RentTransaction.TransactionStatus = enums.TransactionStatusCanceled
+	// 	// todo: transaction
+	// 	// _, err := s.TransactionRepo.Update(ctx, product.RentTransaction)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// }
 
 	err := s.EmptyRentTransaction(ctx, product)
 	if err != nil {
@@ -252,39 +257,41 @@ func (s *ProductUsecase) RentStatusToNotRent(ctx context.Context, product *domai
 }
 
 func (s *ProductUsecase) RentStatusToRented(ctx context.Context, product *domain.Product, dto dto.StatusUpdate) error {
-	trans := product.RentTransaction
+	// trans := product.RentTransaction
 
-	if (trans == nil || trans.ContactID == nil) && dto.ContactID == nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không thể chuyển trạng thái sản phẩm thành đã cho thuê khi không có người liên hệ",
-		}
-	}
+	// if (trans == nil || trans.ContactID == nil) && dto.ContactID == nil {
+	// 	return &_routes.Except{
+	// 		Code:    400,
+	// 		Message: "Không thể chuyển trạng thái sản phẩm thành đã cho thuê khi không có người liên hệ",
+	// 	}
+	// }
 
-	if product.RentTransaction != nil {
-		product.RentTransaction.TransactionStatus = enums.TransactionStatusCompleted
-		s.AttachContactToTransaction(product.RentTransaction, dto)
-		_, err := s.TransactionRepo.Update(ctx, product.RentTransaction)
-		if err != nil {
-			return err
-		}
-	} else {
-		trans = s.EmptyTransaction(product, enums.TransactionTypeRent)
-		trans.TransactionStatus = enums.TransactionStatusCompleted
-		trans = s.AttachContactToTransaction(trans, dto)
-		_, err := s.TransactionRepo.Create(ctx, trans)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.RentTransaction != nil {
+	// 	// todo: transaction
+	// 	// product.RentTransaction.TransactionStatus = enums.TransactionStatusCompleted
+	// 	// s.AttachContactToTransaction(product.RentTransaction, dto)
+	// 	// _, err := s.TransactionRepo.Update(ctx, product.RentTransaction)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// } else {
+	// 	// todo: transaction
+	// 	// trans = s.EmptyTransaction(product, enums.TransactionTypeRent)
+	// 	// trans.TransactionStatus = enums.TransactionStatusCompleted
+	// 	// trans = s.AttachContactToTransaction(trans, dto)
+	// 	// _, err := s.TransactionRepo.Create(ctx, trans)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// }
 
-	if product.RentTransactionID != &trans.ID {
-		product.RentTransactionID = &trans.ID
-		err := s.ProductRepo.UpdateProduct(ctx, product.ID, product)
-		if err != nil {
-			return err
-		}
-	}
+	// if product.RentTransactionID != &trans.ID {
+	// 	product.RentTransactionID = &trans.ID
+	// 	err := s.ProductRepo.UpdateProduct(ctx, product.ID, product)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 

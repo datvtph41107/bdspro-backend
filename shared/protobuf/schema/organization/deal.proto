@@ -356,6 +356,8 @@ message GroupDeal {
     bool memberCanAddTransaction = 30;
     bool onlyOwnerGetCommission = 31;
     string internalNote = 32;
+    optional sharepb.ProfileItem chargePerson = 33;
+    string code = 34;
 }
 
 message DocumentItem {
@@ -648,6 +650,7 @@ message SummaryResponse {
     double amountCost = 13;
     double amountProfit = 14;
     uint32 numTransaction = 15;
+    double totalPayment = 16;
 }
 
 message UpdateAllowManualInputRequest {

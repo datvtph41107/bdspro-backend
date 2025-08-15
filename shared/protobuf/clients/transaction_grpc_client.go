@@ -78,32 +78,16 @@ func (c *TransactionGrpcClient) CreateProductTransaction(ctx context.Context, re
 	return response, nil
 }
 
-func (c *TransactionGrpcClient) CreateDepositAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
-	response, err := c.client.CreateDepositAction(ctx, req)
+func (c *TransactionGrpcClient) GetTransactionByIds(ctx context.Context, req []uint64) (*transactionpb.TransactionListResponse, error) {
+	response, err := c.client.GetTransactionByIDs(ctx, &sharepb.IdRequest{Ids: req})
 	if err != nil {
 		return nil, err
 	}
 	return response, nil
 }
 
-func (c *TransactionGrpcClient) CreateSignAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
-	response, err := c.client.CreateSignAction(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
-}
-
-func (c *TransactionGrpcClient) CreatePaymentAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
-	response, err := c.client.CreatePaymentAction(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
-}
-
-func (c *TransactionGrpcClient) CreateHandoverAction(ctx context.Context, req *transactionpb.CreateActionRequest) (*transactionpb.ActionResponse, error) {
-	response, err := c.client.CreateHandoverAction(ctx, req)
+func (c *TransactionGrpcClient) GetTotalAmountByDealID(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.DealTotalAmountResponse, error) {
+	response, err := c.client.GetTotalAmountByDealID(ctx, req)
 	if err != nil {
 		return nil, err
 	}

@@ -102,7 +102,7 @@ func (r *ReportRepo) UpdateStatus(ctx context.Context, id uint64, status uint32,
 		updates["resolved_at"] = time.Now()
 
 		// Lấy admin ID từ context nếu có
-		if adminID := _utils.GetUserIDFromContext(ctx); adminID != 0 {
+		if adminID := _utils.GetProfileIdWithContext(ctx); adminID != 0 {
 			updates["resolved_by"] = adminID
 			updates["updated_by"] = adminID
 		}

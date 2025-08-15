@@ -34,7 +34,7 @@ func (uc *AssetCostTypeUsecase) CheckPermission(c context.Context, id uint64) er
 		return err
 	}
 
-	if assetCostType.OwnerID != profileId || assetCostType.OwnerType != enums.EOwnerTypeMember {
+	if assetCostType.OwnerID != profileId || assetCostType.OwnerType != enums.EOwnerOfMember {
 		return &_routes.Except{
 			Code:    403,
 			Message: "Bạn không có quyền truy cập",
@@ -45,7 +45,7 @@ func (uc *AssetCostTypeUsecase) CheckPermission(c context.Context, id uint64) er
 
 func (uc *AssetCostTypeUsecase) Create(c context.Context, entity *domain.AssetCostType) error {
 	entity.OwnerID = _utils.GetProfileIdWithContext(c)
-	entity.OwnerType = enums.EOwnerTypeMember
+	entity.OwnerType = enums.EOwnerOfMember
 	entity.IsCustom = true
 	return uc.OwnerRepo.Create(c, entity)
 }

@@ -4,6 +4,7 @@ import (
 	organizationpb "pb/types/organization"
 	"time"
 
+	"organization/infrastructure/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/enums"
 )
@@ -241,6 +242,7 @@ func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *
 		MemberCanAddTransaction: deal.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,
 		InternalNote:            deal.InternalNote,
+		Code:                    utils.GenerateDealCode(deal.ID),
 	}
 
 	if deal.ChargePersonID != nil {

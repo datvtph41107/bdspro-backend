@@ -65,7 +65,7 @@ type ProductRepo interface {
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
 	// CancelDeposite(ctx context.Context, id uint64) error
 
-	// SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerType, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	// SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	SearchExport(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, error)
 	SmartSearch(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.TotalSearchParser) ([]domain.Product, int64, error)
 	Archived(ctx context.Context, productId *uint64, archived bool) error

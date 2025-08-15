@@ -17,90 +17,6 @@ type TransactionPostgresRepository struct {
 	db *gorm.DB
 }
 
-// type tx_domain.Transaction struct {
-// 	_models.BaseEntity
-// 	OwnerId              uint64 `gorm:"index:idx_owner"`
-// 	OwnerType            enums.EOwnerType
-// 	OrganizationId       *uint32 `gorm:"index:idx_organization"`
-// 	Amount               float64
-// 	Currency             string
-// 	TransactionName      string
-// 	Description          string
-// 	TransactionType      enums.TransactionType `gorm:"index:idx_type"`
-// 	CategoryId           uint32                `gorm:"index:idx_category"`
-// 	PaymentMethodId      uint32                `gorm:"index:idx_payment"`
-// 	RelatedDealId        *uint32               `gorm:"index:idx_deal"`
-// 	RelatedTransactionId *uint32               `gorm:"index:idx_related"`
-// 	ApprovalStatus       enums.ApprovalStatus  `gorm:"index:idx_approval"`
-// 	ApprovedBy           *uint32
-// 	ApprovalDate         *time.Time
-// 	TransactionStatus    enums.TransactionStatus `gorm:"index:idx_status;default:10"`
-// 	TransactionDate      time.Time               `gorm:"index:idx_date"`
-// 	ProductID            *uint64                 `gorm:"index:idx_product"`
-// 	DepositeID           *uint64                 `gorm:"index:idx_deposite"`
-// 	Deposite             *domain.Deposite        `gorm:"foreignKey:DepositeID"`
-// }
-
-// func (t *tx_domain.Transaction) TableName() string {
-// 	return "transactions"
-// }
-
-// func tx_domain.TransactionToEntity(t *tx_domain.Transaction) *tx_domain.Transaction {
-// 	return &tx_domain.Transaction{
-// 		BaseEntity: _models.BaseEntity{
-// 			ID: t.ID,
-// 		},
-// 		OwnerType:            t.OwnerType,
-// 		OwnerId:              t.OwnerId,
-// 		OrganizationId:       t.OrganizationId,
-// 		Amount:               t.Amount,
-// 		Currency:             t.Currency,
-// 		TransactionName:      t.TransactionName,
-// 		Description:          t.Description,
-// 		TransactionType:      t.TransactionType,
-// 		CategoryId:           t.CategoryId,
-// 		PaymentMethodId:      t.PaymentMethodId,
-// 		RelatedDealId:        t.RelatedDealId,
-// 		RelatedTransactionId: t.RelatedTransactionId,
-// 		ApprovalStatus:       t.ApprovalStatus,
-// 		ApprovedBy:           t.ApprovedBy,
-// 		ApprovalDate:         t.ApprovalDate,
-// 		TransactionStatus:    t.TransactionStatus,
-// 		TransactionDate:      t.TransactionDate,
-// 		ProductID:            t.ProductID,
-// 		DepositeID:           t.DepositeID,
-// 		Deposite:             t.Deposite,
-// 	}
-// }
-
-// func EntityTotx_domain.Transaction(t *tx_domain.Transaction) *tx_domain.Transaction {
-// 	return &tx_domain.Transaction{
-// 		BaseEntity: _models.BaseEntity{
-// 			ID: t.ID,
-// 		},
-// 		OwnerType:            t.OwnerType,
-// 		OwnerId:              t.OwnerId,
-// 		OrganizationId:       t.OrganizationId,
-// 		Amount:               t.Amount,
-// 		Currency:             t.Currency,
-// 		TransactionName:      t.TransactionName,
-// 		Description:          t.Description,
-// 		TransactionType:      t.TransactionType,
-// 		CategoryId:           t.CategoryId,
-// 		PaymentMethodId:      t.PaymentMethodId,
-// 		RelatedDealId:        t.RelatedDealId,
-// 		RelatedTransactionId: t.RelatedTransactionId,
-// 		ApprovalStatus:       t.ApprovalStatus,
-// 		ApprovedBy:           t.ApprovedBy,
-// 		ApprovalDate:         t.ApprovalDate,
-// 		TransactionStatus:    t.TransactionStatus,
-// 		TransactionDate:      t.TransactionDate,
-// 		ProductID:            t.ProductID,
-// 		DepositeID:           t.DepositeID,
-// 		Deposite:             t.Deposite,
-// 	}
-// }
-
 func NewTransactionPostgresRepository(db *gorm.DB) repo.TransactionRepository {
 	return &TransactionPostgresRepository{
 		db: db,
@@ -123,6 +39,8 @@ func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64)
 	var model *tx_domain.Tx
 	if err := GetDB(ctx, r.db).
 		// Preload("Deposite", "deleted_at IS NULL").
+		Preload("Actions").
+		Preload("LastAction").
 		First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -130,6 +48,20 @@ func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64)
 		return nil, err
 	}
 	return model, nil
+}
+
+// SumByTransactionID trả về tổng value của các action theo transaction_id
+func (r *TransactionPostgresRepository) SumByTransactionID(ctx context.Context, transactionID uint64) (float64, error) {
+	var total float64
+	err := GetDB(ctx, r.db).
+		Table("tb_transaction_action").
+		Select("COALESCE(SUM(value), 0)").
+		Where("tx_id = ?", transactionID).
+		Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *tx_domain.Tx) (*tx_domain.Tx, error) {
@@ -149,7 +81,7 @@ func (r *TransactionPostgresRepository) Update(ctx context.Context, tx *tx_domai
 }
 
 func (r *TransactionPostgresRepository) Delete(ctx context.Context, id uint32) error {
-	result := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).
+	result := GetDB(ctx, r.db).Model(&tx_domain.Tx{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"deleted_at": time.Now(),
@@ -231,8 +163,8 @@ func (r *TransactionPostgresRepository) Reject(ctx context.Context, id uint32) e
 	result := r.db.WithContext(ctx).Model(&tx_domain.Tx{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"approval_status": enums.TxStatusCancel,
-			"updated_at":      time.Now(),
+			"status":     enums.TxStatusCancel,
+			"updated_at": time.Now(),
 		})
 	if result.Error != nil {
 		return result.Error
@@ -273,4 +205,13 @@ func (r *TransactionPostgresRepository) CreateAction(ctx context.Context, action
 		return nil, err
 	}
 	return action, nil
+}
+
+func (r *TransactionPostgresRepository) GetByIDs(ctx context.Context, ids []uint64) ([]*tx_domain.Tx, error) {
+	var models []*tx_domain.Tx
+	err := GetDB(ctx, r.db).Model(&tx_domain.Tx{}).Where("id IN (?) and deleted_at is null", ids).Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return models, nil
 }

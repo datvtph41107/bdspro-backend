@@ -39,6 +39,7 @@ type DealInvitation struct {
 	UpdatedBy    uint64               `gorm:"not null"`
 	ColorId      *uint32              `gorm:"index"`
 	RoleId       uint64               `gorm:"column:role_id" json:"role_id"`
+	Role         *OrganizationRole    `gorm:"foreignKey:RoleId;references:ID"`
 
 	// Relations
 	Deal    *Deal       `gorm:"foreignKey:DealID;references:ID"`

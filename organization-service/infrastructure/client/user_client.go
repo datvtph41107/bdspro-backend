@@ -8,6 +8,7 @@ import (
 	"organization/env"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
+	transactionpb "pb/types/transaction"
 	userpb "pb/types/user"
 	"time"
 
@@ -127,7 +128,7 @@ func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*organizatio
 		}
 		chargePerson := profileMap[deal.ChargePersonId]
 		if chargePerson != nil {
-			deal.ChargePersonName = chargePerson.FullName
+			deal.ChargePerson = chargePerson
 		}
 	}
 
@@ -247,6 +248,41 @@ func (c *UserClient) MapProfileToDealMember(ctx context.Context, members []*orga
 			member.MemberAvatar = p.Avatar
 			member.MemberPhone = p.Phone
 			member.MemberVerified = p.TickVerified
+		}
+	}
+}
+
+// func (c *UserClient) MapProfileToDealContractPb(ctx context.Context, contract *organizationpb.DealContractResponse) {
+// 	ids := make([]uint64, 1)
+// 	ids[0] = uint64(contract.CustomerId)
+// 	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+// 	if err != nil {
+// 		return
+// 	}
+// 	if len(profiles.Profiles) > 0 {
+// 		profile := profiles.Profiles[0]
+// 		profile.Phone = ""
+// 		contract.Customer = profile
+// 	}
+// }
+
+func (c *UserClient) MapProfileToDealContractPbList(ctx context.Context, contracts []*transactionpb.DealContractResponse) {
+	ids := make([]uint64, len(contracts))
+	for i, contract := range contracts {
+		ids[i] = uint64(contract.CustomerId)
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		p.Phone = ""
+		profileMap[p.Id] = p
+	}
+	for _, contract := range contracts {
+		if p, ok := profileMap[uint64(contract.CustomerId)]; ok {
+			contract.Customer = p
 		}
 	}
 }

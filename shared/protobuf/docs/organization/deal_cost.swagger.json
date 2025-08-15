@@ -212,7 +212,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbDealCostServiceUpdateBody"
+              "$ref": "#/definitions/DealCostServiceUpdateBody"
             }
           }
         ],
@@ -268,6 +268,40 @@
     }
   },
   "definitions": {
+    "DealCostServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "enums.ApprovedStatus"
+        }
+      }
+    },
     "organizationpbDealCostDTO": {
       "type": "object",
       "properties": {
@@ -319,40 +353,6 @@
         "totalElements": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "organizationpbDealCostServiceUpdateBody": {
-      "type": "object",
-      "properties": {
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "confirmedAt": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "costTypeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "costTypeName": {
-          "type": "string"
-        },
-        "costName": {
-          "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64",
-          "title": "enums.ApprovedStatus"
         }
       }
     },

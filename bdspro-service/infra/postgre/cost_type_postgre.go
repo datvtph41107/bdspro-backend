@@ -27,7 +27,7 @@ func NewPostgreUserCostType(DB *gorm.DB) *PostgreUserCostType {
 
 func (r *PostgreUserCostType) QuerySearch(c context.Context, profileId uint64, ownerType enums.EOwnerOf, dto *dto.AssetCostTypeSearchDTO) (*gorm.DB, error) {
 	query := r.DB.Model(&domain.AssetCostType{}).
-		Where("deleted_at IS NULL and ((owner_id = ? and owner_type = ?) or owner_id is null)", profileId, enums.EOwnerTypeMember)
+		Where("deleted_at IS NULL and ((owner_id = ? and owner_type = ?) or owner_id is null)", profileId, enums.EOwnerOfMember)
 	if dto.Text != "" {
 		query = query.Where("type_name like ?", "%"+dto.Text+"%")
 	}

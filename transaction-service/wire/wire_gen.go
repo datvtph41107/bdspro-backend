@@ -16,6 +16,7 @@ import (
 	"tx/infra/postgres"
 	"tx/infra/validator"
 	"tx/internal/interface"
+	"tx/internal/repo"
 	"tx/internal/usecases"
 )
 
@@ -33,13 +34,28 @@ func InitializeApp() (*config.ConfigApp, error) {
 	userClient := client.NewUserClient()
 	transactionMapper := mapper.NewTransactionMapper()
 	transactionHandler := handler.NewTransactionHandler(transactionUsecase, userClient, transactionMapper)
+	dealTransactionPostgresRepository := postgre.NewDealTransactionPostgresRepository(db)
+	organizationClient := client.NewOrganizationClient()
+	dealCostRepository := postgre.NewDealCostRepository(db)
+	dealContractUsecase := transaction_usecase.NewDealContractUsecase(dealTransactionPostgresRepository, actionRepository, transactionGorm, transactionUsecase, organizationClient, dealCostRepository)
 	transactionActionValidator := validator.NewTransactionActionValidator()
-	internalTransactionHandler := handler.NewInternalTransactionHandler(transactionUsecase, transactionActionValidator, transactionMapper)
-	configApp := config.NewConfigApp(transactionHandler, internalTransactionHandler)
+	internalTransactionHandler := handler.NewInternalTransactionHandler(transactionUsecase, dealContractUsecase, transactionActionValidator, transactionMapper)
+	costTypeRepository := postgre.NewCostTypeRepository(db)
+	dealCostUsecase := transaction_usecase.NewDealCostUsecase(dealCostRepository, costTypeRepository)
+	contractDealValidator := validator.NewContractDealValidator()
+	contractDealMapper := mapper.NewContractDealMapper(transactionMapper)
+	bdsproClient := client.NewBdsproClient()
+	contractDealHandler := handler.NewContractDealHandler(dealContractUsecase, transactionUsecase, dealCostUsecase, contractDealValidator, contractDealMapper, bdsproClient, userClient)
+	dealCostMapper := mapper.NewDealCostMapper()
+	dealCostHandler := handler.NewDealCostHandler(dealCostUsecase, dealCostMapper)
+	costTypeUsecase := transaction_usecase.NewCostTypeUsecase(costTypeRepository)
+	costTypeMapper := mapper.NewCostTypeMapper()
+	costTypeHandler := handler.NewCostTypeHandler(costTypeUsecase, costTypeMapper)
+	configApp := config.NewConfigApp(transactionHandler, internalTransactionHandler, contractDealHandler, dealCostHandler, costTypeHandler)
 	return configApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), config.NewConfigApp, handler.NewInternalTransactionHandler, postgre.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.IOrganizationClient), new(*client.OrganizationClient)), wire.Bind(new(repo.DealTransactionRepository), new(*postgre.DealTransactionPostgresRepository)), wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), client.NewBdsproClient, config.NewConfigApp, handler.NewContractDealHandler, mapper.NewContractDealMapper, validator.NewContractDealValidator, handler.NewCostTypeHandler, mapper.NewCostTypeMapper, postgre.NewCostTypeRepository, transaction_usecase.NewCostTypeUsecase, transaction_usecase.NewDealContractUsecase, handler.NewDealCostHandler, mapper.NewDealCostMapper, postgre.NewDealCostRepository, transaction_usecase.NewDealCostUsecase, validator.NewDealCostValidator, postgre.NewDealTransactionPostgresRepository, handler.NewInternalTransactionHandler, client.NewOrganizationClient, postgre.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)

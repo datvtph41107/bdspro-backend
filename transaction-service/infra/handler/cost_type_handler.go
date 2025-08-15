@@ -3,21 +3,20 @@ package handler
 import (
 	_dto "common/dto"
 	"context"
-	"organization/infrastructure/transformer"
-	"organization/internal/dto"
-	"organization/internal/usecase"
-
-	pb "pb/types/organization"
 	sharedpb "pb/types/shared"
+	transactionpb "pb/types/transaction"
+	"tx/infra/mapper"
+	"tx/internal/dto"
+	transaction_usecase "tx/internal/usecases"
 )
 
 type CostTypeHandler struct {
-	pb.UnimplementedCostTypeServiceServer
-	usecase usecase.CostTypeUsecase
-	mapper  *transformer.CostTypeMapper
+	transactionpb.UnimplementedCostTypeServiceServer
+	usecase transaction_usecase.CostTypeUsecase
+	mapper  *mapper.CostTypeMapper
 }
 
-func NewCostTypeHandler(uc usecase.CostTypeUsecase, mapper *transformer.CostTypeMapper) *CostTypeHandler {
+func NewCostTypeHandler(uc transaction_usecase.CostTypeUsecase, mapper *mapper.CostTypeMapper) *CostTypeHandler {
 	return &CostTypeHandler{usecase: uc, mapper: mapper}
 }
 
@@ -27,10 +26,10 @@ func NewCostTypeHandler(uc usecase.CostTypeUsecase, mapper *transformer.CostType
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param costType body pb.CostTypeDTO true "Loại chi phí"
-// @Success 200 {object} pb.CostTypeDTO
+// @Param costType body transactionpb.CostTypeDTO true "Loại chi phí"
+// @Success 200 {object} transactionpb.CostTypeDTO
 // @Router /cost-type [post]
-func (h *CostTypeHandler) Create(ctx context.Context, req *pb.CostTypeDTO) (*pb.CostTypeDTO, error) {
+func (h *CostTypeHandler) Create(ctx context.Context, req *transactionpb.CostTypeDTO) (*transactionpb.CostTypeDTO, error) {
 	model := h.mapper.CostTypeProtoToModel(req)
 	if err := h.usecase.Create(ctx, model); err != nil {
 		return nil, err
@@ -45,10 +44,10 @@ func (h *CostTypeHandler) Create(ctx context.Context, req *pb.CostTypeDTO) (*pb.
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID loại chi phí"
-// @Param costType body pb.CostTypeDTO true "Loại chi phí"
-// @Success 200 {object} pb.CostTypeDTO
+// @Param costType body transactionpb.CostTypeDTO true "Loại chi phí"
+// @Success 200 {object} transactionpb.CostTypeDTO
 // @Router /cost-type/{id} [put]
-func (h *CostTypeHandler) Update(ctx context.Context, req *pb.CostTypeDTO) (*pb.CostTypeDTO, error) {
+func (h *CostTypeHandler) Update(ctx context.Context, req *transactionpb.CostTypeDTO) (*transactionpb.CostTypeDTO, error) {
 	model := h.mapper.CostTypeProtoToModel(req)
 	if err := h.usecase.Update(ctx, model); err != nil {
 		return nil, err
@@ -79,10 +78,10 @@ func (h *CostTypeHandler) Delete(ctx context.Context, req *sharedpb.IdRequest) (
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param dto query pb.CostTypeSearchDTO true "Thông tin tìm kiếm"
-// @Success 200 {object} pb.CostTypeListDTO
+// @Param dto query transactionpb.CostTypeSearchDTO true "Thông tin tìm kiếm"
+// @Success 200 {object} transactionpb.CostTypeListDTO
 // @Router /cost-type [get]
-func (h *CostTypeHandler) List(ctx context.Context, req *pb.CostTypeSearchDTO) (*pb.CostTypeListDTO, error) {
+func (h *CostTypeHandler) List(ctx context.Context, req *transactionpb.CostTypeSearchDTO) (*transactionpb.CostTypeListDTO, error) {
 	search := &dto.CostTypeSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: int(req.Page),
@@ -96,12 +95,12 @@ func (h *CostTypeHandler) List(ctx context.Context, req *pb.CostTypeSearchDTO) (
 		return nil, err
 	}
 
-	var data []*pb.CostTypeDTO
+	var data []*transactionpb.CostTypeDTO
 	for _, ct := range list {
 		data = append(data, h.mapper.CostTypeModelToProto(ct))
 	}
 
-	return &pb.CostTypeListDTO{
+	return &transactionpb.CostTypeListDTO{
 		Data:  data,
 		Total: uint32(len(data)),
 	}, nil

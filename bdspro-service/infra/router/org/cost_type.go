@@ -51,7 +51,7 @@ func (r *OrgCostTypeRouter) Search(c *gin.Context) {
 		return
 	}
 
-	result, total, err := r.UC.Search(c, enums.EOwnerTypeOrgnization, &dto)
+	result, total, err := r.UC.Search(c, enums.EOwnerOfOrgnization, &dto)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,

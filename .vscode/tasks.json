@@ -201,7 +201,7 @@
       }
     },
     {
-      "label": "💳 Transaction gRPC (8214)",
+      "label": "💳 Transaction gRPC (8215)",
       "type": "shell",
       "command": "cd shared/code && make transaction",
       "args": [],

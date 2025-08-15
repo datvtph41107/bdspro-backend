@@ -113,29 +113,30 @@ func (m *InternalOrganizationMapper) GroupDealToPb(deal *entity.Deal) *organizat
 	}
 }
 
-func (m *InternalOrganizationMapper) DealTransactionsToPb(dealTransactions []*entity.DealTransaction) []*organizationpb.DealTransactionResponse {
-	pbDealTransactions := make([]*organizationpb.DealTransactionResponse, len(dealTransactions))
-	for i, dealTransaction := range dealTransactions {
-		pbDealTransactions[i] = m.DealTransactionToPb(dealTransaction)
-	}
-	return pbDealTransactions
-}
+// func (m *InternalOrganizationMapper) DealTransactionsToPb(dealTransactions []*entity.DealTransaction) []*organizationpb.DealTransactionResponse {
+// 	pbDealTransactions := make([]*organizationpb.DealTransactionResponse, len(dealTransactions))
+// 	for i, dealTransaction := range dealTransactions {
+// 		pbDealTransactions[i] = m.DealTransactionToPb(dealTransaction)
+// 	}
+// 	return pbDealTransactions
+// }
 
-func (m *InternalOrganizationMapper) DealTransactionToPb(dealTransaction *entity.DealTransaction) *organizationpb.DealTransactionResponse {
-	return &organizationpb.DealTransactionResponse{
-		Id:          dealTransaction.ID,
-		DealId:      dealTransaction.DealID,
-		Type:        organizationpb.TransactionType(dealTransaction.Type),
-		Amount:      dealTransaction.Amount,
-		Description: dealTransaction.Description,
-		Category:    dealTransaction.Category,
-		Note:        dealTransaction.Note,
-		Status:      organizationpb.ApprovedStatus(dealTransaction.Status),
-		CreatedBy:   dealTransaction.CreatedBy,
-		CreatedAt:   dealTransaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   dealTransaction.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-}
+// func (m *InternalOrganizationMapper) DealTransactionToPb(dealTransaction *entity.DealTransaction) *organizationpb.DealTransactionResponse {
+// 	return &organizationpb.DealTransactionResponse{
+// 		Id:          dealTransaction.ID,
+// 		DealId:      dealTransaction.DealID,
+// 		Type:        organizationpb.TransactionType(dealTransaction.Type),
+// 		Amount:      dealTransaction.Amount,
+// 		Description: dealTransaction.Description,
+// 		Category:    dealTransaction.Category,
+// 		Note:        dealTransaction.Note,
+// 		CustomerId:  dealTransaction.CustomerID,
+// 		Status:      organizationpb.ApprovedStatus(dealTransaction.Status),
+// 		CreatedBy:   dealTransaction.CreatedBy,
+// 		CreatedAt:   dealTransaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+// 		UpdatedAt:   dealTransaction.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+// 	}
+// }
 
 func (m *InternalOrganizationMapper) DealMembersToPb(dealMembers []*entity.DealMember) []*organizationpb.DealMember {
 	pbDealMembers := make([]*organizationpb.DealMember, len(dealMembers))
@@ -147,8 +148,8 @@ func (m *InternalOrganizationMapper) DealMembersToPb(dealMembers []*entity.DealM
 
 func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMember) *organizationpb.DealMember {
 	return &organizationpb.DealMember{
-		DealId:  uint64(dealMember.DealID),
-		MemberId: uint64(dealMember.MemberID),
+		DealId:     uint64(dealMember.DealID),
+		MemberId:   uint64(dealMember.MemberID),
 		MemberType: uint32(dealMember.MemberType),
 	}
 }
