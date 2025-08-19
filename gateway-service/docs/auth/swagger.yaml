@@ -1,0 +1,502 @@
+basePath: /v2/auth
+definitions:
+  authpb.AuthSuccessResponse:
+    properties:
+      accessToken:
+        type: string
+      authId:
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      organizationId:
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+      refreshToken:
+        type: string
+      role:
+        type: string
+    type: object
+  authpb.DeleteAccountResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.LogoutResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.QRConfirmRequest:
+    properties:
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
+  authpb.QRInitRequest:
+    properties:
+      clientId:
+        type: string
+      csrfToken:
+        type: string
+      expiration:
+        type: integer
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+      userAgent:
+        type: string
+    type: object
+  authpb.QRInitResponse:
+    properties:
+      qrCode:
+        type: string
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
+  authpb.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  authpb.RefreshTokenResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  authpb.RequestOTPRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        type: string
+    type: object
+  authpb.RequestOTPResponse:
+    properties:
+      authId:
+        type: integer
+      message:
+        type: string
+    type: object
+  authpb.ResendOTPRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        type: string
+    type: object
+  authpb.ResendOTPResponse:
+    properties:
+      authId:
+        type: integer
+      message:
+        type: string
+    type: object
+  authpb.RestoreAccountRequest:
+    properties:
+      phone:
+        type: string
+    type: object
+  authpb.RestoreAccountResponse:
+    properties:
+      authId:
+        type: integer
+      oauthId:
+        type: string
+      provider:
+        type: string
+    type: object
+  authpb.SwitchOrganizationRequest:
+    properties:
+      organizationId:
+        type: integer
+    type: object
+  authpb.VerifyOTPRequest:
+    properties:
+      authId:
+        type: integer
+      fullname:
+        type: string
+      os:
+        type: string
+      otp:
+        type: string
+      phone:
+        type: string
+      platform:
+        type: string
+      version:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API phần logic xác thực và đăng nhập
+  title: Auth Service API
+  version: "1.0"
+paths:
+  /delete:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài khoản
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+      summary: Delete account
+      tags:
+      - Auth
+  /logout:
+    delete:
+      consumes:
+      - application/json
+      description: Logout để đăng xuất
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+      summary: Logout
+      tags:
+      - Auth
+  /oauth/{provider}/callback:
+    get:
+      consumes:
+      - application/json
+      description: Nhận callback từ provider sau khi người dùng đăng nhập và xử lý
+        xác thực.
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Mã xác thực từ provider
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Chuỗi state để bảo vệ chống tấn công CSRF
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin người dùng từ provider
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi khi xử lý callback
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Callback
+      tags:
+      - OAuth
+  /oauth/{provider}/login:
+    get:
+      consumes:
+      - application/json
+      description: Chuyển hướng người dùng đến trang đăng nhập của provider (Google,
+        Facebook, Zalo, v.v.).
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Chuyển hướng đến trang đăng nhập của provider
+        "400":
+          description: Lỗi khi provider không hợp lệ
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Login
+      tags:
+      - OAuth
+  /otp/request:
+    post:
+      consumes:
+      - application/json
+      description: Gửi OTP để đăng nhập
+      parameters:
+      - description: Số điện thoại
+        in: body
+        name: phone
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RequestOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+      summary: Gửi OTP
+      tags:
+      - Auth
+  /otp/resend:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP để đăng nhập
+      parameters:
+      - description: Thông tin OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+      summary: Gửi lại OTP
+      tags:
+      - Auth
+  /otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Xác minh OTP để đăng nhập
+      parameters:
+      - description: Thông tin OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Xác minh OTP
+      tags:
+      - Auth
+  /qr/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Xác nhận QR code để đăng nhập
+      parameters:
+      - description: Thông tin QR
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.QRConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: QR Confirm
+      tags:
+      - Auth
+  /qr/init:
+    post:
+      consumes:
+      - application/json
+      description: Tạo QR code để đăng nhập
+      parameters:
+      - description: Thông tin QR
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.QRInitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+      summary: QR Init
+      tags:
+      - Auth
+  /restore:
+    put:
+      consumes:
+      - application/json
+      description: Khôi phục tài khoản
+      parameters:
+      - description: Thông tin khôi phục tài khoản
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RestoreAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+      summary: Restore account
+      tags:
+      - Auth
+  /switch/organization:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển đổi tổ chức
+      parameters:
+      - description: Thông tin chuyển đổi tổ chức
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.SwitchOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Switch Organization
+      tags:
+      - Auth
+  /token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh token để đăng nhập
+      parameters:
+      - description: Thông tin refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+      summary: Refresh token
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

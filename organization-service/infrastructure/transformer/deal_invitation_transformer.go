@@ -33,10 +33,14 @@ type DealInvitationTransformer interface {
 	EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetInvitationsByDealResponse
 }
 
-type dealInvitationTransformer struct{}
+type dealInvitationTransformer struct {
+	organizationRoleTransformer OrganizationRoleTransformer
+}
 
-func NewDealInvitationTransformer() DealInvitationTransformer {
-	return &dealInvitationTransformer{}
+func NewDealInvitationTransformer(organizationRoleTransformer OrganizationRoleTransformer) DealInvitationTransformer {
+	return &dealInvitationTransformer{
+		organizationRoleTransformer: organizationRoleTransformer,
+	}
 }
 
 // Request to Entity transformations
@@ -356,10 +360,13 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 			InviteeId: invitation.DealInvitation.InviteeID,
 			Status:    uint32(invitation.DealInvitation.Status),
 			Message:   invitation.DealInvitation.Message,
-			// Role:      role,
 			Reason:    "", // DealInvitation entity doesn't have Reason field
 			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
 			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
+		}
+
+		if invitation.DealInvitation.Role != nil {
+			invitationResponse.Role = t.organizationRoleTransformer.EntityToRoleResponse(invitation.DealInvitation.Role)
 		}
 
 		if invitation.DealInvitation.Color != nil {

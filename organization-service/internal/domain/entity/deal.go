@@ -37,12 +37,13 @@ type Deal struct {
 	PartnerIds     []uint64     `gorm:"-"`
 
 	// Setting
-	FromDate                time.Time
-	ToDate                  time.Time
+	FromDate                *time.Time
+	ToDate                  *time.Time
 	AllowSharing            bool
 	MemberCanAddTransaction bool
 	OnlyOwnerGetCommission  bool
 	InternalNote            string
+	AllowManualInput        bool
 }
 
 func (d *Deal) TableName() string {

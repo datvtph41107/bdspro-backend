@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"organization/internal/domain/entity"
+	"organization/internal/domain/repository"
 	"organization/internal/dto"
 	"organization/internal/enums"
+	iusecase "organization/internal/interface"
 
 	"gorm.io/gorm"
 )
@@ -70,15 +72,24 @@ import (
 
 // @bind: organization/internal/domain/repository.GroupDealRepository
 type GroupDealPostgresRepository struct {
-	db *gorm.DB
+	db              *gorm.DB
+	bankAccountRepo repository.BankAccountRepository
+	transactionRepo iusecase.ITransaction
 }
 
-func NewGroupDealPostgresRepository(db *gorm.DB) *GroupDealPostgresRepository {
-	return &GroupDealPostgresRepository{db: db}
+func NewGroupDealPostgresRepository(db *gorm.DB,
+	bankAccountRepo repository.BankAccountRepository,
+	transactionRepo iusecase.ITransaction,
+) *GroupDealPostgresRepository {
+	return &GroupDealPostgresRepository{
+		db:              db,
+		bankAccountRepo: bankAccountRepo,
+		transactionRepo: transactionRepo,
+	}
 }
 
 func (r *GroupDealPostgresRepository) CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error) {
-	if err := r.db.WithContext(ctx).Create(dealProduct).Error; err != nil {
+	if err := GetDB(ctx, r.db).Create(dealProduct).Error; err != nil {
 		return nil, err
 	}
 	return dealProduct, nil
@@ -129,7 +140,10 @@ func (r *GroupDealPostgresRepository) Delete(ctx context.Context, id uint64) err
 
 func (r *GroupDealPostgresRepository) GetByID(ctx context.Context, id uint64) (*entity.Deal, error) {
 	var model entity.Deal
-	if err := r.db.WithContext(ctx).Where("id = ? AND is_deleted = ?", id, false).First(&model).Error; err != nil {
+	if err := GetDB(ctx, r.db).
+		Preload("BankAccount", "deleted_at is null").
+		Where("id = ? AND is_deleted = ?", id, false).
+		First(&model).Error; err != nil {
 		return nil, err
 	}
 	return &model, nil
@@ -216,33 +230,78 @@ func (r *GroupDealPostgresRepository) UpdateStatusAndCancelReason(ctx context.Co
 }
 
 func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error {
-	tx := r.db.WithContext(ctx).Begin()
-	var model *entity.Deal
-	err := tx.Model(&entity.Deal{}).Where("id = ?", id).First(&model).Error
+	// tx := r.db.WithContext(ctx).Begin()
+	err := r.transactionRepo.WithTransaction(ctx, func(ctx context.Context) error {
+		var model *entity.Deal
+		err := GetDB(ctx, r.db).Model(&entity.Deal{}).
+			Preload("BankAccount", "deleted_at is null").
+			Where("id = ? AND is_deleted = ?", id, false).
+			First(&model).Error
+		if err != nil {
+			return err
+		}
+
+		bankAccount, err := r.bankAccountRepo.DealUpdateAccount(ctx, model.BankAccountID, &entity.BankAccount{
+			BankId:        setting.BankId,
+			AccountNumber: setting.AccountNumber,
+			AccountName:   setting.AccountName,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = GetDB(ctx, r.db).
+			Model(&entity.Deal{}).
+			Where("id = ? AND is_deleted = ?", id, false).
+			Updates(map[string]interface{}{
+				"from_date":                  setting.FromDate,
+				"to_date":                    setting.ToDate,
+				"allow_sharing":              setting.AllowSharing,
+				"member_can_add_transaction": setting.MemberCanAddTransaction,
+				"only_owner_get_commission":  setting.OnlyOwnerGetCommission,
+				"internal_note":              setting.InternalNote,
+				"owner_id":                   setting.OwnerId,
+				"status":                     setting.Status,
+				"allow_manual_input":         setting.AllowManualInput,
+				"bank_account_id":            bankAccount.ID,
+			}).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
-	err = tx.Model(&entity.Deal{}).Where("id = ? AND is_deleted = ?", id, false).Updates(model).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = tx.Model(&entity.BankAccount{}).Where("id = ?", model.BankAccountID).Updates(map[string]interface{}{
-		"bank_name":      setting.BankName,
-		"account_number": setting.AccountNumber,
-		"account_name":   setting.AccountName,
-	}).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit().Error
+	return nil
 }
 
 func (r *GroupDealPostgresRepository) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
 	return r.db.WithContext(ctx).Model(&entity.Deal{}).Where("id = ?", dealID).Update("allow_manual_input", allowManualInput).Error
+}
+
+// GetDealProcess lấy thông tin process của deal
+func (r *GroupDealPostgresRepository) GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error) {
+	// TODO: Implement logic để lấy thông tin process từ database
+	// Tạm thời trả về dữ liệu mẫu
+	processItems := []*dto.DealProcessItem{
+		{
+			StatusName:    "Đang xử lý",
+			Timestamp:     "2024-01-15T10:30:00Z",
+			Code:          "PROC001",
+			TransactionId: "TXN123456",
+			Color:         "#FFA500",
+		},
+		{
+			StatusName:    "Hoàn thành",
+			Timestamp:     "2024-01-15T11:00:00Z",
+			Code:          "COMP002",
+			TransactionId: "TXN123457",
+			Color:         "#00FF00",
+		},
+	}
+
+	return processItems, nil
 }

@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_paymentBank": {
+    "paymentpbBank": {
       "type": "object",
       "properties": {
         "id": {

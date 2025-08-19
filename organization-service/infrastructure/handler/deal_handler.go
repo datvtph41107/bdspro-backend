@@ -7,7 +7,6 @@ import (
 	"errors"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
-	"time"
 
 	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
@@ -137,6 +136,11 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 	response := h.GroupDealTransformer.EntityToGetGroupDealResponse(deal)
 	h.BdsproClient.MapProductToDealPb(ctx, []*organizationpb.GroupDeal{response})
 	h.UserClient.MapMemberToDealPb(ctx, []*organizationpb.GroupDeal{response})
+	if response.BankAccount != nil {
+		bank, _ := h.PaymentClient.GetBankById(ctx, response.BankAccount.BankId)
+		response.BankAccount.Bank = bank
+	}
+
 	return response, nil
 }
 
@@ -487,18 +491,9 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 // @Success 200 {object} organizationpb.UpdateDealSettingResponse "Thành công"
 // @Router /deal/{id}/setting [put]
 func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
-	fromDate, err := time.Parse(time.DateOnly, req.FromDate)
-	if err != nil {
-		return nil, err
-	}
-	toDate, err := time.Parse(time.DateOnly, req.ToDate)
-	if err != nil {
-		return nil, err
-	}
-
 	dto := &dto.DealSetting{
-		FromDate:                fromDate,
-		ToDate:                  toDate,
+		FromDate:                _utils.ParseStringToTime(req.FromDate),
+		ToDate:                  _utils.ParseStringToTime(req.ToDate),
 		AllowSharing:            req.AllowSharing,
 		MemberCanAddTransaction: req.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  req.OnlyOwnerGetCommission,
@@ -506,14 +501,11 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 		OwnerId:                 req.OwnerId,
 		Status:                  enums.DealStatus(req.Status),
 		AllowManualInput:        req.AllowManualInput,
+		AccountNumber:           req.AccountNumber,
+		AccountName:             req.AccountName,
+		BankId:                  req.BankId,
 	}
-	if req.BankAccount != nil {
-		dto.BankName = req.BankAccount.BankName
-		dto.AccountNumber = req.BankAccount.AccountNumber
-		dto.AccountName = req.BankAccount.AccountName
-		dto.BankId = req.BankAccount.BankId
-	}
-	err = h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
+	err := h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
 	if err != nil {
 		return nil, err
 	}
@@ -671,6 +663,53 @@ func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.Summ
 		NumTransaction:  summary.NumTransaction,
 		TotalPayment:    summary.TotalPayment,
 	}, nil
+}
+
+// @Summary Lấy thông tin process của deal
+// @Description Lấy thông tin process của deal bao gồm statusName, timestamp, code, transactionId, color
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param dealId path uint64 true "ID thương vụ"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetDealProcessResponse "Thành công"
+// @Router /deal/{dealId}/process [get]
+func (h *GroupDealHandler) GetDealProcess(ctx context.Context, req *organizationpb.GetDealProcessRequest) (*organizationpb.GetDealProcessResponse, error) {
+	// Lấy profileId từ context
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, errors.New("unauthorized")
+	}
+
+	// Lấy organizationId từ context
+	organizationID := _utils.GetOrganizationIdFromContext(ctx)
+	if organizationID == 0 {
+		return nil, errors.New("organization not found")
+	}
+
+	// Gọi usecase để lấy thông tin process
+	processItems, err := h.DealUsecase.GetDealProcess(ctx, req.DealId, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi sang response
+	response := &organizationpb.GetDealProcessResponse{
+		Data:  make([]*organizationpb.DealProcessItem, len(processItems)),
+		Total: uint32(len(processItems)),
+	}
+
+	for i, item := range processItems {
+		response.Data[i] = &organizationpb.DealProcessItem{
+			StatusName:    item.StatusName,
+			Timestamp:     item.Timestamp,
+			Code:          item.Code,
+			TransactionId: item.TransactionId,
+			Color:         item.Color,
+		}
+	}
+
+	return response, nil
 }
 
 // Helper functions để lấy ID từ context

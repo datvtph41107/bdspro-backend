@@ -13,6 +13,7 @@ func NewBankAccountMapper() *BankAccountMapper {
 
 func (m *BankAccountMapper) EntityToPb(bankAccount *entity.BankAccount) *organizationpb.BankAccountItem {
 	return &organizationpb.BankAccountItem{
+		BankId:        bankAccount.BankId,
 		Name:          bankAccount.BankName,
 		BankName:      bankAccount.BankName,
 		AccountNumber: bankAccount.AccountNumber,

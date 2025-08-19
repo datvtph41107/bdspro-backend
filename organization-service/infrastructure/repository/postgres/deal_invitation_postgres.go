@@ -108,6 +108,7 @@ func (r *DealInvitationPostgresRepository) GetByDealID(ctx context.Context, deal
 	if err := r.db.WithContext(ctx).
 		Model(&DealInvitationModel{}).
 		Preload("Role").
+		Preload("Role.Color").
 		Where("deal_id = ?", dealID).
 		Order("created_at desc").
 		Offset(offset).
@@ -219,8 +220,20 @@ func (r *DealInvitationPostgresRepository) entityToModel(entity *entity.DealInvi
 	}
 }
 
+func (r *DealInvitationPostgresRepository) entityToModelWithRole(entity *entity.DealInvitation) *DealInvitationModel {
+	return &DealInvitationModel{
+		ID:         entity.ID,
+		DealID:     entity.DealID,
+		InviterID:  entity.InviterID,
+		InviteeID:  entity.InviteeID,
+		MemberType: uint32(entity.MemberType),
+		UpdatedBy:  entity.UpdatedBy,
+		RoleId:     entity.RoleId,
+	}
+}
+
 func (r *DealInvitationPostgresRepository) modelToEntity(model *DealInvitationModel) *entity.DealInvitation {
-	return &entity.DealInvitation{
+	result := &entity.DealInvitation{
 		ID:           model.ID,
 		DealID:       model.DealID,
 		InviterID:    model.InviterID,
@@ -238,6 +251,14 @@ func (r *DealInvitationPostgresRepository) modelToEntity(model *DealInvitationMo
 		UpdatedBy:    model.UpdatedBy,
 		RoleId:       model.RoleId,
 	}
+	if model.Role != nil {
+		role := RoleModelToEntity(model.Role)
+		result.Role = role
+		result.Color = role.Color
+		result.ColorId = role.ColorId
+	}
+
+	return result
 }
 
 func (r *DealInvitationPostgresRepository) GetByIds(ctx context.Context, dealId uint64, userIds []uint64) ([]*entity.DealInvitation, error) {

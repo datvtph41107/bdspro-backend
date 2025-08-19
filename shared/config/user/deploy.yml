@@ -1,0 +1,99 @@
+server:
+  port: 8001
+  tcp_port: 8201
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 150 # access token hết hạn 100 giờ
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: ERROR
+
+
+    
+
+service:
+  name: "user service"
+  feature: "Enabled only for Service User"
+
+redis:
+  host: 14.225.210.29:6379
+  pass: protected_redis_secure_password
+  
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL9Dialect
+  datasource:
+    url: jdbc:postgresql://14.225.205.222:5432/db_user
+    username: user
+    password: znodVcrXdFtaOLdPaTQr3lmV
+    driver-class-name: org.postgresql.Driver
+
+unauthorization:
+  /oauth/**,/account/login,/account/register,/auth/otp/**,/auth/token/refresh,/user/find
+
+zalo:
+  app:
+    id: 282266321456750389
+    secret: 26DSfVq7RHOM4SVlRNI1
+  secret_key: SECRET_KEY_ZALO_TOKEN
+  redirect_uri: http://14.225.210.29:8000/user/oauth/zalo/callback
+  profile_url: https://graph.zalo.me/v2.0/me?access_token=
+  permission_url: https://oauth.zaloapp.com/v4/permission?
+
+google:
+  client:
+    id: 83012182189-nk4k3aqn3ccmr5hikv8djgb5vpkeragk.apps.googleusercontent.com
+    secret: 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
+  redirect-uri: http://14.225.210.29:8000/user/oauth/google/callback
+
+
+facebook:
+  client:
+    id: "2029655954220379" #123123123
+    secret: "a00ffdf676394cb22b4af98bfe1dac3b"
+  redirect-uri: "http://14.225.210.29:8000/user/oauth/facebook/callback"
+
+
+otp:
+  max-times-resend: 5
+  max-times-otp-enter: 3 #số lần nhập OTP
+  expired-after-seconds: 600 #10p hết hạn otp
+  lock-verify-after: 900 # khóa tài khoản 15p nếu sai OTP/gửi OTP 5 lần
+  lock-send-after: 60 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
+  lock-request-after: 300 # lần gửi OTP giữa 2 lần request là 5p
+  limit-otp-device: 10
+  limit-otp-ip: 100
+  cooldown-seconds: 300
+  ip-cooldown-seconds: 900
+
+grpc:
+  organization:
+    host: :8207
+  group:
+    host: :8207
+  payment:
+    host: :8205

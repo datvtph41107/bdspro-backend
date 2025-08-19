@@ -23,4 +23,5 @@ type GroupDealRepository interface {
 	CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
+	GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error)
 }

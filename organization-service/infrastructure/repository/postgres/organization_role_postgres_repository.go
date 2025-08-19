@@ -44,6 +44,8 @@ func RoleModelToEntity(model *OrganizationRoleModel) *entity.OrganizationRole {
 		OrganizationId: model.OrganizationId,
 		IsDefault:      model.IsDefault,
 		DomainType:     enums.DomainType(model.DomainType),
+		ColorId:        model.ColorId,
+		Color:          model.Color,
 	}
 }
 

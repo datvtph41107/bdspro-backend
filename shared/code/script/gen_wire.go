@@ -207,7 +207,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"%s/config"
+	"%s/initial"
 `, moduleName))
 
 	// Viết danh sách import package với alias mới
@@ -261,7 +261,7 @@ import (
 
 	// Đóng file
 	writer.WriteString(`)
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }`)

@@ -1,0 +1,33 @@
+package properties
+
+import (
+	"auth/config"
+	"auth/internal/dto"
+)
+
+// @bind: auth/internal/interface/factory.IFactory
+type RuntimeProperties struct {
+	Properties dto.PropertiesDTO
+}
+
+func NewRuntimeProperties() *RuntimeProperties {
+	return &RuntimeProperties{
+		Properties: dto.PropertiesDTO{
+			MaxTimesResend:       config.Properties.Otp.MaxTimesResend,
+			MaxTimesOtpEnter:     config.Properties.Otp.MaxTimesOtpEnter,
+			ExpiredAfterSec:      config.Properties.Otp.ExpiredAfterSec,
+			LockVerifyAfter:      config.Properties.Otp.LockVerifyAfter,
+			LockSendAfter:        config.Properties.Otp.LockSendAfter,
+			LockRequestAfter:     config.Properties.Otp.LockRequestAfter,
+			LimitOtpDevice:       config.Properties.Otp.LimitOtpDevice,
+			LimitOtpIP:           config.Properties.Otp.LimitOtpIP,
+			CooldownSeconds:      config.Properties.Otp.CooldownSeconds,
+			IpCooldownSeconds:    config.Properties.Otp.IpCooldownSeconds,
+			JwtRefreshExpMinutes: config.Properties.JWT.RefreshExpMinutes,
+		},
+	}
+}
+
+func (r *RuntimeProperties) GetProperties() dto.PropertiesDTO {
+	return r.Properties
+}

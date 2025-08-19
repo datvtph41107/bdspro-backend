@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentBankList"
+              "$ref": "#/definitions/paymentpbBankList"
             }
           },
           "default": {
@@ -40,7 +40,7 @@
     }
   },
   "definitions": {
-    "pb_paymentBank": {
+    "paymentpbBank": {
       "type": "object",
       "properties": {
         "id": {
@@ -64,14 +64,14 @@
         }
       }
     },
-    "pb_paymentBankList": {
+    "paymentpbBankList": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_paymentBank"
+            "$ref": "#/definitions/paymentpbBank"
           }
         },
         "total": {

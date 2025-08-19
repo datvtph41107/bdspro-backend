@@ -119,6 +119,10 @@ var publicRoutes = []string{
 	"/v2/user/rate/list",
 	"/v2/user/profile/search/public",
 	"/v2/payment/bank/all",
+	"/v2/auth/otp",
+	"/v2/auth/qr",
+	"/v2/auth/token/refresh",
+	"/v2/auth/oauth",
 	// "/v1/search/plan/list",
 }
 
@@ -166,11 +170,6 @@ var HttpCmd = &cobra.Command{
 
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_middleware.InjectGrpcMetadataContextMiddleware),
-			// // runtime.WithMetadata(CustomMetadataMethod),
-			// runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
-			// 	_jwt.ErrorToGatewayResponse(ctx, w, err)
-			// }),
-			// runtime.WithMetadata(ExtractMetadataFromRequest),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 				if tokenErr, ok := ctx.Value("token_error").(error); ok {
 					http.Error(w, tokenErr.Error(), http.StatusUnauthorized)
@@ -193,6 +192,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterChatService(ctx, mux, env, opts)
 		service.RegisterMarketingService(ctx, mux, env, opts)
 		service.RegisterTransactionService(ctx, mux, env, opts)
+		service.RegisterAuthService(ctx, mux, env, opts)
 
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
 

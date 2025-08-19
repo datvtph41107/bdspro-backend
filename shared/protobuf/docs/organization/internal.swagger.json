@@ -35,6 +35,9 @@
         "bankId": {
           "type": "string",
           "format": "uint64"
+        },
+        "bank": {
+          "$ref": "#/definitions/paymentpbBank"
         }
       }
     },
@@ -448,6 +451,30 @@
         },
         "dealMember": {
           "$ref": "#/definitions/organizationpbDealInvitationMember"
+        }
+      }
+    },
+    "paymentpbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

@@ -1,6 +1,8 @@
 package _errors
 
 import (
+	sharepb "pb/types/shared"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/protoadapt"
@@ -26,4 +28,16 @@ func ThrowError(code int32, err error, details ...protoadapt.MessageV1) error {
 	}
 
 	return st.Err()
+}
+
+func ReturnError(code int32, message string) error {
+	st := status.New(codes.Internal, message)
+
+	detail := &sharepb.ErrorResponse{
+		Code:    int32(code),
+		Message: message,
+	}
+
+	stWithDetails, _ := st.WithDetails(detail)
+	return stWithDetails.Err()
 }

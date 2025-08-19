@@ -24,7 +24,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethodList"
+              "$ref": "#/definitions/paymentpbPaymentMethodList"
             }
           },
           "default": {
@@ -67,7 +67,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
+              "$ref": "#/definitions/paymentpbPaymentMethod"
             }
           },
           "default": {
@@ -83,7 +83,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
+              "$ref": "#/definitions/paymentpbPaymentMethod"
             }
           }
         ],
@@ -99,7 +99,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
+              "$ref": "#/definitions/paymentpbEmpty"
             }
           },
           "default": {
@@ -128,7 +128,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentMethod"
+              "$ref": "#/definitions/paymentpbPaymentMethod"
             }
           },
           "default": {
@@ -167,7 +167,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
+              "$ref": "#/definitions/paymentpbEmpty"
             }
           },
           "default": {
@@ -183,7 +183,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_paymentSepayWebhookRequest"
+              "$ref": "#/definitions/paymentpbSepayWebhookRequest"
             }
           }
         ],
@@ -200,7 +200,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionTypeList"
+              "$ref": "#/definitions/paymentpbTransactionTypeList"
             }
           },
           "default": {
@@ -220,7 +220,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
+              "$ref": "#/definitions/paymentpbTransactionType"
             }
           },
           "default": {
@@ -236,7 +236,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
+              "$ref": "#/definitions/paymentpbTransactionType"
             }
           }
         ],
@@ -252,7 +252,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentEmpty"
+              "$ref": "#/definitions/paymentpbEmpty"
             }
           },
           "default": {
@@ -281,7 +281,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentTransactionType"
+              "$ref": "#/definitions/paymentpbTransactionType"
             }
           },
           "default": {
@@ -321,7 +321,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentWalletDashboard"
+              "$ref": "#/definitions/paymentpbWalletDashboard"
             }
           },
           "default": {
@@ -343,7 +343,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransaction"
+              "$ref": "#/definitions/paymentpbWalletTransaction"
             }
           },
           "default": {
@@ -359,7 +359,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_paymentDepositRequest"
+              "$ref": "#/definitions/paymentpbDepositRequest"
             }
           }
         ],
@@ -375,7 +375,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransaction"
+              "$ref": "#/definitions/paymentpbWalletTransaction"
             }
           },
           "default": {
@@ -391,7 +391,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_paymentPaymentRequest"
+              "$ref": "#/definitions/paymentpbPaymentRequest"
             }
           }
         ],
@@ -407,7 +407,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentWalletTransactionList"
+              "$ref": "#/definitions/paymentpbWalletTransactionList"
             }
           },
           "default": {
@@ -469,7 +469,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentExportResponse"
+              "$ref": "#/definitions/paymentpbExportResponse"
             }
           },
           "default": {
@@ -519,7 +519,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_paymentReportResponse"
+              "$ref": "#/definitions/paymentpbReportResponse"
             }
           },
           "default": {
@@ -610,7 +610,7 @@
         }
       }
     },
-    "pb_paymentCreateWalletResponse": {
+    "paymentpbCreateWalletResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -619,7 +619,7 @@
         }
       }
     },
-    "pb_paymentDepositRequest": {
+    "paymentpbDepositRequest": {
       "type": "object",
       "properties": {
         "walletId": {
@@ -638,11 +638,11 @@
         }
       }
     },
-    "pb_paymentEmpty": {
+    "paymentpbEmpty": {
       "type": "object",
       "title": "Additional messages for request/response"
     },
-    "pb_paymentExportResponse": {
+    "paymentpbExportResponse": {
       "type": "object",
       "properties": {
         "data": {
@@ -654,7 +654,7 @@
         }
       }
     },
-    "pb_paymentPaymentMethod": {
+    "paymentpbPaymentMethod": {
       "type": "object",
       "properties": {
         "id": {
@@ -682,14 +682,14 @@
         }
       }
     },
-    "pb_paymentPaymentMethodList": {
+    "paymentpbPaymentMethodList": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_paymentPaymentMethod"
+            "$ref": "#/definitions/paymentpbPaymentMethod"
           }
         },
         "total": {
@@ -698,7 +698,7 @@
         }
       }
     },
-    "pb_paymentPaymentRequest": {
+    "paymentpbPaymentRequest": {
       "type": "object",
       "properties": {
         "walletId": {
@@ -717,7 +717,7 @@
         }
       }
     },
-    "pb_paymentReportResponse": {
+    "paymentpbReportResponse": {
       "type": "object",
       "properties": {
         "totalAmount": {
@@ -732,12 +732,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_paymentWalletTransaction"
+            "$ref": "#/definitions/paymentpbWalletTransaction"
           }
         }
       }
     },
-    "pb_paymentSepayWebhookRequest": {
+    "paymentpbSepayWebhookRequest": {
       "type": "object",
       "properties": {
         "Gateway": {
@@ -781,7 +781,7 @@
         }
       }
     },
-    "pb_paymentTransactionType": {
+    "paymentpbTransactionType": {
       "type": "object",
       "properties": {
         "id": {
@@ -808,19 +808,19 @@
         }
       }
     },
-    "pb_paymentTransactionTypeList": {
+    "paymentpbTransactionTypeList": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_paymentTransactionType"
+            "$ref": "#/definitions/paymentpbTransactionType"
           }
         }
       }
     },
-    "pb_paymentTransferBetweenWalletsResponse": {
+    "paymentpbTransferBetweenWalletsResponse": {
       "type": "object",
       "properties": {
         "fromTransactionId": {
@@ -846,7 +846,7 @@
         }
       }
     },
-    "pb_paymentWallet": {
+    "paymentpbWallet": {
       "type": "object",
       "properties": {
         "id": {
@@ -873,7 +873,7 @@
       },
       "title": "Wallet related messages"
     },
-    "pb_paymentWalletDashboard": {
+    "paymentpbWalletDashboard": {
       "type": "object",
       "properties": {
         "balance": {
@@ -900,7 +900,7 @@
         }
       }
     },
-    "pb_paymentWalletTransaction": {
+    "paymentpbWalletTransaction": {
       "type": "object",
       "properties": {
         "id": {
@@ -941,14 +941,14 @@
         }
       }
     },
-    "pb_paymentWalletTransactionList": {
+    "paymentpbWalletTransactionList": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_paymentWalletTransaction"
+            "$ref": "#/definitions/paymentpbWalletTransaction"
           }
         },
         "total": {

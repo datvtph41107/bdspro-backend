@@ -1,4 +1,5 @@
 {
+  "terminal.integrated.cwd": "${workspaceFolder}/shared/code",
   "files.associations": {
     "server.h": "c"
   },

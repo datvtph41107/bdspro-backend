@@ -17,8 +17,9 @@ REMOTE_PATH=/root/$WORKSPACE_NAME
 #   REMOTE_HOST=14.225.210.29
 # fi
 
+
 if [ "$1" = "compose" ]; then
-  REMOTE_HOST=14.225.210.29
+  REMOTE_HOST=14.225.205.222
   echo "đẩy docker-compose.yml lên server..." $REMOTE_PATH
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_PATH}
@@ -27,6 +28,8 @@ mkdir -p ${REMOTE_PATH}
   scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
   exit 0
 fi
+
+cd ../..
 
 # Chọn thư mục dựa vào tham số đầu tiên
 service_path=/common
@@ -114,6 +117,11 @@ case "$1" in
     service_path=organization-service
     path_jar=main
     payload_build=organization
+    ;;
+  "transaction")
+    service_path=transaction-service
+    path_jar=main
+    payload_build=transaction
     ;;
   *)
     echo "Tham số không hợp lệ."

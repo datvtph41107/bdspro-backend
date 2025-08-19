@@ -1,0 +1,238 @@
+syntax = "proto3";
+
+package authpb;
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/auth;authpb";
+
+service AuthService {
+    // OTP Authentication
+    rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/request"
+            body: "*"
+        };
+    }
+
+    rpc VerifyOTP(VerifyOTPRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/verify"
+            body: "*"
+        };
+    }
+
+    rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/resend"
+            body: "*"
+        };
+    }
+
+    // Token Management
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/token/refresh"
+            body: "*"
+        };
+    }
+
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {
+        option (google.api.http) = {
+            delete: "/v2/auth/logout"
+        };
+    }
+
+    // Account Management
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+        option (google.api.http) = {
+            delete: "/v2/auth/delete"
+        };
+    }
+
+    rpc RestoreAccount(RestoreAccountRequest) returns (RestoreAccountResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/restore"
+            body: "*"
+        };
+    }
+
+    // QR Authentication
+    rpc QRInit(QRInitRequest) returns (QRInitResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/init"
+            body: "*"
+        };
+    }
+
+    rpc QRConfirm(QRConfirmRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/confirm"
+            body: "*"
+        };
+    }
+
+    rpc QRStatus(QRStatusRequest) returns (QRStatusResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/status"
+            body: "*"
+        };
+    }
+
+    // Organization Management
+    rpc SwitchOrganization(SwitchOrganizationRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/switch/organization"
+            body: "*"
+        };
+    }
+
+
+}
+
+// OTP Messages
+message RequestOTPRequest {
+    string phone = 1;
+    string fullname = 2;
+}
+
+message RequestOTPResponse {
+    uint64 authId = 1;
+    string message = 2;
+}
+
+message VerifyOTPRequest {
+    string phone = 1;
+    string otp = 2;
+    uint64 authId = 3;
+    string version = 4;
+    string platform = 5;
+    string os = 6;
+    string fullname = 7;
+}
+
+message AuthSuccessResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    string accessToken = 3;
+    string refreshToken = 4;
+    string fullName = 5;
+    string avatar = 6;
+    string phone = 7;
+    string email = 8;
+    uint64 organizationId = 9;
+    string role = 10;
+}
+
+message ResendOTPRequest {
+    string phone = 1;
+    string fullname = 2;
+}
+
+message ResendOTPResponse {
+    uint64 authId = 1;
+    string message = 2;
+}
+
+// Token Messages
+message RefreshTokenRequest {
+    string refreshToken = 1;
+}
+
+message RefreshTokenResponse {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
+message LogoutRequest {
+    // Empty request
+}
+
+message LogoutResponse {
+    string message = 1;
+}
+
+// Account Management Messages
+message DeleteAccountRequest {
+    // Empty request - profileId will be extracted from context
+}
+
+message DeleteAccountResponse {
+    string message = 1;
+}
+
+message RestoreAccountRequest {
+    string phone = 1;
+}
+
+message RestoreAccountResponse {
+    uint64 authId = 1;
+    string provider = 2;
+    string oauthId = 3;
+}
+
+// QR Authentication Messages
+message QRInitRequest {
+    string clientId = 1;
+    string userAgent = 2;
+    string csrfToken = 3;
+    int64  expiration = 4;
+    string sessionKey = 5;
+    uint64 sessionId = 6;
+}
+
+message QRInitResponse {
+    string sessionKey = 1;
+    uint64 sessionId = 2;
+    string qrCode = 3;
+}
+
+message QRConfirmRequest {
+    uint64 sessionId = 1;
+    string sessionKey = 2;
+}
+
+message QRConfirmResponse {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string platform = 3;
+    string version = 4;
+    string os = 5;
+    string createdDate = 6;
+    string finishedDate = 7;
+    string ipRequest = 8;
+    uint64 totalRequest = 9;
+    string userAgent = 10;
+    bool activate = 11;
+    string sessionKey = 12;
+    string clientId = 13;
+}
+
+message QRStatusRequest {
+    string sessionKey = 1;
+    uint64 sessionId = 2;
+}
+
+message QRStatusResponse {
+    string status = 1; // "pending", "confirmed", "expired"
+    string message = 2;
+}
+
+// Organization Messages
+message SwitchOrganizationRequest {
+    uint64 organizationId = 1;
+}
+
+message SwitchOrganizationResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    uint64 organizationId = 3;
+    string role = 4;
+    string fullName = 5;
+    string avatar = 6;
+    string email = 7;
+    string phone = 8;
+    string accessToken = 9;
+}
+
+

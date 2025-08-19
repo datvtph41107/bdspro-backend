@@ -129,6 +129,38 @@
         ]
       }
     },
+    "/v2/org/deal/process/{dealId}": {
+      "get": {
+        "summary": "API lấy thông tin process của deal",
+        "operationId": "GroupDealService_GetDealProcess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetDealProcessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{dealId}/allow-manual-input": {
       "put": {
         "operationId": "GroupDealService_UpdateAllowManualInput",
@@ -1556,6 +1588,16 @@
         },
         "allowManualInput": {
           "type": "boolean"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1683,6 +1725,9 @@
         "bankId": {
           "type": "string",
           "format": "uint64"
+        },
+        "bank": {
+          "$ref": "#/definitions/paymentpbBank"
         }
       }
     },
@@ -1926,6 +1971,26 @@
         }
       }
     },
+    "organizationpbDealProcessItem": {
+      "type": "object",
+      "properties": {
+        "statusName": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      }
+    },
     "organizationpbDeleteGroupDealResponse": {
       "type": "object",
       "properties": {
@@ -2012,6 +2077,22 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/organizationpbDealMember"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetDealProcessResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDealProcessItem"
           }
         },
         "total": {
@@ -2457,6 +2538,30 @@
         "dealId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "paymentpbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

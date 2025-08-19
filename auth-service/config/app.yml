@@ -1,0 +1,72 @@
+server:
+  name: auth-service
+  tcp_port: 8216
+
+database:
+  host: localhost
+  port: 5432
+  name: auth_service
+  user: postgres
+  password: password
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_auth port=5432 sslmode=disable
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+
+
+oauth:
+  google:
+    client_id: "your_google_client_id"
+    client_secret: "your_google_client_secret"
+    redirect_uri: "http://localhost:3000/auth/google/callback"
+  
+  facebook:
+    client_id: "your_facebook_client_id"
+    client_secret: "your_facebook_client_secret"
+    redirect_uri: "http://localhost:3000/auth/facebook/callback"
+  
+  zalo:
+    app_id: "your_zalo_app_id"
+    secret_key: "your_zalo_secret_key"
+    redirect_uri: "http://localhost:3000/auth/zalo/callback"
+    permission_url: "https://oauth.zaloapp.com/v4/permission?"
+
+key:
+  jwt: key-generate-jwt-token-authentication
+  
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 150 # access token hết hạn 100 giờ
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+sms:
+  provider: "twilio"  # or other SMS providers
+  account_sid: "your_twilio_account_sid"
+  auth_token: "your_twilio_auth_token"
+  from_number: "+1234567890"
+
+otp:
+  max-times-resend: 5
+  max-times-otp-enter: 3 #số lần nhập OTP
+  expired-after-seconds: 600 #10p hết hạn otp
+  lock-verify-after: 900 # khóa tài khoản 15p nếu sai OTP/gửi OTP 5 lần
+  lock-send-after: 60 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
+  lock-request-after: 300 # lần gửi OTP giữa 2 lần request là 5p
+  limit-otp-device: 10
+  limit-otp-ip: 100
+  cooldown-seconds: 300
+  ip-cooldown-seconds: 900
+
+grpc:
+  organization:
+    host: :8207
+  group:
+    host: :8207
+  payment:
+    host: :8205

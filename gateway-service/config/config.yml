@@ -5,6 +5,7 @@ server:
 service:
   domain: localhost
   port:
+    gateway: 8000
     user: 8201
     bdspro: 8202
     file: 8203
@@ -20,6 +21,7 @@ service:
     appointment: 8213
     marketing: 8214
     transaction: 8215
+    auth: 8216
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer

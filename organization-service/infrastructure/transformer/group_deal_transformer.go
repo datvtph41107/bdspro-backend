@@ -1,8 +1,8 @@
 package transformer
 
 import (
+	_utils "common/utils"
 	organizationpb "pb/types/organization"
-	"time"
 
 	"organization/infrastructure/utils"
 	"organization/internal/domain/entity"
@@ -236,8 +236,8 @@ func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *
 		OwnerType:               uint32(deal.OwnerType),
 		Note:                    deal.Note,
 		CancelReason:            deal.CancelReason,
-		FromDate:                deal.FromDate.Format(time.RFC3339),
-		ToDate:                  deal.ToDate.Format(time.RFC3339),
+		FromDate:                _utils.FormatTimeToString(deal.FromDate),
+		ToDate:                  _utils.FormatTimeToString(deal.ToDate),
 		AllowSharing:            deal.AllowSharing,
 		MemberCanAddTransaction: deal.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,

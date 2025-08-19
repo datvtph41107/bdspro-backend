@@ -18,6 +18,14 @@
       "args": ["grpc"]
     },
     {
+      "name": "🧪 Debug Auth gRPC",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/auth-service",
+      "args": ["grpc"]
+    },
+    {
       "name": "🧪 Debug BDSPro HTTP",
       "type": "go",
       "request": "launch",
@@ -53,7 +61,8 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/gateway-service"
+      "program": "${workspaceFolder}/gateway-service",
+      "args": ["http"]
     },
     {
       "name": "🧪 Debug Map Service",

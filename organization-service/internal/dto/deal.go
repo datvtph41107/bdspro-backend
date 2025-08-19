@@ -7,8 +7,8 @@ import (
 )
 
 type DealSetting struct {
-	FromDate                time.Time
-	ToDate                  time.Time
+	FromDate                *time.Time
+	ToDate                  *time.Time
 	AllowSharing            bool
 	MemberCanAddTransaction bool
 	OnlyOwnerGetCommission  bool
@@ -63,4 +63,18 @@ type SummaryResponse struct {
 
 type DealSearch struct {
 	_dto.Pagable
+}
+
+// DTO cho DealProcess
+type DealProcessItem struct {
+	StatusName    string `json:"status_name"`
+	Timestamp     string `json:"timestamp"`
+	Code          string `json:"code"`
+	TransactionId string `json:"transaction_id"`
+	Color         string `json:"color"`
+}
+
+type DealProcessResponse struct {
+	Data  []DealProcessItem `json:"data"`
+	Total uint32            `json:"total"`
 }

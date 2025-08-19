@@ -1,0 +1,200 @@
+package oauth
+
+import (
+	"auth/config"
+	auth_model "auth/internal/domain"
+	"auth/internal/dto"
+	"auth/internal/interface/repo"
+	"auth/internal/usecase"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+
+	"github.com/gin-gonic/gin"
+)
+
+type FacebookAuthService struct {
+	AuthService    *usecase.AuthUsecase
+	HttpClient     *http.Client
+	AuthMethodRepo repo.AuthMethodRepository
+}
+
+func NewFacebookAuthService(authService *usecase.AuthUsecase,
+	httpClient *http.Client,
+	authMethodRepo repo.AuthMethodRepository) *FacebookAuthService {
+	return &FacebookAuthService{
+		AuthService:    authService,
+		HttpClient:     httpClient,
+		AuthMethodRepo: authMethodRepo,
+	}
+}
+
+func (s *FacebookAuthService) GetUrlLogin() string {
+	fbAuthUrl := "https://www.facebook.com/v22.0/dialog/oauth?" +
+		"client_id=" + config.Properties.OAuth.Facebook.ClientID +
+		"&redirect_uri=" + url.QueryEscape(config.Properties.OAuth.Facebook.RedirectURI) +
+		"&state=xyz" +
+		"&scope=email"
+	return fbAuthUrl
+}
+
+func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, platform string, state string) (*dto.AuthLoginResponse, error) {
+	var accessToken string
+	var err error
+
+	// For Android platform, code is already the access token
+	if platform == "android" {
+		accessToken = code
+	} else {
+		// Get access token from authorization code
+		accessToken, err = s.getAccessToken(code)
+		if err != nil {
+			return nil, fmt.Errorf("không thể lấy access token: %v", err)
+		}
+	}
+
+	// Get user info using access token
+	userInfo, err := s.fetchUserInfo(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy thông tin user: %v", err)
+	}
+
+	return s.RegisterOrLogin(c, userInfo)
+}
+
+func (s *FacebookAuthService) getAccessToken(code string) (string, error) {
+	params := url.Values{}
+	params.Set("client_id", config.Properties.OAuth.Facebook.ClientID)
+	params.Set("redirect_uri", config.Properties.OAuth.Facebook.RedirectURI)
+	params.Set("client_secret", config.Properties.OAuth.Facebook.ClientSecret)
+	params.Set("code", code)
+
+	tokenURL := "https://graph.facebook.com/v22.0/oauth/access_token?" + params.Encode()
+	resp, err := s.HttpClient.Get(tokenURL)
+	if err != nil {
+		return "", fmt.Errorf("không lấy được access_token từ Facebook: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("Facebook OAuth API trả về lỗi: %s - %s", resp.Status, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("lỗi đọc phản hồi từ Facebook: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("lỗi parse JSON từ Facebook: %v", err)
+	}
+
+	if errMsg, exists := result["error"]; exists {
+		return "", fmt.Errorf("Facebook OAuth error: %v", errMsg)
+	}
+
+	accessToken, ok := result["access_token"].(string)
+	if !ok {
+		return "", errors.New("không lấy được access_token từ Facebook")
+	}
+	return accessToken, nil
+}
+
+func (s *FacebookAuthService) fetchUserInfo(accessToken string) (map[string]interface{}, error) {
+	req, err := http.NewRequest("GET", "https://graph.facebook.com/me?fields=id,name,email,picture&access_token="+accessToken, nil)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi tạo request: %v", err)
+	}
+
+	resp, err := s.HttpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi gọi Facebook Graph API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Facebook Graph API trả về lỗi: %s - %s", resp.Status, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi đọc phản hồi từ Facebook: %v", err)
+	}
+
+	var userInfo map[string]interface{}
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		return nil, fmt.Errorf("lỗi parse user info: %v", err)
+	}
+
+	return userInfo, nil
+}
+
+func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]interface{}) (*dto.AuthLoginResponse, error) {
+	username, ok := userInfo["id"].(string)
+	if !ok {
+		return nil, errors.New("không lấy được id từ Facebook")
+	}
+
+	// Check if user already exists
+	existingUser, _ := s.AuthMethodRepo.FindByOAuthId(c, username, "FACEBOOK")
+	if existingUser == nil {
+		// User doesn't exist, create new one
+		oauthUser := &auth_model.AuthMethodDomain{
+			Provider: "FACEBOOK",
+			Username: username,
+			OAuthID:  username,
+			Name:     s.extractString(userInfo, "name"),
+			Email:    s.extractString(userInfo, "email"),
+			Avatar:   s.extractAvatar(userInfo),
+		}
+
+		if err := s.AuthMethodRepo.Create(c, oauthUser); err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo user mới: %v", err)
+		}
+
+		// Create user profile
+		_, err := s.AuthService.NewUser(c, oauthUser.ID)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
+		}
+
+		existingUser = oauthUser
+	}
+
+	// Create session
+	session := s.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})
+
+	// Generate refresh token
+	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+
+	// Get user profile
+	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+
+	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
+}
+
+// extractString helper function để extract string từ map
+func (s *FacebookAuthService) extractString(data map[string]interface{}, key string) string {
+	if value, ok := data[key].(string); ok {
+		return value
+	}
+	return ""
+}
+
+// extractAvatar helper function để extract avatar URL từ Facebook response
+func (s *FacebookAuthService) extractAvatar(userInfo map[string]interface{}) string {
+	if picture, ok := userInfo["picture"].(map[string]interface{}); ok {
+		if data, ok := picture["data"].(map[string]interface{}); ok {
+			if url, ok := data["url"].(string); ok {
+				return url
+			}
+		}
+	}
+	return ""
+}

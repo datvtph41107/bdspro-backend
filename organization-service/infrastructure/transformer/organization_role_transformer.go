@@ -19,6 +19,7 @@ type OrganizationRoleTransformer interface {
 	EntityToCreateNewRoleWithMembersResponse(entity *entity.OrganizationRole, memberIds []uint32, permissionIds []uint64) *organizationpb.CreateNewRoleWithMembersResponse
 	UpdateRoleWithMembersRequestToEntity(req *organizationpb.UpdateRoleWithMembersRequest) *entity.OrganizationRole
 	EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse
+	EntityToRoleResponse(entity *entity.OrganizationRole) *organizationpb.Role
 }
 
 type organizationRoleTransformer struct{}
@@ -184,5 +185,13 @@ func (t *organizationRoleTransformer) UpdateRoleWithMembersRequestToEntity(req *
 func (t *organizationRoleTransformer) EntityToUpdateRoleWithMembersResponse(entity *entity.OrganizationRole) *organizationpb.UpdateRoleWithMembersResponse {
 	return &organizationpb.UpdateRoleWithMembersResponse{
 		Id: entity.Id,
+	}
+}
+
+func (t *organizationRoleTransformer) EntityToRoleResponse(entity *entity.OrganizationRole) *organizationpb.Role {
+	return &organizationpb.Role{
+		Id:   entity.Id,
+		Name: entity.Name,
+		Key:  entity.Key,
 	}
 }

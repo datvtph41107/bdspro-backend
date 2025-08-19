@@ -38,6 +38,7 @@ type DealUsecase interface {
 	SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
+	GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error)
 }
 
 type groupDealUsecase struct {
@@ -400,16 +401,16 @@ func (u *groupDealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error
 }
 
 func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error) {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
+	// deal, err := u.groupDealRepository.GetByID(ctx, id)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if deal == nil {
-		return nil, custom_error.RecordNotFound("deal not found")
-	}
+	// if deal == nil {
+	// 	return nil, custom_error.RecordNotFound("deal not found")
+	// }
 
-	deal, err = u.groupDealRepository.DetailByID(ctx, id)
+	deal, err := u.groupDealRepository.DetailByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -793,10 +794,10 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		amountRest = deal.TargetProfit - info.AmountApproved
 	}
 
-	totalAmount, err := u.transactionClient.GetTotalAmountByDealID(ctx, req.DealId)
-	if err != nil {
-		return nil, err
-	}
+	// totalAmount, err := u.transactionClient.GetTotalAmountByDealID(ctx, req.DealId)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &dto.SummaryResponse{
 		AmountPending:   info.AmountPending,
@@ -813,10 +814,21 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		AmountCost:      info.AmountCost,
 		AmountProfit:    info.AmountProfit,
 		AmountTotal:     info.AmountTotal,
-		NumTransaction:  totalAmount.NumTransaction,
-		TotalPayment:    totalAmount.TotalPayment,
+		// NumTransaction:  totalAmount.NumTransaction,
+		// TotalPayment:    totalAmount.TotalPayment,
 	}, nil
 }
 func (u *groupDealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
 	return u.groupDealRepository.UpdateAllowManualInput(ctx, dealID, allowManualInput)
+}
+
+// GetDealProcess lấy thông tin process của deal
+func (u *groupDealUsecase) GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error) {
+	err := u.BeforeAccess(ctx, dealID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Gọi repository để lấy thông tin process
+	return u.groupDealRepository.GetDealProcess(ctx, dealID, organizationID)
 }

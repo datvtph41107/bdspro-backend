@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	sharepb "pb/types/shared"
 	"strings"
 	"time"
 
@@ -162,11 +163,26 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 		return
 	}
 
+	if ok {
+		for _, d := range grpcErr.Details() {
+			switch info := d.(type) {
+			case *sharepb.ErrorResponse:
+				fmt.Printf("Custom code = %d, message = %s\n", info.Code, info.Message)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"code":    info.Code,
+					"message": info.Message,
+				})
+				return
+			}
+		}
+	}
+
 	httpStatus := httpStatusFromCode(grpcErr.Code())
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(map[string]string{
-		"code":    "500",
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"code":    grpcErr.Code(),
 		"message": grpcErr.Message(),
+		"details": grpcErr.Details(),
 	})
 }
 

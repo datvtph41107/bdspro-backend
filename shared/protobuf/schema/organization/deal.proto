@@ -5,6 +5,7 @@ package organizationpb;
 import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
+import "payment/bank.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -164,6 +165,13 @@ service GroupDealService {
         option (google.api.http) = {
             put: "/v2/org/deal/{dealId}/allow-manual-input"
             body: "*"
+        };
+    }
+
+    // API lấy thông tin process của deal
+    rpc GetDealProcess(GetDealProcessRequest) returns (GetDealProcessResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/process/{dealId}"
         };
     }
 }
@@ -373,6 +381,7 @@ message BankAccountItem {
     string accountNumber = 3;
     string accountName = 4;
     uint64 bankId = 5;
+    paymentpb.Bank bank = 6;
 }
 
 message InfoInvestmentResponse {
@@ -596,6 +605,9 @@ message UpdateDealSettingRequest {
     uint32 status = 9;
     BankAccountItem bankAccount = 10;
     bool allowManualInput = 11;
+    string accountNumber = 12;
+    string accountName = 13;
+    uint64 bankId = 14;
 }
 
 message UpdateDealSettingResponse {
@@ -660,4 +672,22 @@ message UpdateAllowManualInputRequest {
 
 message UpdateAllowManualInputResponse {
     uint64 dealId = 1;
+}
+
+// Message cho API GetDealProcess
+message GetDealProcessRequest {
+    uint64 dealId = 1;
+}
+
+message DealProcessItem {
+    string statusName = 1;
+    string timestamp = 2;
+    string code = 3;
+    string transactionId = 4;
+    string color = 5;
+}
+
+message GetDealProcessResponse {
+    repeated DealProcessItem data = 1;
+    uint32 total = 2;
 }

@@ -220,6 +220,13 @@ services:
     networks:
       - internal
 
+  transaction:
+    build: ./transaction-service
+    container_name: transaction
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
       
   # eureka:
   #   build:

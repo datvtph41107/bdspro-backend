@@ -3,7 +3,7 @@
 # Kiểm tra tham số đầu vào
 if [ "$1" = "swag" ]; then
   echo "Usage: $0 swag [extra_flags]"
-  cd ../../$2-service && swag init --parseDependency --output ../../gateway-service/docs/$2
+  cd ../../$2-service && swag init --parseDependency --output ../gateway-service/docs/$2
 
   exit 1
 fi
