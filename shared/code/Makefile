@@ -14,7 +14,7 @@ run:
 	$(CD_ROOT) && cd $(word 2, $(MAKECMDGOALS))-service && go run main.go $(word 3, $(MAKECMDGOALS))
 
 merge-swagger:
-	$(CD_ROOT) && cd protobuf && go run scripts/merge_swagger.go
+	$(CD_ROOT) && cd shared/protobuf && go run scripts/merge_swagger.go
 
 buf-crm:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path crm
@@ -48,7 +48,7 @@ buf-marketing:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path marketing	
 buf-transaction:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path transaction
-buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing
+buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-transaction
 	echo "done"	
 	
 init:

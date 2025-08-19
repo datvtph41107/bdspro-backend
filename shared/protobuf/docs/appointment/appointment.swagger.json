@@ -613,6 +613,12 @@
         },
         "internalNote": {
           "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },
@@ -758,6 +764,9 @@
         },
         "actionName": {
           "type": "string"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },
@@ -820,6 +829,13 @@
           "$ref": "#/definitions/transactionpbTransactionType"
         },
         "typeName": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
           "type": "string"
         }
       }

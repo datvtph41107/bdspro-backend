@@ -776,6 +776,9 @@
         "contractId": {
           "type": "string",
           "format": "uint64"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },

@@ -9,6 +9,7 @@ replace pb => ../shared/protobuf
 replace common => ../shared/common
 
 require (
+	common v0.0.0-00010101000000-000000000000
 	github.com/google/wire v0.6.0
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/oklog/run v1.1.0
@@ -24,7 +25,6 @@ require (
 )
 
 require (
-	common v0.0.0-00010101000000-000000000000 // indirect
 	github.com/bytedance/sonic v1.13.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect

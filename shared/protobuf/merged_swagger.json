@@ -16082,6 +16082,513 @@
         ]
       }
     },
+    "/v2/org/contract/deal/action": {
+      "post": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Giao dịch ký hợp đồng",
+        "operationId": "DealContractService_CreateAction",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbProductActionRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/detail/{id}": {
+      "get": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Lấy chi tiết giao dịch",
+        "operationId": "DealContractService_GetContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/list/{id}": {
+      "get": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Lấy danh sách giao dịch",
+        "operationId": "DealContractService_GetContracts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/transfer": {
+      "post": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Giao dịch mua/bán/thuê",
+        "operationId": "DealContractService_TransferContract",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbTransferContractRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{dealId}/financial-summary": {
+      "get": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Lấy thống kê tài chính",
+        "operationId": "DealContractService_GetFinancialSummary",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbFinancialSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}": {
+      "put": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Cập nhật giao dịch",
+        "operationId": "DealContractService_UpdateContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealContractServiceUpdateContractBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Xóa giao dịch",
+        "operationId": "DealContractService_DeleteContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}/approve": {
+      "put": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Phê duyệt/từ chối giao dịch",
+        "operationId": "DealContractService_ApproveContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DealContractServiceApproveContractBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/contract/deal/{id}/transactions": {
+      "get": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Giao dịch thu/chi",
+        "operationId": "DealContractService_GetDealContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDealContractListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/org/cost-type": {
       "get": {
         "tags": [
@@ -16497,7 +17004,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbDealCostServiceUpdateBody"
+              "$ref": "#/definitions/DealCostServiceUpdateBody"
             }
           },
           {
@@ -16585,6 +17092,569 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_SendInvitation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbSendInvitationRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSendInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/accept": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_AcceptInvitation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/confirm-withdrawal": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_ConfirmWithdrawal",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/list/{dealId}": {
+      "get": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_GetInvitationsByDeal",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetInvitationsByDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/pending": {
+      "get": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_GetPendingInvitations",
+        "parameters": [
+          {
+            "name": "inviteeId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/reject": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_RejectInvitation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/remove": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_RemoveFromDeal",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/resend": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_ResendInvitation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbResendInvitationRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbResendInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/withdraw": {
+      "post": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_WithdrawFromDeal",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/{dealId}/accepted-members": {
+      "get": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_GetAcceptedMembers",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/{dealId}/search-members": {
+      "get": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_SearchMembers",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbSearchMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/org/deal-invitation/{id}": {
+      "get": {
+        "tags": [
+          "DealInvitationService"
+        ],
+        "operationId": "DealInvitationService_GetInvitation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetInvitationResponse"
             }
           },
           "default": {
@@ -16934,49 +18004,6 @@
         ]
       }
     },
-    "/v2/org/deal/{dealId}/accepted-members": {
-      "get": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_GetAcceptedMembers",
-        "parameters": [
-          {
-            "name": "dealId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetAcceptedMembersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
     "/v2/org/deal/{dealId}/allow-manual-input": {
       "put": {
         "tags": [
@@ -17056,50 +18083,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbGetDealCommissionStatsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/deal/{dealId}/financial-summary": {
-      "get": {
-        "tags": [
-          "DealTransactionService"
-        ],
-        "summary": "Lấy thống kê tài chính",
-        "operationId": "DealTransactionService_GetFinancialSummary",
-        "parameters": [
-          {
-            "name": "dealId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbFinancialSummaryResponse"
             }
           },
           "default": {
@@ -17220,61 +18203,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbAddInternalNoteResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/deal/{dealId}/invitations": {
-      "get": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_GetInvitationsByDeal",
-        "parameters": [
-          {
-            "name": "dealId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetInvitationsByDealResponse"
             }
           },
           "default": {
@@ -17496,66 +18424,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbSaveDealProductResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/deal/{dealId}/search-members": {
-      "get": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_SearchMembers",
-        "parameters": [
-          {
-            "name": "dealId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "keyword",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbSearchMembersResponse"
             }
           },
           "default": {
@@ -20423,411 +21291,6 @@
         ]
       }
     },
-    "/v2/org/invitation": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_SendInvitation",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/accept": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_AcceptInvitation",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/confirm-withdrawal": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_ConfirmWithdrawal",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbConfirmWithdrawalRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbConfirmWithdrawalResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/pending": {
-      "get": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_GetPendingInvitations",
-        "parameters": [
-          {
-            "name": "inviteeId",
-            "in": "query",
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetPendingInvitationsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/reject": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_RejectInvitation",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/remove": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_RemoveFromDeal",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbRemoveFromDealRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbRemoveFromDealResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/resend": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_ResendInvitation",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/withdraw": {
-      "post": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_WithdrawFromDeal",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/organizationpbWithdrawFromDealRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbWithdrawFromDealResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/org/invitation/{id}": {
-      "get": {
-        "tags": [
-          "DealInvitationService"
-        ],
-        "operationId": "DealInvitationService_GetInvitation",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
     "/v2/org/milestones/{id}": {
       "put": {
         "tags": [
@@ -23104,6 +23567,42 @@
         ]
       }
     },
+    "/v2/payment/bank/all": {
+      "get": {
+        "tags": [
+          "BankService"
+        ],
+        "operationId": "BankService_GetAll",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_paymentBankList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/payment/payment-methods": {
       "get": {
         "tags": [
@@ -25309,50 +25808,7 @@
         ]
       }
     },
-    "/v2/transaction/approve/{id}": {
-      "post": {
-        "tags": [
-          "TransactionService"
-        ],
-        "operationId": "TransactionService_ApproveTransaction",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/transactionTransaction"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/transaction/create": {
+    "/v2/transaction": {
       "post": {
         "tags": [
           "TransactionService"
@@ -25364,7 +25820,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/transactionCreateTransactionRequest"
+              "$ref": "#/definitions/transactionpbCreateTransactionRequest"
             }
           },
           {
@@ -25379,7 +25835,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionTransaction"
+              "$ref": "#/definitions/transactionpbTransactionResponse"
             }
           },
           "default": {
@@ -25396,19 +25852,51 @@
         ]
       }
     },
-    "/v2/transaction/delete/{id}": {
-      "delete": {
+    "/v2/transaction/contract/deal/detail/{id}": {
+      "get": {
         "tags": [
-          "TransactionService"
+          "DealContractService"
         ],
-        "operationId": "TransactionService_DeleteTransaction",
+        "summary": "Lấy chi tiết giao dịch",
+        "operationId": "DealContractService_GetContract",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
           },
           {
             "name": "Authorization",
@@ -25422,7 +25910,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionDeleteTransactionResponse"
+              "$ref": "#/definitions/transactionpbDealContractResponse"
             }
           },
           "default": {
@@ -25439,80 +25927,20 @@
         ]
       }
     },
-    "/v2/transaction/detail/{id}": {
+    "/v2/transaction/contract/deal/list/{dealId}": {
       "get": {
         "tags": [
-          "TransactionService"
+          "DealContractService"
         ],
-        "operationId": "TransactionService_GetTransactionDetail",
+        "summary": "Lấy danh sách giao dịch",
+        "operationId": "DealContractService_GetContracts",
         "parameters": [
           {
-            "name": "id",
+            "name": "dealId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/transactionTransaction"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v2/transaction/list": {
-      "get": {
-        "tags": [
-          "TransactionService"
-        ],
-        "operationId": "TransactionService_ListTransactions",
-        "parameters": [
-          {
-            "name": "transactionType",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "approvalStatus",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "transactionStatus",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "type": "string"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "page",
@@ -25538,7 +25966,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionListTransactionsResponse"
+              "$ref": "#/definitions/transactionpbDealContractListResponse"
             }
           },
           "default": {
@@ -25555,19 +25983,21 @@
         ]
       }
     },
-    "/v2/transaction/reject/{id}": {
+    "/v2/transaction/contract/deal/payment": {
       "post": {
         "tags": [
-          "TransactionService"
+          "DealContractService"
         ],
-        "operationId": "TransactionService_RejectTransaction",
+        "summary": "Giao dịch mua/bán/thuê",
+        "operationId": "DealContractService_CreateContractPayment",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
+            "name": "body",
+            "in": "body",
             "required": true,
-            "type": "integer",
-            "format": "int64"
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealContractPaymentRequest"
+            }
           },
           {
             "name": "Authorization",
@@ -25581,7 +26011,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionTransaction"
+              "$ref": "#/definitions/transactionpbDealContractResponse"
             }
           },
           "default": {
@@ -25598,13 +26028,74 @@
         ]
       }
     },
-    "/v2/transaction/types": {
+    "/v2/transaction/contract/deal/payment/action": {
+      "post": {
+        "tags": [
+          "DealContractService"
+        ],
+        "operationId": "DealContractService_CreateActionPayment",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbPaymentActionRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbActionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/contract/deal/statistics/{dealId}": {
       "get": {
         "tags": [
-          "TransactionService"
+          "DealContractService"
         ],
-        "operationId": "TransactionService_GetTransactionTypes",
+        "operationId": "DealContractService_GetStatistics",
         "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "payment",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "cost",
+            "in": "query",
+            "type": "boolean"
+          },
           {
             "name": "Authorization",
             "in": "header",
@@ -25617,7 +26108,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionGetTransactionTypesResponse"
+              "$ref": "#/definitions/transactionpbContractDealStatisticsDTO"
             }
           },
           "default": {
@@ -25634,26 +26125,102 @@
         ]
       }
     },
-    "/v2/transaction/update/{id}": {
-      "put": {
+    "/v2/transaction/contract/deal/{id}": {
+      "delete": {
         "tags": [
-          "TransactionService"
+          "DealContractService"
         ],
-        "operationId": "TransactionService_UpdateTransaction",
+        "summary": "Xóa giao dịch",
+        "operationId": "DealContractService_DeleteContract",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/contract/deal/{id}/approve": {
+      "put": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Phê duyệt/từ chối giao dịch",
+        "operationId": "DealContractService_ApproveContract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/TransactionServiceUpdateTransactionBody"
+              "$ref": "#/definitions/DealContractServiceApproveContractBody"
             }
           },
           {
@@ -25668,7 +26235,944 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/transactionTransaction"
+              "$ref": "#/definitions/transactionpbIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/contract/deal/{id}/summary": {
+      "get": {
+        "tags": [
+          "DealContractService"
+        ],
+        "summary": "Lấy thống kê tài chính",
+        "operationId": "DealContractService_GetSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbFinancialSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/cost-type": {
+      "get": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_List",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "typeName",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "costType",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbCostTypeListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Create",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbCostTypeDTO"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbCostTypeDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/cost-type/{id}": {
+      "put": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbCostTypeServiceUpdateBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbCostTypeDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "CostTypeService"
+        ],
+        "operationId": "CostTypeService_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/deal-cost": {
+      "post": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Create",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostDTO"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/deal-cost/detail/{id}": {
+      "get": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Detail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/deal-cost/list/{dealId}": {
+      "get": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Search",
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/deal-cost/{id}": {
+      "put": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostServiceUpdateBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbDealCostDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "DealCostService"
+        ],
+        "operationId": "DealCostService_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/deal/{id}": {
+      "get": {
+        "tags": [
+          "TransactionService"
+        ],
+        "operationId": "TransactionService_ListProductTransactions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/detail/{id}": {
+      "get": {
+        "tags": [
+          "TransactionService"
+        ],
+        "operationId": "TransactionService_GetTransaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/list": {
+      "get": {
+        "tags": [
+          "TransactionService"
+        ],
+        "operationId": "TransactionService_ListTransactions",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "toId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "toOf",
+            "in": "query",
+            "description": " - OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ",
+            "type": "string",
+            "enum": [
+              "OWNER_TYPE_UNKNOWN",
+              "OWNER_TYPE_USER",
+              "OWNER_TYPE_GROUP",
+              "OWNER_TYPE_ORGANIZATION",
+              "OWNER_TYPE_DEAL"
+            ],
+            "default": "OWNER_TYPE_UNKNOWN"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": " - TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối",
+            "type": "string",
+            "enum": [
+              "TRANSACTION_STATUS_UNKNOWN",
+              "TRANSACTION_STATUS_PENDING",
+              "TRANSACTION_STATUS_APPROVED",
+              "TRANSACTION_STATUS_REJECTED"
+            ],
+            "default": "TRANSACTION_STATUS_UNKNOWN"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "description": " - TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua",
+            "type": "string",
+            "enum": [
+              "TRANSACTION_METHOD_UNKNOWN",
+              "TRANSACTION_METHOD_SIGN",
+              "TRANSACTION_METHOD_COST",
+              "TRANSACTION_METHOD_REVENUE",
+              "TRANSACTION_METHOD_INVESTMENT",
+              "TRANSACTION_METHOD_DEPOSIT",
+              "TRANSACTION_METHOD_RENT",
+              "TRANSACTION_METHOD_SALE",
+              "TRANSACTION_METHOD_BUY"
+            ],
+            "default": "TRANSACTION_METHOD_UNKNOWN"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/product/action": {
+      "post": {
+        "tags": [
+          "TransactionService"
+        ],
+        "operationId": "TransactionService_CreateProductAction",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/transactionpbCreateProductActionRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbActionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/transaction/{id}/approve": {
+      "post": {
+        "tags": [
+          "TransactionService"
+        ],
+        "operationId": "TransactionService_ApproveTransaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TransactionServiceApproveTransactionBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbTransactionResponse"
             }
           },
           "default": {
@@ -26181,7 +27685,153 @@
         ]
       }
     },
+    "/v2/user/rate/stats/{id}": {
+      "get": {
+        "tags": [
+          "RateService"
+        ],
+        "operationId": "RateService_GetRateStats",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbRateStats"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v2/user/rate/{id}": {
+      "get": {
+        "tags": [
+          "RateService"
+        ],
+        "operationId": "RateService_GetRate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "type": "array",
+            "items": {
+              "format": "uint64",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbRate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
       "put": {
         "tags": [
           "RateService"
@@ -26303,6 +27953,1070 @@
           }
         ]
       }
+    },
+    "/v2/user/report": {
+      "post": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Tạo báo cáo mới",
+        "operationId": "ReportService_CreateReport",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userCreateReportRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/admin-note": {
+      "put": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Lấy danh sách báo cáo admin có thể xem",
+        "operationId": "ReportService_AdminNote",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userAdminNoteRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userAdminNoteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/detail/{id}": {
+      "get": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Lấy thông tin chi tiết báo cáo",
+        "operationId": "ReportService_GetReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "includeHistory",
+            "in": "query",
+            "description": "Bao gồm lịch sử thay đổi",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReport"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/list/{userId}": {
+      "get": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Lấy danh sách báo cáo theo userId (bắt buộc truyền userId)",
+        "operationId": "ReportService_GetReports",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "Required: userId bắt buộc phải truyền",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "reasonId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "description": "Filter theo priority",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort field (created_at, priority, status)",
+            "type": "string"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "asc/desc",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userGetReportsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/my": {
+      "get": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Lấy danh sách báo cáo của tôi (current user)",
+        "operationId": "ReportService_GetMyReports",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "reasonId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userGetReportsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/proof/{id}": {
+      "get": {
+        "tags": [
+          "ReportProofService"
+        ],
+        "summary": "Lấy thông tin chi tiết file chứng minh",
+        "operationId": "ReportProofService_GetReportProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportProofResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "ReportProofService"
+        ],
+        "summary": "Cập nhật thông tin file chứng minh",
+        "operationId": "ReportProofService_UpdateReportProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportProofServiceUpdateReportProofBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportProofResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ReportProofService"
+        ],
+        "summary": "Xóa file chứng minh",
+        "operationId": "ReportProofService_DeleteReportProof",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userDeleteReportProofResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/reasons": {
+      "get": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Lấy danh sách nguyên nhân báo cáo",
+        "operationId": "ReportReasonService_GetReportReasons",
+        "parameters": [
+          {
+            "name": "isActive",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userGetReportReasonsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Tạo nguyên nhân báo cáo mới (admin)",
+        "operationId": "ReportReasonService_CreateReportReason",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userCreateReportReasonRequest"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportReasonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/reasons/{id}": {
+      "get": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Lấy thông tin chi tiết nguyên nhân báo cáo",
+        "operationId": "ReportReasonService_GetReportReason",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportReasonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Cập nhật nguyên nhân báo cáo (admin)",
+        "operationId": "ReportReasonService_UpdateReportReason",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportReasonServiceUpdateReportReasonBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportReasonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Xóa nguyên nhân báo cáo (admin)",
+        "operationId": "ReportReasonService_DeleteReportReason",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userDeleteReportReasonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/reasons/{id}/toggle": {
+      "post": {
+        "tags": [
+          "ReportReasonService"
+        ],
+        "summary": "Kích hoạt/vô hiệu hóa nguyên nhân báo cáo (admin)",
+        "operationId": "ReportReasonService_ToggleReportReason",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportReasonServiceToggleReportReasonBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportReasonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/stats": {
+      "get": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Thống kê báo cáo (admin)",
+        "operationId": "ReportService_GetReportStats",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "reasonId",
+            "in": "query",
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupBy",
+            "in": "query",
+            "description": "1=daily, 2=weekly, 3=monthly",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "includeDetails",
+            "in": "query",
+            "description": "Bao gồm chi tiết",
+            "type": "boolean"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userGetReportStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/{id}": {
+      "put": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Cập nhật báo cáo (chỉ khi chưa duyệt)",
+        "operationId": "ReportService_UpdateReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportServiceUpdateReportBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Xóa báo cáo",
+        "operationId": "ReportService_DeleteReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "description": "Lý do xóa",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userDeleteReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/{id}/respond": {
+      "post": {
+        "tags": [
+          "ReportService"
+        ],
+        "summary": "Phản hồi báo cáo (admin)",
+        "operationId": "ReportService_RespondToReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportServiceRespondToReportBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v2/user/report/{reportId}/proof": {
+      "get": {
+        "tags": [
+          "ReportProofService"
+        ],
+        "summary": "Lấy danh sách file chứng minh của báo cáo",
+        "operationId": "ReportProofService_GetReportProofs",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userGetReportProofsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ReportProofService"
+        ],
+        "summary": "Thêm file chứng minh vào báo cáo",
+        "operationId": "ReportProofService_AddReportProof",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportProofServiceAddReportProofBody"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userReportProofResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
     }
   },
   "definitions": {
@@ -26349,6 +29063,10 @@
         },
         "startTime": {
           "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -26583,6 +29301,78 @@
             "type": "object"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "DealContractServiceApproveContractBody": {
+      "properties": {
+        "rejectReason": {
+          "type": "string"
+        }
+      },
+      "title": "Request phê duyệt giao dịch",
+      "type": "object"
+    },
+    "DealContractServiceUpdateContractBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "category": {
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "documentIds": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "title": "Request cập nhật giao dịch",
+      "type": "object"
+    },
+    "DealCostServiceUpdateBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "title": "enums.ApprovedStatus",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -28021,6 +30811,123 @@
       },
       "type": "object"
     },
+    "ReportProofServiceAddReportProofBody": {
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "fileSize": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "title": "Request/Response messages",
+      "type": "object"
+    },
+    "ReportProofServiceUpdateReportProofBody": {
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "fileSize": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ReportReasonServiceToggleReportReasonBody": {
+      "properties": {
+        "isActive": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ReportReasonServiceUpdateReportReasonBody": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ReportServiceRespondToReportBody": {
+      "properties": {
+        "adminNote": {
+          "title": "Ghi chú nội bộ",
+          "type": "string"
+        },
+        "response": {
+          "title": "Phản hồi công khai",
+          "type": "string"
+        },
+        "sendNotification": {
+          "title": "Gửi thông báo cho user",
+          "type": "boolean"
+        },
+        "status": {
+          "format": "int64",
+          "title": "1=pending, 2=approved, 3=rejected",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ReportServiceUpdateReportBody": {
+      "properties": {
+        "additionalInfo": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "proofDocs": {
+          "items": {
+            "$ref": "#/definitions/userReportProof",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "reasonId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ReportServiceUpdateReportStatusBody": {
       "properties": {
         "status": {
@@ -28034,6 +30941,32 @@
       "properties": {
         "active": {
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "TransactionServiceApproveTransactionBody": {
+      "properties": {
+        "ids": {
+          "items": {
+            "format": "uint64",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "page": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "size": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -28086,7 +31019,7 @@
         },
         "dealTransactions": {
           "items": {
-            "$ref": "#/definitions/organizationpbDealTransactionResponse",
+            "$ref": "#/definitions/transactionpbDealContractResponse",
             "type": "object"
           },
           "type": "array"
@@ -28118,7 +31051,7 @@
         },
         "participants": {
           "items": {
-            "$ref": "#/definitions/organizationpbDealInvitationMember",
+            "$ref": "#/definitions/sharepbProfileItem",
             "type": "object"
           },
           "type": "array"
@@ -28146,6 +31079,10 @@
         },
         "startTime": {
           "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -28203,6 +31140,10 @@
         },
         "startTime": {
           "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "type": "integer"
         },
         "title": {
           "type": "string"
@@ -31214,6 +34155,10 @@
         "accountNumber": {
           "type": "string"
         },
+        "bankId": {
+          "format": "uint64",
+          "type": "string"
+        },
         "bankName": {
           "type": "string"
         },
@@ -31984,6 +34929,100 @@
       },
       "type": "object"
     },
+    "organizationpbDealContractListResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/organizationpbDealContractResponse",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "title": "Response cho danh sách giao dịch",
+      "type": "object"
+    },
+    "organizationpbDealContractResp": {
+      "properties": {
+        "contractId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "organizationpbDealContractResponse": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "product": {
+          "$ref": "#/definitions/pb_bdsproProductAttachment"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "staffId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "staffName": {
+          "type": "string"
+        },
+        "status": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "transaction": {
+          "$ref": "#/definitions/transactionpbTransactionResponse"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/transactionpbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "title": "Response cho giao dịch",
+      "type": "object"
+    },
     "organizationpbDealCostDTO": {
       "properties": {
         "amount": {
@@ -32033,40 +35072,6 @@
         },
         "totalElements": {
           "format": "int64",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "organizationpbDealCostServiceUpdateBody": {
-      "properties": {
-        "amount": {
-          "format": "double",
-          "type": "number"
-        },
-        "confirmedAt": {
-          "type": "string"
-        },
-        "costName": {
-          "type": "string"
-        },
-        "costTypeId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "costTypeName": {
-          "type": "string"
-        },
-        "dealId": {
-          "format": "uint64",
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "status": {
-          "format": "int64",
-          "title": "enums.ApprovedStatus",
           "type": "integer"
         }
       },
@@ -32368,6 +35373,13 @@
         },
         "createdBy": {
           "format": "uint64",
+          "type": "string"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "customerName": {
           "type": "string"
         },
         "dealId": {
@@ -32810,18 +35822,6 @@
         "data": {
           "items": {
             "$ref": "#/definitions/pb_bdsproProductAttachment",
-            "type": "object"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "organizationpbGetDealTransactionsByIdsResponse": {
-      "properties": {
-        "dealTransactions": {
-          "items": {
-            "$ref": "#/definitions/organizationpbDealTransactionResponse",
             "type": "object"
           },
           "type": "array"
@@ -33327,11 +36327,17 @@
         "cancelReason": {
           "type": "string"
         },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
         "chargePersonId": {
           "format": "uint64",
           "type": "string"
         },
         "chargePersonName": {
+          "type": "string"
+        },
+        "code": {
           "type": "string"
         },
         "createdAt": {
@@ -34152,6 +37158,33 @@
       },
       "type": "object"
     },
+    "organizationpbProductActionRequest": {
+      "properties": {
+        "action": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "organizationpbRejectInvitationRequest": {
       "properties": {
         "invitationId": {
@@ -34446,6 +37479,10 @@
         "percentDone": {
           "format": "double",
           "type": "number"
+        },
+        "totalPayment": {
+          "format": "double",
+          "type": "number"
         }
       },
       "type": "object"
@@ -34493,6 +37530,46 @@
       ],
       "title": "Enum cho loại giao dịch",
       "type": "string"
+    },
+    "organizationpbTransferContractRequest": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "transactionStep": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "transactionType": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "Request mua/bán/thuê",
+      "type": "object"
     },
     "organizationpbUpdateAllowManualInputResponse": {
       "properties": {
@@ -39086,6 +42163,46 @@
       },
       "type": "object"
     },
+    "pb_paymentBank": {
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "pb_paymentBankList": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/pb_paymentBank",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "pb_paymentCreateWalletResponse": {
       "properties": {
         "id": {
@@ -40169,145 +43286,228 @@
       },
       "type": "object"
     },
-    "transactionCreateTransactionRequest": {
+    "transactionpbActionResponse": {
       "properties": {
-        "amount": {
-          "format": "double",
-          "type": "number"
-        },
-        "categoryId": {
+        "action": {
           "format": "int64",
           "type": "integer"
         },
-        "currency": {
+        "actionName": {
           "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "organizationId": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "ownerId": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "paymentMethodId": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "relatedDealId": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "relatedTransactionId": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "transactionDate": {
-          "type": "string"
-        },
-        "transactionName": {
-          "type": "string"
-        },
-        "transactionType": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "transactionDeleteTransactionResponse": {
-      "properties": {
-        "id": {
-          "format": "int64",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "transactionGetTransactionTypesResponse": {
-      "properties": {
-        "types": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "transactionListTransactionsResponse": {
-      "properties": {
-        "total": {
-          "format": "int32",
-          "type": "integer"
-        },
-        "transactions": {
-          "items": {
-            "$ref": "#/definitions/transactionTransaction",
-            "type": "object"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "transactionTransaction": {
-      "properties": {
-        "amount": {
-          "format": "double",
-          "type": "number"
-        },
-        "approvalDate": {
-          "type": "string"
-        },
-        "approvalStatus": {
-          "type": "string"
-        },
-        "approvedBy": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "categoryId": {
-          "format": "int64",
-          "type": "integer"
         },
         "createdAt": {
           "type": "string"
         },
-        "currency": {
+        "fromId": {
+          "format": "uint64",
           "type": "string"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "message": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "toId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "value": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbContractDealStatisticsDTO": {
+      "properties": {
+        "amountCost": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "amountRevenue": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "numCost": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "numPayment": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "numRevenue": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "payment": {
+          "$ref": "#/definitions/transactionpbStatsDTO"
+        },
+        "totalAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalCost": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalProfit": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCostTypeDTO": {
+      "properties": {
+        "costType": {
+          "format": "int64",
+          "type": "integer"
         },
         "description": {
           "type": "string"
         },
         "id": {
-          "format": "int64",
-          "type": "integer"
+          "format": "uint64",
+          "type": "string"
         },
-        "isDeleted": {
+        "isCustom": {
           "type": "boolean"
         },
-        "organizationId": {
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCostTypeListDTO": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/transactionpbCostTypeDTO",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCostTypeServiceUpdateBody": {
+      "properties": {
+        "costType": {
           "format": "int64",
           "type": "integer"
         },
-        "ownerId": {
+        "description": {
+          "type": "string"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCreateActionRequest": {
+      "properties": {
+        "action": {
           "format": "int64",
           "type": "integer"
         },
-        "paymentMethodId": {
-          "format": "int64",
-          "type": "integer"
+        "amount": {
+          "format": "double",
+          "type": "number"
         },
-        "relatedDealId": {
-          "format": "int64",
-          "type": "integer"
+        "currency": {
+          "type": "string"
         },
-        "relatedTransactionId": {
-          "format": "int64",
-          "type": "integer"
+        "fromId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "toId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCreateProductActionRequest": {
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "actionAmount": {
+          "type": "string"
+        },
+        "actionCurrency": {
+          "type": "string"
+        },
+        "actionDate": {
+          "type": "string"
+        },
+        "actionNote": {
+          "type": "string"
+        },
+        "actionStatus": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string"
+        },
+        "toId": {
+          "type": "string"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbCreateTransactionRequest": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "transactionAmount": {
+          "type": "string"
+        },
+        "transactionCurrency": {
+          "type": "string"
         },
         "transactionDate": {
           "type": "string"
@@ -40320,8 +43520,1140 @@
         },
         "transactionType": {
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealContractItem": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "contractId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "status": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealContractListResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/transactionpbDealContractItem",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "title": "Response cho danh sách giao dịch",
+      "type": "object"
+    },
+    "transactionpbDealContractPaymentRequest": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "transactionStep": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "transactionType": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "Request mua/bán/thuê",
+      "type": "object"
+    },
+    "transactionpbDealContractResponse": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "code": {
+          "type": "string"
+        },
+        "contractId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "customerId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "product": {
+          "$ref": "#/definitions/pb_bdsproProductAttachment"
+        },
+        "productId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "staffId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "staffName": {
+          "type": "string"
+        },
+        "status": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "transaction": {
+          "$ref": "#/definitions/transactionpbTransactionResponse"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/transactionpbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealCostDTO": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "title": "enums.ApprovedStatus",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealCostListDTO": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/transactionpbDealCostDTO",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "totalElements": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealCostServiceUpdateBody": {
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "costName": {
+          "type": "string"
+        },
+        "costTypeId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "costTypeName": {
+          "type": "string"
+        },
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int64",
+          "title": "enums.ApprovedStatus",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbDealTotalAmountResponse": {
+      "properties": {
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "netAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "numTransaction": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "totalAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalExpense": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalPayment": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalRevenue": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbFinancialSummaryResponse": {
+      "properties": {
+        "dealId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "netProfit": {
+          "format": "double",
+          "type": "number"
+        },
+        "profitMargin": {
+          "format": "double",
+          "type": "number"
+        },
+        "profitStatus": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalExpense": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalRevenue": {
+          "format": "double",
+          "type": "number"
+        },
+        "warningMessages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "title": "Response cho thống kê tài chính",
+      "type": "object"
+    },
+    "transactionpbGetDealTransactionsByIdsResponse": {
+      "properties": {
+        "dealTransactions": {
+          "items": {
+            "$ref": "#/definitions/transactionpbDealContractResponse",
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbIdResponse": {
+      "properties": {
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbOwnerType": {
+      "default": "OWNER_TYPE_UNKNOWN",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ",
+      "type": "string"
+    },
+    "transactionpbPaymentActionRequest": {
+      "properties": {
+        "action": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "contractId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "fromId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "toId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbStatsDTO": {
+      "properties": {
+        "approved": {
+          "format": "double",
+          "type": "number"
+        },
+        "pending": {
+          "format": "double",
+          "type": "number"
+        },
+        "reject": {
+          "format": "double",
+          "type": "number"
+        },
+        "total": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbTransactionListResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/transactionpbTransactionResponse",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbTransactionMethod": {
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua",
+      "type": "string"
+    },
+    "transactionpbTransactionResponse": {
+      "properties": {
+        "actions": {
+          "items": {
+            "$ref": "#/definitions/transactionpbActionResponse",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "method": {
+          "$ref": "#/definitions/transactionpbTransactionMethod"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "status": {
+          "$ref": "#/definitions/transactionpbTransactionStatus"
+        },
+        "toId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "transactionId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "value": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "transactionpbTransactionStatus": {
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối",
+      "type": "string"
+    },
+    "transactionpbTransactionType": {
+      "default": "TRANSACTION_TYPE_UNKNOWN",
+      "enum": [
+        "TRANSACTION_TYPE_UNKNOWN",
+        "TRANSACTION_TYPE_EXPENSE",
+        "TRANSACTION_TYPE_REVENUE",
+        "TRANSACTION_TYPE_BUY",
+        "TRANSACTION_TYPE_SELL",
+        "TRANSACTION_TYPE_RENT",
+        "TRANSACTION_TYPE_NEGOTIATE"
+      ],
+      "title": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu\n - TRANSACTION_TYPE_BUY: Mua\n - TRANSACTION_TYPE_SELL: Bán\n - TRANSACTION_TYPE_RENT: Thuê\n - TRANSACTION_TYPE_NEGOTIATE: Góp vốn",
+      "type": "string"
+    },
+    "userAdminNoteRequest": {
+      "properties": {
+        "adminNote": {
+          "title": "Ghi chú nội bộ admin",
+          "type": "string"
+        },
+        "isInternal": {
+          "title": "Ghi chú nội bộ hay công khai",
+          "type": "boolean"
+        },
+        "reportId": {
+          "format": "uint64",
+          "title": "ID báo cáo cần cập nhật ghi chú",
+          "type": "string"
+        }
+      },
+      "title": "Admin Note messages",
+      "type": "object"
+    },
+    "userAdminNoteResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "report": {
+          "$ref": "#/definitions/userReport",
+          "title": "Báo cáo đã được cập nhật"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "userCreateReportReasonRequest": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "userCreateReportRequest": {
+      "properties": {
+        "additionalInfo": {
+          "title": "Thông tin bổ sung",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "title": "Mức độ ưu tiên",
+          "type": "integer"
+        },
+        "proofDocs": {
+          "items": {
+            "$ref": "#/definitions/userReportProof",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "reasonId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "userId": {
+          "format": "uint64",
+          "title": "User bị báo cáo",
+          "type": "string"
+        }
+      },
+      "title": "Request/Response messages",
+      "type": "object"
+    },
+    "userDeleteReportProofResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userDeleteReportReasonResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userDeleteReportResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "userGetReportProofsResponse": {
+      "properties": {
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "proofs": {
+          "items": {
+            "$ref": "#/definitions/userReportProof",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "reportId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "size": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userGetReportReasonsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/userReportReason",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "size": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userGetReportStatsResponse": {
+      "properties": {
+        "generatedAt": {
+          "title": "Thời gian tạo báo cáo",
+          "type": "string"
+        },
+        "period": {
+          "title": "Khoảng thời gian",
+          "type": "string"
+        },
+        "stats": {
+          "$ref": "#/definitions/userReportStats"
+        }
+      },
+      "type": "object"
+    },
+    "userGetReportsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/userReport",
+            "type": "object"
+          },
+          "title": "Keep reports for now until protobuf regeneration",
+          "type": "array"
+        },
+        "hasNext": {
+          "title": "Có trang tiếp theo",
+          "type": "boolean"
+        },
+        "hasPrev": {
+          "title": "Có trang trước",
+          "type": "boolean"
+        },
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "size": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/definitions/userReportStats",
+          "title": "Thống kê tóm tắt"
+        },
+        "total": {
+          "format": "int64",
+          "type": "string"
+        },
+        "totalPages": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "userReport": {
+      "properties": {
+        "adminNote": {
+          "title": "Ghi chú nội bộ admin",
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "description": {
+          "title": "Mô tả chi tiết từ người báo cáo",
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "ipAddress": {
+          "title": "IP address của người báo cáo",
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "title": "Mức độ ưu tiên (1=thấp, 5=cao)",
+          "type": "integer"
+        },
+        "proofDocs": {
+          "items": {
+            "$ref": "#/definitions/userReportProof",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "reason": {
+          "$ref": "#/definitions/userReportReason"
+        },
+        "reasonId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "reportStatus": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "reporter": {
+          "$ref": "#/definitions/userReportUser",
+          "title": "Thông tin user báo cáo"
+        },
+        "reporterId": {
+          "format": "uint64",
+          "title": "User báo cáo",
+          "type": "string"
+        },
+        "resolvedAt": {
+          "title": "Thời gian xử lý xong",
+          "type": "string"
+        },
+        "resolvedBy": {
+          "format": "uint64",
+          "title": "Admin xử lý",
+          "type": "string"
+        },
+        "response": {
+          "title": "Phản hồi từ admin",
+          "type": "string"
+        },
+        "statusText": {
+          "type": "string"
         },
         "updatedAt": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/userReportUser",
+          "title": "Thông tin user bị báo cáo"
+        },
+        "userAgent": {
+          "title": "User agent của người báo cáo",
+          "type": "string"
+        },
+        "userId": {
+          "format": "uint64",
+          "title": "User bị báo cáo",
+          "type": "string"
+        }
+      },
+      "title": "Report entity",
+      "type": "object"
+    },
+    "userReportProof": {
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "fileSize": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "reportId": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "title": "ReportProof entity",
+      "type": "object"
+    },
+    "userReportProofResponse": {
+      "properties": {
+        "proof": {
+          "$ref": "#/definitions/userReportProof"
+        }
+      },
+      "type": "object"
+    },
+    "userReportReason": {
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "format": "uint64",
+          "type": "string"
+        }
+      },
+      "title": "ReportReason entity",
+      "type": "object"
+    },
+    "userReportReasonResponse": {
+      "properties": {
+        "reason": {
+          "$ref": "#/definitions/userReportReason"
+        }
+      },
+      "type": "object"
+    },
+    "userReportResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "report": {
+          "$ref": "#/definitions/userReport"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "userReportStats": {
+      "properties": {
+        "approvalRate": {
+          "format": "double",
+          "title": "Tỷ lệ chấp nhận (%)",
+          "type": "number"
+        },
+        "approvedReports": {
+          "format": "int64",
+          "type": "string"
+        },
+        "avgResponseTime": {
+          "format": "double",
+          "title": "Thời gian phản hồi TB (giờ)",
+          "type": "number"
+        },
+        "inProgressReports": {
+          "format": "int64",
+          "title": "Báo cáo đang xử lý",
+          "type": "string"
+        },
+        "pendingReports": {
+          "format": "int64",
+          "type": "string"
+        },
+        "rejectedReports": {
+          "format": "int64",
+          "type": "string"
+        },
+        "statsByAdmin": {
+          "items": {
+            "$ref": "#/definitions/userReportStatsByAdmin",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "statsByDate": {
+          "items": {
+            "$ref": "#/definitions/userReportStatsByDate",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "statsByPriority": {
+          "items": {
+            "$ref": "#/definitions/userReportStatsByPriority",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "statsByReason": {
+          "items": {
+            "$ref": "#/definitions/userReportStatsByReason",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "totalReports": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "title": "Report statistics",
+      "type": "object"
+    },
+    "userReportStatsByAdmin": {
+      "properties": {
+        "adminId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "adminName": {
+          "type": "string"
+        },
+        "avgResponseTime": {
+          "format": "double",
+          "type": "number"
+        },
+        "handledCount": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userReportStatsByDate": {
+      "properties": {
+        "count": {
+          "format": "int64",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "pending": {
+          "format": "int64",
+          "type": "string"
+        },
+        "resolved": {
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userReportStatsByPriority": {
+      "properties": {
+        "count": {
+          "format": "int64",
+          "type": "string"
+        },
+        "priority": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "priorityName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userReportStatsByReason": {
+      "properties": {
+        "count": {
+          "format": "int64",
+          "type": "string"
+        },
+        "percentage": {
+          "format": "double",
+          "title": "Phần trăm",
+          "type": "number"
+        },
+        "reasonId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "reasonName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "userReportUser": {
+      "properties": {
+        "address": {
+          "title": "Địa chỉ",
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "isVerified": {
+          "title": "Tài khoản đã xác thực",
+          "type": "boolean"
+        },
+        "lastLogin": {
+          "title": "Lần đăng nhập cuối",
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "profileId": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "userType": {
+          "format": "int64",
+          "title": "Loại user (1=individual, 2=business)",
+          "type": "integer"
+        },
+        "username": {
+          "title": "Username/handle",
           "type": "string"
         }
       },
@@ -41015,6 +45347,9 @@
       "name": "ColorService"
     },
     {
+      "name": "DealContractService"
+    },
+    {
       "name": "CostTypeService"
     },
     {
@@ -41084,6 +45419,12 @@
       "name": "OrganizationRoleService"
     },
     {
+      "name": "BankService"
+    },
+    {
+      "name": "InternalService"
+    },
+    {
       "name": "PaymentService"
     },
     {
@@ -41105,6 +45446,9 @@
       "name": "TaskService"
     },
     {
+      "name": "InternalTransactionService"
+    },
+    {
       "name": "AuthService"
     },
     {
@@ -41112,6 +45456,9 @@
     },
     {
       "name": "RateService"
+    },
+    {
+      "name": "ReportProofService"
     }
   ]
 }
