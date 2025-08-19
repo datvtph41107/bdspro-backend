@@ -14,6 +14,7 @@ import (
 	"auth/internal/interface/factory"
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
+	"auth/internal/utils"
 	_db "common/db"
 	_errors "common/errors"
 	_jwt "common/jwt"
@@ -524,13 +525,13 @@ func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethodDomain, profile
 		AuthID:    authEntity.ID,
 		ProfileID: authEntity.UserID,
 		SessionID: sessionID,
-		Role:      "ROLE_USER",
+		Role:      enums.RoleMap[profile.RoleType],
 		Type:      "ACCESS",
 		PlanID:    profile.PlanID,
 		PlanAt:    profile.PlanAt,
 	})
 
-	return dto.MakeAuthLoginResponse(accessToken, authEntity, "ROLE_USER")
+	return dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
 }
 
 func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethodDomain, sessionID uint64) string {
@@ -707,6 +708,89 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 		// RefreshToken:   s.GetRefreshToken(authEntity, uint64(principal.Session)),
 		OrganizationID: clientResponse.OrganizationId,
 	}
+
+	return response, nil
+}
+
+// AdminLogin xử lý đăng nhập admin bằng username và password
+func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginRequest) (*dto.AuthLoginResponse, error) {
+	// Validate input
+	if adminLogin.Username == "" || adminLogin.Password == "" {
+		return nil, _errors.ReturnError(
+			int32(400),
+			"Username và password không được để trống",
+		)
+	}
+
+	// Tìm admin trong database
+	adminAuthEntity, err := s.AuthMethodRepo.FindByUsername(c, adminLogin.Username)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Username hoặc password không đúng",
+		)
+	}
+
+	// Kiểm tra provider phải là ADMIN
+	if adminAuthEntity.Provider != "ADMIN" {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Tài khoản không có quyền admin",
+		)
+	}
+
+	// Kiểm tra password
+	if !utils.CheckPasswordHash(adminLogin.Password, adminAuthEntity.Password) {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Username hoặc password không đúng",
+		)
+	}
+
+	// Lấy profile của admin
+	adminProfile, err := s.ProfileProvider.GetByProfileID(c, adminAuthEntity.UserID)
+	if err != nil || adminProfile == nil || adminProfile.ProfileID == 0 {
+		// Tạo profile mới nếu chưa có
+		adminProfile = s.ProfileProvider.MakeUserProfileEntity(
+			adminAuthEntity.ID,
+			s.PreePlanID,
+			adminAuthEntity.Name,
+			adminAuthEntity.Email,
+			adminAuthEntity.Phone,
+			adminAuthEntity.Avatar,
+		)
+		s.ProfileProvider.SaveProfile(c, adminProfile)
+
+		// Cập nhật UserID cho admin auth entity
+		adminAuthEntity.UserID = adminProfile.ProfileID
+		s.AuthMethodRepo.Update(c, adminAuthEntity)
+	}
+
+	// Tạo session cho admin (bắt chước VerifyOtp)
+	adminOtpRequest := dto.OtpVerifyRequest{
+		OtpRequest: dto.OtpRequest{
+			Phone:    adminAuthEntity.Phone,
+			Fullname: adminAuthEntity.Name,
+		},
+		Otp:      "",
+		AuthID:   adminAuthEntity.ID,
+		Version:  "1.0",
+		Platform: "WEB",
+		OS:       "ADMIN",
+		Fullname: adminAuthEntity.Name,
+	}
+
+	newSession := s.createSession(c, adminAuthEntity, adminOtpRequest)
+	s.SessionRepo.CreateSession(c, newSession)
+
+	// Tạo refresh token
+	s.GenRefreshToken(c, adminAuthEntity, newSession.SessionID)
+
+	adminProfile.RoleType = enums.ERoleAdmin
+	// Tạo response với đầy đủ thông tin
+	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
+	response.Role = enums.RoleMap[adminProfile.RoleType]
+	response.Username = adminLogin.Username
 
 	return response, nil
 }

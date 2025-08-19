@@ -87,6 +87,14 @@ service AuthService {
         };
     }
 
+    // Admin Authentication
+    rpc AdminLogin(AdminLoginRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin/login"
+            body: "*"
+        };
+    }
+
 
 }
 
@@ -235,4 +243,8 @@ message SwitchOrganizationResponse {
     string accessToken = 9;
 }
 
-
+// Admin Authentication Messages
+message AdminLoginRequest {
+    string username = 1;
+    string password = 2;
+}

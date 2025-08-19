@@ -76,3 +76,13 @@ func (r *AuthMethodPostgres) DeleteProfile(ctx context.Context, profileID uint64
 		Where("user_id = ?", profileID).
 		Update("deleted_at", time.Now()).Error
 }
+
+// FindByUsername tìm kiếm auth bằng username
+func (r *AuthMethodPostgres) FindByUsername(ctx context.Context, username string) (*domain.AuthMethodDomain, error) {
+	var auth domain.AuthMethodDomain
+	err := r.db.Where("username = ? AND deleted_at IS NULL", username).First(&auth).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auth, nil
+}

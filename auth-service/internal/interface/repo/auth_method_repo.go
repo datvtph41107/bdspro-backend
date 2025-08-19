@@ -15,4 +15,5 @@ type AuthMethodRepository interface {
 	Update(ctx context.Context, auth *domain.AuthMethodDomain) error
 	DeleteProfile(ctx context.Context, profileID uint64) error
 	FindByOAuthId(ctx context.Context, oauthId, provider string) (*domain.AuthMethodDomain, error)
+	FindByUsername(ctx context.Context, username string) (*domain.AuthMethodDomain, error)
 }

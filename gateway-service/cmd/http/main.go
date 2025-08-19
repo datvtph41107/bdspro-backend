@@ -123,6 +123,7 @@ var publicRoutes = []string{
 	"/v2/auth/qr",
 	"/v2/auth/token/refresh",
 	"/v2/auth/oauth",
+	"/v2/auth/admin/login",
 	// "/v1/search/plan/list",
 }
 

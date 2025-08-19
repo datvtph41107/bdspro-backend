@@ -1,5 +1,12 @@
 basePath: /v2/auth
 definitions:
+  authpb.AdminLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   authpb.AuthSuccessResponse:
     properties:
       accessToken:
@@ -146,6 +153,36 @@ info:
   title: Auth Service API
   version: "1.0"
 paths:
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Đăng nhập admin bằng username và password
+      parameters:
+      - description: Thông tin đăng nhập admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Admin Login
+      tags:
+      - Auth
   /delete:
     delete:
       consumes:

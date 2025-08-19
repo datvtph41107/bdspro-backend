@@ -12,4 +12,10 @@ type PropertiesDTO struct {
 	CooldownSeconds      int
 	IpCooldownSeconds    int
 	JwtRefreshExpMinutes uint64
+	Admin                struct {
+		Username string
+		Password string
+		Email    string
+		FullName string
+	}
 }

@@ -313,3 +313,36 @@ func (h *AuthHandler) SwitchOrganization(ctx context.Context, req *authpb.Switch
 		AccessToken: result.AccessToken,
 	}, nil
 }
+
+// @Summary Admin Login
+// @Description Đăng nhập admin bằng username và password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.AdminLoginRequest true "Thông tin đăng nhập admin"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /admin/login [post]
+func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequest) (*authpb.AuthSuccessResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.AdminLoginRequest{
+		Username: req.Username,
+		Password: req.Password,
+	}
+
+	result, err := h.AuthUsecase.AdminLogin(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.AuthSuccessResponse{
+		AuthId:         result.AuthID,
+		ProfileId:      result.ProfileID,
+		OrganizationId: result.OrganizationID,
+		Role:           result.Role,
+		AccessToken:    result.AccessToken,
+		RefreshToken:   result.RefreshToken,
+	}, nil
+}

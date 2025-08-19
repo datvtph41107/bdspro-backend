@@ -7,8 +7,9 @@ import (
 // AuthMethodDomain tương đương với Java Entity
 type AuthMethodDomain struct {
 	ID          uint64     `gorm:"primaryKey;autoIncrement"`
-	Provider    string     `gorm:"size:10"` // enum: email, zalo, facebook, phone
+	Provider    string     `gorm:"size:10"` // enum: email, zalo, facebook, phone, admin
 	Username    string     `gorm:"size:50"`
+	Password    string     `gorm:"size:255"` // Mã hóa password
 	OAuthID     string     `gorm:"column:oauth_id"`
 	Avatar      string     `gorm:"size:255"`
 	IsSensitive bool       `gorm:"column:is_sensitive"`

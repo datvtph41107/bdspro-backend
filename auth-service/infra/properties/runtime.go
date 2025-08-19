@@ -24,6 +24,17 @@ func NewRuntimeProperties() *RuntimeProperties {
 			CooldownSeconds:      config.Properties.Otp.CooldownSeconds,
 			IpCooldownSeconds:    config.Properties.Otp.IpCooldownSeconds,
 			JwtRefreshExpMinutes: config.Properties.JWT.RefreshExpMinutes,
+			Admin: struct {
+				Username string
+				Password string
+				Email    string
+				FullName string
+			}{
+				Username: config.Properties.Admin.Username,
+				Password: config.Properties.Admin.Password,
+				Email:    config.Properties.Admin.Email,
+				FullName: config.Properties.Admin.FullName,
+			},
 		},
 	}
 }

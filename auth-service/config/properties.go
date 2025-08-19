@@ -66,6 +66,12 @@ type AppProperties struct {
 		CooldownSeconds   int   `mapstructure:"cooldown-seconds"`
 		IpCooldownSeconds int   `mapstructure:"ip-cooldown-seconds"`
 	} `mapstructure:"otp"`
+	Admin struct {
+		Username string `mapstructure:"username"`
+		Password string `mapstructure:"password"`
+		Email    string `mapstructure:"email"`
+		FullName string `mapstructure:"full_name"`
+	} `mapstructure:"admin"`
 }
 
 var Properties AppProperties

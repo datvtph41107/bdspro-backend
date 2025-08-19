@@ -211,3 +211,9 @@ type HandleCallbackResponse struct {
 	Phone        string `json:"phone"`
 	Provider     string `json:"provider"`
 }
+
+// AdminLoginRequest đại diện cho yêu cầu đăng nhập admin
+type AdminLoginRequest struct {
+	Username string `json:"username" binding:"required" validate:"required"`
+	Password string `json:"password" binding:"required" validate:"required"`
+}

@@ -18,24 +18,24 @@ redis:
 
 oauth:
   google:
-    client_id: "your_google_client_id"
-    client_secret: "your_google_client_secret"
-    redirect_uri: "http://localhost:3000/auth/google/callback"
+    client_id: 83012182189-nk4k3aqn3ccmr5hikv8djgb5vpkeragk.apps.googleusercontent.com
+    client_secret: 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
+    redirect_uri: http://14.225.210.29:8000/user/oauth/google/callback
   
   facebook:
-    client_id: "your_facebook_client_id"
-    client_secret: "your_facebook_client_secret"
-    redirect_uri: "http://localhost:3000/auth/facebook/callback"
+    client_id: 2029655954220379
+    client_secret: a00ffdf676394cb22b4af98bfe1dac3b
+    redirect_uri: http://14.225.210.29:8000/user/oauth/facebook/callback
   
   zalo:
-    app_id: "your_zalo_app_id"
-    secret_key: "your_zalo_secret_key"
-    redirect_uri: "http://localhost:3000/auth/zalo/callback"
-    permission_url: "https://oauth.zaloapp.com/v4/permission?"
+    app_id: 282266321456750389
+    secret_key: 26DSfVq7RHOM4SVlRNI1
+    redirect_uri: http://14.225.210.29:8000/user/oauth/zalo/callback
+    permission_url: https://oauth.zaloapp.com/v4/permission?
 
 key:
   jwt: key-generate-jwt-token-authentication
-  
+
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer
@@ -70,3 +70,9 @@ grpc:
     host: :8207
   payment:
     host: :8205
+
+admin:
+  username: admin
+  password: admin123
+  email: admin@example.com
+  full_name: Administrator

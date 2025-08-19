@@ -16,6 +16,39 @@
     "application/json"
   ],
   "paths": {
+    "/v2/auth/admin/login": {
+      "post": {
+        "summary": "Admin Authentication",
+        "operationId": "AuthService_AdminLogin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbAdminLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/delete": {
       "delete": {
         "summary": "Account Management",
@@ -355,6 +388,18 @@
     }
   },
   "definitions": {
+    "authpbAdminLoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "title": "Admin Authentication Messages"
+    },
     "authpbAuthSuccessResponse": {
       "type": "object",
       "properties": {
