@@ -33,3 +33,5 @@ search-service/search-service
 social-service/social-service
 task-service/task-service
 user-service/user-service
+auth-service/auth-service   
+transaction-service/transaction-service

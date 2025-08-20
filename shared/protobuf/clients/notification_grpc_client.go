@@ -5,10 +5,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
+
 	shared_dto "pb/dto"
+	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
-	"time"
 
 	"google.golang.org/grpc"
 )
@@ -57,7 +59,6 @@ func (s *NotificationClient) NotifyToUser(
 	targetID uint64,
 	isMerge bool,
 ) error {
-
 	_, err := s.client.Create(ctx, &sharepb.NotificationRequest{
 		AttachData: attachData,
 		Link:       fmt.Sprintf("/news-feed/%d", targetID),
@@ -90,4 +91,66 @@ func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_
 		Title:      history.Title,
 	})
 	return err
+}
+
+// CreateAdminHistory tạo lịch sử admin
+func (s *NotificationClient) CreateAdminHistory(ctx context.Context,
+	adminID uint64,
+	targetID uint64,
+	targetType int32,
+	actionType int32,
+	title string,
+	notes []string,
+	preStage string,
+	afterStage string,
+	ownerID *uint64,
+	ownerType int32,
+	adminRole string,
+	ipAddress string,
+	userAgent string,
+) error {
+	_, err := s.client.CreateAdminHistory(ctx, &notificationpb.AdminHistoryCreateRequest{
+		TargetId:   targetID,
+		TargetType: targetType,
+		ActionType: actionType,
+		Title:      title,
+		Note:       notes,
+		PreStage:   preStage,
+		AfterStage: afterStage,
+		AdminId:    adminID,
+		OwnerId:    ownerID,
+		OwnerType:  ownerType,
+		IsInternal: false,
+		AdminRole:  adminRole,
+		IpAddress:  ipAddress,
+		UserAgent:  userAgent,
+	})
+	return err
+}
+
+// CreateAdminHistoryBatch tạo hàng loạt lịch sử admin
+func (s *NotificationClient) CreateAdminHistoryBatch(ctx context.Context, requests []*notificationpb.AdminHistoryCreateRequest) error {
+	_, err := s.client.CreateAdminHistoryBatch(ctx, &notificationpb.AdminHistoryBatchRequest{
+		Datas: requests,
+	})
+	return err
+}
+
+// LogAdminLogin ghi log khi admin đăng nhập thành công
+func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, adminRole string, ipAddress string, userAgent string) error {
+	return s.CreateAdminHistory(ctx,
+		adminID,                              // adminID
+		adminID,                              // targetID (chính admin đó)
+		int32(shared_enum.TargetHistoryLead), // targetType
+		int32(shared_enum.HistoryCreateStep), // actionType
+		"Admin đăng nhập hệ thống",           // title
+		[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+		"Chưa đăng nhập",                    // preStage
+		"Đã đăng nhập",                      // afterStage
+		&adminID,                            // ownerID
+		int32(shared_enum.EOwnerTypeMember), // ownerType
+		adminRole,                           // adminRole
+		ipAddress,                           // ipAddress
+		userAgent,                           // userAgent
+	)
 }

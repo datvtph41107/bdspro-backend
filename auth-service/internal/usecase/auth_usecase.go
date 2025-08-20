@@ -34,6 +34,7 @@ type AuthUsecase struct {
 	OtpUsecase         *OtpUsecase
 	OrganizationClient provider.OrganizationProvider
 	PaymentProvider    provider.PaymentProvider
+	NotificationClient provider.NotificationProvider
 	properties         dto.PropertiesDTO
 }
 
@@ -47,6 +48,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	otpUsecase *OtpUsecase,
 	organizationClient provider.OrganizationProvider,
 	paymentProvider provider.PaymentProvider,
+	notificationClient provider.NotificationProvider,
 	properties factory.IFactory,
 ) *AuthUsecase {
 	planId := uint64(1)
@@ -62,6 +64,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		OtpUsecase:         otpUsecase,
 		OrganizationClient: organizationClient,
 		PaymentProvider:    paymentProvider,
+		NotificationClient: notificationClient,
 		properties:         properties.GetProperties(),
 	}
 }
@@ -791,6 +794,18 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
 	response.Role = enums.RoleMap[adminProfile.RoleType]
 	response.Username = adminLogin.Username
+
+	// Ghi log admin history
+	go func() {
+		// TODO: Get IP address and User Agent from context
+		ipAddress := "127.0.0.1"    // Default IP
+		userAgent := "Admin-Client" // Default User Agent
+
+		err := s.NotificationClient.LogAdminLogin(c, adminAuthEntity.UserID, enums.RoleMap[adminProfile.RoleType], ipAddress, userAgent)
+		if err != nil {
+			log.Printf("Failed to log admin login: %v", err)
+		}
+	}()
 
 	return response, nil
 }

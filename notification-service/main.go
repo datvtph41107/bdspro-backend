@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	notificationpb "pb/types/notification"
+	"time"
+
 	"noti/config"
 	"noti/db"
 	_ "noti/docs"
 	"noti/wire"
-	"os"
-	notificationpb "pb/types/notification"
-	"time"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"

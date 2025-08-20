@@ -1,9 +1,11 @@
 package dto
 
 import (
+	shared_enum "pb/enums"
+	"time"
+
 	"noti/internal/domain"
 	"noti/internal/enums"
-	"time"
 )
 
 // NotificationResponse dùng để trả về thông tin thông báo
@@ -30,4 +32,25 @@ func NewSendNotiResponse(e domain.HistoryFcmEntity) SendNotiResponse {
 		Response: e.Response,
 		Error:    e.Error,
 	}
+}
+
+// AdminHistoryDTO dùng để trả về thông tin lịch sử admin
+type AdminHistoryDTO struct {
+	ID         uint64                     `json:"id"`
+	TargetId   uint64                     `json:"targetId"`
+	TargetType shared_enum.ETargetHistory `json:"targetType"`
+	ActionType shared_enum.EHistory       `json:"actionType"`
+	Title      string                     `json:"title,omitempty"`
+	Note       []string                   `json:"note,omitempty"`
+	PreStage   string                     `json:"preStage,omitempty"`
+	AfterStage string                     `json:"afterStage,omitempty"`
+	AdminID    uint64                     `json:"adminId"`
+	OwnerID    *uint64                    `json:"ownerId,omitempty"`
+	OwnerType  shared_enum.EOwnerType     `json:"ownerType"`
+	IsInternal bool                       `json:"isInternal"`
+	AdminRole  string                     `json:"adminRole,omitempty"`
+	IPAddress  string                     `json:"ipAddress,omitempty"`
+	UserAgent  string                     `json:"userAgent,omitempty"`
+	CreatedAt  string                     `json:"createdAt"`
+	UpdatedAt  string                     `json:"updatedAt"`
 }

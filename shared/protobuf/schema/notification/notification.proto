@@ -11,6 +11,8 @@ service NotificationService {
   rpc SendBatch (NotiBatchRequest) returns (BatchResponse);
   rpc PushByToken (PushTokenRequest) returns (PushResponse);
   rpc PushByTopic (PushTopicRequest) returns (PushResponse);
+  rpc CreateAdminHistory (AdminHistoryCreateRequest) returns (AdminHistoryDTO);
+  rpc CreateAdminHistoryBatch (AdminHistoryBatchRequest) returns (BatchResponse);
 }
 service GatewayNotificationService {
   rpc Create (GatewayNotiNewRequest) returns (NotificationDTO) {
@@ -54,6 +56,11 @@ service GatewayNotificationService {
     option (google.api.http) = {
       post: "/v2/notification/push/topic"
       body: "*"
+    };
+  };
+  rpc SearchAdminHistory (AdminHistorySearchRequest) returns (AdminHistoryListResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin-history/search"
     };
   };
 }
@@ -129,3 +136,74 @@ message StatusResponse {
     bool status = 1;
     string message = 2;
 }
+
+// Admin History Messages
+message AdminHistoryDTO {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    int32 targetType = 3;
+    int32 actionType = 4;
+    string title = 5;
+    repeated string note = 6;
+    string preStage = 7;
+    string afterStage = 8;
+    uint64 adminId = 9;
+    optional uint64 ownerId = 10;
+    int32 ownerType = 11;
+    bool isInternal = 12;
+    string adminRole = 13;
+    string ipAddress = 14;
+    string userAgent = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+}
+
+message AdminHistoryListResponse {
+    repeated AdminHistoryDTO data = 1;
+    int32 total = 2;
+}
+
+message AdminActionStatsResponse {
+    uint64 adminId = 1;
+    int64 totalActions = 2;
+    map<string, int64> actionCounts = 3;
+    string fromDate = 4;
+    string toDate = 5;
+}
+
+message AdminHistorySearchRequest {
+    int32 page = 1;
+    int32 size = 2;
+    optional uint64 adminId = 3;
+    optional uint64 ownerId = 4;
+    optional int32 ownerType = 5;
+    optional uint64 targetId = 6;
+    optional int32 targetType = 7;
+    optional int32 actionType = 8;
+    optional string adminRole = 9;
+    optional string fromDate = 10;
+    optional string toDate = 11;
+    optional bool isInternal = 12;
+}
+
+message AdminHistoryCreateRequest {
+    uint64 targetId = 1;
+    int32 targetType = 2;
+    int32 actionType = 3;
+    string title = 4;
+    repeated string note = 5;
+    string preStage = 6;
+    string afterStage = 7;
+    uint64 adminId = 8;
+    optional uint64 ownerId = 9;
+    int32 ownerType = 10;
+    bool isInternal = 11;
+    string adminRole = 12;
+    string ipAddress = 13;
+    string userAgent = 14;
+}
+
+message AdminHistoryBatchRequest {
+    repeated AdminHistoryCreateRequest datas = 1;
+}
+
