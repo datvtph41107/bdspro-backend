@@ -6,6 +6,7 @@ import (
 	"context"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
+
 	"tx/infra/client"
 	"tx/infra/mapper"
 	"tx/infra/validator"
@@ -170,8 +171,8 @@ func (h *ContractDealHandler) GetContracts(ctx context.Context, req *transaction
 
 	query := dto.DealSearch{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	// Get contracts

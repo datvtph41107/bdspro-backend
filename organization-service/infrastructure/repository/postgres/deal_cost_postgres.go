@@ -2,10 +2,11 @@ package postgres
 
 import (
 	"context"
+	"time"
+
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 	"organization/internal/dto"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -47,7 +48,7 @@ func (r *DealCostPostgreRepo) ListByDealID(ctx context.Context, search *dto.Deal
 		Preload("CostType").
 		Where("deal_id = ? AND deleted_at IS NULL", search.DealId).
 		Offset(search.GetOffset()).
-		Limit(search.GetSize()).
+		Limit(int(search.GetSize())).
 		Find(&costs).Error
 	return costs, err
 }

@@ -368,7 +368,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), req.GetPage(), req.GetSize(), nil, dealId)
+	members, total, err := u.organizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(currentOrgId), int(req.GetPage()), int(req.GetSize()), nil, dealId)
 	if err != nil {
 		return nil, 0, err
 	}

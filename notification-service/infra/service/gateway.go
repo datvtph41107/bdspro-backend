@@ -4,11 +4,12 @@ import (
 	_dto "common/dto"
 	_utils "common/utils"
 	"context"
+	notipb "pb/types/notification"
+
 	"noti/internal/domain"
 	"noti/internal/dto"
 	"noti/internal/enums"
 	"noti/internal/usecase"
-	notipb "pb/types/notification"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -141,8 +142,8 @@ func (s *GatewayNotiService) Remove(ctx context.Context, req *notipb.IdRequest) 
 func (s *GatewayNotiService) List(ctx context.Context, req *notipb.ListRequest) (*notipb.ListResponse, error) {
 	query := dto.SearchNotiRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		IsRead: &req.IsRead,
 	}
@@ -162,6 +163,7 @@ func (s *GatewayNotiService) List(ctx context.Context, req *notipb.ListRequest) 
 func (s *GatewayNotiService) PushByToken(ctx context.Context, req *notipb.PushTokenRequest) (*notipb.PushResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushByToken not implemented")
 }
+
 func (s *GatewayNotiService) PushByTopic(ctx context.Context, req *notipb.PushTopicRequest) (*notipb.PushResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushByTopic not implemented")
 }

@@ -183,8 +183,8 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 // @Router /organization/members/me [get]
 func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Context, req *sharepb.FriendListRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
 	dto := _dto.Pagable{
-		Page: int(req.Page),
-		Size: int(req.Size),
+		Page: uint32(req.Page),
+		Size: uint32(req.Size),
 	}
 	members, total, err := h.OrganizationMemberUsecase.GetCurrentOrganizationMember(ctx, dto, req.DealId)
 	if err != nil {

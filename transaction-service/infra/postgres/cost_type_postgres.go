@@ -3,6 +3,7 @@ package postgre
 import (
 	"context"
 	"time"
+
 	"tx/internal/domain/entity"
 	"tx/internal/dto"
 	"tx/internal/repo"
@@ -46,7 +47,7 @@ func (r *CostTypePostgreRepo) List(ctx context.Context, search *dto.CostTypeSear
 
 	err := query.
 		Offset(search.GetOffset()).
-		Limit(search.GetSize()).
+		Limit(int(search.GetSize())).
 		Find(&costTypes).Error
 	return costTypes, err
 }

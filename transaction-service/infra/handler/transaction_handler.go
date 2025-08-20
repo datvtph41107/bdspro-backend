@@ -6,6 +6,7 @@ import (
 	"context"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
+
 	"tx/infra/client"
 	"tx/infra/mapper"
 	tx_domain "tx/internal/domain"
@@ -95,8 +96,8 @@ func (h *TransactionHandler) ApproveTransaction(ctx context.Context, req *sharep
 func (h *TransactionHandler) ListTransactions(ctx context.Context, req *transactionpb.TransactionListRequest) (*transactionpb.TransactionListResponse, error) {
 	transactions, total, err := h.TransactionUsecase.ListTransactions(ctx, &dto.TransactionFilters{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -171,8 +172,8 @@ func (h *TransactionHandler) CreateProductAction(ctx context.Context, req *trans
 func (h *TransactionHandler) ListProductTransactions(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.TransactionListResponse, error) {
 	filters := &dto.TransactionFilters{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		ToID: &req.Id,
 		ToOf: enums.EOwnerDeal,

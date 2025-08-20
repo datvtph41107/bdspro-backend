@@ -3,20 +3,21 @@ package routes
 import (
 	"common/case/crud"
 	_jwt "common/jwt"
+	"net/http"
+
 	"membership/models"
 	"membership/services"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PlanRouter struct {
-	crud.BaseRouter[models.Plan]
+	crud.BaseRouter[models.Plan, crud.IBaseRepo[models.Plan]]
 }
 
 func NewPlanRouter(service *services.PlanService) *PlanRouter {
 	return &PlanRouter{
-		BaseRouter: crud.BaseRouter[models.Plan]{
+		BaseRouter: crud.BaseRouter[models.Plan, crud.IBaseRepo[models.Plan]]{
 			Service: service.BaseService,
 		},
 	}

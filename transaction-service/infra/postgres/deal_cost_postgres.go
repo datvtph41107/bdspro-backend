@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+
 	"tx/internal/domain/entity"
 	"tx/internal/dto"
 	"tx/internal/enums"
@@ -53,7 +54,7 @@ func (r *DealCostPostgreRepo) ListByDealID(ctx context.Context, search *dto.Deal
 
 	if search.Page > 0 && search.Size > 0 {
 		offset := (search.Page - 1) * search.Size
-		query = query.Offset(offset).Limit(search.Size)
+		query = query.Offset(int(offset)).Limit(int(search.Size))
 	}
 
 	err := query.Find(&costs).Error
@@ -78,7 +79,6 @@ func (r *DealCostPostgreRepo) GetStatisticsByDealID(ctx context.Context, dealID 
 		Where("deal_id = ? AND deal_costs.deleted_at IS NULL AND cost_types.cost_type = ?", dealID, enums.ECostTypeExpense).
 		// Group("status").
 		Scan(&costStats).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,6 @@ func (r *DealCostPostgreRepo) GetStatisticsByDealID(ctx context.Context, dealID 
 		Where("deal_id = ? AND deal_costs.deleted_at IS NULL AND cost_types.cost_type = ?", dealID, enums.ECostTypeRevenue).
 		// Group("status").
 		Scan(&revenueStats).Error
-
 	if err != nil {
 		return nil, err
 	}

@@ -35,8 +35,8 @@ func (s *PipelineService) Search(ctx context.Context, req *crmpb.PipelineSearchR
 	pipelines, total, err := s.UC.Search(ctx,
 		dto.PipelineSearchDTO{
 			Pagable: _dto.Pagable{
-				Page: int(req.Page),
-				Size: int(req.Size),
+				Page: uint32(req.Page),
+				Size: uint32(req.Size),
 			},
 			PipelineName: req.PipelineName,
 			Active:       req.Active,

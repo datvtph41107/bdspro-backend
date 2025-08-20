@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	pb_social "pb/types/social"
+
 	"social/infra/mapper"
 	"social/internal/domain"
 	"social/internal/dto"
@@ -62,8 +63,8 @@ func (s *ReportService) DeleteReportReason(ctx context.Context, req *pb_social.R
 func (s *ReportService) GetReportReason(ctx context.Context, req *pb_social.ReportReasonRequest) (*pb_social.ReportReasonResponse, error) {
 	dto := &dto.ReportReasonRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		ReasonName: req.ReasonName,
 	}
@@ -147,8 +148,8 @@ func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportR
 func (s *ReportService) GetReportMe(ctx context.Context, req *pb_social.ReportMessageRequest) (*pb_social.ReportMessageResponse, error) {
 	dto := &dto.ReportReasonRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	reports, total, err := s.reportUsecase.GetReportMe(ctx, dto)

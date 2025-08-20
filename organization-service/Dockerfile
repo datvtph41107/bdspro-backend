@@ -6,4 +6,4 @@ COPY main .
 
 ENV APP_ENV=release
 
-CMD ["./main", "grpc-server"]
+CMD ["./main", "grpc"]

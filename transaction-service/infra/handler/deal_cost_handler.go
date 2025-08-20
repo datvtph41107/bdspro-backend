@@ -5,6 +5,7 @@ import (
 	"context"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
+
 	"tx/infra/mapper"
 	"tx/internal/dto"
 	transaction_usecase "tx/internal/usecases"
@@ -100,8 +101,8 @@ func (h *DealCostHandler) Detail(ctx context.Context, req *sharepb.IdRequest) (*
 func (h *DealCostHandler) Search(ctx context.Context, req *transactionpb.DealCostSearchDTO) (*transactionpb.DealCostListDTO, error) {
 	search := &dto.DealCostSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		DealId: req.DealId,
 	}

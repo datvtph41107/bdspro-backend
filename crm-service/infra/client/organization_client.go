@@ -45,11 +45,11 @@ func (c *OrganizationClient) MapDealMemberToFriend(ctx context.Context, dealId u
 	for _, friend := range userPbs {
 		if friend.CreatedBy == profileId {
 			if profile, ok := dealMemberMap[friend.ReceiverId]; ok {
-				friend.DealInvitation = profile
+				friend.DealMember = profile
 			}
 		} else {
 			if profile, ok := dealMemberMap[friend.CreatedBy]; ok {
-				friend.DealInvitation = profile
+				friend.DealMember = profile
 			}
 		}
 	}

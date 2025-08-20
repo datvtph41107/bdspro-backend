@@ -3,11 +3,12 @@ package grpc_service
 import (
 	_dto "common/dto"
 	"context"
+	crmpb "pb/types/crm"
+
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
 )
 
 type SharingAccessService struct {
@@ -58,8 +59,8 @@ func (s *SharingAccessService) Share(ctx context.Context, req *crmpb.SharingRequ
 func (s *SharingAccessService) List(ctx context.Context, req *crmpb.SharingListRequest) (*crmpb.SharingListResponse, error) {
 	query := dto.SharingAccessSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	sharing, total, err := s.UC.List(ctx, req.ContactId, &query)

@@ -696,8 +696,8 @@
         "createdAt": {
           "type": "string"
         },
-        "dealInvitation": {
-          "$ref": "#/definitions/organizationpbDealInvitationMember"
+        "dealMember": {
+          "$ref": "#/definitions/organizationpbDealMember"
         },
         "organizationMember": {
           "$ref": "#/definitions/organizationpbOrganizationMember"
@@ -791,6 +791,54 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbDealMember": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        },
+        "memberName": {
+          "type": "string",
+          "title": "profile"
+        },
+        "memberAvatar": {
+          "type": "string"
+        },
+        "memberPhone": {
+          "type": "string"
+        },
+        "memberVerified": {
+          "type": "boolean"
         }
       }
     },

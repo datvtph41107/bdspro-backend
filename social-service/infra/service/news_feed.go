@@ -10,6 +10,7 @@ import (
 	"net/http"
 	sharepb "pb/types/shared"
 	socialpb "pb/types/social"
+
 	"social/infra/client"
 	"social/infra/mapper"
 	"social/internal/domain"
@@ -110,8 +111,8 @@ func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *sharepb.IdReq
 func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *socialpb.NewsFeedGlobalSearch) (*socialpb.ListNewsFeed, error) {
 	postSearch := &dto.NewsFeedGlobalSearch{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		Text:   req.Text,
 		IsReel: req.IsReel,
@@ -190,8 +191,8 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *socialpb.Share
 // @Router /news-feed/public/reel [get]
 func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRequest) (*socialpb.ListReelResponse, error) {
 	reqPagable := _dto.Pagable{
-		Page: int(req.Page),
-		Size: int(req.Size),
+		Page: uint32(req.Page),
+		Size: uint32(req.Size),
 	}
 	newsFeed, count, err := s.newsFeedUsecase.GetReelNewsFeed(ctx, reqPagable)
 	if err != nil {
@@ -220,8 +221,8 @@ func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRe
 func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *socialpb.NewsFeedSearch) (*socialpb.ListNewsFeed, error) {
 	postSearch := &dto.NewsFeedGlobalSearch{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		Text:   req.Text,
 		IsReel: req.IsReel,

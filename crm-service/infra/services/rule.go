@@ -4,13 +4,14 @@ import (
 	_dto "common/dto"
 	_routes "common/routes"
 	"context"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+
 	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
 )
 
 type RuleService struct {
@@ -37,8 +38,8 @@ func NewRuleService(uc *usecase.RuleUsecase, userClient *client.UserClient) *Rul
 func (s *RuleService) Search(ctx context.Context, req *crmpb.RuleSearchRequest) (*crmpb.RuleListDTO, error) {
 	dto := dto.RuleSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		RuleName: req.Name,
 	}

@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+
 	"social/infra/client"
 	"social/internal/domain"
 	"social/internal/dto"
@@ -100,8 +101,8 @@ func (s *CommentService) DeleteComment(ctx context.Context, req *pb_social.Comme
 func (s *CommentService) GetListComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentListResponse, error) {
 	dto := &dto.CommentRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		NewsFeedID: req.NewsFeedId,
 		ParentID:   req.ParentId,

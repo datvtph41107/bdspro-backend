@@ -370,11 +370,11 @@ func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req 
 	}
 
 	pagable := _dto.Pagable{
-		Page: int(req.GetPage()),
-		Size: int(req.GetSize()),
+		Page: req.GetPage(),
+		Size: req.GetSize(),
 	}
 
-	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, pagable.GetPage(), pagable.GetSize())
+	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
 		return nil, err
 	}
@@ -592,8 +592,8 @@ func (h *GroupDealHandler) SaveDealProduct(ctx context.Context, req *organizatio
 // @Router /deal/{dealId}/products [get]
 func (h *GroupDealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetDealProductsResponse, error) {
 	pagable := _dto.Pagable{
-		Page: int(req.GetPage()),
-		Size: int(req.GetSize()),
+		Page: req.GetPage(),
+		Size: req.GetSize(),
 	}
 	products, err := h.DealUsecase.GetDealProducts(ctx, req.Id, pagable)
 	if err != nil {

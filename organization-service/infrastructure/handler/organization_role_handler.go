@@ -205,8 +205,8 @@ func (h *OrganizationRoleHandler) CreateNewRoleWithMembers(ctx context.Context, 
 // @Router /organization/roles/current [get]
 func (h *OrganizationRoleHandler) GetRolesCurrent(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetRolesResponse, error) {
 	dto := _dto.Pagable{
-		Page: int(req.Page),
-		Size: int(req.Size),
+		Page: uint32(req.Page),
+		Size: uint32(req.Size),
 	}
 
 	roles, total, err := h.OrganizationRoleUsecase.GetRoleCurrent(ctx, dto)

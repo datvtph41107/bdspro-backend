@@ -10,7 +10,7 @@ import (
 
 type OrganizationClient interface {
 	GetDealById(ctx context.Context, dealId uint64) (*organizationpb.GroupDeal, error)
-	GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error)
+	// GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error)
 	GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealMember, error)
 }
 
@@ -28,9 +28,9 @@ func (c *organizationClient) GetDealById(ctx context.Context, dealId uint64) (*o
 	return c.client.GetDealById(ctx, dealId)
 }
 
-func (c *organizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
-	return c.client.GetDealTransactionsByIds(ctx, dealIds)
-}
+// func (c *organizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
+// 	return c.client.GetDealTransactionsByIds(ctx, dealIds)
+// }
 
 func (c *organizationClient) GetDealInvitationsByIds(ctx context.Context, dealId uint64, ids []uint64) (map[uint64]*organizationpb.DealMember, error) {
 	return c.client.GetDealMemberByIds(ctx, dealId, ids)

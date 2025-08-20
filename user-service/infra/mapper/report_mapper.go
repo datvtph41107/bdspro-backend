@@ -3,6 +3,7 @@ package mapper
 import (
 	_utils "common/utils"
 	userpb "pb/types/user"
+
 	"user/enums"
 	"user/internal/dto"
 	user_model "user/internal/models/user"
@@ -130,8 +131,8 @@ func (m *ReportMapper) PbToListRequest(req *userpb.GetReportsRequest) dto.Report
 		listReq.ReasonID = &reasonId
 	}
 
-	listReq.Page = int(req.Page)
-	listReq.Size = int(req.Size)
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
 
 	return listReq
 }

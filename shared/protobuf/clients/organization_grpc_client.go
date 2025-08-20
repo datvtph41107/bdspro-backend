@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	organizationpb "pb/types/organization"
 	"time"
+
+	organizationpb "pb/types/organization"
 
 	"google.golang.org/grpc"
 )
@@ -112,83 +113,83 @@ func (c *OrganizationClient) GetDealMemberByIds(ctx context.Context, dealId uint
 	return dealMemberMap, nil
 }
 
-// func (c *OrganizationClient) GetGroupMemberByIds(ctx context.Context, groupId uint64, userIds []uint64) (map[uint64]*organizationpb.GroupMember, error) {
-// 	if c.client == nil {
-// 		return nil, errors.New("organization client not avaiable")
-// 	}
+func (c *OrganizationClient) GetGroupMemberByIds(ctx context.Context, groupId uint64, userIds []uint64) (map[uint64]*organizationpb.GroupMember, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
 
-// 	groupMembers, err := c.client.GetGroupMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
-// 		GroupId: groupId,
-// 		Ids:     userIds,
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	groupMembers, err := c.Client.GetGroupMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: groupId,
+		Ids:     userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-// 	groupMemberMap := make(map[uint64]*organizationpb.GroupMember)
-// 	for _, groupMember := range groupMembers.Data {
-// 		groupMemberMap[uint64(groupMember.UserId)] = groupMember
-// 	}
+	groupMemberMap := make(map[uint64]*organizationpb.GroupMember)
+	for _, groupMember := range groupMembers.Data {
+		groupMemberMap[uint64(groupMember.UserId)] = groupMember
+	}
 
-// 	return groupMemberMap, nil
-// }
+	return groupMemberMap, nil
+}
 
-// func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, userIds []uint64) (map[uint64]*organizationpb.OrganizationMember, error) {
-// 	if c.client == nil {
-// 		return nil, errors.New("organization client not avaiable")
-// 	}
+func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, userIds []uint64) (map[uint64]*organizationpb.OrganizationMember, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
 
-// 	organizationMembers, err := c.client.GetOrganizationMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
-// 		GroupId: organizationId,
-// 		Ids:     userIds,
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	organizationMembers, err := c.Client.GetOrganizationMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: organizationId,
+		Ids:     userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-// 	organizationMemberMap := make(map[uint64]*organizationpb.OrganizationMember)
-// 	for _, organizationMember := range organizationMembers.Data {
-// 		organizationMemberMap[uint64(organizationMember.UserId)] = organizationMember
-// 	}
+	organizationMemberMap := make(map[uint64]*organizationpb.OrganizationMember)
+	for _, organizationMember := range organizationMembers.Data {
+		organizationMemberMap[uint64(organizationMember.UserId)] = organizationMember
+	}
 
-// 	return organizationMemberMap, nil
-// }
+	return organizationMemberMap, nil
+}
 
-// func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {
-// 	if c.client == nil {
-// 		return nil, errors.New("organization client not avaiable")
-// 	}
+func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
 
-// 	users, err := c.client.CheckUsersInOrganization(ctx, &organizationpb.CheckUsersInOrganizationRequest{
-// 		OrganizationId: organizationID,
-// 		UserIds:        userIds,
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	users, err := c.Client.CheckUsersInOrganization(ctx, &organizationpb.CheckUsersInOrganizationRequest{
+		OrganizationId: organizationID,
+		UserIds:        userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-// 	return users.Data, nil
-// }
+	return users.Data, nil
+}
 
-// func (c *OrganizationClient) GetDealById(ctx context.Context, dealId uint64) (*organizationpb.GroupDeal, error) {
-// 	if c.client == nil {
-// 		return nil, errors.New("organization client not avaiable")
-// 	}
+func (c *OrganizationClient) GetDealById(ctx context.Context, dealId uint64) (*organizationpb.GroupDeal, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
 
-// 	deal, err := c.client.GetDealById(ctx, &organizationpb.GetDealByIdRequest{Id: dealId})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	deal, err := c.Client.GetDealById(ctx, &organizationpb.GetDealByIdRequest{Id: dealId})
+	if err != nil {
+		return nil, err
+	}
 
-// 	return deal.Deal, nil
-// }
+	return deal.Deal, nil
+}
 
 // func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
-// 	if c.client == nil {
+// 	if c.Client == nil {
 // 		return nil, errors.New("organization client not avaiable")
 // 	}
 
-// 	dealTransactions, err := c.client.GetDealTransactionsByIds(ctx, &organizationpb.GetDealTransactionsByIdsRequest{Ids: dealIds})
+// 	dealTransactions, err := c.Client.GetDealTransactionsByIds(ctx, &organizationpb.GetDealTransactionsByIdsRequest{Ids: dealIds})
 // 	if err != nil {
 // 		return nil, err
 // 	}

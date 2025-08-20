@@ -112,7 +112,7 @@ func (u *organizationRoleUsecase) GetRoleCurrent(ctx context.Context, dto _dto.P
 	// if !hasRole {
 	// 	return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	// }
-	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), dto.GetPage(), dto.GetSize())
+	roles, total, err := u.organizationRoleRepository.FindByOrganizationIdWithPagination(ctx, uint32(organizationId), int(dto.GetPage()), int(dto.GetSize()))
 	if err != nil {
 		return nil, 0, err
 	}

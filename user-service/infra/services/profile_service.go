@@ -10,6 +10,7 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
+
 	"user/infra/client"
 	"user/infra/mapper"
 	user_repo "user/infra/repo"
@@ -224,8 +225,8 @@ func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoReq
 
 func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userpb.SearchProfilePublicRequest) (*userpb.SearchProfilePublicResponse, error) {
 	pageable := _dto.Pagable{
-		Page: int(req.Page),
-		Size: int(req.Size),
+		Page: uint32(req.Page),
+		Size: uint32(req.Size),
 	}
 	results, total, err := s.Profile.SearchProfilePublic(ctx, req, pageable)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 type AppointmentTransformer interface {
 	CreateAppointmentRequestToEntity(req *appointmentpb.CreateAppointmentRequest) *entity.Appointment
 	UpdateAppointmentRequestToEntity(req *appointmentpb.UpdateAppointmentRequest) *entity.Appointment
-	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*sharepb.ProfileItem) *appointmentpb.Appointment
+	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, participants []*sharepb.ProfileItem) *appointmentpb.Appointment
 	EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.ListAppointmentsResponse
 }
 
@@ -66,7 +66,7 @@ func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *appointme
 	}
 }
 
-func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, dealTransactions []*organizationpb.DealTransactionResponse, participants []*sharepb.ProfileItem) *appointmentpb.Appointment {
+func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*pb_bdspro.ProductAttachment, participants []*sharepb.ProfileItem) *appointmentpb.Appointment {
 	return &appointmentpb.Appointment{
 		Id:               appointment.Id,
 		Title:            appointment.Title,
@@ -84,15 +84,15 @@ func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *entity
 		TransactionIds:   appointment.TransactionIds,
 		Deal:             deal,
 		Products:         products,
-		DealTransactions: dealTransactions,
-		Participants:     participants,
+		// DealTransactions: dealTransactions,
+		Participants: participants,
 	}
 }
 
 func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.ListAppointmentsResponse {
 	appointmentsResponse := make([]*appointmentpb.Appointment, len(appointments))
 	for i, appointment := range appointments {
-		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.DealTransactions, appointment.Participants)
+		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants)
 	}
 	return &appointmentpb.ListAppointmentsResponse{
 		Data:  appointmentsResponse,

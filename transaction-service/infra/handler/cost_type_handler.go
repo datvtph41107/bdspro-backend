@@ -5,6 +5,7 @@ import (
 	"context"
 	sharedpb "pb/types/shared"
 	transactionpb "pb/types/transaction"
+
 	"tx/infra/mapper"
 	"tx/internal/dto"
 	transaction_usecase "tx/internal/usecases"
@@ -84,8 +85,8 @@ func (h *CostTypeHandler) Delete(ctx context.Context, req *sharedpb.IdRequest) (
 func (h *CostTypeHandler) List(ctx context.Context, req *transactionpb.CostTypeSearchDTO) (*transactionpb.CostTypeListDTO, error) {
 	search := &dto.CostTypeSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		TypeName: req.TypeName,
 		CostType: req.CostType,

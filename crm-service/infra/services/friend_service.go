@@ -3,6 +3,7 @@ package grpc_service
 import (
 	_dto "common/dto"
 	"context"
+	"errors"
 	"fmt"
 	crmpb "pb/types/crm"
 	organizationpb "pb/types/organization"
@@ -14,7 +15,7 @@ import (
 	"crm/infra/mapper"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	"errors"
+	sharepb "pb/types/shared"
 )
 
 type FriendService struct {
@@ -28,7 +29,8 @@ type FriendService struct {
 func NewFriendService(uc *usecase.FriendUsecase,
 	userClient *client.UserClient,
 	organizationClient *client.OrganizationClient,
-	friendMapper *mapper.FriendMapper) *FriendService {
+	friendMapper *mapper.FriendMapper,
+) *FriendService {
 	return &FriendService{
 		UC:                 uc,
 		userClient:         userClient,
@@ -43,17 +45,17 @@ func NewFriendService(uc *usecase.FriendUsecase,
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param text query crmpb.FriendListRequest false "Tên hoặc số điện thoại"
+// @Param text query commonpb.FriendListRequest false "Tên hoặc số điện thoại"
 // @Success 200 {array} data.FriendDTO "Danh sách bạn bè"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/list [get]
-func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendProfileListResponse, error) {
+func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendProfileListResponse, error) {
 	query := data.FriendRequest{
 		Text: strings.TrimSpace(strings.ToLower(req.Text)),
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	result, total, err := s.UC.FriendList(ctx, query)
@@ -114,15 +116,15 @@ func (s *FriendService) FriendList(ctx context.Context, req *crmpb.FriendListReq
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/with-member [get]
-func (s *FriendService) FriendListWithMember(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+func (s *FriendService) FriendListWithMember(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	// if req.DealId == nil {
 	// 	return nil, errors.New("dealId is required")
 	// }
 	query := data.FriendRequest{
 		Text: strings.TrimSpace(strings.ToLower(req.Text)),
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	result, total, err := s.UC.FriendList(ctx, query)
@@ -158,15 +160,15 @@ func (s *FriendService) FriendListWithMember(ctx context.Context, req *crmpb.Fri
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/with-lead [get]
-func (s *FriendService) FriendListWithLead(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+func (s *FriendService) FriendListWithLead(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	if req.DealId == nil {
 		return nil, errors.New("dealId is required")
 	}
 	query := data.FriendRequest{
 		Text: strings.TrimSpace(strings.ToLower(req.Text)),
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	result, total, err := s.UC.FriendList(ctx, query)
@@ -193,15 +195,15 @@ func (s *FriendService) FriendListWithLead(ctx context.Context, req *crmpb.Frien
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/with-organization [get]
-func (s *FriendService) FriendListWithOrganization(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+func (s *FriendService) FriendListWithOrganization(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	if req.OrganizationId == nil {
 		return nil, errors.New("organizationId is required")
 	}
 	query := data.FriendRequest{
 		Text: strings.TrimSpace(strings.ToLower(req.Text)),
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	result, total, err := s.UC.FriendList(ctx, query)
@@ -313,7 +315,7 @@ func (s *FriendService) FriendReject(ctx context.Context, req *sharedpb.IdReques
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/request/sent [get]
-func (s *FriendService) FriendSent(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+func (s *FriendService) FriendSent(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	query := data.FriendDTO{
 		Text: &req.Text,
 	}
@@ -337,7 +339,7 @@ func (s *FriendService) FriendSent(ctx context.Context, req *crmpb.FriendListReq
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/request/received [get]
-func (s *FriendService) FriendReceived(ctx context.Context, req *crmpb.FriendListRequest) (*crmpb.FriendListResponse, error) {
+func (s *FriendService) FriendReceived(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	query := data.FriendDTO{
 		Text: &req.Text,
 	}

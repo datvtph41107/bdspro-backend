@@ -3,13 +3,14 @@ package grpc_service
 import (
 	_dto "common/dto"
 	"context"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+
 	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,11 +56,10 @@ func NewContactService(
 // @Param appInstalled query bool false "Đã cài app"
 // @Router /contact/list/{ownerType} [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
-
 	contacts, total, err := s.UC.Search(ctx, enums.EOwnerType(req.OwnerType), dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		Text:         req.Text,
 		FriendStatus: req.FriendStatus,

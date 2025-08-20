@@ -3,6 +3,7 @@ package postgre
 import (
 	_dto "common/dto"
 	"context"
+
 	"social/internal/domain"
 	"social/internal/enums"
 
@@ -47,7 +48,7 @@ func (r *PostgreReport) GetByCreatedBy(ctx context.Context, createdBy uint64, dt
 	if err := r.db.WithContext(ctx).Model(&domain.Report{}).
 		Where("created_by = ? AND deleted_at IS NULL", createdBy).
 		Offset(dto.GetOffset()).
-		Limit(dto.GetSize()).
+		Limit(int(dto.GetSize())).
 		Find(&reports).Error; err != nil {
 		return nil, 0, err
 	}

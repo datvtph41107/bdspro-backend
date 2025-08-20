@@ -5,13 +5,14 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+
 	"crm/infra/client"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -68,8 +69,8 @@ func (s *LeadService) Search(ctx context.Context, req *crmpb.LeadSearchRequest) 
 	}
 	dto := dto.LeadSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		Phone:           req.Phone,
 		FullName:        req.FullName,
@@ -279,7 +280,7 @@ func (s *LeadService) AssignCrm(ctx context.Context, req *crmpb.LeadAssignCrmReq
 func (s *LeadService) Manager(ctx context.Context, req *crmpb.LeadManagerRequest) (*crmpb.LeadManagerResponse, error) {
 	dto := dto.LeadSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
+			Page: uint32(req.Page),
 			Size: 999,
 		},
 		LastUpdatedAt: _utils.ParseStringToTime(req.LastUpdatedAt),

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"time"
+
 	"user/internal/dto"
 	iusecase "user/internal/interface"
 	user_model "user/internal/models/user"
@@ -123,8 +124,8 @@ func (u *RateUsecase) DeleteRate(ctx context.Context, id uint64) error {
 
 func (u *RateUsecase) GetHistoryRate(ctx context.Context, rateId uint64, page uint32, size uint32) ([]user_model.RateItem, int64, error) {
 	dto := &_dto.Pagable{
-		Page: int(page),
-		Size: int(size),
+		Page: page,
+		Size: size,
 	}
 
 	rates, total, err := u.rateRepo.GetHistoryRate(ctx, rateId, dto)

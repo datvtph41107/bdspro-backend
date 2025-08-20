@@ -3,6 +3,7 @@ package service
 import (
 	_dto "common/dto"
 	"context"
+
 	"noti/infra/mapper"
 	"noti/internal/dto"
 	"noti/internal/usecase"
@@ -35,8 +36,8 @@ func NewHistoryService(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper)
 func (s *HistoryService) Search(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.Search(ctx, req.OwnerId, shared_enum.EOwnerType(req.OwnerType), dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		UserID: req.UserId,
 	})
@@ -67,8 +68,8 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.CrmHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -93,8 +94,8 @@ func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.His
 func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ContactHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -112,8 +113,8 @@ func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb
 func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.AssetHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -131,8 +132,8 @@ func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.H
 func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ProductHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -159,8 +160,8 @@ func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb
 func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ProductChildHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -187,8 +188,8 @@ func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificat
 func (s *HistoryService) RuleEventHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.RuleEventHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -232,8 +233,8 @@ func (s *HistoryService) CreateInternal(ctx context.Context, req *notificationpb
 func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.SearchInternal(ctx, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -258,8 +259,8 @@ func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb
 func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.CampaignHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {
@@ -284,8 +285,8 @@ func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationp
 func (s *HistoryService) PackageHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.PackageHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	})
 	if err != nil {

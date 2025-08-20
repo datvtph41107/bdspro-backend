@@ -51,7 +51,7 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil, nil), nil
+	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil), nil
 }
 
 // @Summary Lấy lịch hẹn
@@ -73,7 +73,7 @@ func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *appointmen
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.DealTransactions, appointment.Participants), nil
+	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants), nil
 }
 
 // @Summary Cập nhật lịch hẹn
@@ -98,7 +98,7 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *appoint
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil, nil), nil
+	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil), nil
 }
 
 // @Summary Xóa lịch hẹn

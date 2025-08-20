@@ -6,12 +6,12 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+
 	"user/internal/dto"
 	user_model "user/internal/models/user"
 )
 
-type RateMapper struct {
-}
+type RateMapper struct{}
 
 func NewRateMapper() *RateMapper {
 	return &RateMapper{}
@@ -110,8 +110,8 @@ func (m *RateMapper) EntityToPbRate(rate *user_model.Rate) *userpb.Rate {
 func (m *RateMapper) PbToEntityRateSearch(req *userpb.GetRateListRequest) *dto.RateSearchDTO {
 	return &dto.RateSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		TargetId:   req.TargetId,
 		TargetType: req.TargetType,

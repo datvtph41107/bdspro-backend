@@ -3,11 +3,12 @@ package grpc_service
 import (
 	_dto "common/dto"
 	"context"
+	crmpb "pb/types/crm"
+
 	"crm/infra/mapper"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
 )
 
 type InvitationInstallService struct {
@@ -67,8 +68,8 @@ func (s *InvitationInstallService) SendInvitation(ctx context.Context, req *crmp
 func (s *InvitationInstallService) ListInvitation(ctx context.Context, req *crmpb.ListInvitationRequest) (*crmpb.ListInvitationResponse, error) {
 	query := dto.ListInvitationRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 	}
 	entities, total, err := s.uc.ListInvitation(ctx, &query)

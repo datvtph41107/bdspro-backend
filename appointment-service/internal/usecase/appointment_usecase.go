@@ -89,6 +89,7 @@ func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[s
 	}
 	return appointmentsDTO, total, nil
 }
+
 func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment *entity.Appointment) (*dto.AppointmentDTO, error) {
 	// Convert IDs once to avoid repeated conversions
 	dealId := uint64(appointment.DealId)
@@ -104,11 +105,11 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 
 	// Make concurrent API calls for better performance
 	type result struct {
-		deal             *organizationpb.GroupDeal
-		products         *pb_bdspro.ProductAttachmentResponse
-		dealTransactions []*organizationpb.DealTransactionResponse
-		participants     []*sharepb.ProfileItem
-		err              error
+		deal     *organizationpb.GroupDeal
+		products *pb_bdspro.ProductAttachmentResponse
+		// dealTransactions []*organizationpb.DealTransactionResponse
+		participants []*sharepb.ProfileItem
+		err          error
 	}
 
 	ch := make(chan result, 4)
@@ -124,10 +125,10 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		ch <- result{products: products, err: err}
 	}()
 
-	go func() {
-		dealTransactions, err := uc.organizationClient.GetDealTransactionsByIds(ctx, []uint64{dealId})
-		ch <- result{dealTransactions: dealTransactions, err: err}
-	}()
+	// go func() {
+	// 	dealTransactions, err := uc.organizationClient.GetDealTransactionsByIds(ctx, []uint64{dealId})
+	// 	ch <- result{dealTransactions: dealTransactions, err: err}
+	// }()
 
 	go func() {
 		participants, err := uc.userClient.GetProfileByIds(ctx, participantIds)
@@ -137,7 +138,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	// Collect results
 	var deal *organizationpb.GroupDeal
 	var products *pb_bdspro.ProductAttachmentResponse
-	var dealTransactions []*organizationpb.DealTransactionResponse
+	// var dealTransactions []*organizationpb.DealTransactionResponse
 	var participants []*sharepb.ProfileItem
 
 	for i := 0; i < 4; i++ {
@@ -151,9 +152,9 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		if res.products != nil {
 			products = res.products
 		}
-		if res.dealTransactions != nil {
-			dealTransactions = res.dealTransactions
-		}
+		// if res.dealTransactions != nil {
+		// 	dealTransactions = res.dealTransactions
+		// }
 		if res.participants != nil {
 			participants = res.participants
 		}
@@ -166,10 +167,10 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}
 
 	out := &dto.AppointmentDTO{
-		Appointment:      appointment,
-		Deal:             deal,
-		DealTransactions: dealTransactions,
-		Participants:     participantsArray,
+		Appointment: appointment,
+		Deal:        deal,
+		// DealTransactions: dealTransactions,
+		Participants: participantsArray,
 	}
 
 	if products != nil {
@@ -177,5 +178,4 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}
 
 	return out, nil
-
 }

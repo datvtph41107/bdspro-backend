@@ -6,8 +6,10 @@ SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
 PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/config.yml)
 
-@echo "SERVICE = $(SERVICE)"
-@echo "PORT = $(PORT)"
+# Debug info
+debug-info:
+	@echo "SERVICE = $(SERVICE)"
+	@echo "PORT = $(PORT)"
 
 run-dev:
 	@lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
@@ -84,55 +86,62 @@ init:
 	$(CD_ROOT) && cd bdspro-service && go mod tidy
 	$(CD_ROOT) && cd crm-service && go mod tidy
 	$(CD_ROOT) && cd marketing-service && go mod tidy
+	$(CD_ROOT) && cd auth-service && go mod tidy
+	$(CD_ROOT) && cd transaction-service && go mod tidy
 
-# gateway:
-# 	$(CD_ROOT) && cd gateway-service && exec go run main.go http
-# crm-grpc:
-# 	$(CD_ROOT) && cd crm-service && air grpc
-# bdspro-grpc:
-# 	$(CD_ROOT) && cd bdspro-service && air grpc
-# user-http:
-# 	$(CD_ROOT) && cd user-service && air http
-# user-grpc:
-# 	$(CD_ROOT) && cd user-service && air grpc
-# organization-grpc:
-# 	$(CD_ROOT) && cd organization-service && air grpc-server
-# notification-grpc:
-# 	$(CD_ROOT) && cd gateway-service && go run main.go http
-# bdspro:
-# 	$(CD_ROOT) && cd bdspro-service && go run main.go grpc
-# user-dev:
-# 	$(CD_ROOT) && cd user-service && go run main.go grpc
-# organization:
-# 	$(CD_ROOT) && cd organization-service && go run main.go grpc-server
-# notification:
-# 	$(CD_ROOT) && cd notification-service && air grpc
-# social-grpc:
-# 	$(CD_ROOT) && cd social-service && air grpc
-# appointment-grpc:
-# 	$(CD_ROOT) && cd appointment-service && air grpc
-# appointment:
-# 	$(CD_ROOT) && cd appointment-service && go run main.go grpc
-# chat-http:
-# 	$(CD_ROOT) && cd chat-service && air grpc
-# chat-grpc:
-# 	$(CD_ROOT) && cd chat-service && air grpc
-# relay-grpc:
-# 	$(CD_ROOT) && cd relay-service && air
-# payment-grpc:
-# 	$(CD_ROOT) && cd payment-service && air grpc
-# membership-grpc:
-# 	$(CD_ROOT) && cd membership-service && air grpc
-# file-http:
-# 	$(CD_ROOT) && cd file-service && air http
-# crm:
-# 	$(CD_ROOT) && cd crm-service && go run main.go grpc
-# marketing-grpc:
-# 	$(CD_ROOT) && cd marketing-service && air grpc
-# payment:
-# 	$(CD_ROOT) && cd payment-service && go run main.go grpc
-# transaction:
-# 	$(CD_ROOT) && cd transaction-service && go run main.go grpc
+gateway-http:
+	$(CD_ROOT) && cd gateway-service && air http
+
+crm-grpc:
+	$(CD_ROOT) && cd crm-service && air grpc
+
+bdspro-grpc:
+	$(CD_ROOT) && cd bdspro-service && air grpc
+
+user-http:
+	$(CD_ROOT) && cd user-service && air http
+
+user-grpc:
+	$(CD_ROOT) && cd user-service && air grpc
+
+organization-grpc:
+	$(CD_ROOT) && cd organization-service && air grpc-server
+
+notification-grpc:
+	$(CD_ROOT) && cd notification-service && air grpc
+
+social-grpc:
+	$(CD_ROOT) && cd social-service && air grpc
+
+appointment-grpc:
+	$(CD_ROOT) && cd appointment-service && air grpc
+
+chat-http:
+	$(CD_ROOT) && cd chat-service && air http   
+
+chat-grpc:
+	$(CD_ROOT) && cd chat-service && air grpc
+
+relay-grpc:
+	$(CD_ROOT) && cd relay-service && air
+
+payment-grpc:
+	$(CD_ROOT) && cd payment-service && air grpc
+
+membership-grpc:
+	$(CD_ROOT) && cd membership-service && air grpc
+
+file-http:
+	$(CD_ROOT) && cd file-service && air http
+
+marketing-grpc:
+	$(CD_ROOT) && cd marketing-service && air grpc
+
+transaction-grpc:
+	$(CD_ROOT) && cd transaction-service && air grpc
+
+auth-grpc:
+	$(CD_ROOT) && cd auth-service && air grpc
 
 start-all:
 	@echo "Starting all services..."
@@ -142,16 +151,19 @@ start-all:
 	$(MAKE) bdspro-grpc &
 	$(MAKE) user-http &
 	$(MAKE) user-grpc &
-	$(MAKE) organization &
-	$(MAKE) notification &
-	$(MAKE) social &
-	$(MAKE) appointment &
+	$(MAKE) organization-grpc &
+	$(MAKE) notification-grpc &
+	$(MAKE) social-grpc &
+	$(MAKE) appointment-grpc &
 	$(MAKE) chat-http &
 	$(MAKE) chat-grpc &
 	$(MAKE) relay-grpc &
 	$(MAKE) payment-grpc &
 	$(MAKE) membership-grpc &
 	$(MAKE) file-http &
+	$(MAKE) marketing-grpc &
+	$(MAKE) transaction-grpc &
+	$(MAKE) auth-grpc &
 	@echo "All services started in background. Use 'make stop-all' to stop them."
 	@echo "To see running processes: ps aux | grep air"
 	@echo "To see logs: tail -f */tmp/*.log"
@@ -177,3 +189,5 @@ build-all:
 	$(CD_ROOT) && cd crm-service && go build -o crm-service main.go
 	$(CD_ROOT) && cd marketing-service && go build -o marketing-service main.go
 	$(CD_ROOT) && cd membership-service && go build -o membership-service .
+	$(CD_ROOT) && cd auth-service && go build -o auth-service .
+	$(CD_ROOT) && cd transaction-service && go build -o transaction-service .

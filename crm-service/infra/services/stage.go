@@ -4,11 +4,12 @@ import (
 	_dto "common/dto"
 	_routes "common/routes"
 	"context"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/usecase"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
 )
 
 type StageService struct {
@@ -34,8 +35,8 @@ func NewStageService(uc *usecase.StageUsecase) *StageService {
 func (s *StageService) Search(ctx context.Context, req *crmpb.StageSearchRequest) (*crmpb.StageListDTO, error) {
 	stages, total, err := s.UC.Search(ctx, req.PipelineId, dto.StageSearchDTO{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
 		},
 		StageName: req.StageName,
 	})

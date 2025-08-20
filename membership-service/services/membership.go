@@ -5,11 +5,12 @@ import (
 	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
+	"strconv"
+	"time"
+
 	"membership/data"
 	"membership/models"
 	"membership/repo"
-	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -58,7 +59,7 @@ func (m *MembershipService) CreateOrder(c *gin.Context) (*models.Membership, err
 	}
 
 	profileId := _jwt.GetProfileId(c)
-	plan, _ := m.planRepo.GetByID(memDTO.PlanId)
+	plan, _ := m.planRepo.GetByID(c, memDTO.PlanId)
 	if plan == nil {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -109,12 +110,12 @@ func (m *MembershipService) VerifyOrder(c *gin.Context) (*models.Membership, err
 		}
 	}
 
-	membership, err := m.repo.GetByID(mem.TargetId)
+	membership, err := m.repo.GetByID(c, mem.TargetId)
 	if err != nil {
 		return nil, err
 	}
 
-	plan, _ := m.planRepo.GetByID(membership.PlanId)
+	plan, _ := m.planRepo.GetByID(c, membership.PlanId)
 
 	membership.PaidAt = mem.PaidAt
 	expiredAt := mem.PaidAt.Add(time.Duration(plan.Duration * int64(time.Hour)))
