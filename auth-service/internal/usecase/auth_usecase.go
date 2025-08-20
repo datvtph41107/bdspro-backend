@@ -296,7 +296,8 @@ func (s *AuthUsecase) Logout(c context.Context) (*dto.LogoutResponse, error) {
 
 // Restore khôi phục tài khoản
 func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) (*dto.RestoreAccountResponse, error) {
-	ok, err := s.AuthMethodRepo.ExistsByOAuth(c, query.Phone)
+	existingAuth, err := s.AuthMethodRepo.FindByPhone(c, query.Phone)
+	ok := existingAuth != nil
 	if err != nil {
 		return nil, err
 	}
@@ -315,19 +316,20 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 		UserID:   profileId,
 	}
 
-	if err := s.AuthMethodRepo.Create(c, &e); err != nil {
+	createdAuth, err := s.AuthMethodRepo.Create(c, &e)
+	if err != nil {
 		return nil, err
 	}
 
-	param, _ := s.NewUser(c, e.ID)
+	param, _ := s.NewUser(c, createdAuth.ID)
 	if err := s.OTPRepo.CreateOTP(c, param.OTP); err != nil {
 		return nil, err
 	}
 
 	return &dto.RestoreAccountResponse{
-		AuthId:   e.ID,
-		Provider: e.Provider,
-		OAuthId:  e.OAuthID,
+		AuthId:   createdAuth.ID,
+		Provider: createdAuth.Provider,
+		OAuthId:  createdAuth.OAuthID,
 	}, nil
 }
 
@@ -371,12 +373,13 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	}
 
 	// Lưu vào database
-	if err := s.AuthMethodRepo.Create(c, e); err != nil {
+	createdAuth, err := s.AuthMethodRepo.Create(c, e)
+	if err != nil {
 		return nil, err
 	}
 
 	// Tạo AuthParam mới
-	param, err := s.NewUser(c, e.ID)
+	param, err := s.NewUser(c, createdAuth.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +387,7 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	// Gửi OTP trong updateNewOTP luôn
 	s.SendNewOTP(c, param.OTP, dto.Phone)
 
-	return e, nil
+	return createdAuth, nil
 }
 
 func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam, error) {
@@ -636,7 +639,7 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	sessionEntity.Activate = true
 	s.SessionRepo.UpdateSession(c, sessionEntity)
 
-	authEntity, err := s.AuthMethodRepo.GetByID(c, sessionEntity.AuthID)
+	authEntity, err := s.AuthMethodRepo.FindByID(c, sessionEntity.AuthID)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    400,

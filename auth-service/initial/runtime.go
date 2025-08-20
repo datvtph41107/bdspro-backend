@@ -11,14 +11,16 @@ import (
 
 type InitialApp struct {
 	AuthHandler  *handler.AuthHandler
+	AdminHandler *handler.AdminHandler
 	OAuthHandler *handler.OAuthHandler
 	Logger       *flogging.FabricLogger
 }
 
-func NewApp(authHandler *handler.AuthHandler, oauthHandler *handler.OAuthHandler) *InitialApp {
+func NewApp(authHandler *handler.AuthHandler, adminHandler *handler.AdminHandler, oauthHandler *handler.OAuthHandler) *InitialApp {
 	common.LoadConfig(config.EmbeddedConfig)
 	return &InitialApp{
 		AuthHandler:  authHandler,
+		AdminHandler: adminHandler,
 		OAuthHandler: oauthHandler,
 		Logger:       flogging.MustGetLogger(viper.GetString("server.name")),
 	}

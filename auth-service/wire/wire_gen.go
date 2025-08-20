@@ -30,30 +30,36 @@ func InitializeApp() (*initial.InitialApp, error) {
 	broswerCookieProvider := cookie.NewCookieProvider()
 	redisProvider := redis.NewRedisProvider()
 	userClient := client.NewUserClient()
+	authMethodPostgreRepo := postgre.NewAuthMethodPostgreRepo()
+	sessionPostgres := postgre.NewSessionRepository()
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
 	}
-	authMethodPostgres := postgre.NewAuthRepository(db)
-	sessionPostgres := postgre.NewSessionRepository()
 	otpPostgres := postgre.NewOTPRepository(db)
 	statusPostgres := postgre.NewStatusRepository()
 	runtimeProperties := properties.NewRuntimeProperties()
 	otpUsecase := usecase.NewOtpUsecase(otpPostgres, statusPostgres, runtimeProperties)
+	clientConn, err := client.NewGrpcClient()
+	if err != nil {
+		return nil, err
+	}
+	organizationClient := client.NewOrganizationClient(clientConn)
 	httpClient := client.NewHttpClient()
-	organizationClient := client.NewOrganizationClient(httpClient)
 	paymentClient := client.NewPaymentClient(httpClient)
-	authUsecase := usecase.NewAuthService(broswerCookieProvider, redisProvider, userClient, authMethodPostgres, sessionPostgres, otpPostgres, statusPostgres, otpUsecase, organizationClient, paymentClient, runtimeProperties)
+	authUsecase := usecase.NewAuthService(broswerCookieProvider, redisProvider, userClient, authMethodPostgreRepo, sessionPostgres, otpPostgres, statusPostgres, otpUsecase, organizationClient, paymentClient, runtimeProperties)
 	authHandler := handler.NewAuthHandler(authUsecase)
-	oAuthGoogle := oauth.NewGoogleAuthService(httpClient, authUsecase, authMethodPostgres, userClient)
-	zaloAuthService := oauth.NewZaloAuthService(httpClient, authUsecase, authMethodPostgres)
-	facebookAuthService := oauth.NewFacebookAuthService(authUsecase, httpClient, authMethodPostgres)
+	adminUsecase := usecase.NewAdminUsecase(authMethodPostgreRepo, userClient, organizationClient)
+	adminHandler := handler.NewAdminHandler(adminUsecase)
+	oAuthGoogle := oauth.NewGoogleAuthService(httpClient, authUsecase, authMethodPostgreRepo, userClient)
+	zaloAuthService := oauth.NewZaloAuthService(httpClient, authUsecase, authMethodPostgreRepo)
+	facebookAuthService := oauth.NewFacebookAuthService(authUsecase, httpClient, authMethodPostgreRepo)
 	oAuthHandler := handler.NewOAuthRouter(oAuthGoogle, zaloAuthService, facebookAuthService)
-	initialApp := initial.NewApp(authHandler, oAuthHandler)
+	initialApp := initial.NewApp(authHandler, adminHandler, oAuthHandler)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AuthMethodRepository), new(*postgre.AuthMethodPostgres)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), initial.NewApp, handler.NewAuthHandler, postgre.NewAuthRepository, usecase.NewAuthService, cookie.NewCookieProvider, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewHttpClient, handler.NewOAuthRouter, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, client.NewPaymentClient, redis.NewRedisProvider, properties.NewRuntimeProperties, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, domain.NewUserOTPRepository, oauth.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AuthMethodRepository), new(*postgre.AuthMethodPostgreRepo)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), initial.NewApp, handler.NewAuthHandler, handler.NewAdminHandler, postgre.NewAuthMethodPostgreRepo, usecase.NewAuthService, usecase.NewAdminUsecase, cookie.NewCookieProvider, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewHttpClient, client.NewGrpcClient, handler.NewOAuthRouter, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, client.NewPaymentClient, redis.NewRedisProvider, properties.NewRuntimeProperties, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, domain.NewUserOTPRepository, oauth.NewZaloAuthService)
