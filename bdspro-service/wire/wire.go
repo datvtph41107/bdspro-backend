@@ -6,11 +6,12 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"bdspro/config"
-	bdspro_config "bdspro/config"
+	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
+	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
 	bdspro_infra_mapper "bdspro/infra/mapper"
 	bdspro_infra_postgre "bdspro/infra/postgre"
+	bdspro_infra_postgre_admin "bdspro/infra/postgre/admin"
 	bdspro_infra_providers "bdspro/infra/providers"
 	bdspro_infra_router_group "bdspro/infra/router/group"
 	bdspro_infra_router_org "bdspro/infra/router/org"
@@ -18,8 +19,11 @@ import (
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_services "bdspro/infra/services"
 	bdspro_infra_validator "bdspro/infra/validator"
+	bdspro_initial "bdspro/initial"
 	bdspro_internal_repo "bdspro/internal/repo"
+	bdspro_internal_repo_admin "bdspro/internal/repo/admin"
 	bdspro_internal_usecases "bdspro/internal/usecases"
+	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
 )
@@ -29,6 +33,8 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	wire.Bind(new(bdspro_internal_usecases_interface.IChatClient), new(*bdspro_infra_client.ChatClient)),
 	wire.Bind(new(bdspro_internal_usecases_interface.INotificationClient), new(*bdspro_infra_client.NotificationClient)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminProductRepo), new(*bdspro_infra_postgre_admin.AdminProductPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgre_admin.AdminPropertyTypePostgres)),
 	wire.Bind(new(bdspro_internal_repo.AmenityRepo), new(*bdspro_infra_postgre.PostgreAmenity)),
 	wire.Bind(new(bdspro_internal_repo.ApartmentRepo), new(*bdspro_infra_postgre.PostgreApartment)),
 	wire.Bind(new(bdspro_internal_repo.AssetCostRepo), new(*bdspro_infra_postgre.GormAssetCostRepo)),
@@ -60,6 +66,12 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_usecases_interface.IPlanClient), new(*bdspro_infra_providers.MemberPlanProvider)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_services.MemberPlanUsecase)),
 	bdspro_infra_postgre.NewActionRepo,
+	bdspro_infra_handler_admin.NewAdminProductHandler,
+	bdspro_infra_postgre_admin.NewAdminProductPostgres,
+	bdspro_internal_usecases_admin.NewAdminProductUsecase,
+	bdspro_infra_handler_admin.NewAdminPropertyTypeHandler,
+	bdspro_infra_postgre_admin.NewAdminPropertyTypePostgres,
+	bdspro_internal_usecases_admin.NewAdminPropertyTypeUsecase,
 	bdspro_infra_mapper.NewApartmentAttributeMapper,
 	bdspro_infra_mapper.NewApartmentMapper,
 	bdspro_internal_usecases_shared.NewApartmentUsecase,
@@ -85,7 +97,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_services.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_client.NewChatClient,
-	bdspro_config.NewConfigApp,
 	bdspro_infra_services.NewCostDocumentServer,
 	bdspro_internal_usecases.NewCostDocumentUc,
 	bdspro_infra_mapper.NewCostTypeMapper,
@@ -115,6 +126,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_mapper.NewHistoryMapper,
 	bdspro_infra_services.NewIncomeDocumentServer,
 	bdspro_internal_usecases.NewIncomeDocumentUc,
+	bdspro_initial.NewInitialApp,
 	bdspro_infra_router_user.NewListRouter,
 	bdspro_internal_usecases.NewListUsecase,
 	bdspro_infra_providers.NewMemberPlanService,
@@ -153,6 +165,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_services.NewProjectBuildService,
 	bdspro_internal_usecases.NewProjectBuildUsecase,
 	bdspro_infra_mapper.NewProjectMapper,
+	bdspro_infra_mapper.NewPropertyTypeMapper,
 	bdspro_internal_usecases.NewPropertyTypeUsecase,
 	bdspro_infra_mapper.NewPublicMapper,
 	bdspro_infra_router_public.NewPublicRouter,
@@ -184,7 +197,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
 )
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

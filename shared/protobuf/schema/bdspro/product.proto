@@ -265,7 +265,7 @@ message ProductSearch {
 
 message SearchResponse {
   repeated ProductResponse data = 1;
-  uint32 totalElements = 2;
+  int64 totalElements = 2;
 }
 
 message MemberResponse {

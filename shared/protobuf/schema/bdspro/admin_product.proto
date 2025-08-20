@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+import "bdspro/common.proto";
+import "bdspro/product.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service AdminProductService {
+  rpc GetProducts(sharepb.IdRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/products"
+    };
+  };
+  rpc CreateProduct(ProductSaveRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/products"
+      body: "*"
+    };
+  };
+  rpc UpdateProduct(ProductSaveRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/products/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteProduct(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/products/{id}"
+    };
+  };
+}
+
+message ProductRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}

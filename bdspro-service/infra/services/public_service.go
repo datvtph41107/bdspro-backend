@@ -50,7 +50,7 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdsp
 	products := s.ProductMapper.MapProductMarketPbList(result)
 	return &pb_bdspro.ProductMarketResponse{
 		Data:  products,
-		Total: uint32(total),
+		Total: total,
 	}, err
 }
 
@@ -180,8 +180,8 @@ func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.Sea
 func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspro.ProductTotalRequest) (*pb_bdspro.SearchResponse, error) {
 	query := dto.TextSearchRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		Text: req.Text,
 	}
@@ -193,7 +193,7 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 
 	return &pb_bdspro.SearchResponse{
 		Data:          products,
-		TotalElements: uint32(total),
+		TotalElements: total,
 	}, nil
 }
 
@@ -207,8 +207,8 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 func (s *BdsproPublicService) GetProjectBuild(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
 	query := dto.TextSearchRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		Text: req.Text,
 	}

@@ -7,7 +7,6 @@ import "bdspro/project.proto";
 import "bdspro/developer.proto";
 import "bdspro/amenity.proto";
 import "bdspro/doc_type.proto";
-import "bdspro/property_type.proto";
 import "bdspro/region.proto";
 import "bdspro/deposite.proto";
 import "bdspro/apartment.proto";
@@ -108,7 +107,7 @@ message ProductResponse {
     optional uint64 parentId = 2;
     optional uint64 assetId = 3;
     optional uint64 propertyTypeId = 4;
-    optional PropertyType propertyType = 5;
+    optional ItemResponse propertyType = 5;
     optional uint64 docTypeId = 6;
     optional DocType docType = 7;
     repeated AmenityItem amenities = 8;
@@ -249,4 +248,9 @@ message ProjectBuild {
     uint64 projectId = 6;
     repeated Apartment apartments = 7;
     repeated ApartmentAttribute attributes = 8;
+}
+
+message ItemResponse {
+    uint64 id = 1;
+    string name = 2;
 }

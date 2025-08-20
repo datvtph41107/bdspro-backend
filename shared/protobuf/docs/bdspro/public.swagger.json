@@ -691,7 +691,7 @@
           }
         },
         "total": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         }
       }

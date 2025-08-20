@@ -286,7 +286,7 @@ func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSe
 	// copier.Copy(&products, &result)
 	return &pb_bdspro.SearchResponse{
 		Data:          products,
-		TotalElements: uint32(total),
+		TotalElements: total,
 	}, nil
 }
 
@@ -539,8 +539,8 @@ func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdReques
 func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.PostResponse, error) {
 	query := dto.PostLinkSearch{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		ProductID: &req.Id,
 	}

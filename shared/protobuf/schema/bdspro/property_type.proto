@@ -2,9 +2,46 @@ syntax = "proto3";
 
 package pb_bdspro;
 
+import "shared/common.proto";
+import "bdspro/public.proto";
+import "google/api/annotations.proto";
+
 option go_package = "pb/types/bdspro;pb_bdspro";
+
+service AdminPropertyTypeService {
+  rpc GetList(SearchQueryRequest) returns (PropertyTypeListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/property-type/list"
+    };
+  };
+  rpc Create(PropertyType) returns (PropertyType) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/property-type"
+      body: "*"
+    };
+  };
+  rpc Update(PropertyType) returns (PropertyType) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/property-type/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/property-type/{id}"
+    };
+  };
+}
 
 message PropertyType {
   uint64 id = 1;
   string name = 2;
+  string createdAt = 3;
+  string updatedAt = 4;
+  bool active = 5;
+}
+
+message PropertyTypeListResponse {
+  repeated PropertyType data = 1;
+  int64 totalElements = 2;
 }

@@ -132,8 +132,8 @@ func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *pb_bdspro.PostDetailR
 func (m *PostMapper) PostSearchRequestToDTO(request *pb_bdspro.PostSearchRequest) *dto.PostSearchRequest {
 	result := &dto.PostSearchRequest{
 		Pagable: _dto.Pagable{
-			Size: int(request.Size),
-			Page: int(request.Page),
+			Size: request.Size,
+			Page: request.Page,
 		},
 		Content:         request.Content,
 		TransactionType: request.TransactionType,

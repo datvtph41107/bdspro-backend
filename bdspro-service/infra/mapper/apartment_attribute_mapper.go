@@ -34,8 +34,8 @@ func (m *ApartmentAttributeMapper) MapApartmentAttributePbItem(apartmentAttribut
 	}
 
 	if apartmentAttribute.NumBedroom != nil {
-		numBedroom := uint32(*apartmentAttribute.NumBedroom)
-		result.NumBedroom = &numBedroom
+		// numBedroom := uint32(*apartmentAttribute.NumBedroom)
+		// result.NumBedroom = &numBedroom
 	}
 	if apartmentAttribute.NumBathroom != nil {
 		numBathroom := uint32(*apartmentAttribute.NumBathroom)

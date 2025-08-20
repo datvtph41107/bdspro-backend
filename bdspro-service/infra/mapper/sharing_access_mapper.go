@@ -76,8 +76,8 @@ func (m *SharingAccessMapper) SharingAccessToSearchPb(entities *[]domain.Sharing
 func (m *SharingAccessMapper) SharingAccessToSearchDTO(pb_dto *pb_bdspro.SharingAccessRequest) *dto.SharingAccessSearch {
 	result := dto.SharingAccessSearch{
 		Pagable: _dto.Pagable{
-			Page: int(pb_dto.Page),
-			Size: int(pb_dto.Size),
+			Page: pb_dto.Page,
+			Size: pb_dto.Size,
 		},
 		DomainID: pb_dto.DomainId,
 		Domain:   enums.EDomainAccess(pb_dto.Domain),

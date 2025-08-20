@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"log"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -9,80 +10,86 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ServiceConfig cấu hình cho từng service
+type ServiceConfig struct {
+	Port int
+	Name string
+}
+
+// servicePorts map tên service với port tương ứng
+var servicePorts = map[string]int{
+	"config":       8003,
+	"user":         8001,
+	"file":         8002,
+	"notification": 8004,
+	"payment":      8005,
+	"crm":          8006,
+	"membership":   8007,
+	"search":       8008,
+	"map":          8101,
+	"bdspro":       8102,
+	"tho247":       8103,
+	"chat":         8104,
+}
+
+// ForwardingRequest xử lý forwarding request đến các service
 func ForwardingRequest(g *Gateway, env string) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		fmt.Println("ProxyRequest")
 		serviceName := c.Param("service")
 		path := c.Param("path")
 
-		serviceIp := 0
-		if serviceName == "config" {
-			serviceIp = 8003
-		} else if serviceName == "user" {
-			serviceIp = 8001
-		} else if serviceName == "file" {
-			serviceIp = 8002
-		} else if serviceName == "notification" {
-			serviceIp = 8004
-		} else if serviceName == "payment" {
-			serviceIp = 8005
-		} else if serviceName == "crm" {
-			serviceIp = 8006
-		} else if serviceName == "membership" {
-			serviceIp = 8007
-		} else if serviceName == "search" {
-			serviceIp = 8008
-		} else if serviceName == "map" {
-			serviceIp = 8101
-		} else if serviceName == "bdspro" {
-			serviceIp = 8102
-		} else if serviceName == "tho247" {
-			serviceIp = 8103
-		} else if serviceName == "chat" {
-			serviceIp = 8104
+		// Lấy port từ config
+		port, exists := servicePorts[serviceName]
+		if !exists {
+			c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Service %s not found", serviceName)})
+			return
 		}
 
-		url := "localhost"
+		// Xác định host dựa trên environment
+		host := "localhost"
 		if env == "release" {
-			url = serviceName
+			host = serviceName
 		}
+
+		// Tạo target URL
 		targetURL := fmt.Sprintf(
 			"http://%s:%d/%s%s?%s",
-			url,
-			serviceIp,
+			host,
+			port,
 			serviceName,
 			path,
 			c.Request.URL.RawQuery,
 		)
 
-		fmt.Println(targetURL)
-		fmt.Println(c.Request.Header)
-		fmt.Println("c.Request.Method", c.Request.Method)
+		log.Printf("Forwarding request to: %s", targetURL)
 
+		// Thực hiện request
 		resp, err := g.Client.R().
 			SetHeaderMultiValues(c.Request.Header).
 			SetBody(c.Request.Body).
 			Execute(c.Request.Method, targetURL)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			log.Printf("Forwarding error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
+		// Xác định content type
 		ext := filepath.Ext(c.Request.URL.Path)
 		contentType := mime.TypeByExtension(ext)
 		if contentType == "" {
 			contentType = "application/json"
 		}
 
-		// ✅ Sao chép tất cả header từ BE -> FE (bao gồm Set-Cookie)
+		// Copy headers từ response
 		for key, values := range resp.Header() {
 			for _, value := range values {
 				c.Writer.Header().Add(key, value)
-				// fmt.Println(key, value, " _HEADER_RESPONSE")
 			}
 		}
+
+		// Trả về response
 		c.Data(resp.StatusCode(), resp.Header().Get("Content-Type"), resp.Body())
 	}
-
 }

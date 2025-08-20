@@ -219,7 +219,7 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	// }
 
 	if product.PropertyType != nil {
-		result.PropertyType = &pb_bdspro.PropertyType{
+		result.PropertyType = &pb_bdspro.ItemResponse{
 			Id:   product.PropertyType.ID,
 			Name: product.PropertyType.Name,
 		}
@@ -504,8 +504,8 @@ func (m *ProductMapper) MapDevideChildRequest(req *pb_bdspro.DevideChildRequest)
 func (m *ProductMapper) MapMarketProductToDTO(req *pb_bdspro.ProductMarketRequest) *dto.ProductSearchRequest {
 	return &dto.ProductSearchRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		Text: req.Text,
 		// ProvinceIds:      []uint64{req.ProvinceId},

@@ -272,8 +272,8 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 
 	err := query.
 		Order("posts.created_at desc").
-		Offset(dto.Page * size).
-		Limit(size).
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
 		Find(&results).Error
 	if err != nil {
 		// Log nếu cần thiết
@@ -314,8 +314,8 @@ func (r *GormPostRepo) Global(ctx context.Context, dto dto.PostSearchRequest) ([
 	}
 	err := query.
 		Order("created_at desc").
-		Offset(dto.Page * size).
-		Limit(size).
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
 		Find(&results).Error
 	if err != nil {
 		// Log nếu cần thiết
@@ -330,8 +330,8 @@ func (r *GormPostRepo) Global(ctx context.Context, dto dto.PostSearchRequest) ([
 func (r *GormPostRepo) SearchLinkToProduct(ctx context.Context, profileId uint64, req *dto.PostLinkSearch) ([]domain.PostItem, error) {
 	searchDto := &dto.PostSearchRequest{
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		ProductID: req.ProductID,
 	}

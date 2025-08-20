@@ -46,6 +46,10 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 			if fieldVal.CanInterface() {
 				data = fieldVal.Interface()
 			}
+		case "TotalElements":
+			if fieldVal.CanInterface() {
+				totalElements = fieldVal.Interface()
+			}
 		case "Total":
 			if fieldVal.CanInterface() {
 				totalElements = fieldVal.Interface()
@@ -55,10 +59,11 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 
 	// fallback default
 	return json.Marshal(map[string]interface{}{
-		"code":    0,
-		"message": "success",
-		"data":    data,
-		"total":   totalElements,
+		"code":          0,
+		"message":       "success",
+		"data":          data,
+		"totalElements": totalElements,
+		"total":         totalElements,
 	})
 }
 

@@ -396,7 +396,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ProductServiceUpdateProductBody"
+              "$ref": "#/definitions/pb_bdsproProductServiceUpdateProductBody"
             }
           }
         ],
@@ -1202,115 +1202,6 @@
         }
       }
     },
-    "ProductServiceUpdateProductBody": {
-      "type": "object",
-      "properties": {
-        "parentId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "area": {
-          "type": "number",
-          "format": "double"
-        },
-        "description": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "propertyTypeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "docTypeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "amenityIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        },
-        "projectId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "provinceId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "districtId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "wardId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "transactionType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
-        },
-        "mediaItems": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
-          }
-        },
-        "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
-        },
-        "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
-        },
-        "googleMapLink": {
-          "type": "string"
-        },
-        "sourceType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "saleStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "rentStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
-        },
-        "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
-        },
-        "saleVisibility": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "rentVisibility": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "ownerType": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "pb_bdsproAmenityItem": {
       "type": "object",
       "properties": {
@@ -1603,6 +1494,18 @@
         "numToilet": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_bdsproItemResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },
@@ -2085,7 +1988,7 @@
           "format": "uint64"
         },
         "propertyType": {
-          "$ref": "#/definitions/pb_bdsproPropertyType"
+          "$ref": "#/definitions/pb_bdsproItemResponse"
         },
         "docTypeId": {
           "type": "string",
@@ -2385,6 +2288,115 @@
         }
       }
     },
+    "pb_bdsproProductServiceUpdateProductBody": {
+      "type": "object",
+      "properties": {
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "amenityIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "priceData": {
+          "$ref": "#/definitions/pb_bdsproProductPrice"
+        },
+        "mediaItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproMediaItem"
+          }
+        },
+        "houseInfo": {
+          "$ref": "#/definitions/pb_bdsproHouseInfo"
+        },
+        "productPrivate": {
+          "$ref": "#/definitions/pb_bdsproProductPrivate"
+        },
+        "googleMapLink": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "post": {
+          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+        },
+        "asset": {
+          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+        },
+        "saleVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "pb_bdsproProject": {
       "type": "object",
       "properties": {
@@ -2436,18 +2448,6 @@
             "type": "object",
             "$ref": "#/definitions/pb_bdsproApartmentAttribute"
           }
-        }
-      }
-    },
-    "pb_bdsproPropertyType": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
         }
       }
     },
@@ -2591,7 +2591,7 @@
           }
         },
         "totalElements": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         }
       }

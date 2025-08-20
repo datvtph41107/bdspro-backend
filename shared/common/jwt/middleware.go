@@ -29,6 +29,10 @@ func isPublicRoute(pubRoutes []string, path string) bool {
 // Middleware để xác thực JWT
 func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
 		fmt.Printf("request: %s\n", c.Request.URL.Path)
 		// fmt.Printf("pubRoutes: %v\n", pubRoutes)
 		// Lấy token từ header Authorization

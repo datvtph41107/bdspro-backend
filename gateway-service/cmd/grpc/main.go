@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// ProfileIDInterceptor xử lý profileID từ metadata
 func ProfileIDInterceptor(
 	ctx context.Context,
 	req interface{},
@@ -29,57 +30,63 @@ func ProfileIDInterceptor(
 ) (interface{}, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return handler(ctx, req) // Không có metadata thì tiếp tục
+		return handler(ctx, req)
 	}
 
 	profileIDList := md.Get("profileid")
 	if len(profileIDList) > 0 {
 		profileIDStr := profileIDList[0]
-
 		profileID, err := strconv.ParseUint(profileIDStr, 10, 64)
 		if err == nil {
-			log.Printf("Gán profileID", profileID)
-			// Gán profileID vào context mới
+			log.Printf("Gán profileID: %d", profileID)
 			ctx = context.WithValue(ctx, "profileId", profileID)
 		}
 	}
 
-	// Gọi handler tiếp theo (controller thực sự)
 	return handler(ctx, req)
 }
 
-// @deprecated
+// GrpcCmd chạy gRPC server
 var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
-	Short: "Run the GRPC server",
+	Short: "Chạy gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		config.LoadConfig()
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
-
 		url := viper.GetString("service.domain")
-		notification_endpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
+		notificationEndpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
+
 		r := gin.Default()
 
-		// 1. gRPC Gateway xử lý mọi route
+		// gRPC Gateway
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler,
 				w http.ResponseWriter, r *http.Request, err error) {
-				log.Printf("Err: %v", err)
+				log.Printf("gRPC Error: %v", err)
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
 		)
+
 		ctx := context.Background()
 		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-		_ = notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notification_endpoint, opts)
 
-		// gRPC Gateway qua Gin
+		// Đăng ký notification service
+		if err := notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationEndpoint, opts); err != nil {
+			log.Printf("Failed to register notification service: %v", err)
+		}
+
+		// Routes
 		r.Any("/v2/*any", gin.WrapH(mux))
 		r.Static("/swagger-doc", "./cmd/grpc/docs")
-		// 3. Swagger UI dùng ginSwagger
+
+		// Swagger UI
 		swaggerURL := ginSwagger.URL("/swagger-doc/swagger.json")
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, swaggerURL))
 
-		r.Run(port)
+		log.Printf("gRPC Gateway server starting on port %s", port)
+		if err := r.Run(port); err != nil {
+			log.Fatalf("gRPC Gateway server failed: %v", err)
+		}
 	},
 }

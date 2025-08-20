@@ -1,14 +1,12 @@
 package crud
 
 import (
-	_routes "common/routes"
-
 	"github.com/gin-gonic/gin"
 )
 
 // BaseRouter là struct chung cho tất cả các router
-type BaseRouter[T any] struct {
-	Service BaseService[T]
+type BaseRouter[T any, R IBaseRepo[T]] struct {
+	Service BaseService[T, R]
 }
 
 // @Summary Tạo mới bản ghi
@@ -19,9 +17,9 @@ type BaseRouter[T any] struct {
 // @Success 200 {object} T
 // @Failure 400 {object} map[string]string
 // @Router /[entity] [post]
-func (r *BaseRouter[T]) Create(c *gin.Context) {
-	entity, err := r.Service.Create(c)
-	_routes.RouteResult(c, entity, err)
+func (r *BaseRouter[T, R]) Create(c *gin.Context) {
+	// entity, err := r.Service.Create(c, entity)
+	// _routes.RouteResult(c, entity, err)
 }
 
 // @Summary Cập nhật bản ghi
@@ -33,9 +31,9 @@ func (r *BaseRouter[T]) Create(c *gin.Context) {
 // @Success 200 {object} T
 // @Failure 400 {object} map[string]string
 // @Router /[entity]/{id} [put]
-func (r *BaseRouter[T]) Update(c *gin.Context) {
-	entity, err := r.Service.Update(c)
-	_routes.RouteResult(c, entity, err)
+func (r *BaseRouter[T, R]) Update(c *gin.Context) {
+	// entity, err := r.Service.Update(c, id, entity)
+	// _routes.RouteResult(c, entity, err)
 }
 
 // @Summary Xóa bản ghi
@@ -44,9 +42,9 @@ func (r *BaseRouter[T]) Update(c *gin.Context) {
 // @Success 200 {object} map[string]bool
 // @Failure 400 {object} map[string]string
 // @Router /[entity]/{id} [delete]
-func (r *BaseRouter[T]) Delete(c *gin.Context) {
-	success, err := r.Service.Delete(c)
-	_routes.RouteResult(c, success, err)
+func (r *BaseRouter[T, R]) Delete(c *gin.Context) {
+	// success, err := r.Service.Delete(c, id)
+	// _routes.RouteResult(c, success, err)
 }
 
 // @Summary Lấy thông tin bản ghi
@@ -55,9 +53,9 @@ func (r *BaseRouter[T]) Delete(c *gin.Context) {
 // @Success 200 {object} T
 // @Failure 400 {object} map[string]string
 // @Router /[entity]/{id} [get]
-func (r *BaseRouter[T]) GetByID(c *gin.Context) {
-	entity, err := r.Service.GetByID(c)
-	_routes.RouteResult(c, entity, err)
+func (r *BaseRouter[T, R]) GetByID(c *gin.Context) {
+	// entity, err := r.Service.GetByID(c, id)
+	// _routes.RouteResult(c, entity, err)
 }
 
 // @Summary Lấy danh sách bản ghi
@@ -65,7 +63,7 @@ func (r *BaseRouter[T]) GetByID(c *gin.Context) {
 // @Success 200 {array} T
 // @Failure 400 {object} map[string]string
 // @Router /[entity] [get]
-func (r *BaseRouter[T]) GetAll(c *gin.Context) {
-	entities, err := r.Service.GetAll(c)
-	_routes.RouteResult(c, entities, err)
+func (r *BaseRouter[T, R]) GetAll(c *gin.Context) {
+	// entities, err := r.Service.GetList(c, pagable)
+	// _routes.RouteResult(c, entities, err)
 }

@@ -16,8 +16,8 @@ func NewPublicMapper() *PublicMapper {
 func (m *PublicMapper) PbToRegionRequest(region *pb_bdspro.SearchQueryRequest) *dto.RegionRequest {
 	result := &dto.RegionRequest{
 		Pagable: _dto.Pagable{
-			Page: int(region.Page),
-			Size: int(region.Size),
+			Page: region.Page,
+			Size: region.Size,
 		},
 		Text: region.Text,
 	}

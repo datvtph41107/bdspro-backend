@@ -3,6 +3,7 @@ syntax = "proto3";
 package pb_bdspro;
 
 import "bdspro/product.proto";
+import "bdspro/common.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 import "google/api/annotations.proto";
@@ -72,7 +73,7 @@ message ProductMarketRequest {
 
 message ProductMarketResponse {
     repeated ProductMarket data = 1;
-    uint32 total = 2;
+    int64 total = 2;
 }
 
 message ProductMarket {
@@ -185,11 +186,6 @@ message ProductMarket {
 // message DocTypeResponse {
 //     repeated DocType data = 1;
 // }
-
-message ItemResponse {
-    uint64 id = 1;
-    string name = 2;
-}
 
 message ListItemResponse {
     repeated ItemResponse data = 1;

@@ -926,6 +926,18 @@
         }
       }
     },
+    "pb_bdsproItemResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "pb_bdsproLegalItem": {
       "type": "object",
       "properties": {
@@ -1103,7 +1115,7 @@
           "format": "uint64"
         },
         "propertyType": {
-          "$ref": "#/definitions/pb_bdsproPropertyType"
+          "$ref": "#/definitions/pb_bdsproItemResponse"
         },
         "docTypeId": {
           "type": "string",
@@ -1341,18 +1353,6 @@
             "type": "object",
             "$ref": "#/definitions/pb_bdsproApartmentAttribute"
           }
-        }
-      }
-    },
-    "pb_bdsproPropertyType": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
         }
       }
     },

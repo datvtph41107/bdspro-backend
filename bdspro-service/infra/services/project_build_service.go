@@ -40,8 +40,8 @@ func (s *ProjectBuildService) GetProjectBuild(ctx context.Context, req *pb_bdspr
 	dto := &dto.TextSearchRequest{
 		Text: req.Text,
 		Pagable: _dto.Pagable{
-			Page: int(req.Page),
-			Size: int(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 	}
 	items, total, err := s.ProjectBuildUsecase.Search(ctx, dto)

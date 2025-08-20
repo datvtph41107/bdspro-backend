@@ -1,19 +1,26 @@
 package _dto
 
+type IPagable interface {
+	GetPage() uint32
+	GetSize() uint32
+	GetOffset() int
+	GetLimit() int
+}
+
 type Pagable struct {
-	Page int    `form:"page"`
-	Size int    `form:"size"`
+	Page uint32 `form:"page"`
+	Size uint32 `form:"size"`
 	Sort string `form:"sort"`
 }
 
-func (p *Pagable) GetPage() int {
+func (p *Pagable) GetPage() uint32 {
 	if p.Page <= 0 {
 		return 0
 	}
 	return p.Page
 }
 
-func (p *Pagable) GetSize() int {
+func (p *Pagable) GetSize() uint32 {
 	if p.Size <= 0 {
 		return 20
 	}
@@ -24,7 +31,7 @@ func (p *Pagable) GetOffset() int {
 	page := p.GetPage()
 	size := p.GetSize()
 
-	return page * size
+	return int(page) * int(size)
 }
 
 func (p *Pagable) GetLimit() int {
@@ -34,5 +41,5 @@ func (p *Pagable) GetLimit() int {
 	if p.Size >= 100 {
 		return 100
 	}
-	return p.Size
+	return int(p.Size)
 }

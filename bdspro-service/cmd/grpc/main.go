@@ -3,6 +3,7 @@ package cmd_grpc
 import (
 	"bdspro/config"
 	"bdspro/db"
+	"bdspro/initial"
 	"bdspro/wire"
 	_middleware "common/middleware"
 	"context"
@@ -52,6 +53,8 @@ var GrpcCmd = &cobra.Command{
 		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalService)
 		pb_bdspro.RegisterProjectBuildServiceServer(s, app.ProjectBuildService)
 		pb_bdspro.RegisterTransactionServiceServer(s, app.TransactionService)
+		pb_bdspro.RegisterAdminProductServiceServer(s, app.AdminProductHandler)
+		pb_bdspro.RegisterAdminPropertyTypeServiceServer(s, app.AdminPropertyTypeHandler)
 
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
@@ -74,7 +77,7 @@ var GrpcCmd = &cobra.Command{
 	},
 }
 
-func startScheduler(app *config.ConfigApp) {
+func startScheduler(app *initial.InitialApp) {
 	log.Printf("startScheduler")
 	now := time.Now()
 	nextHour := now.Truncate(time.Minute).Add(30 * time.Minute) // 30p
