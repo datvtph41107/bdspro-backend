@@ -55,6 +55,7 @@ var GrpcCmd = &cobra.Command{
 		pb_bdspro.RegisterTransactionServiceServer(s, app.TransactionService)
 		pb_bdspro.RegisterAdminProductServiceServer(s, app.AdminProductHandler)
 		pb_bdspro.RegisterAdminPropertyTypeServiceServer(s, app.AdminPropertyTypeHandler)
+		pb_bdspro.RegisterAdminProjectServiceServer(s, app.AdminProjectHandler)
 
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)

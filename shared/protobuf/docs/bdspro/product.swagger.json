@@ -2405,8 +2405,23 @@
           "format": "uint64"
         },
         "name": {
+          "type": "string"
+        },
+        "developerId": {
           "type": "string",
-          "title": "Developer developer = 3;\n string description = 4;\n repeated ProjectBuild builds = 5;"
+          "format": "uint64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
         }
       }
     },

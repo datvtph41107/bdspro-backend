@@ -33,6 +33,7 @@ type InitialApp struct {
 	TransactionService       *service.TransactionHandler
 	AdminProductHandler      *admin_handler.AdminProductHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
+	AdminProjectHandler      *admin_handler.AdminProjectHandler
 
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
@@ -75,6 +76,7 @@ func NewInitialApp(
 	transactionService *service.TransactionHandler,
 	adminProductHandler *admin_handler.AdminProductHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
+	adminProjectHandler *admin_handler.AdminProjectHandler,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -97,6 +99,7 @@ func NewInitialApp(
 		TransactionService:       transactionService,
 		AdminProductHandler:      adminProductHandler,
 		AdminPropertyTypeHandler: adminPropertyTypeHandler,
+		AdminProjectHandler:      adminProjectHandler,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,
