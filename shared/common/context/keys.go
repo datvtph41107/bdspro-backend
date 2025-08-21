@@ -21,6 +21,12 @@ func GetResponseWriter(ctx context.Context) (http.ResponseWriter, bool) {
 	return w, ok
 }
 
+// GetResponseWriterFromGrpcContext lấy writer từ gRPC context (được inject từ gateway)
+func GetResponseWriterFromGrpcContext(ctx context.Context) (http.ResponseWriter, bool) {
+	w, ok := ctx.Value("response-writer").(http.ResponseWriter)
+	return w, ok
+}
+
 func WithRequest(ctx context.Context, r *http.Request) context.Context {
 	return context.WithValue(ctx, RequestKey, r)
 }

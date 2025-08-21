@@ -19,4 +19,7 @@ func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, env string,
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = authpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = authpb.RegisterOAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

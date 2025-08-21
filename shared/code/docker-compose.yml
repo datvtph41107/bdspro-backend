@@ -9,6 +9,14 @@ services:
     command: ["./main", "http"]
     networks:
       - internal
+  auth:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth
+    command: ["./main", "grpc"]
+    networks:
+      - internal
     
   user-grpc:
     build:

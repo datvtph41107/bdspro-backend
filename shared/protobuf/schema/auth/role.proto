@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package authpb;
+option go_package = "pb/types/auth;authpb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "auth/color.proto";
+
+// Role message
+message Role {
+  uint64 id = 1;
+  string roleName = 2;
+  string roleDescription = 3;
+  string key = 4;
+  repeated uint64 permissionIds = 5;
+  uint64 organizationId = 6;
+  repeated Permission permissions = 7;
+  bool isDefault = 8;
+  string domainType = 9;
+  optional uint64 colorId = 10;
+  optional Color color = 11;
+  optional uint64 roleGroupId = 12;
+  optional string roleGroupName = 13;
+  string createdAt = 14;
+  string updatedAt = 15;
+}
+
+// Permission message
+message Permission {
+  uint64 id = 1;
+  string name = 2;
+  string key = 3;
+  string description = 4;
+  string permissionType = 5;
+  string module = 6;
+  optional uint64 parentId = 7;
+  repeated Permission children = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  uint32 priority = 11;
+}
+
+// Role request/response messages
+message RoleRequest {
+  // id chỉ dùng cho update, create thì không cần truyền
+  uint64 id = 1;
+  string roleName = 2;
+  string roleDescription = 3;
+  string key = 4;
+  repeated uint64 permissionIds = 5;
+  uint64 organizationId = 6;
+  bool isDefault = 7;
+  string domainType = 8;
+  optional uint64 colorId = 9;
+  optional uint64 roleGroupId = 10;
+}
+
+message RoleListResponse {
+  repeated Role data = 1;
+  uint32 totalElements = 2;
+}
+
+message AddPermissionToRoleRequest {
+  uint64 roleId = 1;
+  repeated uint64 permissionIds = 2;
+}
+
+message PermissionListResponse {
+  repeated Permission data = 1;
+  uint64 totalElements = 2;
+}
+
+message RoleSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint32 scope = 3;
+  uint32 domainType = 4;
+  string name = 5;
+  optional bool isDefault = 6;
+}
+
+// Role Service
+service RoleService {
+  rpc GetListRole(RoleSearchRequest) returns (RoleListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role/list"
+    };
+  };
+  rpc CreateRole(RoleRequest) returns (Role) {
+    option (google.api.http) = {
+      post: "/v2/auth/role"
+      body: "*"
+    };
+  };
+  rpc UpdateRole(RoleRequest) returns (Role) {
+    option (google.api.http) = {
+      put: "/v2/auth/role/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteRole(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/auth/role/{id}"
+    };
+  };
+  rpc GetRoleById(sharepb.IdRequest) returns (Role) {
+    option (google.api.http) = {
+      get: "/v2/auth/role/detail/{id}"
+    };
+  };
+  rpc GetRolesByOrganization(sharepb.IdRequest) returns (RoleListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role/organization/{id}"
+    };
+  };
+  rpc AddPermissionToRole(AddPermissionToRoleRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/auth/role/permissions"
+    };
+  };
+}
+
+// Permission Service
+service PermissionService {
+  rpc GetPermissionById(sharepb.IdRequest) returns (Permission);
+  rpc GetPermissionsByModule(sharepb.IdRequest) returns (PermissionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/permission/module/{id}"
+    };
+  };
+  rpc GetAllPermissions(sharepb.IdRequest) returns (PermissionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/permission/all"
+    };
+  };
+}

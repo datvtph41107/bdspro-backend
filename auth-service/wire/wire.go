@@ -10,6 +10,7 @@ import (
 	auth_infra_client "auth/infra/client"
 	auth_infra_cookie "auth/infra/cookie"
 	auth_infra_handler "auth/infra/handler"
+	auth_infra_mapper "auth/infra/mapper"
 	auth_infra_oauth "auth/infra/oauth"
 	auth_infra_postgre "auth/infra/postgre"
 	auth_infra_properties "auth/infra/properties"
@@ -20,11 +21,13 @@ import (
 	auth_internal_interface_provider "auth/internal/interface/provider"
 	auth_internal_interface_repo "auth/internal/interface/repo"
 	auth_internal_usecase "auth/internal/usecase"
+	auth_validator "auth/validator"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	_db.NewDBTransaction,
 	wire.Bind(new(auth_internal_interface_provider.OrganizationProvider), new(*auth_infra_client.OrganizationClient)),
 	wire.Bind(new(auth_internal_interface_provider.PaymentProvider), new(*auth_infra_client.PaymentClient)),
 	wire.Bind(new(auth_internal_interface_provider.ProfileProvider), new(*auth_infra_client.UserClient)),
@@ -48,7 +51,19 @@ var wireSet = wire.NewSet(
 	auth_infra_client.NewOrganizationClient,
 	auth_internal_usecase.NewOtpUsecase,
 	auth_infra_client.NewPaymentClient,
+	auth_infra_handler.NewPermissionHandler,
+	auth_infra_postgre.NewPermissionRepo,
+	auth_internal_usecase.NewPermissionUsecase,
 	auth_infra_redis.NewRedisProvider,
+	auth_infra_handler.NewRoleGroupHandler,
+	auth_infra_mapper.NewRoleGroupMapper,
+	auth_infra_postgre.NewRoleGroupRepo,
+	auth_internal_usecase.NewRoleGroupUsecase,
+	auth_validator.NewRoleGroupValidator,
+	auth_infra_handler.NewRoleHandler,
+	auth_infra_mapper.NewRoleMapper,
+	auth_infra_postgre.NewRoleRepo,
+	auth_internal_usecase.NewRoleUsecase,
 	auth_infra_properties.NewRuntimeProperties,
 	auth_infra_postgre.NewSessionRepository,
 	auth_infra_postgre.NewStatusRepository,

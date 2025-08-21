@@ -78,3 +78,21 @@ message NotificationRequest {
   bool isMerge = 10;
   uint64 ownerId = 11;
 }
+
+message SetCookie {
+  string name = 1;
+  string value = 2;
+  string path = 3;
+  string domain = 4;
+  bool http_only = 5;
+  bool secure = 6;
+  int64 max_age = 7;
+}
+
+message CommonResponse {
+  int32 code = 1;
+  string message = 2;
+  repeated SetCookie cookies = 3;
+  string redirect_url = 4;
+  bytes data = 5;
+}

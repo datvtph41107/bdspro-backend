@@ -11,5 +11,8 @@ func AutoMigrate() {
 		&domain.UserOTPEntity{},
 		&domain.UserSessionEntity{},
 		&domain.UserStatusEntity{},
+		&domain.Role{},
+		&domain.Permission{},
+		&domain.RoleGroup{},
 	)
 }

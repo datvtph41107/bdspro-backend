@@ -1,7 +1,7 @@
 package cookie
 
 import (
-	appcontext "auth/infra/context"
+	appcontext "common/context"
 	"context"
 	"net/http"
 )

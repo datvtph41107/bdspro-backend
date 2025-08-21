@@ -46,6 +46,11 @@ case "$1" in
     path_jar=main
     payload_build=user
     ;;
+  "auth")
+    service_path=auth-service
+    path_jar=main
+    payload_build=auth
+    ;;
   "user-grpc")
     service_path=user-service
     path_jar=main

@@ -7,12 +7,12 @@ import (
 )
 
 type AdminPropertyTypeUsecase struct {
-	crud.BaseService[domain.PropertyType, admin_repo.AdminPropertyTypeRepo]
+	crud.BaseUsecase[domain.PropertyType, admin_repo.AdminPropertyTypeRepo]
 }
 
 func NewAdminPropertyTypeUsecase(repo admin_repo.AdminPropertyTypeRepo) *AdminPropertyTypeUsecase {
 	return &AdminPropertyTypeUsecase{
-		crud.BaseService[domain.PropertyType, admin_repo.AdminPropertyTypeRepo]{
+		crud.BaseUsecase[domain.PropertyType, admin_repo.AdminPropertyTypeRepo]{
 			Repo: repo,
 		},
 	}

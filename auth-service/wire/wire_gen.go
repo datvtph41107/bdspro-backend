@@ -10,6 +10,7 @@ import (
 	"auth/infra/client"
 	"auth/infra/cookie"
 	"auth/infra/handler"
+	"auth/infra/mapper"
 	"auth/infra/oauth"
 	"auth/infra/postgre"
 	"auth/infra/properties"
@@ -20,6 +21,7 @@ import (
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
+	"auth/validator"
 	"common/db"
 	"github.com/google/wire"
 )
@@ -49,11 +51,24 @@ func InitializeApp() (*initial.InitialApp, error) {
 	zaloAuthService := oauth.NewZaloAuthService(httpClient, authUsecase, authMethodPostgres)
 	facebookAuthService := oauth.NewFacebookAuthService(authUsecase, httpClient, authMethodPostgres)
 	oAuthHandler := handler.NewOAuthRouter(oAuthGoogle, zaloAuthService, facebookAuthService)
-	initialApp := initial.NewApp(authHandler, oAuthHandler)
+	dbTransaction := _db.NewDBTransaction(db)
+	roleRepository := postgre.NewRoleRepo(dbTransaction)
+	roleUsecase := usecase.NewRoleUsecase(roleRepository)
+	roleMapper := mapper.NewRoleMapper()
+	roleHandler := handler.NewRoleHandler(roleUsecase, roleMapper)
+	permissionRepository := postgre.NewPermissionRepo(db)
+	permissionUsecase := usecase.NewPermissionUsecase(permissionRepository)
+	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper)
+	roleGroupRepository := postgre.NewRoleGroupRepo(dbTransaction)
+	roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository)
+	roleGroupMapper := mapper.NewRoleGroupMapper()
+	roleGroupValidator := validator.NewRoleGroupValidator()
+	roleGroupHandler := handler.NewRoleGroupHandler(roleGroupUsecase, roleGroupMapper, roleGroupValidator)
+	initialApp := initial.NewApp(authHandler, oAuthHandler, roleHandler, permissionHandler, roleGroupHandler)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AuthMethodRepository), new(*postgre.AuthMethodPostgres)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), initial.NewApp, handler.NewAuthHandler, postgre.NewAuthRepository, usecase.NewAuthService, cookie.NewCookieProvider, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewHttpClient, handler.NewOAuthRouter, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, client.NewPaymentClient, redis.NewRedisProvider, properties.NewRuntimeProperties, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, domain.NewUserOTPRepository, oauth.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewDBTransaction, wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AuthMethodRepository), new(*postgre.AuthMethodPostgres)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), initial.NewApp, handler.NewAuthHandler, postgre.NewAuthRepository, usecase.NewAuthService, cookie.NewCookieProvider, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewHttpClient, handler.NewOAuthRouter, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, client.NewPaymentClient, handler.NewPermissionHandler, postgre.NewPermissionRepo, usecase.NewPermissionUsecase, redis.NewRedisProvider, handler.NewRoleGroupHandler, mapper.NewRoleGroupMapper, postgre.NewRoleGroupRepo, usecase.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper.NewRoleMapper, postgre.NewRoleRepo, usecase.NewRoleUsecase, properties.NewRuntimeProperties, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, domain.NewUserOTPRepository, oauth.NewZaloAuthService)

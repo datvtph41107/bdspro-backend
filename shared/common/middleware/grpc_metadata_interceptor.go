@@ -58,6 +58,12 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	}
 	appendIfExists(md, "method", r.Method)
 
+	// Thêm writer vào context để có thể truy cập từ gRPC server
+	if writer, ok := r.Context().Value("response-writer").(http.ResponseWriter); ok {
+		// Lưu writer vào context để có thể truy cập từ gRPC server
+		ctx = context.WithValue(ctx, "response-writer", writer)
+	}
+
 	return md
 }
 
@@ -80,6 +86,12 @@ func ParseGrpcMetadataContextMiddleware(
 	ctx = parseStringMetadata(ctx, md, "role", _constants.RoleKey)
 	ctx = parseStringMetadata(ctx, md, "type", _constants.TypeKey)
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _constants.PlanFromKey)
+
+	// Parse writer từ context nếu có
+	if writer, ok := ctx.Value("response-writer").(http.ResponseWriter); ok {
+		// Sử dụng appcontext để lưu writer vào context
+		ctx = context.WithValue(ctx, "response-writer", writer)
+	}
 
 	return handler(ctx, req)
 }

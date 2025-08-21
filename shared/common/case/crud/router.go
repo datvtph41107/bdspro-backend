@@ -6,7 +6,7 @@ import (
 
 // BaseRouter là struct chung cho tất cả các router
 type BaseRouter[T any, R IBaseRepo[T]] struct {
-	Service BaseService[T, R]
+	Service BaseUsecase[T, R]
 }
 
 // @Summary Tạo mới bản ghi

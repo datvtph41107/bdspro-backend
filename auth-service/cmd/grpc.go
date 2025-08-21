@@ -4,6 +4,7 @@ import (
 	"auth/config"
 	"auth/infra/db"
 	"auth/wire"
+	_middleware "common/middleware"
 	"fmt"
 	"log"
 	"net"
@@ -30,7 +31,9 @@ func startGRPCServer() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+	)
 
 	app, _ := wire.InitializeApp()
 
@@ -38,6 +41,9 @@ func startGRPCServer() {
 
 	authpb.RegisterAuthServiceServer(s, app.AuthHandler)
 	authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
+	authpb.RegisterRoleServiceServer(s, app.RoleHandler)
+	authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
+	authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
 
 	// Enable reflection for debugging
 	// reflection.Register(s)

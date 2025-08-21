@@ -7,12 +7,12 @@ import (
 )
 
 type AdminProjectUsecase struct {
-	crud.BaseService[domain.Project, admin_repo.AdminProjectRepo]
+	crud.BaseUsecase[domain.Project, admin_repo.AdminProjectRepo]
 }
 
 func NewAdminProjectUsecase(repo admin_repo.AdminProjectRepo) *AdminProjectUsecase {
 	return &AdminProjectUsecase{
-		BaseService: crud.BaseService[domain.Project, admin_repo.AdminProjectRepo]{
+		crud.BaseUsecase[domain.Project, admin_repo.AdminProjectRepo]{
 			Repo: repo,
 		},
 	}

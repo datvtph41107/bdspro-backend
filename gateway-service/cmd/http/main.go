@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	sharepb "pb/types/shared"
 	"time"
 
 	"gateway/config"
@@ -16,6 +17,7 @@ import (
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -128,6 +130,7 @@ var HttpCmd = &cobra.Command{
 				"http://localhost:8000",
 				"http://14.225.210.29:8000",
 				"http://14.225.205.222:8000",
+				"http://103.145.63.185:3107",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
@@ -149,6 +152,30 @@ var HttpCmd = &cobra.Command{
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &CustomMarshaler{}),
+			runtime.WithForwardResponseOption(func(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+				// nếu resp implement interface nào đó, ví dụ CommonResponse
+				if cr, ok := resp.(*sharepb.CommonResponse); ok {
+					// 1. apply cookies
+					for _, ck := range cr.Cookies {
+						http.SetCookie(w, &http.Cookie{
+							Name:     ck.Name,
+							Value:    ck.Value,
+							Path:     ck.Path,
+							Domain:   ck.Domain,
+							HttpOnly: ck.HttpOnly,
+							Secure:   ck.Secure,
+							MaxAge:   int(ck.MaxAge),
+						})
+					}
+
+					// 2. handle redirect
+					if cr.RedirectUrl != "" {
+						http.Redirect(w, nil, cr.RedirectUrl, http.StatusFound) // 302
+						return nil                                              // stop normal response
+					}
+				}
+				return nil
+			}),
 		)
 
 		ctx := context.Background()
