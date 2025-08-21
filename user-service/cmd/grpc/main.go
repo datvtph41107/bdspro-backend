@@ -13,6 +13,7 @@ import (
 	"user/wire"
 
 	_middleware "common/middleware"
+	admin_middleware "user/infra/middleware"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,7 +40,10 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to listen: %v", err)
 		}
 		s := grpc.NewServer(
-			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+			grpc.ChainUnaryInterceptor(
+				_middleware.ParseGrpcMetadataContextMiddleware,
+				admin_middleware.AdminAuthInterceptor,
+			),
 		)
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		userpb.RegisterAuthServiceServer(s, app.AuthService)

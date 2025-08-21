@@ -1,10 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	"user/config"
 	user_config "user/config"
@@ -24,6 +23,8 @@ import (
 	user_internal_services_user "user/internal/services/user"
 	user_internal_usecases "user/internal/usecases"
 	user_validator "user/validator"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -94,7 +95,12 @@ var wireSet = wire.NewSet(
 	user_internal_models_auth.NewUserOTPRepository,
 	user_internal_models_user.NewUserProfileEntityWithRequest,
 	user_internal_services_auth.NewZaloAuthService,
+	// Admin dependencies
+	user_infra_repo.NewAdminRepo,
+	user_internal_usecases.NewAdminUsecase,
+	user_infra_handler.NewAdminHandler,
 )
+
 func InitializeApp() (*config.ConfigApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
