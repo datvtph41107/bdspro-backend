@@ -29,8 +29,11 @@ func InitializeApp() (*config.ConfigApp, error) {
 	postgreNotification := postgres.NewPostgreNotification(db)
 	notificationUsecase := usecase.NewNotificationService(postgreNotification)
 	notificationMapper := mapper.NewNotificationMapper()
-	internalNotiService := service.NewInternalNotiService(notificationUsecase, notificationMapper)
-	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase)
+	adminHistoryPostgres := postgres.NewAdminHistoryPostgres(db)
+	adminHistoryUsecase := usecase.NewAdminHistoryUsecase(adminHistoryPostgres)
+	adminHistoryMapper := mapper.NewAdminHistoryMapper()
+	internalNotiService := service.NewInternalNotiService(notificationUsecase, notificationMapper, adminHistoryUsecase, adminHistoryMapper)
+	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase, adminHistoryUsecase, adminHistoryMapper)
 	historyRepo := postgres.NewHistoryRepo(db)
 	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
 	historyMapper := mapper.NewHistoryMapper()
@@ -42,4 +45,4 @@ func InitializeApp() (*config.ConfigApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)
+var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), wire.Bind(new(repo.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, mapper.NewAdminHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, postgres.NewAdminHistoryPostgres, service.NewHistoryService, usecase.NewHistoryUsecase, usecase.NewAdminHistoryUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)

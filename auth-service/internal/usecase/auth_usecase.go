@@ -34,6 +34,7 @@ type AuthUsecase struct {
 	OtpUsecase         *OtpUsecase
 	OrganizationClient provider.OrganizationProvider
 	PaymentProvider    provider.PaymentProvider
+	NotificationClient provider.NotificationProvider
 	properties         dto.PropertiesDTO
 }
 
@@ -47,6 +48,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	otpUsecase *OtpUsecase,
 	organizationClient provider.OrganizationProvider,
 	paymentProvider provider.PaymentProvider,
+	notificationClient provider.NotificationProvider,
 	properties factory.IFactory,
 ) *AuthUsecase {
 	planId := uint64(1)
@@ -62,6 +64,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		OtpUsecase:         otpUsecase,
 		OrganizationClient: organizationClient,
 		PaymentProvider:    paymentProvider,
+		NotificationClient: notificationClient,
 		properties:         properties.GetProperties(),
 	}
 }
@@ -293,7 +296,8 @@ func (s *AuthUsecase) Logout(c context.Context) (*dto.LogoutResponse, error) {
 
 // Restore khôi phục tài khoản
 func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) (*dto.RestoreAccountResponse, error) {
-	ok, err := s.AuthMethodRepo.ExistsByOAuth(c, query.Phone)
+	existingAuth, err := s.AuthMethodRepo.FindByPhone(c, query.Phone)
+	ok := existingAuth != nil
 	if err != nil {
 		return nil, err
 	}
@@ -312,19 +316,20 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 		UserID:   profileId,
 	}
 
-	if err := s.AuthMethodRepo.Create(c, &e); err != nil {
+	createdAuth, err := s.AuthMethodRepo.Create(c, &e)
+	if err != nil {
 		return nil, err
 	}
 
-	param, _ := s.NewUser(c, e.ID)
+	param, _ := s.NewUser(c, createdAuth.ID)
 	if err := s.OTPRepo.CreateOTP(c, param.OTP); err != nil {
 		return nil, err
 	}
 
 	return &dto.RestoreAccountResponse{
-		AuthId:   e.ID,
-		Provider: e.Provider,
-		OAuthId:  e.OAuthID,
+		AuthId:   createdAuth.ID,
+		Provider: createdAuth.Provider,
+		OAuthId:  createdAuth.OAuthID,
 	}, nil
 }
 
@@ -368,12 +373,13 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	}
 
 	// Lưu vào database
-	if err := s.AuthMethodRepo.Create(c, e); err != nil {
+	createdAuth, err := s.AuthMethodRepo.Create(c, e)
+	if err != nil {
 		return nil, err
 	}
 
 	// Tạo AuthParam mới
-	param, err := s.NewUser(c, e.ID)
+	param, err := s.NewUser(c, createdAuth.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +387,7 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	// Gửi OTP trong updateNewOTP luôn
 	s.SendNewOTP(c, param.OTP, dto.Phone)
 
-	return e, nil
+	return createdAuth, nil
 }
 
 func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam, error) {
@@ -633,7 +639,7 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	sessionEntity.Activate = true
 	s.SessionRepo.UpdateSession(c, sessionEntity)
 
-	authEntity, err := s.AuthMethodRepo.GetByID(c, sessionEntity.AuthID)
+	authEntity, err := s.AuthMethodRepo.FindByID(c, sessionEntity.AuthID)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -791,6 +797,18 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
 	response.Role = enums.RoleMap[adminProfile.RoleType]
 	response.Username = adminLogin.Username
+
+	// Ghi log admin history
+	go func() {
+		// TODO: Get IP address and User Agent from context
+		ipAddress := "127.0.0.1"    // Default IP
+		userAgent := "Admin-Client" // Default User Agent
+
+		err := s.NotificationClient.LogAdminLogin(c, adminAuthEntity.UserID, enums.RoleMap[adminProfile.RoleType], ipAddress, userAgent)
+		if err != nil {
+			log.Printf("Failed to log admin login: %v", err)
+		}
+	}()
 
 	return response, nil
 }

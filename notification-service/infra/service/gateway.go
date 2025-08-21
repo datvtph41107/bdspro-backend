@@ -4,8 +4,11 @@ import (
 	_dto "common/dto"
 	_utils "common/utils"
 	"context"
+	shared_enum "pb/enums"
 	notipb "pb/types/notification"
+	"time"
 
+	"noti/infra/mapper"
 	"noti/internal/domain"
 	"noti/internal/dto"
 	"noti/internal/enums"
@@ -16,13 +19,21 @@ import (
 )
 
 type GatewayNotiService struct {
-	Usecase *usecase.NotificationUsecase
+	Usecase             *usecase.NotificationUsecase
+	AdminHistoryUsecase *usecase.AdminHistoryUsecase
+	AdminHistoryMapper  *mapper.AdminHistoryMapper
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
-func NewGatewayNotiService(usecase *usecase.NotificationUsecase) *GatewayNotiService {
+func NewGatewayNotiService(
+	usecase *usecase.NotificationUsecase,
+	adminHistoryUsecase *usecase.AdminHistoryUsecase,
+	adminHistoryMapper *mapper.AdminHistoryMapper,
+) *GatewayNotiService {
 	return &GatewayNotiService{
-		Usecase: usecase,
+		Usecase:             usecase,
+		AdminHistoryUsecase: adminHistoryUsecase,
+		AdminHistoryMapper:  adminHistoryMapper,
 	}
 }
 
@@ -166,6 +177,116 @@ func (s *GatewayNotiService) PushByToken(ctx context.Context, req *notipb.PushTo
 
 func (s *GatewayNotiService) PushByTopic(ctx context.Context, req *notipb.PushTopicRequest) (*notipb.PushResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushByTopic not implemented")
+}
+
+// @Summary Tìm kiếm lịch sử admin
+// @Description Tìm kiếm lịch sử các hành động của admin
+// @Tags Admin History
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Trang cần lấy (default = 0)"
+// @Param size query int false "Số lượng trên mỗi trang (default = 20)"
+// @Param adminId query int false "ID của admin"
+// @Param ownerId query int false "ID của owner"
+// @Param ownerType query int false "Loại owner"
+// @Param targetId query int false "ID của target"
+// @Param targetType query int false "Loại target"
+// @Param actionType query int false "Loại hành động"
+// @Param adminRole query string false "Vai trò admin"
+// @Param fromDate query string false "Từ ngày (RFC3339 format)"
+// @Param toDate query string false "Đến ngày (RFC3339 format)"
+// @Param isInternal query bool false "Có phải internal không"
+// @Success 200 {object} notipb.AdminHistoryListResponse "Danh sách lịch sử admin"
+// @Failure 500 {object} map[string]string "error"
+// @Router /admin-history/search [get]
+func (s *GatewayNotiService) SearchAdminHistory(ctx context.Context, request *notipb.AdminHistorySearchRequest) (*notipb.AdminHistoryListResponse, error) {
+	// Convert protobuf request to DTO
+	searchDTO := &dto.AdminHistorySearchDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(request.Page),
+			Size: uint32(request.Size),
+		},
+	}
+
+	if request.AdminId != nil {
+		searchDTO.AdminID = request.AdminId
+	}
+	if request.OwnerId != nil {
+		searchDTO.OwnerID = request.OwnerId
+	}
+	if request.OwnerType != nil {
+		ownerType := shared_enum.EOwnerType(*request.OwnerType)
+		searchDTO.OwnerType = &ownerType
+	}
+	if request.TargetId != nil {
+		searchDTO.TargetID = request.TargetId
+	}
+	if request.TargetType != nil {
+		targetType := shared_enum.ETargetHistory(*request.TargetType)
+		searchDTO.TargetType = &targetType
+	}
+	if request.ActionType != nil {
+		actionType := shared_enum.EHistory(*request.ActionType)
+		searchDTO.ActionType = &actionType
+	}
+	if request.AdminRole != nil {
+		searchDTO.AdminRole = request.AdminRole
+	}
+	if request.FromDate != nil {
+		if fromDate, err := time.Parse(time.RFC3339, *request.FromDate); err == nil {
+			searchDTO.FromDate = &fromDate
+		}
+	}
+	if request.ToDate != nil {
+		if toDate, err := time.Parse(time.RFC3339, *request.ToDate); err == nil {
+			searchDTO.ToDate = &toDate
+		}
+	}
+	if request.IsInternal != nil {
+		searchDTO.IsInternal = request.IsInternal
+	}
+
+	histories, total, err := s.AdminHistoryUsecase.SearchInternal(ctx, *searchDTO)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to search admin history: %v", err)
+	}
+
+	dtos := s.AdminHistoryMapper.EntitiesToDTOs(histories)
+
+	// Convert DTOs to protobuf DTOs
+	pbDtos := make([]*notipb.AdminHistoryDTO, len(dtos))
+	for i, dto := range dtos {
+		pbDtos[i] = s.convertToPbDTO(&dto)
+	}
+
+	return &notipb.AdminHistoryListResponse{
+		Data:  pbDtos,
+		Total: int32(total),
+	}, nil
+}
+
+// convertToPbDTO chuyển đổi AdminHistoryDTO thành protobuf AdminHistoryDTO
+func (s *GatewayNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.AdminHistoryDTO {
+	return &notipb.AdminHistoryDTO{
+		Id:         dto.ID,
+		TargetId:   dto.TargetId,
+		TargetType: int32(dto.TargetType),
+		ActionType: int32(dto.ActionType),
+		Title:      dto.Title,
+		Note:       dto.Note,
+		PreStage:   dto.PreStage,
+		AfterStage: dto.AfterStage,
+		AdminId:    dto.AdminID,
+		OwnerId:    dto.OwnerID,
+		OwnerType:  int32(dto.OwnerType),
+		IsInternal: dto.IsInternal,
+		AdminRole:  dto.AdminRole,
+		IpAddress:  dto.IPAddress,
+		UserAgent:  dto.UserAgent,
+		CreatedAt:  dto.CreatedAt,
+		UpdatedAt:  dto.UpdatedAt,
+	}
 }
 
 // -- mapping ---

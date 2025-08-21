@@ -166,7 +166,7 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 			"Không lấy được id từ Zalo",
 		)
 	}
-	existingUser, _ := s.AuthMethodRepo.FindByOAuthId(c, username, "ZALO")
+	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "ZALO")
 	if existingUser == nil {
 		e := &domain.AuthMethodDomain{
 			Provider:    "ZALO",

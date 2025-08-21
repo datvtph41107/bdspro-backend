@@ -106,7 +106,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	if !ok {
 		return nil, errors.New("failed to get user ID")
 	}
-	existingUser, _ := g.AuthMethodRepo.FindByOAuthId(c, oauthId, "GOOGLE")
+	existingUser, _ := g.AuthMethodRepo.FindByOAuthID(c, oauthId, "GOOGLE")
 	// if err != nil {
 	// 	return nil, err
 	// }
@@ -120,11 +120,12 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 			Avatar:   userInfo["picture"].(string),
 			Email:    userInfo["email"].(string),
 		}
-		if err := g.AuthMethodRepo.Create(c, oauthUser); err != nil {
+		createdUser, err := g.AuthMethodRepo.Create(c, oauthUser)
+		if err != nil {
 			return nil, err
 		}
-		g.AuthService.NewUser(c, oauthUser.ID)
-		existingUser = oauthUser
+		g.AuthService.NewUser(c, createdUser.ID)
+		existingUser = createdUser
 	}
 
 	session := g.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})

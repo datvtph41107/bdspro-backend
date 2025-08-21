@@ -142,7 +142,7 @@ func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[strin
 	}
 
 	// Check if user already exists
-	existingUser, _ := s.AuthMethodRepo.FindByOAuthId(c, username, "FACEBOOK")
+	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "FACEBOOK")
 	if existingUser == nil {
 		// User doesn't exist, create new one
 		oauthUser := &auth_model.AuthMethodDomain{
@@ -154,17 +154,18 @@ func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[strin
 			Avatar:   s.extractAvatar(userInfo),
 		}
 
-		if err := s.AuthMethodRepo.Create(c, oauthUser); err != nil {
+		createdUser, err := s.AuthMethodRepo.Create(c, oauthUser)
+		if err != nil {
 			return nil, fmt.Errorf("lỗi khi tạo user mới: %v", err)
 		}
 
 		// Create user profile
-		_, err := s.AuthService.NewUser(c, oauthUser.ID)
+		_, err = s.AuthService.NewUser(c, createdUser.ID)
 		if err != nil {
 			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
 		}
 
-		existingUser = oauthUser
+		existingUser = createdUser
 	}
 
 	// Create session

@@ -15,6 +15,7 @@ type InitialApp struct {
 	RoleHandler       *handler.RoleHandler
 	PermissionHandler *handler.PermissionHandler
 	RoleGroupHandler  *handler.RoleGroupHandler
+	AdminHandler      *handler.AdminHandler
 	Logger            *flogging.FabricLogger
 }
 
@@ -24,6 +25,7 @@ func NewApp(
 	roleHandler *handler.RoleHandler,
 	permissionHandler *handler.PermissionHandler,
 	roleGroupHandler *handler.RoleGroupHandler,
+	adminHandler *handler.AdminHandler,
 ) *InitialApp {
 	common.LoadConfig(config.EmbeddedConfig)
 	return &InitialApp{
@@ -32,6 +34,7 @@ func NewApp(
 		RoleHandler:       roleHandler,
 		PermissionHandler: permissionHandler,
 		RoleGroupHandler:  roleGroupHandler,
+		AdminHandler:      adminHandler,
 		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }
