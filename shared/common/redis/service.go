@@ -2,6 +2,7 @@ package _redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -62,7 +63,7 @@ func (r *RedisService) DeleteToken(userID uint64) error {
 
 // Set lưu một key-value vào Redis
 func (r *RedisService) Set(key, value string) error {
-	return r.Client.Set(r.Ctx, key, value, 0).Err()
+	return r.Client.Set(r.Ctx, key, value, 15*time.Minute).Err()
 }
 
 // Get lấy giá trị từ Redis
@@ -73,6 +74,22 @@ func (r *RedisService) Get(key string) (string, error) {
 // Delete xóa một key khỏi Redis
 func (r *RedisService) Delete(key string) error {
 	return r.Client.Del(r.Ctx, key).Err()
+}
+
+// DeleteAllKeysWithPrefix xóa tất cả các key có prefix
+func (r *RedisService) DeleteAllKeysWithPrefix(prefix string) error {
+	iter := r.Client.Scan(r.Ctx, 0, prefix, 0).Iterator()
+	for iter.Next(r.Ctx) {
+		err := r.Client.Del(r.Ctx, iter.Val()).Err()
+		if err != nil {
+			fmt.Println("Xóa lỗi key:", iter.Val(), err)
+		}
+	}
+	if err := iter.Err(); err != nil {
+		fmt.Println("Scan lỗi:", err)
+	}
+
+	return nil
 }
 
 // Increment tăng giá trị của một key số nguyên trong Redis

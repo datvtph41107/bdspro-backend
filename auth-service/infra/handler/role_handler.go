@@ -13,14 +13,20 @@ import (
 
 type RoleHandler struct {
 	authpb.UnimplementedRoleServiceServer
-	roleUsecase *usecase.RoleUsecase
-	roleMapper  *mapper.RoleMapper
+	roleUsecase     *usecase.RoleUsecase
+	roleMapper      *mapper.RoleMapper
+	internalHandler *InternalHandler
 }
 
-func NewRoleHandler(roleUsecase *usecase.RoleUsecase, roleMapper *mapper.RoleMapper) *RoleHandler {
+func NewRoleHandler(
+	roleUsecase *usecase.RoleUsecase,
+	roleMapper *mapper.RoleMapper,
+	internalHandler *InternalHandler,
+) *RoleHandler {
 	return &RoleHandler{
-		roleUsecase: roleUsecase,
-		roleMapper:  roleMapper,
+		roleUsecase:     roleUsecase,
+		roleMapper:      roleMapper,
+		internalHandler: internalHandler,
 	}
 }
 
@@ -34,9 +40,9 @@ func NewRoleHandler(roleUsecase *usecase.RoleUsecase, roleMapper *mapper.RoleMap
 // @Success 200 {object} authpb.Role
 // @Router /role [post]
 func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
-	// if req.Name == "" || req.PermissionIds == nil {
-	// 	return nil, _errors.ReturnError(400, "name or permissionIds is required")
-	// }
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_TAO"}); err != nil {
+		return nil, err
+	}
 
 	role := &domain.Role{
 		RoleName:        req.RoleName,
@@ -68,6 +74,10 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 // @Success 200 {object} authpb.Role
 // @Router /role [put]
 func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_SUA"}); err != nil {
+		return nil, err
+	}
+
 	role := &domain.Role{
 		RoleName:        req.RoleName,
 		RoleDescription: req.RoleDescription,
@@ -78,6 +88,10 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 		ColorID:         req.ColorId,
 		RoleGroupID:     req.RoleGroupId,
 		PermissionIDs:   req.PermissionIds,
+	}
+
+	if err := h.internalHandler.ResetPermission(ctx, req.Id); err != nil {
+		return nil, err
 	}
 
 	result, err := h.roleUsecase.Update(ctx, req.Id, role)
@@ -98,6 +112,10 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /role/{id} [delete]
 func (h *RoleHandler) DeleteRole(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XOA"}); err != nil {
+		return nil, err
+	}
+
 	err := h.roleUsecase.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -119,6 +137,10 @@ func (h *RoleHandler) DeleteRole(ctx context.Context, req *sharepb.IdRequest) (*
 // @Success 200 {object} authpb.Role
 // @Router /role/{id} [get]
 func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XEM"}); err != nil {
+		return nil, err
+	}
+
 	role, err := h.roleUsecase.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -139,6 +161,10 @@ func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (
 // @Success 200 {object} authpb.RoleListResponse
 // @Router /role/organization/{id} [get]
 func (h *RoleHandler) GetRolesByOrganization(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleListResponse, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XEM"}); err != nil {
+		return nil, err
+	}
+
 	roles, total, err := h.roleUsecase.GetByOrganizationIDWithPagination(ctx, req.Id, int(req.Page), int(req.Size))
 	if err != nil {
 		return nil, err
@@ -162,6 +188,10 @@ func (h *RoleHandler) GetRolesByOrganization(ctx context.Context, req *sharepb.I
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /role/permissions [post]
 func (h *RoleHandler) AddPermissionToRole(ctx context.Context, req *authpb.AddPermissionToRoleRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_SUA"}); err != nil {
+		return nil, err
+	}
+
 	err := h.roleUsecase.AddPermissionsToRole(ctx, req.RoleId, req.PermissionIds)
 	if err != nil {
 		return nil, err
@@ -183,6 +213,10 @@ func (h *RoleHandler) AddPermissionToRole(ctx context.Context, req *authpb.AddPe
 // @Success 200 {object} authpb.RoleListResponse
 // @Router /role/list [get]
 func (h *RoleHandler) GetListRole(ctx context.Context, req *authpb.RoleSearchRequest) (*authpb.RoleListResponse, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XEM"}); err != nil {
+		return nil, err
+	}
+
 	roleSearchRequest := &dto.RoleSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,

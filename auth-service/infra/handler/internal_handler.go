@@ -2,9 +2,11 @@ package handler
 
 import (
 	"auth/internal/interface/repo"
+	_errors "common/errors"
 	_redis "common/redis"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	authpb "pb/types/auth"
 	"strconv"
 	"strings"
@@ -26,8 +28,17 @@ func NewInternalHandler(roleRepo repo.RoleRepository, redisService *_redis.Redis
 func (h *InternalHandler) RequiredRoles(ctx context.Context, req *authpb.RequiredRolesRequest) (*authpb.RequiredRolesResponse, error) {
 	return &authpb.RequiredRolesResponse{}, nil
 }
-
 func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.RequiredPermissionsRequest) (*authpb.RequiredPermissionsResponse, error) {
+	err := h.HasPermissions(ctx, req.Permissions)
+	if err != nil {
+		return nil, err
+	}
+	return &authpb.RequiredPermissionsResponse{
+		Status: true,
+	}, nil
+}
+
+func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) error {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	// -------------------
@@ -39,7 +50,7 @@ func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.R
 		// fallback: lấy từ DB
 		roleIdsUint, err := h.roleRepo.GetRoleIdsByProfileId(ctx, profileId)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for _, id := range roleIdsUint {
 			roleIds = append(roleIds, strconv.FormatUint(id, 10))
@@ -71,7 +82,7 @@ func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.R
 	if len(missingRoleIds) > 0 {
 		dbPermIds, err := h.roleRepo.GetPermissionIdsByRoleIds(ctx, missingRoleIds)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for rid, permIds := range dbPermIds {
 			rolePermKey := "ROLE_PERMS_" + strconv.FormatUint(rid, 10)
@@ -105,7 +116,7 @@ func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.R
 	if len(missingPermIds) > 0 {
 		keys, err := h.roleRepo.GetPermissionKeysByIds(ctx, missingPermIds)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for i, key := range keys {
 			userPerms[key] = struct{}{}
@@ -113,19 +124,29 @@ func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.R
 			rk := "PERM_KEY_" + strconv.FormatUint(missingPermIds[i], 10)
 			h.redisService.Set(rk, key)
 		}
+		fmt.Println("missingPermIds", missingPermIds)
 	}
 
 	// -------------------
 	// 4. Kiểm tra các permission cần thiết
-	allExist := true
-	for _, required := range req.Permissions {
+	for _, required := range keys {
 		if _, ok := userPerms[required]; !ok {
-			allExist = false
-			break
+			return _errors.ReturnError(403, "Bạn không có quyền truy cập")
 		}
 	}
 
-	return &authpb.RequiredPermissionsResponse{
-		Status: allExist,
-	}, nil
+	return nil
+}
+
+func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) error {
+	// if err := h.redisService.DeleteAllKeysWithPrefix("USER_ROLES_*"); err != nil {
+	// 	return err
+	// }
+	if err := h.redisService.DeleteAllKeysWithPrefix(fmt.Sprintf("ROLE_PERMS_%d", roleId)); err != nil {
+		return err
+	}
+	// if err := h.redisService.DeleteAllKeysWithPrefix("PERM_KEY_*"); err != nil {
+	// 	return err
+	// }
+	return nil
 }

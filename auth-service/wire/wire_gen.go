@@ -60,7 +60,9 @@ func InitializeApp() (*initial.InitialApp, error) {
 	roleRepository := postgre.NewRoleRepo(dbTransaction)
 	roleUsecase := usecase.NewRoleUsecase(roleRepository)
 	roleMapper := mapper.NewRoleMapper()
-	roleHandler := handler.NewRoleHandler(roleUsecase, roleMapper)
+	redisService := initial.NewRedisService()
+	internalHandler := handler.NewInternalHandler(roleRepository, redisService)
+	roleHandler := handler.NewRoleHandler(roleUsecase, roleMapper, internalHandler)
 	permissionRepository := postgre.NewPermissionRepo(db)
 	permissionUsecase := usecase.NewPermissionUsecase(permissionRepository)
 	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper, roleUsecase)
@@ -70,9 +72,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	roleGroupValidator := validator.NewRoleGroupValidator()
 	roleGroupHandler := handler.NewRoleGroupHandler(roleGroupUsecase, roleGroupMapper, roleGroupValidator)
 	adminUsecase := usecase.NewAdminUsecase(authMethodPostgres, userClient, organizationClient)
-	adminHandler := handler.NewAdminHandler(adminUsecase)
-	redisService := initial.NewRedisService()
-	internalHandler := handler.NewInternalHandler(roleRepository, redisService)
+	adminHandler := handler.NewAdminHandler(adminUsecase, internalHandler)
 	initialApp := initial.NewApp(authHandler, oAuthHandler, roleHandler, permissionHandler, roleGroupHandler, adminHandler, internalHandler)
 	return initialApp, nil
 }

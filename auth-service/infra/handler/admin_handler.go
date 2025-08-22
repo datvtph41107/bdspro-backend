@@ -9,12 +9,17 @@ import (
 
 type AdminHandler struct {
 	authpb.UnimplementedAuthServiceServer
-	AdminUsecase *usecase.AdminUsecase
+	AdminUsecase    *usecase.AdminUsecase
+	InternalHandler *InternalHandler
 }
 
-func NewAdminHandler(adminUsecase *usecase.AdminUsecase) *AdminHandler {
+func NewAdminHandler(
+	adminUsecase *usecase.AdminUsecase,
+	internalHandler *InternalHandler,
+) *AdminHandler {
 	return &AdminHandler{
-		AdminUsecase: adminUsecase,
+		AdminUsecase:    adminUsecase,
+		InternalHandler: internalHandler,
 	}
 }
 
@@ -29,6 +34,10 @@ func NewAdminHandler(adminUsecase *usecase.AdminUsecase) *AdminHandler {
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/create [post]
 func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_TAO"}); err != nil {
+		return nil, err
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.CreateAdminRequest{
 		Username: req.Username,
@@ -63,6 +72,10 @@ func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminR
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/update [put]
 func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_SUA"}); err != nil {
+		return nil, err
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.UpdateAdminRequest{
 		AuthID:   req.AuthId,
@@ -96,6 +109,10 @@ func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminR
 // @Failure 500 {object} authpb.DeleteAdminResponse
 // @Router /admin/delete [delete]
 func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_XOA"}); err != nil {
+		return nil, err
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.DeleteAdminRequest{
 		AuthID: req.AuthId,
@@ -122,6 +139,10 @@ func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminR
 // @Failure 500 {object} authpb.AssignRoleResponse
 // @Router /admin/assign-role [post]
 func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_GAN"}); err != nil {
+		return nil, err
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.AssignRoleRequest{
 		AuthID:  req.AuthId,
@@ -150,6 +171,10 @@ func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleReq
 // @Failure 500 {object} authpb.AdminListResponse
 // @Router /admin/list [get]
 func (h *AdminHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_XEM"}); err != nil {
+		return nil, err
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.AdminListRequest{
 		Page: req.Page,
