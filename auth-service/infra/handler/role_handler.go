@@ -24,7 +24,15 @@ func NewRoleHandler(roleUsecase *usecase.RoleUsecase, roleMapper *mapper.RoleMap
 	}
 }
 
-// CreateRole tạo mới role
+// @Summary Tạo mới role
+// @Description Tạo mới role
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param role body authpb.RoleRequest true "Role to create"
+// @Success 200 {object} authpb.Role
+// @Router /role [post]
 func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
 	// if req.Name == "" || req.PermissionIds == nil {
 	// 	return nil, _errors.ReturnError(400, "name or permissionIds is required")
@@ -50,7 +58,15 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 	return h.roleMapper.MapRoleToPb(result), nil
 }
 
-// UpdateRole cập nhật role
+// @Summary Cập nhật role
+// @Description Cập nhật role
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param role body authpb.RoleRequest true "Role to update"
+// @Success 200 {object} authpb.Role
+// @Router /role [put]
 func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
 	role := &domain.Role{
 		RoleName:        req.RoleName,
@@ -72,7 +88,15 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 	return h.roleMapper.MapRoleToPb(result), nil
 }
 
-// DeleteRole xóa role
+// @Summary Xóa role
+// @Description Xóa role
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Role ID"
+// @Success 200 {object} sharepb.SubmitResponse
+// @Router /role/{id} [delete]
 func (h *RoleHandler) DeleteRole(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := h.roleUsecase.Delete(ctx, req.Id)
 	if err != nil {
@@ -85,7 +109,15 @@ func (h *RoleHandler) DeleteRole(ctx context.Context, req *sharepb.IdRequest) (*
 	}, nil
 }
 
-// GetRoleById lấy role theo ID
+// @Summary Lấy role theo ID
+// @Description Lấy role theo ID
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Role ID"
+// @Success 200 {object} authpb.Role
+// @Router /role/{id} [get]
 func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
 	role, err := h.roleUsecase.Detail(ctx, req.Id)
 	if err != nil {
@@ -95,7 +127,17 @@ func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (
 	return h.roleMapper.MapRoleToPb(role), nil
 }
 
-// GetRolesByOrganization lấy danh sách role theo organization ID
+// @Summary Lấy danh sách role theo organization ID
+// @Description Lấy danh sách role theo organization ID
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Organization ID"
+// @Param page query int true "Page"
+// @Param size query int true "Size"
+// @Success 200 {object} authpb.RoleListResponse
+// @Router /role/organization/{id} [get]
 func (h *RoleHandler) GetRolesByOrganization(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleListResponse, error) {
 	roles, total, err := h.roleUsecase.GetByOrganizationIDWithPagination(ctx, req.Id, int(req.Page), int(req.Size))
 	if err != nil {
@@ -110,7 +152,15 @@ func (h *RoleHandler) GetRolesByOrganization(ctx context.Context, req *sharepb.I
 	}, nil
 }
 
-// AddPermissionToRole thêm permission vào role
+// @Summary Thêm permission vào role
+// @Description Thêm permission vào role
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param role body authpb.AddPermissionToRoleRequest true "Role to add permission"
+// @Success 200 {object} sharepb.SubmitResponse
+// @Router /role/permissions [post]
 func (h *RoleHandler) AddPermissionToRole(ctx context.Context, req *authpb.AddPermissionToRoleRequest) (*sharepb.SubmitResponse, error) {
 	err := h.roleUsecase.AddPermissionsToRole(ctx, req.RoleId, req.PermissionIds)
 	if err != nil {
@@ -123,6 +173,15 @@ func (h *RoleHandler) AddPermissionToRole(ctx context.Context, req *authpb.AddPe
 	}, nil
 }
 
+// @Summary Lấy danh sách role
+// @Description Lấy danh sách role
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param role body authpb.RoleSearchRequest true "Role search request"
+// @Success 200 {object} authpb.RoleListResponse
+// @Router /role/list [get]
 func (h *RoleHandler) GetListRole(ctx context.Context, req *authpb.RoleSearchRequest) (*authpb.RoleListResponse, error) {
 	roleSearchRequest := &dto.RoleSearchRequest{
 		Pagable: _dto.Pagable{

@@ -14,5 +14,6 @@ func AutoMigrate() {
 		&domain.Role{},
 		&domain.Permission{},
 		&domain.RoleGroup{},
+		&domain.RoleProfile{},
 	)
 }

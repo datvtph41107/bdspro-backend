@@ -12,19 +12,30 @@ type PermissionHandler struct {
 	authpb.UnimplementedPermissionServiceServer
 	permissionUsecase *usecase.PermissionUsecase
 	roleMapper        *mapper.RoleMapper
+	roleUsecase       *usecase.RoleUsecase
 }
 
 func NewPermissionHandler(
 	permissionUsecase *usecase.PermissionUsecase,
 	roleMapper *mapper.RoleMapper,
+	roleUsecase *usecase.RoleUsecase,
 ) *PermissionHandler {
 	return &PermissionHandler{
 		permissionUsecase: permissionUsecase,
 		roleMapper:        roleMapper,
+		roleUsecase:       roleUsecase,
 	}
 }
 
-// GetPermissionById lấy permission theo ID
+// @Summary Get permission by ID
+// @Description Get permission by ID
+// @Tags Permission
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Permission ID"
+// @Success 200 {object} authpb.Permission
+// @Router /permission/{id} [get]
 func (h *PermissionHandler) GetPermissionById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Permission, error) {
 	permission, err := h.permissionUsecase.GetByID(ctx, req.Id)
 	if err != nil {
@@ -34,7 +45,17 @@ func (h *PermissionHandler) GetPermissionById(ctx context.Context, req *sharepb.
 	return h.roleMapper.MapPermissionToPb(permission), nil
 }
 
-// GetPermissionsByModule lấy danh sách permission theo module
+// @Summary Get permissions by module
+// @Description Get permissions by module
+// @Tags Permission
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Module ID"
+// @Param page query int true "Page"
+// @Param size query int true "Size"
+// @Success 200 {object} authpb.PermissionListResponse
+// @Router /permission/module/{id} [get]
 func (h *PermissionHandler) GetPermissionsByModule(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionListResponse, error) {
 	permissions, total, err := h.permissionUsecase.GetByModuleWithPagination(ctx, uint32(req.Id), int(req.Page), int(req.Size))
 	if err != nil {
@@ -52,7 +73,14 @@ func (h *PermissionHandler) GetPermissionsByModule(ctx context.Context, req *sha
 	}, nil
 }
 
-// GetAllPermissions lấy tất cả permission
+// @Summary Get all permissions
+// @Description Get all permissions
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} authpb.PermissionListResponse
+// @Router /permission/all [get]
 func (h *PermissionHandler) GetAllPermissions(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionListResponse, error) {
 	permissions, err := h.permissionUsecase.GetAll(ctx)
 	if err != nil {
@@ -67,6 +95,25 @@ func (h *PermissionHandler) GetAllPermissions(ctx context.Context, req *sharepb.
 	return &authpb.PermissionListResponse{
 		Data:          pbPermissions,
 		TotalElements: uint64(len(pbPermissions)),
+	}, nil
+}
+
+// @Summary Get permission keys
+// @Description Get all permission keys
+// @Tags Permission
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} authpb.PermissionKeysResponse
+// @Router /permission/me [get]
+func (h *PermissionHandler) GetPermissionKeys(ctx context.Context, req *sharepb.Empty) (*authpb.PermissionKeysResponse, error) {
+	keys, err := h.roleUsecase.GetPermissionKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.PermissionKeysResponse{
+		Keys: keys,
 	}, nil
 }
 

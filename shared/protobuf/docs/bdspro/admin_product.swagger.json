@@ -16,6 +16,28 @@
     "application/json"
   ],
   "paths": {
+    "/v2/bdspro/admin/permissions/keys": {
+      "get": {
+        "operationId": "AdminProductService_GetPermissionKeys",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproPermissionKeysResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AdminProductService"
+        ]
+      }
+    },
     "/v2/bdspro/admin/products": {
       "get": {
         "operationId": "AdminProductService_GetProducts",
@@ -622,6 +644,17 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "pb_bdsproPermissionKeysResponse": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud"
+	_db "common/db"
 	_dto "common/dto"
 	_errors "common/errors"
 	"context"
@@ -16,10 +17,8 @@ type AdminPropertyTypePostgres struct {
 	crud.BaseRepo[domain.PropertyType]
 }
 
-func NewAdminPropertyTypePostgres(db *gorm.DB) *AdminPropertyTypePostgres {
-	return &AdminPropertyTypePostgres{
-		BaseRepo: crud.BaseRepo[domain.PropertyType]{DB: db},
-	}
+func NewAdminPropertyTypePostgres(db *_db.DBTransaction) *AdminPropertyTypePostgres {
+	return crud.MakeCrudRepo(&AdminPropertyTypePostgres{}, db).(*AdminPropertyTypePostgres)
 }
 
 func (r *AdminPropertyTypePostgres) QueryDomain(query *gorm.DB, dto *dto.TextSearchRequest) *gorm.DB {

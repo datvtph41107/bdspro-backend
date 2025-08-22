@@ -5,6 +5,7 @@ import (
 	"auth/internal/interface/repo"
 	"common/case/crud"
 	_errors "common/errors"
+	_utils "common/utils"
 	"context"
 )
 
@@ -133,3 +134,13 @@ func (uc *RoleUsecase) AddPermissionsToRole(ctx context.Context, roleID uint64, 
 // 	}
 // 	return roles, total, nil
 // }
+
+func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) {
+	// roleIds, err := uc.Repo.GetRoleIdsByProfileId(ctx, profileId)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	keys, err := uc.Repo.GetPermissionKeysByUserId(ctx, profileId)
+	if err != nil {
+		return nil, err
+	}
+	return keys, nil
+}

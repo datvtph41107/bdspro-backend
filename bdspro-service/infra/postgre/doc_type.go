@@ -4,9 +4,8 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud"
+	_db "common/db"
 	"context"
-
-	"gorm.io/gorm"
 )
 
 // @bind: bdspro/internal/repo.DocTypeRepo
@@ -14,10 +13,8 @@ type PostgreDocType struct {
 	crud.BaseRepo[domain.DocType]
 }
 
-func NewPostgreDocType(db *gorm.DB) *PostgreDocType {
-	return &PostgreDocType{
-		BaseRepo: crud.BaseRepo[domain.DocType]{DB: db},
-	}
+func NewPostgreDocType(db *_db.DBTransaction) *PostgreDocType {
+	return crud.MakeCrudRepo(&PostgreDocType{}, db).(*PostgreDocType)
 }
 
 func (r *PostgreDocType) GetAllItem(c context.Context) ([]domain.DocTypeItem, error) {

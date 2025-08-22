@@ -77,6 +77,15 @@ func NewInitialApp(
 	adminProductHandler *admin_handler.AdminProductHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
+	// @bind: register_server_new
+	// CostDocumentServer: CostDocumentServer,
+	// IncomeDocumentServer:    IncomeDocumentServer,
+	// AssetIncomeTypeServer:   AssetIncomeTypeServer,
+	// AssetExploitationServer: AssetExploitationServer,
+	// AssetCostTypeServer:     AssetCostTypeServer,
+	// AssetCostServer:         AssetCostServer,
+	// AssetLegalServer:        AssetLegalServer,
+	// AssetSplitHistoryServer: AssetSplitHistoryServer,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -104,7 +113,7 @@ func NewInitialApp(
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,
 		// IncomeDocumentServer:    IncomeDocumentServer,
-		// AssetIncomeTypeServer:   AssetIncomeTypeServer,
+		// AssetIncomeTypeServer:   AssetIncomeServer,
 		// AssetExploitationServer: AssetExploitationServer,
 		// AssetCostTypeServer:     AssetCostTypeServer,
 		// AssetCostServer:         AssetCostServer,

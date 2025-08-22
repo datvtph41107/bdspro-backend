@@ -1,10 +1,61 @@
 basePath: /v2/auth
 definitions:
+  authpb.AddPermissionToRoleRequest:
+    properties:
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      roleId:
+        type: integer
+    type: object
+  authpb.AdminItem:
+    properties:
+      authId:
+        type: integer
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      phone:
+        type: string
+      profileId:
+        type: integer
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  authpb.AdminListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.AdminItem'
+        type: array
+      total:
+        type: integer
+    type: object
   authpb.AdminLoginRequest:
     properties:
       password:
         type: string
       username:
+        type: string
+    type: object
+  authpb.AssignRoleRequest:
+    properties:
+      authId:
+        type: integer
+      roleKey:
+        type: string
+    type: object
+  authpb.AssignRoleResponse:
+    properties:
+      message:
         type: string
     type: object
   authpb.AuthSuccessResponse:
@@ -30,7 +81,55 @@ definitions:
       role:
         type: string
     type: object
+  authpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  authpb.CreateAdminRequest:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
   authpb.DeleteAccountResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.DeleteAdminRequest:
+    properties:
+      authId:
+        type: integer
+    type: object
+  authpb.DeleteAdminResponse:
     properties:
       message:
         type: string
@@ -39,6 +138,49 @@ definitions:
     properties:
       message:
         type: string
+    type: object
+  authpb.Permission:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      permissionType:
+        type: string
+      priority:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.PermissionKeysResponse:
+    properties:
+      keys:
+        items:
+          type: string
+        type: array
+    type: object
+  authpb.PermissionListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      totalElements:
+        type: integer
     type: object
   authpb.QRConfirmRequest:
     properties:
@@ -125,10 +267,145 @@ definitions:
       provider:
         type: string
     type: object
+  authpb.Role:
+    properties:
+      color:
+        $ref: '#/definitions/authpb.Color'
+      colorId:
+        type: integer
+      createdAt:
+        type: string
+      domainType:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      permissions:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleGroupName:
+        type: string
+      roleName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  authpb.RoleGroup:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      groupName:
+        type: string
+      id:
+        type: integer
+      key:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.RoleGroupListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.RoleGroup'
+        type: array
+      totalElements:
+        type: integer
+    type: object
+  authpb.RoleGroupRequest:
+    properties:
+      description:
+        type: string
+      groupName:
+        type: string
+      id:
+        type: integer
+      key:
+        type: integer
+    type: object
+  authpb.RoleListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.Role'
+        type: array
+      totalElements:
+        type: integer
+    type: object
+  authpb.RoleRequest:
+    properties:
+      colorId:
+        type: integer
+      domainType:
+        type: string
+      id:
+        description: id chỉ dùng cho update, create thì không cần truyền
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleName:
+        type: string
+    type: object
+  authpb.RoleSearchRequest:
+    properties:
+      domainType:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      page:
+        type: integer
+      scope:
+        type: integer
+      size:
+        type: integer
+    type: object
   authpb.SwitchOrganizationRequest:
     properties:
       organizationId:
         type: integer
+    type: object
+  authpb.UpdateAdminRequest:
+    properties:
+      authId:
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      phone:
+        type: string
     type: object
   authpb.VerifyOTPRequest:
     properties:
@@ -147,12 +424,145 @@ definitions:
       version:
         type: string
     type: object
+  sharepb.SubmitResponse:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+    type: object
 info:
   contact: {}
   description: API phần logic xác thực và đăng nhập
   title: Auth Service API
   version: "1.0"
 paths:
+  /admin/assign-role:
+    post:
+      consumes:
+      - application/json
+      description: Gán quyền cho admin
+      parameters:
+      - description: Thông tin gán quyền
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+      summary: Assign Role
+      tags:
+      - Admin
+  /admin/create:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tài khoản admin mới
+      parameters:
+      - description: Thông tin tạo admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Create Admin
+      tags:
+      - Admin
+  /admin/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài khoản admin
+      parameters:
+      - description: Thông tin xóa admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.DeleteAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+      summary: Delete Admin
+      tags:
+      - Admin
+  /admin/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách admin
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+      summary: List Admins
+      tags:
+      - Admin
   /admin/login:
     post:
       consumes:
@@ -183,6 +593,36 @@ paths:
       summary: Admin Login
       tags:
       - Auth
+  /admin/update:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin admin
+      parameters:
+      - description: Thông tin cập nhật admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.UpdateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Update Admin
+      tags:
+      - Admin
   /delete:
     delete:
       consumes:
@@ -381,6 +821,96 @@ paths:
       summary: Xác minh OTP
       tags:
       - Auth
+  /permission/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permission by ID
+      parameters:
+      - description: Permission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Permission'
+      security:
+      - BearerAuth: []
+      summary: Get permission by ID
+      tags:
+      - Permission
+  /permission/all:
+    get:
+      consumes:
+      - application/json
+      description: Get all permissions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all permissions
+      tags:
+      - Role
+  /permission/me:
+    get:
+      consumes:
+      - application/json
+      description: Get all permission keys
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionKeysResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permission keys
+      tags:
+      - Permission
+  /permission/module/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permissions by module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permissions by module
+      tags:
+      - Permission
   /qr/confirm:
     post:
       consumes:
@@ -471,6 +1001,179 @@ paths:
       summary: Restore account
       tags:
       - Auth
+  /role:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới role
+      parameters:
+      - description: Role to create
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Tạo mới role
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật role
+      parameters:
+      - description: Role to update
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật role
+      tags:
+      - Role
+  /role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa role
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa role
+      tags:
+      - Role
+    get:
+      consumes:
+      - application/json
+      description: Lấy role theo ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Lấy role theo ID
+      tags:
+      - Role
+  /role/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role
+      parameters:
+      - description: Role search request
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách role
+      tags:
+      - Role
+  /role/organization/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role theo organization ID
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách role theo organization ID
+      tags:
+      - Role
+  /role/permissions:
+    post:
+      consumes:
+      - application/json
+      description: Thêm permission vào role
+      parameters:
+      - description: Role to add permission
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AddPermissionToRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm permission vào role
+      tags:
+      - Role
   /switch/organization:
     post:
       consumes:
@@ -531,6 +1234,120 @@ paths:
       summary: Refresh token
       tags:
       - Auth
+  /v2/auth/role-group:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới role group
+      parameters:
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Tạo mới role group
+      tags:
+      - RoleGroup
+  /v2/auth/role-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Xóa role group
+      tags:
+      - RoleGroup
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Cập nhật role group
+      tags:
+      - RoleGroup
+  /v2/auth/role-group/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết role group theo ID
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Lấy chi tiết role group
+      tags:
+      - RoleGroup
+  /v2/auth/role-group/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role group với phân trang
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroupListResponse'
+      summary: Lấy danh sách role group
+      tags:
+      - RoleGroup
 securityDefinitions:
   BearerAuth:
     in: header

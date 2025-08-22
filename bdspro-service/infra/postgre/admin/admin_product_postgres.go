@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud"
+	_db "common/db"
 	_dto "common/dto"
 	_errors "common/errors"
 	"context"
@@ -18,11 +19,10 @@ type AdminProductPostgres struct {
 	ProductRepo *postgre.GormUserProductRepo
 }
 
-func NewAdminProductPostgres(db *gorm.DB, productRepo *postgre.GormUserProductRepo) *AdminProductPostgres {
-	return &AdminProductPostgres{
-		BaseRepo:    crud.BaseRepo[domain.Product]{DB: db},
+func NewAdminProductPostgres(db *_db.DBTransaction, productRepo *postgre.GormUserProductRepo) *AdminProductPostgres {
+	return crud.MakeCrudRepo(&AdminProductPostgres{
 		ProductRepo: productRepo,
-	}
+	}, db).(*AdminProductPostgres)
 }
 
 func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable) ([]domain.Product, int64, error) {
@@ -57,7 +57,7 @@ func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable)
 
 	query = r.ProductRepo.QueryDomain(query, dto)
 	err := query.
-		Order("updated_at desc").
+		// Order("updated_at desc").
 		Limit(pagable.GetLimit()).
 		Offset(pagable.GetOffset()).
 		Find(&products).Error

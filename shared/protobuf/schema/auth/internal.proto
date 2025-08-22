@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package authpb;
+
+option go_package = "pb/types/auth;authpb";
+
+service AuthInternalService {
+    rpc RequiredRoles(RequiredRolesRequest) returns (RequiredRolesResponse);
+    rpc RequiredPermissions(RequiredPermissionsRequest) returns (RequiredPermissionsResponse);
+}
+
+message RequiredRolesRequest {
+    repeated string roles = 1;
+}
+
+message RequiredRolesResponse {
+    bool status = 1;
+    string message = 2;
+}
+
+message RequiredPermissionsRequest {
+    repeated string permissions = 1;
+}
+
+message RequiredPermissionsResponse {
+    bool status = 1;
+    string message = 2;
+}

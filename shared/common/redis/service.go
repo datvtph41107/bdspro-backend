@@ -2,6 +2,7 @@ package _redis
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -23,6 +24,11 @@ func NewRedisService() *RedisService {
 		Addr:     viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
 		Password: viper.GetString("redis.pass"),
 	})
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	log.Println("Connected to Redis at ", viper.GetString("redis.host"))
 	return &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),
