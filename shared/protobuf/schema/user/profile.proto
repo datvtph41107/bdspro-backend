@@ -42,6 +42,30 @@ service ProfileService {
             get: "/v2/user/admin/users"
         };
     }
+    
+    // Admin API - Khóa tài khoản user
+    rpc BlockUser(BlockUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/block"
+            body: "*"
+        };
+    }
+    
+    // Admin API - Mở khóa tài khoản user
+    rpc UnblockUser(UnblockUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/unblock"
+            body: "*"
+        };
+    }
+    
+    // Admin API - Duyệt tài khoản user
+    rpc ApproveUser(ApproveUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/approve"
+            body: "*"
+        };
+    }
 }
 
 message ProfileItem {
@@ -249,3 +273,20 @@ message AdminUserItem {
     string lastLoginAt = 17;     // Lần đăng nhập cuối
     uint32 totalLogin = 18;      // Tổng số lần đăng nhập
 }
+
+// Admin API Request Messages
+message BlockUserRequest {
+    uint64 profileId = 1;
+    string reason = 2;           // Lý do khóa tài khoản
+}
+
+message UnblockUserRequest {
+    uint64 profileId = 1;
+    string reason = 2;           // Lý do mở khóa tài khoản
+}
+
+message ApproveUserRequest {
+    uint64 profileId = 1;
+    string note = 2;             // Ghi chú khi duyệt
+}
+

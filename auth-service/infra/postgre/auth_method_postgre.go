@@ -142,3 +142,40 @@ func (r *AuthMethodPostgreRepo) CountByProvider(c context.Context, provider stri
 		Count(&count).Error
 	return count, err
 }
+
+// RestoreAccount khôi phục tài khoản đã bị soft delete
+func (r *AuthMethodPostgreRepo) RestoreAccount(c context.Context, id uint64) error {
+	return _db.DB.WithContext(c).Model(&domain.AuthMethodDomain{}).
+		Where("id = ?", id).
+		Update("deleted_at", nil).Error
+}
+
+// FindDeletedByPhone tìm auth method đã bị xóa theo phone
+func (r *AuthMethodPostgreRepo) FindDeletedByPhone(c context.Context, phone string) (*domain.AuthMethodDomain, error) {
+	var auth domain.AuthMethodDomain
+	err := _db.DB.WithContext(c).Where("phone = ? AND deleted_at IS NOT NULL", phone).First(&auth).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auth, nil
+}
+
+// FindDeletedByEmail tìm auth method đã bị xóa theo email
+func (r *AuthMethodPostgreRepo) FindDeletedByEmail(c context.Context, email string) (*domain.AuthMethodDomain, error) {
+	var auth domain.AuthMethodDomain
+	err := _db.DB.WithContext(c).Where("email = ? AND deleted_at IS NOT NULL", email).First(&auth).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auth, nil
+}
+
+// FindDeletedByUsername tìm auth method đã bị xóa theo username
+func (r *AuthMethodPostgreRepo) FindDeletedByUsername(c context.Context, username string) (*domain.AuthMethodDomain, error) {
+	var auth domain.AuthMethodDomain
+	err := _db.DB.WithContext(c).Where("username = ? AND deleted_at IS NOT NULL", username).First(&auth).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auth, nil
+}

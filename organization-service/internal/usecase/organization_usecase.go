@@ -8,7 +8,10 @@ import (
 	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
+	"organization/internal/dto"
+	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
+	sharepb "pb/types/shared"
 )
 
 type OrganizationUsecase interface {
@@ -18,6 +21,8 @@ type OrganizationUsecase interface {
 	GetOrganizationByUserId(ctx context.Context) ([]*entity.Organization, error)
 	CheckOrganizationIsExist(ctx context.Context) (bool, error)
 	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)
+	GetAllOrganizationsForAdmin(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
+	GetAllOrganizationsWithMembersForAdmin(ctx context.Context, offset, limit int) ([]*dto.OrganizationWithMembers, uint32, error)
 }
 
 type organizationUsecase struct {
@@ -25,6 +30,7 @@ type organizationUsecase struct {
 	OrganizationMemberRepository repository.OrganizationMemberRepository
 	organizationAuthUsecase      OrganizationAuthUsecase
 	logWorker                    *OrganizationLogWorker
+	userClient                   iusecase.IUserClient
 }
 
 func NewOrganizationUsecase(
@@ -32,12 +38,14 @@ func NewOrganizationUsecase(
 	organizationMemberRepository repository.OrganizationMemberRepository,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
+	userClient iusecase.IUserClient,
 ) OrganizationUsecase {
 	return &organizationUsecase{
 		OrganizationRepository:       organizationRepository,
 		OrganizationMemberRepository: organizationMemberRepository,
 		organizationAuthUsecase:      organizationAuthUsecase,
 		logWorker:                    logWorker,
+		userClient:                   userClient,
 	}
 }
 
@@ -154,4 +162,80 @@ func (o *organizationUsecase) GetOwnedOrganization(ctx context.Context) (*entity
 		return nil, custom_error.InvalidOrganizationID()
 	}
 	return organization, nil
+}
+
+func (o *organizationUsecase) GetAllOrganizationsForAdmin(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
+	// Kiểm tra quyền admin
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	hasRole, err := o.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), 0, env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	return o.OrganizationRepository.GetAllOrganizationsWithPagination(ctx, offset, limit)
+}
+
+func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context.Context, offset, limit int) ([]*dto.OrganizationWithMembers, uint32, error) {
+	// Kiểm tra quyền admin
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	hasRole, err := o.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), 0, env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Lấy tất cả organizations
+	organizations, total, err := o.OrganizationRepository.GetAllOrganizationsWithPagination(ctx, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	organizationsWithMembers := make([]*dto.OrganizationWithMembers, len(organizations))
+	for i, organization := range organizations {
+		// Lấy members của organization này
+		members, totalMembers, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organization.ID, 0, 100, nil, nil)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		// Lấy thông tin user từ user service
+		profileIds := make([]uint64, len(members))
+		for j, member := range members {
+			profileIds[j] = uint64(member.UserID)
+		}
+
+		var profilesMap map[uint64]*sharepb.ProfileItem
+		if len(profileIds) > 0 {
+			profilesMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+				Ids: profileIds,
+			})
+			if err != nil {
+				// Log error nhưng không fail toàn bộ request
+				profilesMap = make(map[uint64]*sharepb.ProfileItem)
+			}
+		} else {
+			profilesMap = make(map[uint64]*sharepb.ProfileItem)
+		}
+
+		membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
+		for j, member := range members {
+			membersWithProfiles[j] = &dto.OrganizationMemberWithProfile{
+				OrganizationMember: member,
+				Profile:            profilesMap[uint64(member.UserID)],
+			}
+		}
+
+		organizationsWithMembers[i] = &dto.OrganizationWithMembers{
+			Organization: organization,
+			Members:      membersWithProfiles,
+			TotalMembers: totalMembers,
+		}
+	}
+
+	return organizationsWithMembers, total, nil
 }

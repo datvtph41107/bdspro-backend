@@ -107,6 +107,126 @@
         ]
       }
     },
+    "/v2/user/admin/users/{profileId}/approve": {
+      "post": {
+        "summary": "Admin API - Duyệt tài khoản user",
+        "operationId": "ProfileService_ApproveUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceApproveUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin/users/{profileId}/block": {
+      "post": {
+        "summary": "Admin API - Khóa tài khoản user",
+        "operationId": "ProfileService_BlockUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceBlockUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin/users/{profileId}/unblock": {
+      "post": {
+        "summary": "Admin API - Mở khóa tài khoản user",
+        "operationId": "ProfileService_UnblockUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceUnblockUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/accounts/me": {
       "get": {
         "operationId": "ProfileService_ListAccountMe",
@@ -260,6 +380,34 @@
     }
   },
   "definitions": {
+    "ProfileServiceApproveUserBody": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "title": "Ghi chú khi duyệt"
+        }
+      }
+    },
+    "ProfileServiceBlockUserBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "title": "Lý do khóa tài khoản"
+        }
+      },
+      "title": "Admin API Request Messages"
+    },
+    "ProfileServiceUnblockUserBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "title": "Lý do mở khóa tài khoản"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {

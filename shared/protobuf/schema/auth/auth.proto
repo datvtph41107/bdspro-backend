@@ -57,6 +57,60 @@ service AuthService {
         };
     }
 
+    rpc RestoreDeletedAccount(RestoreDeletedAccountRequest) returns (RestoreDeletedAccountResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/restore-deleted"
+            body: "*"
+        };
+    }
+
+    // Admin Access Control
+    rpc CreateAdminAccess(CreateAdminAccessRequest) returns (AdminAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access"
+            body: "*"
+        };
+    }
+
+    rpc UpdateAdminAccess(UpdateAdminAccessRequest) returns (AdminAccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/admin-access/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteAdminAccess(DeleteAdminAccessRequest) returns (DeleteAdminAccessResponse) {
+        option (google.api.http) = {
+            delete: "/v2/auth/admin-access/{id}"
+        };
+    }
+
+    rpc GetAdminAccessList(GetAdminAccessListRequest) returns (GetAdminAccessListResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/admin-access"
+        };
+    }
+
+    rpc ValidateAdminAccess(ValidateAdminAccessRequest) returns (ValidateAdminAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access/validate"
+            body: "*"
+        };
+    }
+
+    rpc CreateAdminAccessLog(CreateAdminAccessLogRequest) returns (CreateAdminAccessLogResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access/log"
+            body: "*"
+        };
+    }
+
+    rpc GetAdminAccessLogList(GetAdminAccessLogListRequest) returns (GetAdminAccessLogListResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/admin-access/log"
+        };
+    }
+
     // QR Authentication
     rpc QRInit(QRInitRequest) returns (QRInitResponse) {
         option (google.api.http) = {
@@ -212,6 +266,139 @@ message RestoreAccountResponse {
     string oauthId = 3;
 }
 
+message RestoreDeletedAccountRequest {
+    string phone = 1;
+    string email = 2;
+    string username = 3;
+}
+
+message RestoreDeletedAccountResponse {
+    uint64 authId = 1;
+    string provider = 2;
+    string oauthId = 3;
+    string message = 4;
+}
+
+message AdminAccessResponse {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+    uint64 createdBy = 14;
+    uint64 updatedBy = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+}
+
+// Admin Access Control Messages
+message CreateAdminAccessRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string ipRange = 3;
+    string deviceId = 4;
+    string deviceName = 5;
+    string deviceType = 6;
+    string authType = 7;
+    string status = 8;
+    string effectiveFrom = 9;
+    string effectiveTo = 10;
+    int32 maxDevices = 11;
+    bool require2fa = 12;
+}
+
+message UpdateAdminAccessRequest {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+}
+
+message DeleteAdminAccessRequest {
+    uint64 id = 1;
+}
+
+message DeleteAdminAccessResponse {
+    string message = 1;
+}
+
+message GetAdminAccessListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    uint64 userId = 3;
+    string status = 4;
+    string authType = 5;
+    string ipAddress = 6;
+}
+
+message GetAdminAccessListResponse {
+    repeated AdminAccessItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message ValidateAdminAccessRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string deviceId = 3;
+}
+
+message ValidateAdminAccessResponse {
+    bool isAllowed = 1;
+    string reason = 2;
+    bool require2fa = 3;
+    uint64 accessId = 4;
+    string deviceId = 5;
+    string ipAddress = 6;
+}
+
+message CreateAdminAccessLogRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string deviceId = 3;
+    string deviceName = 4;
+    string action = 5;
+    string status = 6;
+    string reason = 7;
+    string userAgent = 8;
+}
+
+message CreateAdminAccessLogResponse {
+    string message = 1;
+}
+
+message GetAdminAccessLogListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    uint64 userId = 3;
+    string ipAddress = 4;
+}
+
+message GetAdminAccessLogListResponse {
+    repeated AdminAccessLogItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
 // QR Authentication Messages
 message QRInitRequest {
     string clientId = 1;
@@ -337,4 +524,37 @@ message AdminItem {
     string avatar = 7;
     string role = 8;
     string createdAt = 9;
+}
+
+message AdminAccessItem {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+    uint64 createdBy = 14;
+    uint64 updatedBy = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+}
+
+message AdminAccessLogItem {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string deviceId = 4;
+    string deviceName = 5;
+    string action = 6;
+    string status = 7;
+    string reason = 8;
+    string userAgent = 9;
+    string createdAt = 10;
 }

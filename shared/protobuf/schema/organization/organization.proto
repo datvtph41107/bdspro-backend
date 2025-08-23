@@ -53,6 +53,12 @@ service OrganizationService {
         };
     }
     
+    rpc GetAllOrganizationsWithMembersForAdmin(GetAllOrganizationsWithMembersForAdminRequest) returns (GetAllOrganizationsWithMembersForAdminResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/admin/all-with-members"
+        };
+    }
+    
 }
 
 message DashboardResponse {
@@ -154,4 +160,34 @@ message GetOwnedOrganizationRequest {
 
 message GetOwnedOrganizationResponse {
     Organization organization = 1 [json_name = "organization"];
+}
+
+message GetAllOrganizationsWithMembersForAdminRequest {
+    optional uint32 page = 1 [json_name = "page"];
+    optional uint32 size = 2 [json_name = "size"];
+}
+
+message OrganizationWithMembers {
+    Organization organization = 1 [json_name = "organization"];
+    repeated OrganizationMemberWithProfile members = 2 [json_name = "members"];
+    uint32 totalMembers = 3 [json_name = "totalMembers"];
+}
+
+message OrganizationMemberWithProfile {
+    uint32 id = 1 [json_name = "id"];
+    uint32 organizationId = 2 [json_name = "organizationId"];
+    uint32 userId = 3 [json_name = "userId"];
+    uint32 roleId = 4 [json_name = "roleId"];
+    uint32 status = 5 [json_name = "status"];
+    string joinedAt = 6 [json_name = "joinedAt"];
+    optional string removedAt = 7 [json_name = "removedAt"];
+    string roleName = 8 [json_name = "roleName"];
+    string roleKey = 9 [json_name = "roleKey"];
+    repeated string permissions = 10 [json_name = "permissions"];
+    sharepb.ProfileItem profile = 11 [json_name = "profile"];
+}
+
+message GetAllOrganizationsWithMembersForAdminResponse {
+    repeated OrganizationWithMembers data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
 }

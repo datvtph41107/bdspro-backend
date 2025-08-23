@@ -120,3 +120,33 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 
 	return users, total, nil
 }
+
+// GetUserByProfileID lấy thông tin user theo profile ID
+func (r *AdminRepo) GetUserByProfileID(profileID uint64) (*user_model.UserProfileEntity, error) {
+	var user user_model.UserProfileEntity
+	err := r.DB.Where("profile_id = ?", profileID).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// UpdateUserStatus cập nhật trạng thái user
+func (r *AdminRepo) UpdateUserStatus(profileID uint64, status uint8) error {
+	// Status: 0 = blocked, 1 = active, 2 = approved
+	var err error
+
+	if status == 0 {
+		// Block user - set deleted_at
+		err = r.DB.Model(&user_model.UserProfileEntity{}).
+			Where("profile_id = ?", profileID).
+			Update("deleted_at", gorm.Expr("NOW()")).Error
+	} else {
+		// Unblock/Approve user - clear deleted_at
+		err = r.DB.Model(&user_model.UserProfileEntity{}).
+			Where("profile_id = ?", profileID).
+			Update("deleted_at", nil).Error
+	}
+
+	return err
+}

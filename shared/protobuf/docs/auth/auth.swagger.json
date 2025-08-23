@@ -16,6 +16,281 @@
     "application/json"
   ],
   "paths": {
+    "/v2/auth/admin-access": {
+      "get": {
+        "operationId": "AuthService_GetAdminAccessList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbGetAdminAccessListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "authType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ipAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      },
+      "post": {
+        "summary": "Admin Access Control",
+        "operationId": "AuthService_CreateAdminAccess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAdminAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbCreateAdminAccessRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/admin-access/log": {
+      "get": {
+        "operationId": "AuthService_GetAdminAccessLogList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbGetAdminAccessLogListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ipAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      },
+      "post": {
+        "operationId": "AuthService_CreateAdminAccessLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbCreateAdminAccessLogResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbCreateAdminAccessLogRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/admin-access/validate": {
+      "post": {
+        "operationId": "AuthService_ValidateAdminAccess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbValidateAdminAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbValidateAdminAccessRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/admin-access/{id}": {
+      "delete": {
+        "operationId": "AuthService_DeleteAdminAccess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbDeleteAdminAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      },
+      "put": {
+        "operationId": "AuthService_UpdateAdminAccess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAdminAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthServiceUpdateAdminAccessBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/admin/assign-role": {
       "post": {
         "operationId": "AuthService_AssignRole",
@@ -486,6 +761,38 @@
         ]
       }
     },
+    "/v2/auth/restore-deleted": {
+      "put": {
+        "operationId": "AuthService_RestoreDeletedAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbRestoreDeletedAccountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbRestoreDeletedAccountRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/switch/organization": {
       "post": {
         "summary": "Organization Management",
@@ -554,6 +861,208 @@
     }
   },
   "definitions": {
+    "AuthServiceUpdateAdminAccessBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "ipRange": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "effectiveFrom": {
+          "type": "string"
+        },
+        "effectiveTo": {
+          "type": "string"
+        },
+        "maxDevices": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "require2fa": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authpbAdminAccessItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "ipRange": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "effectiveFrom": {
+          "type": "string"
+        },
+        "effectiveTo": {
+          "type": "string"
+        },
+        "maxDevices": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "require2fa": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbAdminAccessLogItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbAdminAccessResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "ipRange": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "effectiveFrom": {
+          "type": "string"
+        },
+        "effectiveTo": {
+          "type": "string"
+        },
+        "maxDevices": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "require2fa": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
     "authpbAdminItem": {
       "type": "object",
       "properties": {
@@ -674,6 +1183,88 @@
         }
       }
     },
+    "authpbCreateAdminAccessLogRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbCreateAdminAccessLogResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbCreateAdminAccessRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "ipRange": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "effectiveFrom": {
+          "type": "string"
+        },
+        "effectiveTo": {
+          "type": "string"
+        },
+        "maxDevices": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "require2fa": {
+          "type": "boolean"
+        }
+      },
+      "title": "Admin Access Control Messages"
+    },
     "authpbCreateAdminRequest": {
       "type": "object",
       "properties": {
@@ -706,11 +1297,67 @@
         }
       }
     },
+    "authpbDeleteAdminAccessResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "authpbDeleteAdminResponse": {
       "type": "object",
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "authpbGetAdminAccessListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbAdminAccessItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "authpbGetAdminAccessLogListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbAdminAccessLogItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -889,6 +1536,38 @@
         }
       }
     },
+    "authpbRestoreDeletedAccountRequest": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbRestoreDeletedAccountResponse": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "oauthId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "authpbSwitchOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -916,6 +1595,45 @@
           "type": "string"
         },
         "avatar": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbValidateAdminAccessRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbValidateAdminAccessResponse": {
+      "type": "object",
+      "properties": {
+        "isAllowed": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "require2fa": {
+          "type": "boolean"
+        },
+        "accessId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "ipAddress": {
           "type": "string"
         }
       }

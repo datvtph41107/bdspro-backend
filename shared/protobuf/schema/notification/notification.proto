@@ -63,6 +63,53 @@ service GatewayNotificationService {
       get: "/v2/admin-history/search"
     };
   };
+
+  // Account Warning APIs
+  rpc SendAccountWarning(SendAccountWarningRequest) returns (SendAccountWarningResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/account-warning/send"
+      body: "*"
+    };
+  }
+
+  rpc GetAccountWarningList(GetAccountWarningListRequest) returns (GetAccountWarningListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/account-warning/list"
+    };
+  }
+
+  rpc MarkWarningAsRead(MarkWarningAsReadRequest) returns (MarkWarningAsReadResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/account-warning/read"
+      body: "*"
+    };
+  }
+
+  rpc MarkWarningAsAcknowledged(MarkWarningAsAcknowledgedRequest) returns (MarkWarningAsAcknowledgedResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/account-warning/acknowledge"
+      body: "*"
+    };
+  }
+
+  rpc CreateWarningTemplate(CreateWarningTemplateRequest) returns (CreateWarningTemplateResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/account-warning/template"
+      body: "*"
+    };
+  }
+
+  rpc GetWarningTemplateList(GetWarningTemplateListRequest) returns (GetWarningTemplateListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/account-warning/template/list"
+    };
+  }
+
+  rpc GetWarningLogList(GetWarningLogListRequest) returns (GetWarningLogListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/account-warning/log/list"
+    };
+  }
 }
 
 message NotiBatchRequest {
@@ -205,5 +252,172 @@ message AdminHistoryCreateRequest {
 
 message AdminHistoryBatchRequest {
     repeated AdminHistoryCreateRequest datas = 1;
+}
+
+// Account Warning Messages
+message SendAccountWarningRequest {
+    uint64 targetId = 1;
+    string targetType = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool sendEmail = 7;
+    optional uint64 relatedId = 8;
+    string relatedType = 9;
+    optional string expiresAt = 10;
+}
+
+message SendAccountWarningResponse {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    uint64 sentBy = 9;
+    string sentAt = 10;
+    bool emailSent = 11;
+    string message = 12;
+}
+
+message GetAccountWarningListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    optional uint64 targetId = 3;
+    string targetType = 4;
+    string warningType = 5;
+    string severity = 6;
+    string status = 7;
+    optional uint64 sentBy = 8;
+    optional bool isRead = 9;
+}
+
+message GetAccountWarningListResponse {
+    repeated AccountWarningItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message AccountWarningItem {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    bool isRead = 9;
+    optional string readAt = 10;
+    uint64 sentBy = 11;
+    string sentAt = 12;
+    bool emailSent = 13;
+    optional string emailSentAt = 14;
+    optional uint64 relatedId = 15;
+    string relatedType = 16;
+    optional string expiresAt = 17;
+    string createdAt = 18;
+    string updatedAt = 19;
+}
+
+message MarkWarningAsReadRequest {
+    uint64 warningId = 1;
+    uint64 targetId = 2;
+}
+
+message MarkWarningAsReadResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message MarkWarningAsAcknowledgedRequest {
+    uint64 warningId = 1;
+    uint64 targetId = 2;
+}
+
+message MarkWarningAsAcknowledgedResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message CreateWarningTemplateRequest {
+    string name = 1;
+    string warningType = 2;
+    string title = 3;
+    string content = 4;
+    string severity = 5;
+    bool isActive = 6;
+}
+
+message CreateWarningTemplateResponse {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message GetWarningTemplateListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string warningType = 3;
+}
+
+message GetWarningTemplateListResponse {
+    repeated WarningTemplateItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message WarningTemplateItem {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message GetWarningLogListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    optional uint64 warningId = 3;
+    optional uint64 targetId = 4;
+}
+
+message GetWarningLogListResponse {
+    repeated WarningLogItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message WarningLogItem {
+    uint64 id = 1;
+    uint64 warningId = 2;
+    uint64 targetId = 3;
+    string action = 4;
+    string status = 5;
+    string reason = 6;
+    uint64 performedBy = 7;
+    string performedAt = 8;
+    string ipAddress = 9;
+    string userAgent = 10;
 }
 

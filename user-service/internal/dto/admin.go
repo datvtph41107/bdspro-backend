@@ -47,3 +47,19 @@ type AdminUserItem struct {
 	LastLoginAt    *time.Time `json:"lastLoginAt"`
 	TotalLogin     uint32     `json:"totalLogin"`
 }
+
+// Admin API Request DTOs
+type BlockUserRequest struct {
+	ProfileID uint64 `json:"profileId"`
+	Reason    string `json:"reason"`
+}
+
+type UnblockUserRequest struct {
+	ProfileID uint64 `json:"profileId"`
+	Reason    string `json:"reason"`
+}
+
+type ApproveUserRequest struct {
+	ProfileID uint64 `json:"profileId"`
+	Note      string `json:"note"`
+}
