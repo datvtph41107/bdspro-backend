@@ -18,7 +18,13 @@ type AuthMethodRepository interface {
 	FindByID(ctx context.Context, id uint64) (*domain.AuthMethodDomain, error)
 
 	// Admin management methods
-	FindAdminsByProvider(ctx context.Context, provider string, page, size int) ([]*domain.AuthMethodDomain, int64, error)
-	FindByUsernameAndProvider(ctx context.Context, username, provider string) (*domain.AuthMethodDomain, error)
-	CountByProvider(ctx context.Context, provider string) (int64, error)
+	FindAdminsByProvider(c context.Context, provider string, page, size int) ([]*domain.AuthMethodDomain, int64, error)
+	FindByUsernameAndProvider(c context.Context, username, provider string) (*domain.AuthMethodDomain, error)
+	CountByProvider(c context.Context, provider string) (int64, error)
+
+	// Account restoration methods
+	RestoreAccount(c context.Context, id uint64) error
+	FindDeletedByPhone(c context.Context, phone string) (*domain.AuthMethodDomain, error)
+	FindDeletedByEmail(c context.Context, email string) (*domain.AuthMethodDomain, error)
+	FindDeletedByUsername(c context.Context, username string) (*domain.AuthMethodDomain, error)
 }

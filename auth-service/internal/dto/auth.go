@@ -105,6 +105,21 @@ type RestoreAccountResponse struct {
 	OAuthId  string `json:"oauthId"`
 }
 
+// RestoreDeletedAccountRequest đại diện cho yêu cầu khôi phục tài khoản đã bị xóa
+type RestoreDeletedAccountRequest struct {
+	Phone    string `json:"phone,omitempty" validate:"omitempty,e164"`
+	Email    string `json:"email,omitempty" validate:"omitempty,email"`
+	Username string `json:"username,omitempty" validate:"omitempty,min=3,max=50"`
+}
+
+// RestoreDeletedAccountResponse đại diện cho response khôi phục tài khoản đã bị xóa
+type RestoreDeletedAccountResponse struct {
+	AuthId   uint64 `json:"authId"`
+	Provider string `json:"provider"`
+	OAuthId  string `json:"oauthId"`
+	Message  string `json:"message"`
+}
+
 // SessionQRRequest đại diện cho yêu cầu tạo QR session
 type SessionQRRequest struct {
 	ClientID   string `json:"clientId"`

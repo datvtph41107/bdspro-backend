@@ -35,6 +35,37 @@ service ProfileService {
             get: "/v2/user/profile/search/public"
         };
     }
+    
+    // Admin API - Lấy danh sách tất cả user với phân trang và tìm kiếm
+    rpc ListAllUsers(ListAllUsersRequest) returns (ListAllUsersResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/users"
+        };
+    }
+    
+    // Admin API - Khóa tài khoản user
+    rpc BlockUser(BlockUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/block"
+            body: "*"
+        };
+    }
+    
+    // Admin API - Mở khóa tài khoản user
+    rpc UnblockUser(UnblockUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/unblock"
+            body: "*"
+        };
+    }
+    
+    // Admin API - Duyệt tài khoản user
+    rpc ApproveUser(ApproveUserRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/users/{profileId}/approve"
+            body: "*"
+        };
+    }
 }
 
 message ProfileItem {
@@ -200,3 +231,62 @@ message SearchProfilePublicResponse {
     repeated UserSearchItem data = 1;
     int32 total = 2;
 }
+
+// Admin API Messages
+message ListAllUsersRequest {
+    string search = 1;           // Tìm kiếm theo tên, email, phone
+    uint32 page = 2;             // Trang hiện tại
+    uint32 size = 3;             // Số lượng item trên mỗi trang
+    string sortBy = 4;           // Sắp xếp theo trường (created_at, full_name, email)
+    string sortOrder = 5;        // Thứ tự sắp xếp (asc, desc)
+    uint32 status = 6;           // Lọc theo trạng thái (1: active, 0: inactive)
+    string roleType = 7;         // Lọc theo role type
+    string startDate = 8;        // Lọc từ ngày tạo
+    string endDate = 9;          // Lọc đến ngày tạo
+}
+
+message ListAllUsersResponse {
+    repeated AdminUserItem data = 1;
+    int32 total = 2;
+    uint32 page = 3;
+    uint32 size = 4;
+    uint32 totalPages = 5;
+}
+
+message AdminUserItem {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string email = 3;
+    string phone = 4;
+    string avatar = 5;
+    string address = 6;
+    uint32 gender = 7;
+    string birth = 8;
+    string createdAt = 9;
+    string updatedAt = 10;
+    uint32 status = 11;          // 1: active, 0: inactive
+    string roleType = 12;        // Role type của user
+    string roleRealEstate = 13;  // Role real estate
+    string position = 14;
+    uint64 departmentId = 15;
+    bool tickVerified = 16;      // Tài khoản đã xác thực
+    string lastLoginAt = 17;     // Lần đăng nhập cuối
+    uint32 totalLogin = 18;      // Tổng số lần đăng nhập
+}
+
+// Admin API Request Messages
+message BlockUserRequest {
+    uint64 profileId = 1;
+    string reason = 2;           // Lý do khóa tài khoản
+}
+
+message UnblockUserRequest {
+    uint64 profileId = 1;
+    string reason = 2;           // Lý do mở khóa tài khoản
+}
+
+message ApproveUserRequest {
+    uint64 profileId = 1;
+    string note = 2;             // Ghi chú khi duyệt
+}
+

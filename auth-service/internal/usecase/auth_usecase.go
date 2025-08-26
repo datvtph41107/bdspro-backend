@@ -333,6 +333,65 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 	}, nil
 }
 
+// RestoreDeletedAccount khôi phục tài khoản đã bị soft delete
+func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDeletedAccountRequest) (*dto.RestoreDeletedAccountResponse, error) {
+	var deletedAuth *domain.AuthMethodDomain
+	var err error
+
+	// Tìm tài khoản đã bị xóa theo phone, email hoặc username
+	if req.Phone != "" {
+		deletedAuth, err = s.AuthMethodRepo.FindDeletedByPhone(c, req.Phone)
+	} else if req.Email != "" {
+		deletedAuth, err = s.AuthMethodRepo.FindDeletedByEmail(c, req.Email)
+	} else if req.Username != "" {
+		deletedAuth, err = s.AuthMethodRepo.FindDeletedByUsername(c, req.Username)
+	} else {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Vui lòng cung cấp phone, email hoặc username để khôi phục tài khoản",
+		}
+	}
+
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy tài khoản đã bị xóa",
+		}
+	}
+
+	if deletedAuth == nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy tài khoản đã bị xóa",
+		}
+	}
+
+	// Kiểm tra xem tài khoản đã được khôi phục chưa
+	existingAuth, err := s.AuthMethodRepo.FindByID(c, deletedAuth.ID)
+	if err == nil && existingAuth != nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Tài khoản đã được khôi phục trước đó",
+		}
+	}
+
+	// Khôi phục tài khoản bằng cách set deleted_at = null
+	err = s.AuthMethodRepo.RestoreAccount(c, deletedAuth.ID)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi khi khôi phục tài khoản",
+		}
+	}
+
+	return &dto.RestoreDeletedAccountResponse{
+		AuthId:   deletedAuth.ID,
+		Provider: deletedAuth.Provider,
+		OAuthId:  deletedAuth.OAuthID,
+		Message:  "Tài khoản đã được khôi phục thành công",
+	}, nil
+}
+
 // Xóa tài khoản
 func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, error) {
 	principal := _jwt.GetPrincipalContext(c)

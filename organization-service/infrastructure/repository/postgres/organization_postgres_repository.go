@@ -283,6 +283,32 @@ func (r *OrganizationPostgresRepository) FindByUserIdWithPagination(ctx context.
 	return entities, uint32(count), nil
 }
 
+func (r *OrganizationPostgresRepository) GetAllOrganizationsWithPagination(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
+	var models []*OrganizationModel
+	if err := r.db.WithContext(ctx).
+		Preload("BusinessDomains").
+		Where("is_deleted = ?", false).
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+	entities := make([]*entity.Organization, len(models))
+	for i, model := range models {
+		entities[i] = OrganizationModelToEntity(model)
+	}
+
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&OrganizationModel{}).
+		Where("is_deleted = ?", false).
+		Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, uint32(count), nil
+}
+
 // Add soft delete function
 func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context, id uint32) error {
 	return r.db.WithContext(ctx).Model(&OrganizationModel{}).

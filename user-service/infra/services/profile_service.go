@@ -14,7 +14,9 @@ import (
 	"user/infra/client"
 	"user/infra/mapper"
 	user_repo "user/infra/repo"
+	"user/internal/dto"
 	user_service "user/internal/services/user"
+	"user/internal/usecases"
 
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/grpc/codes"
@@ -25,6 +27,7 @@ type GrpcProfileService struct {
 	userpb.UnimplementedProfileServiceServer
 	ProfileRepo   *user_repo.ProfileRepo
 	Profile       *user_service.ProfileService
+	AdminUsecase  *usecases.AdminUsecase
 	cache         *cache.Cache
 	OrgClient     orgpb.OrganizationServiceClient
 	GroupClient   organizationpb.GroupServiceClient
@@ -35,6 +38,7 @@ type GrpcProfileService struct {
 func NewGrpcProfileService(
 	profileRepo *user_repo.ProfileRepo,
 	profileService *user_service.ProfileService,
+	adminUsecase *usecases.AdminUsecase,
 	orgClient orgpb.OrganizationServiceClient,
 	groupClient organizationpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
@@ -43,6 +47,7 @@ func NewGrpcProfileService(
 	return &GrpcProfileService{
 		ProfileRepo:   profileRepo,
 		Profile:       profileService,
+		AdminUsecase:  adminUsecase,
 		cache:         cache.New(5*time.Minute, 10*time.Minute),
 		OrgClient:     orgClient,
 		GroupClient:   groupClient,
@@ -241,4 +246,215 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 		Data:  infos,
 		Total: int32(total),
 	}, nil
+}
+
+// @Summary Lấy danh sách tất cả user (Admin only)
+// @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param search query string false "Tìm kiếm theo tên, email, phone"
+// @Param page query int false "Trang hiện tại (mặc định: 1)"
+// @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
+// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
+// @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
+// @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
+// @Param roleType query string false "Lọc theo role type"
+// @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
+// @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
+// @Success 200 {object} userpb.ListAllUsersResponse
+// @Failure 400 {object} userpb.ListAllUsersResponse
+// @Failure 401 {object} userpb.ListAllUsersResponse
+// @Failure 500 {object} userpb.ListAllUsersResponse
+// @Router /v2/user/admin/users [get]
+func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
+	// TODO: Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if !h.isAdmin(profileID) {
+	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
+	// }
+
+	// Convert proto request to DTO
+	dtoReq := &dto.ListAllUsersRequest{
+		Search:    req.Search,
+		SortBy:    req.SortBy,
+		SortOrder: req.SortOrder,
+		RoleType:  req.RoleType,
+	}
+
+	// Set pagination
+	if req.Page > 0 {
+		dtoReq.Page = req.Page
+	} else {
+		dtoReq.Page = 1
+	}
+	if req.Size > 0 {
+		dtoReq.Size = req.Size
+	} else {
+		dtoReq.Size = 20
+	}
+
+	// Set status filter
+	if req.Status != 0 {
+		status := req.Status
+		dtoReq.Status = &status
+	}
+
+	// Set date filters
+	if req.StartDate != "" {
+		// TODO: Parse startDate string to time.Time
+	}
+	if req.EndDate != "" {
+		// TODO: Parse endDate string to time.Time
+	}
+
+	// Call usecase
+	result, err := s.AdminUsecase.ListAllUsers(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	response := &userpb.ListAllUsersResponse{
+		Total:      result.Total,
+		Page:       result.Page,
+		Size:       result.Size,
+		TotalPages: result.TotalPages,
+	}
+
+	// Convert data items
+	for _, item := range result.Data {
+		protoItem := &userpb.AdminUserItem{
+			ProfileId:      item.ProfileID,
+			FullName:       item.FullName,
+			Email:          item.Email,
+			Phone:          item.Phone,
+			Avatar:         item.Avatar,
+			Address:        item.Address,
+			Gender:         uint32(item.Gender),
+			Status:         uint32(item.Status),
+			RoleType:       item.RoleType,
+			RoleRealEstate: item.RoleRealEstate,
+			Position:       item.Position,
+			DepartmentId:   item.DepartmentID,
+			TickVerified:   item.TickVerified,
+			TotalLogin:     item.TotalLogin,
+		}
+
+		// Convert time fields
+		protoItem.CreatedAt = _utils.FormatTimeToString(&item.CreatedAt)
+		protoItem.UpdatedAt = _utils.FormatTimeToString(&item.UpdatedAt)
+		if item.Birth != nil {
+			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
+		}
+		if item.LastLoginAt != nil {
+			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
+		}
+
+		response.Data = append(response.Data, protoItem)
+	}
+
+	return response, nil
+}
+
+// @Summary Khóa tài khoản user (Admin only)
+// @Description Khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param profileId path int true "ID của user cần khóa"
+// @Param request body userpb.BlockUserRequest true "Thông tin khóa tài khoản"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {object} sharepb.Empty
+// @Failure 401 {object} sharepb.Empty
+// @Failure 500 {object} sharepb.Empty
+// @Router /v2/user/admin/users/{profileId}/block [post]
+func (s *GrpcProfileService) BlockUser(ctx context.Context, req *userpb.BlockUserRequest) (*sharepb.Empty, error) {
+	// TODO: Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if !h.isAdmin(profileID) {
+	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
+	// }
+
+	// Convert proto request to DTO
+	dtoReq := &dto.BlockUserRequest{
+		ProfileID: req.ProfileId,
+		Reason:    req.Reason,
+	}
+
+	// Call usecase
+	err := s.AdminUsecase.BlockUser(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to block user: %v", err)
+	}
+
+	return &sharepb.Empty{}, nil
+}
+
+// @Summary Mở khóa tài khoản user (Admin only)
+// @Description Mở khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param profileId path int true "ID của user cần mở khóa"
+// @Param request body userpb.UnblockUserRequest true "Thông tin mở khóa tài khoản"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {object} sharepb.Empty
+// @Failure 401 {object} sharepb.Empty
+// @Failure 500 {object} sharepb.Empty
+// @Router /v2/user/admin/users/{profileId}/unblock [post]
+func (s *GrpcProfileService) UnblockUser(ctx context.Context, req *userpb.UnblockUserRequest) (*sharepb.Empty, error) {
+	// TODO: Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if !h.isAdmin(profileID) {
+	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
+	// }
+
+	// Convert proto request to DTO
+	dtoReq := &dto.UnblockUserRequest{
+		ProfileID: req.ProfileId,
+		Reason:    req.Reason,
+	}
+
+	// Call usecase
+	err := s.AdminUsecase.UnblockUser(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unblock user: %v", err)
+	}
+
+	return &sharepb.Empty{}, nil
+}
+
+// @Summary Duyệt tài khoản user (Admin only)
+// @Description Duyệt tài khoản user với ghi chú (chỉ dành cho admin)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param profileId path int true "ID của user cần duyệt"
+// @Param request body userpb.ApproveUserRequest true "Thông tin duyệt tài khoản"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {object} sharepb.Empty
+// @Failure 401 {object} sharepb.Empty
+// @Failure 500 {object} sharepb.Empty
+// @Router /v2/user/admin/users/{profileId}/approve [post]
+func (s *GrpcProfileService) ApproveUser(ctx context.Context, req *userpb.ApproveUserRequest) (*sharepb.Empty, error) {
+	// TODO: Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if !h.isAdmin(profileID) {
+	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
+	// }
+
+	// Convert proto request to DTO
+	dtoReq := &dto.ApproveUserRequest{
+		ProfileID: req.ProfileId,
+		Note:      req.Note,
+	}
+
+	// Call usecase
+	err := s.AdminUsecase.ApproveUser(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to approve user: %v", err)
+	}
+
+	return &sharepb.Empty{}, nil
 }

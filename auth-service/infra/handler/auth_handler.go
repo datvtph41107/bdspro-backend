@@ -220,6 +220,39 @@ func (h *AuthHandler) RestoreAccount(ctx context.Context, req *authpb.RestoreAcc
 	}, nil
 }
 
+// @Summary Khôi phục tài khoản đã bị xóa
+// @Description Khôi phục tài khoản đã bị soft delete bằng cách bỏ trường deleted_at
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.RestoreDeletedAccountRequest true "Thông tin khôi phục tài khoản đã bị xóa"
+// @Success 200 {object} authpb.RestoreDeletedAccountResponse
+// @Failure 400 {object} authpb.RestoreDeletedAccountResponse
+// @Failure 404 {object} authpb.RestoreDeletedAccountResponse
+// @Failure 500 {object} authpb.RestoreDeletedAccountResponse
+// @Router /restore-deleted [put]
+func (h *AuthHandler) RestoreDeletedAccount(ctx context.Context, req *authpb.RestoreDeletedAccountRequest) (*authpb.RestoreDeletedAccountResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.RestoreDeletedAccountRequest{
+		Phone:    req.Phone,
+		Email:    req.Email,
+		Username: req.Username,
+	}
+
+	result, err := h.AuthUsecase.RestoreDeletedAccount(ctx, *dto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi khôi phục tài khoản đã bị xóa: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.RestoreDeletedAccountResponse{
+		AuthId:   result.AuthId,
+		Provider: result.Provider,
+		OauthId:  result.OAuthId,
+		Message:  result.Message,
+	}, nil
+}
+
 // @Summary QR Init
 // @Description Tạo QR code để đăng nhập
 // @Tags Auth

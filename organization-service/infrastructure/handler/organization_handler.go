@@ -144,8 +144,8 @@ func (h *OrganizationHandler) CheckOrganizationIsExist(ctx context.Context, req 
 	return &organizationpb.CheckOrganizationIsExistResponse{IsExist: isExist}, nil
 }
 
-// @Summary Lấy tổ chức của người dùng hiện tại
-// @Description Lấy tổ chức của người dùng hiện tại
+// @Summary Lấy tổ chức hiện tại
+// @Description Lấy tổ chức hiện tại
 // @Tags Tổ chức
 // @Accept json
 // @Produce json
@@ -156,33 +156,38 @@ func (h *OrganizationHandler) GetOwnedOrganization(ctx context.Context, req *org
 	if err != nil {
 		return nil, err
 	}
-	response := &organizationpb.GetOwnedOrganizationResponse{Organization: &organizationpb.Organization{
-		Id:                 organization.ID,
-		Name:               organization.Name,
-		TaxCode:            organization.TaxCode,
-		Address:            organization.Address,
-		Phone:              organization.Phone,
-		Email:              organization.Email,
-		BusinessLicenseUrl: organization.BusinessLicenseUrl,
-		Website:            organization.Website,
-		LogoUrl:            organization.LogoUrl,
-	}}
+	return h.OrganizationTransformer.EntityToGetOwnedOrganizationResponse(organization), nil
+}
 
-	response.Organization.BusinessDomains = make([]*organizationpb.BusinessDomain, len(organization.BusinessDomains))
-	for i, domain := range organization.BusinessDomains {
-		response.Organization.BusinessDomains[i] = &organizationpb.BusinessDomain{
-			Id:          domain.ID,
-			Name:        domain.Name,
-			Code:        domain.Code,
-			Description: domain.Description,
-			IsActive:    domain.IsActive,
-			CreatedAt:   domain.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   domain.UpdatedAt.Format(time.RFC3339),
-			CreatedBy:   domain.CreatedBy,
-			UpdatedBy:   domain.UpdatedBy,
-		}
+// @Summary Lấy danh sách tất cả doanh nghiệp với thành viên (Admin only)
+// @Description Lấy danh sách tất cả doanh nghiệp với thành viên cho admin
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.GetAllOrganizationsWithMembersForAdminRequest true "Thông tin request"
+// @Security BearerAuth
+// @Router /organization/admin/all-with-members [get]
+func (h *OrganizationHandler) GetAllOrganizationsWithMembersForAdmin(ctx context.Context, req *organizationpb.GetAllOrganizationsWithMembersForAdminRequest) (*organizationpb.GetAllOrganizationsWithMembersForAdminResponse, error) {
+	// Get pagination parameters
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
 	}
-	return response, nil
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Calculate offset
+	offset := page * size
+
+	// Get organizations with members for admin
+	organizationsWithMembers, total, err := h.OrganizationUsecase.GetAllOrganizationsWithMembersForAdmin(ctx, offset, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.OrganizationTransformer.EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers, total), nil
 }
 
 // @Summary Lấy dashboard của tổ chức hiện tại

@@ -16,6 +16,217 @@
     "application/json"
   ],
   "paths": {
+    "/v2/user/admin/users": {
+      "get": {
+        "summary": "Admin API - Lấy danh sách tất cả user với phân trang và tìm kiếm",
+        "operationId": "ProfileService_ListAllUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbListAllUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "search",
+            "description": "Tìm kiếm theo tên, email, phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "description": "Trang hiện tại",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "description": "Số lượng item trên mỗi trang",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sortBy",
+            "description": "Sắp xếp theo trường (created_at, full_name, email)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortOrder",
+            "description": "Thứ tự sắp xếp (asc, desc)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "description": "Lọc theo trạng thái (1: active, 0: inactive)",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "roleType",
+            "description": "Lọc theo role type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "startDate",
+            "description": "Lọc từ ngày tạo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "endDate",
+            "description": "Lọc đến ngày tạo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin/users/{profileId}/approve": {
+      "post": {
+        "summary": "Admin API - Duyệt tài khoản user",
+        "operationId": "ProfileService_ApproveUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceApproveUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin/users/{profileId}/block": {
+      "post": {
+        "summary": "Admin API - Khóa tài khoản user",
+        "operationId": "ProfileService_BlockUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceBlockUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin/users/{profileId}/unblock": {
+      "post": {
+        "summary": "Admin API - Mở khóa tài khoản user",
+        "operationId": "ProfileService_UnblockUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProfileServiceUnblockUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/accounts/me": {
       "get": {
         "operationId": "ProfileService_ListAccountMe",
@@ -169,6 +380,34 @@
     }
   },
   "definitions": {
+    "ProfileServiceApproveUserBody": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "title": "Ghi chú khi duyệt"
+        }
+      }
+    },
+    "ProfileServiceBlockUserBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "title": "Lý do khóa tài khoản"
+        }
+      },
+      "title": "Admin API Request Messages"
+    },
+    "ProfileServiceUnblockUserBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "title": "Lý do mở khóa tài khoản"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -312,6 +551,76 @@
         }
       }
     },
+    "userpbAdminUserItem": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: active, 0: inactive"
+        },
+        "roleType": {
+          "type": "string",
+          "title": "Role type của user"
+        },
+        "roleRealEstate": {
+          "type": "string",
+          "title": "Role real estate"
+        },
+        "position": {
+          "type": "string"
+        },
+        "departmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "tickVerified": {
+          "type": "boolean",
+          "title": "Tài khoản đã xác thực"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "title": "Lần đăng nhập cuối"
+        },
+        "totalLogin": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tổng số lần đăng nhập"
+        }
+      }
+    },
     "userpbCertificationItem": {
       "type": "object",
       "properties": {
@@ -336,6 +645,34 @@
         },
         "issueDate": {
           "type": "string"
+        }
+      }
+    },
+    "userpbListAllUsersResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbAdminUserItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalPages": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
