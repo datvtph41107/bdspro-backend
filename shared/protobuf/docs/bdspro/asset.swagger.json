@@ -523,7 +523,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AssetServiceUpdateAssetBody"
+              "$ref": "#/definitions/pb_bdsproAssetServiceUpdateAssetBody"
             }
           }
         ],
@@ -534,81 +534,6 @@
     }
   },
   "definitions": {
-    "AssetServiceUpdateAssetBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "area": {
-          "type": "number",
-          "format": "double"
-        },
-        "wardId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "districtId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "provinceId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "productId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "parentAssetId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "splitMergeStatus": {
-          "type": "string"
-        },
-        "purchasePrice": {
-          "type": "number",
-          "format": "double"
-        },
-        "purchaseDate": {
-          "type": "string"
-        },
-        "legalStatus": {
-          "type": "integer",
-          "format": "int64",
-          "title": "10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ"
-        },
-        "archived": {
-          "type": "boolean"
-        },
-        "rentStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "address": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "propertyTypeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "legalItems": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_bdsproLegalItem"
-          }
-        },
-        "ownerType": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "pb_bdsproAmenityItem": {
       "type": "object",
       "properties": {
@@ -817,6 +742,81 @@
         "total": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "pb_bdsproAssetServiceUpdateAssetBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parentAssetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "splitMergeStatus": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "purchaseDate": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "address": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "legalItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproLegalItem"
+          }
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

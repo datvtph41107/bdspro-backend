@@ -115,7 +115,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		// Status:          enums.EPostPublic,
 		Hidden: dto.Hidden,
 		// todo:
-		OwnerType: ownerType,
+		OwnerOf: ownerType,
 	}
 	if ownerId != nil {
 		entity.OwnerID = *ownerId

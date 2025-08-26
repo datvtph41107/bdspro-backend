@@ -246,7 +246,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 				PurchasePrice:  assetInfo.PurchasePrice,
 				PurchaseDate:   assetInfo.PurchaseDate,
 				LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
-				LegalItems:     &assetInfo.LegalItems,
+				LegalItems:     assetInfo.LegalItems,
 				RentStatus:     assetInfo.RentStatus,
 				OwnerType:      entity.OwnerType,
 				// Description:    assetInfo.Description,

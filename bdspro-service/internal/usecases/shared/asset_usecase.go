@@ -96,7 +96,7 @@ func (uc *AssetUsecase) UpdateAsset(ctx context.Context, id uint64, asset *domai
 	}
 	legalItems := []domain.AssetLegal{}
 	if asset.LegalItems != nil {
-		legalItems = *asset.LegalItems
+		legalItems = asset.LegalItems
 	}
 	asset.LegalItems = nil
 
@@ -173,7 +173,7 @@ func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*
 
 	legalItems := []domain.AssetLegal{}
 	if asset.LegalItems != nil {
-		legalItems = *asset.LegalItems
+		legalItems = asset.LegalItems
 	}
 	asset.LegalItems = nil
 
@@ -595,7 +595,7 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) (
 	return dto.Datas, nil
 }
 
-func (uc *AssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (uc *AssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchRequest) ([]domain.AssetList, int64, error) {
 	ownerID, ownerType, err := uc.RequestUsecase.GetOwnerIDAndType(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -608,7 +608,7 @@ func (uc *AssetUsecase) SearchAssetMe(ctx context.Context, dto dto.AssetSearchDT
 }
 
 // UC6: Tìm kiếm tài sản theo từ khóa hoặc mã tài sản
-func (uc *AssetUsecase) SearchAssetShare(ctx context.Context, dto dto.AssetSearchDTO) ([]domain.AssetList, int64, error) {
+func (uc *AssetUsecase) SearchAssetShare(ctx context.Context, dto dto.AssetSearchRequest) ([]domain.AssetList, int64, error) {
 	ownerID, ownerType, err := uc.RequestUsecase.GetOwnerIDAndType(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -651,7 +651,7 @@ func (uc *AssetUsecase) SearchAssetShare(ctx context.Context, dto dto.AssetSearc
 // 	}, nil
 // }
 
-func (uc *AssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto dto.AssetSearchDTO) ([]dto.AssetWithChildCountDTO, int64, error) {
+func (uc *AssetUsecase) GetAssetsWithChildCount(ctx context.Context, searchDto dto.AssetSearchRequest) ([]dto.AssetWithChildCountDTO, int64, error) {
 	// Validate input if needed
 	profileId := _utils.GetProfileIdWithContext(ctx)
 

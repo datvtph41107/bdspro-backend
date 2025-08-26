@@ -5,7 +5,7 @@ import (
 )
 
 // BaseRouter là struct chung cho tất cả các router
-type BaseRouter[T any, R IBaseRepo[T]] struct {
+type BaseRouter[T any, R ICrudRepo[T]] struct {
 	Service BaseUsecase[T, R]
 }
 

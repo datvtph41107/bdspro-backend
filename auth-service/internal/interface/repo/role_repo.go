@@ -7,7 +7,7 @@ import (
 )
 
 type RoleRepository interface {
-	crud.IBaseRepo[domain.Role]
+	crud.ICrudRepo[domain.Role]
 	ExistProfileIdWithKeys(ctx context.Context, profileId uint64, keys []string) (bool, error)
 	FindByDomain(ctx context.Context, domain string) ([]*domain.Role, error)
 	FindByOrganizationId(ctx context.Context, organizationId uint64) ([]*domain.Role, error)

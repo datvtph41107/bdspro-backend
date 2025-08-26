@@ -6,5 +6,5 @@ import (
 )
 
 type AdminProjectRepo interface {
-	crud.IBaseRepo[domain.Project]
+	crud.ICrudRepo[domain.Project]
 }

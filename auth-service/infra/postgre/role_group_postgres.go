@@ -10,11 +10,15 @@ import (
 )
 
 type RoleGroupRepo struct {
-	crud.BaseRepo[domain.RoleGroup]
+	*crud.CrudRepo[domain.RoleGroup]
 }
 
-func NewRoleGroupRepo(db *_db.DBTransaction) repo.RoleGroupRepository {
-	return crud.MakeCrudRepo(&RoleGroupRepo{}, db).(*RoleGroupRepo)
+func NewRoleGroupRepo(db *_db.TransactionRepo) repo.RoleGroupRepository {
+	x := &RoleGroupRepo{
+		CrudRepo: &crud.CrudRepo[domain.RoleGroup]{},
+	}
+	x.CrudRepo.Init(x, db)
+	return x
 }
 
 func (r *RoleGroupRepo) GetByKey(ctx context.Context, key enums.GroupRoleKeyEnum) (*domain.RoleGroup, error) {

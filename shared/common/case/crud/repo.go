@@ -5,11 +5,10 @@ import (
 	_dto "common/dto"
 	"context"
 	"time"
-
-	"gorm.io/gorm"
 )
 
-type IBaseRepo[T any] interface {
+// là usecase cơ bản cho logic thêm sửa xóa 1 bản ghi thông thường
+type ICrudRepo[T any] interface {
 	Create(c context.Context, entity *T) error
 	Update(c context.Context, id uint64, entity *T) error
 	Delete(c context.Context, id uint64) error
@@ -19,50 +18,36 @@ type IBaseRepo[T any] interface {
 	GetDetail(c context.Context, id uint64) (*T, error)
 	BeforeSave(c context.Context, id *uint64, entity *T) error
 	AfterSave(c context.Context, id *uint64, entity *T) error
-
-	// __internal__
-	Self() IBaseRepo[T]
-	GetDB(c context.Context) *gorm.DB
-	Init(repo IBaseRepo[T], db *_db.DBTransaction)
 }
 
-type BaseRepo[T any] struct {
-	*_db.DBTransaction
-	implements IBaseRepo[T]
-	// DB         *gorm.DB
+type CrudRepo[T any] struct {
+	*_db.TransactionRepo
+	implements ICrudRepo[T]
 }
 
-func MakeCrudRepo[T any](repo IBaseRepo[T], db *_db.DBTransaction) IBaseRepo[T] {
-	repo.Init(repo, db)
-	return repo
-}
-
-func (r *BaseRepo[T]) Init(repo IBaseRepo[T], db *_db.DBTransaction) {
+func (r *CrudRepo[T]) Init(repo ICrudRepo[T], db *_db.TransactionRepo) {
 	r.implements = repo
-	r.DBTransaction = db
-}
-
-func (r *BaseRepo[T]) Self() IBaseRepo[T] {
-	return r.implements
+	r.TransactionRepo = db
 }
 
 // func (r *BaseRepo[T]) GetDB(c context.Context) *gorm.DB {
 // 	return r.DBTransaction.GetDB(c, r.DBTransaction.DB)
 // }
 
-func (r *BaseRepo[T]) AfterSave(c context.Context, id *uint64, entity *T) error {
+func (r *CrudRepo[T]) AfterSave(c context.Context, id *uint64, entity *T) error {
+	r.GetDB(c)
 	return nil
 }
 
 // Tạo mới bản ghi
-func (r *BaseRepo[T]) Create(c context.Context, entity *T) error {
-	if err := r.Self().BeforeSave(c, nil, entity); err != nil {
+func (r *CrudRepo[T]) Create(c context.Context, entity *T) error {
+	if err := r.implements.BeforeSave(c, nil, entity); err != nil {
 		return err
 	}
 
-	err := r.DBTransaction.WithTransaction(c, func(c context.Context) error {
-		exec := r.Self().GetDB(c).Create(entity)
-		if err := r.Self().AfterSave(c, nil, entity); err != nil {
+	err := r.TransactionRepo.WithTransaction(c, func(c context.Context) error {
+		exec := r.GetDB(c).Create(entity)
+		if err := r.implements.AfterSave(c, nil, entity); err != nil {
 			return err
 		}
 		return exec.Error
@@ -72,26 +57,26 @@ func (r *BaseRepo[T]) Create(c context.Context, entity *T) error {
 }
 
 // Cập nhật bản ghi
-func (r *BaseRepo[T]) Update(c context.Context, id uint64, entity *T) error {
-	if err := r.Self().BeforeSave(c, &id, entity); err != nil {
+func (r *CrudRepo[T]) Update(c context.Context, id uint64, entity *T) error {
+	if err := r.implements.BeforeSave(c, &id, entity); err != nil {
 		return err
 	}
-	err := r.DBTransaction.WithTransaction(c, func(c context.Context) error {
-		err := r.Self().GetDB(c).
+	err := r.TransactionRepo.WithTransaction(c, func(c context.Context) error {
+		err := r.GetDB(c).
 			Model(entity).
 			Where("id = ? and deleted_at is null", id).
 			Updates(entity).Error
 		if err != nil {
 			return err
 		}
-		return r.Self().AfterSave(c, &id, entity)
+		return r.implements.AfterSave(c, &id, entity)
 	})
 	return err
 }
 
 // Xóa mềm bản ghi (cập nhật deleted_at thay vì xóa trực tiếp)
-func (r *BaseRepo[T]) Delete(c context.Context, id uint64) error {
-	return r.Self().GetDB(c).
+func (r *CrudRepo[T]) Delete(c context.Context, id uint64) error {
+	return r.GetDB(c).
 		Model(new(T)).
 		Where("id = ? and deleted_at is null", id).
 		Update("deleted_at", time.Now()).
@@ -99,9 +84,9 @@ func (r *BaseRepo[T]) Delete(c context.Context, id uint64) error {
 }
 
 // Lấy tất cả bản ghi (bỏ qua những bản ghi đã bị xóa mềm)
-func (r *BaseRepo[T]) GetAll(c context.Context) ([]T, error) {
+func (r *CrudRepo[T]) GetAll(c context.Context) ([]T, error) {
 	var entities []T
-	err := r.Self().GetDB(c).
+	err := r.GetDB(c).
 		Where("deleted_at is null").
 		Find(&entities).
 		Error
@@ -109,9 +94,9 @@ func (r *BaseRepo[T]) GetAll(c context.Context) ([]T, error) {
 }
 
 // Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
-func (r *BaseRepo[T]) GetByID(c context.Context, id uint64) (*T, error) {
+func (r *CrudRepo[T]) GetByID(c context.Context, id uint64) (*T, error) {
 	var entity T
-	err := r.Self().GetDB(c).
+	err := r.GetDB(c).
 		Where("id = ? and deleted_at is null", id).
 		First(&entity).
 		Error
@@ -121,10 +106,10 @@ func (r *BaseRepo[T]) GetByID(c context.Context, id uint64) (*T, error) {
 	return &entity, nil
 }
 
-func (r *BaseRepo[T]) GetList(c context.Context, pagable _dto.IPagable) ([]T, int64, error) {
+func (r *CrudRepo[T]) GetList(c context.Context, pagable _dto.IPagable) ([]T, int64, error) {
 	var entities []T
 	var total int64
-	err := r.Self().GetDB(c).
+	err := r.GetDB(c).
 		Where("deleted_at is null").
 		Offset(pagable.GetOffset()).
 		Limit(pagable.GetLimit()).
@@ -134,7 +119,7 @@ func (r *BaseRepo[T]) GetList(c context.Context, pagable _dto.IPagable) ([]T, in
 		return nil, 0, err
 	}
 
-	err = r.Self().GetDB(c).
+	err = r.GetDB(c).
 		Model(new(T)).
 		Where("deleted_at is null").
 		Count(&total).Error
@@ -146,9 +131,9 @@ func (r *BaseRepo[T]) GetList(c context.Context, pagable _dto.IPagable) ([]T, in
 	return entities, total, err
 }
 
-func (r *BaseRepo[T]) GetDetail(c context.Context, id uint64) (*T, error) {
+func (r *CrudRepo[T]) GetDetail(c context.Context, id uint64) (*T, error) {
 	var entity T
-	err := r.Self().GetDB(c).
+	err := r.GetDB(c).
 		Where("id = ? and deleted_at is null", id).
 		First(&entity).
 		Error
@@ -158,6 +143,6 @@ func (r *BaseRepo[T]) GetDetail(c context.Context, id uint64) (*T, error) {
 	return &entity, nil
 }
 
-func (r *BaseRepo[T]) BeforeSave(c context.Context, id *uint64, entity *T) error {
+func (r *CrudRepo[T]) BeforeSave(c context.Context, id *uint64, entity *T) error {
 	return nil
 }

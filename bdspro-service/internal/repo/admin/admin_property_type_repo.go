@@ -6,5 +6,5 @@ import (
 )
 
 type AdminPropertyTypeRepo interface {
-	crud.IBaseRepo[domain.PropertyType]
+	crud.ICrudRepo[domain.PropertyType]
 }

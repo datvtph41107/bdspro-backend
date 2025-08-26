@@ -12,12 +12,12 @@ import (
 )
 
 type PlanRouter struct {
-	crud.BaseRouter[models.Plan, crud.IBaseRepo[models.Plan]]
+	crud.BaseRouter[models.Plan, crud.ICrudRepo[models.Plan]]
 }
 
 func NewPlanRouter(service *services.PlanService) *PlanRouter {
 	return &PlanRouter{
-		BaseRouter: crud.BaseRouter[models.Plan, crud.IBaseRepo[models.Plan]]{
+		BaseRouter: crud.BaseRouter[models.Plan, crud.ICrudRepo[models.Plan]]{
 			Service: service.BaseService,
 		},
 	}

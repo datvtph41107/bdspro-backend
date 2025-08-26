@@ -31,6 +31,16 @@ service AdminProductService {
       delete: "/v2/bdspro/admin/products/{id}"
     };
   };
+  rpc ApproveProduct(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/products/{id}/approve"
+    };
+  };
+  rpc RejectProduct(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/products/{id}/reject"
+    };
+  };
 }
 
 message ProductRequest {

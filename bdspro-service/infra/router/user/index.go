@@ -85,7 +85,7 @@ func (rm *RouterManager) RegisterRouter(e *gin.Engine) {
 	// userRouter.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 
 	rm.uListRouter.RegisterRouter(userRouter)
-	rm.uAssetRouter.RegisterRoutes(userRouter, "/asset")
+	// rm.uAssetRouter.RegisterRoutes(userRouter, "/asset")
 	rm.uAssetCostTypeRouter.RegisterRoutes(userRouter, "/assets/cost-type")
 	rm.uAssetCostRouter.RegisterRoutes(userRouter, "/assets/cost")
 	rm.uAssetExploitationRouter.RegisterRoutes(userRouter, "/assets/exploitation")

@@ -36,7 +36,7 @@ func NewGrpcAssetService(uc *shared_usecase.AssetUsecase,
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/search [get]
 func (s *AssetService) SearchInternal(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
-	body := dto.AssetSearchDTO{}
+	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (s *AssetService) SearchInternal(ctx context.Context, req *pb_bdspro.AssetS
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/search-share [get]
 func (s *AssetService) SearchShare(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
-	body := dto.AssetSearchDTO{}
+	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (s *AssetService) SearchShare(ctx context.Context, req *pb_bdspro.AssetSear
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/split [get]
 func (s *AssetService) SearchSplit(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
-	body := dto.AssetSearchDTO{}
+	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (s *AssetService) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*
 		return nil, err
 	}
 
-	asset := s.Mapper.AssetToPb(result)
+	asset := s.Mapper.MapAssetPb(result)
 
 	return asset, nil
 }
@@ -288,7 +288,7 @@ func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetReque
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/publish/{profileId} [get]
 func (s *AssetService) GetPublish(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetSearchResponse, error) {
-	body := dto.AssetSearchDTO{}
+	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
 	}

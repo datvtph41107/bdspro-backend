@@ -32,6 +32,8 @@ type InitialApp struct {
 	ProjectBuildService      *service.ProjectBuildService
 	TransactionService       *service.TransactionHandler
 	AdminProductHandler      *admin_handler.AdminProductHandler
+	AdminAssetHandler        *admin_handler.AdminAssetHandler
+	AdminPostHandler         *admin_handler.AdminPostHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
 
@@ -75,6 +77,8 @@ func NewInitialApp(
 	projectBuildService *service.ProjectBuildService,
 	transactionService *service.TransactionHandler,
 	adminProductHandler *admin_handler.AdminProductHandler,
+	adminAssetHandler *admin_handler.AdminAssetHandler,
+	adminPostHandler *admin_handler.AdminPostHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
 	// @bind: register_server_new
@@ -107,6 +111,8 @@ func NewInitialApp(
 		ProjectBuildService:      projectBuildService,
 		TransactionService:       transactionService,
 		AdminProductHandler:      adminProductHandler,
+		AdminAssetHandler:        adminAssetHandler,
+		AdminPostHandler:         adminPostHandler,
 		AdminPropertyTypeHandler: adminPropertyTypeHandler,
 		AdminProjectHandler:      adminProjectHandler,
 		// AdminRouter: adminRoute,

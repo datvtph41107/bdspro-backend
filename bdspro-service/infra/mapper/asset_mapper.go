@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_models "common/models"
 	_utils "common/utils"
@@ -22,45 +23,32 @@ func NewAssetMapper(assetLegalMapper *AssetLegalMapper, productMapper *ProductMa
 	return result
 }
 
-func (m *AssetMapper) AssetToPb(asset *domain.Asset) *pb_bdspro.Asset {
-	result := &pb_bdspro.Asset{
-		Id:             asset.ID,
-		Name:           asset.Name,
-		Area:           asset.Area,
-		Address:        asset.Address,
-		WardId:         asset.WardID,
-		DistrictId:     asset.DistrictID,
-		ProvinceId:     asset.ProvinceID,
-		PurchasePrice:  asset.PurchasePrice,
-		PurchaseDate:   _utils.FormatTimeToString(asset.PurchaseDate),
-		LegalStatus:    uint32(asset.LegalStatus),
-		Archived:       asset.Archived,
-		RentStatus:     uint32(asset.RentStatus),
-		Description:    asset.Description,
-		PropertyTypeId: asset.PropertyTypeId,
-		ProductId:      asset.ProductID,
-		// DocStatus:     uint32(asset.LegalStatus),
-		// MediaList:     m.LegalItemsToPb(asset.LegalItems),
+func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *pb_bdspro.Asset {
+	if asset == nil {
+		return nil
 	}
-	if asset.PropertyType != nil {
-		result.PropertyTypeName = asset.PropertyType.Name
+
+	return &pb_bdspro.Asset{
+		Id:               asset.ID,
+		Name:             asset.Name,
+		Area:             asset.Area,
+		WardId:           asset.WardID,
+		DistrictId:       asset.DistrictID,
+		ProvinceId:       asset.ProvinceID,
+		ProductId:        asset.ProductID,
+		ParentAssetId:    asset.ParentAssetID,
+		SplitMergeStatus: asset.SplitMergeStatus,
+		PurchasePrice:    asset.PurchasePrice,
+		PurchaseDate:     _utils.FormatTimeToString(asset.PurchaseDate),
+		LegalStatus:      uint32(asset.LegalStatus),
+		Archived:         asset.Archived,
+		RentStatus:       uint32(asset.RentStatus),
+		Address:          asset.Address,
+		Description:      asset.Description,
+		PropertyTypeId:   asset.PropertyTypeId,
+		OwnerType:        &asset.OwnerType,
+		LegalItems:       m.mapLegalItemsPb(asset.LegalItems),
 	}
-	if asset.Ward != nil {
-		result.WardName = asset.Ward.Name
-	}
-	if asset.District != nil {
-		result.DistrictName = asset.District.Name
-	}
-	if asset.Province != nil {
-		result.ProvinceName = asset.Province.Name
-	}
-	if asset.LegalItems != nil {
-		result.LegalItems = m.LegalItemsToPb(*asset.LegalItems)
-	}
-	if asset.Product != nil {
-		result.Product = m.ProductMapper.MapProductPb(asset.Product)
-	}
-	return result
 }
 
 func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain.Asset {
@@ -93,19 +81,83 @@ func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain
 	return result
 }
 
-func (m *AssetMapper) LegalItemsToPb(legalItems []domain.AssetLegal) []*pb_bdspro.LegalItem {
-	pbLegalItems := make([]*pb_bdspro.LegalItem, len(legalItems))
-	for i, legalItem := range legalItems {
-		pbLegalItems[i] = &pb_bdspro.LegalItem{
-			Id:           legalItem.ID,
-			AssetId:      legalItem.AssetID,
-			DocumentName: legalItem.DocumentName,
-			DocumentUrl:  legalItem.DocumentURL,
-			DocumentType: legalItem.DocumentType,
-			IssuedDate:   legalItem.IssuedDate,
-			ExpiryDate:   legalItem.ExpiryDate,
-			Description:  legalItem.Description,
+func (m *AssetMapper) MapAssetPbList(assets []domain.Asset) []*pb_bdspro.Asset {
+	if assets == nil {
+		return nil
+	}
+
+	result := make([]*pb_bdspro.Asset, len(assets))
+	for i, asset := range assets {
+		result[i] = m.MapAssetPb(&asset)
+	}
+	return result
+}
+
+func (m *AssetMapper) AssetSavePbToDTO(req *pb_bdspro.SaveAssetRequest) *dto.AssetSaveRequest {
+	if req == nil {
+		return nil
+	}
+
+	return &dto.AssetSaveRequest{
+		ID:               req.Id,
+		Name:             req.Name,
+		Area:             req.Area,
+		WardID:           req.WardId,
+		DistrictID:       req.DistrictId,
+		ProvinceID:       req.ProvinceId,
+		ProductID:        req.ProductId,
+		ParentAssetID:    req.ParentAssetId,
+		SplitMergeStatus: req.SplitMergeStatus,
+		PurchasePrice:    req.PurchasePrice,
+		PurchaseDate:     req.PurchaseDate,
+		LegalStatus:      req.LegalStatus,
+		Archived:         req.Archived,
+		RentStatus:       req.RentStatus,
+		Address:          req.Address,
+		Description:      req.Description,
+		PropertyTypeID:   req.PropertyTypeId,
+		LegalItems:       m.mapLegalItemsDto(req.LegalItems),
+		OwnerType:        req.OwnerType,
+	}
+}
+
+func (m *AssetMapper) mapLegalItemsPb(legalItems []domain.AssetLegal) []*pb_bdspro.LegalItem {
+	if legalItems == nil {
+		return nil
+	}
+
+	result := make([]*pb_bdspro.LegalItem, len(legalItems))
+	for i, item := range legalItems {
+		result[i] = &pb_bdspro.LegalItem{
+			Id:           item.ID,
+			AssetId:      item.AssetID,
+			DocumentType: item.DocumentType,
+			DocumentName: item.DocumentType, // Using DocumentType as DocumentName
+			DocumentUrl:  "",                // Empty for now
+			IssuedDate:   _utils.FormatTimeToString(item.IssuedDate),
+			ExpiryDate:   _utils.FormatTimeToString(item.ExpiryDate),
+			Description:  "", // Empty for now
 		}
 	}
-	return pbLegalItems
+	return result
+}
+
+func (m *AssetMapper) mapLegalItemsDto(legalItems []*pb_bdspro.LegalItem) []dto.LegalItem {
+	if legalItems == nil {
+		return nil
+	}
+
+	result := make([]dto.LegalItem, len(legalItems))
+	for i, item := range legalItems {
+		result[i] = dto.LegalItem{
+			ID:             item.Id,
+			AssetID:        item.AssetId,
+			DocumentType:   item.DocumentType,
+			DocumentNumber: item.DocumentName, // Using DocumentName as DocumentNumber
+			IssueDate:      item.IssuedDate,
+			ExpiryDate:     item.ExpiryDate,
+			Status:         0, // Default status
+		}
+	}
+	return result
 }

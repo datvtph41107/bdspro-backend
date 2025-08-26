@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+import "bdspro/common.proto";
+import "bdspro/asset.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service AdminAssetService {
+  rpc GetAssets(sharepb.IdRequest) returns (AssetSearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/assets"
+    };
+  };
+  rpc CreateAsset(SaveAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets"
+      body: "*"
+    };
+  };
+  rpc UpdateAsset(SaveAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/assets/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/assets/{id}"
+    };
+  };
+  rpc ApproveAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/{id}/approve"
+    };
+  };
+  rpc RejectAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/{id}/reject"
+    };
+  };
+  rpc ArchiveAsset(ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/assets/archived"
+      body: "*"
+    };
+  };
+  rpc MergeAssets(MergeAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/merge"
+      body: "*"
+    };
+  };
+  rpc SplitAsset(SplitAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/split"
+      body: "*"
+    };
+  };
+}
+
+message AssetRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}

@@ -565,7 +565,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/PostServiceUpdatePostBody"
+              "$ref": "#/definitions/pb_bdsproPostServiceUpdatePostBody"
             }
           }
         ],
@@ -576,62 +576,6 @@
     }
   },
   "definitions": {
-    "PostServiceUpdatePostBody": {
-      "type": "object",
-      "properties": {
-        "productId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "title": {
-          "type": "string"
-        },
-        "content": {
-          "type": "string"
-        },
-        "price": {
-          "type": "number",
-          "format": "double"
-        },
-        "transactionType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "visibility": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "packageVisible": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "expiredAt": {
-          "type": "string"
-        },
-        "numDate": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hidden": {
-          "type": "boolean"
-        },
-        "mediaList": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_bdsproPostMedia"
-          }
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "priceType": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "pb_bdsproAmenityItem": {
       "type": "object",
       "properties": {
@@ -1246,6 +1190,62 @@
         "id": {
           "type": "string",
           "format": "uint64"
+        },
+        "priceType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "pb_bdsproPostServiceUpdatePostBody": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "packageVisible": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "expiredAt": {
+          "type": "string"
+        },
+        "numDate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproPostMedia"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         },
         "priceType": {
           "type": "integer",

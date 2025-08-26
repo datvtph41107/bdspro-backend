@@ -13,11 +13,15 @@ import (
 )
 
 type RoleRepo struct {
-	crud.BaseRepo[domain.Role]
+	*crud.CrudRepo[domain.Role]
 }
 
-func NewRoleRepo(db *_db.DBTransaction) repo.RoleRepository {
-	return crud.MakeCrudRepo(&RoleRepo{}, db).(*RoleRepo)
+func NewRoleRepo(db *_db.TransactionRepo) repo.RoleRepository {
+	x := &RoleRepo{
+		CrudRepo: &crud.CrudRepo[domain.Role]{},
+	}
+	x.CrudRepo.Init(x, db)
+	return x
 }
 
 func (r *RoleRepo) ExistProfileIdWithKeys(ctx context.Context, profileId uint64, keys []string) (bool, error) {

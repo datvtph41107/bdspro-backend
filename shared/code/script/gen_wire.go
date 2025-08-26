@@ -239,7 +239,7 @@ import (
 	writer.WriteString("// Inject dependencies\n")
 	writer.WriteString(`var wireSet = wire.NewSet(
 	_db.NewDB,
-	_db.NewDBTransaction,
+	_db.NewTransactionRepo,
 `)
 
 	// for _, f := range binds {

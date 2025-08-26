@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-// type PostStatus struct {
-// 	Status enums.EPostStatus `gorm:"-" json:"status"`
-// }
-
 type Post struct {
 	_models.BaseEntity
 	ID              uint64                `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -32,7 +28,7 @@ type Post struct {
 	Product         *Product              `gorm:"-" json:"product"`
 	MediaList       []PostMediaEntity     `json:"mediaList"`
 	OwnerID         uint64                `json:"ownerId"`
-	OwnerType       enums.EOwnerOf        `gorm:"column:owner_type;default:10" json:"ownerType"`
+	OwnerOf         enums.EOwnerOf        `gorm:"column:owner_of;default:10" json:"ownerOf"`
 	// Asset           *Asset               `json:"asset"`
 }
 

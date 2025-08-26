@@ -4,6 +4,7 @@ import (
 	"bdspro/infra/postgre"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	case_archived "common/case/archived"
 	"common/case/crud"
 	_db "common/db"
 	_dto "common/dto"
@@ -15,14 +16,22 @@ import (
 
 // @bind: bdspro/internal/repo/admin.AdminProductRepo
 type AdminProductPostgres struct {
-	crud.BaseRepo[domain.Product]
+	*crud.CrudRepo[domain.Product]
+	*case_archived.ArchivedRepo[domain.Product]
 	ProductRepo *postgre.GormUserProductRepo
 }
 
-func NewAdminProductPostgres(db *_db.DBTransaction, productRepo *postgre.GormUserProductRepo) *AdminProductPostgres {
-	return crud.MakeCrudRepo(&AdminProductPostgres{
-		ProductRepo: productRepo,
-	}, db).(*AdminProductPostgres)
+func NewAdminProductPostgres(db *_db.TransactionRepo, productRepo *postgre.GormUserProductRepo) *AdminProductPostgres {
+	x := &AdminProductPostgres{
+		CrudRepo:     &crud.CrudRepo[domain.Product]{},
+		ArchivedRepo: &case_archived.ArchivedRepo[domain.Product]{},
+		ProductRepo:  productRepo,
+	}
+
+	x.CrudRepo.Init(x, db)
+	x.ArchivedRepo.Init(x, db)
+
+	return x
 }
 
 func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable) ([]domain.Product, int64, error) {
@@ -30,11 +39,13 @@ func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable)
 	if !ok {
 		return nil, 0, _errors.ReturnError(400, "invalid pagable")
 	}
-
+	// r.WithTransaction(c, func(c context.Context) error {
+	// 	return nil
+	// })
 	var products []domain.Product
 	var total int64
 
-	query := r.DB.
+	query := r.CrudRepo.GetDB(c).
 		Debug().
 		Model(domain.Product{}).
 		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").

@@ -1,17 +1,20 @@
 package domain
 
-import _models "common/models"
+import (
+	_models "common/models"
+	"time"
+)
 
 type AssetLegal struct {
 	_models.BaseEntity
-	AssetID             uint64  `json:"assetId"`
-	DocumentName        string  `json:"documentName"`
-	DocumentURL         string  `json:"documentUrl"`
-	DocumentType        string  `json:"documentType"`
-	IssuedDate          string  `json:"issuedDate"`
-	ExpiryDate          string  `json:"expiryDate"`
-	Description         string  `json:"description"`
-	RelatedSplitMergeID *uint64 `json:"relatedSplitMergeId"`
+	AssetID             uint64     `json:"assetId"`
+	DocumentName        string     `json:"documentName"`
+	DocumentURL         string     `json:"documentUrl"`
+	DocumentType        string     `json:"documentType"`
+	IssuedDate          *time.Time `json:"issuedDate"`
+	ExpiryDate          *time.Time `json:"expiryDate"`
+	Description         string     `json:"description"`
+	RelatedSplitMergeID *uint64    `json:"relatedSplitMergeId"`
 }
 
 func (AssetLegal) TableName() string {

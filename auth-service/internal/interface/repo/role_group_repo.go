@@ -8,6 +8,6 @@ import (
 )
 
 type RoleGroupRepository interface {
-	crud.IBaseRepo[domain.RoleGroup]
+	crud.ICrudRepo[domain.RoleGroup]
 	GetByKey(ctx context.Context, key enums.GroupRoleKeyEnum) (*domain.RoleGroup, error)
 }

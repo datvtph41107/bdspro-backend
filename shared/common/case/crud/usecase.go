@@ -18,7 +18,7 @@ type IBaseUsecase[T any] interface {
 	GetList(c context.Context, pagable _dto.IPagable) ([]T, int64, error)
 }
 
-type BaseUsecase[T any, R IBaseRepo[T]] struct {
+type BaseUsecase[T any, R ICrudRepo[T]] struct {
 	Repo R
 }
 

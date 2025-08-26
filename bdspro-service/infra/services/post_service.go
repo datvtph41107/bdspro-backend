@@ -59,7 +59,7 @@ func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByI
 		Comment:        post.Comment,
 		NumView:        post.NumView,
 		OwnerId:        post.OwnerID,
-		OwnerType:      uint32(post.OwnerType),
+		OwnerType:      uint32(post.OwnerOf),
 		MediaList:      mediaList,
 	}, nil
 }

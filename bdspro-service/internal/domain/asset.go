@@ -45,7 +45,7 @@ type Asset struct {
 	PropertyTypeId   *uint64            `json:"propertyTypeId"`
 	PropertyType     *PropertyTypeItem  `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	Product          *Product           `gorm:"foreignKey:ProductID;references:ID" json:"product,omitempty"`
-	LegalItems       *[]AssetLegal      `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
+	LegalItems       []AssetLegal       `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
 	OwnerID          *uint64            `json:"ownerId"`
 	OwnerType        enums.EOwnerOf     `json:"ownerType"`
 	// OwnerUserID      *uint64            `json:"ownerUserId"`

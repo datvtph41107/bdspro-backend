@@ -130,12 +130,12 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	// -------------------
 	// 4. Kiểm tra các permission cần thiết
 	for _, required := range keys {
-		if _, ok := userPerms[required]; !ok {
-			return _errors.ReturnError(403, "Bạn không có quyền truy cập")
+		if _, ok := userPerms[required]; ok {
+			return nil
 		}
 	}
 
-	return nil
+	return _errors.ReturnError(403, "Bạn không có quyền truy cập")
 }
 
 func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) error {

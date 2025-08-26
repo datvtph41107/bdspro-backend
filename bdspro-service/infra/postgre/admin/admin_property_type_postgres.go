@@ -14,11 +14,15 @@ import (
 
 // @bind: bdspro/internal/repo/admin.AdminPropertyTypeRepo
 type AdminPropertyTypePostgres struct {
-	crud.BaseRepo[domain.PropertyType]
+	*crud.CrudRepo[domain.PropertyType]
 }
 
-func NewAdminPropertyTypePostgres(db *_db.DBTransaction) *AdminPropertyTypePostgres {
-	return crud.MakeCrudRepo(&AdminPropertyTypePostgres{}, db).(*AdminPropertyTypePostgres)
+func NewAdminPropertyTypePostgres(db *_db.TransactionRepo) *AdminPropertyTypePostgres {
+	x := &AdminPropertyTypePostgres{
+		CrudRepo: &crud.CrudRepo[domain.PropertyType]{},
+	}
+	x.CrudRepo.Init(x, db)
+	return x
 }
 
 func (r *AdminPropertyTypePostgres) QueryDomain(query *gorm.DB, dto *dto.TextSearchRequest) *gorm.DB {

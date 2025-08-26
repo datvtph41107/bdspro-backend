@@ -41,7 +41,7 @@ func (rm *RouterManager) RegisterRoutes(e *gin.Engine) {
 	orgGroup := e.Group("/bdspro/v2/org")
 	// rm.orgAccessRoute.RegisterRoutes(orgGroup)
 	// rm.orgProductRouter.RegisterRoutes(orgGroup)
-	rm.orgAssetRouter.RegisterRoutes(orgGroup, "/asset")
+	// rm.orgAssetRouter.RegisterRoutes(orgGroup, "/asset")
 	rm.orgCostTypeRouter.RegisterRoutes(orgGroup, "/assets/cost-type")
 	rm.orgAssetCostRouter.RegisterRoutes(orgGroup, "/assets/cost")
 	rm.orgAssetExploitationRouter.RegisterRoutes(orgGroup, "/assets/exploitation")

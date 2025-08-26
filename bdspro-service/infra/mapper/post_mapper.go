@@ -63,7 +63,7 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *pb_bdspro.Post {
 		NumDate:         int32(post.NumDate),
 		Content:         post.Content,
 		OwnerId:         post.OwnerID,
-		OwnerType:       uint32(post.OwnerType),
+		OwnerType:       uint32(post.OwnerOf),
 		MediaList:       mediaList,
 		Status:          uint32(post.Status),
 		ExpiredAt:       _utils.FormatTimeToString(post.ExpiredAt),
@@ -124,7 +124,7 @@ func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *pb_bdspro.PostDetailR
 		result.ProductInfo = m.ProductMapper.MapProductPb(post.ProductInfo)
 	}
 	if post.AssetInfo != nil {
-		result.AssetInfo = m.AssetMapper.AssetToPb(post.AssetInfo)
+		result.AssetInfo = m.AssetMapper.MapAssetPb(post.AssetInfo)
 	}
 	return result
 }
@@ -150,5 +150,70 @@ func (m *PostMapper) PostSearchRequestToDTO(request *pb_bdspro.PostSearchRequest
 	if request.ExpiredTo != nil {
 		result.ExpiredTo = _utils.ParseStringToTime(*request.ExpiredTo)
 	}
+	return result
+}
+
+// Admin methods
+// func (m *PostMapper) MapPostPb(post *domain.Post) *pb_bdspro.Post {
+// 	if post == nil {
+// 		return nil
+// 	}
+
+// 	return &pb_bdspro.Post{
+// 		Id:              post.ID,
+// 		Title:           post.Title,
+// 		PostPrice:       post.Price,
+// 		TransactionType: uint32(post.TransactionType),
+// 		Visibility:      uint32(post.Visibility),
+// 		PackageVisible:  uint32(post.PackageVisible),
+// 		NumDate:         int32(post.NumDate),
+// 		Content:         post.Content,
+// 		ProductId:       post.ProductID,
+// 		Status:          uint32(post.Status),
+// 		Hidden:          &post.Hidden,
+// 		ExpiredAt:       _utils.FormatTimeToString(post.ExpiredAt),
+// 		CreatedAt:       _utils.FormatTimeToString(&post.CreatedAt),
+// 		UpdatedAt:       _utils.FormatTimeToString(&post.UpdatedAt),
+// 	}
+// }
+
+// func (m *PostMapper) MapPostPbList(posts []*domain.Post) []*pb_bdspro.Post {
+// 	if posts == nil {
+// 		return nil
+// 	}
+
+// 	result := make([]*pb_bdspro.Post, len(posts))
+// 	for i, post := range posts {
+// 		result[i] = m.MapPostPb(post)
+// 	}
+// 	return result
+// }
+
+func (m *PostMapper) PostSavePbToDTO(req *pb_bdspro.PostSaveRequest) *dto.PostSaveRequest {
+	if req == nil {
+		return nil
+	}
+
+	result := &dto.PostSaveRequest{
+		ProductID:       req.ProductId,
+		Title:           req.Title,
+		Content:         req.Content,
+		Price:           req.Price,
+		TransactionType: enums.TransactionType(req.TransactionType),
+		Visibility:      enums.EVisibility(req.Visibility),
+		PackageVisible:  uint(req.PackageVisible),
+		ExpiredAt:       _utils.ParseStringToTime(req.ExpiredAt),
+		NumDate:         int(req.NumDate),
+		PriceType:       req.PriceType,
+	}
+
+	if req.Hidden != nil {
+		result.Hidden = *req.Hidden
+	}
+
+	if len(req.MediaList) > 0 {
+		result.Medatadatas = m.PostMediaToDTO(req.MediaList)
+	}
+
 	return result
 }

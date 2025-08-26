@@ -8,9 +8,13 @@ import (
 
 // @bind: bdspro/internal/repo/admin.AdminProjectRepo
 type AdminProjectPostgres struct {
-	crud.BaseRepo[domain.Project]
+	*crud.CrudRepo[domain.Project]
 }
 
-func NewAdminProjectPostgres(db *_db.DBTransaction) *AdminProjectPostgres {
-	return crud.MakeCrudRepo(&AdminProjectPostgres{}, db).(*AdminProjectPostgres)
+func NewAdminProjectPostgres(db *_db.TransactionRepo) *AdminProjectPostgres {
+	x := &AdminProjectPostgres{
+		CrudRepo: &crud.CrudRepo[domain.Project]{},
+	}
+	x.CrudRepo.Init(x, db)
+	return x
 }

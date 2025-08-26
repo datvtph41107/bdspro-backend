@@ -1,9 +1,12 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
+	_db "common/db"
+	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
 	bdspro_infra_mapper "bdspro/infra/mapper"
@@ -16,7 +19,6 @@ import (
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_services "bdspro/infra/services"
 	bdspro_infra_validator "bdspro/infra/validator"
-	"bdspro/initial"
 	bdspro_initial "bdspro/initial"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_repo_admin "bdspro/internal/repo/admin"
@@ -24,17 +26,16 @@ import (
 	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
-	_db "common/db"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
-	_db.NewDBTransaction,
+	_db.NewTransactionRepo,
 	wire.Bind(new(bdspro_internal_usecases_interface.IChatClient), new(*bdspro_infra_client.ChatClient)),
 	wire.Bind(new(bdspro_internal_usecases_interface.INotificationClient), new(*bdspro_infra_client.NotificationClient)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminAssetRepo), new(*bdspro_infra_postgre_admin.AdminAssetPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminPostRepo), new(*bdspro_infra_postgre_admin.AdminPostPostgres)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminProductRepo), new(*bdspro_infra_postgre_admin.AdminProductPostgres)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminProjectRepo), new(*bdspro_infra_postgre_admin.AdminProjectPostgres)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgre_admin.AdminPropertyTypePostgres)),
@@ -69,6 +70,12 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_usecases_interface.IPlanClient), new(*bdspro_infra_providers.MemberPlanProvider)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_services.MemberPlanUsecase)),
 	bdspro_infra_postgre.NewActionRepo,
+	bdspro_infra_handler_admin.NewAdminAssetHandler,
+	bdspro_infra_postgre_admin.NewAdminAssetPostgres,
+	bdspro_internal_usecases_admin.NewAdminAssetUsecase,
+	bdspro_infra_handler_admin.NewAdminPostHandler,
+	bdspro_infra_postgre_admin.NewAdminPostPostgres,
+	bdspro_internal_usecases_admin.NewAdminPostUsecase,
 	bdspro_infra_handler_admin.NewAdminProductHandler,
 	bdspro_infra_postgre_admin.NewAdminProductPostgres,
 	bdspro_internal_usecases_admin.NewAdminProductUsecase,
@@ -204,7 +211,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

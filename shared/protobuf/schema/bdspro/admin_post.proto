@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "pb/types/bdspro;pb_bdspro";
+
+import "bdspro/common.proto";
+import "bdspro/post.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service AdminPostService {
+  rpc GetPosts(sharepb.IdRequest) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/posts"
+    };
+  };
+  rpc CreatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts"
+      body: "*"
+    };
+  };
+  rpc UpdatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/posts/{id}"
+      body: "*"
+    };
+  };
+  rpc DeletePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/posts/{id}"
+    };
+  };
+  rpc ApprovePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/approve"
+    };
+  };
+  rpc RejectPost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/reject"
+    };
+  };
+  rpc ArchivePost(ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/posts/archived"
+      body: "*"
+    };
+  };
+  rpc HidePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/hide"
+    };
+  };
+  rpc UnhidePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/unhide"
+    };
+  };
+}
+
+message PostRequest {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}

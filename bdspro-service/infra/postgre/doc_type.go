@@ -10,11 +10,15 @@ import (
 
 // @bind: bdspro/internal/repo.DocTypeRepo
 type PostgreDocType struct {
-	crud.BaseRepo[domain.DocType]
+	*crud.CrudRepo[domain.DocType]
 }
 
-func NewPostgreDocType(db *_db.DBTransaction) *PostgreDocType {
-	return crud.MakeCrudRepo(&PostgreDocType{}, db).(*PostgreDocType)
+func NewPostgreDocType(db *_db.TransactionRepo) *PostgreDocType {
+	x := &PostgreDocType{
+		CrudRepo: &crud.CrudRepo[domain.DocType]{},
+	}
+	x.CrudRepo.Init(x, db)
+	return x
 }
 
 func (r *PostgreDocType) GetAllItem(c context.Context) ([]domain.DocTypeItem, error) {
