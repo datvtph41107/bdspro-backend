@@ -47,5 +47,5 @@ type Deal struct {
 }
 
 func (d *Deal) TableName() string {
-	return "group_deals"
+	return "deals"
 }

@@ -184,6 +184,25 @@ func (c *OrganizationClient) GetDealById(ctx context.Context, dealId uint64) (*o
 	return deal.Deal, nil
 }
 
+func (c *OrganizationClient) GetDealMember(ctx context.Context, dealId uint64, userId uint64) (*organizationpb.DealMember, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	resp, err := c.Client.GetDealMembers(ctx, &organizationpb.DealMemberRequest{
+		DealId:  dealId,
+		UserIds: []uint64{userId},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Data) == 0 {
+		return nil, nil
+	}
+
+	return resp.Data[0], nil
+}
+
 // func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
 // 	if c.Client == nil {
 // 		return nil, errors.New("organization client not avaiable")

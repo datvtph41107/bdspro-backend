@@ -24,3 +24,9 @@ type GroupMember struct {
 	Role    string  `json:"role"`
 	RoleId  *uint64 `json:"roleId"`
 }
+
+type DealMember struct {
+	DealId uint64  `json:"dealId"`
+	UserId uint64  `json:"userId"`
+	RoleId *uint64 `json:"roleId"`
+}

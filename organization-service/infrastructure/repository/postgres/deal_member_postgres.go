@@ -13,6 +13,7 @@ type DealMemberModel struct {
 	DealID          uint64               `gorm:"not null;index"`
 	MemberID        uint64               `gorm:"not null;index"`
 	MemberType      enums.DealMemberType `gorm:"not null;default:10"`
+	RoleID          uint64               `gorm:"not null"`
 	AmountCommit    float64              `gorm:"not null;default:0"`
 	CommissionValue float64              `gorm:"default:0"`     // Giá trị hoa hồng
 	CommissionType  enums.CommissionType `gorm:"default:10"`    // Loại hoa hồng
@@ -38,6 +39,7 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 		DealID:          dealMember.DealID,
 		MemberID:        dealMember.MemberID,
 		MemberType:      dealMember.MemberType,
+		RoleID:          dealMember.RoleID,
 		AmountCommit:    dealMember.AmountCommit,
 		CommissionValue: dealMember.CommissionValue,
 		CommissionType:  dealMember.CommissionType,
@@ -66,6 +68,7 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 		DealID:          model.DealID,
 		MemberID:        model.MemberID,
 		MemberType:      model.MemberType,
+		RoleID:          model.RoleID,
 		AmountCommit:    model.AmountCommit,
 		CommissionValue: model.CommissionValue,
 		CommissionType:  model.CommissionType,
@@ -132,6 +135,7 @@ func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, dealI
 			DealID:          model.DealID,
 			MemberID:        model.MemberID,
 			MemberType:      model.MemberType,
+			RoleID:          model.RoleID,
 			AmountCommit:    model.AmountCommit,
 			CommissionValue: model.CommissionValue,
 			CommissionType:  model.CommissionType,
@@ -207,5 +211,24 @@ func (r *DealMemberPostgresRepository) GetByIds(ctx context.Context, ids []uint6
 			MemberType: model.MemberType,
 		}
 	}
+	return members, nil
+}
+
+func (r *DealMemberPostgresRepository) GetDealMembersByUserIds(ctx context.Context, dealID uint64, userIds []uint64) ([]*entity.DealMember, error) {
+	var models []DealMemberModel
+	if err := r.db.WithContext(ctx).Where("deal_id = ? AND member_id IN (?)", dealID, userIds).Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	members := make([]*entity.DealMember, len(models))
+	for i, model := range models {
+		members[i] = &entity.DealMember{
+			DealID:     model.DealID,
+			MemberID:   model.MemberID,
+			MemberType: model.MemberType,
+			RoleID:     model.RoleID,
+		}
+	}
+
 	return members, nil
 }

@@ -1,8 +1,8 @@
 package transformer
 
 import (
-	_utils "common/utils"
 	_models "common/models"
+	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/enums"
 	organizationpb "pb/types/organization"
@@ -23,11 +23,11 @@ func (m *InvestmentMapper) SubmitInvestRequestToEntity(req *organizationpb.Submi
 		BaseEntity: _models.BaseEntity{
 			ID: req.Id,
 		},
-		DealID:            req.DealId,
-		MemberID:          req.MemberId,
-		Amount:            req.Amount,
-		TransferTime:      _utils.ParseStringToTime(req.TransferTime),
-		Note:              req.Note,
+		DealID:             req.DealId,
+		MemberID:           req.MemberId,
+		Amount:             req.Amount,
+		TransferTime:       _utils.ParseStringToTime(req.TransferTime),
+		Note:               req.Note,
 		TransferProofImage: req.TransferProofImage,
 	}
 
@@ -60,7 +60,7 @@ func (m *InvestmentMapper) EntityToPb(investment *entity.Investment) *organizati
 		InvestType:         uint32(investment.InvestType),
 		Status:             uint32(investment.Status),
 		StatusName:         enums.ApprovedStatusMap[investment.Status],
-		ChangedAt:          _utils.FormatTimeToString(investment.ChangedAt),
+		ChangedAt:          _utils.FormatTimeToString(investment.TransferTime),
 		CreatedBy:          investment.CreatedBy,
 		Confirmed:          investment.Confirmed,
 	}

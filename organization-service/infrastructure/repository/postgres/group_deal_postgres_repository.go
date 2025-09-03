@@ -14,62 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// type GroupDealModel struct {
-// 	Id        uint64    `gorm:"primaryKey;autoIncrement"`
-// 	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_group_deals_created_at"`
-// 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-// 	CreatedBy uint32    `gorm:"index:idx_group_deals_created_by"`
-// 	UpdatedBy uint32
-
-// 	OwnerId   uint32            `gorm:"not null;index:idx_group_deals_owner_id"`
-// 	OwnerType enums.OwnerType   `gorm:"not null;index:idx_group_deals_owner_type"`
-// 	Name      string            `gorm:"not null;index:idx_group_deals_name"`
-// 	Amount    float64           `gorm:"not null"`
-// 	Status    entity.DealStatus `gorm:"not null;index:idx_group_deals_status"`
-// 	DealType  enums.DealType    `gorm:"not null;index:idx_group_deals_deal_type"`
-// 	DeletedAt *time.Time        `gorm:"index"`
-// 	IsDeleted bool              `gorm:"default:false"`
-// }
-
-// func (GroupDealModel) TableName() string {
-// 	return "group_deals"
-// }
-
-// func GroupDealModelToEntity(model *GroupDealModel) *entity.Deal {
-// 	return &entity.Deal{
-// 		// Id:        model.Id,
-// 		// CreatedAt: model.CreatedAt,
-// 		// UpdatedAt: model.UpdatedAt,
-// 		// CreatedBy: model.CreatedBy,
-// 		// UpdatedBy: model.UpdatedBy,
-// 		BaseEntity: _models.BaseEntity{
-// 			ID:        model.Id,
-// 			CreatedAt: &model.CreatedAt,
-// 			UpdatedAt: &model.UpdatedAt,
-// 			CreatedBy: &model.CreatedBy,
-// 			UpdatedBy: &model.UpdatedBy,
-// 		},
-// 		GroupId: model.GroupId,
-// 		Name:    model.Name,
-// 		Amount:  model.Amount,
-// 		Status:  model.Status,
-// 	}
-// }
-
-// func GroupDealEntityToModel(entity *entity.Deal) *GroupDealModel {
-// 	return &GroupDealModel{
-// 		Id:        entity.Id,
-// 		CreatedAt: entity.CreatedAt,
-// 		UpdatedAt: entity.UpdatedAt,
-// 		CreatedBy: entity.CreatedBy,
-// 		UpdatedBy: entity.UpdatedBy,
-// 		GroupId:   entity.GroupId,
-// 		Name:      entity.Name,
-// 		Amount:    entity.Amount,
-// 		Status:    entity.Status,
-// 	}
-// }
-
 // @bind: organization/internal/domain/repository.GroupDealRepository
 type GroupDealPostgresRepository struct {
 	db              *gorm.DB

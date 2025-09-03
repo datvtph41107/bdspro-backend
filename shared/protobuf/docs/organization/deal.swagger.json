@@ -1948,6 +1948,10 @@
         },
         "memberVerified": {
           "type": "boolean"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

@@ -104,7 +104,7 @@ func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *
 	if permission.Children != nil {
 		pbPermission.Children = make([]*authpb.Permission, len(permission.Children))
 		for i, child := range permission.Children {
-			pbPermission.Children[i] = m.MapPermissionToPb(child)
+			pbPermission.Children[i] = m.MapPermissionListWithChild(child)
 		}
 	}
 

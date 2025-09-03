@@ -103,6 +103,18 @@ func (h *InternalOrganizationHandler) GetOrganizationMemberByIds(ctx context.Con
 	}, nil
 }
 
+func (h *InternalOrganizationHandler) GetDealMembers(ctx context.Context, req *organizationpb.DealMemberRequest) (*organizationpb.GetDealMemberByIdsResponse, error) {
+	dealMembers, err := h.dealMemberRepo.GetDealMembersByUserIds(ctx, req.DealId, req.UserIds)
+	if err != nil {
+		return nil, err
+	}
+
+	data := h.mapper.DealMembersToPb(dealMembers)
+	return &organizationpb.GetDealMemberByIdsResponse{
+		Data: data,
+	}, nil
+}
+
 func (h *InternalOrganizationHandler) GetDealById(ctx context.Context, req *organizationpb.GetDealByIdRequest) (*organizationpb.GetDealByIdResponse, error) {
 	deal, err := h.dealRepo.GetByID(ctx, req.Id)
 	if err != nil {

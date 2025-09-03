@@ -18,6 +18,7 @@ service InternalOrganizationService {
     rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
     rpc GetDealById(GetDealByIdRequest) returns (GetDealByIdResponse);
     rpc AddProductToDeal(AddProductToDealRequest) returns (sharepb.SubmitResponse);
+    rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
 }
 
 message GetOrganizationByIdsRequest {
@@ -94,4 +95,9 @@ message GetDealTransactionsByIdsRequest {
 message AddProductToDealRequest {
     uint64 dealId = 1;
     uint64 productId = 2;
+}
+
+message DealMemberRequest {
+    uint64 dealId = 1;
+    repeated uint64 userIds = 2;
 }

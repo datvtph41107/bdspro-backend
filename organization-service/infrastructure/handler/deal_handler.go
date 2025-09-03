@@ -557,6 +557,7 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*or
 			CommissionValue: member.CommissionValue,
 			CommissionType:  uint32(member.CommissionType),
 			Note:            member.Note,
+			RoleId:          &member.RoleID,
 		}
 	}
 	h.UserClient.MapProfileToDealMember(ctx, response)

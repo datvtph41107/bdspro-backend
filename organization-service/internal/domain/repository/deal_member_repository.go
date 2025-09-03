@@ -18,4 +18,5 @@ type DealMemberRepository interface {
 	CalculateTotalCommission(ctx context.Context, dealID uint64) (float64, error)
 	GetCommissionStats(ctx context.Context, dealID uint64) (*entity.CommissionStats, error)
 	GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealMember, error)
+	GetDealMembersByUserIds(ctx context.Context, dealID uint64, userIds []uint64) ([]*entity.DealMember, error)
 }

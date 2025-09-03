@@ -110,16 +110,30 @@ func (uc *PermissionUsecase) GetAll(ctx context.Context) ([]*domain.Permission, 
 	var roots []*domain.Permission
 
 	// Xây dựng quan hệ cha-con
-	for i := range permissions {
-		p := permissions[i]
-		if p.ParentID == nil {
-			roots = append(roots, p)
-		} else if parent, ok := permMap[*p.ParentID]; ok {
-			parent.Children = append(parent.Children, p)
+	for _, p := range permissions {
+		permission := uc.BuildHierarchy(p, permMap)
+		if permission.ParentID == nil {
+			roots = append(roots, permission)
 		}
 	}
 
 	return roots, nil
+}
+
+func (uc *PermissionUsecase) BuildHierarchy(permission *domain.Permission, permMap map[uint64]*domain.Permission) *domain.Permission {
+	if permission == nil {
+		return nil
+	}
+
+	if permission.ParentID == nil {
+		return permission
+	}
+
+	if parent, ok := permMap[*permission.ParentID]; ok {
+		parent.Children = append(parent.Children, permission)
+	}
+
+	return permission
 }
 
 // GetByKey lấy permission theo key
@@ -169,6 +183,29 @@ func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) (
 	}
 
 	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *groupMember.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}
+
+func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	dealMember, err := uc.organizationProvider.GetDealMember(ctx, dealId, profileId)
+	if err != nil {
+		return nil, err
+	}
+
+	if dealMember == nil {
+		return []string{}, nil
+	}
+
+	if dealMember.RoleId == nil {
+		return []string{}, nil
+	}
+
+	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *dealMember.RoleId)
 	if err != nil {
 		return nil, err
 	}

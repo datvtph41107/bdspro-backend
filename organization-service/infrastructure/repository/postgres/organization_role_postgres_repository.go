@@ -225,3 +225,20 @@ func (r *OrganizationRoleRepository) FindByDomain(ctx context.Context, domain en
 	}
 	return RoleModelsToEntities(models), nil
 }
+
+func (r *OrganizationRoleRepository) GetPermissionKeysByRoleId(ctx context.Context, roleId uint64) ([]string, error) {
+	var permissionKeys []string
+
+	err := r.db.WithContext(ctx).
+		Table("role_permissions").
+		Select("organization_permissions.key").
+		Joins("JOIN organization_permissions ON organization_permissions.id = role_permissions.organization_permission_model_id").
+		Where("role_permissions.organization_role_model_id = ?", roleId).
+		Find(&permissionKeys).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return permissionKeys, nil
+}

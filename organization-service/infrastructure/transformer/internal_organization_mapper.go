@@ -152,5 +152,6 @@ func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMembe
 		DealId:     uint64(dealMember.DealID),
 		MemberId:   uint64(dealMember.MemberID),
 		MemberType: uint32(dealMember.MemberType),
+		RoleId:     &dealMember.RoleID,
 	}
 }

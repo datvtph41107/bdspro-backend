@@ -82,3 +82,19 @@ func (c *OrganizationClient) GetGroupRoleUser(ctx context.Context, groupId uint6
 		RoleId:  resp.Data[0].RoleId,
 	}, nil
 }
+
+func (c *OrganizationClient) GetDealMember(ctx context.Context, dealId uint64, userId uint64) (*dto.DealMember, error) {
+	resp, err := c.OrganizationClient.GetDealMember(ctx, dealId, userId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get deal member role: %v", err)
+	}
+	if resp == nil {
+		return nil, nil
+	}
+
+	return &dto.DealMember{
+		DealId: resp.DealId,
+		UserId: resp.MemberId,
+		RoleId: resp.RoleId,
+	}, nil
+}

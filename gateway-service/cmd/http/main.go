@@ -127,6 +127,7 @@ var HttpCmd = &cobra.Command{
 		r.Use(cors.New(cors.Config{
 			AllowOrigins: []string{
 				"http://localhost:3000",
+				"http://localhost:3001",
 				"http://localhost:8000",
 				"http://14.225.210.29:8000",
 				"http://14.225.205.222:8000",

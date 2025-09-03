@@ -56,6 +56,10 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 		}
 	}
 
+	if req.MemberID == 0 {
+		req.MemberID = _utils.GetProfileIdWithContext(ctx)
+	}
+
 	investment, err := u.investmentRepository.CreateInvestment(ctx, req)
 	if err != nil {
 		return nil, err

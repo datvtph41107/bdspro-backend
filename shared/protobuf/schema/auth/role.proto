@@ -144,6 +144,12 @@ service PermissionService {
       get: "/v2/auth/permission/group/{id}"
     };
   };
+  
+  rpc GetPermissionByDealId(sharepb.IdRequest) returns (PermissionKeysResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/permission/deal/{id}"
+    };
+  };
 }
 
 

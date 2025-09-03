@@ -42,6 +42,7 @@ func AutoMigrate() {
 		// &entity.DealAction{},
 		&entity.Deal{},
 		&entity.GroupMember{},
+		&entity.DealMember{},
 	)
 	if err != nil {
 		panic(err)
