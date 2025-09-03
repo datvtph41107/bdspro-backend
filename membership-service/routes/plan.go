@@ -18,7 +18,7 @@ type PlanRouter struct {
 func NewPlanRouter(service *services.PlanService) *PlanRouter {
 	return &PlanRouter{
 		BaseRouter: crud.BaseRouter[models.Plan, crud.ICrudRepo[models.Plan]]{
-			Service: service.BaseService,
+			Service: service.BaseUsecase,
 		},
 	}
 }

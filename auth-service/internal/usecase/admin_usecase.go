@@ -10,6 +10,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -34,10 +35,10 @@ func NewAdminUsecase(
 // CreateAdmin tạo tài khoản admin mới
 func (u *AdminUsecase) CreateAdmin(ctx context.Context, req dto.CreateAdminRequest) (*dto.AdminResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Kiểm tra username đã tồn tại chưa
 	existingAuth, err := u.AuthMethodRepo.FindByUsernameAndProvider(ctx, req.Username, "ADMIN")
@@ -72,8 +73,10 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req dto.CreateAdminReque
 	// Lưu auth method
 	createdAuth, err := u.AuthMethodRepo.Create(ctx, authMethod)
 	if err != nil {
+		fmt.Printf("Error creating auth method: %v\n", err)
 		return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản admin")
 	}
+	fmt.Printf("Created auth method with ID: %d\n", createdAuth.ID)
 
 	// Tạo profile cho admin
 	planID := uint64(1)
@@ -175,11 +178,11 @@ func (u *AdminUsecase) UpdateAdmin(ctx context.Context, req dto.UpdateAdminReque
 
 // DeleteAdmin xóa tài khoản admin
 func (u *AdminUsecase) DeleteAdmin(ctx context.Context, req dto.DeleteAdminRequest) error {
-	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// // Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Tìm admin cần xóa
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
@@ -192,10 +195,10 @@ func (u *AdminUsecase) DeleteAdmin(ctx context.Context, req dto.DeleteAdminReque
 		return _errors.ReturnError(int32(400), "Tài khoản không phải admin")
 	}
 
-	// Không cho phép xóa chính mình
-	if authMethod.UserID == profileID {
-		return _errors.ReturnError(int32(400), "Không thể xóa tài khoản của chính mình")
-	}
+	// // Không cho phép xóa chính mình
+	// if authMethod.UserID == profileID {
+	// 	return _errors.ReturnError(int32(400), "Không thể xóa tài khoản của chính mình")
+	// }
 
 	// Soft delete auth method
 	err = u.AuthMethodRepo.SoftDelete(ctx, req.AuthID)
@@ -264,10 +267,10 @@ func (u *AdminUsecase) AssignRole(ctx context.Context, req dto.AssignRoleRequest
 // ListAdmins lấy danh sách admin
 func (u *AdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequest) (*dto.AdminListResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Lấy danh sách admin từ database
 	admins, total, err := u.AuthMethodRepo.FindAdminsByProvider(ctx, "ADMIN", int(req.Page), int(req.Size))

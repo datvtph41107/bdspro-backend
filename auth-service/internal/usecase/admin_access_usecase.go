@@ -28,16 +28,16 @@ func NewAdminAccessUsecase(
 // CreateAdminAccess tạo quyền truy cập mới
 func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.AdminAccessRequest) (*dto.AdminAccessResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Kiểm tra user tồn tại
-	user, err := u.AuthMethodRepo.FindByID(ctx, req.UserID)
-	if err != nil || user == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
-	}
+	// user, err := u.AuthMethodRepo.FindByID(ctx, req.UserID)
+	// if err != nil || user == nil {
+	// 	return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+	// }
 
 	// Kiểm tra giới hạn thiết bị
 	if req.DeviceID != "" {
@@ -75,8 +75,8 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 		EffectiveTo:   req.EffectiveTo,
 		MaxDevices:    req.MaxDevices,
 		Require2FA:    req.Require2FA,
-		CreatedBy:     profileID,
-		UpdatedBy:     profileID,
+		// CreatedBy:     profileID,
+		// UpdatedBy:     profileID,
 	}
 
 	if access.Status == "" {
@@ -97,10 +97,10 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 // UpdateAdminAccess cập nhật quyền truy cập
 func (u *AdminAccessUsecase) UpdateAdminAccess(ctx context.Context, id uint64, req dto.AdminAccessRequest) (*dto.AdminAccessResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Tìm quyền truy cập hiện tại
 	existingAccess, err := u.AdminAccessRepo.FindByID(ctx, id)
@@ -120,7 +120,7 @@ func (u *AdminAccessUsecase) UpdateAdminAccess(ctx context.Context, id uint64, r
 	existingAccess.EffectiveTo = req.EffectiveTo
 	existingAccess.MaxDevices = req.MaxDevices
 	existingAccess.Require2FA = req.Require2FA
-	existingAccess.UpdatedBy = profileID
+	// existingAccess.UpdatedBy = profileID
 
 	updatedAccess, err := u.AdminAccessRepo.Update(ctx, existingAccess)
 	if err != nil {
@@ -156,10 +156,10 @@ func (u *AdminAccessUsecase) DeleteAdminAccess(ctx context.Context, id uint64) e
 // GetAdminAccessList lấy danh sách quyền truy cập
 func (u *AdminAccessUsecase) GetAdminAccessList(ctx context.Context, req dto.AdminAccessListRequest) (*dto.AdminAccessListResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
 
 	// Set default pagination
 	if req.Page <= 0 {

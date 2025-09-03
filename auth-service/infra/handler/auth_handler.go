@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"auth/internal/dto"
-	"auth/internal/usecase"
 	"context"
 	authpb "pb/types/auth"
 	"time"
+
+	"auth/internal/dto"
+	"auth/internal/usecase"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -391,17 +392,171 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequ
 	}, nil
 }
 
-// @Summary Tạo quyền truy cập admin
-// @Description Tạo quyền truy cập hệ thống nội bộ mới
-// @Tags Admin Access Control
+// @Summary List Admins
+// @Description Lấy danh sách admin
+// @Tags Admin
 // @Accept json
 // @Produce json
-// @Param body body authpb.CreateAdminAccessRequest true "Thông tin quyền truy cập"
-// @Success 200 {object} authpb.AdminAccessResponse
-// @Failure 400 {object} authpb.AdminAccessResponse
-// @Failure 401 {object} authpb.AdminAccessResponse
-// @Failure 500 {object} authpb.AdminAccessResponse
-// @Router /admin-access [post]
+// @Param page query int false "Trang hiện tại"
+// @Param size query int false "Số lượng item trên mỗi trang"
+// @Success 200 {object} authpb.AdminListResponse
+// @Failure 400 {object} authpb.AdminListResponse
+// @Failure 500 {object} authpb.AdminListResponse
+// @Router /admin/list [get]
+func (h *AuthHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.AdminListRequest{
+		Page: req.Page,
+		Size: req.Size,
+	}
+
+	result, err := h.AdminUsecase.ListAdmins(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	var adminItems []*authpb.AdminItem
+	for _, item := range result.Data {
+		adminItems = append(adminItems, &authpb.AdminItem{
+			AuthId:    item.AuthID,
+			ProfileId: item.ProfileID,
+			Username:  item.Username,
+			FullName:  item.FullName,
+			Email:     item.Email,
+			Phone:     item.Phone,
+			Avatar:    item.Avatar,
+			Role:      item.Role,
+			CreatedAt: item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
+
+	return &authpb.AdminListResponse{
+		Data:  adminItems,
+		Total: int32(result.Total),
+	}, nil
+}
+
+// @Summary Create Admin
+// @Description Tạo tài khoản admin mới
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.CreateAdminRequest true "Thông tin tạo admin"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /admin/create [post]
+func (h *AuthHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.CreateAdminRequest{
+		Username: req.Username,
+		Password: req.Password,
+		FullName: req.FullName,
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Avatar:   req.Avatar,
+	}
+
+	result, err := h.AdminUsecase.CreateAdmin(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.AuthSuccessResponse{
+		AuthId:    result.AuthID,
+		ProfileId: result.ProfileID,
+		Role:      result.Role,
+	}, nil
+}
+
+// @Summary Update Admin
+// @Description Cập nhật thông tin admin
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.UpdateAdminRequest true "Thông tin cập nhật admin"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /admin/update [put]
+func (h *AuthHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.UpdateAdminRequest{
+		AuthID:   req.AuthId,
+		FullName: req.FullName,
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Avatar:   req.Avatar,
+	}
+
+	result, err := h.AdminUsecase.UpdateAdmin(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.AuthSuccessResponse{
+		AuthId:    result.AuthID,
+		ProfileId: result.ProfileID,
+		Role:      result.Role,
+	}, nil
+}
+
+// @Summary Delete Admin
+// @Description Xóa tài khoản admin
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.DeleteAdminRequest true "Thông tin xóa admin"
+// @Success 200 {object} authpb.DeleteAdminResponse
+// @Failure 400 {object} authpb.DeleteAdminResponse
+// @Failure 500 {object} authpb.DeleteAdminResponse
+// @Router /admin/delete [delete]
+func (h *AuthHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.DeleteAdminRequest{
+		AuthID: req.Id,
+	}
+
+	err := h.AdminUsecase.DeleteAdmin(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.DeleteAdminResponse{
+		Message: "Xóa tài khoản admin thành công",
+	}, nil
+}
+
+// @Summary Assign Role
+// @Description Gán quyền cho admin
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.AssignRoleRequest true "Thông tin gán quyền"
+// @Success 200 {object} authpb.AssignRoleResponse
+// @Failure 400 {object} authpb.AssignRoleResponse
+// @Failure 500 {object} authpb.AssignRoleResponse
+// @Router /admin/assign-role [post]
+func (h *AuthHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.AssignRoleRequest{
+		AuthID:  req.AuthId,
+		RoleKey: req.RoleKey,
+	}
+
+	err := h.AdminUsecase.AssignRole(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.AssignRoleResponse{
+		Message: "Gán quyền thành công",
+	}, nil
+}
+
 func (h *AuthHandler) CreateAdminAccess(ctx context.Context, req *authpb.CreateAdminAccessRequest) (*authpb.AdminAccessResponse, error) {
 	// Convert proto request to DTO
 	var effectiveFrom, effectiveTo *time.Time
@@ -436,26 +591,34 @@ func (h *AuthHandler) CreateAdminAccess(ctx context.Context, req *authpb.CreateA
 		return nil, status.Errorf(codes.Internal, "lỗi khi tạo quyền truy cập: %v", err)
 	}
 
-	// Convert DTO response to proto response
-	return &authpb.AdminAccessResponse{
-		Id:            result.ID,
-		UserId:        result.UserID,
-		IpAddress:     result.IPAddress,
-		IpRange:       result.IPRange,
-		DeviceId:      result.DeviceID,
-		DeviceName:    result.DeviceName,
-		DeviceType:    result.DeviceType,
-		AuthType:      result.AuthType,
-		Status:        result.Status,
-		EffectiveFrom: result.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00"),
-		EffectiveTo:   result.EffectiveTo.Format("2006-01-02T15:04:05Z07:00"),
-		MaxDevices:    int32(result.MaxDevices),
-		Require2Fa:    result.Require2FA,
-		CreatedBy:     result.CreatedBy,
-		UpdatedBy:     result.UpdatedBy,
-		CreatedAt:     result.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:     result.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}, nil
+	effectiveFrom = result.EffectiveFrom
+	effectiveTo = result.EffectiveTo
+
+	resultProto := &authpb.AdminAccessResponse{
+		Id:         result.ID,
+		UserId:     result.UserID,
+		IpAddress:  result.IPAddress,
+		IpRange:    result.IPRange,
+		DeviceId:   result.DeviceID,
+		DeviceName: result.DeviceName,
+		DeviceType: result.DeviceType,
+		AuthType:   result.AuthType,
+		Status:     result.Status,
+
+		MaxDevices: int32(result.MaxDevices),
+		Require2Fa: result.Require2FA,
+		CreatedBy:  result.CreatedBy,
+		UpdatedBy:  result.UpdatedBy,
+		CreatedAt:  result.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:  result.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if effectiveFrom != nil {
+		resultProto.EffectiveFrom = effectiveFrom.Format("2006-01-02T15:04:05Z07:00")
+	}
+	if effectiveTo != nil {
+		resultProto.EffectiveTo = effectiveTo.Format("2006-01-02T15:04:05Z07:00")
+	}
+	return resultProto, nil
 }
 
 // @Summary Cập nhật quyền truy cập admin
@@ -506,25 +669,33 @@ func (h *AuthHandler) UpdateAdminAccess(ctx context.Context, req *authpb.UpdateA
 	}
 
 	// Convert DTO response to proto response
-	return &authpb.AdminAccessResponse{
-		Id:            result.ID,
-		UserId:        result.UserID,
-		IpAddress:     result.IPAddress,
-		IpRange:       result.IPRange,
-		DeviceId:      result.DeviceID,
-		DeviceName:    result.DeviceName,
-		DeviceType:    result.DeviceType,
-		AuthType:      result.AuthType,
-		Status:        result.Status,
-		EffectiveFrom: result.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00"),
-		EffectiveTo:   result.EffectiveTo.Format("2006-01-02T15:04:05Z07:00"),
-		MaxDevices:    int32(result.MaxDevices),
-		Require2Fa:    result.Require2FA,
-		CreatedBy:     result.CreatedBy,
-		UpdatedBy:     result.UpdatedBy,
-		CreatedAt:     result.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:     result.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}, nil
+	response := &authpb.AdminAccessResponse{
+		Id:         result.ID,
+		UserId:     result.UserID,
+		IpAddress:  result.IPAddress,
+		IpRange:    result.IPRange,
+		DeviceId:   result.DeviceID,
+		DeviceName: result.DeviceName,
+		DeviceType: result.DeviceType,
+		AuthType:   result.AuthType,
+		Status:     result.Status,
+		MaxDevices: int32(result.MaxDevices),
+		Require2Fa: result.Require2FA,
+		CreatedBy:  result.CreatedBy,
+		UpdatedBy:  result.UpdatedBy,
+		CreatedAt:  result.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:  result.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	// Handle nullable time fields
+	if result.EffectiveFrom != nil {
+		response.EffectiveFrom = result.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00")
+	}
+	if result.EffectiveTo != nil {
+		response.EffectiveTo = result.EffectiveTo.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	return response, nil
 }
 
 // @Summary Xóa quyền truy cập admin
@@ -566,8 +737,8 @@ func (h *AuthHandler) DeleteAdminAccess(ctx context.Context, req *authpb.DeleteA
 // @Failure 401 {object} authpb.GetAdminAccessListResponse
 // @Failure 500 {object} authpb.GetAdminAccessListResponse
 // @Router /admin-access [get]
-// Convert proto request to DTO
 func (h *AuthHandler) GetAdminAccessList(ctx context.Context, req *authpb.GetAdminAccessListRequest) (*authpb.GetAdminAccessListResponse, error) {
+	// Convert proto request to DTO
 	dto := &dto.AdminAccessListRequest{
 		Page:      int(req.Page),
 		Size:      int(req.Size),
@@ -588,25 +759,33 @@ func (h *AuthHandler) GetAdminAccessList(ctx context.Context, req *authpb.GetAdm
 	// Convert DTO response to proto response
 	items := make([]*authpb.AdminAccessItem, len(result.Data))
 	for i, item := range result.Data {
-		items[i] = &authpb.AdminAccessItem{
-			Id:            item.ID,
-			UserId:        item.UserID,
-			IpAddress:     item.IPAddress,
-			IpRange:       item.IPRange,
-			DeviceId:      item.DeviceID,
-			DeviceName:    item.DeviceName,
-			DeviceType:    item.DeviceType,
-			AuthType:      item.AuthType,
-			Status:        item.Status,
-			EffectiveFrom: item.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00"),
-			EffectiveTo:   item.EffectiveTo.Format("2006-01-02T15:04:05Z07:00"),
-			MaxDevices:    int32(item.MaxDevices),
-			Require2Fa:    item.Require2FA,
-			CreatedBy:     item.CreatedBy,
-			UpdatedBy:     item.UpdatedBy,
-			CreatedAt:     item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:     item.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		protoItem := &authpb.AdminAccessItem{
+			Id:         item.ID,
+			UserId:     item.UserID,
+			IpAddress:  item.IPAddress,
+			IpRange:    item.IPRange,
+			DeviceId:   item.DeviceID,
+			DeviceName: item.DeviceName,
+			DeviceType: item.DeviceType,
+			AuthType:   item.AuthType,
+			Status:     item.Status,
+			MaxDevices: int32(item.MaxDevices),
+			Require2Fa: item.Require2FA,
+			CreatedBy:  item.CreatedBy,
+			UpdatedBy:  item.UpdatedBy,
+			CreatedAt:  item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:  item.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
+
+		// Handle nullable time fields
+		if item.EffectiveFrom != nil {
+			protoItem.EffectiveFrom = item.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00")
+		}
+		if item.EffectiveTo != nil {
+			protoItem.EffectiveTo = item.EffectiveTo.Format("2006-01-02T15:04:05Z07:00")
+		}
+
+		items[i] = protoItem
 	}
 
 	return &authpb.GetAdminAccessListResponse{

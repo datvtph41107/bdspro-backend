@@ -1,14 +1,15 @@
 package cmd
 
 import (
-	"auth/config"
-	"auth/infra/db"
-	"auth/wire"
 	_middleware "common/middleware"
 	"fmt"
 	"log"
 	"net"
 	authpb "pb/types/auth"
+
+	"auth/config"
+	"auth/infra/db"
+	"auth/wire"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -41,10 +42,8 @@ func startGRPCServer() {
 
 	authpb.RegisterAuthServiceServer(s, app.AuthHandler)
 	authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
-	authpb.RegisterRoleServiceServer(s, app.RoleHandler)
-	authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
-	authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
 	authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)
+
 	// Enable reflection for debugging
 	// reflection.Register(s)
 

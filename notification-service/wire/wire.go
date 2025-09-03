@@ -12,6 +12,7 @@ import (
 	notification_infra_postgres "noti/infra/postgres"
 	notification_infra_service "noti/infra/service"
 	notification_internal_dto "noti/internal/dto"
+	notification_internal_interface_repo "noti/internal/interface/repo"
 	crm_internal_repo "noti/internal/repo"
 	noti_internal_repo "noti/internal/repo"
 	notification_internal_usecase "noti/internal/usecase"
@@ -25,6 +26,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.HistoryRepo), new(*notification_infra_postgres.HistoryRepo)),
 	wire.Bind(new(noti_internal_repo.NotificationRepo), new(*notification_infra_postgres.PostgreNotification)),
 	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
+	wire.Bind(new(notification_internal_interface_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
 	notification_config.NewConfigApp,
 	notification_config.NewFirebaseConfig,
 	notification_infra_firebase.NewFirebaseService,
@@ -35,9 +37,11 @@ var wireSet = wire.NewSet(
 	notification_infra_postgres.NewHistoryRepo,
 	notification_infra_postgres.NewHistoryRepository,
 	notification_infra_postgres.NewAdminHistoryPostgres,
+	notification_infra_postgres.NewAccountWarningPostgresRepo,
 	notification_infra_service.NewHistoryService,
 	notification_internal_usecase.NewHistoryUsecase,
 	notification_internal_usecase.NewAdminHistoryUsecase,
+	notification_internal_usecase.NewAccountWarningUsecase,
 	notification_infra_service.NewInternalNotiService,
 	notification_infra_mapper.NewNotificationMapper,
 	notification_internal_usecase.NewNotificationService,

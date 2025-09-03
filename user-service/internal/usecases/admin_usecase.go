@@ -59,6 +59,7 @@ func (uc *AdminUsecase) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 
 // BlockUser khóa tài khoản user với lý do
 func (uc *AdminUsecase) BlockUser(ctx context.Context, req *dto.BlockUserRequest) error {
+
 	// Kiểm tra user có tồn tại không
 	_, err := uc.AdminRepo.GetUserByProfileID(req.ProfileID)
 	if err != nil {
@@ -68,8 +69,10 @@ func (uc *AdminUsecase) BlockUser(ctx context.Context, req *dto.BlockUserRequest
 	// Cập nhật trạng thái user thành blocked
 	err = uc.AdminRepo.UpdateUserStatus(req.ProfileID, 0) // 0 = blocked
 	if err != nil {
+		fmt.Printf("Failed to block user: %v\n", err)
 		return fmt.Errorf("failed to block user: %v", err)
 	}
+	fmt.Printf("User blocked successfully\n")
 
 	// TODO: Log action và gửi notification
 	// TODO: Lưu lý do khóa vào bảng audit log

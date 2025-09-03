@@ -8,11 +8,11 @@ import (
 )
 
 type PlanService struct {
-	crud.BaseService[models.Plan, crud.ICrudRepo[models.Plan]]
+	crud.BaseUsecase[models.Plan, crud.ICrudRepo[models.Plan]]
 }
 
 func NewPlanService(repo *repo.PlanRepo) *PlanService {
 	return &PlanService{
-		BaseService: crud.BaseService[models.Plan, crud.ICrudRepo[models.Plan]]{Repo: repo},
+		BaseUsecase: crud.BaseUsecase[models.Plan, crud.ICrudRepo[models.Plan]]{Repo: repo},
 	}
 }

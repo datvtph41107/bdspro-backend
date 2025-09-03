@@ -14,6 +14,8 @@ import (
 	_ "noti/docs"
 	"noti/wire"
 
+	_middleware "common/middleware"
+
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -44,8 +46,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(common.ProfileIDInterceptor),
+		grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+		),
 	)
 	notificationpb.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
 	notificationpb.RegisterNotificationServiceServer(s, app.InternalNotiService)

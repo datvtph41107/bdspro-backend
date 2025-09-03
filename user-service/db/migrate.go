@@ -19,9 +19,9 @@ func AutoMigrate() {
 		// &user_model.CertificationEntity{},
 		// &user_model.AttachEntity{},
 		&user_model.Report{},
+		&user_model.UserProfileEntity{},
 	// &user_model.ReportReason{},
 	// &user_model.ReportProof{},
 	// &user_model.Rate{},
-	// &user_model.UserProfileEntity{},
 	)
 }

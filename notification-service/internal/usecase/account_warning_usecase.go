@@ -2,13 +2,14 @@ package usecase
 
 import (
 	_errors "common/errors"
-	_utils "common/utils"
 	"context"
+	"strings"
+	"time"
+
+	_middleware "common/middleware"
 	"noti/internal/domain"
 	"noti/internal/dto"
 	"noti/internal/interface/repo"
-	"strings"
-	"time"
 )
 
 type AccountWarningUsecase struct {
@@ -26,12 +27,19 @@ func NewAccountWarningUsecase(
 // SendAccountWarning gửi cảnh báo tài khoản
 func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.SendAccountWarningRequest) (*dto.SendAccountWarningResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
 	// Kiểm tra không gửi cảnh báo cho chính mình
+	profileID, err := u.getProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if profileID == req.TargetID {
 		return nil, _errors.ReturnError(int32(400), "Không thể gửi cảnh báo cho chính tài khoản của mình")
 	}
@@ -116,15 +124,18 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 
 // GetAccountWarningList lấy danh sách cảnh báo
 func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req dto.GetAccountWarningListRequest) (*dto.GetAccountWarningListResponse, error) {
-	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
+	// Log context values for debugging
+	// _utils.LogContextValues(ctx, "GetAccountWarningList")
 
-	// Set default pagination
-	if req.Page <= 0 {
-		req.Page = 1
+	// Kiểm tra quyền admin
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if profileID == 0 {
+	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// }
+
+	// Set default pagination - page bắt đầu từ 0
+	if req.Page < 0 {
+		req.Page = 0
 	}
 	if req.Size <= 0 {
 		req.Size = 10
@@ -154,7 +165,7 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 		filters["is_read"] = *req.IsRead
 	}
 
-	// Lấy danh sách
+	// Lấy danh sách - giữ nguyên page = 0
 	warnings, total, err := u.AccountWarningRepo.FindAll(ctx, req.Page, req.Size, filters)
 	if err != nil {
 		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách cảnh báo")
@@ -189,7 +200,7 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 	return &dto.GetAccountWarningListResponse{
 		Data:  items,
 		Total: total,
-		Page:  req.Page,
+		Page:  req.Page, // Trả về page gốc (0-based)
 		Size:  req.Size,
 	}, nil
 }
@@ -197,11 +208,17 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 // MarkWarningAsRead đánh dấu đã đọc
 func (u *AccountWarningUsecase) MarkWarningAsRead(ctx context.Context, req dto.MarkWarningAsReadRequest) (*dto.MarkWarningAsReadResponse, error) {
 	// Kiểm tra quyền
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
-
+	profileID, err := u.getProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// Kiểm tra cảnh báo tồn tại
 	warning, err := u.AccountWarningRepo.FindByID(ctx, req.WarningID)
 	if err != nil || warning == nil {
@@ -238,7 +255,17 @@ func (u *AccountWarningUsecase) MarkWarningAsRead(ctx context.Context, req dto.M
 // MarkWarningAsAcknowledged đánh dấu đã xác nhận
 func (u *AccountWarningUsecase) MarkWarningAsAcknowledged(ctx context.Context, req dto.MarkWarningAsAcknowledgedRequest) (*dto.MarkWarningAsAcknowledgedResponse, error) {
 	// Kiểm tra quyền
-	profileID := _utils.GetProfileIdWithContext(ctx)
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+	profileID, err := u.getProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if profileID == 0 {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
@@ -279,8 +306,11 @@ func (u *AccountWarningUsecase) MarkWarningAsAcknowledged(ctx context.Context, r
 // CreateWarningTemplate tạo mẫu cảnh báo
 func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req dto.CreateWarningTemplateRequest) (*dto.CreateWarningTemplateResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
@@ -297,8 +327,6 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 		Content:     req.Content,
 		Severity:    req.Severity,
 		IsActive:    req.IsActive,
-		CreatedBy:   profileID,
-		UpdatedBy:   profileID,
 	}
 
 	createdTemplate, err := u.AccountWarningRepo.CreateTemplate(ctx, template)
@@ -323,15 +351,17 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 
 // GetWarningTemplateList lấy danh sách mẫu cảnh báo
 func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req dto.GetWarningTemplateListRequest) (*dto.GetWarningTemplateListResponse, error) {
-	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
-	// Set default pagination
-	if req.Page <= 0 {
-		req.Page = 1
+	// Set default pagination - page bắt đầu từ 0
+	if req.Page < 0 {
+		req.Page = 0
 	}
 	if req.Size <= 0 {
 		req.Size = 10
@@ -339,7 +369,6 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 
 	var templates []*domain.AccountWarningTemplateEntity
 	var total int64
-	var err error
 
 	// Lấy mẫu theo loại hoặc tất cả
 	if req.WarningType != "" {
@@ -348,6 +377,17 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 			return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách mẫu")
 		}
 		total = int64(len(templates))
+
+		// Xử lý pagination thủ công
+		start := req.Page * req.Size
+		end := start + req.Size
+		if start >= len(templates) {
+			templates = []*domain.AccountWarningTemplateEntity{}
+		} else if end > len(templates) {
+			templates = templates[start:]
+		} else {
+			templates = templates[start:end]
+		}
 	} else {
 		templates, total, err = u.AccountWarningRepo.FindAllTemplates(ctx, req.Page, req.Size)
 		if err != nil {
@@ -376,7 +416,7 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 	return &dto.GetWarningTemplateListResponse{
 		Data:  items,
 		Total: total,
-		Page:  req.Page,
+		Page:  req.Page, // Trả về page gốc (0-based)
 		Size:  req.Size,
 	}, nil
 }
@@ -384,14 +424,24 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 // GetWarningLogList lấy danh sách log cảnh báo
 func (u *AccountWarningUsecase) GetWarningLogList(ctx context.Context, req dto.GetWarningLogListRequest) (*dto.GetWarningLogListResponse, error) {
 	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+	profileID, err := u.getProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if profileID == 0 {
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
-	// Set default pagination
-	if req.Page <= 0 {
-		req.Page = 1
+	// Set default pagination - page bắt đầu từ 0
+	if req.Page < 0 {
+		req.Page = 0
 	}
 	if req.Size <= 0 {
 		req.Size = 10
@@ -399,9 +449,8 @@ func (u *AccountWarningUsecase) GetWarningLogList(ctx context.Context, req dto.G
 
 	var logs []*domain.AccountWarningLogEntity
 	var total int64
-	var err error
 
-	// Lấy log theo WarningID hoặc TargetID
+	// Lấy log theo WarningID hoặc TargetID - giữ nguyên page = 0
 	if req.WarningID != nil {
 		logs, total, err = u.AccountWarningRepo.FindLogsByWarningID(ctx, *req.WarningID, req.Page, req.Size)
 	} else if req.TargetID != nil {
@@ -434,7 +483,25 @@ func (u *AccountWarningUsecase) GetWarningLogList(ctx context.Context, req dto.G
 	return &dto.GetWarningLogListResponse{
 		Data:  items,
 		Total: total,
-		Page:  req.Page,
+		Page:  req.Page, // Trả về page gốc (0-based)
 		Size:  req.Size,
 	}, nil
+}
+
+func (u *AccountWarningUsecase) hasAdminRole(ctx context.Context) (bool, error) {
+	principal, err := _middleware.PrincipalFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return principal.Role == "ROLE_ADMIN", nil
+}
+
+func (u *AccountWarningUsecase) getProfileID(ctx context.Context) (uint64, error) {
+	principal, err := _middleware.PrincipalFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return principal.ProfileId, nil
 }

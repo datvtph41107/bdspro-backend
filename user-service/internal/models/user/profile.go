@@ -62,6 +62,7 @@ type UserProfileEntity struct {
 
 	FriendStatus *FriendItem `gorm:"-" json:"friendStatus"`
 	Following    bool        `gorm:"-" json:"following"`
+	Status       uint8       `gorm:"column:status;default:1" json:"status"`
 
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`

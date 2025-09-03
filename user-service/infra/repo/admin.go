@@ -38,12 +38,14 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 			birth,
 			created_at,
 			updated_at,
-			CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END as status,
+			COALESCE(status, 1) as status,
 			role_type,
 			role_real_estate,
 			position,
 			department_id,
-			tick_verified
+			tick_verified,
+			NULL as last_login_at,
+			0 as total_login
 		`)
 
 	// Apply search filter
@@ -58,11 +60,7 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 
 	// Apply status filter
 	if req.Status != nil {
-		if *req.Status == 1 {
-			query = query.Where("deleted_at IS NULL")
-		} else {
-			query = query.Where("deleted_at IS NOT NULL")
-		}
+		query = query.Where("COALESCE(status, 1) = ?", *req.Status)
 	}
 
 	// Apply role type filter
@@ -123,8 +121,14 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 
 // GetUserByProfileID lấy thông tin user theo profile ID
 func (r *AdminRepo) GetUserByProfileID(profileID uint64) (*user_model.UserProfileEntity, error) {
+
+	// Kiểm tra xem có dữ liệu trong bảng không
+	var count int64
+	r.DB.Model(&user_model.UserProfileEntity{}).Count(&count)
+
+	// Kiểm tra xem có user nào với profile_id này không (kể cả đã bị soft delete)
 	var user user_model.UserProfileEntity
-	err := r.DB.Where("profile_id = ?", profileID).First(&user).Error
+	err := r.DB.Unscoped().Where("profile_id = ?", profileID).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -134,19 +138,14 @@ func (r *AdminRepo) GetUserByProfileID(profileID uint64) (*user_model.UserProfil
 // UpdateUserStatus cập nhật trạng thái user
 func (r *AdminRepo) UpdateUserStatus(profileID uint64, status uint8) error {
 	// Status: 0 = blocked, 1 = active, 2 = approved
-	var err error
 
-	if status == 0 {
-		// Block user - set deleted_at
-		err = r.DB.Model(&user_model.UserProfileEntity{}).
-			Where("profile_id = ?", profileID).
-			Update("deleted_at", gorm.Expr("NOW()")).Error
-	} else {
-		// Unblock/Approve user - clear deleted_at
-		err = r.DB.Model(&user_model.UserProfileEntity{}).
-			Where("profile_id = ?", profileID).
-			Update("deleted_at", nil).Error
+	err := r.DB.Model(&user_model.UserProfileEntity{}).
+		Where("profile_id = ?", profileID).
+		Update("status", status).Error
+
+	if err != nil {
+		return err
 	}
 
-	return err
+	return nil
 }

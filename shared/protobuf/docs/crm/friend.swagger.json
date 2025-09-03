@@ -839,6 +839,10 @@
         },
         "memberVerified": {
           "type": "boolean"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -862,6 +866,10 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

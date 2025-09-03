@@ -1,15 +1,15 @@
-package postgre
+package postgres
 
 import (
 	_db "common/db"
 	"context"
-	"noti/internal/domain"
 	"time"
+
+	"noti/internal/domain"
 )
 
 // @bind: noti/internal/interface/repo.AccountWarningRepository
-type AccountWarningPostgresRepo struct {
-}
+type AccountWarningPostgresRepo struct{}
 
 func NewAccountWarningPostgresRepo() *AccountWarningPostgresRepo {
 	return &AccountWarningPostgresRepo{}

@@ -166,7 +166,7 @@ service AuthService {
 
     rpc DeleteAdmin(DeleteAdminRequest) returns (DeleteAdminResponse) {
         option (google.api.http) = {
-            delete: "/v2/auth/admin/delete"
+            delete: "/v2/auth/admin/delete/{id}"
         };
     }
 
@@ -488,7 +488,7 @@ message UpdateAdminRequest {
 }
 
 message DeleteAdminRequest {
-    uint64 authId = 1;
+    uint64 id = 1;
 }
 
 message DeleteAdminResponse {

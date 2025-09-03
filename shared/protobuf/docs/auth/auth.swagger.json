@@ -356,7 +356,7 @@
         ]
       }
     },
-    "/v2/auth/admin/delete": {
+    "/v2/auth/admin/delete/{id}": {
       "delete": {
         "operationId": "AuthService_DeleteAdmin",
         "responses": {
@@ -375,9 +375,9 @@
         },
         "parameters": [
           {
-            "name": "authId",
-            "in": "query",
-            "required": false,
+            "name": "id",
+            "in": "path",
+            "required": true,
             "type": "string",
             "format": "uint64"
           }

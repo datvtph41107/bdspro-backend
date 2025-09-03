@@ -3,18 +3,20 @@ package repo
 import (
 	"common/case/crud"
 	_db "common/db"
+
 	"membership/models"
 
 	"gorm.io/gorm"
 )
 
 type MembershipRepo struct {
-	crud.BaseRepo[models.Membership]
+	crud.CrudRepo[models.Membership]
+	*_db.TransactionRepo
 }
 
 func NewMembershipRepo(db *gorm.DB) *MembershipRepo {
 	return &MembershipRepo{
-		BaseRepo: crud.BaseRepo[models.Membership]{DB: db},
+		CrudRepo: crud.CrudRepo[models.Membership]{TransactionRepo: _db.NewTransactionRepo(db)},
 	}
 }
 
