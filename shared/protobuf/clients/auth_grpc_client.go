@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	authpb "pb/types/auth"
+	sharepb "pb/types/shared"
 	"time"
 
 	"google.golang.org/grpc"
@@ -59,4 +60,9 @@ func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) erro
 		return _errors.ReturnError(403, "Bạn không có quyền truy cập")
 	}
 	return nil
+}
+
+func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*authpb.Role, error) {
+	return c.AuthInternalServiceClient.
+		GetRoleById(ctx, &sharepb.IdRequest{Id: id})
 }

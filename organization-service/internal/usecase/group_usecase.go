@@ -19,7 +19,7 @@ type GroupUsecase interface {
 	GetGroups(ctx context.Context, offset, limit int) ([]*entity.Group, uint32, error)
 	GetGroupByUserId(ctx context.Context) ([]*entity.Group, error)
 	GetGroupByUserIdWithDetails(ctx context.Context) ([]*dto.GroupWithDetails, error)
-	GetGroupsWithDetails(ctx context.Context, offset, limit int) ([]*dto.GroupWithDetails, uint32, error)
+	GetGroupsWithDetails(ctx context.Context, page, size int) ([]*dto.GroupWithDetails, uint32, error)
 }
 
 type groupUsecase struct {

@@ -912,7 +912,7 @@ func (s *ProductUsecase) RequiredBeforeSave(c context.Context, parentID uint64) 
 	// if parent.AssetId == nil {
 	// 	return nil, &_routes.Except{
 	// 		Code:    400,
-	// 		Message: "Sản phẩm không đủ điều kiến để tạo sản phẩm con",
+	// 		Message: "Sản phẩm không đủ điều kiện để tạo sản phẩm con",
 	// 	}
 	// }
 
@@ -1187,4 +1187,12 @@ func (s *ProductUsecase) SyncProduct(c context.Context) error {
 	}
 	log.Printf("SyncProduct success")
 	return nil
+}
+
+func (s *ProductUsecase) SyncData(c context.Context) error {
+	return s.ProductRepo.SyncData(c)
+}
+
+func (s *ProductUsecase) GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error) {
+	return s.ProductRepo.GetGroupProducts(ctx, req)
 }

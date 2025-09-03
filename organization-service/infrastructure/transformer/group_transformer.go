@@ -92,14 +92,14 @@ func (t *groupTransformer) EntityToGetGroupsWithDetailsResponse(groups []*dto.Gr
 	for i, groupWithDetails := range groups {
 		group := groupWithDetails.Group
 		groupsResponse[i] = &grouppb.Group{
-			Id:          group.Id,
-			Name:        group.Name,
-			Description: group.Description,
-			AvatarUrl:   group.AvatarUrl,
-			// Status:         groupWithDetails.GroupStatus,
-			// MemberCount:    groupWithDetails.MemberCount,
-			// UserRole:       groupWithDetails.UserRole,
-			// AdditionalInfo: groupWithDetails.AdditionalInfo,
+			Id:             group.Id,
+			Name:           group.Name,
+			Description:    group.Description,
+			AvatarUrl:      group.AvatarUrl,
+			Status:         groupWithDetails.GroupStatus,
+			MemberCount:    groupWithDetails.MemberCount,
+			UserRole:       groupWithDetails.UserRole,
+			AdditionalInfo: groupWithDetails.AdditionalInfo,
 		}
 	}
 	return &grouppb.GetGroupsResponse{

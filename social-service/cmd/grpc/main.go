@@ -10,6 +10,7 @@ import (
 	pb_social "pb/types/social"
 	"social/config"
 	"social/db"
+	"social/initial"
 	"social/wire"
 	"time"
 
@@ -55,7 +56,7 @@ var GrpcCmd = &cobra.Command{
 	},
 }
 
-func startScheduler(app *config.ConfigApp) {
+func startScheduler(app *initial.InitialApp) {
 	now := time.Now()
 	nextHour := now.Truncate(time.Minute).Add(30 * time.Minute) // 30p
 	wait := time.Until(nextHour)

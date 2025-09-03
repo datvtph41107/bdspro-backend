@@ -144,3 +144,23 @@ func (h *PermissionHandler) GetPermissionKeys(ctx context.Context, req *sharepb.
 
 // 	return pbPermission
 // }
+
+// @Summary Get permission by group ID
+// @Description Get permission by group ID
+// @Tags Permission
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Group ID"
+// @Success 200 {object} authpb.PermissionKeysResponse
+// @Router /permission/group/{id} [get]
+func (h *PermissionHandler) GetPermissionByGroupId(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionKeysResponse, error) {
+	permissions, err := h.permissionUsecase.GetByGroupId(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.PermissionKeysResponse{
+		Keys: permissions,
+	}, nil
+}

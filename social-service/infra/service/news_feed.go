@@ -2,6 +2,7 @@ package service
 
 import (
 	_dto "common/dto"
+	_errors "common/errors"
 	_models "common/models"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -46,6 +47,19 @@ func NewNewsFeedService(
 	}
 }
 
+func (s *NewsFeedService) RequiredOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId *uint64) error {
+	if ownerOf != socialpb.OwnerOf_group && ownerOf != socialpb.OwnerOf_user {
+		return _errors.ReturnError(400, "ownerOf is user/group")
+	}
+	if ownerOf == socialpb.OwnerOf_group && ownerId == nil {
+		return _errors.ReturnError(400, "groupId is required")
+	}
+	// if ownerOf == socialpb.OwnerOf_user && ownerId == nil {
+	// 	return _errors.ReturnError(400, "userId is required")
+	// }
+	return nil
+}
+
 // @Summary Create a new news feed
 // @Description Create a new news feed
 // @Tags News Feed
@@ -56,8 +70,114 @@ func NewNewsFeedService(
 // @Success 200 {object} pb_social.NewsFeed
 // @Router /news-feed [post]
 func (s *NewsFeedService) CreateNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*socialpb.NewsFeed, error) {
+	if err := s.RequiredOwner(ctx, req.OwnerOf, req.GroupId); err != nil {
+		return nil, err
+	}
+	// if req.OwnerOf == socialpb.OwnerOf_group {
+	// 	if req.GroupId == nil {
+	// 		return nil, _errors.ReturnError(400, "groupId is required")
+	// 	}
+	// } else if req.OwnerOf == socialpb.OwnerOf_user {
+	// } else {
+	// 	return nil, _errors.ReturnError(400, "ownerOf is user/group")
+	// }
+
 	newsFeed := s.PbPostToDomain(req)
-	result, err := s.newsFeedUsecase.CreateNewsFeed(ctx, newsFeed)
+	if req.OwnerOf == socialpb.OwnerOf_user {
+		result, err := s.newsFeedUsecase.CreateUserNewsFeed(ctx, newsFeed)
+		if err != nil {
+			return nil, err
+		}
+		return s.DomainPostToPb(result), nil
+	}
+	result, err := s.newsFeedUsecase.CreateGroupNewsFeed(ctx, newsFeed, req.GroupId)
+	if err != nil {
+		return nil, err
+	}
+	return s.DomainPostToPb(result), nil
+}
+
+// @Summary Get news feed by owner
+// @Description Get news feed by owner
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Param ownerOf path string true "OwnerOf"
+// @Param ownerId path uint64 true "OwnerId"
+// @Param page query int true "Page"
+// @Param size query int true "Size"
+// @Param text query string true "Text"
+// @Param isReel query bool true "IsReel"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /news-feed/{ownerOf}/{ownerId} [get]
+func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.NewsFeedSearch) (*socialpb.ListNewsFeed, error) {
+	if err := s.RequiredOwner(ctx, req.OwnerOf, &req.OwnerId); err != nil {
+		return nil, err
+	}
+
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:   req.Text,
+		IsReel: req.IsReel,
+	}
+
+	var posts []*domain.NewsFeed
+	var total int32
+	var err error
+
+	if req.OwnerOf == socialpb.OwnerOf_group {
+		posts, total, err = s.newsFeedUsecase.GetListPostGroup(ctx, req.OwnerId, postSearch)
+		if err != nil {
+			return nil, err
+		}
+	} else if req.OwnerOf == socialpb.OwnerOf_user {
+		posts, total, err = s.newsFeedUsecase.GetListPostUser(ctx, postSearch)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, _errors.ReturnError(400, "ownerOf is user/group")
+	}
+
+	data := s.newsFeedMapper.DomainToNewsFeedPbList(ctx, posts)
+	// s.userClient.PbUserToNewsFeed(ctx, data)
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.bdsproClient.PbPostToDomain(ctx, data)
+		return nil
+	})
+
+	g.Go(func() error {
+		s.userClient.PbUserToNewsFeed(ctx, data)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return &socialpb.ListNewsFeed{
+		Data:  data,
+		Total: &total,
+	}, nil
+}
+
+// @Summary Create a new news feed
+// @Description Create a new group news feed
+// @Tags News Feed
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param post body pb_social.NewsFeed true "NewsFeed"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /news-feed/group [post]
+func (s *NewsFeedService) CreateGroupNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*socialpb.NewsFeed, error) {
+	newsFeed := s.PbPostToDomain(req)
+	result, err := s.newsFeedUsecase.CreateGroupNewsFeed(ctx, newsFeed, req.GroupId)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +319,7 @@ func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRe
 		return nil, err
 	}
 
-	result := s.newsFeedMapper.DomainToReelResponseList(newsFeed)
+	result := s.newsFeedMapper.DomainToReelResponseList(ctx, newsFeed)
 	s.userClient.PbUserToReels(ctx, result)
 
 	return &socialpb.ListReelResponse{

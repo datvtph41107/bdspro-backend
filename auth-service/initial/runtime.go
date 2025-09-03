@@ -11,14 +11,15 @@ import (
 )
 
 type InitialApp struct {
-	AuthHandler       *handler.AuthHandler
-	OAuthHandler      *handler.OAuthHandler
-	RoleHandler       *handler.RoleHandler
-	PermissionHandler *handler.PermissionHandler
-	RoleGroupHandler  *handler.RoleGroupHandler
-	AdminHandler      *handler.AdminHandler
-	InternalHandler   *handler.InternalHandler
-	Logger            *flogging.FabricLogger
+	AuthHandler        *handler.AuthHandler
+	OAuthHandler       *handler.OAuthHandler
+	RoleHandler        *handler.RoleHandler
+	PermissionHandler  *handler.PermissionHandler
+	RoleGroupHandler   *handler.RoleGroupHandler
+	AdminHandler       *handler.AdminHandler
+	AdminAccessHandler *handler.AdminAccessHandler
+	InternalHandler    *handler.InternalHandler
+	Logger             *flogging.FabricLogger
 }
 
 func NewApp(
@@ -28,18 +29,20 @@ func NewApp(
 	permissionHandler *handler.PermissionHandler,
 	roleGroupHandler *handler.RoleGroupHandler,
 	adminHandler *handler.AdminHandler,
+	adminAccessHandler *handler.AdminAccessHandler,
 	internalHandler *handler.InternalHandler,
 ) *InitialApp {
 	common.LoadConfig(config.EmbeddedConfig)
 	return &InitialApp{
-		AuthHandler:       authHandler,
-		OAuthHandler:      oauthHandler,
-		RoleHandler:       roleHandler,
-		PermissionHandler: permissionHandler,
-		RoleGroupHandler:  roleGroupHandler,
-		AdminHandler:      adminHandler,
-		InternalHandler:   internalHandler,
-		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
+		AuthHandler:        authHandler,
+		OAuthHandler:       oauthHandler,
+		RoleHandler:        roleHandler,
+		PermissionHandler:  permissionHandler,
+		RoleGroupHandler:   roleGroupHandler,
+		AdminHandler:       adminHandler,
+		AdminAccessHandler: adminAccessHandler,
+		InternalHandler:    internalHandler,
+		Logger:             flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }
 

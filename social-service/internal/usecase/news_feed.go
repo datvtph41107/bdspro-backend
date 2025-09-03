@@ -2,6 +2,7 @@ package usecase
 
 import (
 	_dto "common/dto"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -15,14 +16,16 @@ import (
 )
 
 type NewsFeedUsecase struct {
-	newsFeedRepo      repo.NewsFeedRepo
-	likeRepo          repo.LikeRepo
-	permissionUsecase iusecase.PermissionUsecase
-	friendTagRepo     repo.FriendTagRepo
-	newsFeedMediaRepo repo.NewsFeedMediaRepo
-	bdsproClient      iusecase.BdsproClient
-	userClient        iusecase.UserClient
-	transaction       iusecase.ITransaction
+	newsFeedRepo        repo.NewsFeedRepo
+	likeRepo            repo.LikeRepo
+	permissionUsecase   iusecase.PermissionUsecase
+	friendTagRepo       repo.FriendTagRepo
+	newsFeedMediaRepo   repo.NewsFeedMediaRepo
+	newsFeedOfUserRepo  repo.NewsFeedOfUserRepo
+	newsFeedOfGroupRepo repo.NewsFeedOfGroupRepo
+	bdsproClient        iusecase.BdsproClient
+	userClient          iusecase.UserClient
+	transaction         iusecase.ITransaction
 }
 
 func NewNewsFeedUsecase(postRepo repo.NewsFeedRepo,
@@ -30,23 +33,43 @@ func NewNewsFeedUsecase(postRepo repo.NewsFeedRepo,
 	permissionUsecase iusecase.PermissionUsecase,
 	friendTagRepo repo.FriendTagRepo,
 	newsFeedMediaRepo repo.NewsFeedMediaRepo,
+	newsFeedOfUserRepo repo.NewsFeedOfUserRepo,
+	newsFeedOfGroupRepo repo.NewsFeedOfGroupRepo,
 	bdsproClient iusecase.BdsproClient,
 	userClient iusecase.UserClient,
 	transaction iusecase.ITransaction,
 ) *NewsFeedUsecase {
 	return &NewsFeedUsecase{
-		newsFeedRepo:      postRepo,
-		likeRepo:          likeRepo,
-		permissionUsecase: permissionUsecase,
-		friendTagRepo:     friendTagRepo,
-		newsFeedMediaRepo: newsFeedMediaRepo,
-		bdsproClient:      bdsproClient,
-		userClient:        userClient,
-		transaction:       transaction,
+		newsFeedRepo:        postRepo,
+		likeRepo:            likeRepo,
+		permissionUsecase:   permissionUsecase,
+		friendTagRepo:       friendTagRepo,
+		newsFeedMediaRepo:   newsFeedMediaRepo,
+		newsFeedOfUserRepo:  newsFeedOfUserRepo,
+		newsFeedOfGroupRepo: newsFeedOfGroupRepo,
+		bdsproClient:        bdsproClient,
+		userClient:          userClient,
+		transaction:         transaction,
 	}
 }
 
-func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
+func (u *NewsFeedUsecase) CreateGroupNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed, groupId *uint64) (*domain.NewsFeed, error) {
+	if groupId == nil {
+		return nil, _errors.ReturnError(http.StatusBadRequest, "groupId is required")
+	}
+	ownerType := enums.OwnerTypeGroup
+	ownerID := groupId
+	return u.createNewsFeed(ctx, newsFeed, ownerType, ownerID)
+}
+
+func (u *NewsFeedUsecase) CreateUserNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	ownerType := enums.OwnerTypeUser
+	ownerID := profileId
+	return u.createNewsFeed(ctx, newsFeed, ownerType, &ownerID)
+}
+
+func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed, ownerType enums.OwnerType, ownerID *uint64) (*domain.NewsFeed, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	if newsFeed.PostID != nil {
@@ -67,6 +90,44 @@ func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.N
 			}
 		}
 		newsFeed = createdFeed
+
+		// Track the news feed based on owner type
+		// Default to user if not specified
+
+		// Check if this is a group post by checking ParentID or other logic
+		// For now, we'll use ParentID to determine if it's a group post
+		// You can modify this logic based on your business requirements
+		if newsFeed.ParentID != nil {
+			// This could be a group post - you might want to add more logic here
+			// For example, check if ParentID refers to a group
+			ownerType = enums.OwnerTypeGroup
+			ownerID = newsFeed.ParentID
+		}
+
+		// Create tracking record based on owner type
+		if ownerType == enums.OwnerTypeUser {
+			newsFeedOfUser := &domain.NewsFeedOfUser{
+				PostID: createdFeed.ID,
+				UserID: *ownerID,
+			}
+			if err := u.newsFeedOfUserRepo.Create(ctx, newsFeedOfUser); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: "không thể track tin đăng cho user",
+				}
+			}
+		} else if ownerType == enums.OwnerTypeGroup {
+			newsFeedOfGroup := &domain.NewsFeedOfGroup{
+				PostID:  createdFeed.ID,
+				GroupID: *ownerID,
+			}
+			if err := u.newsFeedOfGroupRepo.Create(ctx, newsFeedOfGroup); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: "không thể track tin đăng cho group",
+				}
+			}
+		}
 
 		if len(newsFeed.FriendTagIds) > 0 {
 			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
@@ -99,12 +160,13 @@ func (u *NewsFeedUsecase) CreateNewsFeed(ctx context.Context, newsFeed *domain.N
 		// 	}
 		// }
 
-		return nil // commit nếu mọi thứ ok
+		return nil
 	})
 
 	if err != nil {
-		return nil, err // rollback nếu lỗi
+		return nil, err
 	}
+
 	return newsFeed, nil
 }
 
@@ -201,7 +263,6 @@ func (u *NewsFeedUsecase) GetListPostByUserID(ctx context.Context, userId uint64
 	if err != nil {
 		return nil, 0, err
 	}
-
 	return newsFeeds, int32(total), nil
 }
 
@@ -209,8 +270,30 @@ func (u *NewsFeedUsecase) GetListPost(ctx context.Context, req *dto.NewsFeedGlob
 	if req.Size > 10 || req.Size <= 0 {
 		req.Size = 10
 	}
-
 	newsFeeds, total, err := u.newsFeedRepo.GetGlobal(ctx, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeeds, int32(total), nil
+}
+
+func (u *NewsFeedUsecase) GetListPostGroup(ctx context.Context, groupId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+	if req.Size > 10 || req.Size <= 0 {
+		req.Size = 10
+	}
+	newsFeeds, total, err := u.newsFeedRepo.GetListPostGroup(ctx, req, groupId)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeeds, int32(total), nil
+}
+
+func (u *NewsFeedUsecase) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+	if req.Size > 10 || req.Size <= 0 {
+		req.Size = 10
+	}
+	userId := _utils.GetProfileIdWithContext(ctx)
+	newsFeeds, total, err := u.newsFeedRepo.GetListPostUser(ctx, req, userId)
 	if err != nil {
 		return nil, 0, err
 	}

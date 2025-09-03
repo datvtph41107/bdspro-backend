@@ -16,38 +16,6 @@
     "application/json"
   ],
   "paths": {
-    "/v2/social/news-feed": {
-      "post": {
-        "operationId": "NewsFeedService_CreateNewsFeed",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pb_socialNewsFeed"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/pb_socialNewsFeed"
-            }
-          }
-        ],
-        "tags": [
-          "NewsFeedService"
-        ]
-      }
-    },
     "/v2/social/news-feed/detail/{newsFeedId}": {
       "get": {
         "operationId": "NewsFeedService_DetailNewsFeed",
@@ -247,6 +215,25 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerOf",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group"
+            ],
+            "default": "unknown"
           }
         ],
         "tags": [
@@ -436,9 +423,219 @@
           "NewsFeedService"
         ]
       }
+    },
+    "/v2/social/news-feed/{ownerOf}": {
+      "post": {
+        "operationId": "NewsFeedService_CreateNewsFeed",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialNewsFeed"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group"
+            ]
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewsFeedServiceCreateNewsFeedBody"
+            }
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
+    },
+    "/v2/social/news-feed/{ownerOf}/{ownerId}": {
+      "get": {
+        "operationId": "NewsFeedService_GetNewsFeedByOwner",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialListNewsFeed"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group"
+            ]
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "isReel",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
     }
   },
   "definitions": {
+    "NewsFeedServiceCreateNewsFeedBody": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numLike": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numComment": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numShare": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numView": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "postId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaFeeds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_socialNewsFeedMedia"
+          }
+        },
+        "friendTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "author": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "isReel": {
+          "type": "boolean"
+        },
+        "post": {
+          "$ref": "#/definitions/pb_bdsproPost"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "friendTags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "likedAt": {
+          "type": "string"
+        },
+        "disLike": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "NewsFeedServiceShareNewsFeedBody": {
       "type": "object",
       "properties": {
@@ -536,6 +733,13 @@
         },
         "disLike": {
           "type": "boolean"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "$ref": "#/definitions/pb_socialOwnerOf"
         }
       }
     },
@@ -789,6 +993,13 @@
         },
         "disLike": {
           "type": "boolean"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "$ref": "#/definitions/pb_socialOwnerOf"
         }
       }
     },
@@ -810,6 +1021,15 @@
           "format": "int32"
         }
       }
+    },
+    "pb_socialOwnerOf": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "user",
+        "group"
+      ],
+      "default": "unknown"
     },
     "pb_socialReelResponse": {
       "type": "object",

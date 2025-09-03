@@ -11,8 +11,8 @@ type AssetLegal struct {
 	DocumentName        string     `json:"documentName"`
 	DocumentURL         string     `json:"documentUrl"`
 	DocumentType        string     `json:"documentType"`
-	IssuedDate          *time.Time `json:"issuedDate"`
-	ExpiryDate          *time.Time `json:"expiryDate"`
+	IssuedDate          *time.Time `json:"-"`
+	ExpiryDate          *time.Time `json:"-"`
 	Description         string     `json:"description"`
 	RelatedSplitMergeID *uint64    `json:"relatedSplitMergeId"`
 }

@@ -2,6 +2,7 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"context"
 	socialpb "pb/types/social"
 	"social/internal/domain"
 )
@@ -13,7 +14,54 @@ func NewNewsFeedMapper() *NewsFeedMapper {
 	return &NewsFeedMapper{}
 }
 
-func (m *NewsFeedMapper) DomainToReelResponseList(newsFeed []*domain.ReelEntity) []*socialpb.ReelResponse {
+func (m *NewsFeedMapper) DomainToNewsFeedPbList(ctx context.Context, newsFeed []*domain.NewsFeed) []*socialpb.NewsFeed {
+	result := make([]*socialpb.NewsFeed, len(newsFeed))
+	for i, news := range newsFeed {
+		result[i] = m.DomainToNewsFeedPb(ctx, news)
+	}
+
+	return result
+}
+
+func (m *NewsFeedMapper) DomainToNewsFeedPb(ctx context.Context, newsFeed *domain.NewsFeed) *socialpb.NewsFeed {
+	result := &socialpb.NewsFeed{
+		Id:         newsFeed.ID,
+		Content:    newsFeed.Content,
+		Image:      newsFeed.Image,
+		Link:       newsFeed.Link,
+		Visibility: int32(newsFeed.Visibility),
+		OwnerOf:    socialpb.OwnerOf_user,
+		PostId:     newsFeed.PostID,
+		// Post: ,
+		// GroupId:    newsFeed.GroupId,
+		Title:      newsFeed.Title,
+		UpdatedAt:  _utils.FormatTimeToString(newsFeed.UpdatedAt),
+		CreatedBy:  newsFeed.CreatedBy,
+		LikedAt:    _utils.FormatTimeToString(newsFeed.LikedAt),
+		DisLike:    newsFeed.DisLike,
+		NumLike:    int32(newsFeed.NumLike),
+		NumComment: int32(newsFeed.NumComment),
+		NumShare:   int32(newsFeed.NumShare),
+		NumView:    int32(newsFeed.NumView),
+		IsReel:     newsFeed.IsReel,
+	}
+
+	if newsFeed.NewsFeedMedias != nil {
+		result.MediaFeeds = make([]*socialpb.NewsFeedMedia, len(newsFeed.NewsFeedMedias))
+		for i, media := range newsFeed.NewsFeedMedias {
+			result.MediaFeeds[i] = &socialpb.NewsFeedMedia{
+				Id:          media.ID,
+				Url:         media.Url,
+				Type:        media.Type,
+				OrderNumber: int32(media.OrderNumber),
+			}
+		}
+	}
+
+	return result
+}
+
+func (m *NewsFeedMapper) DomainToReelResponseList(ctx context.Context, newsFeed []*domain.ReelEntity) []*socialpb.ReelResponse {
 	result := make([]*socialpb.ReelResponse, len(newsFeed))
 	for i, news := range newsFeed {
 		result[i] = m.DomainToReelResponse(news)

@@ -267,21 +267,22 @@ func (r *GroupPostgresRepository) ListWithDetails(ctx context.Context, page, siz
 		AvatarUrl                 string             `gorm:"column:avatar_url"`
 		Status                    entity.GroupStatus `gorm:"column:status"`
 		MemberCount               uint32             `gorm:"column:member_count"`
-		Role                      string             `gorm:"column:role"`
+		RoleId                    *uint64            `gorm:"column:role_id"`
 		RoleName                  string             `gorm:"column:role_name"`
 		LatestNotificationContent string             `gorm:"column:latest_notification_content"`
 	}
 
 	query := r.db.WithContext(ctx).
+		Debug().
 		Table("groups g").
 		Select(`
 			g.id, g.created_at, g.updated_at, g.created_by, g.updated_by,
 			g.name, g.description, g.avatar_url, g.status,
 			COALESCE(member_counts.count, 0) as member_count,
-			COALESCE(gm.role, CASE WHEN g.created_by = ? THEN 'admin' ELSE 'member' END) as role,
+			gm.role_id,
 			COALESCE(org_role.name, CASE WHEN g.created_by = ? THEN 'Admin' ELSE 'Thành viên' END) as role_name,
 			gn.content as latest_notification_content
-		`, currentUserId, currentUserId).
+		`, currentUserId).
 		Joins("LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = ? AND gm.is_deleted = false", currentUserId).
 		Joins("LEFT JOIN organization_roles org_role ON gm.role = org_role.key").
 		Joins(`
@@ -300,7 +301,7 @@ func (r *GroupPostgresRepository) ListWithDetails(ctx context.Context, page, siz
 				ORDER BY group_id, created_at DESC
 			) gn ON g.id = gn.group_id
 		`).
-		Where("g.created_by = ? AND g.is_deleted = ?", currentUserId, false).
+		Where("gm.user_id = ? AND g.is_deleted = ?", currentUserId, false).
 		Order("g.created_at DESC")
 
 	// Count total
@@ -339,22 +340,22 @@ func (r *GroupPostgresRepository) ListWithDetails(ctx context.Context, page, siz
 		}
 
 		// Determine user role
-		userRole := result.RoleName
-		if userRole == "" {
-			// Map role string to Vietnamese
-			roleMap := map[string]string{
-				"admin":  "Admin",
-				"member": "Thành viên",
-			}
-			userRole = roleMap[result.Role]
-			if userRole == "" {
-				if result.CreatedBy == currentUserId {
-					userRole = "Admin"
-				} else {
-					userRole = "Thành viên"
-				}
-			}
-		}
+		// userRole := result.RoleName
+		// if userRole == "" {
+		// 	// Map role string to Vietnamese
+		// 	roleMap := map[string]string{
+		// 		"admin":  "Admin",
+		// 		"member": "Thành viên",
+		// 	}
+		// 	userRole = roleMap[result.Role]
+		// 	if userRole == "" {
+		// 		if result.CreatedBy == currentUserId {
+		// 			userRole = "Admin"
+		// 		} else {
+		// 			userRole = "Thành viên"
+		// 		}
+		// 	}
+		// }
 
 		// Determine additional info
 		additionalInfo := "Bạn chưa mời thành viên nào"
@@ -365,9 +366,10 @@ func (r *GroupPostgresRepository) ListWithDetails(ctx context.Context, page, siz
 		groupsWithDetails[i] = &dto.GroupWithDetails{
 			Group:          group,
 			MemberCount:    result.MemberCount,
-			UserRole:       userRole,
+			RoleId:         result.RoleId,
 			GroupStatus:    statusMap[result.Status],
 			AdditionalInfo: additionalInfo,
+			// UserRole:       result.RoleName,
 		}
 	}
 

@@ -107,7 +107,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/organization-service",
-      "args": ["grpc-server"],
+      "args": ["grpc"],
       "env": {}
     },
     {
@@ -145,6 +145,14 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/transaction-service",
+      "args": ["grpc"]
+    },
+    {
+      "name": "🧪 Debug Social Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/social-service",
       "args": ["grpc"]
     }
   ]

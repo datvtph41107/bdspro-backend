@@ -8,20 +8,29 @@ import (
 	"context"
 	"fmt"
 	authpb "pb/types/auth"
+	sharepb "pb/types/shared"
 	"strconv"
 	"strings"
+
+	"auth/infra/mapper"
 )
 
 type InternalHandler struct {
 	authpb.UnimplementedAuthInternalServiceServer
 	roleRepo     repo.RoleRepository
 	redisService *_redis.RedisService
+	roleMapper   *mapper.RoleMapper
 }
 
-func NewInternalHandler(roleRepo repo.RoleRepository, redisService *_redis.RedisService) *InternalHandler {
+func NewInternalHandler(
+	roleRepo repo.RoleRepository,
+	redisService *_redis.RedisService,
+	roleMapper *mapper.RoleMapper,
+) *InternalHandler {
 	return &InternalHandler{
 		roleRepo:     roleRepo,
 		redisService: redisService,
+		roleMapper:   roleMapper,
 	}
 }
 
@@ -149,4 +158,24 @@ func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) er
 	// 	return err
 	// }
 	return nil
+}
+
+func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+	role, err := h.roleRepo.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.roleMapper.MapRoleToPb(role), nil
+}
+
+func (h *InternalHandler) GetRolesByIds(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleListResponse, error) {
+	roles, err := h.roleRepo.GetListByIDs(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+
+	result := h.roleMapper.MapRoleListToPb(roles)
+	return &authpb.RoleListResponse{
+		Data: result,
+	}, nil
 }

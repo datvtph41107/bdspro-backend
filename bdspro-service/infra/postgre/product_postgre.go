@@ -312,8 +312,8 @@ func (r *GormUserProductRepo) SearchProductWithOwner(profileId *uint64, dto dto.
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
-		Preload("SaleTransaction", "deleted_at IS NULL").
-		Preload("RentTransaction", "deleted_at IS NULL").
+		// Preload("SaleTransaction", "deleted_at IS NULL").
+		// Preload("RentTransaction", "deleted_at IS NULL").
 		Where("products.owner_id = ? and products.deleted_at is NULL", profileId)
 
 	query = r.QueryDomain(query, &dto)
@@ -736,6 +736,106 @@ func (r *GormUserProductRepo) Create(c context.Context, entity *domain.Product) 
 
 func (r *GormUserProductRepo) SyncData(ctx context.Context) error {
 	return r.DB.Exec(`REFRESH MATERIALIZED VIEW public.product_market`).Error
+}
+
+func (r *GormUserProductRepo) GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error) {
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN sharing_access sa ON (sa.domain_id = products.id AND sa.domain = 10 AND sa.to_id = ? AND sa.to_type = 20)`, req.GroupID).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("sa.deleted_at IS NULL AND sa.to_type = 20 AND sa.to_id = ? AND products.deleted_at IS NULL", req.GroupID)
+
+	// Apply filters
+	if req.Text != "" {
+		query = query.Where("products.name ILIKE ? OR products.description ILIKE ?", "%"+req.Text+"%", "%"+req.Text+"%")
+	}
+
+	if req.ParentID != nil {
+		query = query.Where("products.parent_id = ?", *req.ParentID)
+	}
+
+	if req.PropertyTypeID != nil {
+		query = query.Where("products.property_type_id = ?", *req.PropertyTypeID)
+	}
+
+	if req.DocTypeID != nil {
+		query = query.Where("products.doc_type_id = ?", *req.DocTypeID)
+	}
+
+	if req.ProjectID != nil {
+		query = query.Where("products.project_id = ?", *req.ProjectID)
+	}
+
+	if req.ProvinceID != nil {
+		query = query.Where("products.province_id = ?", *req.ProvinceID)
+	}
+
+	if req.DistrictID != nil {
+		query = query.Where("products.district_id = ?", *req.DistrictID)
+	}
+
+	if req.WardID != nil {
+		query = query.Where("products.ward_id = ?", *req.WardID)
+	}
+
+	if req.TransactionType != nil {
+		query = query.Where("products.transaction_type = ?", *req.TransactionType)
+	}
+
+	if req.SaleStatus != nil {
+		query = query.Where("products.sale_status = ?", *req.SaleStatus)
+	}
+
+	if req.RentStatus != nil {
+		query = query.Where("products.rent_status = ?", *req.RentStatus)
+	}
+
+	if req.SaleVisibility != nil {
+		query = query.Where("products.sale_visibility = ?", *req.SaleVisibility)
+	}
+
+	if req.RentVisibility != nil {
+		query = query.Where("products.rent_visibility = ?", *req.RentVisibility)
+	}
+
+	if req.SourceType != nil {
+		query = query.Where("products.source_type = ?", *req.SourceType)
+	}
+
+	if req.Archived != nil {
+		query = query.Where("products.archived = ?", *req.Archived)
+	}
+
+	// Count total
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	var products []domain.Product
+	if err := query.
+		Order("products.created_at desc").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return products, total, nil
 }
 
 func (r *GormUserProductRepo) Save(c context.Context, entity *domain.Product) error {

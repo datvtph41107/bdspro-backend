@@ -4,6 +4,7 @@ import (
 	"context"
 	organizationpb "pb/types/organization"
 
+	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/usecase"
@@ -14,17 +15,20 @@ type GroupHandler struct {
 	GroupUsecase     usecase.GroupUsecase
 	GroupTransformer transformer.GroupTransformer
 	GroupValidator   validator.GroupValidator
+	AuthClient       *client.AuthClient
 }
 
 func NewGroupHandler(
 	groupUsecase usecase.GroupUsecase,
 	groupTransformer transformer.GroupTransformer,
 	groupValidator validator.GroupValidator,
+	authClient *client.AuthClient,
 ) *GroupHandler {
 	return &GroupHandler{
 		GroupUsecase:     groupUsecase,
 		GroupTransformer: groupTransformer,
 		GroupValidator:   groupValidator,
+		AuthClient:       authClient,
 	}
 }
 
@@ -143,7 +147,9 @@ func (h *GroupHandler) GetGroups(ctx context.Context, req *organizationpb.GetGro
 		return nil, err
 	}
 
-	return h.GroupTransformer.EntityToGetGroupsWithDetailsResponse(groups, total), nil
+	h.AuthClient.MapRoleToGroups(ctx, groups)
+
+	return h.GroupTransformer.EntityToGetGroupsWithDetailsResponse(groups, uint32(total)), nil
 }
 
 // @Summary Lấy danh sách nhóm của user hiện tại

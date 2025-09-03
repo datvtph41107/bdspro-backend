@@ -205,7 +205,7 @@
     {
       "label": "🌐 Social gRPC (8209)",
       "type": "shell",
-      "command": "cd shared/code && make run-dev social",
+      "command": "cd shared/code && make run-dev social grpc",
       "args": [],
       "problemMatcher": [
         "$go"

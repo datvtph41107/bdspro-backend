@@ -3,6 +3,7 @@ package dto
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/enums"
+	_dto "common/dto"
 )
 
 // type MediaItem struct {
@@ -167,3 +168,55 @@ type CreateResponse struct {
 // 	// OwnerOrgID       *int64     `gorm:"column:owner_org_id" json:"ownerOrgId"`
 
 // }
+
+type ProductSearch struct {
+	_dto.Pagable
+	OwnerID          *uint64 `json:"ownerId"`
+	OwnerType        *uint64 `json:"ownerType"`
+	ParentID         *uint64 `json:"parentId"`
+	PropertyTypeID   *uint64 `json:"propertyTypeId"`
+	DocTypeID        *uint64 `json:"docTypeId"`
+	ProjectID        *uint64 `json:"projectId"`
+	ProvinceID       *uint64 `json:"provinceId"`
+	DistrictID       *uint64 `json:"districtId"`
+	WardID           *uint64 `json:"wardId"`
+	TransactionType  *int32  `json:"transactionType"`
+	SaleStatus       *int32  `json:"saleStatus"`
+	RentStatus       *int32  `json:"rentStatus"`
+	SaleVisibility   *int32  `json:"saleVisibility"`
+	RentVisibility   *int32  `json:"rentVisibility"`
+	SourceType       *int32  `json:"sourceType"`
+	TransactionPrice *int32  `json:"transactionPrice"`
+	SalePrice        *int32  `json:"salePrice"`
+	RentPrice        *int32  `json:"rentPrice"`
+	SaleCommission   *int32  `json:"saleCommission"`
+	RentCommission   *int32  `json:"rentCommission"`
+	RentPaymentCycle *int32  `json:"rentPaymentCycle"`
+	Archived         *bool   `json:"archived"`
+}
+
+type GroupProductSearchRequest struct {
+	_dto.Pagable
+	GroupID          uint64  `json:"groupId" binding:"required"`
+	Text             string  `json:"text"`
+	ParentID         *uint64 `json:"parentId"`
+	PropertyTypeID   *uint64 `json:"propertyTypeId"`
+	DocTypeID        *uint64 `json:"docTypeId"`
+	ProjectID        *uint64 `json:"projectId"`
+	ProvinceID       *uint64 `json:"provinceId"`
+	DistrictID       *uint64 `json:"districtId"`
+	WardID           *uint64 `json:"wardId"`
+	TransactionType  *int32  `json:"transactionType"`
+	SaleStatus       *int32  `json:"saleStatus"`
+	RentStatus       *int32  `json:"rentStatus"`
+	SaleVisibility   *int32  `json:"saleVisibility"`
+	RentVisibility   *int32  `json:"rentVisibility"`
+	SourceType       *int32  `json:"sourceType"`
+	TransactionPrice *int32  `json:"transactionPrice"`
+	SalePrice        *int32  `json:"salePrice"`
+	RentPrice        *int32  `json:"rentPrice"`
+	SaleCommission   *int32  `json:"saleCommission"`
+	RentCommission   *int32  `json:"rentCommission"`
+	RentPaymentCycle *int32  `json:"rentPaymentCycle"`
+	Archived         *bool   `json:"archived"`
+}

@@ -6,13 +6,14 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"social/config"
+	"social/initial"
 	social_config "social/config"
 	social_infra_client "social/infra/client"
 	social_infra_impl "social/infra/impl"
 	social_infra_mapper "social/infra/mapper"
 	social_infra_postgre "social/infra/postgre"
 	social_infra_service "social/infra/service"
+	social_initial "social/initial"
 	social_internal_interface "social/internal/interface"
 	social_internal_repo "social/internal/repo"
 	social_internal_usecase "social/internal/usecase"
@@ -21,6 +22,7 @@ import (
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	_db.NewTransactionRepo,
 	wire.Bind(new(social_internal_interface.BdsproClient), new(*social_infra_client.BdsproClient)),
 	wire.Bind(new(social_internal_interface.ChatClient), new(*social_infra_client.ChatClient)),
 	wire.Bind(new(social_internal_interface.NotiClient), new(*social_infra_client.NotificationClient)),
@@ -35,6 +37,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(social_internal_repo.ReportRepo), new(*social_infra_postgre.PostgreReport)),
 	wire.Bind(new(social_internal_repo.ReportReasonRepo), new(*social_infra_postgre.PostgreReportReason)),
 	wire.Bind(new(social_internal_interface.ITransaction), new(*social_infra_postgre.PostgreTransaction)),
+	social_initial.NewApp,
 	social_infra_client.NewBdsproClient,
 	social_infra_client.NewChatClient,
 	social_infra_service.NewCommentService,
@@ -45,6 +48,8 @@ var wireSet = wire.NewSet(
 	social_infra_service.NewLikeService,
 	social_internal_usecase.NewLikeUsecase,
 	social_infra_mapper.NewNewsFeedMapper,
+	social_infra_postgre.NewNewsFeedOfGroupPostgres,
+	social_infra_postgre.NewNewsFeedOfUserPostgres,
 	social_infra_service.NewNewsFeedService,
 	social_internal_usecase.NewNewsFeedShareUsecase,
 	social_internal_usecase.NewNewsFeedUsecase,
@@ -66,7 +71,7 @@ var wireSet = wire.NewSet(
 	social_infra_client.NewUserClient,
 	social_internal_usecase.NewUserUsecase,
 )
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

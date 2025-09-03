@@ -18,6 +18,8 @@ type NewsFeedRepo interface {
 	GetPublicIgnorePreloadByID(ctx context.Context, id uint64) (*domain.NewsFeed, error)
 	GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error)
 	GetGlobal(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error)
+	GetListPostGroup(ctx context.Context, req *dto.NewsFeedGlobalSearch, groupId uint64) ([]*domain.NewsFeed, int32, error)
+	GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch, userId uint64) ([]*domain.NewsFeed, int32, error)
 	UpdateComment(ctx context.Context, newFeedID uint64, numComment int) error
 	UpdateShare(ctx context.Context, newFeedID uint64, numShare int) error
 	UpdateView(ctx context.Context, newFeedID uint64, numView int) error

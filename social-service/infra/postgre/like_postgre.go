@@ -31,6 +31,12 @@ func (r *PostgreLike) GetByTargetIdAndTypeAndUserId(ctx context.Context, targetI
 		Where("target_id = ? AND target_type = ? AND user_id = ?", targetId, targetType, userId).
 		First(&like).
 		Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
 	return like, err
 }
 

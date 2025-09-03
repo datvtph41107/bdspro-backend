@@ -123,6 +123,313 @@
         ]
       }
     },
+    "/v2/notification/account-warning/acknowledge": {
+      "put": {
+        "operationId": "GatewayNotificationService_MarkWarningAsAcknowledged",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbMarkWarningAsAcknowledgedResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbMarkWarningAsAcknowledgedRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/list": {
+      "get": {
+        "operationId": "GatewayNotificationService_GetAccountWarningList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetAccountWarningListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "targetId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "targetType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "warningType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sentBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "isRead",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/log/list": {
+      "get": {
+        "operationId": "GatewayNotificationService_GetWarningLogList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetWarningLogListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "warningId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "targetId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/read": {
+      "put": {
+        "operationId": "GatewayNotificationService_MarkWarningAsRead",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbMarkWarningAsReadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbMarkWarningAsReadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/send": {
+      "post": {
+        "summary": "Account Warning APIs",
+        "operationId": "GatewayNotificationService_SendAccountWarning",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbSendAccountWarningResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbSendAccountWarningRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/template": {
+      "post": {
+        "operationId": "GatewayNotificationService_CreateWarningTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbCreateWarningTemplateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbCreateWarningTemplateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
+    "/v2/notification/account-warning/template/list": {
+      "get": {
+        "operationId": "GatewayNotificationService_GetWarningTemplateList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetWarningTemplateListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "warningType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
     "/v2/notification/count": {
       "get": {
         "operationId": "GatewayNotificationService_Count",
@@ -377,6 +684,72 @@
     }
   },
   "definitions": {
+    "notificationpbAccountWarningItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "isRead": {
+          "type": "boolean"
+        },
+        "readAt": {
+          "type": "string"
+        },
+        "sentBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sentAt": {
+          "type": "string"
+        },
+        "emailSent": {
+          "type": "boolean"
+        },
+        "emailSentAt": {
+          "type": "string"
+        },
+        "relatedId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "relatedType": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
     "notificationpbAdminHistoryCreateRequest": {
       "type": "object",
       "properties": {
@@ -537,6 +910,70 @@
         }
       }
     },
+    "notificationpbCreateWarningTemplateRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "notificationpbCreateWarningTemplateResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
     "notificationpbGatewayNotiNewRequest": {
       "type": "object",
       "properties": {
@@ -559,6 +996,78 @@
         }
       }
     },
+    "notificationpbGetAccountWarningListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/notificationpbAccountWarningItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "notificationpbGetWarningLogListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/notificationpbWarningLogItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "notificationpbGetWarningTemplateListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/notificationpbWarningTemplateItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "notificationpbListResponse": {
       "type": "object",
       "properties": {
@@ -572,6 +1081,54 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "notificationpbMarkWarningAsAcknowledgedRequest": {
+      "type": "object",
+      "properties": {
+        "warningId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "notificationpbMarkWarningAsAcknowledgedResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "notificationpbMarkWarningAsReadRequest": {
+      "type": "object",
+      "properties": {
+        "warningId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "notificationpbMarkWarningAsReadResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },
@@ -653,6 +1210,88 @@
         }
       }
     },
+    "notificationpbSendAccountWarningRequest": {
+      "type": "object",
+      "properties": {
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "sendEmail": {
+          "type": "boolean"
+        },
+        "relatedId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "relatedType": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      },
+      "title": "Account Warning Messages"
+    },
+    "notificationpbSendAccountWarningResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "sentBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sentAt": {
+          "type": "string"
+        },
+        "emailSent": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "notificationpbStatusResponse": {
       "type": "object",
       "properties": {
@@ -660,6 +1299,86 @@
           "type": "boolean"
         },
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "notificationpbWarningLogItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "warningId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "action": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "performedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "performedAt": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "notificationpbWarningTemplateItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "warningType": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
           "type": "string"
         }
       }

@@ -33,7 +33,7 @@ func NewAdminHandler(
 // @Failure 400 {object} authpb.AuthSuccessResponse
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/create [post]
-func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+func (h *AuthHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
 	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_TAO"}); err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminR
 // @Failure 400 {object} authpb.AuthSuccessResponse
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/update [put]
-func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+func (h *AuthHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
 	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_SUA"}); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminR
 // @Failure 400 {object} authpb.DeleteAdminResponse
 // @Failure 500 {object} authpb.DeleteAdminResponse
 // @Router /admin/delete [delete]
-func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
+func (h *AuthHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
 	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_XOA"}); err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminR
 // @Failure 400 {object} authpb.AssignRoleResponse
 // @Failure 500 {object} authpb.AssignRoleResponse
 // @Router /admin/assign-role [post]
-func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
+func (h *AuthHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
 	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_GAN"}); err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleReq
 // @Failure 400 {object} authpb.AdminListResponse
 // @Failure 500 {object} authpb.AdminListResponse
 // @Router /admin/list [get]
-func (h *AdminHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
+func (h *AuthHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
 	if err := h.InternalHandler.HasPermissions(ctx, []string{"ADMIN_TK_XEM"}); err != nil {
 		return nil, err
 	}

@@ -25,7 +25,7 @@ func NewPostgreNewsFeed(db *gorm.DB) *PostgreNewsFeed {
 }
 
 func (r *PostgreNewsFeed) Create(ctx context.Context, post *domain.NewsFeed) (*domain.NewsFeed, error) {
-	err := r.db.WithContext(ctx).Create(post).Error
+	err := GetDB(ctx, r.db).Create(post).Error
 	return post, err
 }
 
@@ -125,33 +125,9 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 		return nil, 0, err
 	}
 
-	results := make([]*domain.NewsFeed, 0)
-	for _, newsFeed := range newsFeeds {
-		results = append(results, &newsFeed.NewsFeed)
-		results[len(results)-1].LikedAt = newsFeed.LikedAt
-		results[len(results)-1].DisLike = newsFeed.DisLike
-		newsFeed.NewsFeed.LikedAt = newsFeed.LikedAt
-		newsFeed.NewsFeed.DisLike = newsFeed.DisLike
-		newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
-		var medias []domain.NewsFeedMedia
-		var friendIDs []uint64
-
-		if err := json.Unmarshal(newsFeed.NewsFeedMediaRaws, &medias); err != nil {
-			log.Printf("failed to unmarshal NewsFeedMedias: %v", err)
-			medias = []domain.NewsFeedMedia{} // fallback
-		}
-
-		if err := json.Unmarshal(newsFeed.FriendTagRaws, &friendIDs); err != nil {
-			log.Printf("failed to unmarshal FriendTagIds: %v", err)
-			friendIDs = []uint64{}
-		}
-
-		newsFeed.FriendTagIds = friendIDs
-		newsFeed.NewsFeedMedias = medias
-
-		for i, friendTag := range newsFeed.FriendTag {
-			newsFeed.FriendTagIds[i] = friendTag.UserID
-		}
+	results, err := r.buildNewsFeedResults(newsFeeds)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return results, int32(total), nil
@@ -278,6 +254,9 @@ func (r *PostgreNewsFeed) GetPublicIgnorePreloadByID(ctx context.Context, id uin
 		First(&newsFeed).
 		Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &newsFeed, nil
@@ -366,4 +345,141 @@ func (r *PostgreNewsFeed) GetReel(ctx context.Context, dto _dto.Pagable) ([]*dom
 	}
 
 	return results, count, nil
+}
+
+// func (r *PostgreNewsFeed) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch, userId uint64) ([]*domain.NewsFeed, int32, error) {
+// 	var results []*domain.NewsFeed
+// 	var total int64
+// 	err := r.db.WithContext(ctx).
+// 		Model(&domain.NewsFeed{}).
+// 		Where("created_by = ? and deleted_at is null", userId).
+// 		Order("created_at DESC").
+// 		Offset(req.GetOffset()).
+// 		Limit(req.GetLimit()).
+// 		Scan(&results).Error
+
+func (r *PostgreNewsFeed) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch, userId uint64) ([]*domain.NewsFeed, int32, error) {
+	return r.GetListPostWithOwner(ctx, enums.OwnerTypeUser, userId, req)
+}
+
+func (r *PostgreNewsFeed) GetListPostGroup(ctx context.Context,
+	req *dto.NewsFeedGlobalSearch,
+	groupId uint64,
+) ([]*domain.NewsFeed, int32, error) {
+	return r.GetListPostWithOwner(ctx, enums.OwnerTypeGroup, groupId, req)
+}
+
+// Lấy news feed của User
+func (r *PostgreNewsFeed) GetListPostWithOwner(
+	ctx context.Context,
+	ownerType enums.OwnerType,
+	ownerID uint64,
+	req *dto.NewsFeedGlobalSearch,
+) ([]*domain.NewsFeed, int32, error) {
+	var newsFeeds []*NewsFeedQuery
+	var total int64
+
+	joinCondition := ""
+	whereCondition := ""
+	if ownerType == enums.OwnerTypeUser {
+		// tableName = "news_feed_of_user"
+		joinCondition = "JOIN news_feed_of_user nfu ON nfu.post_id = news_feeds.id"
+		whereCondition = fmt.Sprintf("nfu.user_id = %d", ownerID)
+	} else if ownerType == enums.OwnerTypeGroup {
+		// tableName = "news_feed_of_group"
+		joinCondition = "JOIN news_feed_of_group nfg ON nfg.post_id = news_feeds.id"
+		whereCondition = fmt.Sprintf("nfg.group_id = %d", ownerID)
+	}
+
+	// Join với bảng mapping news_feed_of_user
+	query := GetDB(ctx, r.db).
+		Debug().
+		Model(&domain.NewsFeed{}).
+		Joins(joinCondition).
+		Where(whereCondition)
+
+	// đếm total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	// query chi tiết
+	err := GetDB(ctx, r.db).
+		Debug().
+		Model(&domain.NewsFeed{}).
+		Joins(joinCondition).
+		Joins("left join tb_like tl on tl.target_id = news_feeds.id and tl.target_type = 20 and tl.user_id = ?", profileId).
+		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
+		Joins("left join friend_tag ft on ft.news_feed_id = news_feeds.id").
+		Where(whereCondition).
+		Select(`
+            news_feeds.*, tl.created_at as liked_at, tl.dis_like,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT JSONB_BUILD_OBJECT(
+                  'news_feed_id', nfm.news_feed_id,
+                  'url', nfm.url,
+                  'type', nfm.type,
+                  'order_number', nfm.order_number
+                )
+              ) FILTER (WHERE nfm.news_feed_id IS NOT NULL),
+              '[]'
+            ) AS news_feed_medias,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT ft.user_id
+              ) FILTER (WHERE ft.user_id IS NOT NULL),
+              '[]'
+            ) AS friend_tag_ids
+        `).
+		Order("news_feeds.created_at DESC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Group("news_feeds.id, tl.created_at, tl.dis_like").
+		Scan(&newsFeeds).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	results, err := r.buildNewsFeedResults(newsFeeds)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, int32(total), nil
+}
+
+func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedQuery) ([]*domain.NewsFeed, error) {
+	results := make([]*domain.NewsFeed, 0)
+	for _, newsFeed := range newsFeeds {
+		results = append(results, &newsFeed.NewsFeed)
+		results[len(results)-1].LikedAt = newsFeed.LikedAt
+		results[len(results)-1].DisLike = newsFeed.DisLike
+		newsFeed.NewsFeed.LikedAt = newsFeed.LikedAt
+		newsFeed.NewsFeed.DisLike = newsFeed.DisLike
+		newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
+		var medias []domain.NewsFeedMedia
+		var friendIDs []uint64
+
+		if err := json.Unmarshal(newsFeed.NewsFeedMediaRaws, &medias); err != nil {
+			log.Printf("failed to unmarshal NewsFeedMedias: %v", err)
+			medias = []domain.NewsFeedMedia{} // fallback
+		}
+
+		if err := json.Unmarshal(newsFeed.FriendTagRaws, &friendIDs); err != nil {
+			log.Printf("failed to unmarshal FriendTagIds: %v", err)
+			friendIDs = []uint64{}
+		}
+
+		newsFeed.FriendTagIds = friendIDs
+		newsFeed.NewsFeedMedias = medias
+
+		for i, friendTag := range newsFeed.FriendTag {
+			newsFeed.FriendTagIds[i] = friendTag.UserID
+		}
+	}
+
+	return results, nil
 }

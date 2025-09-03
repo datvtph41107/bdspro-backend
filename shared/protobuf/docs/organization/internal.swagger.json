@@ -402,6 +402,10 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

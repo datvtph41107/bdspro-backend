@@ -114,8 +114,8 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dt
 			'id', legal.id,
 			'documentName', legal.document_name,
 			'documentUrl', legal.document_url,
-			'issuedDate', legal.issued_date,
-			'expiryDate', legal.expiry_date,
+			'issuedDate', COALESCE(legal.issued_date, NULL),
+			'expiryDate', COALESCE(legal.expiry_date, NULL),
 			'description', legal.description
 		)) FILTER (WHERE legal.asset_id = assets.id), '[]') AS legal_list`).
 		Joins("left join property_type on property_type.id = assets.property_type_id").
@@ -145,9 +145,17 @@ func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, ownerTyp
 	for i, r := range assets {
 		list := []domain.AssetLegal{}
 		if r.LegalList != nil {
-			if err := json.Unmarshal(r.LegalList, list); err != nil {
+			if err := json.Unmarshal(r.LegalList, &list); err != nil {
 				return nil, 0, err
 			}
+			// for _, l := range list {
+			// 	if l.IssuedDate != "" {
+			// 		l.IssuedDate = _utils.ParseStringToTime(l.IssuedDate)
+			// 	}
+			// 	if l.ExpiryDate != "" {
+			// 		l.ExpiryDate = _utils.ParseStringToTime(l.ExpiryDate)
+			// 	}
+			// }
 		}
 
 		assets[i].LegalItems = list

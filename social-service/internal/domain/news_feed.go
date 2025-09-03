@@ -2,7 +2,6 @@ package domain
 
 import (
 	_models "common/models"
-	"social/internal/dto"
 	"social/internal/enums"
 	"time"
 )
@@ -25,9 +24,9 @@ type NewsFeed struct {
 	NewsFeedMedias []NewsFeedMedia  `gorm:"foreignKey:NewsFeedID" json:"news_feed_medias"`
 	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
 	FriendTagIds   []uint64         `gorm:"-" json:"friend_tag_ids"`
-	Author         *dto.UserProfile `gorm:"-" json:"author"`
 	LikedAt        *time.Time       `gorm:"-" json:"likedAt"`
 	DisLike        *bool            `gorm:"-" json:"disLike"`
+	// Author         *dto.UserProfile `gorm:"-" json:"author"`
 }
 
 type ReelEntity struct {

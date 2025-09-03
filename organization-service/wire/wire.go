@@ -6,7 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"organization/config"
+	"organization/initial"
 	organization_config "organization/config"
 	organization_infrastructure_client "organization/infrastructure/client"
 	organization_infrastructure_handler "organization/infrastructure/handler"
@@ -14,6 +14,7 @@ import (
 	organization_infrastructure_server_grpc "organization/infrastructure/server/grpc"
 	organization_infrastructure_transformer "organization/infrastructure/transformer"
 	organization_infrastructure_validator "organization/infrastructure/validator"
+	organization_initial "organization/initial"
 	organization_internal_domain_repository "organization/internal/domain/repository"
 	organization_internal_interface "organization/internal/interface"
 	organization_internal_usecase "organization/internal/usecase"
@@ -22,6 +23,7 @@ import (
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	_db.NewTransactionRepo,
 	wire.Bind(new(organization_internal_interface.IChatClient), new(*organization_infrastructure_client.ChatClient)),
 	wire.Bind(new(organization_internal_usecase.IMembershipClient), new(*organization_infrastructure_client.MembershipClient)),
 	wire.Bind(new(organization_internal_interface.INotiClient), new(*organization_infrastructure_client.NotificationClient)),
@@ -51,6 +53,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(organization_internal_domain_repository.OrganizationPermissionRepository), new(*organization_infrastructure_repository_postgres.OrganizationPermissionRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRepository), new(*organization_infrastructure_repository_postgres.OrganizationPostgresRepository)),
 	wire.Bind(new(organization_internal_domain_repository.OrganizationRoleRepository), new(*organization_infrastructure_repository_postgres.OrganizationRoleRepository)),
+	organization_infrastructure_client.NewAuthClient,
 	organization_infrastructure_transformer.NewBankAccountMapper,
 	organization_infrastructure_repository_postgres.NewBankAccountPostgresRepository,
 	organization_infrastructure_client.NewBdsproClient,
@@ -131,6 +134,7 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewGroupTransformer,
 	organization_internal_usecase.NewGroupUsecase,
 	organization_infrastructure_validator.NewGroupValidator,
+	organization_initial.NewInitialApp,
 	organization_infrastructure_handler.NewInternalNoteHandler,
 	organization_infrastructure_repository_postgres.NewInternalNotePostgresRepository,
 	organization_infrastructure_transformer.NewInternalNoteTransformer,
@@ -185,7 +189,7 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_client.NewTransactionClient,
 	organization_infrastructure_client.NewUserClient,
 )
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

@@ -63,7 +63,7 @@ func (u *NewsFeedShareUsecase) ShareToNewsFeed(ctx context.Context, newsFeedID u
 	}
 
 	// Tạo bài viết cho người dùng
-	_, err = u.newsFeedUsecase.CreateNewsFeed(ctx, &domain.NewsFeed{
+	_, err = u.newsFeedUsecase.CreateUserNewsFeed(ctx, &domain.NewsFeed{
 		Title:      newsFeed.Title,
 		Content:    newsFeed.Content,
 		Image:      newsFeed.Image,

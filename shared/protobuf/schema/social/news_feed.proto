@@ -8,11 +8,22 @@ import "shared/common.proto";
 
 option go_package = "pb/types/social;pb_social";
 
+enum OwnerOf {
+    unknown = 0;
+    user = 1;
+    group = 2;
+  }
+
 service NewsFeedService {
     rpc CreateNewsFeed(NewsFeed) returns (NewsFeed) {
         option (google.api.http) = {
-            post: "/v2/social/news-feed"
+            post: "/v2/social/news-feed/{ownerOf}"
             body: "*"
+        };
+    };
+    rpc GetNewsFeedByOwner(NewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/{ownerOf}/{ownerId}"
         };
     };
     rpc UpdateNewsFeed(NewsFeed) returns (NewsFeed) {
@@ -96,6 +107,8 @@ message NewsFeed {
     repeated sharepb.ProfileItem friendTags = 19;
     string likedAt = 20;
     optional bool disLike = 21;
+    optional uint64 groupId = 22;
+    OwnerOf ownerOf = 23;
 }
 
 message NewsFeedSearch {
@@ -104,6 +117,8 @@ message NewsFeedSearch {
     string text = 3;
     uint64 userId = 4;
     optional bool isReel = 5;
+    uint64 ownerId = 6;
+    OwnerOf ownerOf = 7;
 }
 
 message ListNewsFeed {
@@ -151,4 +166,20 @@ message ReelResponse {
 message ListReelResponse {
     repeated ReelResponse data = 1;
     int32 total = 2;
+}
+
+message NewsFeedOfUser {
+    uint64 id = 1;
+    uint64 postId = 2;
+    uint64 userId = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+}
+
+message NewsFeedOfGroup {
+    uint64 id = 1;
+    uint64 postId = 2;
+    uint64 groupId = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
 }

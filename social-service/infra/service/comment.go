@@ -2,10 +2,10 @@ package service
 
 import (
 	_dto "common/dto"
+	_errors "common/errors"
 	_models "common/models"
 	_utils "common/utils"
 	"context"
-	"errors"
 
 	"social/infra/client"
 	"social/internal/domain"
@@ -41,7 +41,7 @@ func NewCommentService(
 func (s *CommentService) CreateComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.Content == "" || comment.NewsFeedID == 0 {
-		return nil, errors.New("content and news feed id are required")
+		return nil, _errors.ReturnError(400, "content and news feed id are required")
 	}
 	comment, err := s.commentUsecase.CreateComment(ctx, comment)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *CommentService) CreateComment(ctx context.Context, req *pb_social.Comme
 func (s *CommentService) UpdateComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.Content == "" || comment.ID == 0 {
-		return nil, errors.New("content, news feed id and id are required")
+		return nil, _errors.ReturnError(400, "content, news feed id and id are required")
 	}
 	comment, err := s.commentUsecase.UpdateComment(ctx, comment)
 	if err != nil {
@@ -81,7 +81,7 @@ func (s *CommentService) UpdateComment(ctx context.Context, req *pb_social.Comme
 func (s *CommentService) DeleteComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.ID == 0 {
-		return nil, errors.New("id is required")
+		return nil, _errors.ReturnError(400, "id is required")
 	}
 	err := s.commentUsecase.DeleteComment(ctx, comment)
 	if err != nil {

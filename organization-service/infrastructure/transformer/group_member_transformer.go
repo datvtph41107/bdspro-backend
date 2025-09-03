@@ -28,13 +28,15 @@ func (t *groupMemberTransformer) CreateGroupMemberRequestToEntity(request *organ
 		GroupId: request.GroupId,
 		UserId:  uint32(request.UserId),
 		Role:    entity.GroupMemberRole(request.Role),
+		RoleId:  request.RoleId,
 	}
 }
 
 func (t *groupMemberTransformer) UpdateGroupMemberRequestToEntity(request *organizationpb.UpdateGroupMemberRequest) *entity.GroupMember {
 	return &entity.GroupMember{
-		Id:   request.Id,
-		Role: entity.GroupMemberRole(request.Role),
+		Id:     request.Id,
+		Role:   entity.GroupMemberRole(request.Role),
+		RoleId: request.RoleId,
 	}
 }
 
@@ -57,6 +59,7 @@ func (t *groupMemberTransformer) EntityToGetGroupMemberResponse(member *entity.G
 			GroupId: member.GroupId,
 			UserId:  member.UserId,
 			Role:    string(member.Role),
+			RoleId:  member.RoleId,
 		},
 	}
 }
@@ -74,6 +77,7 @@ func (t *groupMemberTransformer) EntityToGetGroupMembersResponse(members []*dto.
 			GroupId: member.GroupMember.GroupId,
 			UserId:  member.GroupMember.UserId,
 			Role:    string(member.GroupMember.Role),
+			RoleId:  member.GroupMember.RoleId,
 			Profile: profile,
 		})
 	}

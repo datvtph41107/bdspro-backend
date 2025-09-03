@@ -16,3 +16,11 @@ type SwitchOrganizationResponse struct {
 	Phone          string `json:"phone"`
 	AccessToken    string `json:"accessToken"`
 }
+
+type GroupMember struct {
+	ID      uint64  `json:"id"`
+	GroupId uint64  `json:"groupId"`
+	UserId  uint64  `json:"userId"`
+	Role    string  `json:"role"`
+	RoleId  *uint64 `json:"roleId"`
+}

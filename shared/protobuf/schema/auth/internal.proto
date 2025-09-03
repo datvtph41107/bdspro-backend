@@ -4,9 +4,14 @@ package authpb;
 
 option go_package = "pb/types/auth;authpb";
 
+import "shared/common.proto";
+import "auth/role.proto";
+
 service AuthInternalService {
     rpc RequiredRoles(RequiredRolesRequest) returns (RequiredRolesResponse);
     rpc RequiredPermissions(RequiredPermissionsRequest) returns (RequiredPermissionsResponse);
+    rpc GetRoleById(sharepb.IdRequest) returns (Role);
+    rpc GetRolesByIds(sharepb.IdRequest) returns (RoleListResponse);
 }
 
 message RequiredRolesRequest {

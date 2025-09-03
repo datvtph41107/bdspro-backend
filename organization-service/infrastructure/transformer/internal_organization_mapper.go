@@ -81,6 +81,7 @@ func (m *InternalOrganizationMapper) GroupMemberToPb(groupMember *entity.GroupMe
 		Id:      uint32(groupMember.Id),
 		GroupId: uint32(groupMember.GroupId),
 		UserId:  uint32(groupMember.UserId),
+		RoleId:  groupMember.RoleId,
 	}
 }
 

@@ -24,6 +24,7 @@ type GroupMemberModel struct {
 
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
+	RoleId    *uint64    `gorm:"index:idx_group_members_role_id"`
 }
 
 func (GroupMemberModel) TableName() string {
@@ -41,6 +42,7 @@ func GroupMemberModelToEntity(model *GroupMemberModel) *entity.GroupMember {
 		UserId:    model.UserId,
 		Role:      model.Role,
 		Status:    model.Status,
+		RoleId:    model.RoleId,
 	}
 }
 
@@ -55,6 +57,7 @@ func GroupMemberEntityToModel(entity *entity.GroupMember) *GroupMemberModel {
 		UserId:    entity.UserId,
 		Role:      entity.Role,
 		Status:    entity.Status,
+		RoleId:    entity.RoleId,
 	}
 }
 

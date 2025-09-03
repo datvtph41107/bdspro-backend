@@ -222,6 +222,17 @@ func (r *RoleRepo) GetPermissionKeysByIds(ctx context.Context, permIds []uint64)
 	return keys, err
 }
 
+func (r *RoleRepo) GetPermissionKeysByRoleId(ctx context.Context, roleId uint64) ([]string, error) {
+	var permIds []string
+	err := r.GetDB(ctx).
+		Table("role_permissions").
+		Select("key").
+		Where("role_id = ?", roleId).
+		Joins("INNER JOIN permissions p ON p.id = role_permissions.permission_id AND p.deleted_at IS NULL").
+		Pluck("p.key", &permIds).Error
+	return permIds, err
+}
+
 // GetPermissionKeysByUserId lấy tất cả permission keys của một user dựa vào userId (1 query duy nhất)
 func (r *RoleRepo) GetPermissionKeysByUserId(ctx context.Context, userId uint64) ([]string, error) {
 	var permissionKeys []string

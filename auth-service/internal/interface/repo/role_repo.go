@@ -18,4 +18,5 @@ type RoleRepository interface {
 	GetPermissionIdsByRoleIds(ctx context.Context, roleIds []uint64) (map[uint64][]uint64, error)
 	GetPermissionKeysByIds(ctx context.Context, permIds []uint64) ([]string, error)
 	GetPermissionKeysByUserId(ctx context.Context, userId uint64) ([]string, error)
+	GetPermissionKeysByRoleId(ctx context.Context, roleId uint64) ([]string, error)
 }

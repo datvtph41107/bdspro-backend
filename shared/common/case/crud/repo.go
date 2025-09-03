@@ -15,6 +15,7 @@ type ICrudRepo[T any] interface {
 	GetAll(c context.Context) ([]T, error)
 	GetByID(c context.Context, id uint64) (*T, error)
 	GetList(c context.Context, pagable _dto.IPagable) ([]T, int64, error)
+	GetListByIDs(c context.Context, ids []uint64) ([]T, error)
 	GetDetail(c context.Context, id uint64) (*T, error)
 	BeforeSave(c context.Context, id *uint64, entity *T) error
 	AfterSave(c context.Context, id *uint64, entity *T) error
@@ -129,6 +130,14 @@ func (r *CrudRepo[T]) GetList(c context.Context, pagable _dto.IPagable) ([]T, in
 	}
 
 	return entities, total, err
+}
+
+func (r *CrudRepo[T]) GetListByIDs(c context.Context, ids []uint64) ([]T, error) {
+	var entities []T
+	err := r.GetDB(c).
+		Where("id IN (?) and deleted_at is null", ids).
+		Find(&entities).Error
+	return entities, err
 }
 
 func (r *CrudRepo[T]) GetDetail(c context.Context, id uint64) (*T, error) {

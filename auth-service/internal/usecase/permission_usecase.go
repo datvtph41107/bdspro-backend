@@ -2,18 +2,24 @@ package usecase
 
 import (
 	"auth/internal/domain"
+	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
+	_utils "common/utils"
 	"context"
 )
 
 type PermissionUsecase struct {
-	permissionRepo repo.PermissionRepository
+	permissionRepo       repo.PermissionRepository
+	roleRepo             repo.RoleRepository
+	organizationProvider provider.OrganizationProvider
 }
 
-func NewPermissionUsecase(permissionRepo repo.PermissionRepository) *PermissionUsecase {
+func NewPermissionUsecase(permissionRepo repo.PermissionRepository, roleRepo repo.RoleRepository, organizationProvider provider.OrganizationProvider) *PermissionUsecase {
 	return &PermissionUsecase{
-		permissionRepo: permissionRepo,
+		permissionRepo:       permissionRepo,
+		roleRepo:             roleRepo,
+		organizationProvider: organizationProvider,
 	}
 }
 
@@ -145,4 +151,27 @@ func (uc *PermissionUsecase) GetByModuleWithPagination(ctx context.Context, modu
 		return nil, 0, _errors.ReturnError(400, "Module không được để trống")
 	}
 	return uc.permissionRepo.FindByModuleWithPagination(ctx, module, page, size)
+}
+
+func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) ([]string, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	groupMember, err := uc.organizationProvider.GetGroupRoleUser(ctx, groupId, profileId)
+	if err != nil {
+		return nil, err
+	}
+
+	if groupMember == nil {
+		return []string{}, nil
+	}
+
+	if groupMember.RoleId == nil {
+		return []string{}, nil
+	}
+
+	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *groupMember.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
 }

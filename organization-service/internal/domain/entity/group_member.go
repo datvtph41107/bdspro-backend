@@ -26,5 +26,6 @@ type GroupMember struct {
 	GroupId uint32
 	UserId  uint32
 	Role    GroupMemberRole
+	RoleId  *uint64
 	Status  GroupMemberStatus
 }

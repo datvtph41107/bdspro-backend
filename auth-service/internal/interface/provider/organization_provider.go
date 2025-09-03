@@ -10,4 +10,5 @@ type OrganizationProvider interface {
 
 	// Admin role management
 	GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error)
+	GetGroupRoleUser(ctx context.Context, groupId uint64, userId uint64) (*dto.GroupMember, error)
 }

@@ -11,4 +11,5 @@ type GroupWithDetails struct {
 	GroupStatus    string
 	AdditionalInfo string
 	LastInvestment *float64
+	RoleId         *uint64
 }

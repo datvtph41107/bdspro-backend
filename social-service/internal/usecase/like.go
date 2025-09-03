@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -128,10 +129,7 @@ func (u *LikeUsecase) UnlikeNewsFeed(ctx context.Context, targetId uint64) (*dom
 func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "unauthorized",
-		}
+		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 	liked, _ := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx,
 		targetId,

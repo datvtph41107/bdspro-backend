@@ -1,8 +1,10 @@
 package client
 
 import (
+	"auth/env"
 	"auth/internal/dto"
 	"context"
+	clients "pb/clients"
 	organizationpb "pb/types/organization"
 
 	"google.golang.org/grpc"
@@ -12,12 +14,14 @@ import (
 
 // @bind: auth/internal/interface/provider.OrganizationProvider
 type OrganizationClient struct {
+	*clients.OrganizationClient
 	client organizationpb.OrganizationRoleServiceClient
 }
 
 func NewOrganizationClient(conn *grpc.ClientConn) *OrganizationClient {
 	return &OrganizationClient{
-		client: organizationpb.NewOrganizationRoleServiceClient(conn),
+		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RELEASE),
+		client:             organizationpb.NewOrganizationRoleServiceClient(conn),
 	}
 }
 
@@ -55,4 +59,26 @@ func (c *OrganizationClient) GetAdminRoles(ctx context.Context) ([]dto.AdminRole
 	}
 
 	return adminRoles, nil
+}
+
+func (c *OrganizationClient) GetGroupRoleUser(ctx context.Context, groupId uint64, userId uint64) (*dto.GroupMember, error) {
+	resp, err := c.OrganizationClient.Client.GetGroupMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
+		GroupId: groupId,
+		Ids:     []uint64{userId},
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get group role user: %v", err)
+	}
+
+	if resp == nil || len(resp.Data) == 0 {
+		return nil, nil
+	}
+
+	return &dto.GroupMember{
+		ID:      uint64(resp.Data[0].Id),
+		GroupId: uint64(resp.Data[0].GroupId),
+		UserId:  uint64(resp.Data[0].UserId),
+		Role:    resp.Data[0].Role,
+		RoleId:  resp.Data[0].RoleId,
+	}, nil
 }

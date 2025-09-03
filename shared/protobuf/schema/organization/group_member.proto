@@ -53,6 +53,7 @@ message CreateGroupMemberRequest {
     uint32 groupId = 1;
     uint32 userId = 2;
     string role = 3;
+    optional uint64 roleId = 4;
 }
 
 message CreateGroupMemberResponse {
@@ -71,6 +72,7 @@ message CreateGroupMemberBatchResponse {
 message UpdateGroupMemberRequest {
     uint32 id = 1;
     string role = 2;
+    optional uint64 roleId = 3;
 }
 
 message UpdateGroupMemberResponse {
@@ -110,6 +112,7 @@ message GroupMember {
     uint32 userId = 3;
     string role = 4;
     sharepb.ProfileItem profile = 5;
+    optional uint64 roleId = 6;
 }
 
 message SwitchGroupRequest {

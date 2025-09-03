@@ -1,11 +1,12 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
-	"user/config"
+	"user/initial"
 	user_config "user/config"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
@@ -23,16 +24,19 @@ import (
 	user_internal_services_user "user/internal/services/user"
 	user_internal_usecases "user/internal/usecases"
 	user_validator "user/validator"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	_db.NewTransactionRepo,
 	wire.Bind(new(user_internal_repo.RateRepo), new(*user_infra_postgres.RatePostgres)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
+	wire.Bind(new(user_internal_repo.AdminRepository), new(*user_infra_repo.AdminRepo)),
 	wire.Bind(new(user_internal_repo.ReportRepo), new(*user_infra_repo.ReportRepo)),
+	user_infra_handler.NewAdminHandler,
+	user_infra_repo.NewAdminRepo,
+	user_internal_usecases.NewAdminUsecase,
 	user_infra_postgres.NewAttachPostgres,
 	user_infra_routes.NewAuthRoutes,
 	user_internal_services_auth.NewAuthService,
@@ -95,13 +99,8 @@ var wireSet = wire.NewSet(
 	user_internal_models_auth.NewUserOTPRepository,
 	user_internal_models_user.NewUserProfileEntityWithRequest,
 	user_internal_services_auth.NewZaloAuthService,
-	// Admin dependencies
-	user_infra_repo.NewAdminRepo,
-	user_internal_usecases.NewAdminUsecase,
-	user_infra_handler.NewAdminHandler,
 )
-
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }
