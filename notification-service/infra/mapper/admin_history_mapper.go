@@ -20,7 +20,7 @@ func (m *AdminHistoryMapper) AdminHistoryToDTO(entity *domain.AdminHistoryEntity
 		return nil
 	}
 
-	return &dto.AdminHistoryDTO{
+	dto := &dto.AdminHistoryDTO{
 		ID:         entity.ID,
 		TargetId:   entity.TargetId,
 		TargetType: entity.TargetType,
@@ -39,6 +39,19 @@ func (m *AdminHistoryMapper) AdminHistoryToDTO(entity *domain.AdminHistoryEntity
 		CreatedAt:  entity.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:  entity.UpdatedAt.Format(time.RFC3339),
 	}
+
+	// Thêm thông tin user nếu có
+	if entity.AdminName != nil {
+		dto.AdminName = entity.AdminName
+	}
+	if entity.AdminAvatar != nil {
+		dto.AdminAvatar = entity.AdminAvatar
+	}
+	if entity.Status != nil {
+		dto.Status = entity.Status
+	}
+
+	return dto
 }
 
 // AdminHistoryToSharedDTO chuyển đổi AdminHistoryEntity thành shared_dto.HistoryDTO

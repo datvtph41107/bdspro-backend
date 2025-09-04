@@ -53,4 +53,9 @@ type AdminHistoryDTO struct {
 	UserAgent  string                     `json:"userAgent,omitempty"`
 	CreatedAt  string                     `json:"createdAt"`
 	UpdatedAt  string                     `json:"updatedAt"`
+	// Thêm thông tin user
+	AdminName   *string `json:"adminName,omitempty"`
+	AdminAvatar *string `json:"adminAvatar,omitempty"`
+	// Thêm trạng thái thành công/thất bại
+	Status *string `json:"status,omitempty"`
 }

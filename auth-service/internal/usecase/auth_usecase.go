@@ -20,6 +20,7 @@ import (
 	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
+	shared_enum "pb/enums"
 )
 
 type AuthUsecase struct {
@@ -859,13 +860,44 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 
 	// Ghi log admin history
 	go func() {
-		// TODO: Get IP address and User Agent from context
-		ipAddress := "127.0.0.1"    // Default IP
-		userAgent := "Admin-Client" // Default User Agent
+		// Tạo context mới với timeout riêng, không dùng context gốc
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-		err := s.NotificationClient.LogAdminLogin(c, adminAuthEntity.UserID, enums.RoleMap[adminProfile.RoleType], ipAddress, userAgent)
+		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+
+		// Nếu không có IP hoặc User Agent, sử dụng giá trị mặc định
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Admin-Client"
+		}
+
+		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
+			adminAuthEntity.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			adminAuthEntity.UserID,                        // adminID
+			adminAuthEntity.UserID,                        // targetID (chính admin đó)
+			int32(shared_enum.TargetHistoryLead),          // targetType
+			int32(shared_enum.HistoryCreateStep),          // actionType
+			"Admin đăng nhập hệ thống",                    // title
+			[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+			"Chưa đăng nhập",                              // preStage
+			"Đã đăng nhập",                                // afterStage
+			&adminAuthEntity.UserID,                       // ownerID
+			int32(shared_enum.EOwnerTypeMember),           // ownerType
+			enums.RoleMap[adminProfile.RoleType],          // adminRole
+			ipAddress,                                     // ipAddress
+			userAgent,                                     // userAgent
+		)
 		if err != nil {
 			log.Printf("Failed to log admin login: %v", err)
+		} else {
+			log.Printf("Successfully logged admin login for user %d", adminAuthEntity.UserID)
 		}
 	}()
 

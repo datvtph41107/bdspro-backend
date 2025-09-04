@@ -109,7 +109,9 @@ func (s *NotificationClient) CreateAdminHistory(ctx context.Context,
 	ipAddress string,
 	userAgent string,
 ) error {
-	_, err := s.client.CreateAdminHistory(ctx, &notificationpb.AdminHistoryCreateRequest{
+	log.Printf("Creating admin history: adminID=%d, targetID=%d, actionType=%d, title=%s", adminID, targetID, actionType, title)
+
+	response, err := s.client.CreateAdminHistory(ctx, &notificationpb.AdminHistoryCreateRequest{
 		TargetId:   targetID,
 		TargetType: targetType,
 		ActionType: actionType,
@@ -125,7 +127,13 @@ func (s *NotificationClient) CreateAdminHistory(ctx context.Context,
 		IpAddress:  ipAddress,
 		UserAgent:  userAgent,
 	})
-	return err
+	if err != nil {
+		log.Printf("Error creating admin history: %v", err)
+		return err
+	}
+
+	log.Printf("Admin history created successfully: ID=%d", response.Id)
+	return nil
 }
 
 // CreateAdminHistoryBatch tạo hàng loạt lịch sử admin

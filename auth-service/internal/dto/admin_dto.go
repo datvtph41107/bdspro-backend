@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"auth/internal/enums"
 	"time"
+
+	"auth/internal/enums"
 )
 
 // CreateAdminRequest DTO cho tạo admin mới
@@ -39,6 +40,16 @@ type AssignRoleRequest struct {
 type AdminListRequest struct {
 	Page int32 `json:"page" form:"page" binding:"min=1" validate:"min=1"`
 	Size int32 `json:"size" form:"size" binding:"min=1,max=100" validate:"min=1,max=100"`
+}
+
+// AdminSearchRequest DTO cho tìm kiếm admin
+type AdminSearchRequest struct {
+	Page       int32  `json:"page" form:"page" binding:"min=1" validate:"min=1"`
+	Size       int32  `json:"size" form:"size" binding:"min=1,max=100" validate:"min=1,max=100"`
+	SearchName string `json:"searchName" form:"searchName"`
+	Role       string `json:"role" form:"role"`
+	Department string `json:"department" form:"department"`
+	Status     string `json:"status" form:"status"`
 }
 
 // AdminListResponse DTO cho response danh sách admin

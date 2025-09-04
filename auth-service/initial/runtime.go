@@ -25,9 +25,13 @@ type InitialApp struct {
 func NewApp(authHandler *handler.AuthHandler, oauthHandler *handler.OAuthHandler, internalHandler *handler.InternalHandler, permissionHandler *handler.PermissionHandler, roleGroupHandler *handler.RoleGroupHandler, roleHandler *handler.RoleHandler) *InitialApp {
 	common.LoadConfig(config.EmbeddedConfig)
 	return &InitialApp{
-		AuthHandler:  authHandler,
-		OAuthHandler: oauthHandler,
-		Logger:       flogging.MustGetLogger(viper.GetString("server.name")),
+		AuthHandler:       authHandler,
+		InternalHandler:   internalHandler,
+		OAuthHandler:      oauthHandler,
+		PermissionHandler: permissionHandler,
+		RoleGroupHandler:  roleGroupHandler,
+		RoleHandler:       roleHandler,
+		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }
 

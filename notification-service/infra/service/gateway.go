@@ -271,7 +271,7 @@ func (s *GatewayNotiService) SearchAdminHistory(ctx context.Context, request *no
 
 // convertToPbDTO chuyển đổi AdminHistoryDTO thành protobuf AdminHistoryDTO
 func (s *GatewayNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.AdminHistoryDTO {
-	return &notipb.AdminHistoryDTO{
+	pbDTO := &notipb.AdminHistoryDTO{
 		Id:         dto.ID,
 		TargetId:   dto.TargetId,
 		TargetType: int32(dto.TargetType),
@@ -290,6 +290,10 @@ func (s *GatewayNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.Ad
 		CreatedAt:  dto.CreatedAt,
 		UpdatedAt:  dto.UpdatedAt,
 	}
+
+	// Thêm thông tin user nếu có
+
+	return pbDTO
 }
 
 // -- mapping ---

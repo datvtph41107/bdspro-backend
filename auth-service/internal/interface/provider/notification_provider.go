@@ -3,7 +3,6 @@ package provider
 import "context"
 
 type NotificationProvider interface {
-	LogAdminLogin(ctx context.Context, adminID uint64, adminRole string, ipAddress string, userAgent string) error
 	CreateAdminHistory(ctx context.Context,
 		adminID uint64,
 		targetID uint64,
@@ -18,5 +17,4 @@ type NotificationProvider interface {
 		adminRole string,
 		ipAddress string,
 		userAgent string) error
-	CreateAdminHistoryBatch(ctx context.Context, requests []interface{}) error
 }

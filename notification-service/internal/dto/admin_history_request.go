@@ -19,6 +19,8 @@ type AdminHistorySearchDTO struct {
 	FromDate   *time.Time                  `form:"fromDate"`
 	ToDate     *time.Time                  `form:"toDate"`
 	IsInternal *bool                       `form:"isInternal"`
+	IPAddress  *string                     `form:"ipAddress"`
+	Status     *string                     `form:"status"`
 }
 
 // AdminHistoryCreateDTO đại diện cho request tạo lịch sử admin

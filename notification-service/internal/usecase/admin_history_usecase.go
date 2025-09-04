@@ -137,5 +137,14 @@ func (h *AdminHistoryUsecase) SearchInternal(c context.Context, dto dto.AdminHis
 	if err != nil {
 		return nil, 0, err
 	}
+
+	for i := range histories {
+		status := "success"
+		histories[i].Status = &status
+
+		adminName := "Admin " + string(rune(histories[i].AdminID))
+		histories[i].AdminName = &adminName
+	}
+
 	return histories, total, nil
 }

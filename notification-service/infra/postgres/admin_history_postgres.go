@@ -160,7 +160,7 @@ func (r *AdminHistoryPostgres) GetAdminActionStats(c context.Context, adminID ui
 }
 
 func (r *AdminHistoryPostgres) SearchInternal(c context.Context, dto dto.AdminHistorySearchDTO) ([]domain.AdminHistoryEntity, int64, error) {
-	query := r.DB.WithContext(c).Model(&domain.AdminHistoryEntity{}).
+	query := r.DB.WithContext(c).Debug().Model(&domain.AdminHistoryEntity{}).
 		Where("deleted_at is null")
 
 	if dto.AdminID != nil {

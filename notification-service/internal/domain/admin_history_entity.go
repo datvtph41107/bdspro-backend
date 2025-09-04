@@ -23,6 +23,11 @@ type AdminHistoryEntity struct {
 	AdminRole  string                     `json:"adminRole,omitempty"` // Vai trò của admin (super_admin, admin, moderator, etc.)
 	IPAddress  string                     `json:"ipAddress,omitempty"` // IP address của admin
 	UserAgent  string                     `json:"userAgent,omitempty"` // User agent của admin
+	// Thêm thông tin user (không lưu trong DB, chỉ để hiển thị)
+	AdminName   *string `json:"adminName,omitempty" gorm:"-"`
+	AdminAvatar *string `json:"adminAvatar,omitempty" gorm:"-"`
+	// Thêm trạng thái thành công/thất bại (không lưu trong DB, chỉ để hiển thị)
+	Status *string `json:"status,omitempty" gorm:"-"`
 }
 
 func (AdminHistoryEntity) TableName() string {

@@ -22,6 +22,15 @@ func AuditIPFromContext(ctx context.Context) string {
 	return ""
 }
 
+// GetUserAgentFromContext lấy User-Agent từ context.Context
+func GetUserAgentFromContext(ctx context.Context) string {
+	if userAgent, ok := ctx.Value("User-Agent").(string); ok && userAgent != "" {
+		return userAgent
+	}
+	// Nếu không có, trả về chuỗi rỗng
+	return ""
+}
+
 func AuditIP(c *gin.Context) string {
 	xfHeader := c.GetHeader("X-Forwarded-For")
 	if xfHeader == "" {
