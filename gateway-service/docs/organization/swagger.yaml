@@ -1,7 +1,5 @@
 basePath: /v2/org
 definitions:
-  emptypb.Empty:
-    type: object
   entity.AttachDocument:
     properties:
       createdAt:
@@ -49,6 +47,9 @@ definitions:
         type: integer
       dealID:
         type: integer
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
       id:
         type: integer
       investType:
@@ -145,28 +146,29 @@ definitions:
       userId:
         type: integer
     type: object
-  organizationpb.ApprovedStatus:
-    enum:
-    - 0
-    - 10
-    - 20
-    - 30
-    type: integer
-    x-enum-comments:
-      ApprovedStatus_APPROVED_STATUS_APPROVED: Đã xác nhận
-      ApprovedStatus_APPROVED_STATUS_PENDING: Chờ xác nhận
-      ApprovedStatus_APPROVED_STATUS_REJECTED: Từ chối
-    x-enum-varnames:
-    - ApprovedStatus_APPROVED_STATUS_UNKNOWN
-    - ApprovedStatus_APPROVED_STATUS_PENDING
-    - ApprovedStatus_APPROVED_STATUS_APPROVED
-    - ApprovedStatus_APPROVED_STATUS_REJECTED
+  organizationpb.ApprovedInvestmentItem:
+    properties:
+      amount:
+        type: number
+      confirmed:
+        type: boolean
+      id:
+        type: integer
+      note:
+        type: string
+      statusName:
+        type: string
+      transferTime:
+        type: string
+    type: object
   organizationpb.BankAccountItem:
     properties:
       accountName:
         type: string
       accountNumber:
         type: string
+      bank:
+        $ref: '#/definitions/paymentpb.Bank'
       bankId:
         type: integer
       bankName:
@@ -226,57 +228,6 @@ definitions:
       success:
         type: boolean
     type: object
-  organizationpb.ContractStatus:
-    enum:
-    - 0
-    - 10
-    - 20
-    - 30
-    type: integer
-    x-enum-comments:
-      ContractStatus_CONTRACT_STATUS_APPROVED: Đã xác nhận
-      ContractStatus_CONTRACT_STATUS_PENDING: Chờ xác nhận
-      ContractStatus_CONTRACT_STATUS_REJECTED: Từ chối
-    x-enum-varnames:
-    - ContractStatus_CONTRACT_STATUS_UNKNOWN
-    - ContractStatus_CONTRACT_STATUS_PENDING
-    - ContractStatus_CONTRACT_STATUS_APPROVED
-    - ContractStatus_CONTRACT_STATUS_REJECTED
-  organizationpb.ContractType:
-    enum:
-    - 0
-    - 10
-    - 20
-    type: integer
-    x-enum-comments:
-      ContractType_CONTRACT_TYPE_EXPENSE: Chi phí
-      ContractType_CONTRACT_TYPE_REVENUE: Doanh thu
-    x-enum-varnames:
-    - ContractType_CONTRACT_TYPE_UNKNOWN
-    - ContractType_CONTRACT_TYPE_EXPENSE
-    - ContractType_CONTRACT_TYPE_REVENUE
-  organizationpb.CostTypeDTO:
-    properties:
-      costType:
-        type: integer
-      description:
-        type: string
-      id:
-        type: integer
-      isCustom:
-        type: boolean
-      typeName:
-        type: string
-    type: object
-  organizationpb.CostTypeListDTO:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/organizationpb.CostTypeDTO'
-        type: array
-      total:
-        type: integer
-    type: object
   organizationpb.CreateBusinessDomainRequest:
     properties:
       code:
@@ -287,27 +238,6 @@ definitions:
         type: boolean
       name:
         type: string
-    type: object
-  organizationpb.CreateDealContractRequest:
-    properties:
-      amount:
-        type: number
-      category:
-        type: string
-      contractDate:
-        type: string
-      dealId:
-        type: integer
-      description:
-        type: string
-      documentIds:
-        items:
-          type: integer
-        type: array
-      note:
-        type: string
-      type:
-        $ref: '#/definitions/organizationpb.ContractType'
     type: object
   organizationpb.CreateGroupDealRequest:
     properties:
@@ -447,6 +377,8 @@ definitions:
         type: integer
       role:
         type: string
+      roleId:
+        type: integer
       userId:
         type: integer
     type: object
@@ -621,74 +553,6 @@ definitions:
           type: integer
         type: array
     type: object
-  organizationpb.DealContractResp:
-    properties:
-      transactionId:
-        type: integer
-    type: object
-  organizationpb.DealContractResponse:
-    properties:
-      amount:
-        type: number
-      approvedAt:
-        type: string
-      approvedBy:
-        type: integer
-      category:
-        type: string
-      contractDate:
-        type: string
-      createdAt:
-        type: string
-      createdBy:
-        type: integer
-      dealId:
-        type: integer
-      description:
-        type: string
-      documentIds:
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      note:
-        type: string
-      rejectReason:
-        type: string
-      status:
-        $ref: '#/definitions/organizationpb.ContractStatus'
-      statusName:
-        type: string
-      type:
-        $ref: '#/definitions/organizationpb.ContractType'
-      typeName:
-        type: string
-      updatedAt:
-        type: string
-    type: object
-  organizationpb.DealCostDTO:
-    properties:
-      amount:
-        type: number
-      confirmedAt:
-        type: string
-      costName:
-        type: string
-      costTypeId:
-        type: integer
-      costTypeName:
-        type: string
-      dealId:
-        type: integer
-      id:
-        type: integer
-      note:
-        type: string
-      status:
-        description: enums.ApprovedStatus
-        type: integer
-    type: object
   organizationpb.DealHistoryItem:
     properties:
       actionName:
@@ -787,6 +651,8 @@ definitions:
       note:
         description: Ghi chú
         type: string
+      roleId:
+        type: integer
     type: object
   organizationpb.DealMemberCommissionUpdate:
     properties:
@@ -799,54 +665,17 @@ definitions:
       note:
         type: string
     type: object
-  organizationpb.DealTransactionListResponse:
+  organizationpb.DealProcessItem:
     properties:
-      data:
-        items:
-          $ref: '#/definitions/organizationpb.DealTransactionResponse'
-        type: array
-      total:
-        type: integer
-    type: object
-  organizationpb.DealTransactionResponse:
-    properties:
-      amount:
-        type: number
-      approvedAt:
+      code:
         type: string
-      approvedBy:
-        type: integer
-      category:
+      color:
         type: string
-      createdAt:
-        type: string
-      createdBy:
-        type: integer
-      dealId:
-        type: integer
-      description:
-        type: string
-      documentIds:
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      note:
-        type: string
-      rejectReason:
-        type: string
-      status:
-        $ref: '#/definitions/organizationpb.ApprovedStatus'
       statusName:
         type: string
-      transactionDate:
+      timestamp:
         type: string
-      type:
-        $ref: '#/definitions/organizationpb.TransactionType'
-      typeName:
-        type: string
-      updatedAt:
+      transactionId:
         type: string
     type: object
   organizationpb.DeleteGroupDealResponse:
@@ -875,33 +704,19 @@ definitions:
       type:
         type: string
     type: object
-  organizationpb.FinancialSummaryResponse:
-    properties:
-      dealId:
-        type: integer
-      netProfit:
-        type: number
-      profitMargin:
-        type: number
-      profitStatus:
-        type: string
-      targetProfit:
-        type: number
-      totalExpense:
-        type: number
-      totalRevenue:
-        type: number
-      warningMessages:
-        items:
-          type: string
-        type: array
-    type: object
   organizationpb.GetAcceptedMembersResponse:
     properties:
       members:
         items:
           $ref: '#/definitions/organizationpb.DealInvitationMember'
         type: array
+    type: object
+  organizationpb.GetAllOrganizationsWithMembersForAdminRequest:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
     type: object
   organizationpb.GetDealCommissionStatsResponse:
     properties:
@@ -938,6 +753,15 @@ definitions:
       data:
         items:
           $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetDealProcessResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealProcessItem'
         type: array
       total:
         type: integer
@@ -1021,9 +845,13 @@ definitions:
         $ref: '#/definitions/organizationpb.BankAccountItem'
       cancelReason:
         type: string
+      chargePerson:
+        $ref: '#/definitions/sharepb.ProfileItem'
       chargePersonId:
         type: integer
       chargePersonName:
+        type: string
+      code:
         type: string
       createdAt:
         type: string
@@ -1118,6 +946,61 @@ definitions:
         type: number
       totalInvestment:
         type: integer
+    type: object
+  organizationpb.Investment:
+    properties:
+      amount:
+        type: number
+      changedAt:
+        type: string
+      confirmed:
+        type: boolean
+      createdBy:
+        type: integer
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      dealId:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      histories:
+        description: Danh sách các lần góp vốn đã được xác nhận
+        items:
+          $ref: '#/definitions/organizationpb.ApprovedInvestmentItem'
+        type: array
+      id:
+        type: integer
+      investType:
+        type: integer
+      memberId:
+        description: ID of the deal member
+        type: integer
+      note:
+        type: string
+      proxyUser:
+        allOf:
+        - $ref: '#/definitions/sharepb.ProfileItem'
+        description: Profile of proxy user
+      proxyUserId:
+        description: ID of admin who created on behalf
+        type: integer
+      status:
+        type: integer
+      statusName:
+        type: string
+      totalInvestment:
+        description: Tổng số tiền các lần đã góp và được duyệt
+        type: number
+      transferProofImage:
+        description: URL to transfer proof image
+        type: string
+      transferTime:
+        type: string
     type: object
   organizationpb.Permission:
     properties:
@@ -1240,25 +1123,6 @@ definitions:
       success:
         type: boolean
     type: object
-  organizationpb.SignContractRequest:
-    properties:
-      amount:
-        type: number
-      contractName:
-        type: string
-      dealId:
-        type: integer
-      documentIds:
-        items:
-          $ref: '#/definitions/organizationpb.DocumentItem'
-        type: array
-      note:
-        type: string
-      signedAt:
-        type: string
-      signedBy:
-        type: integer
-    type: object
   organizationpb.SubmitInvestRequest:
     properties:
       amount:
@@ -1269,6 +1133,9 @@ definitions:
         items:
           $ref: '#/definitions/organizationpb.DocumentItem'
         type: array
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
       id:
         type: integer
       investType:
@@ -1319,40 +1186,8 @@ definitions:
         type: integer
       percentDone:
         type: number
-    type: object
-  organizationpb.TransactionType:
-    enum:
-    - 0
-    - 10
-    - 20
-    type: integer
-    x-enum-comments:
-      TransactionType_TRANSACTION_TYPE_EXPENSE: Chi phí
-      TransactionType_TRANSACTION_TYPE_REVENUE: Doanh thu
-    x-enum-varnames:
-    - TransactionType_TRANSACTION_TYPE_UNKNOWN
-    - TransactionType_TRANSACTION_TYPE_EXPENSE
-    - TransactionType_TRANSACTION_TYPE_REVENUE
-  organizationpb.TransferContractRequest:
-    properties:
-      amount:
+      totalPayment:
         type: number
-      customerId:
-        type: integer
-      dealId:
-        type: integer
-      id:
-        type: integer
-      note:
-        type: string
-      productIds:
-        type: integer
-      timestamp:
-        type: string
-      transactionStep:
-        type: integer
-      transactionType:
-        type: integer
     type: object
   organizationpb.UpdateAllowManualInputRequest:
     properties:
@@ -1377,25 +1212,6 @@ definitions:
       isActive:
         type: boolean
       name:
-        type: string
-    type: object
-  organizationpb.UpdateDealContractRequest:
-    properties:
-      amount:
-        type: number
-      category:
-        type: string
-      contractDate:
-        type: string
-      description:
-        type: string
-      documentIds:
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      note:
         type: string
     type: object
   organizationpb.UpdateDealMemberCommissionRequest:
@@ -1465,12 +1281,18 @@ definitions:
     type: object
   organizationpb.UpdateDealSettingRequest:
     properties:
+      accountName:
+        type: string
+      accountNumber:
+        type: string
       allowManualInput:
         type: boolean
       allowSharing:
         type: boolean
       bankAccount:
         $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankId:
+        type: integer
       dealId:
         type: integer
       fromDate:
@@ -1556,6 +1378,8 @@ definitions:
         type: integer
       role:
         type: string
+      roleId:
+        type: integer
     type: object
   organizationpb.UpdateGroupRequest:
     properties:
@@ -1678,6 +1502,21 @@ definitions:
       success:
         type: boolean
     type: object
+  paymentpb.Bank:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      logo:
+        type: string
+      name:
+        type: string
+    type: object
   pb_bdspro.ProductAttachment:
     properties:
       area:
@@ -1705,8 +1544,6 @@ definitions:
       sourceTypeName:
         type: string
     type: object
-  sharepb.Empty:
-    type: object
   sharepb.ProfileItem:
     properties:
       avatar:
@@ -1723,8 +1560,6 @@ definitions:
         type: string
       tickVerified:
         type: boolean
-    type: object
-  status.Error:
     type: object
 info:
   contact: {}
@@ -1838,416 +1673,6 @@ paths:
       summary: Lấy lĩnh vực hoạt động đang active
       tags:
       - Lĩnh vực hoạt động
-  /contract/deal/{dealId}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách giao dịch thương vụ
-      parameters:
-      - description: ID của deal
-        in: path
-        name: dealId
-        required: true
-        type: integer
-      - description: Loại giao dịch
-        in: query
-        name: type
-        type: integer
-      - description: Trang
-        in: query
-        name: page
-        type: integer
-      - description: Kích thước trang
-        in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Danh sách giao dịch thương vụ
-          schema:
-            $ref: '#/definitions/organizationpb.DealTransactionListResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách giao dịch thương vụ
-      tags:
-      - Contract Deal
-    post:
-      consumes:
-      - application/json
-      description: Tạo giao dịch thương vụ
-      parameters:
-      - description: ID của deal
-        in: path
-        name: dealId
-        required: true
-        type: integer
-      - description: Yêu cầu tạo giao dịch thương vụ
-        in: body
-        name: contract
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.CreateDealContractRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã tạo
-          schema:
-            $ref: '#/definitions/organizationpb.DealTransactionResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Tạo giao dịch thương vụ
-      tags:
-      - Contract Deal
-  /contract/deal/{dealId}/financial-summary:
-    get:
-      consumes:
-      - application/json
-      description: Lấy thống kê tài chính
-      parameters:
-      - description: ID của deal
-        in: path
-        name: dealId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Thống kê tài chính
-          schema:
-            $ref: '#/definitions/organizationpb.FinancialSummaryResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Lấy thống kê tài chính
-      tags:
-      - Contract Deal
-  /contract/deal/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa giao dịch thương vụ
-      parameters:
-      - description: ID của giao dịch
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã xóa
-          schema:
-            $ref: '#/definitions/emptypb.Empty'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Xóa giao dịch thương vụ
-      tags:
-      - Contract Deal
-    get:
-      consumes:
-      - application/json
-      description: Lấy chi tiết giao dịch thương vụ
-      parameters:
-      - description: ID của giao dịch
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã lấy
-          schema:
-            $ref: '#/definitions/organizationpb.DealTransactionResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Lấy chi tiết giao dịch thương vụ
-      tags:
-      - Contract Deal
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật giao dịch thương vụ
-      parameters:
-      - description: ID của giao dịch
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Yêu cầu cập nhật giao dịch thương vụ
-        in: body
-        name: contract
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.UpdateDealContractRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã cập nhật
-          schema:
-            $ref: '#/definitions/organizationpb.DealTransactionResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Cập nhật giao dịch thương vụ
-      tags:
-      - Contract Deal
-  /contract/deal/{id}/approve:
-    put:
-      consumes:
-      - application/json
-      description: Phê duyệt giao dịch thương vụ
-      parameters:
-      - description: ID của giao dịch
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Lý do từ chối
-        in: query
-        name: rejectReason
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã phê duyệt
-          schema:
-            $ref: '#/definitions/emptypb.Empty'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Phê duyệt giao dịch thương vụ
-      tags:
-      - Contract Deal
-  /contract/deal/sign:
-    post:
-      consumes:
-      - application/json
-      description: Ký hợp đồng
-      parameters:
-      - description: Yêu cầu ký hợp đồng
-        in: body
-        name: signContract
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.SignContractRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã ký
-          schema:
-            $ref: '#/definitions/organizationpb.DealContractResponse'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Ký hợp đồng
-      tags:
-      - Contract Deal
-  /contract/deal/transfer:
-    post:
-      consumes:
-      - application/json
-      description: Mua/bán/thuê
-      parameters:
-      - description: Yêu cầu mua/bán/thuê
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.TransferContractRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Giao dịch thương vụ đã mua/bán/thuê
-          schema:
-            $ref: '#/definitions/organizationpb.DealContractResp'
-        "400":
-          description: Lỗi yêu cầu không hợp lệ
-          schema:
-            $ref: '#/definitions/status.Error'
-        "500":
-          description: Lỗi server
-          schema:
-            $ref: '#/definitions/status.Error'
-      security:
-      - BearerAuth: []
-      summary: Mua/bán/thuê
-      tags:
-      - Contract Deal
-  /cost-type:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách loại chi phí
-      parameters:
-      - in: query
-        name: costType
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      - in: query
-        name: typeName
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.CostTypeListDTO'
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách loại chi phí
-      tags:
-      - CostType
-    post:
-      consumes:
-      - application/json
-      description: Tạo loại chi phí
-      parameters:
-      - description: Loại chi phí
-        in: body
-        name: costType
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.CostTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.CostTypeDTO'
-      security:
-      - BearerAuth: []
-      summary: Tạo loại chi phí
-      tags:
-      - CostType
-  /cost-type/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa loại chi phí
-      parameters:
-      - description: ID loại chi phí
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/sharepb.Empty'
-      security:
-      - BearerAuth: []
-      summary: Xóa loại chi phí
-      tags:
-      - CostType
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật loại chi phí
-      parameters:
-      - description: ID loại chi phí
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Loại chi phí
-        in: body
-        name: costType
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.CostTypeDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.CostTypeDTO'
-      security:
-      - BearerAuth: []
-      summary: Cập nhật loại chi phí
-      tags:
-      - CostType
   /deal:
     get:
       consumes:
@@ -2298,99 +1723,6 @@ paths:
       summary: Tạo thương vụ
       tags:
       - Thương vụ
-  /deal-cost:
-    post:
-      consumes:
-      - application/json
-      description: Tạo Chi phí/Doanh thu thương vụ
-      parameters:
-      - description: Deal cost data
-        in: body
-        name: dealCost
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.DealCostDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.DealCostDTO'
-      security:
-      - BearerAuth: []
-      summary: Tạo Chi phí/Doanh thu thương vụ
-      tags:
-      - DealCost
-  /deal-cost/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa Chi phí/Doanh thu thương vụ
-      parameters:
-      - description: Deal cost ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/sharepb.Empty'
-      security:
-      - BearerAuth: []
-      summary: Xóa Chi phí/Doanh thu thương vụ
-      tags:
-      - DealCost
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật Chi phí/Doanh thu thương vụ
-      parameters:
-      - description: Deal cost data
-        in: body
-        name: dealCost
-        required: true
-        schema:
-          $ref: '#/definitions/organizationpb.DealCostDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.DealCostDTO'
-      security:
-      - BearerAuth: []
-      summary: Cập nhật Chi phí/Doanh thu thương vụ
-      tags:
-      - DealCost
-  /deal-cost/detail/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy Chi phí/Doanh thu thương vụ theo ID
-      parameters:
-      - description: Deal cost ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/organizationpb.DealCostDTO'
-      security:
-      - BearerAuth: []
-      summary: Lấy Chi phí/Doanh thu thương vụ theo ID
-      tags:
-      - DealCost
   /deal-invitation:
     post:
       consumes:
@@ -2880,6 +2212,30 @@ paths:
       summary: Cập nhật hoa hồng cho nhiều deal members
       tags:
       - Hoa hồng
+  /deal/{dealId}/process:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin process của deal bao gồm statusName, timestamp, code,
+        transactionId, color
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin process của deal
+      tags:
+      - Thương vụ
   /deal/{dealId}/products:
     get:
       consumes:
@@ -3257,34 +2613,6 @@ paths:
       summary: Cập nhật trạng thái thương vụ
       tags:
       - Thương vụ
-  /deal/deal-cost/{dealId}:
-    get:
-      consumes:
-      - application/json
-      description: Tìm kiếm Chi phí/Doanh thu thương vụ
-      parameters:
-      - description: Deal ID
-        in: path
-        name: dealId
-        required: true
-        type: integer
-      - in: query
-        name: dealId
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      security:
-      - BearerAuth: []
-      summary: Tìm kiếm Chi phí/Doanh thu thương vụ
-      tags:
-      - DealCost
   /group:
     get:
       consumes:
@@ -3837,7 +3165,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entity.Investment'
+            $ref: '#/definitions/organizationpb.Investment'
       security:
       - BearerAuth: []
       summary: get form khai báo góp vốn
@@ -4097,6 +3425,26 @@ paths:
       summary: Lấy danh sách thương vụ của tổ chức
       tags:
       - Thương vụ
+  /organization/admin/all-with-members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả doanh nghiệp với thành viên cho admin
+      parameters:
+      - description: Thông tin request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.GetAllOrganizationsWithMembersForAdminRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tất cả doanh nghiệp với thành viên (Admin only)
+      tags:
+      - Tổ chức
   /organization/branch:
     get:
       consumes:
@@ -4139,6 +3487,35 @@ paths:
       summary: Tạo chi nhánh
       tags:
       - Chi nhánh
+  /organization/branch/{branchId}/deals:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ theo chi nhánh
+      parameters:
+      - description: ID chi nhánh
+        in: path
+        name: branchId
+        required: true
+        type: integer
+      - default: 1
+        description: Trang
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Kích thước
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ theo chi nhánh
+      tags:
+      - Thương vụ
   /organization/branch/{id}:
     delete:
       consumes:
@@ -4306,13 +3683,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy tổ chức của người dùng hiện tại
+      description: Lấy tổ chức hiện tại
       produces:
       - application/json
       responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy tổ chức của người dùng hiện tại
+      summary: Lấy tổ chức hiện tại
       tags:
       - Tổ chức
   /organization/current/dashboard:

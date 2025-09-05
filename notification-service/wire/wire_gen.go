@@ -14,15 +14,16 @@ import (
 	"noti/infra/mapper"
 	"noti/infra/postgres"
 	"noti/infra/service"
+	"noti/initial"
 	"noti/internal/dto"
-	repo2 "noti/internal/interface/repo"
-	"noti/internal/repo"
+	"noti/internal/interface/repo"
+	repo2 "noti/internal/repo"
 	"noti/internal/usecase"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
@@ -41,11 +42,11 @@ func InitializeApp() (*config.ConfigApp, error) {
 	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
 	historyMapper := mapper.NewHistoryMapper()
 	historyService := service.NewHistoryService(historyUsecase, historyMapper)
-	configApp := config.NewConfigApp(internalNotiService, gatewayNotiService, historyService)
-	return configApp, nil
+	initialApp := initial.NewInitialApp(internalNotiService, gatewayNotiService, historyService)
+	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), wire.Bind(new(repo.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo2.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), config.NewConfigApp, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, mapper.NewAdminHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, postgres.NewAdminHistoryPostgres, postgres.NewAccountWarningPostgresRepo, service.NewHistoryService, usecase.NewHistoryUsecase, usecase.NewAdminHistoryUsecase, usecase.NewAccountWarningUsecase, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo2.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo2.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo2.NotificationRepo), new(*postgres.PostgreNotification)), postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, initial.NewInitialApp, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"common"
 	_ "embed"
 	"log"
 
@@ -10,10 +11,20 @@ import (
 const C_SESSION_ID = "C_SESSION_ID"
 
 //go:embed app.yml
-var ConfigFile []byte
+var EmbeddedConfig []byte
 
 // UserProperties chứa cấu hình của ứng dụng
 type UserProperties struct {
+	Server struct {
+		TCPPort int `mapstructure:"tcp_port"`
+	} `mapstructure:"server"`
+	Database struct {
+		Host     string `mapstructure:"host"`
+		Port     int    `mapstructure:"port"`
+		Name     string `mapstructure:"name"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"database"`
 	Jwt struct {
 		SecretKey           string   `mapstructure:"key-generate"`
 		TokenPrefix         string   `mapstructure:"tokenPrefix"`
@@ -35,6 +46,7 @@ var AppProperties UserProperties
 // LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
 func LoadProperties() {
 	log.Printf("Đọc config")
+	common.LoadConfig(EmbeddedConfig)
 
 	// var config UserProperties
 	if err := viper.Unmarshal(&AppProperties); err != nil {

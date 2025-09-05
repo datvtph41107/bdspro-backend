@@ -137,8 +137,8 @@ func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*organizatio
 func (c *UserClient) MapToInvestPb(ctx context.Context, invests []*organizationpb.Investment) {
 	ids := make([]uint64, len(invests))
 	for i, invest := range invests {
-		if invest.CreatedBy != nil {
-			ids[i] = *invest.CreatedBy
+		if invest.MemberId != 0 {
+			ids[i] = invest.MemberId
 		}
 	}
 
@@ -156,8 +156,8 @@ func (c *UserClient) MapToInvestPb(ctx context.Context, invests []*organizationp
 		profileMap[p.Id] = p
 	}
 	for i, invest := range invests {
-		if invest.CreatedBy != nil {
-			if p, ok := profileMap[*invest.CreatedBy]; ok {
+		if invest.MemberId != 0 {
+			if p, ok := profileMap[invest.MemberId]; ok {
 				invests[i].CreatedUser = p
 			}
 		}

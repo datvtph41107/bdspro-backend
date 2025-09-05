@@ -1,55 +1,54 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
-	"noti/config"
+	"noti/initial"
+	crm_internal_repo "noti/internal/repo"
+	noti_internal_interface_repo "noti/internal/interface/repo"
+	noti_internal_repo "noti/internal/repo"
 	notification_config "noti/config"
 	notification_infra_firebase "noti/infra/firebase"
 	notification_infra_mapper "noti/infra/mapper"
 	notification_infra_postgres "noti/infra/postgres"
 	notification_infra_service "noti/infra/service"
+	notification_initial "noti/initial"
 	notification_internal_dto "noti/internal/dto"
-	notification_internal_interface_repo "noti/internal/interface/repo"
-	crm_internal_repo "noti/internal/repo"
-	noti_internal_repo "noti/internal/repo"
 	notification_internal_usecase "noti/internal/usecase"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
+	_db.NewTransactionRepo,
+	wire.Bind(new(noti_internal_interface_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
+	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
 	wire.Bind(new(crm_internal_repo.HistoryRepo), new(*notification_infra_postgres.HistoryRepo)),
 	wire.Bind(new(noti_internal_repo.NotificationRepo), new(*notification_infra_postgres.PostgreNotification)),
-	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
-	wire.Bind(new(notification_internal_interface_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
-	notification_config.NewConfigApp,
+	notification_infra_postgres.NewAccountWarningPostgresRepo,
+	notification_internal_usecase.NewAccountWarningUsecase,
+	notification_infra_mapper.NewAdminHistoryMapper,
+	notification_infra_postgres.NewAdminHistoryPostgres,
+	notification_internal_usecase.NewAdminHistoryUsecase,
 	notification_config.NewFirebaseConfig,
 	notification_infra_firebase.NewFirebaseService,
 	notification_infra_service.NewGatewayNotiService,
-
 	notification_infra_mapper.NewHistoryMapper,
-	notification_infra_mapper.NewAdminHistoryMapper,
 	notification_infra_postgres.NewHistoryRepo,
 	notification_infra_postgres.NewHistoryRepository,
-	notification_infra_postgres.NewAdminHistoryPostgres,
-	notification_infra_postgres.NewAccountWarningPostgresRepo,
 	notification_infra_service.NewHistoryService,
 	notification_internal_usecase.NewHistoryUsecase,
-	notification_internal_usecase.NewAdminHistoryUsecase,
-	notification_internal_usecase.NewAccountWarningUsecase,
+	notification_initial.NewInitialApp,
 	notification_infra_service.NewInternalNotiService,
 	notification_infra_mapper.NewNotificationMapper,
 	notification_internal_usecase.NewNotificationService,
 	notification_infra_postgres.NewPostgreNotification,
 	notification_internal_dto.NewSendNotiResponse,
 )
-
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

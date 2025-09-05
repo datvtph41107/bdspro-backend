@@ -76,5 +76,21 @@ func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.Ty
 		return []string{"Bạn đã thanh toán: ", attachData[0]}
 	}
 
+	if typeMessage == enums.NotiDealInvitation {
+		return []string{"Bạn đã nhận được lời mời tham gia thương vụ: \"", attachData[0], "\""}
+	}
+	if typeMessage == enums.NotiDealInvitationAccepted {
+		return []string{"Bạn đã chấp nhận lời mời tham gia thương vụ: \"", attachData[0], "\""}
+	}
+	if typeMessage == enums.NotiDealInvitationRejected {
+		return []string{"Bạn đã từ chối lời mời tham gia thương vụ: \"", attachData[0], "\""}
+	}
+	if typeMessage == enums.NotiDealMemberWithdrawn {
+		return []string{"Bạn đã rút khỏi thương vụ: \"", attachData[0], "\""}
+	}
+	if typeMessage == enums.NotiDealMemberRemoved {
+		return []string{"Bạn đã bị gỡ khỏi thương vụ: \"", attachData[0], "\""}
+	}
+
 	return []string{}
 }

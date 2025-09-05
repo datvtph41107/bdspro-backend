@@ -713,6 +713,39 @@ func (h *GroupDealHandler) GetDealProcess(ctx context.Context, req *organization
 	return response, nil
 }
 
+// @Summary Lấy danh sách thương vụ theo chi nhánh
+// @Description Lấy danh sách thương vụ theo chi nhánh
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param branchId path uint64 true "ID chi nhánh"
+// @Param page query uint32 false "Trang" default(1)
+// @Param size query uint32 false "Kích thước" default(10)
+// @Security BearerAuth
+// @Router /organization/branch/{branchId}/deals [get]
+func (h *GroupDealHandler) GetBranchDeals(ctx context.Context, req *organizationpb.GetBranchDealsRequest) (*organizationpb.GetGroupDealsV2Response, error) {
+	if err := h.GroupDealValidator.ValidateGetBranchDealsRequest(req); err != nil {
+		return nil, err
+	}
+
+	branchId := req.BranchId
+	page := 1
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	deals, total, err := h.DealUsecase.GetBranchDealsByBranchID(ctx, branchId, page, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
+}
+
 // Helper functions để lấy ID từ context
 func getOrganizationIdFromContext(ctx context.Context) uint64 {
 	// Implementation sẽ được thêm sau khi có middleware

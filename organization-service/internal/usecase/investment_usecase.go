@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"organization/internal/custom_error"
 	"organization/internal/domain/entity"
 	"organization/internal/domain/repository"
 	"organization/internal/dto"
@@ -18,6 +19,7 @@ type InvestmentUsecase struct {
 	dealRepository       repository.GroupDealRepository
 	groupAuthUsecase     GroupAuthUsecase
 	notiClient           iusecase.INotiClient
+	dealMemberRepo       repository.DealMemberRepository
 }
 
 func NewInvestmentUsecase(
@@ -25,19 +27,34 @@ func NewInvestmentUsecase(
 	dealRepository repository.GroupDealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	notiClient iusecase.INotiClient,
+	dealMemberRepo repository.DealMemberRepository,
 ) *InvestmentUsecase {
 	return &InvestmentUsecase{
 		investmentRepository: investmentRepository,
 		dealRepository:       dealRepository,
 		groupAuthUsecase:     groupAuthUsecase,
 		notiClient:           notiClient,
+		dealMemberRepo:       dealMemberRepo,
 	}
+}
+
+func (u *InvestmentUsecase) IsMemberDeal(ctx context.Context, dealID, memberID uint64) error {
+	isMember, err := u.dealMemberRepo.IsMemberDeal(ctx, dealID, memberID)
+	if err != nil {
+		return err
+	}
+	if !isMember {
+		return custom_error.Forbidden("you are not allowed to access this deal")
+	}
+	return nil
 }
 
 func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionCreateInvestment) {
-		return nil, errors.New("permission denied")
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	if err != nil {
+		return nil, err
 	}
 
 	// Validate deal member exists
@@ -86,8 +103,10 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 
 func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionUpdateInvestment) {
-		return nil, errors.New("permission denied")
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get current investment
@@ -114,6 +133,13 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 	investment, err := u.investmentRepository.UpdateInvestment(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.DoneInvestment {
+		err = u.dealMemberRepo.UpdateDoneInvestment(ctx, req.DealID, req.MemberID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &investment.ID, nil
@@ -152,6 +178,33 @@ func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*enti
 	}
 
 	return investment, nil
+}
+
+func (u *InvestmentUsecase) GetInvestmentWithConfirmedHistory(ctx context.Context, id uint64) (*entity.Investment, []entity.Investment, float64, error) {
+	// Only users with MANAGE_INVESTMENT permission can view investment details
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
+		return nil, nil, 0, errors.New("permission denied - only managers can view investment details")
+	}
+
+	// Get investment
+	investment, err := u.investmentRepository.GetByID(ctx, id)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	// Get confirmed investments for this deal
+	confirmedInvestments, err := u.investmentRepository.GetConfirmedInvestmentsByDealId(ctx, investment.DealID, investment.MemberID)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	// Calculate total investment amount
+	totalInvestment := 0.0
+	for _, inv := range confirmedInvestments {
+		totalInvestment += inv.Amount
+	}
+
+	return investment, confirmedInvestments, totalInvestment, nil
 }
 
 func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error) {

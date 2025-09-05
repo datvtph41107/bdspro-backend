@@ -68,6 +68,7 @@ message SubmitInvestRequest {
     string transferProofImage = 8;  // URL to transfer proof image
     repeated DocumentItem documents = 9;
     optional uint64 proxyUserId = 10;  // For proxy investments
+    bool doneInvestment = 11;  // Đánh dấu đã đủ vốn góp
 }
 
 message ListInvestment {
@@ -93,6 +94,18 @@ message Investment {
     bool confirmed = 15;
     optional uint64 proxyUserId = 16;  // ID of admin who created on behalf
     optional sharepb.ProfileItem proxyUser = 17;  // Profile of proxy user
+    bool doneInvestment = 18;  // Đánh dấu đã đủ vốn góp
+    repeated ApprovedInvestmentItem histories = 19;  // Danh sách các lần góp vốn đã được xác nhận
+    double totalInvestment = 20;  // Tổng số tiền các lần đã góp và được duyệt
+}
+
+message ApprovedInvestmentItem {
+    uint64 id = 1;
+    double amount = 2;
+    string transferTime = 3;
+    string note = 4;
+    string statusName = 5;
+    bool confirmed = 6;
 }
 
 message InvestmentListRequest {

@@ -25,6 +25,7 @@ type DealUsecase interface {
 	GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error)
 	GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	GetOrganizationDealsByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error)
+	GetBranchDealsByBranchID(ctx context.Context, branchID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
 	UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error
 	UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error
@@ -54,6 +55,7 @@ type groupDealUsecase struct {
 	dealMemberRepository    repository.DealMemberRepository
 	userClient              iusecase.IUserClient
 	organizationAuthUsecase OrganizationAuthUsecase
+	dealOfBranchRepo        repository.DealOfBranchRepo
 }
 
 func NewGroupDealUsecase(
@@ -69,6 +71,7 @@ func NewGroupDealUsecase(
 	userClient iusecase.IUserClient,
 	organizationAuthUsecase OrganizationAuthUsecase,
 	transactionClient iusecase.TransactionClient,
+	dealOfBranchRepo repository.DealOfBranchRepo,
 ) DealUsecase {
 	return &groupDealUsecase{
 		groupDealRepository:     groupDealRepository,
@@ -83,7 +86,19 @@ func NewGroupDealUsecase(
 		userClient:              userClient,
 		organizationAuthUsecase: organizationAuthUsecase,
 		transactionClient:       transactionClient,
+		dealOfBranchRepo:        dealOfBranchRepo,
 	}
+}
+
+func (u *groupDealUsecase) IsMemberDeal(ctx context.Context, dealID, memberID uint64) error {
+	isMember, err := u.dealMemberRepository.IsMemberDeal(ctx, dealID, memberID)
+	if err != nil {
+		return err
+	}
+	if !isMember {
+		return custom_error.Forbidden("you are not allowed to access this deal")
+	}
+	return nil
 }
 
 func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
@@ -667,7 +682,7 @@ func (u *groupDealUsecase) AccountInvestment(ctx context.Context, id uint64) (*e
 	}
 
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	err = u.groupAuthUsecase.IsMemberGroup(ctx, uint32(deal.OwnerId), uint32(currentUserId))
+	err = u.IsMemberDeal(ctx, deal.ID, currentUserId)
 	if err != nil {
 		return nil, custom_error.Forbidden("you are not allowed to get account investment")
 	}
@@ -831,4 +846,35 @@ func (u *groupDealUsecase) GetDealProcess(ctx context.Context, dealID uint64, or
 
 	// Gọi repository để lấy thông tin process
 	return u.groupDealRepository.GetDealProcess(ctx, dealID, organizationID)
+}
+
+// GetBranchDealsByBranchID lấy danh sách thương vụ theo chi nhánh
+func (u *groupDealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+	// Lấy danh sách deal IDs từ deal_of_branch
+	dealOfBranches, total, err := u.dealOfBranchRepo.GetByBranchID(ctx, branchID, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if len(dealOfBranches) == 0 {
+		return []*entity.Deal{}, uint32(total), nil
+	}
+
+	// Lấy danh sách deal IDs
+	dealIDs := make([]uint64, len(dealOfBranches))
+	for i, dealOfBranch := range dealOfBranches {
+		dealIDs[i] = dealOfBranch.DealID
+	}
+
+	// Lấy thông tin chi tiết các deals
+	deals := make([]*entity.Deal, 0, len(dealIDs))
+	for _, dealID := range dealIDs {
+		deal, err := u.groupDealRepository.GetByID(ctx, dealID)
+		if err != nil {
+			continue // Bỏ qua deal không tìm thấy
+		}
+		deals = append(deals, deal)
+	}
+
+	return deals, uint32(total), nil
 }

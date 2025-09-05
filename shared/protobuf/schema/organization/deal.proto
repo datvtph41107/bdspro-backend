@@ -174,6 +174,13 @@ service GroupDealService {
             get: "/v2/org/deal/process/{dealId}"
         };
     }
+
+    // API lấy danh sách thương vụ theo chi nhánh
+    rpc GetBranchDeals(GetBranchDealsRequest) returns (GetGroupDealsV2Response) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/branch/{branchId}/deals"
+        };
+    }
 }
 
 service DealCommissionService {
@@ -691,4 +698,11 @@ message DealProcessItem {
 message GetDealProcessResponse {
     repeated DealProcessItem data = 1;
     uint32 total = 2;
+}
+
+// API cho chi nhánh
+message GetBranchDealsRequest {
+    uint64 branchId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
 }

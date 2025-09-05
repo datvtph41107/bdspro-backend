@@ -22,7 +22,8 @@ type Investment struct {
 	Confirmed bool                 `gorm:"not null;default:false"` // For tracking confirmation status
 
 	// For proxy investments (when admin creates on behalf of user)
-	ProxyUserID *uint64 `gorm:"index"` // ID of admin/manager who created on behalf
+	ProxyUserID    *uint64 `gorm:"index"` // ID of admin/manager who created on behalf
+	DoneInvestment bool    `gorm:"-"`     // Đánh dấu đã đủ vốn góp
 }
 
 func (Investment) TableName() string {

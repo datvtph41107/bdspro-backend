@@ -30,6 +30,12 @@ const (
 	InvestmentApproved TypeEnum = 7005 //"INVESTMENT_APPROVED"
 	InvestmentRejected TypeEnum = 7006 //"INVESTMENT_REJECTED"
 
+	NotiDealInvitation         TypeEnum = 7008
+	NotiDealInvitationAccepted TypeEnum = 7009
+	NotiDealInvitationRejected TypeEnum = 7010
+	NotiDealMemberWithdrawn    TypeEnum = 7011
+	NotiDealMemberRemoved      TypeEnum = 7012
+
 	// Transaction
 	TransactionDeposit  TypeEnum = 5001 //"TRANSACTION_DEPOSIT"
 	TransactionWithdraw TypeEnum = 5002 //"TRANSACTION_WITHDRAW"

@@ -377,6 +377,35 @@
           "type": "string",
           "format": "uint64",
           "title": "For proxy investments"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        }
+      }
+    },
+    "organizationpbApprovedInvestmentItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "transferTime": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "confirmed": {
+          "type": "boolean"
         }
       }
     },
@@ -467,6 +496,23 @@
         "proxyUser": {
           "$ref": "#/definitions/sharepbProfileItem",
           "title": "Profile of proxy user"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "histories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbApprovedInvestmentItem"
+          },
+          "title": "Danh sách các lần góp vốn đã được xác nhận"
+        },
+        "totalInvestment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng số tiền các lần đã góp và được duyệt"
         }
       }
     },
@@ -531,6 +577,10 @@
           "type": "string",
           "format": "uint64",
           "title": "For proxy investments"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
         }
       }
     },

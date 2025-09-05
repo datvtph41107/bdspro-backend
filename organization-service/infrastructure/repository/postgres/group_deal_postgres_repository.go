@@ -204,10 +204,10 @@ func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint
 				"member_can_add_transaction": setting.MemberCanAddTransaction,
 				"only_owner_get_commission":  setting.OnlyOwnerGetCommission,
 				"internal_note":              setting.InternalNote,
-				"owner_id":                   setting.OwnerId,
 				"status":                     setting.Status,
 				"allow_manual_input":         setting.AllowManualInput,
 				"bank_account_id":            bankAccount.ID,
+				// "owner_id":                   setting.OwnerId,
 			}).Error
 		if err != nil {
 			return err

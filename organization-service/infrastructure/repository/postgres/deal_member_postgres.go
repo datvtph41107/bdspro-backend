@@ -232,3 +232,17 @@ func (r *DealMemberPostgresRepository) GetDealMembersByUserIds(ctx context.Conte
 
 	return members, nil
 }
+
+func (r *DealMemberPostgresRepository) IsMemberDeal(ctx context.Context, dealID, memberID uint64) (bool, error) {
+	var model DealMemberModel
+	if err := r.db.WithContext(ctx).Where("deal_id = ? AND member_id = ?", dealID, memberID).First(&model).Error; err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *DealMemberPostgresRepository) UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error {
+	return r.db.WithContext(ctx).Model(&DealMemberModel{}).
+		Where("deal_id = ? AND member_id = ?", dealID, memberID).
+		Update("done_investment", true).Error
+}

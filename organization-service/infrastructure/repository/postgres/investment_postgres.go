@@ -22,6 +22,11 @@ func NewInvestmentPostgres(db *gorm.DB) *InvestmentPostgres {
 }
 
 func (r *InvestmentPostgres) CreateInvestment(ctx context.Context, investment *entity.Investment) (*entity.Investment, error) {
+	if investment.Status != enums.ApprovedStatusPending &&
+		investment.Status != enums.ApprovedStatusRejected &&
+		investment.Status != enums.ApprovedStatusApproved {
+		investment.Status = enums.ApprovedStatusPending
+	}
 	err := r.db.WithContext(ctx).Create(investment).Error
 	if err != nil {
 		return nil, err
@@ -44,6 +49,12 @@ func (r *InvestmentPostgres) UpdateInvestment(ctx context.Context, investment *e
 	// If rejected, reset status to pending
 	if current.Status == enums.ApprovedStatusRejected {
 		investment.Status = enums.ApprovedStatusPending
+	}
+
+	if investment.Status != enums.ApprovedStatusPending &&
+		investment.Status != enums.ApprovedStatusRejected &&
+		investment.Status != enums.ApprovedStatusApproved {
+		investment.Status = current.Status
 	}
 
 	updateData := map[string]interface{}{
@@ -243,4 +254,21 @@ func (r *InvestmentPostgres) CountDashboard(ctx context.Context, summary *dto.Su
 	}
 
 	return &result, nil
+}
+
+func (r *InvestmentPostgres) GetConfirmedInvestmentsByDealId(ctx context.Context, dealId uint64, memberId uint64) ([]entity.Investment, error) {
+	var investments []entity.Investment
+
+	err := r.db.WithContext(ctx).
+		Model(&entity.Investment{}).
+		Where("deal_id = ? AND member_id = ? AND status = ? AND deleted_at IS NULL",
+			dealId, memberId, enums.ApprovedStatusApproved).
+		Order("transfer_time ASC").
+		Find(&investments).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return investments, nil
 }

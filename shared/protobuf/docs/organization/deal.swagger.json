@@ -1136,6 +1136,52 @@
         ]
       }
     },
+    "/v2/org/organization/branch/{branchId}/deals": {
+      "get": {
+        "summary": "API lấy danh sách thương vụ theo chi nhánh",
+        "operationId": "GroupDealService_GetBranchDeals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDealsV2Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/organization/deals/current": {
       "get": {
         "operationId": "GroupDealService_GetOrganizationDealsCurrent",

@@ -1,19 +1,19 @@
-package config
+package initial
 
 import "noti/infra/service"
 
-type ConfigApp struct {
+type InitialApp struct {
 	InternalNotiService *service.InternalNotiService
 	ServerHttp          *service.GatewayNotiService
 	HistoryService      *service.HistoryService
 }
 
-func NewConfigApp(
+func NewInitialApp(
 	router *service.InternalNotiService,
 	ServerHttp *service.GatewayNotiService,
 	historyService *service.HistoryService,
-) *ConfigApp {
-	return &ConfigApp{
+) *InitialApp {
+	return &InitialApp{
 		InternalNotiService: router,
 		ServerHttp:          ServerHttp,
 		HistoryService:      historyService,

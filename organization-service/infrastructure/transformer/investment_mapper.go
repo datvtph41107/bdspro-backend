@@ -79,3 +79,25 @@ func (m *InvestmentMapper) EntityToPb(investment *entity.Investment) *organizati
 
 	return result
 }
+
+func (m *InvestmentMapper) EntityToPbWithConfirmedHistory(investment *entity.Investment, confirmedInvestments []entity.Investment, totalInvestment float64) *organizationpb.Investment {
+	result := m.EntityToPb(investment)
+
+	// Map confirmed investments
+	result.Histories = make([]*organizationpb.ApprovedInvestmentItem, len(confirmedInvestments))
+	for i, inv := range confirmedInvestments {
+		result.Histories[i] = &organizationpb.ApprovedInvestmentItem{
+			Id:           inv.ID,
+			Amount:       inv.Amount,
+			TransferTime: _utils.FormatTimeToString(inv.TransferTime),
+			Note:         inv.Note,
+			StatusName:   enums.ApprovedStatusMap[inv.Status],
+			Confirmed:    inv.Confirmed,
+		}
+	}
+
+	// Set total investment
+	result.TotalInvestment = totalInvestment
+
+	return result
+}

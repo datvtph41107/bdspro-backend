@@ -182,655 +182,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/contract/deal/sign": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Ký hợp đồng",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Ký hợp đồng",
-                "parameters": [
-                    {
-                        "description": "Yêu cầu ký hợp đồng",
-                        "name": "signContract",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.SignContractRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã ký",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealContractResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/deal/transfer": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mua/bán/thuê",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Mua/bán/thuê",
-                "parameters": [
-                    {
-                        "description": "Yêu cầu mua/bán/thuê",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.TransferContractRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã mua/bán/thuê",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealContractResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/deal/{dealId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Lấy danh sách giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của deal",
-                        "name": "dealId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Loại giao dịch",
-                        "name": "type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Trang",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Kích thước trang",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách giao dịch thương vụ",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealTransactionListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Tạo giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của deal",
-                        "name": "dealId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Yêu cầu tạo giao dịch thương vụ",
-                        "name": "contract",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CreateDealContractRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã tạo",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealTransactionResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/deal/{dealId}/financial-summary": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy thống kê tài chính",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Lấy thống kê tài chính",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của deal",
-                        "name": "dealId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thống kê tài chính",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.FinancialSummaryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/deal/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy chi tiết giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Lấy chi tiết giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của giao dịch",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã lấy",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealTransactionResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Cập nhật giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của giao dịch",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Yêu cầu cập nhật giao dịch thương vụ",
-                        "name": "contract",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.UpdateDealContractRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã cập nhật",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealTransactionResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Xóa giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của giao dịch",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã xóa",
-                        "schema": {
-                            "$ref": "#/definitions/emptypb.Empty"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/deal/{id}/approve": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Phê duyệt giao dịch thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract Deal"
-                ],
-                "summary": "Phê duyệt giao dịch thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của giao dịch",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Lý do từ chối",
-                        "name": "rejectReason",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Giao dịch thương vụ đã phê duyệt",
-                        "schema": {
-                            "$ref": "#/definitions/emptypb.Empty"
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi yêu cầu không hợp lệ",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "$ref": "#/definitions/status.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/cost-type": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách loại chi phí",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "CostType"
-                ],
-                "summary": "Lấy danh sách loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "costType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "typeName",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CostTypeListDTO"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo loại chi phí",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "CostType"
-                ],
-                "summary": "Tạo loại chi phí",
-                "parameters": [
-                    {
-                        "description": "Loại chi phí",
-                        "name": "costType",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CostTypeDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CostTypeDTO"
-                        }
-                    }
-                }
-            }
-        },
-        "/cost-type/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật loại chi phí",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "CostType"
-                ],
-                "summary": "Cập nhật loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID loại chi phí",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Loại chi phí",
-                        "name": "costType",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CostTypeDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.CostTypeDTO"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa loại chi phí",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "CostType"
-                ],
-                "summary": "Xóa loại chi phí",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID loại chi phí",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/sharepb.Empty"
-                        }
-                    }
-                }
-            }
-        },
         "/deal": {
             "get": {
                 "security": [
@@ -908,156 +259,6 @@ const docTemplate = `{
                         "description": "Thành công",
                         "schema": {
                             "$ref": "#/definitions/organizationpb.CreateGroupDealResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/deal-cost": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo Chi phí/Doanh thu thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DealCost"
-                ],
-                "summary": "Tạo Chi phí/Doanh thu thương vụ",
-                "parameters": [
-                    {
-                        "description": "Deal cost data",
-                        "name": "dealCost",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealCostDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealCostDTO"
-                        }
-                    }
-                }
-            }
-        },
-        "/deal-cost/detail/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy Chi phí/Doanh thu thương vụ theo ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DealCost"
-                ],
-                "summary": "Lấy Chi phí/Doanh thu thương vụ theo ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Deal cost ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealCostDTO"
-                        }
-                    }
-                }
-            }
-        },
-        "/deal-cost/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật Chi phí/Doanh thu thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DealCost"
-                ],
-                "summary": "Cập nhật Chi phí/Doanh thu thương vụ",
-                "parameters": [
-                    {
-                        "description": "Deal cost data",
-                        "name": "dealCost",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealCostDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.DealCostDTO"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa Chi phí/Doanh thu thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DealCost"
-                ],
-                "summary": "Xóa Chi phí/Doanh thu thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Deal cost ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/sharepb.Empty"
                         }
                     }
                 }
@@ -1468,51 +669,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/deal/deal-cost/{dealId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tìm kiếm Chi phí/Doanh thu thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DealCost"
-                ],
-                "summary": "Tìm kiếm Chi phí/Doanh thu thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Deal ID",
-                        "name": "dealId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "name": "dealId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/deal/{dealId}/commission/stats": {
             "get": {
                 "security": [
@@ -1804,6 +960,43 @@ const docTemplate = `{
                         "description": "Thành công",
                         "schema": {
                             "$ref": "#/definitions/organizationpb.UpdateDealMembersCommissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deal/{dealId}/process": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin process của deal bao gồm statusName, timestamp, code, transactionId, color",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy thông tin process của deal",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "dealId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetDealProcessResponse"
                         }
                     }
                 }
@@ -3337,7 +2530,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.Investment"
+                            "$ref": "#/definitions/organizationpb.Investment"
                         }
                     }
                 }
@@ -3600,6 +2793,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/organization/admin/all-with-members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả doanh nghiệp với thành viên cho admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy danh sách tất cả doanh nghiệp với thành viên (Admin only)",
+                "parameters": [
+                    {
+                        "description": "Thông tin request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetAllOrganizationsWithMembersForAdminRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/organization/branch": {
             "get": {
                 "security": [
@@ -3663,6 +2888,50 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/organizationpb.CreateOrganizationBranchRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/organization/branch/{branchId}/deals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thương vụ theo chi nhánh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy danh sách thương vụ theo chi nhánh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID chi nhánh",
+                        "name": "branchId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Kích thước",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -3934,7 +3203,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy tổ chức của người dùng hiện tại",
+                "description": "Lấy tổ chức hiện tại",
                 "consumes": [
                     "application/json"
                 ],
@@ -3944,7 +3213,7 @@ const docTemplate = `{
                 "tags": [
                     "Tổ chức"
                 ],
-                "summary": "Lấy tổ chức của người dùng hiện tại",
+                "summary": "Lấy tổ chức hiện tại",
                 "responses": {}
             }
         },
@@ -4821,9 +4090,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "emptypb.Empty": {
-            "type": "object"
-        },
         "entity.AttachDocument": {
             "type": "object",
             "properties": {
@@ -4892,6 +4158,10 @@ const docTemplate = `{
                 },
                 "dealID": {
                     "type": "integer"
+                },
+                "doneInvestment": {
+                    "description": "Đánh dấu đã đủ vốn góp",
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"
@@ -5032,25 +4302,28 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.ApprovedStatus": {
-            "type": "integer",
-            "enum": [
-                0,
-                10,
-                20,
-                30
-            ],
-            "x-enum-comments": {
-                "ApprovedStatus_APPROVED_STATUS_APPROVED": "Đã xác nhận",
-                "ApprovedStatus_APPROVED_STATUS_PENDING": "Chờ xác nhận",
-                "ApprovedStatus_APPROVED_STATUS_REJECTED": "Từ chối"
-            },
-            "x-enum-varnames": [
-                "ApprovedStatus_APPROVED_STATUS_UNKNOWN",
-                "ApprovedStatus_APPROVED_STATUS_PENDING",
-                "ApprovedStatus_APPROVED_STATUS_APPROVED",
-                "ApprovedStatus_APPROVED_STATUS_REJECTED"
-            ]
+        "organizationpb.ApprovedInvestmentItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "confirmed": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "transferTime": {
+                    "type": "string"
+                }
+            }
         },
         "organizationpb.BankAccountItem": {
             "type": "object",
@@ -5060,6 +4333,9 @@ const docTemplate = `{
                 },
                 "accountNumber": {
                     "type": "string"
+                },
+                "bank": {
+                    "$ref": "#/definitions/paymentpb.Bank"
                 },
                 "bankId": {
                     "type": "integer"
@@ -5153,77 +4429,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.ContractStatus": {
-            "type": "integer",
-            "enum": [
-                0,
-                10,
-                20,
-                30
-            ],
-            "x-enum-comments": {
-                "ContractStatus_CONTRACT_STATUS_APPROVED": "Đã xác nhận",
-                "ContractStatus_CONTRACT_STATUS_PENDING": "Chờ xác nhận",
-                "ContractStatus_CONTRACT_STATUS_REJECTED": "Từ chối"
-            },
-            "x-enum-varnames": [
-                "ContractStatus_CONTRACT_STATUS_UNKNOWN",
-                "ContractStatus_CONTRACT_STATUS_PENDING",
-                "ContractStatus_CONTRACT_STATUS_APPROVED",
-                "ContractStatus_CONTRACT_STATUS_REJECTED"
-            ]
-        },
-        "organizationpb.ContractType": {
-            "type": "integer",
-            "enum": [
-                0,
-                10,
-                20
-            ],
-            "x-enum-comments": {
-                "ContractType_CONTRACT_TYPE_EXPENSE": "Chi phí",
-                "ContractType_CONTRACT_TYPE_REVENUE": "Doanh thu"
-            },
-            "x-enum-varnames": [
-                "ContractType_CONTRACT_TYPE_UNKNOWN",
-                "ContractType_CONTRACT_TYPE_EXPENSE",
-                "ContractType_CONTRACT_TYPE_REVENUE"
-            ]
-        },
-        "organizationpb.CostTypeDTO": {
-            "type": "object",
-            "properties": {
-                "costType": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isCustom": {
-                    "type": "boolean"
-                },
-                "typeName": {
-                    "type": "string"
-                }
-            }
-        },
-        "organizationpb.CostTypeListDTO": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.CostTypeDTO"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
         "organizationpb.CreateBusinessDomainRequest": {
             "type": "object",
             "properties": {
@@ -5238,38 +4443,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "organizationpb.CreateDealContractRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "category": {
-                    "type": "string"
-                },
-                "contractDate": {
-                    "type": "string"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "note": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/organizationpb.ContractType"
                 }
             }
         },
@@ -5480,6 +4653,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "roleId": {
+                    "type": "integer"
                 },
                 "userId": {
                     "type": "integer"
@@ -5746,109 +4922,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.DealContractResp": {
-            "type": "object",
-            "properties": {
-                "transactionId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.DealContractResponse": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "approvedAt": {
-                    "type": "string"
-                },
-                "approvedBy": {
-                    "type": "integer"
-                },
-                "category": {
-                    "type": "string"
-                },
-                "contractDate": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "integer"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "rejectReason": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/organizationpb.ContractStatus"
-                },
-                "statusName": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/organizationpb.ContractType"
-                },
-                "typeName": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "organizationpb.DealCostDTO": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "confirmedAt": {
-                    "type": "string"
-                },
-                "costName": {
-                    "type": "string"
-                },
-                "costTypeId": {
-                    "type": "integer"
-                },
-                "costTypeName": {
-                    "type": "string"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "status": {
-                    "description": "enums.ApprovedStatus",
-                    "type": "integer"
-                }
-            }
-        },
         "organizationpb.DealHistoryItem": {
             "type": "object",
             "properties": {
@@ -5991,6 +5064,9 @@ const docTemplate = `{
                 "note": {
                     "description": "Ghi chú",
                     "type": "string"
+                },
+                "roleId": {
+                    "type": "integer"
                 }
             }
         },
@@ -6011,78 +5087,22 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.DealTransactionListResponse": {
+        "organizationpb.DealProcessItem": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.DealTransactionResponse"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.DealTransactionResponse": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "approvedAt": {
+                "code": {
                     "type": "string"
                 },
-                "approvedBy": {
-                    "type": "integer"
-                },
-                "category": {
+                "color": {
                     "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "integer"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "rejectReason": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/organizationpb.ApprovedStatus"
                 },
                 "statusName": {
                     "type": "string"
                 },
-                "transactionDate": {
+                "timestamp": {
                     "type": "string"
                 },
-                "type": {
-                    "$ref": "#/definitions/organizationpb.TransactionType"
-                },
-                "typeName": {
-                    "type": "string"
-                },
-                "updatedAt": {
+                "transactionId": {
                     "type": "string"
                 }
             }
@@ -6128,38 +5148,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.FinancialSummaryResponse": {
-            "type": "object",
-            "properties": {
-                "dealId": {
-                    "type": "integer"
-                },
-                "netProfit": {
-                    "type": "number"
-                },
-                "profitMargin": {
-                    "type": "number"
-                },
-                "profitStatus": {
-                    "type": "string"
-                },
-                "targetProfit": {
-                    "type": "number"
-                },
-                "totalExpense": {
-                    "type": "number"
-                },
-                "totalRevenue": {
-                    "type": "number"
-                },
-                "warningMessages": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "organizationpb.GetAcceptedMembersResponse": {
             "type": "object",
             "properties": {
@@ -6168,6 +5156,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/organizationpb.DealInvitationMember"
                     }
+                }
+            }
+        },
+        "organizationpb.GetAllOrganizationsWithMembersForAdminRequest": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
                 }
             }
         },
@@ -6221,6 +5220,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/organizationpb.DealMember"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.GetDealProcessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealProcessItem"
                     }
                 },
                 "total": {
@@ -6351,10 +5364,16 @@ const docTemplate = `{
                 "cancelReason": {
                     "type": "string"
                 },
+                "chargePerson": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
                 "chargePersonId": {
                     "type": "integer"
                 },
                 "chargePersonName": {
+                    "type": "string"
+                },
+                "code": {
                     "type": "string"
                 },
                 "createdAt": {
@@ -6495,6 +5514,88 @@ const docTemplate = `{
                 },
                 "totalInvestment": {
                     "type": "integer"
+                }
+            }
+        },
+        "organizationpb.Investment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "changedAt": {
+                    "type": "string"
+                },
+                "confirmed": {
+                    "type": "boolean"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "doneInvestment": {
+                    "description": "Đánh dấu đã đủ vốn góp",
+                    "type": "boolean"
+                },
+                "histories": {
+                    "description": "Danh sách các lần góp vốn đã được xác nhận",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.ApprovedInvestmentItem"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "investType": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "description": "ID of the deal member",
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "proxyUser": {
+                    "description": "Profile of proxy user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.ProfileItem"
+                        }
+                    ]
+                },
+                "proxyUserId": {
+                    "description": "ID of admin who created on behalf",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "totalInvestment": {
+                    "description": "Tổng số tiền các lần đã góp và được duyệt",
+                    "type": "number"
+                },
+                "transferProofImage": {
+                    "description": "URL to transfer proof image",
+                    "type": "string"
+                },
+                "transferTime": {
+                    "type": "string"
                 }
             }
         },
@@ -6686,35 +5787,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.SignContractRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "contractName": {
-                    "type": "string"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "documentIds": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.DocumentItem"
-                    }
-                },
-                "note": {
-                    "type": "string"
-                },
-                "signedAt": {
-                    "type": "string"
-                },
-                "signedBy": {
-                    "type": "integer"
-                }
-            }
-        },
         "organizationpb.SubmitInvestRequest": {
             "type": "object",
             "properties": {
@@ -6729,6 +5801,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/organizationpb.DocumentItem"
                     }
+                },
+                "doneInvestment": {
+                    "description": "Đánh dấu đã đủ vốn góp",
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"
@@ -6803,55 +5879,9 @@ const docTemplate = `{
                 },
                 "percentDone": {
                     "type": "number"
-                }
-            }
-        },
-        "organizationpb.TransactionType": {
-            "type": "integer",
-            "enum": [
-                0,
-                10,
-                20
-            ],
-            "x-enum-comments": {
-                "TransactionType_TRANSACTION_TYPE_EXPENSE": "Chi phí",
-                "TransactionType_TRANSACTION_TYPE_REVENUE": "Doanh thu"
-            },
-            "x-enum-varnames": [
-                "TransactionType_TRANSACTION_TYPE_UNKNOWN",
-                "TransactionType_TRANSACTION_TYPE_EXPENSE",
-                "TransactionType_TRANSACTION_TYPE_REVENUE"
-            ]
-        },
-        "organizationpb.TransferContractRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
+                },
+                "totalPayment": {
                     "type": "number"
-                },
-                "customerId": {
-                    "type": "integer"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "productIds": {
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "type": "string"
-                },
-                "transactionStep": {
-                    "type": "integer"
-                },
-                "transactionType": {
-                    "type": "integer"
                 }
             }
         },
@@ -6890,35 +5920,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "organizationpb.UpdateDealContractRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "category": {
-                    "type": "string"
-                },
-                "contractDate": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "note": {
                     "type": "string"
                 }
             }
@@ -7025,6 +6026,12 @@ const docTemplate = `{
         "organizationpb.UpdateDealSettingRequest": {
             "type": "object",
             "properties": {
+                "accountName": {
+                    "type": "string"
+                },
+                "accountNumber": {
+                    "type": "string"
+                },
                 "allowManualInput": {
                     "type": "boolean"
                 },
@@ -7033,6 +6040,9 @@ const docTemplate = `{
                 },
                 "bankAccount": {
                     "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "bankId": {
+                    "type": "integer"
                 },
                 "dealId": {
                     "type": "integer"
@@ -7165,6 +6175,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "roleId": {
+                    "type": "integer"
                 }
             }
         },
@@ -7354,6 +6367,29 @@ const docTemplate = `{
                 }
             }
         },
+        "paymentpb.Bank": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "pb_bdspro.ProductAttachment": {
             "type": "object",
             "properties": {
@@ -7395,9 +6431,6 @@ const docTemplate = `{
                 }
             }
         },
-        "sharepb.Empty": {
-            "type": "object"
-        },
         "sharepb.ProfileItem": {
             "type": "object",
             "properties": {
@@ -7423,9 +6456,6 @@ const docTemplate = `{
                     "type": "boolean"
                 }
             }
-        },
-        "status.Error": {
-            "type": "object"
         }
     },
     "securityDefinitions": {

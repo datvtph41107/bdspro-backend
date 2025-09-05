@@ -99,14 +99,14 @@ func (h *InvestmentHandler) DeleteInvestment(ctx context.Context, req *sharepb.I
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID"
-// @Success 200 {object} entity.Investment
+// @Success 200 {object} organizationpb.Investment
 // @Router /investment/{id} [get]
 func (h *InvestmentHandler) DetailInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.Investment, error) {
-	investment, err := h.InvestmentUsecase.GetInvestment(ctx, req.Id)
+	investment, confirmedInvestments, totalInvestment, err := h.InvestmentUsecase.GetInvestmentWithConfirmedHistory(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	result := h.InvestmentMapper.EntityToPb(investment)
+	result := h.InvestmentMapper.EntityToPbWithConfirmedHistory(investment, confirmedInvestments, totalInvestment)
 	h.UserClient.MapToInvestPb(ctx, []*organizationpb.Investment{result})
 	return result, nil
 }
