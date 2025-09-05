@@ -12,4 +12,6 @@ type OrganizationProvider interface {
 	GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error)
 	GetGroupRoleUser(ctx context.Context, groupId uint64, userId uint64) (*dto.GroupMember, error)
 	GetDealMember(ctx context.Context, dealId uint64, userId uint64) (*dto.DealMember, error)
+	GetBranchMember(ctx context.Context, branchId uint64, userId uint64) (*dto.BranchMember, error)
+	GetOrganizationMember(ctx context.Context, organizationId uint64, userId uint64) (*dto.OrganizationMember, error)
 }

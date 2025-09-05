@@ -98,3 +98,35 @@ func (c *OrganizationClient) GetDealMember(ctx context.Context, dealId uint64, u
 		RoleId: resp.RoleId,
 	}, nil
 }
+
+func (c *OrganizationClient) GetBranchMember(ctx context.Context, branchId uint64, userId uint64) (*dto.BranchMember, error) {
+	resp, err := c.OrganizationClient.GetBranchMember(ctx, branchId, userId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get branch member role: %v", err)
+	}
+	if resp == nil {
+		return nil, nil
+	}
+
+	return &dto.BranchMember{
+		BranchId: branchId,
+		UserId:   userId,
+		RoleId:   &resp.RoleId,
+	}, nil
+}
+
+func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organizationId uint64, userId uint64) (*dto.OrganizationMember, error) {
+	resp, err := c.OrganizationClient.GetOrganizationMember(ctx, organizationId, userId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get organization member role: %v", err)
+	}
+	if resp == nil {
+		return nil, nil
+	}
+
+	return &dto.OrganizationMember{
+		OrganizationId: organizationId,
+		UserId:         userId,
+		RoleId:         &resp.RoleId,
+	}, nil
+}

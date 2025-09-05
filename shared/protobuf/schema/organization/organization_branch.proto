@@ -124,7 +124,8 @@ message GetOrganizationBranchMembersRequest {
 message OrganizationBranchMember {
     uint32 id = 1;
     uint32 userId = 2;
-    optional sharepb.ProfileItem user = 3;
+    uint64 roleId = 3;
+    optional sharepb.ProfileItem user = 4;
 }
 
 message GetOrganizationBranchMembersResponse {

@@ -21,6 +21,7 @@ type InternalOrganizationHandler struct {
 	dealTransactionRepo    repository.DealTransactionRepository
 	dealMemberRepo         repository.DealMemberRepository
 	dealUsecase            usecase.DealUsecase
+	branchMemberRepo       repository.OrganizationBranchMemberRepository
 }
 
 func NewInternalOrganizationHandler(
@@ -33,6 +34,7 @@ func NewInternalOrganizationHandler(
 	dealTransactionRepo repository.DealTransactionRepository,
 	dealMemberRepo repository.DealMemberRepository,
 	dealUsecase usecase.DealUsecase,
+	branchMemberRepo repository.OrganizationBranchMemberRepository,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
 		organizationRepo:       organizationRepo,
@@ -45,6 +47,7 @@ func NewInternalOrganizationHandler(
 		dealTransactionRepo:    dealTransactionRepo,
 		dealMemberRepo:         dealMemberRepo,
 		dealUsecase:            dealUsecase,
+		branchMemberRepo:       branchMemberRepo,
 	}
 }
 
@@ -112,6 +115,18 @@ func (h *InternalOrganizationHandler) GetDealMembers(ctx context.Context, req *o
 	data := h.mapper.DealMembersToPb(dealMembers)
 	return &organizationpb.GetDealMemberByIdsResponse{
 		Data: data,
+	}, nil
+}
+
+func (h *InternalOrganizationHandler) GetBranchMembers(ctx context.Context, req *organizationpb.GetBranchMembersRequest) (*organizationpb.GetBranchMemberByIdsResponse, error) {
+	branchMembers, err := h.branchMemberRepo.GetOrganizationBranchMemberByUserIdsAndOrganizationBranchId(ctx, req.UserIds, uint32(req.BranchId))
+
+	if err != nil {
+		return nil, err
+	}
+	pbBranchMembers := h.mapper.BranchMembersToPb(branchMembers)
+	return &organizationpb.GetBranchMemberByIdsResponse{
+		Data: pbBranchMembers,
 	}, nil
 }
 

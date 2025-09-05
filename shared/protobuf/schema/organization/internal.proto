@@ -7,6 +7,7 @@ import "organization/deal_invitation.proto";
 import "organization/group_member.proto";
 import "organization/organization_member.proto";
 import "organization/deal.proto";
+import "organization/organization_branch.proto";
 import "shared/common.proto";
 
 service InternalOrganizationService {
@@ -19,6 +20,7 @@ service InternalOrganizationService {
     rpc GetDealById(GetDealByIdRequest) returns (GetDealByIdResponse);
     rpc AddProductToDeal(AddProductToDealRequest) returns (sharepb.SubmitResponse);
     rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
+    rpc GetBranchMembers(GetBranchMembersRequest) returns (GetBranchMemberByIdsResponse);
 }
 
 message GetOrganizationByIdsRequest {
@@ -40,6 +42,10 @@ message GetGroupByIdsResponse {
 message GetMemberByIdsRequest {
     uint64 groupId = 1;
     repeated uint64 ids = 2;
+}
+
+message GetBranchMemberByIdsResponse {
+    repeated OrganizationBranchMember data = 1;
 }
 
 message GetDealMemberByIdsResponse {
@@ -100,4 +106,14 @@ message AddProductToDealRequest {
 message DealMemberRequest {
     uint64 dealId = 1;
     repeated uint64 userIds = 2;
+}
+
+message GetBranchMembersRequest {
+    uint64 branchId = 1;
+    repeated uint64 userIds = 2;
+}
+
+message GetOrganizationMemberRequest {
+    uint64 organizationId = 1;
+    uint64 userId = 2;
 }

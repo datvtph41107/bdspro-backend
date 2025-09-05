@@ -204,7 +204,7 @@ func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, mod
 				member = &entity.OrganizationMember{
 					OrganizationID: uint32(organizationId),
 					UserID:         memberId,
-					RoleId:         role.Id,
+					RoleId:         uint64(role.Id),
 				}
 				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)
 				if err != nil {
@@ -215,8 +215,8 @@ func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, mod
 			}
 		} else {
 			// Tồn tại → update role nếu cần
-			if member.RoleId != role.Id {
-				member.RoleId = role.Id
+			if member.RoleId != uint64(role.Id) {
+				member.RoleId = uint64(role.Id)
 				_, err = u.organizationMemberRepository.UpdateOrganizationMember(ctx, member)
 				if err != nil {
 					return nil, err
@@ -398,7 +398,7 @@ func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, 
 				member = &entity.OrganizationMember{
 					OrganizationID: uint32(organizationId),
 					UserID:         memberId,
-					RoleId:         role.Id,
+					RoleId:         uint64(role.Id),
 				}
 				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)
 				if err != nil {
@@ -410,8 +410,8 @@ func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, 
 		}
 
 		// Tồn tại → update role nếu cần
-		if member.RoleId != role.Id {
-			member.RoleId = role.Id
+		if member.RoleId != uint64(role.Id) {
+			member.RoleId = uint64(role.Id)
 			_, err = u.organizationMemberRepository.UpdateOrganizationMember(ctx, member)
 			if err != nil {
 				return nil, err

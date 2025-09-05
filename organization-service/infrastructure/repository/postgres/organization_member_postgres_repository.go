@@ -18,6 +18,7 @@ type OrganizationMemberModel struct {
 	OrganizationID uint32    `gorm:"not null;index:idx_org_members_organization_id,priority:1;index:idx_org_members_user_org,priority:2;index:idx_org_members_status_org,priority:2"`
 	UserID         uint32    `gorm:"not null;index:idx_org_members_user_org,priority:1"`
 	Role           uint32    `gorm:"not null;index:idx_org_members_role"`
+	RoleId         uint64    `gorm:"index:idx_org_members_role_id"`
 	Status         uint32    `gorm:"default:1;index:idx_org_members_status_org,priority:1"`
 	JoinedAt       time.Time `gorm:"autoCreateTime"`
 	RemovedAt      *time.Time
@@ -43,7 +44,7 @@ func OrganizationMemberModelToEntity(model *OrganizationMemberModel) *entity.Org
 		ID:             model.ID,
 		OrganizationID: model.OrganizationID,
 		UserID:         model.UserID,
-		RoleId:         model.Role,
+		RoleId:         uint64(model.RoleId),
 		Status:         entity.OrganizationMemberStatus(model.Status),
 		JoinedAt:       model.JoinedAt,
 		RemovedAt:      model.RemovedAt,
@@ -56,6 +57,7 @@ func OrganizationMemberEntityToModel(entity *entity.OrganizationMember) *Organiz
 		OrganizationID: entity.OrganizationID,
 		UserID:         entity.UserID,
 		Role:           uint32(entity.RoleId),
+		RoleId:         entity.RoleId,
 		Status:         uint32(entity.Status),
 		JoinedAt:       entity.JoinedAt,
 		RemovedAt:      entity.RemovedAt,
@@ -114,7 +116,7 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		ID:             result.ID,
 		OrganizationID: result.OrganizationID,
 		UserID:         result.UserID,
-		RoleId:         result.RoleId,
+		RoleId:         uint64(result.RoleId),
 		Status:         entity.OrganizationMemberStatus(result.Status),
 		JoinedAt:       result.JoinedAt,
 		RemovedAt:      result.RemovedAt,
@@ -294,7 +296,7 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 			ID:             result.ID,
 			OrganizationID: result.OrganizationID,
 			UserID:         result.UserID,
-			RoleId:         result.RoleId,
+			RoleId:         uint64(result.RoleId),
 			Status:         entity.OrganizationMemberStatus(result.Status),
 			JoinedAt:       result.JoinedAt,
 			RemovedAt:      result.RemovedAt,

@@ -164,6 +164,18 @@
         }
       }
     },
+    "organizationpbGetBranchMemberByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbOrganizationBranchMember"
+          }
+        }
+      }
+    },
     "organizationpbGetDealByIdResponse": {
       "type": "object",
       "properties": {
@@ -413,6 +425,26 @@
         }
       }
     },
+    "organizationpbOrganizationBranchMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "user": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
     "organizationpbOrganizationItem": {
       "type": "object",
       "properties": {
@@ -444,8 +476,8 @@
           "format": "int64"
         },
         "roleId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "roleName": {
           "type": "string"

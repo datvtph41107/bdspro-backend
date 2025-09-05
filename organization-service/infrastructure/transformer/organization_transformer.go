@@ -194,7 +194,7 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 				Id:             member.OrganizationMember.ID,
 				OrganizationId: member.OrganizationMember.OrganizationID,
 				UserId:         member.OrganizationMember.UserID,
-				RoleId:         member.OrganizationMember.RoleId,
+				RoleId:         uint32(member.OrganizationMember.RoleId),
 				Status:         uint32(member.OrganizationMember.Status),
 				JoinedAt:       member.OrganizationMember.JoinedAt.Format("2006-01-02T15:04:05Z07:00"),
 				RoleName:       member.OrganizationMember.RoleName,

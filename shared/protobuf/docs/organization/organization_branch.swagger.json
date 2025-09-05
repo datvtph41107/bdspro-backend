@@ -587,6 +587,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
         "user": {
           "$ref": "#/definitions/sharepbProfileItem"
         }

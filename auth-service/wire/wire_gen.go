@@ -66,7 +66,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	oAuthHandler := handler.NewOAuthRouter(oAuthGoogle, zaloAuthService, facebookAuthService)
 	permissionRepository := postgre.NewPermissionRepo(db)
 	permissionUsecase := usecase.NewPermissionUsecase(permissionRepository, roleRepository, organizationClient)
-	roleUsecase := usecase.NewRoleUsecase(roleRepository)
+	roleUsecase := usecase.NewRoleUsecase(roleRepository, organizationClient)
 	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper, roleUsecase)
 	roleGroupRepository := postgre.NewRoleGroupRepo(transactionRepo)
 	roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository)

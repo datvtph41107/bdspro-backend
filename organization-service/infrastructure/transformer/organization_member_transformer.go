@@ -31,7 +31,7 @@ func (o *organizationMemberTransformer) CreateOrganizationMemberRequestToEntity(
 	return &entity.OrganizationMember{
 		OrganizationID: request.OrganizationId,
 		UserID:         request.UserId,
-		RoleId:         request.Role,
+		RoleId:         uint64(request.Role),
 	}
 }
 
@@ -62,7 +62,7 @@ func (o *organizationMemberTransformer) EntitiesToCreateOrganizationMemberBatchR
 func (o *organizationMemberTransformer) UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember {
 	return &entity.OrganizationMember{
 		ID:     request.Id,
-		RoleId: request.Role,
+		RoleId: uint64(request.Role),
 	}
 }
 

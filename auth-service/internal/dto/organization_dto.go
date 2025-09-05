@@ -30,3 +30,15 @@ type DealMember struct {
 	UserId uint64  `json:"userId"`
 	RoleId *uint64 `json:"roleId"`
 }
+
+type BranchMember struct {
+	BranchId uint64  `json:"branchId"`
+	UserId   uint64  `json:"userId"`
+	RoleId   *uint64 `json:"roleId"`
+}
+
+type OrganizationMember struct {
+	OrganizationId uint64  `json:"organizationId"`
+	UserId         uint64  `json:"userId"`
+	RoleId         *uint64 `json:"roleId"`
+}

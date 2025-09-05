@@ -203,6 +203,45 @@ func (c *OrganizationClient) GetDealMember(ctx context.Context, dealId uint64, u
 	return resp.Data[0], nil
 }
 
+func (c *OrganizationClient) GetBranchMember(ctx context.Context, branchId uint64, userId uint64) (*organizationpb.OrganizationBranchMember, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	resp, err := c.Client.GetBranchMembers(ctx, &organizationpb.GetBranchMembersRequest{
+		BranchId: branchId,
+		UserIds:  []uint64{userId},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Data) == 0 {
+		return nil, nil
+	}
+
+	return resp.Data[0], nil
+}
+
+func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organizationId uint64, userId uint64) (*organizationpb.OrganizationMember, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	resp, err := c.Client.GetOrganizationMemberByIds(ctx,
+		&organizationpb.GetMemberByIdsRequest{GroupId: organizationId, Ids: []uint64{userId}},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Data) == 0 {
+		return nil, nil
+	}
+
+	return resp.Data[0], nil
+}
+
 // func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
 // 	if c.Client == nil {
 // 		return nil, errors.New("organization client not avaiable")

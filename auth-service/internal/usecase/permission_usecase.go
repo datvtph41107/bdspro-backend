@@ -212,3 +212,26 @@ func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]
 
 	return permissions, nil
 }
+
+func (uc *PermissionUsecase) GetByBranchId(ctx context.Context, branchId uint64) ([]string, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	branchMember, err := uc.organizationProvider.GetBranchMember(ctx, branchId, profileId)
+	if err != nil {
+		return nil, err
+	}
+
+	if branchMember == nil {
+		return []string{}, nil
+	}
+
+	if branchMember.RoleId == nil {
+		return []string{}, nil
+	}
+
+	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *branchMember.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}

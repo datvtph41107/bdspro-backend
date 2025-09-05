@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"auth/internal/domain"
+	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	"common/case/crud"
 	_errors "common/errors"
@@ -11,13 +12,15 @@ import (
 
 type RoleUsecase struct {
 	crud.BaseUsecase[domain.Role, repo.RoleRepository]
+	OrganizationProvider provider.OrganizationProvider
 }
 
-func NewRoleUsecase(roleRepo repo.RoleRepository) *RoleUsecase {
+func NewRoleUsecase(roleRepo repo.RoleRepository, organizationProvider provider.OrganizationProvider) *RoleUsecase {
 	return &RoleUsecase{
-		crud.BaseUsecase[domain.Role, repo.RoleRepository]{
+		BaseUsecase: crud.BaseUsecase[domain.Role, repo.RoleRepository]{
 			Repo: roleRepo,
 		},
+		OrganizationProvider: organizationProvider,
 	}
 }
 
@@ -138,9 +141,25 @@ func (uc *RoleUsecase) AddPermissionsToRole(ctx context.Context, roleID uint64, 
 func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) {
 	// roleIds, err := uc.Repo.GetRoleIdsByProfileId(ctx, profileId)
 	profileId := _utils.GetProfileIdWithContext(ctx)
-	keys, err := uc.Repo.GetPermissionKeysByUserId(ctx, profileId)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	if organizationId == 0 {
+		keys, err := uc.Repo.GetPermissionKeysByUserId(ctx, profileId)
+		if err != nil {
+			return nil, err
+		}
+		return keys, nil
+	}
+	organizationMember, err := uc.OrganizationProvider.GetOrganizationMember(ctx, organizationId, profileId)
 	if err != nil {
 		return nil, err
 	}
+	if organizationMember == nil {
+		return nil, _errors.ReturnError(404, "Organization member not found")
+	}
+	keys, err := uc.Repo.GetPermissionKeysByRoleId(ctx, *organizationMember.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
 	return keys, nil
 }

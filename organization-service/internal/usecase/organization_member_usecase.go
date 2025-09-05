@@ -408,7 +408,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMemberRole(ctx context
 	if err != nil {
 		return 0, "", "", err
 	}
-	role, err := u.organizationRoleRepository.FindById(ctx, member.RoleId)
+	role, err := u.organizationRoleRepository.FindById(ctx, uint32(member.RoleId))
 	if err != nil {
 		return 0, "", "", err
 	}

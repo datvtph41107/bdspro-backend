@@ -184,3 +184,43 @@ func (h *PermissionHandler) GetPermissionByDealId(ctx context.Context, req *shar
 		Keys: permissions,
 	}, nil
 }
+
+// @Summary Get permission by branch ID
+// @Description Get permission by branch ID
+// @Tags Permission
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Branch ID"
+// @Success 200 {object} authpb.PermissionKeysResponse
+// @Router /permission/branch/{id} [get]
+func (h *PermissionHandler) GetPermissionByBranchId(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionKeysResponse, error) {
+	permissions, err := h.permissionUsecase.GetByBranchId(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.PermissionKeysResponse{
+		Keys: permissions,
+	}, nil
+}
+
+// // @Summary Get permission by organization ID
+// // @Description Get permission by organization ID
+// // @Tags Permission
+// // @Security BearerAuth
+// // @Accept json
+// // @Produce json
+// // @Param id path int true "Organization ID"
+// // @Success 200 {object} authpb.PermissionKeysResponse
+// // @Router /permission/organization/me [get]
+// func (h *PermissionHandler) GetPermissionByOrganizationId(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionKeysResponse, error) {
+// 	permissions, err := h.permissionUsecase.GetByCurrentOrganizationId(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &authpb.PermissionKeysResponse{
+// 		Keys: permissions,
+// 	}, nil
+// }

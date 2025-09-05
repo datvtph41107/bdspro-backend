@@ -98,6 +98,7 @@ func (m *InternalOrganizationMapper) OrganizationMemberToPb(organizationMember *
 		Id:     uint32(organizationMember.ID),
 		UserId: uint32(organizationMember.UserID),
 		Status: uint32(organizationMember.Status),
+		RoleId: organizationMember.RoleId,
 		// Role:     organizationMember.Role,
 		// Profile:  m.ProfileToPb(organizationMember.Profile),
 		// JoinedAt: organizationMember.JoinedAt,
@@ -153,5 +154,21 @@ func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMembe
 		MemberId:   uint64(dealMember.MemberID),
 		MemberType: uint32(dealMember.MemberType),
 		RoleId:     &dealMember.RoleID,
+	}
+}
+
+func (m *InternalOrganizationMapper) BranchMembersToPb(dealMembers []*entity.OrganizationBranchMember) []*organizationpb.OrganizationBranchMember {
+	pbBranchMembers := make([]*organizationpb.OrganizationBranchMember, len(dealMembers))
+	for i, dealMember := range dealMembers {
+		pbBranchMembers[i] = m.BranchMemberToPb(dealMember)
+	}
+	return pbBranchMembers
+}
+
+func (m *InternalOrganizationMapper) BranchMemberToPb(branchMember *entity.OrganizationBranchMember) *organizationpb.OrganizationBranchMember {
+	return &organizationpb.OrganizationBranchMember{
+		Id:     branchMember.Id,
+		UserId: branchMember.UserId,
+		RoleId: branchMember.RoleId,
 	}
 }

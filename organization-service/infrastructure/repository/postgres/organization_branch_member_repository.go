@@ -17,6 +17,7 @@ type OrganizationBranchMemberModel struct {
 	UpdatedAt            time.Time `gorm:"autoUpdateTime"`
 	CreatedBy            uint32    `gorm:"index:idx_org_branch_members_created_by"`
 
+	RoleId    uint64     `gorm:"column:role_id"`
 	DeletedAt *time.Time `gorm:"index"`
 	IsDeleted bool       `gorm:"default:false"`
 }
@@ -33,6 +34,7 @@ func OrganizationBranchMemberModelToEntity(m *OrganizationBranchMemberModel) *en
 		CreatedAt:            m.CreatedAt,
 		UpdatedAt:            m.UpdatedAt,
 		CreatedBy:            m.CreatedBy,
+		RoleId:               m.RoleId,
 	}
 }
 
@@ -44,6 +46,7 @@ func OrganizationBranchMemberEntityToModel(e *entity.OrganizationBranchMember) *
 		CreatedAt:            e.CreatedAt,
 		UpdatedAt:            e.UpdatedAt,
 		CreatedBy:            e.CreatedBy,
+		RoleId:               e.RoleId,
 	}
 }
 
@@ -95,6 +98,19 @@ func (r *OrganizationBranchMemberRepository) GetOrganizationBranchMemberByUserId
 		return nil, err
 	}
 	return OrganizationBranchMemberModelToEntity(&model), nil
+}
+
+func (r *OrganizationBranchMemberRepository) GetOrganizationBranchMemberByUserIdsAndOrganizationBranchId(ctx context.Context, userIds []uint64, organizationBranchId uint32) ([]*entity.OrganizationBranchMember, error) {
+	var models []OrganizationBranchMemberModel
+	err := r.db.WithContext(ctx).Where("user_id IN (?) AND organization_branch_id = ? AND deleted_at IS NULL", userIds, organizationBranchId).Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	entities := make([]*entity.OrganizationBranchMember, len(models))
+	for i, model := range models {
+		entities[i] = OrganizationBranchMemberModelToEntity(&model)
+	}
+	return entities, nil
 }
 
 func (r *OrganizationBranchMemberRepository) GetOrganizationBranchMemberByOrganizationBranchIdWithPagination(ctx context.Context, organizationBranchId uint32, page, size int) ([]*entity.OrganizationBranchMember, uint32, error) {

@@ -421,8 +421,8 @@
           "format": "int64"
         },
         "roleId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "roleName": {
           "type": "string"
