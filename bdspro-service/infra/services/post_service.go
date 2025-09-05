@@ -181,8 +181,7 @@ func (s *PostService) GetGlobalPost(ctx context.Context, req *pb_bdspro.PostSear
 		return nil, err
 	}
 
-	postList := make([]*pb_bdspro.Post, len(result))
-	copier.Copy(&postList, &result)
+	postList := s.PostMapper.PostToPbList(&result)
 
 	return &pb_bdspro.PostListResponse{
 		Data:  postList,

@@ -119,6 +119,7 @@ message NewsFeedSearch {
     optional bool isReel = 5;
     uint64 ownerId = 6;
     OwnerOf ownerOf = 7;
+    optional bool isPost = 8;
 }
 
 message ListNewsFeed {
@@ -131,6 +132,7 @@ message NewsFeedGlobalSearch {
     int32 size = 2;
     string text = 3;
     optional bool isReel = 5;
+    optional bool isPost = 6;
 }
 
 message ShareRequest {

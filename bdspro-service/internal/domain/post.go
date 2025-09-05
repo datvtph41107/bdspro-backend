@@ -29,6 +29,8 @@ type Post struct {
 	MediaList       []PostMediaEntity     `json:"mediaList"`
 	OwnerID         uint64                `json:"ownerId"`
 	OwnerOf         enums.EOwnerOf        `gorm:"column:owner_of;default:10" json:"ownerOf"`
+	PublishedAt     *time.Time            `json:"publishedAt"`
+	PublishedBy     uint64                `json:"publishedBy"`
 	// Asset           *Asset               `json:"asset"`
 }
 

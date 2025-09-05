@@ -309,10 +309,15 @@ func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest
 	return entities, total, nil
 }
 
-func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.Post, int64, error) {
-	entities, total, err := s.Repo.Global(c, dto)
+func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+	dto.IsPublished = true
+	entities, total, err := s.Repo.Search(c, 0, &dto)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for i, entity := range entities {
+		entities[i].Status = s.MapPostStatus(&entity)
 	}
 
 	return entities, total, nil

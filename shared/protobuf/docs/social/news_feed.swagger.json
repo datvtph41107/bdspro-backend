@@ -90,6 +90,12 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "isPost",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -234,6 +240,12 @@
               "group"
             ],
             "default": "unknown"
+          },
+          {
+            "name": "isPost",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -532,6 +544,12 @@
           },
           {
             "name": "isReel",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "isPost",
             "in": "query",
             "required": false,
             "type": "boolean"

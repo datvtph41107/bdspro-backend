@@ -15,6 +15,7 @@ type NewsFeedGlobalSearch struct {
 	_dto.Pagable
 	Text   string `json:"text" form:"text"`
 	IsReel *bool  `json:"isReel" form:"isReel"`
+	IsPost *bool  `json:"isPost" form:"isPost"`
 }
 
 type NewsFeedPublic struct {

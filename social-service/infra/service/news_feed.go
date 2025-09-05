@@ -122,6 +122,7 @@ func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.
 		},
 		Text:   req.Text,
 		IsReel: req.IsReel,
+		IsPost: req.IsPost,
 	}
 
 	var posts []*domain.NewsFeed
@@ -236,6 +237,7 @@ func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *socialpb.N
 		},
 		Text:   req.Text,
 		IsReel: req.IsReel,
+		IsPost: req.IsPost,
 	}
 	posts, total, err := s.newsFeedUsecase.GetListPost(ctx, postSearch)
 	if err != nil {

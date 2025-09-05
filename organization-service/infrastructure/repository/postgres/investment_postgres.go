@@ -261,9 +261,10 @@ func (r *InvestmentPostgres) GetConfirmedInvestmentsByDealId(ctx context.Context
 
 	err := r.db.WithContext(ctx).
 		Model(&entity.Investment{}).
-		Where("deal_id = ? AND member_id = ? AND status = ? AND deleted_at IS NULL",
-			dealId, memberId, enums.ApprovedStatusApproved).
-		Order("transfer_time ASC").
+		Joins("JOIN organization_members om ON om.user_id = investments.member_id").
+		Where("investments.deal_id = ? AND investments.member_id = ? AND investments.status = ? AND investments.deleted_at IS NULL AND om.status = ? AND om.deleted_at IS NULL",
+			dealId, memberId, enums.ApprovedStatusApproved, entity.OrganizationMemberStatusActive).
+		Order("investments.transfer_time ASC").
 		Find(&investments).Error
 
 	if err != nil {

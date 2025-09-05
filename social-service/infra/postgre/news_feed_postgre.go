@@ -148,10 +148,20 @@ func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, req *dto.NewsFeedGlobal
 		return nil, 0, err
 	}
 
-	whereCondition := ""
+	reelCondition := "1 = 1"
+	postCondition := "1 = 1"
 	if req.IsReel != nil {
-		whereCondition = fmt.Sprintf("WHERE (is_reel = %t)", *req.IsReel)
+		reelCondition = fmt.Sprintf("is_reel = %t", *req.IsReel)
 	}
+	if req.IsPost != nil {
+		if *req.IsPost {
+			postCondition = "post_id is not null"
+		} else {
+			postCondition = "post_id is null"
+		}
+	}
+	whereCondition := fmt.Sprintf("WHERE %s AND %s", reelCondition, postCondition)
+
 	query := `SELECT * FROM news_feed_global %s LIMIT ? OFFSET ?;`
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId != 0 {

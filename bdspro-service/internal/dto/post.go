@@ -25,6 +25,7 @@ type PostSearchRequest struct {
 	Types           []uint64   `form:"types"` // 1: hiển thị, 2: hết hạn; 3: tạm ẩn
 	PackageVisibles []uint64   `form:"packageVisibles"`
 	ProductID       *uint64    `form:"productId"`
+	IsPublished     bool       `form:"isPublished"`
 }
 
 type PostDetail struct {

@@ -203,6 +203,10 @@ func (r *GormPostRepo) Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *go
 		// queryStr += ")"
 		query.Where(builder.String())
 	}
+
+	if dto.IsPublished {
+		query.Where("posts.published_at is not null")
+	}
 	// if dto.Types != nil && contain10 && contain20 && contain30 {
 	// } else if dto.Types != nil && contain20 && contain10 {
 	// 	query.Where("(expired_at < CURRENT_TIMESTAMP or hidden = false)")
