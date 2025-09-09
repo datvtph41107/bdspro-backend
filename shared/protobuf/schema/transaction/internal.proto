@@ -30,7 +30,7 @@ service InternalTransactionService {
     rpc GetTransactionDetail(sharepb.IdRequest) returns (TransactionResponse);
     rpc GetTransactionByIDs(sharepb.IdRequest) returns (TransactionListResponse);
     rpc GetDealTransactionsByIds(sharepb.IdRequest) returns (GetDealTransactionsByIdsResponse);
-    rpc GetTotalAmountByDealID(sharepb.IdRequest) returns (DealTotalAmountResponse);
+    rpc GetDealStatisticByDealIds(sharepb.IdRequest) returns (StatisticDealsResponse);
 }
 
 message CreateActionRequest {
@@ -153,12 +153,10 @@ message GetDealTransactionsByIdsResponse {
     repeated DealContractResponse dealTransactions = 1;
 }
 
-message DealTotalAmountResponse {
-    uint64 dealId = 1;
-    double totalAmount = 2;
-    double totalRevenue = 3;
-    double totalExpense = 4;
-    double netAmount = 5;
-    double totalPayment = 6;
-    uint32 numTransaction = 7;
+message StatisticDealsResponse {
+    repeated uint64 dealIds = 1;
+    double amountTxt = 2;
+    double amountRevenue = 3;
+    double amountCost = 4;
+    double totalProfit = 5;
 }

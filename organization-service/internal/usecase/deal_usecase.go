@@ -41,6 +41,10 @@ type DealUsecase interface {
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 	GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error)
+
+	// Thống kê tổng quan thương vụ
+	GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error)
+	GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error)
 }
 
 type groupDealUsecase struct {
@@ -917,4 +921,58 @@ func (u *groupDealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchI
 	}
 
 	return deals, uint32(total), nil
+}
+
+// GetOrganizationDealOverview lấy thống kê tổng quan thương vụ theo tổ chức
+func (u *groupDealUsecase) GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error) {
+	// Lấy thống kê cơ bản từ repository
+	overview, err := u.groupDealRepository.GetDealOverviewByOrganization(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lấy danh sách deal IDs để tính lợi nhuận ước tính
+	dealIDs, err := u.groupDealRepository.GetIdsByOrganizationID(ctx, organizationID) // Lấy tối đa 1000 deals
+	if err != nil {
+		// Nếu không lấy được danh sách deals, vẫn trả về thống kê cơ bản
+		return overview, nil
+	}
+
+	// Lấy deal IDs
+	// dealIDs := make([]uint64, len(deals))
+	// for i, deal := range deals {
+	// 	dealIDs[i] = deal.ID
+	// }
+
+	// Lấy lợi nhuận ước tính từ transaction service
+	if len(dealIDs) > 0 {
+		estimatedProfit, err := u.transactionClient.GetEstimatedProfitByDealIDs(ctx, dealIDs)
+		if err == nil {
+			overview.EstimatedProfit = estimatedProfit
+		}
+	}
+
+	return overview, nil
+}
+
+// GetGroupDealOverview lấy thống kê tổng quan thương vụ theo nhóm
+func (u *groupDealUsecase) GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error) {
+	// Lấy thống kê cơ bản từ repository
+	overview, err := u.groupDealRepository.GetDealOverviewByGroup(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lấy danh sách deal IDs để tính lợi nhuận ước tính
+	dealIDs, err := u.groupDealRepository.GetIdsByGroupID(ctx, groupID) // Lấy tối đa 1000 deals
+
+	// Lấy lợi nhuận ước tính từ transaction service
+	if len(dealIDs) > 0 {
+		estimatedProfit, err := u.transactionClient.GetEstimatedProfitByDealIDs(ctx, dealIDs)
+		if err == nil {
+			overview.EstimatedProfit = estimatedProfit
+		}
+	}
+
+	return overview, nil
 }

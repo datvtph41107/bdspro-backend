@@ -847,3 +847,68 @@ func getGroupIdFromContext(ctx context.Context) uint64 {
 	// Implementation sẽ được thêm sau khi có middleware
 	return 0
 }
+
+// @Summary Lấy tổng quan thương vụ theo tổ chức
+// @Description Lấy thống kê tổng quan thương vụ theo tổ chức
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param organizationId path uint64 true "ID tổ chức"
+// @Security BearerAuth
+// @Router /organization/{organizationId}/deals/overview [get]
+func (h *GroupDealHandler) GetOrganizationDealOverview(ctx context.Context, req *organizationpb.GetOrganizationDealOverviewRequest) (*organizationpb.GetOrganizationDealOverviewResponse, error) {
+	organizationID := req.OrganizationId
+
+	// Lấy thống kê từ usecase
+	overview, err := h.DealUsecase.GetOrganizationDealOverview(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	total := overview.TotalDealProcessing + overview.TotalDealCompleted + overview.TotalDealCanceled
+
+	// Map sang response
+	response := &organizationpb.GetOrganizationDealOverviewResponse{
+		OrganizationId:      organizationID,
+		TotalDeals:          total,
+		TotalCapital:        overview.TotalCapital,
+		EstimatedProfit:     overview.EstimatedProfit,
+		TotalDealProcessing: overview.TotalDealProcessing,
+		TotalDealCompleted:  overview.TotalDealCompleted,
+		TotalDealCanceled:   overview.TotalDealCanceled,
+	}
+
+	return response, nil
+}
+
+// @Summary Lấy tổng quan thương vụ theo nhóm
+// @Description Lấy thống kê tổng quan thương vụ theo nhóm
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param groupId path uint64 true "ID nhóm"
+// @Security BearerAuth
+// @Router /group/{groupId}/deals/overview [get]
+func (h *GroupDealHandler) GetGroupDealOverview(ctx context.Context, req *organizationpb.GetGroupDealOverviewRequest) (*organizationpb.GetGroupDealOverviewResponse, error) {
+	groupID := req.GroupId
+
+	// Lấy thống kê từ usecase
+	overview, err := h.DealUsecase.GetGroupDealOverview(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	total := overview.TotalDealProcessing + overview.TotalDealCompleted + overview.TotalDealCanceled
+
+	// Map sang response
+	response := &organizationpb.GetGroupDealOverviewResponse{
+		GroupId:         groupID,
+		TotalDeals:      total,
+		TotalCapital:    overview.TotalCapital,
+		EstimatedProfit: overview.EstimatedProfit,
+		ProcessingDeals: overview.ProcessingDeals,
+		CompletedDeals:  overview.TotalDealCompleted,
+	}
+
+	return response, nil
+}

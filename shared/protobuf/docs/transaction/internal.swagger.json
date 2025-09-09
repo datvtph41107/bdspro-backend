@@ -276,39 +276,6 @@
         }
       }
     },
-    "transactionpbDealTotalAmountResponse": {
-      "type": "object",
-      "properties": {
-        "dealId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "totalAmount": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalRevenue": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalExpense": {
-          "type": "number",
-          "format": "double"
-        },
-        "netAmount": {
-          "type": "number",
-          "format": "double"
-        },
-        "totalPayment": {
-          "type": "number",
-          "format": "double"
-        },
-        "numTransaction": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "transactionpbGetDealTransactionsByIdsResponse": {
       "type": "object",
       "properties": {
@@ -332,6 +299,34 @@
       ],
       "default": "OWNER_TYPE_UNKNOWN",
       "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "transactionpbStatisticDealsResponse": {
+      "type": "object",
+      "properties": {
+        "dealIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "amountTxt": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRevenue": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalProfit": {
+          "type": "number",
+          "format": "double"
+        }
+      }
     },
     "transactionpbTransactionListResponse": {
       "type": "object",

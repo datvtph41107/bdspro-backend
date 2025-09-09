@@ -10,6 +10,7 @@ import (
 	"tx/infra/validator"
 	tx_domain "tx/internal/domain"
 	"tx/internal/enums"
+	"tx/internal/repo"
 	usecase "tx/internal/usecases"
 
 	"google.golang.org/grpc/codes"
@@ -22,6 +23,8 @@ type InternalTransactionHandler struct {
 	DealContractUsecase *usecase.DealContractUsecase
 	Validator           validator.TransactionActionValidator
 	Mapper              *mapper.TransactionMapper
+	DealMapper          *mapper.ContractDealMapper
+	DealCostRepo        repo.DealCostRepository
 }
 
 func NewInternalTransactionHandler(
@@ -29,12 +32,16 @@ func NewInternalTransactionHandler(
 	dealContractUsecase *usecase.DealContractUsecase,
 	validator validator.TransactionActionValidator,
 	mapper *mapper.TransactionMapper,
+	dealMapper *mapper.ContractDealMapper,
+	dealCostRepo repo.DealCostRepository,
 ) *InternalTransactionHandler {
 	return &InternalTransactionHandler{
 		TransactionUsecase:  transactionUsecase,
 		DealContractUsecase: dealContractUsecase,
 		Validator:           validator,
 		Mapper:              mapper,
+		DealMapper:          dealMapper,
+		DealCostRepo:        dealCostRepo,
 	}
 }
 
@@ -228,5 +235,19 @@ func (h *InternalTransactionHandler) GetTransactionByIDs(ctx context.Context, re
 	return &transactionpb.TransactionListResponse{
 		Data:  transactions,
 		Total: int64(len(txs)),
+	}, nil
+}
+
+func (h *InternalTransactionHandler) GetDealStatisticByDealIds(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.StatisticDealsResponse, error) {
+	statistics, err := h.DealCostRepo.GetStatisticsByDealIDs(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	return &transactionpb.StatisticDealsResponse{
+		DealIds:       req.Ids,
+		AmountTxt:     statistics.AmountTxt,
+		AmountRevenue: statistics.AmountRevenue,
+		AmountCost:    statistics.AmountCost,
+		TotalProfit:   statistics.TotalProfit,
 	}, nil
 }

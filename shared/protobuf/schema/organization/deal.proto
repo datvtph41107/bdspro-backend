@@ -196,6 +196,20 @@ service GroupDealService {
             get: "/v2/org/organization/branch/{branchId}/deals"
         };
     }
+
+    // API tổng quan thương vụ cho tổ chức
+    rpc GetOrganizationDealOverview(GetOrganizationDealOverviewRequest) returns (GetOrganizationDealOverviewResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/organization/{organizationId}/overview"
+        };
+    }
+
+    // API tổng quan thương vụ cho nhóm
+    rpc GetGroupDealOverview(GetGroupDealOverviewRequest) returns (GetGroupDealOverviewResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deal/group/{groupId}/overview"
+        };
+    }
 }
 
 service DealCommissionService {
@@ -724,4 +738,33 @@ message GetBranchDealsRequest {
     uint64 branchId = 1;
     optional uint32 page = 2;
     optional uint32 size = 3;
+}
+
+// API tổng quan thương vụ cho tổ chức
+message GetOrganizationDealOverviewRequest {
+    uint64 organizationId = 1;
+}
+
+message GetOrganizationDealOverviewResponse {
+    uint64 organizationId = 1;
+    uint32 totalDeals = 2;           // Tổng số thương vụ
+    uint32 totalDealProcessing = 3;     // Đang xử lý (theo status)
+    uint32 totalDealCompleted = 4;   // Hoàn tất (theo status)
+    uint32 totalDealCanceled = 5;   // Hủy (theo status)
+    double totalCapital = 6;         // Tổng vốn (sum của targetProfit)
+    double estimatedProfit = 7;      // Lợi nhuận ước tính (từ transaction service)
+}
+
+// API tổng quan thương vụ cho nhóm
+message GetGroupDealOverviewRequest {
+    uint64 groupId = 1;
+}
+
+message GetGroupDealOverviewResponse {
+    uint64 groupId = 1;
+    uint32 totalDeals = 2;           // Tổng số thương vụ
+    double totalCapital = 3;         // Tổng vốn (sum của targetProfit)
+    double estimatedProfit = 4;      // Lợi nhuận ước tính (từ transaction service)
+    uint32 processingDeals = 5;      // Đang xử lý (theo status)
+    uint32 completedDeals = 6;       // Hoàn tất (theo status)
 }

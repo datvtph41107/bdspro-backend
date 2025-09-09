@@ -13,4 +13,5 @@ type DealCostRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entity.DealCost, error)
 	ListByDealID(ctx context.Context, search *dto.DealCostSearchDTO) ([]*entity.DealCost, error)
 	GetStatisticsByDealID(ctx context.Context, dealID uint64) (*dto.DealCostStatisticsDTO, error)
+	GetStatisticsByDealIDs(ctx context.Context, dealIDs []uint64) (*dto.StatisticDealsDTO, error)
 }

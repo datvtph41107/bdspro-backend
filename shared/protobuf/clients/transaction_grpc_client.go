@@ -86,8 +86,8 @@ func (c *TransactionGrpcClient) GetTransactionByIds(ctx context.Context, req []u
 	return response, nil
 }
 
-func (c *TransactionGrpcClient) GetTotalAmountByDealID(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.DealTotalAmountResponse, error) {
-	response, err := c.client.GetTotalAmountByDealID(ctx, req)
+func (c *TransactionGrpcClient) GetDealStatisticByDealIds(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.StatisticDealsResponse, error) {
+	response, err := c.client.GetDealStatisticByDealIds(ctx, req)
 	if err != nil {
 		return nil, err
 	}

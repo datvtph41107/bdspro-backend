@@ -110,68 +110,38 @@ func (r *GroupDealPostgresRepository) DetailByID(ctx context.Context, id uint64)
 	return &model, nil
 }
 
-func (r *GroupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	var deals []*entity.Deal
-	var total int64
-
-	offset := (page - 1) * size
-
-	// Count total
-	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).
-		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", groupID, enums.OwnerTypeGroup, false).
-		Count(&total).Error; err != nil {
-		return nil, 0, err
+func (r *GroupDealPostgresRepository) GetIdsByGroupID(ctx context.Context, groupID uint64) ([]uint64, error) {
+	var deals []uint64
+	// Get deal ids
+	countQuery := `
+		SELECT d.id
+		FROM deals d 
+		WHERE d.owner_id = ? 
+		AND d.owner_type = ? 
+		AND d.deleted_at IS NULL
+	`
+	if err := GetDB(ctx, r.db).Raw(countQuery, groupID, enums.OwnerTypeGroup).Pluck("id", &deals).Error; err != nil {
+		return nil, err
 	}
 
-	// Get deals with pagination
-	if err := r.db.WithContext(ctx).
-		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", groupID, enums.OwnerTypeGroup, false).
-		Offset(offset).Limit(size).
-		Order("created_at DESC").
-		Find(&deals).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return deals, uint32(total), nil
+	return deals, nil
 }
 
-func (r *GroupDealPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint64, userID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	var deals []*entity.Deal
-	var total int64
-
-	offset := page * size
-
-	// Count total with JOIN to check if user is member of deal
+func (r *GroupDealPostgresRepository) GetIdsByOrganizationID(ctx context.Context, organizationID uint64) ([]uint64, error) {
+	var deals []uint64
+	// Get deal ids
 	countQuery := `
-		SELECT COUNT(DISTINCT d.id) 
+		SELECT d.id
 		FROM deals d 
-		LEFT JOIN deal_members dm ON d.id = dm.deal_id 
 		WHERE d.owner_id = ? 
 		AND d.owner_type = ? 
-		AND d.is_deleted = ? 
-		AND (d.owner_id = ? OR dm.member_id = ?)
+		AND d.deleted_at IS NULL
 	`
-	if err := r.db.WithContext(ctx).Raw(countQuery, organizationID, enums.OwnerTypeOrganization, false, userID, userID).Scan(&total).Error; err != nil {
-		return nil, 0, err
+	if err := GetDB(ctx, r.db).Raw(countQuery, organizationID, enums.OwnerTypeOrganization).Pluck("id", &deals).Error; err != nil {
+		return nil, err
 	}
 
-	// Get deals with pagination and JOIN to check if user is member of deal
-	query := `
-		SELECT DISTINCT d.* 
-		FROM deals d 
-		LEFT JOIN deal_members dm ON d.id = dm.deal_id 
-		WHERE d.owner_id = ? 
-		AND d.owner_type = ? 
-		AND d.is_deleted = ? 
-		AND (d.owner_id = ? OR dm.member_id = ?)
-		ORDER BY d.created_at DESC 
-		LIMIT ? OFFSET ?
-	`
-	if err := r.db.WithContext(ctx).Raw(query, organizationID, enums.OwnerTypeOrganization, false, userID, userID, size, offset).Scan(&deals).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return deals, uint32(total), nil
+	return deals, nil
 }
 
 func (r *GroupDealPostgresRepository) GetDeals(ctx context.Context, userID uint64, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
@@ -354,4 +324,62 @@ func (r *GroupDealPostgresRepository) GetDealProcess(ctx context.Context, dealID
 	}
 
 	return processItems, nil
+}
+
+// GetDealOverviewByOrganization lấy thống kê tổng quan thương vụ theo tổ chức
+func (r *GroupDealPostgresRepository) GetDealOverviewByOrganization(ctx context.Context, organizationID uint64) (*dto.DealOverview, error) {
+	var result dto.DealOverview
+
+	// Lấy tổng số thương vụ, tổng vốn, đang xử lý, hoàn tất
+	err := GetDB(ctx, r.db).
+		Debug().
+		Model(&entity.Deal{}).
+		Select(`
+			COUNT(*) as total_deals,
+			COALESCE(SUM(target_profit), 0) as total_capital,
+			SUM(CASE WHEN status = 10 THEN 1 ELSE 0 END) as total_deal_processing,
+			SUM(CASE WHEN status = 20 THEN 1 ELSE 0 END) as total_deal_completed,
+			SUM(CASE WHEN status = 30 THEN 1 ELSE 0 END) as total_deal_canceled
+		`).
+		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", organizationID, enums.OwnerTypeOrganization).
+		Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Lợi nhuận ước tính sẽ được lấy từ transaction service
+	// Tạm thời set = 0, sẽ được cập nhật trong usecase
+	// result.EstimatedProfit = 0
+
+	return &result, nil
+}
+
+// GetDealOverviewByGroup lấy thống kê tổng quan thương vụ theo nhóm
+func (r *GroupDealPostgresRepository) GetDealOverviewByGroup(ctx context.Context, groupID uint64) (*dto.DealOverview, error) {
+	var result dto.DealOverview
+
+	// Lấy tổng số thương vụ, tổng vốn, đang xử lý, hoàn tất
+	err := r.db.WithContext(ctx).
+		Debug().
+		Model(&entity.Deal{}).
+		Select(`
+			COUNT(*) as total_deals,
+			COALESCE(SUM(target_profit), 0) as total_capital,
+			SUM(CASE WHEN status = 10 THEN 1 ELSE 0 END) as total_deal_processing,
+			SUM(CASE WHEN status = 20 THEN 1 ELSE 0 END) as total_deal_completed,
+			SUM(CASE WHEN status = 30 THEN 1 ELSE 0 END) as total_deal_canceled
+		`).
+		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", groupID, enums.OwnerTypeGroup).
+		Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Lợi nhuận ước tính sẽ được lấy từ transaction service
+	// Tạm thời set = 0, sẽ được cập nhật trong usecase
+	result.EstimatedProfit = 0
+
+	return &result, nil
 }

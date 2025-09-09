@@ -19,3 +19,11 @@ type Stats struct {
 	Pending  float64
 	Total    float64
 }
+
+type StatisticDealsDTO struct {
+	DealIDs       []uint64
+	AmountTxt     float64
+	AmountRevenue float64
+	AmountCost    float64
+	TotalProfit   float64
+}

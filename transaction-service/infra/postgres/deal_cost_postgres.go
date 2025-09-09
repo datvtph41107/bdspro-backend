@@ -146,3 +146,55 @@ func (r *DealCostPostgreRepo) GetStatisticsByDealID(ctx context.Context, dealID 
 
 	return result, nil
 }
+
+func (r *DealCostPostgreRepo) GetStatisticsByDealIDs(ctx context.Context, dealIDs []uint64) (*dto.StatisticDealsDTO, error) {
+	var totalTx, totalRevenue, totalExpense float64
+
+	// 1. Transactions (cộng theo tb_transaction_action.value)
+	err := r.db.WithContext(ctx).
+		Debug().
+		Table("contract_deals cd").
+		Select("COALESCE(SUM(ta.value),0)").
+		Joins("JOIN tx_transaction t ON t.id = cd.transaction_id").
+		Joins("JOIN tb_transaction_action ta ON ta.tx_id = t.id").
+		Where("cd.deal_id IN ? AND cd.deleted_at IS NULL AND ta.deleted_at IS NULL", dealIDs).
+		Scan(&totalTx).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Revenue (cost_type = 20)
+	err = r.db.WithContext(ctx).
+		Debug().
+		Table("deal_costs dc").
+		Select("COALESCE(SUM(dc.amount),0)").
+		Joins("JOIN cost_types ct ON ct.id = dc.cost_type_id").
+		Where("dc.deal_id IN ? AND dc.deleted_at IS NULL AND ct.cost_type = ?", dealIDs, enums.ECostTypeRevenue).
+		Scan(&totalRevenue).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Expense (cost_type = 10)
+	err = r.db.WithContext(ctx).
+		Debug().
+		Table("deal_costs dc").
+		Select("COALESCE(SUM(dc.amount),0)").
+		Joins("JOIN cost_types ct ON ct.id = dc.cost_type_id").
+		Where("dc.deal_id IN ? AND dc.deleted_at IS NULL AND ct.cost_type = ?", dealIDs, enums.ECostTypeExpense).
+		Scan(&totalExpense).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Tổng hợp kết quả
+	result := &dto.StatisticDealsDTO{
+		DealIDs:       dealIDs,
+		AmountTxt:     totalTx,
+		AmountRevenue: totalRevenue,
+		AmountCost:    totalExpense,
+		TotalProfit:   totalTx + totalRevenue - totalExpense,
+	}
+
+	return result, nil
+}

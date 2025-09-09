@@ -129,6 +129,70 @@
         ]
       }
     },
+    "/v2/org/deal/group/{groupId}/overview": {
+      "get": {
+        "summary": "API tổng quan thương vụ cho nhóm",
+        "operationId": "GroupDealService_GetGroupDealOverview",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetGroupDealOverviewResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
+    "/v2/org/deal/organization/{organizationId}/overview": {
+      "get": {
+        "summary": "API tổng quan thương vụ cho tổ chức",
+        "operationId": "GroupDealService_GetOrganizationDealOverview",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationDealOverviewResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/process/{dealId}": {
       "get": {
         "summary": "API lấy thông tin process của deal",
@@ -2413,6 +2477,40 @@
         }
       }
     },
+    "organizationpbGetGroupDealOverviewResponse": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalDeals": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tổng số thương vụ"
+        },
+        "totalCapital": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng vốn (sum của targetProfit)"
+        },
+        "estimatedProfit": {
+          "type": "number",
+          "format": "double",
+          "title": "Lợi nhuận ước tính (từ transaction service)"
+        },
+        "processingDeals": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Đang xử lý (theo status)"
+        },
+        "completedDeals": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hoàn tất (theo status)"
+        }
+      }
+    },
     "organizationpbGetGroupDealsResponse": {
       "type": "object",
       "properties": {
@@ -2442,6 +2540,45 @@
         "total": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "organizationpbGetOrganizationDealOverviewResponse": {
+      "type": "object",
+      "properties": {
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalDeals": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tổng số thương vụ"
+        },
+        "totalDealProcessing": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Đang xử lý (theo status)"
+        },
+        "totalDealCompleted": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hoàn tất (theo status)"
+        },
+        "totalDealCanceled": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hủy (theo status)"
+        },
+        "totalCapital": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng vốn (sum của targetProfit)"
+        },
+        "estimatedProfit": {
+          "type": "number",
+          "format": "double",
+          "title": "Lợi nhuận ước tính (từ transaction service)"
         }
       }
     },

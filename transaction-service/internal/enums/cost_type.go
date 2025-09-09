@@ -8,6 +8,6 @@ const (
 )
 
 var ECostTypeMap = map[ECostType]string{
-	ECostTypeExpense: "Doanh thu",
-	ECostTypeRevenue: "Chi phí",
+	ECostTypeExpense: "Chi phí",
+	ECostTypeRevenue: "Doanh thu",
 }

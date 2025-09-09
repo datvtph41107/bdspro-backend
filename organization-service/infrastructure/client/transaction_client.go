@@ -6,8 +6,6 @@ import (
 	"pb/clients"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
-
-	iusecase "organization/internal/interface"
 )
 
 // @bind: organization/internal/interface.TransactionClient
@@ -44,14 +42,27 @@ func (c *TransactionClient) MapTransactionToDealContract(ctx context.Context, co
 	}
 }
 
-func (c *TransactionClient) GetTotalAmountByDealID(ctx context.Context, dealID uint64) (*iusecase.GetTotalAmountByDealIDResponse, error) {
-	response, err := c.TransactionGrpcClient.GetTotalAmountByDealID(ctx, &sharepb.IdRequest{Id: dealID})
-	if err != nil {
-		return nil, err
+// func (c *TransactionClient) GetTotalAmountByDealID(ctx context.Context, dealID uint64) (*iusecase.GetTotalAmountByDealIDResponse, error) {
+// 	response, err := c.TransactionGrpcClient.GetTotalAmountByDealID(ctx, &sharepb.IdRequest{Id: dealID})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &iusecase.GetTotalAmountByDealIDResponse{
+// 		DealID:         response.DealId,
+// 		TotalPayment:   response.TotalPayment,
+// 		NumTransaction: response.NumTransaction,
+// 	}, nil
+// }
+
+// GetEstimatedProfitByDealIDs lấy lợi nhuận ước tính theo danh sách deal IDs
+func (c *TransactionClient) GetEstimatedProfitByDealIDs(ctx context.Context, dealIDs []uint64) (float64, error) {
+	if len(dealIDs) == 0 {
+		return 0, nil
 	}
-	return &iusecase.GetTotalAmountByDealIDResponse{
-		DealID:         response.DealId,
-		TotalPayment:   response.TotalPayment,
-		NumTransaction: response.NumTransaction,
-	}, nil
+	response, err := c.TransactionGrpcClient.GetDealStatisticByDealIds(ctx, &sharepb.IdRequest{Ids: dealIDs})
+	if err != nil {
+		return 0, err
+	}
+
+	return response.TotalProfit, nil
 }
