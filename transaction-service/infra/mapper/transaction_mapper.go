@@ -4,7 +4,9 @@ import (
 	_utils "common/utils"
 	transactionpb "pb/types/transaction"
 	"time"
+	"tx/infra/utils"
 	tx_domain "tx/internal/domain"
+	"tx/internal/dto"
 	"tx/internal/enums"
 )
 
@@ -159,4 +161,23 @@ func (m *TransactionMapper) TxActionsToPb(actions []tx_domain.TxAction) []*trans
 		actionsPb[i] = m.TxActionToResponse(&action)
 	}
 	return actionsPb
+}
+
+func (m *TransactionMapper) ProcessDTOsToPb(processes []dto.ProcessDTO) []*transactionpb.ContractProcess {
+	processesPb := make([]*transactionpb.ContractProcess, len(processes))
+	for i, process := range processes {
+		processesPb[i] = m.ProcessDTOToPb(&process)
+	}
+	return processesPb
+}
+func (m *TransactionMapper) ProcessDTOToPb(process *dto.ProcessDTO) *transactionpb.ContractProcess {
+	return &transactionpb.ContractProcess{
+		StatusName:    process.StatusName,
+		Timestamp:     _utils.FormatTimeToString(process.Timestamp),
+		Code:          utils.GenerateTransactionCode(process.TransactionId),
+		TransactionId: process.TransactionId,
+		Color:         process.Color,
+		BgColor:       process.BgColor,
+		BorderColor:   process.BorderColor,
+	}
 }

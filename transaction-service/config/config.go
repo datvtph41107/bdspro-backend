@@ -2,10 +2,6 @@ package config
 
 import (
 	_ "embed"
-	"tx/infra/handler"
-
-	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/spf13/viper"
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
@@ -27,42 +23,3 @@ type UserProperties struct {
 }
 
 var AppProperties UserProperties
-
-type ConfigApp struct {
-	TransactionHandler         *handler.TransactionHandler
-	InternalTransactionHandler *handler.InternalTransactionHandler
-	ContractDealHandler        *handler.ContractDealHandler
-	DealCostHandler            *handler.DealCostHandler
-	CostTypeHandler            *handler.CostTypeHandler
-	Logger                     *flogging.FabricLogger
-}
-
-func NewConfigApp(
-	transactionHandler *handler.TransactionHandler,
-	internalTransactionHandler *handler.InternalTransactionHandler,
-	contractDealHandler *handler.ContractDealHandler,
-	dealCostHandler *handler.DealCostHandler,
-	costTypeHandler *handler.CostTypeHandler,
-) *ConfigApp {
-	return &ConfigApp{
-		TransactionHandler:         transactionHandler,
-		InternalTransactionHandler: internalTransactionHandler,
-		ContractDealHandler:        contractDealHandler,
-		DealCostHandler:            dealCostHandler,
-		CostTypeHandler:            costTypeHandler,
-		Logger:                     flogging.MustGetLogger(viper.GetString("server.name")),
-	}
-}
-
-// // LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
-// func LoadProperties() {
-// 	log.Printf("Đọc config")
-
-// 	// var config UserProperties
-// 	if err := viper.Unmarshal(&AppProperties); err != nil {
-// 		log.Fatalf("Lỗi parse config: %v", err)
-// 		// return nil, err
-// 	}
-
-// 	// return &config, nil
-// }

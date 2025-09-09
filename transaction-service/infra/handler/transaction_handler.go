@@ -144,7 +144,7 @@ func (h *TransactionHandler) CreateProductAction(ctx context.Context, req *trans
 		// FromId:    req.FromId,
 		FromOf: enums.EOwnerUser,
 		// ToId:      req.ToId,
-		ToOf:   enums.EOwnerDeal,
+		ToOf:   enums.EOwnerDealContract,
 		Action: enums.EActionHandOver,
 		// Value:     req.ActionAmount,
 		Note:      req.ActionNote,
@@ -176,7 +176,7 @@ func (h *TransactionHandler) ListProductTransactions(ctx context.Context, req *s
 			Size: uint32(req.Size),
 		},
 		ToID: &req.Id,
-		ToOf: enums.EOwnerDeal,
+		ToOf: enums.EOwnerDealContract,
 	}
 
 	transactions, total, err := h.TransactionUsecase.ListTransactions(ctx, filters)

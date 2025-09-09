@@ -93,3 +93,16 @@ message CreateProductActionRequest {
     string actionAmount = 8;
     string actionCurrency = 9;
 }
+
+message ContractProcess {
+    string statusName = 1;
+    string timestamp = 2;
+    string code = 3;
+    uint64 transactionId = 4;
+    string color = 5;
+    string bgColor = 6;
+    string borderColor = 7;
+}
+message ContractProcessResponse {
+    repeated ContractProcess data = 1;
+}

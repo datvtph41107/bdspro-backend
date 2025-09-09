@@ -41,6 +41,22 @@ func NewDealContractUsecase(
 	}
 }
 
+func (uc *DealContractUsecase) GetDealContractProcess(ctx context.Context, dealID uint64) ([]dto.ProcessDTO, error) {
+	processes, err := uc.dealTransactionRepo.GetDealContractProcess(ctx, dealID)
+	if err != nil {
+		return nil, err
+	}
+	for i, process := range processes {
+		action := enums.EAction(process.Action)
+		style := enums.GetActionStyle(action)
+		processes[i].StatusName = enums.ActionNames[action]
+		processes[i].Color = style.Color
+		processes[i].BorderColor = style.BorderColor
+		processes[i].BgColor = style.BgColor
+	}
+	return processes, nil
+}
+
 func (uc *DealContractUsecase) GetDealContractByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*dto.ContractDealListResponse, int64, error) {
 	dealTransaction, total, err := uc.dealTransactionRepo.GetListByDealID(ctx, dealID, req)
 	if err != nil {
@@ -56,7 +72,7 @@ func (uc *DealContractUsecase) GetActionWhenSave(ctx context.Context, req *dto.D
 		FromId:    req.CustomerId,
 		FromOf:    enums.EOwnerUser,
 		ToId:      req.DealId,
-		ToOf:      enums.EOwnerDeal,
+		ToOf:      enums.EOwnerDealContract,
 		Action:    enums.EAction(req.TransactionStep),
 		Value:     req.Amount,
 		Note:      req.Note,
@@ -65,27 +81,27 @@ func (uc *DealContractUsecase) GetActionWhenSave(ctx context.Context, req *dto.D
 	if req.TransactionStep == 10 {
 		action.Action = 10
 		action.ToId = req.DealId
-		action.ToOf = enums.EOwnerDeal
+		action.ToOf = enums.EOwnerDealContract
 		return action, nil
 	} else if req.TransactionStep == 20 {
 		action.Action = 20
 		action.ToId = req.DealId
-		action.ToOf = enums.EOwnerDeal
+		action.ToOf = enums.EOwnerDealContract
 		return action, nil
 	} else if req.TransactionStep == 30 {
 		action.Action = 30
 		action.ToId = req.DealId
-		action.ToOf = enums.EOwnerDeal
+		action.ToOf = enums.EOwnerDealContract
 		return action, nil
 	} else if req.TransactionStep == 40 {
 		action.Action = 40
 		action.ToId = req.DealId
-		action.ToOf = enums.EOwnerDeal
+		action.ToOf = enums.EOwnerDealContract
 		return action, nil
 	} else if req.TransactionStep == 50 {
 		action.Action = 50
 		action.ToId = req.DealId
-		action.ToOf = enums.EOwnerDeal
+		action.ToOf = enums.EOwnerDealContract
 		return action, nil
 	} else if req.TransactionStep == 60 {
 		action.Action = 60
@@ -136,7 +152,7 @@ func (uc *DealContractUsecase) CreateContractPayment(ctx context.Context, req *d
 			FromID:     currentUserId,
 			FromOf:     enums.EOwnerUser,
 			ToID:       req.DealId,
-			ToOf:       enums.EOwnerDeal,
+			ToOf:       enums.EOwnerDealContract,
 			Value:      req.Amount,
 			Note:       req.Note,
 			Method:     enums.EMethod(req.TransactionType),

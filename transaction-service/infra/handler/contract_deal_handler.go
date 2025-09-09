@@ -24,6 +24,7 @@ type ContractDealHandler struct {
 	dealCostUsecase     transaction_usecase.DealCostUsecase
 	validator           *validator.ContractDealValidator
 	mapper              *mapper.ContractDealMapper
+	txtMapper           *mapper.TransactionMapper
 	bdsproClient        *client.BdsproClient
 	userClient          *client.UserClient
 }
@@ -34,6 +35,7 @@ func NewContractDealHandler(
 	dealCostUsecase transaction_usecase.DealCostUsecase,
 	validator *validator.ContractDealValidator,
 	mapper *mapper.ContractDealMapper,
+	txtMapper *mapper.TransactionMapper,
 	bdsproClient *client.BdsproClient,
 	userClient *client.UserClient,
 ) *ContractDealHandler {
@@ -43,9 +45,31 @@ func NewContractDealHandler(
 		dealCostUsecase:     dealCostUsecase,
 		validator:           validator,
 		mapper:              mapper,
+		txtMapper:           txtMapper,
 		bdsproClient:        bdsproClient,
 		userClient:          userClient,
 	}
+}
+
+// @Summary Lấy quá trình giao dịch thương vụ
+// @Description Lấy quá trình giao dịch thương vụ
+// @Tags Contract Deal
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của giao dịch"
+// @Success 200 {object} transactionpb.ContractProcessResponse "Quá trình giao dịch thương vụ"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /contract/deal/process/{id} [get]
+func (h *ContractDealHandler) DealContractProcess(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.ContractProcessResponse, error) {
+	processes, err := h.contractDealUsecase.GetDealContractProcess(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get deal contract process: %v", err)
+	}
+
+	data := h.txtMapper.ProcessDTOsToPb(processes)
+	return &transactionpb.ContractProcessResponse{Data: data}, nil
 }
 
 // @Summary Tạo giao dịch thương vụ

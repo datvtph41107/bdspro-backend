@@ -9,12 +9,12 @@ package wire
 import (
 	"common/db"
 	"github.com/google/wire"
-	"tx/config"
 	"tx/infra/client"
 	"tx/infra/handler"
 	"tx/infra/mapper"
 	"tx/infra/postgres"
 	"tx/infra/validator"
+	"tx/initial"
 	"tx/internal/interface"
 	"tx/internal/repo"
 	"tx/internal/usecases"
@@ -22,7 +22,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
@@ -45,17 +45,17 @@ func InitializeApp() (*config.ConfigApp, error) {
 	contractDealValidator := validator.NewContractDealValidator()
 	contractDealMapper := mapper.NewContractDealMapper(transactionMapper)
 	bdsproClient := client.NewBdsproClient()
-	contractDealHandler := handler.NewContractDealHandler(dealContractUsecase, transactionUsecase, dealCostUsecase, contractDealValidator, contractDealMapper, bdsproClient, userClient)
+	contractDealHandler := handler.NewContractDealHandler(dealContractUsecase, transactionUsecase, dealCostUsecase, contractDealValidator, contractDealMapper, transactionMapper, bdsproClient, userClient)
 	dealCostMapper := mapper.NewDealCostMapper()
 	dealCostHandler := handler.NewDealCostHandler(dealCostUsecase, dealCostMapper)
 	costTypeUsecase := transaction_usecase.NewCostTypeUsecase(costTypeRepository)
 	costTypeMapper := mapper.NewCostTypeMapper()
 	costTypeHandler := handler.NewCostTypeHandler(costTypeUsecase, costTypeMapper)
-	configApp := config.NewConfigApp(transactionHandler, internalTransactionHandler, contractDealHandler, dealCostHandler, costTypeHandler)
-	return configApp, nil
+	initialApp := initial.NewInitalApp(transactionHandler, internalTransactionHandler, contractDealHandler, dealCostHandler, costTypeHandler)
+	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, wire.Bind(new(iusecase.IOrganizationClient), new(*client.OrganizationClient)), wire.Bind(new(repo.DealTransactionRepository), new(*postgre.DealTransactionPostgresRepository)), wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), client.NewBdsproClient, config.NewConfigApp, handler.NewContractDealHandler, mapper.NewContractDealMapper, validator.NewContractDealValidator, handler.NewCostTypeHandler, mapper.NewCostTypeMapper, postgre.NewCostTypeRepository, transaction_usecase.NewCostTypeUsecase, transaction_usecase.NewDealContractUsecase, handler.NewDealCostHandler, mapper.NewDealCostMapper, postgre.NewDealCostRepository, transaction_usecase.NewDealCostUsecase, validator.NewDealCostValidator, postgre.NewDealTransactionPostgresRepository, handler.NewInternalTransactionHandler, client.NewOrganizationClient, postgre.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(iusecase.IOrganizationClient), new(*client.OrganizationClient)), wire.Bind(new(repo.DealTransactionRepository), new(*postgre.DealTransactionPostgresRepository)), wire.Bind(new(iusecase.ITransaction), new(*postgre.TransactionGorm)), client.NewBdsproClient, handler.NewContractDealHandler, mapper.NewContractDealMapper, validator.NewContractDealValidator, handler.NewCostTypeHandler, mapper.NewCostTypeMapper, postgre.NewCostTypeRepository, transaction_usecase.NewCostTypeUsecase, transaction_usecase.NewDealContractUsecase, handler.NewDealCostHandler, mapper.NewDealCostMapper, postgre.NewDealCostRepository, transaction_usecase.NewDealCostUsecase, validator.NewDealCostValidator, postgre.NewDealTransactionPostgresRepository, initial.NewInitalApp, handler.NewInternalTransactionHandler, client.NewOrganizationClient, postgre.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgre.NewTransactionGorm, handler.NewTransactionHandler, mapper.NewTransactionMapper, postgre.NewTransactionPostgresRepository, transaction_usecase.NewTransactionUsecase, client.NewUserClient)

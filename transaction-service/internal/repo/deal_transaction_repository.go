@@ -18,4 +18,5 @@ type DealTransactionRepository interface {
 	GetTotalAmountByType(ctx context.Context, dealID uint64, transactionType enums.TransactionType) (float64, error)
 	GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*dto.ContractDealListResponse, int64, error)
 	GetTotalAmountByDealID(ctx context.Context, dealID uint64) (*dto.DealCostStatisticsDTO, error)
+	GetDealContractProcess(ctx context.Context, dealID uint64) ([]dto.ProcessDTO, error)
 }

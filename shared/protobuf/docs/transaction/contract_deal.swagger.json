@@ -348,6 +348,75 @@
         ]
       }
     },
+    "/v2/transaction/contract/deal/{id}/process": {
+      "get": {
+        "summary": "Cập nhật giao dịch\nrpc UpdateContract(UpdateDealContractRequest) returns (DealContractResponse) {\n    option (google.api.http) = {\n        put: \"/v2/transaction/contract/deal/{id}\"\n        body: \"*\"\n    };\n}",
+        "operationId": "DealContractService_DealContractProcess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/transactionpbContractProcessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
     "/v2/transaction/contract/deal/{id}/summary": {
       "get": {
         "summary": "Lấy thống kê tài chính",
@@ -612,6 +681,45 @@
         "totalProfit": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "transactionpbContractProcess": {
+      "type": "object",
+      "properties": {
+        "statusName": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "type": "string"
+        },
+        "bgColor": {
+          "type": "string"
+        },
+        "borderColor": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbContractProcessResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbContractProcess"
+          }
         }
       }
     },

@@ -68,7 +68,7 @@ func (h *InternalTransactionHandler) CreateProductTransaction(ctx context.Contex
 		FromID:     req.FromId,
 		FromOf:     enums.EOwnerUser,
 		ToID:       req.ToId,
-		ToOf:       enums.EOwnerDeal,
+		ToOf:       enums.EOwnerDealContract,
 		Value:      req.Amount,
 		Note:       req.Note,
 		Method:     enums.EMethodBuy,

@@ -199,3 +199,25 @@ FROM (
 		},
 	}, nil
 }
+
+func (r *DealTransactionPostgresRepository) GetDealContractProcess(ctx context.Context, dealID uint64) ([]dto.ProcessDTO, error) {
+	var processes []dto.ProcessDTO
+
+	sql := `
+		WITH actions AS (
+			SELECT 
+				a.*,
+				ROW_NUMBER() OVER (PARTITION BY a.action ORDER BY a.timestamp ASC) AS rn
+			FROM tb_transaction_action a
+			INNER JOIN contract_deals cd ON cd.transaction_id = a.tx_id
+			WHERE cd.deal_id = ? 
+			  AND cd.deleted_at IS NULL
+		)
+		SELECT * 
+		FROM actions
+		WHERE rn = 1
+	`
+
+	err := GetDB(ctx, r.db).Raw(sql, dealID).Scan(&processes).Error
+	return processes, err
+}

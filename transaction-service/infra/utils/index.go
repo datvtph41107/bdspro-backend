@@ -5,3 +5,7 @@ import "fmt"
 func GenerateDealCode(id uint64) string {
 	return fmt.Sprintf("TV%06d", id)
 }
+
+func GenerateTransactionCode(id uint64) string {
+	return fmt.Sprintf("TXT%06d", id)
+}

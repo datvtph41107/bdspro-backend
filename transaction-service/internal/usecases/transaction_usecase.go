@@ -345,7 +345,7 @@ func (uc *transactionUsecase) CreateTransferTransaction(ctx context.Context, req
 		FromID:          req.FromID,
 		FromOf:          enums.EOwnerUser, // User type
 		ToID:            req.ToID,
-		ToOf:            enums.EOwnerDeal, // Deal type
+		ToOf:            enums.EOwnerDealContract, // Deal type
 		Method:          enums.EMethodTransfer,
 		Value:           req.Amount,
 		Status:          enums.TxStatusPending,
@@ -364,7 +364,7 @@ func (uc *transactionUsecase) CreateTransferTransaction(ctx context.Context, req
 			FromId: req.FromID,
 			FromOf: enums.EOwnerUser,
 			ToId:   req.ToID,
-			ToOf:   enums.EOwnerDeal,
+			ToOf:   enums.EOwnerDealContract,
 			Action: enums.EActionDeposite,
 			Value:  req.Amount,
 			Note:   req.Note,
