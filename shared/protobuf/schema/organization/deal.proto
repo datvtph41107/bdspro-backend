@@ -631,6 +631,8 @@ message UpdateDealSettingRequest {
     string accountNumber = 12;
     string accountName = 13;
     uint64 bankId = 14;
+    double targetProfit = 15;
+    string name = 16;
 }
 
 message UpdateDealSettingResponse {

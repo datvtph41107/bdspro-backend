@@ -283,6 +283,8 @@ func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint
 				"status":                     setting.Status,
 				"allow_manual_input":         setting.AllowManualInput,
 				"bank_account_id":            bankAccount.ID,
+				"name":                       setting.Name,
+				"target_profit":              setting.TargetProfit,
 				// "owner_id":                   setting.OwnerId,
 			}).Error
 		if err != nil {

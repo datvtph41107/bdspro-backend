@@ -1790,6 +1790,13 @@
         "bankId": {
           "type": "string",
           "format": "uint64"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },

@@ -590,6 +590,8 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 		AccountNumber:           req.AccountNumber,
 		AccountName:             req.AccountName,
 		BankId:                  req.BankId,
+		TargetProfit:            req.TargetProfit,
+		Name:                    req.Name,
 	}
 	err := h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
 	if err != nil {

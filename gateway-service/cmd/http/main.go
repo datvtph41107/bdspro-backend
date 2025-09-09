@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
@@ -180,7 +181,18 @@ var HttpCmd = &cobra.Command{
 		)
 
 		ctx := context.Background()
-		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+		opts := []grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithConnectParams(grpc.ConnectParams{
+				Backoff: backoff.Config{
+					BaseDelay:  5 * time.Second,
+					Multiplier: 1.0,
+					Jitter:     0.0,
+					MaxDelay:   5 * time.Second,
+				},
+				MinConnectTimeout: 5 * time.Second,
+			}),
+		}
 
 		// Đăng ký các gRPC services
 		service.RegisterNotificationService(ctx, mux, env, opts)

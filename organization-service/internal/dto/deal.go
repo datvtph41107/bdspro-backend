@@ -21,6 +21,7 @@ type DealSetting struct {
 	AccountName             string
 	BankId                  uint64
 	AllowManualInput        bool
+	TargetProfit            float64
 }
 
 type SummaryRequest struct {
