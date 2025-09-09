@@ -153,27 +153,28 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetGroupDealsResponse "Thành công"
 // @Router /deal [get]
+// deprecated
 func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *organizationpb.GetGroupDealsRequest) (*organizationpb.GetGroupDealsResponse, error) {
-	if err := h.GroupDealValidator.ValidateGetGroupDealsRequest(req); err != nil {
-		return nil, err
-	}
+	// if err := h.GroupDealValidator.ValidateGetGroupDealsRequest(req); err != nil {
+	// 	return nil, err
+	// }
 
-	page := 0
-	size := 10
-	if req.Page != nil {
-		page = int(*req.Page)
-	}
-	if req.Size != nil {
-		size = int(*req.Size)
-	}
-	deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, uint64(req.GroupId), page, size)
-	if err != nil {
-		return nil, err
-	}
+	// page := 0
+	// size := 10
+	// if req.Page != nil {
+	// 	page = int(*req.Page)
+	// }
+	// if req.Size != nil {
+	// 	size = int(*req.Size)
+	// }
+	// deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, uint64(req.GroupId), page, size)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	response := h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total)
-	h.UserClient.MapMemberToDealPb(ctx, response.Data)
-	return response, nil
+	// response := h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total)
+	// h.UserClient.MapMemberToDealPb(ctx, response.Data)
+	return nil, nil
 }
 
 // @Summary Cập nhật trạng thái thương vụ
@@ -337,16 +338,24 @@ func (h *GroupDealHandler) CreateGroupDealV2(ctx context.Context, req *organizat
 // @Router /organization/{organizationId}/deals [get]
 func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organizationpb.GetOrganizationDealsRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
 	organizationId := req.OrganizationId
-	page := 0
-	size := 10
+	page := uint32(0)
+	size := uint32(10)
 	if req.Page != nil {
-		page = int(*req.Page)
+		page = *req.Page
 	}
 	if req.Size != nil {
-		size = int(*req.Size)
+		size = *req.Size
 	}
 
-	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, page, size)
+	searchRequest := &dto.DealSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: page,
+			Size: size,
+		},
+		OrganizationID: &organizationId,
+	}
+
+	deals, total, err := h.DealUsecase.GetOrganizationDeals(ctx, searchRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -369,17 +378,84 @@ func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req 
 		return nil, errors.New("organizationId is required")
 	}
 
-	pagable := _dto.Pagable{
-		Page: req.GetPage(),
-		Size: req.GetSize(),
+	searchRequest := &dto.DealSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.GetPage(),
+			Size: req.GetSize(),
+		},
+		OrganizationID: &organizationId,
 	}
 
-	deals, total, err := h.DealUsecase.GetOrganizationDealsByOrganizationID(ctx, organizationId, int(pagable.GetPage()), int(pagable.GetSize()))
+	deals, total, err := h.DealUsecase.GetOrganizationDeals(ctx, searchRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	response := h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total)
+	h.UserClient.MapMemberToDealPb(ctx, response.Data)
+	return response, nil
+}
+
+// @Summary Tìm kiếm deals chung
+// @Description Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId và text
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.DealSearchRequest true "Thông tin tìm kiếm deals"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetDealsResponse "Thành công"
+// @Router /v2/org/deals/user [get]
+func (h *GroupDealHandler) GetDealsUser(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
+	searchRequest := &dto.DealSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.GetPage(),
+			Size: req.GetSize(),
+		},
+		Text:           req.GetText(),
+		OrganizationID: req.OrganizationId,
+		GroupID:        req.GroupId,
+		OwnerID:        req.OwnerId,
+	}
+	if req.OwnerOf != nil {
+		searchRequest.OwnerType = enums.OwnerType(*req.OwnerOf)
+	}
+
+	deals, total, err := h.DealUsecase.GetDeals(ctx, searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	response := h.GroupDealTransformer.EntityToGetDealsResponse(deals, total)
+	h.UserClient.MapMemberToDealPb(ctx, response.Data)
+	return response, nil
+}
+
+// @Summary Tìm kiếm deals chung
+// @Description Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId và text
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.DealSearchRequest true "Thông tin tìm kiếm deals"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.GetDealsResponse "Thành công"
+// @Router /v2/org/deals/user/organization [get]
+func (h *GroupDealHandler) GetDealsOrganization(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
+	searchRequest := &dto.DealSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.GetPage(),
+			Size: req.GetSize(),
+		},
+		Text:           req.GetText(),
+		OrganizationID: req.OrganizationId,
+		GroupID:        req.GroupId,
+	}
+
+	deals, total, err := h.DealUsecase.GetDeals(ctx, searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	response := h.GroupDealTransformer.EntityToGetDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
 }
@@ -395,30 +471,40 @@ func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req 
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetGroupDealsV2Response "Thành công"
 // @Router /group/{groupId}/deals [get]
+// deprecated
 func (h *GroupDealHandler) GetGroupDealsV2(ctx context.Context, req *organizationpb.GetGroupDealsV2Request) (*organizationpb.GetGroupDealsV2Response, error) {
-	groupId := req.GroupId
-	page := 0
-	size := 10
-	if req.Page != nil {
-		page = int(*req.Page)
-	}
-	if req.Size != nil {
-		size = int(*req.Size)
-	}
+	// groupId := req.GroupId
+	// page := uint32(0)
+	// size := uint32(10)
+	// if req.Page != nil {
+	// 	page = *req.Page
+	// }
+	// if req.Size != nil {
+	// 	size = *req.Size
+	// }
 
-	if page <= 0 {
-		page = 1
-	}
-	if size <= 0 {
-		size = 10
-	}
+	// if page <= 0 {
+	// 	page = 1
+	// }
+	// if size <= 0 {
+	// 	size = 10
+	// }
 
-	deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, groupId, page, size)
-	if err != nil {
-		return nil, err
-	}
+	// searchRequest := &dto.DealSearchRequest{
+	// 	Pagable: _dto.Pagable{
+	// 		Page: page,
+	// 		Size: size,
+	// 	},
+	// 	GroupID: &groupId,
+	// }
 
-	return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
+	// deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, searchRequest)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
+	return nil, nil
 }
 
 // @Summary Cập nhật trạng thái thương vụ cho tổ chức
@@ -550,14 +636,15 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*or
 	response := make([]*organizationpb.DealMember, len(members))
 	for i, member := range members {
 		response[i] = &organizationpb.DealMember{
-			DealId:          member.DealID,
-			MemberId:        member.MemberID,
-			MemberType:      uint32(member.MemberType),
+			DealId:   member.DealID,
+			MemberId: member.MemberID,
+			// MemberType:      uint32(member.MemberType),
 			AmountCommit:    member.AmountCommit,
 			CommissionValue: member.CommissionValue,
 			CommissionType:  uint32(member.CommissionType),
 			Note:            member.Note,
 			RoleId:          &member.RoleID,
+			IsOwner:         member.IsOwner,
 		}
 	}
 	h.UserClient.MapProfileToDealMember(ctx, response)
@@ -659,7 +746,7 @@ func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.Summ
 		AmountTarget:    summary.AmountTarget,
 		PercentDone:     summary.PercentDone,
 		AmountCost:      summary.AmountCost,
-		AmountProfit:    5000000000,
+		AmountProfit:    summary.AmountApproved,
 		AmountTotal:     10000000000,
 		NumTransaction:  summary.NumTransaction,
 		TotalPayment:    summary.TotalPayment,
@@ -707,6 +794,8 @@ func (h *GroupDealHandler) GetDealProcess(ctx context.Context, req *organization
 			Code:          item.Code,
 			TransactionId: item.TransactionId,
 			Color:         item.Color,
+			BgColor:       item.BgColor,
+			BorderColor:   item.BorderColor,
 		}
 	}
 

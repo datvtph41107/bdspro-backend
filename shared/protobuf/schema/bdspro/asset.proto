@@ -77,6 +77,19 @@ service AssetService {
       get: "/v2/bdspro/v2/asset/publish/{id}" // profileId
     };
   };
+  
+  // Asset Management APIs for Organizations
+  rpc CreateAssetOrganization (SaveAssetRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/asset/organization"
+      body: "*"
+    };
+  };
+  rpc CurrentOrganizationAssets (AssetSearchRequest) returns (AssetSearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset/organization"
+    };
+  };
 }
 
 message AssetList {
@@ -210,4 +223,3 @@ message AssetSearchResponse {
   repeated Asset data = 1;
   uint64 total = 2;
 }
-

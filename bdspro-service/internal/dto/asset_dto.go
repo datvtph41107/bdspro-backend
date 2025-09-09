@@ -34,6 +34,9 @@ type AssetSearchRequest struct {
 	ParentID        *uint64  `form:"parentId"`
 	Keyword         string   `json:"keyword"`
 	Type            uint32   `json:"type"`
+
+	RequestUserId         *uint64 `form:"-"`
+	RequestOrganizationId *uint64 `form:"-"`
 }
 
 type AssetSaveRequest struct {

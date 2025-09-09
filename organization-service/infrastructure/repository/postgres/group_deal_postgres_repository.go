@@ -135,25 +135,101 @@ func (r *GroupDealPostgresRepository) GetByGroupID(ctx context.Context, groupID 
 	return deals, uint32(total), nil
 }
 
-func (r *GroupDealPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+func (r *GroupDealPostgresRepository) GetByOrganizationID(ctx context.Context, organizationID uint64, userID uint64, page, size int) ([]*entity.Deal, uint32, error) {
 	var deals []*entity.Deal
 	var total int64
 
-	offset := (page - 1) * size
+	offset := page * size
+
+	// Count total with JOIN to check if user is member of deal
+	countQuery := `
+		SELECT COUNT(DISTINCT d.id) 
+		FROM deals d 
+		LEFT JOIN deal_members dm ON d.id = dm.deal_id 
+		WHERE d.owner_id = ? 
+		AND d.owner_type = ? 
+		AND d.is_deleted = ? 
+		AND (d.owner_id = ? OR dm.member_id = ?)
+	`
+	if err := r.db.WithContext(ctx).Raw(countQuery, organizationID, enums.OwnerTypeOrganization, false, userID, userID).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get deals with pagination and JOIN to check if user is member of deal
+	query := `
+		SELECT DISTINCT d.* 
+		FROM deals d 
+		LEFT JOIN deal_members dm ON d.id = dm.deal_id 
+		WHERE d.owner_id = ? 
+		AND d.owner_type = ? 
+		AND d.is_deleted = ? 
+		AND (d.owner_id = ? OR dm.member_id = ?)
+		ORDER BY d.created_at DESC 
+		LIMIT ? OFFSET ?
+	`
+	if err := r.db.WithContext(ctx).Raw(query, organizationID, enums.OwnerTypeOrganization, false, userID, userID, size, offset).Scan(&deals).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return deals, uint32(total), nil
+}
+
+func (r *GroupDealPostgresRepository) GetDeals(ctx context.Context, userID uint64, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+	var deals []*entity.Deal
+	var total int64
+
+	offset := searchRequest.GetOffset()
+	limit := searchRequest.GetLimit()
+
+	// Build base query with subquery to check user access
+	baseQuery := `
+		SELECT d.* 
+		FROM deals d 
+		WHERE d.is_deleted = false 
+		AND (
+			d.owner_id = ? 
+			OR EXISTS (
+				SELECT 1 FROM deal_members dm 
+				WHERE dm.deal_id = d.id AND dm.member_id = ?
+			)
+		)
+	`
+
+	args := []interface{}{userID, userID}
+
+	if searchRequest.OwnerID != nil && searchRequest.OwnerType != 0 {
+		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		args = append(args, *searchRequest.OwnerID, searchRequest.OwnerType)
+	}
+	// Add organization filter if provided
+	if searchRequest.OrganizationID != nil {
+		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		args = append(args, *searchRequest.OrganizationID, enums.OwnerTypeOrganization)
+	}
+
+	// Add group filter if provided
+	if searchRequest.GroupID != nil {
+		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		args = append(args, *searchRequest.GroupID, enums.OwnerTypeGroup)
+	}
+
+	// Add text search if provided
+	if searchRequest.Text != "" {
+		baseQuery += " AND d.name ILIKE ?"
+		args = append(args, "%"+searchRequest.Text+"%")
+	}
 
 	// Count total
-	if err := r.db.WithContext(ctx).Model(&entity.Deal{}).
-		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", organizationID, enums.OwnerTypeOrganization, false).
-		Count(&total).Error; err != nil {
+	countQuery := "SELECT COUNT(*) FROM (" + baseQuery + ") as count_query"
+	if err := r.db.WithContext(ctx).Raw(countQuery, args...).Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// Get deals with pagination
-	if err := r.db.WithContext(ctx).
-		Where("owner_id = ? AND owner_type = ? AND is_deleted = ?", organizationID, enums.OwnerTypeOrganization, false).
-		Offset(offset).Limit(size).
-		Order("created_at DESC").
-		Find(&deals).Error; err != nil {
+	dataQuery := baseQuery + " ORDER BY d.created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	if err := r.db.WithContext(ctx).Raw(dataQuery, args...).Scan(&deals).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -236,14 +312,42 @@ func (r *GroupDealPostgresRepository) GetDealProcess(ctx context.Context, dealID
 			Timestamp:     "2024-01-15T10:30:00Z",
 			Code:          "PROC001",
 			TransactionId: "TXN123456",
-			Color:         "#FFA500",
+			Color:         "#8E51FF",
+			BgColor:       "#F5F3FF",
+			BorderColor:   "#DDD6FF",
 		},
 		{
 			StatusName:    "Hoàn thành",
 			Timestamp:     "2024-01-15T11:00:00Z",
 			Code:          "COMP002",
 			TransactionId: "TXN123457",
-			Color:         "#00FF00",
+			Color:         "#2B7FFF",
+			BgColor:       "#EFF6FF",
+			BorderColor:   "#BEDBFF",
+		},
+		{
+			StatusName:  "Đặt cọc",
+			Timestamp:   "16/09/2025",
+			Code:        "GD0000120",
+			Color:       "#FE9A00",
+			BgColor:     "#FFFBEB",
+			BorderColor: "#FEE685",
+		},
+		{
+			StatusName:  "Ký kết",
+			Timestamp:   "16/09/2025",
+			Code:        "GD0000120",
+			Color:       "#00BBA7",
+			BgColor:     "#F0FDFA",
+			BorderColor: "#96F7E4",
+		},
+		{
+			StatusName:  "Hoàn tất",
+			Timestamp:   "16/09/2025",
+			Code:        "GD0000120",
+			Color:       "#00A63E",
+			BgColor:     "#F0FDF4",
+			BorderColor: "#B9F8CF",
 		},
 	}
 

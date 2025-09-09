@@ -477,3 +477,162 @@ func (r *GormPostRepo) GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]
 	}
 	return posts, nil
 }
+
+// GetPosts lấy danh sách posts với filtering và pagination
+func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+	var posts []domain.PostItem
+	var total int64
+
+	// Build base query with joins
+	baseQuery := GetDB(ctx, r.DB).
+		Debug().
+		Model(domain.PostItem{}).
+		Select(`posts.*,
+		province.name as province_name, 
+		district.name as district_name, 
+		ward.name as ward_name,
+		CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
+			ELSE COALESCE(prices.rent_price, 0)
+			END AS post_price,
+		COALESCE(json_agg(json_build_object(
+			'id', post_media.id,
+			'mediaUrl', post_media.media_url,
+			'mediaType', post_media.media_type,
+			'isMain', post_media.is_main,
+			'sortOrder', post_media.sort_order
+		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
+		 CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
+			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+			ELSE 0
+			END AS transaction_status
+		`).
+		Joins("left join products products on products.id = posts.product_id").
+		Joins("left join product_price prices on prices.id = products.last_price_id").
+		Joins("left join region province on province.id = products.province_id").
+		Joins("left join region district  on district.id = products.district_id").
+		Joins("left join region ward on ward.id = products.ward_id").
+		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
+		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
+		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
+		Where("posts.deleted_at is null")
+
+	// Apply user/organization filtering with EXISTS
+	if dto.RequestOrganizationId != nil {
+		baseQuery = baseQuery.Where(`EXISTS (
+			SELECT 1 FROM post_organization poo 
+			WHERE poo.post_id = posts.id 
+			AND poo.organization_id = ? 
+			AND poo.deleted_at IS NULL
+		)`, *dto.RequestOrganizationId)
+	}
+
+	if dto.RequestUserId != nil {
+		baseQuery = baseQuery.Where(`EXISTS (
+			SELECT 1 FROM post_user pou 
+			WHERE pou.post_id = posts.id 
+			AND pou.profile_id = ? 
+			AND pou.deleted_at IS NULL
+		)`, *dto.RequestUserId)
+	}
+
+	// Apply other filters
+	baseQuery = r.applyPostFilters(baseQuery, dto)
+
+	// Count total records first
+	countQuery := baseQuery
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Execute main query with pagination
+	err := baseQuery.
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status").
+		Order("posts.updated_at desc").
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
+		Scan(&posts).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Process media list
+	for i, post := range posts {
+		if post.MediaListRaw != nil {
+			list := []domain.PostMediaEntity{}
+			if err := json.Unmarshal(post.MediaListRaw, &list); err != nil {
+				return nil, 0, err
+			}
+			posts[i].MediaList = list
+		}
+	}
+
+	return posts, total, nil
+}
+
+// applyPostFilters áp dụng các filter cho GetPosts
+func (r *GormPostRepo) applyPostFilters(query *gorm.DB, dto *dto.PostSearchRequest) *gorm.DB {
+	// Filter by content
+	if dto.Content != "" {
+		query = query.Where("content ILIKE ?", "%"+dto.Content+"%")
+	}
+
+	// Filter by title
+	if dto.Title != "" {
+		query = query.Where("title ILIKE ?", "%"+dto.Title+"%")
+	}
+
+	// Filter by text search (content, title)
+	if dto.Text != "" {
+		searchText := "%" + dto.Text + "%"
+		query = query.Where("(content ILIKE ? OR title ILIKE ?)", searchText, searchText)
+	}
+
+	// Filter by transaction type
+	if dto.TransactionType > 0 {
+		query = query.Where("transaction_type = ?", dto.TransactionType)
+	}
+
+	// Filter by product ID
+	if dto.ProductID != nil {
+		query = query.Where("product_id = ?", *dto.ProductID)
+	}
+
+	// Filter by hidden status
+	if dto.Hidden != nil {
+		query = query.Where("hidden = ?", *dto.Hidden)
+	}
+
+	// Filter by status
+	if len(dto.Status) > 0 {
+		query = query.Where("status IN ?", dto.Status)
+	}
+
+	// Filter by types
+	if len(dto.Types) > 0 {
+		query = query.Where("type IN ?", dto.Types)
+	}
+
+	// Filter by package visibles
+	if len(dto.PackageVisibles) > 0 {
+		query = query.Where("package_visible IN ?", dto.PackageVisibles)
+	}
+
+	// Filter by is published
+	if dto.IsPublished {
+		query = query.Where("is_published = ?", dto.IsPublished)
+	}
+
+	// Filter by expired date range
+	if dto.ExpiredFrom != nil {
+		query = query.Where("expired_at >= ?", *dto.ExpiredFrom)
+	}
+
+	if dto.ExpiredTo != nil {
+		query = query.Where("expired_at <= ?", *dto.ExpiredTo)
+	}
+
+	return query
+}

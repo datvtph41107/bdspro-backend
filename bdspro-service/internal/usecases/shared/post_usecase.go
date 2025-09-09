@@ -21,14 +21,16 @@ import (
 
 type PostUsecase struct {
 	// This           IPostUsecase
-	ClientUC       iusecase.INotificationClient
-	ProductUsecase *ProductUsecase // forward reference
-	ProductRepo    repo.ProductRepo
-	Repo           repo.PostRepo
-	PostMediaRepo  repo.PostMediaRepo
-	AssetRepo      repo.AssetRepo
-	PlanUsecase    usecases.PlanUsecase
-	RequestUsecase *RequestUsecase
+	ClientUC             iusecase.INotificationClient
+	ProductUsecase       *ProductUsecase // forward reference
+	ProductRepo          repo.ProductRepo
+	Repo                 repo.PostRepo
+	PostMediaRepo        repo.PostMediaRepo
+	AssetRepo            repo.AssetRepo
+	PlanUsecase          usecases.PlanUsecase
+	RequestUsecase       *RequestUsecase
+	PostOrganizationRepo repo.PostOrganizationRepo
+	PostUserRepo         repo.PostUserRepo
 }
 
 func NewSharedPostUsecase(repo repo.PostRepo,
@@ -38,16 +40,20 @@ func NewSharedPostUsecase(repo repo.PostRepo,
 	assetRepo repo.AssetRepo,
 	planUsecase usecases.PlanUsecase,
 	clientUsecase iusecase.INotificationClient,
+	postOrganizationRepo repo.PostOrganizationRepo,
+	postUserRepo repo.PostUserRepo,
 	// serviceManager *manager.ServiceManager,
 ) *PostUsecase {
 	return &PostUsecase{
 		// planService: planService,
-		ProductRepo:   productRepo,
-		Repo:          repo,
-		PostMediaRepo: postMediaRepo,
-		AssetRepo:     assetRepo,
-		PlanUsecase:   planUsecase,
-		ClientUC:      clientUsecase,
+		ProductRepo:          productRepo,
+		Repo:                 repo,
+		PostMediaRepo:        postMediaRepo,
+		AssetRepo:            assetRepo,
+		PlanUsecase:          planUsecase,
+		ClientUC:             clientUsecase,
+		PostOrganizationRepo: postOrganizationRepo,
+		PostUserRepo:         postUserRepo,
 		// serviceManager:     serviceManager,
 	}
 }
@@ -129,6 +135,13 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 
 	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.Medatadatas); err != nil {
 		return nil, err
+	}
+
+	if dto.RequestOrganizationId != nil {
+		s.PostOrganizationRepo.CreateOwner(c, entity.ID, *dto.RequestOrganizationId)
+	} else {
+		profileId := _utils.GetProfileIdWithContext(c)
+		s.PostUserRepo.CreateOwner(c, entity.ID, profileId)
 	}
 
 	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
@@ -363,6 +376,33 @@ func (s *PostUsecase) GetPublishByProfileID(c context.Context, profileId uint64,
 	return entities, total, nil
 }
 
-// func (s *PostUsecase) Save(c context.Context, entity *domain.Post) error {
-// 	return _db.SaveWithContext(c, entity)
-// }
+// CreateAssetOrganization tạo tài sản cho tổ chức
+func (s *PostUsecase) CreateOrganizationAsset(c context.Context, dto *dto.PostSaveRequest) (*domain.Post, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+
+	dto.RequestOrganizationId = &organizationId
+	return s.CreatePost(c, dto)
+}
+
+func (s *PostUsecase) GetPostOfCurrentUser(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	dto.RequestUserId = &profileId
+	return s.searchPost(c, dto)
+}
+
+func (s *PostUsecase) GetPostOfCurrentOrganization(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+	dto.RequestOrganizationId = &organizationId
+	return s.searchPost(c, dto)
+}
+
+func (s *PostUsecase) searchPost(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
+	results, total, err := s.Repo.GetPosts(c, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	// for i := 0; i < len(results); i++ {
+	// 	s.MapAssetStatus(c, &results[i])
+	// }
+	return results, total, nil
+}

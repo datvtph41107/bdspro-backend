@@ -10,6 +10,8 @@ import (
 	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AssetService struct {
@@ -303,5 +305,65 @@ func (s *AssetService) GetPublish(ctx context.Context, req *pb_bdspro.IdRequest)
 
 	return &pb_bdspro.AssetSearchResponse{
 		Data: assets,
+	}, nil
+}
+
+// @Summary Tạo tài sản cho tổ chức
+// @Description API này cho phép tạo tài sản mới cho tổ chức
+// @Tags Organization: Tài sản
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body pb_bdspro.SaveAssetRequest true "Thông tin tài sản cần tạo"
+// @Router /v2/bdspro/v2/asset/organization [post]
+func (s *AssetService) CreateAssetOrganization(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Response, error) {
+	if req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "tên tài sản là bắt buộc")
+	}
+	if req.Area <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "diện tích phải lớn hơn 0")
+	}
+	if req.PurchasePrice <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "giá mua phải lớn hơn 0")
+	}
+
+	body := s.Mapper.AssetPbToDomain(req)
+	result, err := s.UC.CreateOrganizationAsset(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb_bdspro.Response{
+		Message: "Tạo tài sản thành công",
+		Id:      result.ID,
+	}, nil
+}
+
+// @Summary Lấy danh sách tài sản của tổ chức hiện tại
+// @Description API này cho phép lấy danh sách tài sản thuộc về tổ chức hiện tại
+// @Tags Organization: Tài sản
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param keyword query string false "Từ khóa tìm kiếm"
+// @Param type query int false "Loại tài sản"
+// @Param archived query bool false "Trạng thái lưu trữ"
+// @Router /v2/bdspro/v2/asset/organization [get]
+func (s *AssetService) CurrentOrganizationAssets(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
+	body := dto.AssetSearchRequest{}
+	if err := copier.Copy(&body, req); err != nil {
+		return nil, err
+	}
+
+	result, total, err := s.UC.GetAssetOfCurrentOrganization(ctx, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	assets := s.Mapper.MapAssetPbList(result)
+
+	return &pb_bdspro.AssetSearchResponse{
+		Data:  assets,
+		Total: uint64(total),
 	}, nil
 }

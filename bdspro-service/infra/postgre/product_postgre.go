@@ -855,3 +855,63 @@ func (r *GormUserProductRepo) UpdateRentTransactionID(c context.Context, id uint
 		Where("id = ? and deleted_at is null", id).
 		Update("rent_transaction_id", transactionID).Error
 }
+
+func (r *GormUserProductRepo) GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	var results []domain.Product
+
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`)
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của tổ chức
+	if dto.RequestOrganizationId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM product_organization poo 
+			WHERE poo.product_id = products.id 
+			AND poo.organization_id = ? 
+			AND poo.deleted_at IS NULL
+		)`, *dto.RequestOrganizationId)
+	}
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của user
+	if dto.RequestUserId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM product_user pou 
+			WHERE pou.product_id = products.id 
+			AND pou.profile_id = ? 
+			AND pou.deleted_at IS NULL
+		)`, *dto.RequestUserId)
+	}
+
+	query = query.
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL")
+
+	query = r.QueryDomain(query, dto)
+
+	err := query.
+		Order("updated_at desc").
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
+		Find(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}

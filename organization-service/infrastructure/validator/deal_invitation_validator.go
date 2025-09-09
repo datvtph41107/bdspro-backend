@@ -12,18 +12,18 @@ import (
 )
 
 type DealInvitationValidator interface {
-	ValidateSendInvitationRequest(request *organizationpb.SendInvitationRequest) error
-	ValidateAcceptInvitationRequest(request *organizationpb.AcceptInvitationRequest) error
-	ValidateRejectInvitationRequest(request *organizationpb.RejectInvitationRequest) error
-	ValidateResendInvitationRequest(request *organizationpb.ResendInvitationRequest) error
+	ValidateSendInvitationRequest(request *organizationpb.SendDealInvitationRequest) error
+	ValidateAcceptInvitationRequest(request *organizationpb.AcceptDealInvitationRequest) error
+	ValidateRejectInvitationRequest(request *organizationpb.RejectDealInvitationRequest) error
+	ValidateResendInvitationRequest(request *organizationpb.ResendDealInvitationRequest) error
 	ValidateGetAcceptedMembersRequest(request *organizationpb.GetAcceptedMembersRequest) error
 	ValidateWithdrawFromDealRequest(request *organizationpb.WithdrawFromDealRequest) error
 	ValidateRemoveFromDealRequest(request *organizationpb.RemoveFromDealRequest) error
 	ValidateConfirmWithdrawalRequest(request *organizationpb.ConfirmWithdrawalRequest) error
-	ValidateSearchMembersRequest(request *organizationpb.SearchMembersRequest) error
-	ValidateGetInvitationRequest(request *organizationpb.GetInvitationRequest) error
+	ValidateSearchMembersRequest(request *organizationpb.SearchDealMembersRequest) error
+	ValidateGetInvitationRequest(request *organizationpb.GetDealInvitationRequest) error
 	ValidateGetPendingInvitationsRequest(request *organizationpb.GetPendingInvitationsRequest) error
-	ValidateGetInvitationsByDealRequest(request *organizationpb.GetInvitationsByDealRequest) error
+	ValidateGetInvitationsByDealRequest(request *organizationpb.GetDealInvitationsByDealRequest) error
 }
 
 type dealInvitationValidator struct{}
@@ -32,7 +32,7 @@ func NewDealInvitationValidator() DealInvitationValidator {
 	return &dealInvitationValidator{}
 }
 
-func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organizationpb.SendInvitationRequest) error {
+func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organizationpb.SendDealInvitationRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -61,12 +61,12 @@ func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organiz
 	// 	})
 	// }
 
-	if request.InviteeId == 0 {
+	if request.MemberId == 0 {
 		details = append(details, &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
 				{
-					Field:       "invitee_id",
-					Description: "invitee_id is required",
+					Field:       "member_id",
+					Description: "member_id is required",
 				},
 			},
 		})
@@ -111,7 +111,7 @@ func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organiz
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateAcceptInvitationRequest(request *organizationpb.AcceptInvitationRequest) error {
+func (v *dealInvitationValidator) ValidateAcceptInvitationRequest(request *organizationpb.AcceptDealInvitationRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -123,7 +123,7 @@ func (v *dealInvitationValidator) ValidateAcceptInvitationRequest(request *organ
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateRejectInvitationRequest(request *organizationpb.RejectInvitationRequest) error {
+func (v *dealInvitationValidator) ValidateRejectInvitationRequest(request *organizationpb.RejectDealInvitationRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -140,7 +140,7 @@ func (v *dealInvitationValidator) ValidateRejectInvitationRequest(request *organ
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateResendInvitationRequest(request *organizationpb.ResendInvitationRequest) error {
+func (v *dealInvitationValidator) ValidateResendInvitationRequest(request *organizationpb.ResendDealInvitationRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -210,7 +210,7 @@ func (v *dealInvitationValidator) ValidateConfirmWithdrawalRequest(request *orga
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateSearchMembersRequest(request *organizationpb.SearchMembersRequest) error {
+func (v *dealInvitationValidator) ValidateSearchMembersRequest(request *organizationpb.SearchDealMembersRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -240,7 +240,7 @@ func (v *dealInvitationValidator) ValidateSearchMembersRequest(request *organiza
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateGetInvitationRequest(request *organizationpb.GetInvitationRequest) error {
+func (v *dealInvitationValidator) ValidateGetInvitationRequest(request *organizationpb.GetDealInvitationRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
@@ -257,8 +257,8 @@ func (v *dealInvitationValidator) ValidateGetPendingInvitationsRequest(request *
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}
 
-	if request.InviteeId == 0 {
-		return status.Errorf(codes.InvalidArgument, "invitee_id is required")
+	if request.MemberId == 0 {
+		return status.Errorf(codes.InvalidArgument, "member_id is required")
 	}
 
 	// Validate pagination
@@ -277,7 +277,7 @@ func (v *dealInvitationValidator) ValidateGetPendingInvitationsRequest(request *
 	return nil
 }
 
-func (v *dealInvitationValidator) ValidateGetInvitationsByDealRequest(request *organizationpb.GetInvitationsByDealRequest) error {
+func (v *dealInvitationValidator) ValidateGetInvitationsByDealRequest(request *organizationpb.GetDealInvitationsByDealRequest) error {
 	if request == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
 	}

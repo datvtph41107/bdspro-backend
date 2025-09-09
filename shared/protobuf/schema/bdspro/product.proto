@@ -111,6 +111,18 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/detail"
     };
   };
+  rpc CreateProductForUser (CreateProductForUserRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/create-for-user"
+      body: "*"
+    };
+  };
+  rpc CreateProductForOrg (CreateProductForOrgRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/create-for-org"
+      body: "*"
+    };
+  };
   // rpc GetHistories (IdRequest) returns (HistoryResponse) {
   //   option (google.api.http) = {
   //     get: "/v2/bdspro/v2/product/{id}/histories"
@@ -146,6 +158,18 @@ service ProductService {
   rpc GetGroupProducts (GroupProductSearch) returns (SearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/group/{groupId}"
+    };
+  };
+
+  rpc CurrentOrganizationProducts (ProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/organization/current"
+    };
+  };
+  rpc CreateOrganizationProduct (ProductSaveRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/organization"
+      body: "*"
     };
   };
 }
@@ -373,4 +397,23 @@ message ProductSaveRequest {
 
 message SuggestRequest {
   string content = 1;
+}
+
+message CreateProductForUserRequest {
+  ProductSaveRequest product = 1;
+  uint64 profileId = 2;
+  bool isOwner = 3;
+  uint64 roleId = 4;
+}
+
+message CreateProductForOrgRequest {
+  ProductSaveRequest product = 1;
+  uint64 organizationId = 2;
+  bool isOwner = 3;
+  uint64 roleId = 4;
+}
+
+message CreateProductResponse {
+  uint64 productId = 1;
+  string message = 2;
 }

@@ -1,6 +1,7 @@
 package transformer
 
 import (
+	_models "common/models"
 	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
@@ -10,27 +11,27 @@ import (
 
 type DealInvitationTransformer interface {
 	// Request to Entity transformations
-	SendInvitationRequestToEntity(req *organizationpb.SendInvitationRequest) *entity.DealInvitation
-	AcceptInvitationRequestToEntity(req *organizationpb.AcceptInvitationRequest) *entity.DealInvitation
-	RejectInvitationRequestToEntity(req *organizationpb.RejectInvitationRequest) *entity.DealInvitation
-	ResendInvitationRequestToEntity(req *organizationpb.ResendInvitationRequest) *entity.DealInvitation
-	WithdrawFromDealRequestToEntity(req *organizationpb.WithdrawFromDealRequest) *entity.DealInvitation
-	RemoveFromDealRequestToEntity(req *organizationpb.RemoveFromDealRequest) *entity.DealInvitation
-	ConfirmWithdrawalRequestToEntity(req *organizationpb.ConfirmWithdrawalRequest) *entity.DealInvitation
+	SendInvitationRequestToEntity(req *organizationpb.SendDealInvitationRequest) *entity.DealMember
+	AcceptInvitationRequestToEntity(req *organizationpb.AcceptDealInvitationRequest) *entity.DealMember
+	RejectInvitationRequestToEntity(req *organizationpb.RejectDealInvitationRequest) *entity.DealMember
+	ResendInvitationRequestToEntity(req *organizationpb.ResendDealInvitationRequest) *entity.DealMember
+	WithdrawFromDealRequestToEntity(req *organizationpb.WithdrawFromDealRequest) *entity.DealMember
+	RemoveFromDealRequestToEntity(req *organizationpb.RemoveFromDealRequest) *entity.DealMember
+	ConfirmWithdrawalRequestToEntity(req *organizationpb.ConfirmWithdrawalRequest) *entity.DealMember
 
 	// Entity to Response transformations
-	EntityToSendInvitationResponse(invitation *entity.DealInvitation) *organizationpb.SendInvitationResponse
-	EntityToAcceptInvitationResponse(invitation *entity.DealInvitation) *organizationpb.AcceptInvitationResponse
-	EntityToRejectInvitationResponse(invitation *entity.DealInvitation) *organizationpb.RejectInvitationResponse
-	EntityToResendInvitationResponse(invitation *entity.DealInvitation) *organizationpb.ResendInvitationResponse
-	EntityToWithdrawFromDealResponse(invitation *entity.DealInvitation) *organizationpb.WithdrawFromDealResponse
-	EntityToRemoveFromDealResponse(invitation *entity.DealInvitation) *organizationpb.RemoveFromDealResponse
-	EntityToConfirmWithdrawalResponse(invitation *entity.DealInvitation) *organizationpb.ConfirmWithdrawalResponse
-	EntityToGetInvitationResponse(invitation *entity.DealInvitation) *organizationpb.GetInvitationResponse
+	EntityToSendInvitationResponse(invitation *entity.DealMember) *organizationpb.SendDealInvitationResponse
+	EntityToAcceptInvitationResponse(invitation *entity.DealMember) *organizationpb.AcceptDealInvitationResponse
+	EntityToRejectInvitationResponse(invitation *entity.DealMember) *organizationpb.RejectDealInvitationResponse
+	EntityToResendInvitationResponse(invitation *entity.DealMember) *organizationpb.ResendDealInvitationResponse
+	EntityToWithdrawFromDealResponse(invitation *entity.DealMember) *organizationpb.WithdrawFromDealResponse
+	EntityToRemoveFromDealResponse(invitation *entity.DealMember) *organizationpb.RemoveFromDealResponse
+	EntityToConfirmWithdrawalResponse(invitation *entity.DealMember) *organizationpb.ConfirmWithdrawalResponse
+	EntityToGetInvitationResponse(invitation *entity.DealMember) *organizationpb.GetDealInvitationResponse
 	EntitiesToGetAcceptedMembersResponse(members []*dto.DealInvitationWithProfile) *organizationpb.GetAcceptedMembersResponse
-	EntitiesToSearchMembersResponse(members []*dto.DealInvitationWithProfile, total uint32) *organizationpb.SearchMembersResponse
+	EntitiesToSearchMembersResponse(members []*dto.DealInvitationWithProfile, total uint32) *organizationpb.SearchDealMembersResponse
 	EntitiesToGetPendingInvitationsResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetPendingInvitationsResponse
-	EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetInvitationsByDealResponse
+	EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetDealInvitationsByDealResponse
 }
 
 type dealInvitationTransformer struct {
@@ -44,7 +45,7 @@ func NewDealInvitationTransformer(organizationRoleTransformer OrganizationRoleTr
 }
 
 // Request to Entity transformations
-func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizationpb.SendInvitationRequest) *entity.DealInvitation {
+func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizationpb.SendDealInvitationRequest) *entity.DealMember {
 	// Convert string role to DealMemberType enum
 	// var memberType enums.DealMemberType
 	// switch req.Role {
@@ -58,17 +59,17 @@ func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizat
 	// 	memberType = enums.DealMemberTypeMember // default
 	// }
 
-	invitation := &entity.DealInvitation{
+	invitation := &entity.DealMember{
 		DealID:    req.DealId,
 		InviterID: req.InviterId,
-		InviteeID: req.InviteeId,
+		MemberID:  req.MemberId,
 		Message:   req.Message,
-		RoleId:    req.RoleId,
+		RoleID:    req.RoleId,
 		// MemberType: memberType,
-		Status:    entity.DealInvitationStatusInvited,
+		Status:    entity.DealMemberStatusInvited,
 		InvitedAt: time.Now(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		// CreatedAt: time.Now(),
+		// UpdatedAt: time.Now(),
 	}
 
 	if req.ColorId != nil {
@@ -78,99 +79,111 @@ func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizat
 	return invitation
 }
 
-func (t *dealInvitationTransformer) AcceptInvitationRequestToEntity(req *organizationpb.AcceptInvitationRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID: req.InvitationId,
+func (t *dealInvitationTransformer) AcceptInvitationRequestToEntity(req *organizationpb.AcceptDealInvitationRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 	}
 }
 
-func (t *dealInvitationTransformer) RejectInvitationRequestToEntity(req *organizationpb.RejectInvitationRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID:      req.InvitationId,
+func (t *dealInvitationTransformer) RejectInvitationRequestToEntity(req *organizationpb.RejectDealInvitationRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 		Message: req.Reason,
 	}
 }
 
-func (t *dealInvitationTransformer) ResendInvitationRequestToEntity(req *organizationpb.ResendInvitationRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID: req.InvitationId,
+func (t *dealInvitationTransformer) ResendInvitationRequestToEntity(req *organizationpb.ResendDealInvitationRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 	}
 }
 
-func (t *dealInvitationTransformer) WithdrawFromDealRequestToEntity(req *organizationpb.WithdrawFromDealRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID:      req.InvitationId,
+func (t *dealInvitationTransformer) WithdrawFromDealRequestToEntity(req *organizationpb.WithdrawFromDealRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 		Message: req.Reason,
 	}
 }
 
-func (t *dealInvitationTransformer) RemoveFromDealRequestToEntity(req *organizationpb.RemoveFromDealRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID:      req.InvitationId,
+func (t *dealInvitationTransformer) RemoveFromDealRequestToEntity(req *organizationpb.RemoveFromDealRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 		Message: req.Reason,
 	}
 }
 
-func (t *dealInvitationTransformer) ConfirmWithdrawalRequestToEntity(req *organizationpb.ConfirmWithdrawalRequest) *entity.DealInvitation {
-	return &entity.DealInvitation{
-		ID: req.InvitationId,
+func (t *dealInvitationTransformer) ConfirmWithdrawalRequestToEntity(req *organizationpb.ConfirmWithdrawalRequest) *entity.DealMember {
+	return &entity.DealMember{
+		BaseEntity: _models.BaseEntity{
+			ID: req.InvitationId,
+		},
 	}
 }
 
 // Entity to Response transformations
-func (t *dealInvitationTransformer) EntityToSendInvitationResponse(invitation *entity.DealInvitation) *organizationpb.SendInvitationResponse {
-	return &organizationpb.SendInvitationResponse{
+func (t *dealInvitationTransformer) EntityToSendInvitationResponse(invitation *entity.DealMember) *organizationpb.SendDealInvitationResponse {
+	return &organizationpb.SendDealInvitationResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 		Message:      "Invitation sent successfully",
-		RoleId:       invitation.RoleId,
+		RoleId:       invitation.RoleID,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToAcceptInvitationResponse(invitation *entity.DealInvitation) *organizationpb.AcceptInvitationResponse {
-	return &organizationpb.AcceptInvitationResponse{
+func (t *dealInvitationTransformer) EntityToAcceptInvitationResponse(invitation *entity.DealMember) *organizationpb.AcceptDealInvitationResponse {
+	return &organizationpb.AcceptDealInvitationResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToRejectInvitationResponse(invitation *entity.DealInvitation) *organizationpb.RejectInvitationResponse {
-	return &organizationpb.RejectInvitationResponse{
+func (t *dealInvitationTransformer) EntityToRejectInvitationResponse(invitation *entity.DealMember) *organizationpb.RejectDealInvitationResponse {
+	return &organizationpb.RejectDealInvitationResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToResendInvitationResponse(invitation *entity.DealInvitation) *organizationpb.ResendInvitationResponse {
-	return &organizationpb.ResendInvitationResponse{
+func (t *dealInvitationTransformer) EntityToResendInvitationResponse(invitation *entity.DealMember) *organizationpb.ResendDealInvitationResponse {
+	return &organizationpb.ResendDealInvitationResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 		Message:      "Invitation resent successfully",
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToWithdrawFromDealResponse(invitation *entity.DealInvitation) *organizationpb.WithdrawFromDealResponse {
+func (t *dealInvitationTransformer) EntityToWithdrawFromDealResponse(invitation *entity.DealMember) *organizationpb.WithdrawFromDealResponse {
 	return &organizationpb.WithdrawFromDealResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToRemoveFromDealResponse(invitation *entity.DealInvitation) *organizationpb.RemoveFromDealResponse {
+func (t *dealInvitationTransformer) EntityToRemoveFromDealResponse(invitation *entity.DealMember) *organizationpb.RemoveFromDealResponse {
 	return &organizationpb.RemoveFromDealResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToConfirmWithdrawalResponse(invitation *entity.DealInvitation) *organizationpb.ConfirmWithdrawalResponse {
+func (t *dealInvitationTransformer) EntityToConfirmWithdrawalResponse(invitation *entity.DealMember) *organizationpb.ConfirmWithdrawalResponse {
 	return &organizationpb.ConfirmWithdrawalResponse{
 		InvitationId: invitation.ID,
 		Success:      true,
 	}
 }
 
-func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *entity.DealInvitation) *organizationpb.GetInvitationResponse {
+func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *entity.DealMember) *organizationpb.GetDealInvitationResponse {
 	if invitation == nil {
 		return nil
 	}
@@ -188,17 +201,17 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 	// 	role = "member"
 	// }
 
-	invitationResponse := &organizationpb.DealInvitation{
+	invitationResponse := &organizationpb.DealMember{
 		Id:        invitation.ID,
 		DealId:    invitation.DealID,
 		InviterId: invitation.InviterID,
-		InviteeId: invitation.InviteeID,
+		MemberId:  invitation.MemberID,
 		Status:    uint32(invitation.Status),
 		Message:   invitation.Message,
 		// Role:      role,
-		Reason:    "", // DealInvitation entity doesn't have Reason field
-		CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
-		UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
+		Reason: "", // DealInvitation entity doesn't have Reason field
+		// CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
+		// UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
 	}
 
 	if invitation.Color != nil {
@@ -212,28 +225,28 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 		}
 	}
 
-	return &organizationpb.GetInvitationResponse{
-		Invitation: &organizationpb.DealInvitation{
+	return &organizationpb.GetDealInvitationResponse{
+		Member: &organizationpb.DealMember{
 			Id:        invitation.ID,
 			DealId:    invitation.DealID,
 			InviterId: invitation.InviterID,
-			InviteeId: invitation.InviteeID,
+			MemberId:  invitation.MemberID,
 			Status:    uint32(invitation.Status),
 			Message:   invitation.Message,
 			// Role:      role,
-			Reason:    "", // DealInvitation entity doesn't have Reason field
-			CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
-			UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
+			Reason: "", // DealInvitation entity doesn't have Reason field
+			// CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
+			// UpdatedAt: _utils.FormatTimeToString(&invitation.UpdatedAt),
 		},
 	}
 }
 
 func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members []*dto.DealInvitationWithProfile) *organizationpb.GetAcceptedMembersResponse {
-	result := make([]*organizationpb.DealInvitationMember, len(members))
+	result := make([]*organizationpb.DealMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
 		// var role string
-		// switch member.DealInvitation.MemberType {
+		// switch member.DealMember.MemberType {
 		// case enums.DealMemberTypeCustomer:
 		// 	role = "customer"
 		// case enums.DealMemberTypePartner:
@@ -244,12 +257,13 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 		// 	role = "member"
 		// }
 
-		result[i] = &organizationpb.DealInvitationMember{
-			UserId:   member.DealInvitation.InviteeID,
-			Name:     member.Invitee.FullName,
-			Email:    "", // ProfileItem doesn't have email field
-			RoleId:   member.RoleId,
-			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
+		result[i] = &organizationpb.DealMember{
+			MemberId: member.DealMember.MemberID,
+			Profile:  member.Invitee,
+			// Name:     member.Invitee.FullName,
+			// Email:    "", // ProfileItem doesn't have email field
+			RoleId:      &member.DealMember.RoleID,
+			RespondedAt: _utils.FormatTimeToString(member.DealMember.RespondedAt),
 		}
 	}
 
@@ -258,12 +272,12 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 	}
 }
 
-func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*dto.DealInvitationWithProfile, total uint32) *organizationpb.SearchMembersResponse {
-	result := make([]*organizationpb.DealInvitationMember, len(members))
+func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*dto.DealInvitationWithProfile, total uint32) *organizationpb.SearchDealMembersResponse {
+	result := make([]*organizationpb.DealMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
 		// var role string
-		// switch member.DealInvitation.MemberType {
+		// switch member.DealMember.MemberType {
 		// case enums.DealMemberTypeCustomer:
 		// 	role = "customer"
 		// case enums.DealMemberTypePartner:
@@ -274,27 +288,28 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 		// 	role = "member"
 		// }
 
-		result[i] = &organizationpb.DealInvitationMember{
-			UserId:   member.DealInvitation.InviteeID,
-			Name:     member.Invitee.FullName,
-			Email:    "", // ProfileItem doesn't have email field
-			RoleId:   member.RoleId,
-			JoinedAt: _utils.FormatTimeToString(&member.DealInvitation.CreatedAt),
+		result[i] = &organizationpb.DealMember{
+			MemberId: member.DealMember.MemberID,
+			Profile:  member.Invitee,
+			// Name:     member.Invitee.FullName,
+			// Email:    "", // ProfileItem doesn't have email field
+			RoleId:      &member.DealMember.RoleID,
+			RespondedAt: _utils.FormatTimeToString(member.DealMember.RespondedAt),
 		}
 	}
 
-	return &organizationpb.SearchMembersResponse{
+	return &organizationpb.SearchDealMembersResponse{
 		Members: result,
 		Total:   int64(total),
 	}
 }
 
 func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetPendingInvitationsResponse {
-	result := make([]*organizationpb.DealInvitation, len(invitations))
+	result := make([]*organizationpb.DealMember, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
 		// var role string
-		// switch invitation.DealInvitation.MemberType {
+		// switch invitation.DealMember.MemberType {
 		// case enums.DealMemberTypeCustomer:
 		// 	role = "customer"
 		// case enums.DealMemberTypePartner:
@@ -305,27 +320,27 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 		// 	role = "member"
 		// }
 
-		invitationResponse := &organizationpb.DealInvitation{
-			Id:        invitation.DealInvitation.ID,
-			DealId:    invitation.DealInvitation.DealID,
-			InviterId: invitation.DealInvitation.InviterID,
-			InviteeId: invitation.DealInvitation.InviteeID,
-			Status:    uint32(invitation.DealInvitation.Status),
-			Message:   invitation.DealInvitation.Message,
+		invitationResponse := &organizationpb.DealMember{
+			Id:        invitation.DealMember.ID,
+			DealId:    invitation.DealMember.DealID,
+			InviterId: invitation.DealMember.InviterID,
+			MemberId:  invitation.DealMember.MemberID,
+			Status:    uint32(invitation.DealMember.Status),
+			Message:   invitation.DealMember.Message,
 			// Role:      role,
-			Reason:    "", // DealInvitation entity doesn't have Reason field
-			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
-			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
+			Reason: "", // DealInvitation entity doesn't have Reason field
+			// CreatedAt: _utils.FormatTimeToString(&invitation.Create),
+			// UpdatedAt: _utils.FormatTimeToString(&invitation.DealMember.UpdatedAt),
 		}
 
-		if invitation.DealInvitation.Color != nil {
+		if invitation.DealMember.Color != nil {
 			invitationResponse.Color = &organizationpb.Color{
-				Id:              uint32(invitation.DealInvitation.Color.ID),
-				Name:            invitation.DealInvitation.Color.Name,
-				ContentColor:    invitation.DealInvitation.Color.ContentColor,
-				BackgroundColor: invitation.DealInvitation.Color.BackgroundColor,
-				Description:     invitation.DealInvitation.Color.Description,
-				IsActive:        invitation.DealInvitation.Color.IsActive,
+				Id:              uint32(invitation.DealMember.Color.ID),
+				Name:            invitation.DealMember.Color.Name,
+				ContentColor:    invitation.DealMember.Color.ContentColor,
+				BackgroundColor: invitation.DealMember.Color.BackgroundColor,
+				Description:     invitation.DealMember.Color.Description,
+				IsActive:        invitation.DealMember.Color.IsActive,
 			}
 		}
 
@@ -337,12 +352,12 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 	}
 }
 
-func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetInvitationsByDealResponse {
-	result := make([]*organizationpb.DealInvitation, len(invitations))
+func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *organizationpb.GetDealInvitationsByDealResponse {
+	result := make([]*organizationpb.DealMember, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
 		// var role string
-		// switch invitation.DealInvitation.MemberType {
+		// switch invitation.DealMember.MemberType {
 		// case enums.DealMemberTypeCustomer:
 		// 	role = "customer"
 		// case enums.DealMemberTypePartner:
@@ -353,36 +368,37 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 		// 	role = "member"
 		// }
 
-		invitationResponse := &organizationpb.DealInvitation{
-			Id:        invitation.DealInvitation.ID,
-			DealId:    invitation.DealInvitation.DealID,
-			InviterId: invitation.DealInvitation.InviterID,
-			InviteeId: invitation.DealInvitation.InviteeID,
-			Status:    uint32(invitation.DealInvitation.Status),
-			Message:   invitation.DealInvitation.Message,
+		invitationResponse := &organizationpb.DealMember{
+			Id:        invitation.DealMember.ID,
+			DealId:    invitation.DealMember.DealID,
+			InviterId: invitation.DealMember.InviterID,
+			MemberId:  invitation.DealMember.MemberID,
+			Status:    uint32(invitation.DealMember.Status),
+			Message:   invitation.DealMember.Message,
 			Reason:    "", // DealInvitation entity doesn't have Reason field
-			CreatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.CreatedAt),
-			UpdatedAt: _utils.FormatTimeToString(&invitation.DealInvitation.UpdatedAt),
+			IsOwner:   invitation.DealMember.IsOwner,
+			// CreatedAt: _utils.FormatTimeToString(&invitation.DealMember.CreatedAt),
+			// UpdatedAt: _utils.FormatTimeToString(&invitation.DealMember.UpdatedAt),
 		}
 
-		if invitation.DealInvitation.Role != nil {
-			invitationResponse.Role = t.organizationRoleTransformer.EntityToRoleResponse(invitation.DealInvitation.Role)
-		}
+		// if invitation.DealMember.Role != nil {
+		// 	invitationResponse.Role = t.organizationRoleTransformer.EntityToRoleResponse(invitation.DealMember.Role)
+		// }
 
-		if invitation.DealInvitation.Color != nil {
+		if invitation.DealMember.Color != nil {
 			invitationResponse.Color = &organizationpb.Color{
-				Id:              uint32(invitation.DealInvitation.Color.ID),
-				Name:            invitation.DealInvitation.Color.Name,
-				ContentColor:    invitation.DealInvitation.Color.ContentColor,
-				BackgroundColor: invitation.DealInvitation.Color.BackgroundColor,
-				Description:     invitation.DealInvitation.Color.Description,
-				IsActive:        invitation.DealInvitation.Color.IsActive,
+				Id:              uint32(invitation.DealMember.Color.ID),
+				Name:            invitation.DealMember.Color.Name,
+				ContentColor:    invitation.DealMember.Color.ContentColor,
+				BackgroundColor: invitation.DealMember.Color.BackgroundColor,
+				Description:     invitation.DealMember.Color.Description,
+				IsActive:        invitation.DealMember.Color.IsActive,
 			}
 		}
 
 		result[i] = invitationResponse
 	}
-	return &organizationpb.GetInvitationsByDealResponse{
+	return &organizationpb.GetDealInvitationsByDealResponse{
 		Data:  result,
 		Total: int64(total),
 	}

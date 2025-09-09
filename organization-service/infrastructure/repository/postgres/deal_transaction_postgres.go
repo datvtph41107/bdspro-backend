@@ -42,7 +42,7 @@ func (r *DealTransactionPostgresRepository) GetByID(ctx context.Context, id uint
 		First(&transaction).Error
 	if err != nil {
 		return nil, err
-	} 
+	}
 	return &transaction, nil
 }
 
@@ -180,7 +180,7 @@ func (r *DealTransactionPostgresRepository) GetTotalAmountByType(ctx context.Con
 	return total, nil
 }
 
-func (r *DealTransactionPostgresRepository) GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*entity.DealTransaction, int64, error) {
+func (r *DealTransactionPostgresRepository) GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearchRequest) ([]*entity.DealTransaction, int64, error) {
 	var transactions []*entity.DealTransaction
 	var total int64
 	err := GetDB(ctx, r.db).Model(&entity.DealTransaction{}).Where("deal_id = ? and deleted_at is null", dealID).Find(&transactions).Error

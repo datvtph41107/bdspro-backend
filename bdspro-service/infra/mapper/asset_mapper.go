@@ -28,13 +28,10 @@ func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *pb_bdspro.Asset {
 		return nil
 	}
 
-	return &pb_bdspro.Asset{
+	result := &pb_bdspro.Asset{
 		Id:               asset.ID,
 		Name:             asset.Name,
 		Area:             asset.Area,
-		WardId:           asset.WardID,
-		DistrictId:       asset.DistrictID,
-		ProvinceId:       asset.ProvinceID,
 		ProductId:        asset.ProductID,
 		ParentAssetId:    asset.ParentAssetID,
 		SplitMergeStatus: asset.SplitMergeStatus,
@@ -49,6 +46,21 @@ func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *pb_bdspro.Asset {
 		OwnerType:        &asset.OwnerType,
 		LegalItems:       m.mapLegalItemsPb(asset.LegalItems),
 	}
+
+	if asset.Province != nil {
+		result.ProvinceName = asset.Province.Name
+		result.ProvinceId = &asset.Province.ID
+	}
+	if asset.District != nil {
+		result.DistrictName = asset.District.Name
+		result.DistrictId = &asset.District.ID
+	}
+	if asset.Ward != nil {
+		result.WardName = asset.Ward.Name
+		result.WardId = &asset.Ward.ID
+	}
+
+	return result
 }
 
 func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain.Asset {

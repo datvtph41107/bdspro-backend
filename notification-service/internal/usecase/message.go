@@ -60,10 +60,12 @@ func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.Ty
 		return []string{"Thương vụ \"", attachData[0], "\" đã được cập nhật trạng thái thành: \"", attachData[1], "\""}
 	}
 	if typeMessage == enums.InvestmentApproved {
-		return []string{"Bạn đã được phê duyệt khai báo góp vốn cho thương vụ: \"", attachData[0], "\" với số tiền: ", attachData[1]}
+		// return []string{"Bạn đã được phê duyệt khai báo góp vốn cho thương vụ: \"", attachData[0], "\" với số tiền: ", attachData[1]}
+		return []string{"Bạn đã đồng ý tham gia thương vụ"}
 	}
 	if typeMessage == enums.InvestmentRejected {
-		return []string{"Bạn đã bị từ chối khai báo góp vốn cho thương vụ: \"", attachData[0], "\" với số tiền: ", attachData[1]}
+		// return []string{"Bạn đã bị từ chối khai báo góp vốn cho thương vụ: \"", attachData[0], "\" với số tiền: ", attachData[1]}
+		return []string{"Bạn đã bị chối khai báo góp vốn"}
 	}
 
 	if typeMessage == enums.TransactionDeposit {

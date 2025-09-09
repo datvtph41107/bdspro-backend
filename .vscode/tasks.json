@@ -124,7 +124,7 @@
     {
       "label": "🔔 Notification gRPC (8204)",
       "type": "shell",
-      "command": "cd shared/code && make run-dev notification",
+      "command": "cd shared/code && make run-dev notification grpc",
       "args": [],
       "problemMatcher": [
         "$go"

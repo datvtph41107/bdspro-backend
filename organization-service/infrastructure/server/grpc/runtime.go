@@ -203,7 +203,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
 			organizationpb.RegisterInvestmentServiceServer(s, investmentHandler)
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
-			organizationpb.RegisterDealInvitationServiceServer(s, dealInvitationHandler)
+			organizationpb.RegisterDealMemberServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
 			// organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)

@@ -203,3 +203,36 @@ func (s *PostService) GetPublish(ctx context.Context, req *pb_bdspro.PostPublish
 		Total: int32(total),
 	}, err
 }
+
+func (s *PostService) CreatePostOrganization(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
+	body := s.PostMapper.PostSaveRequestToDTO(req)
+
+	result, err := s.UC.CreateOrganizationAsset(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+
+	post := &pb_bdspro.Post{}
+	if err := copier.Copy(post, result); err != nil {
+		return nil, err
+	}
+	return post, nil
+}
+
+func (s *PostService) CurrentOrganizationPosts(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
+	query := dto.PostSearchRequest{}
+	if err := copier.Copy(&query, req); err != nil {
+		return nil, err
+	}
+
+	result, total, err := s.UC.GetPostOfCurrentOrganization(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+	postList := s.PostMapper.PostToPbList(&result)
+
+	return &pb_bdspro.PostListResponse{
+		Data:  postList,
+		Total: int32(total),
+	}, nil
+}

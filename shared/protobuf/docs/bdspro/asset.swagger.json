@@ -228,6 +228,80 @@
         ]
       }
     },
+    "/v2/bdspro/v2/asset/organization": {
+      "get": {
+        "operationId": "AssetService_CurrentOrganizationAssets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproAssetSearchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "AssetService"
+        ]
+      },
+      "post": {
+        "summary": "Asset Management APIs for Organizations",
+        "operationId": "AssetService_CreateAssetOrganization",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproSaveAssetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssetService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/asset/publish/{id}": {
       "get": {
         "summary": "rpc History(IdRequest) returns (HistoryResponse) {\n  option (google.api.http) = {\n    get: \"/v2/bdspro/v2/asset/history/{id}\"\n  };\n};\nrpc HistoryOwner(IdRequest) returns (HistoryResponse) {\n  option (google.api.http) = {\n    get: \"/v2/bdspro/v2/asset/history/owner\"\n  };\n};",

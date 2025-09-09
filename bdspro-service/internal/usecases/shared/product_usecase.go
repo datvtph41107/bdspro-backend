@@ -51,6 +51,9 @@ type ProductUsecase struct {
 	NotificationClient iusecase.INotificationClient
 	Transaction        iusecase.ITransaction
 	AssetUsecase       *AssetUsecase
+
+	ProductOrganizationRepo repo.ProductOrganizationRepo
+	ProductUserRepo         repo.ProductUserRepo
 }
 
 func NewProductUsecase(
@@ -72,6 +75,8 @@ func NewProductUsecase(
 	notificationClient iusecase.INotificationClient,
 	transaction iusecase.ITransaction,
 	assetUsecase *AssetUsecase,
+	productOrganizationRepo repo.ProductOrganizationRepo,
+	productUserRepo repo.ProductUserRepo,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -93,6 +98,9 @@ func NewProductUsecase(
 		NotificationClient: notificationClient,
 		Transaction:        transaction,
 		AssetUsecase:       assetUsecase,
+
+		ProductOrganizationRepo: productOrganizationRepo,
+		ProductUserRepo:         productUserRepo,
 		// OwnerType:    ownerType,
 	}
 
@@ -101,41 +109,41 @@ func NewProductUsecase(
 	return result
 }
 
-func MakeProductUsecase(
-	productRepo repo.ProductRepo,
-	ProductHistoryRepo repo.ProductHistoryRepo,
-	assetRepo repo.AssetRepo,
-	mediaRepo repo.ProductMediaRepo,
-	productAccessRepo repo.SharingAccessRepo,
-	houseInfoRepo repo.HouseInfoRepo,
-	priceRepo repo.ProductPriceRepo,
-	productPrivate repo.ProductPrivateRepo,
-	region repo.RegionRepo,
-	docTypeRepo repo.DocTypeRepo,
-	propertyType repo.PropertyTypeRepo,
-	amenity repo.AmenityRepo,
-	memberPlan usecases.PlanUsecase,
-	PostUsecase *PostUsecase,
-	ownerType enums.EOwnerOf,
-) *ProductUsecase {
-	return &ProductUsecase{
-		ProductRepo:        productRepo,
-		AssetRepo:          assetRepo,
-		ProductAccessRepo:  productAccessRepo,
-		MediaRepo:          mediaRepo,
-		HouseInfoRepo:      houseInfoRepo,
-		PriceRepo:          priceRepo,
-		ProductPrivate:     productPrivate,
-		Region:             region,
-		DocTypeRepo:        docTypeRepo,
-		PropertyType:       propertyType,
-		Amenity:            amenity,
-		MemberPlan:         memberPlan,
-		ProductHistoryRepo: ProductHistoryRepo,
-		PostUsecase:        PostUsecase,
-		OwnerType:          ownerType,
-	}
-}
+// func MakeProductUsecase(
+// 	productRepo repo.ProductRepo,
+// 	ProductHistoryRepo repo.ProductHistoryRepo,
+// 	assetRepo repo.AssetRepo,
+// 	mediaRepo repo.ProductMediaRepo,
+// 	productAccessRepo repo.SharingAccessRepo,
+// 	houseInfoRepo repo.HouseInfoRepo,
+// 	priceRepo repo.ProductPriceRepo,
+// 	productPrivate repo.ProductPrivateRepo,
+// 	region repo.RegionRepo,
+// 	docTypeRepo repo.DocTypeRepo,
+// 	propertyType repo.PropertyTypeRepo,
+// 	amenity repo.AmenityRepo,
+// 	memberPlan usecases.PlanUsecase,
+// 	PostUsecase *PostUsecase,
+// 	ownerType enums.EOwnerOf,
+// ) *ProductUsecase {
+// 	return &ProductUsecase{
+// 		ProductRepo:        productRepo,
+// 		AssetRepo:          assetRepo,
+// 		ProductAccessRepo:  productAccessRepo,
+// 		MediaRepo:          mediaRepo,
+// 		HouseInfoRepo:      houseInfoRepo,
+// 		PriceRepo:          priceRepo,
+// 		ProductPrivate:     productPrivate,
+// 		Region:             region,
+// 		DocTypeRepo:        docTypeRepo,
+// 		PropertyType:       propertyType,
+// 		Amenity:            amenity,
+// 		MemberPlan:         memberPlan,
+// 		ProductHistoryRepo: ProductHistoryRepo,
+// 		PostUsecase:        PostUsecase,
+// 		OwnerType:          ownerType,
+// 	}
+// }
 
 func (s *ProductUsecase) CheckPermission(c context.Context, productId *uint64, permission enums.EPermission) error {
 	// hasPermission, err := s.This.HasPermission(c, productId, permission)
@@ -156,6 +164,13 @@ func (s *ProductUsecase) GetOwnerID(c context.Context, ownerType enums.EOwnerOf)
 
 	ownerId := _utils.GetProfileIdWithContext(c)
 	return ownerId
+}
+
+func (s *ProductUsecase) CreateOrganizationProduct(c context.Context, product *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+
+	product.RequestOrganizationID = &organizationId
+	return s.CreateProduct(c, product)
 }
 
 func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
@@ -258,6 +273,21 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			}
 
 			err = s.ProductRepo.UpdateAssetID(c, entity.ID, assetEntity.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		// sản phẩm của tổ chức
+		if product.RequestOrganizationID != nil {
+			_, err = s.ProductOrganizationRepo.CreateOwner(c, entity.ID, *product.RequestOrganizationID)
+			if err != nil {
+				return err
+			}
+		} else {
+			// sản phẩm của người dùng
+			profileId := _utils.GetProfileIdWithContext(c)
+			_, err = s.ProductUserRepo.CreateOwner(c, entity.ID, profileId)
 			if err != nil {
 				return err
 			}
@@ -367,6 +397,34 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 
 // 	return product, nil
 // }
+
+func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	dto.RequestGroupId = &groupId
+	return s.searchProduct(c, dto)
+}
+
+func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	dto.RequestUserId = &profileId
+	return s.searchProduct(c, dto)
+}
+
+func (s *ProductUsecase) GetProductOfCurrentOrganization(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+	dto.RequestOrganizationId = &organizationId
+	return s.searchProduct(c, dto)
+}
+
+func (s *ProductUsecase) searchProduct(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	results, total, err := s.ProductRepo.GetProducts(c, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := 0; i < len(results); i++ {
+		s.MapProductStatus(c, &results[i])
+	}
+	return results, total, nil
+}
 
 func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	// profileId := _jwt.GetProfileId(c)

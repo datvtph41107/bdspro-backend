@@ -43,6 +43,7 @@ func startGRPCServer() {
 	authpb.RegisterAuthServiceServer(s, app.AuthHandler)
 	authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
 	authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)
+	authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
 
 	// Enable reflection for debugging
 	// reflection.Register(s)

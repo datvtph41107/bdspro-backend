@@ -32,4 +32,6 @@ type PostRepo interface {
 	Delete(ctx context.Context, profileId, id uint64) error
 	GetPublishByProfileID(ctx context.Context, profileId uint64, dto dto.PostPublishSearch) ([]domain.Post, int64, error)
 	OwnerPost(ctx context.Context, profileId uint64, postId uint64) (bool, error)
+
+	GetPosts(ctx context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error)
 }

@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 import "payment/bank.proto";
+import "organization/deal_invitation.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -68,6 +69,20 @@ service GroupDealService {
     rpc GetOrganizationDealsCurrent(sharepb.IdRequest) returns (GetOrganizationDealsResponse) {
         option (google.api.http) = {
             get: "/v2/org/organization/deals/current"
+        };
+    }
+
+    // API tìm kiếm deals chung
+    rpc GetDealsUser(DealSearchRequest) returns (GetDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deals/user"
+        };
+    }
+
+    // API tìm kiếm deals chung
+    rpc GetDealsOrganization(DealSearchRequest) returns (GetDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/deals/user/organization"
         };
     }
 
@@ -406,22 +421,6 @@ message InfoInvestmentResponse {
     double amountRest = 12;
 }
 
-message DealMember {
-    uint64 dealId = 1;
-    uint64 memberId = 2;
-    uint32 memberType = 3;
-    double amountCommit = 4;
-    double commissionValue = 5;  // Giá trị hoa hồng
-    uint32 commissionType = 6;   // Loại hoa hồng (10: %, 20: VND)
-    string note = 7;             // Ghi chú
-    // profile
-    string memberName = 8;
-    string memberAvatar = 9;
-    string memberPhone = 10;
-    bool memberVerified = 11;
-    optional uint64 roleId = 12;
-}
-
 message GetDealMembersResponse {
     repeated DealMember data = 1;
     uint32 total = 2;
@@ -567,6 +566,22 @@ message GetOrganizationDealsResponse {
     uint32 total = 2;
 }
 
+// Message cho tìm kiếm deals chung
+message DealSearchRequest {
+    optional uint32 page = 1;
+    optional uint32 size = 2;
+    optional string text = 3;
+    optional uint64 organizationId = 4;
+    optional uint64 groupId = 5;
+    optional uint64 ownerId = 6;
+    optional uint32 ownerOf = 7;
+}
+
+message GetDealsResponse {
+    repeated GroupDeal data = 1 [json_name = "data"];
+    uint32 total = 2;
+}
+
 // API cho nhóm
 message CreateGroupDealV2Request {
     string name = 1;
@@ -693,6 +708,8 @@ message DealProcessItem {
     string code = 3;
     string transactionId = 4;
     string color = 5;
+    string bgColor = 6;
+    string borderColor = 7;
 }
 
 message GetDealProcessResponse {

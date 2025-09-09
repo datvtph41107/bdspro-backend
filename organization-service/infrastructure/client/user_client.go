@@ -206,10 +206,10 @@ func (c *UserClient) MapToOrganizationBranchMemberPb(ctx context.Context, member
 	}
 }
 
-func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*organizationpb.DealInvitation) {
+func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*organizationpb.DealMember) {
 	ids := make([]uint64, len(invitations))
 	for i, invitation := range invitations {
-		ids[i] = uint64(invitation.InviteeId)
+		ids[i] = uint64(invitation.MemberId)
 	}
 	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
 	if err != nil {
@@ -221,7 +221,7 @@ func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*o
 		profileMap[p.Id] = p
 	}
 	for _, invitation := range invitations {
-		if p, ok := profileMap[uint64(invitation.InviteeId)]; ok {
+		if p, ok := profileMap[uint64(invitation.MemberId)]; ok {
 			invitation.Profile = p
 		}
 	}
@@ -244,10 +244,10 @@ func (c *UserClient) MapProfileToDealMember(ctx context.Context, members []*orga
 
 	for _, member := range members {
 		if p, ok := profileMap[uint64(member.MemberId)]; ok {
-			member.MemberName = p.FullName
-			member.MemberAvatar = p.Avatar
-			member.MemberPhone = p.Phone
-			member.MemberVerified = p.TickVerified
+			// member.MemberName = p.FullName
+			// member.MemberAvatar = p.Avatar
+			// member.MemberPhone = p.Phone
+			member.Profile = p
 		}
 	}
 }

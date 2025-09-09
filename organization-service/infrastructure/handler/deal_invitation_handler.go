@@ -11,7 +11,7 @@ import (
 )
 
 type DealInvitationHandler struct {
-	organizationpb.UnimplementedDealInvitationServiceServer
+	organizationpb.UnimplementedDealMemberServiceServer
 	dealInvitationUsecase     usecase.DealInvitationUsecase
 	dealInvitationTransformer transformer.DealInvitationTransformer
 	dealInvitationValidator   validator.DealInvitationValidator
@@ -41,7 +41,7 @@ func NewDealInvitationHandler(
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.SendInvitationResponse "Thành công"
 // @Router /deal-invitation [post]
-func (h *DealInvitationHandler) SendInvitation(ctx context.Context, req *organizationpb.SendInvitationRequest) (*organizationpb.SendInvitationResponse, error) {
+func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *organizationpb.SendDealInvitationRequest) (*organizationpb.SendDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateSendInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (h *DealInvitationHandler) SendInvitation(ctx context.Context, req *organiz
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.AcceptInvitationResponse "Thành công"
 // @Router /deal-invitation/accept [post]
-func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organizationpb.AcceptInvitationRequest) (*organizationpb.AcceptInvitationResponse, error) {
+func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organizationpb.AcceptDealInvitationRequest) (*organizationpb.AcceptDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateAcceptInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organ
 		return nil, err
 	}
 
-	return &organizationpb.AcceptInvitationResponse{
+	return &organizationpb.AcceptDealInvitationResponse{
 		InvitationId: req.InvitationId,
 		Success:      true,
 	}, nil
@@ -90,7 +90,7 @@ func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.RejectInvitationResponse "Thành công"
 // @Router /deal-invitation/reject [post]
-func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organizationpb.RejectInvitationRequest) (*organizationpb.RejectInvitationResponse, error) {
+func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organizationpb.RejectDealInvitationRequest) (*organizationpb.RejectDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateRejectInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organ
 		return nil, err
 	}
 
-	return &organizationpb.RejectInvitationResponse{
+	return &organizationpb.RejectDealInvitationResponse{
 		InvitationId: req.InvitationId,
 		Success:      true,
 	}, nil
@@ -115,7 +115,7 @@ func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.ResendInvitationResponse "Thành công"
 // @Router /deal-invitation/resend [post]
-func (h *DealInvitationHandler) ResendInvitation(ctx context.Context, req *organizationpb.ResendInvitationRequest) (*organizationpb.ResendInvitationResponse, error) {
+func (h *DealInvitationHandler) ResendInvitation(ctx context.Context, req *organizationpb.ResendDealInvitationRequest) (*organizationpb.ResendDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateResendInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (h *DealInvitationHandler) ConfirmWithdrawal(ctx context.Context, req *orga
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.SearchMembersResponse "Thành công"
 // @Router /deal-invitation/search [get]
-func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *organizationpb.SearchMembersRequest) (*organizationpb.SearchMembersResponse, error) {
+func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *organizationpb.SearchDealMembersRequest) (*organizationpb.SearchDealMembersResponse, error) {
 	if err := h.dealInvitationValidator.ValidateSearchMembersRequest(req); err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *organiza
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetInvitationResponse "Thành công"
 // @Router /deal-invitation/{id} [get]
-func (h *DealInvitationHandler) GetInvitation(ctx context.Context, req *organizationpb.GetInvitationRequest) (*organizationpb.GetInvitationResponse, error) {
+func (h *DealInvitationHandler) GetInvitation(ctx context.Context, req *organizationpb.GetDealInvitationRequest) (*organizationpb.GetDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateGetInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -302,7 +302,7 @@ func (h *DealInvitationHandler) GetPendingInvitations(ctx context.Context, req *
 		size = int(req.Size)
 	}
 
-	invitations, total, err := h.dealInvitationUsecase.GetPendingInvitations(ctx, req.InviteeId, page, size)
+	invitations, total, err := h.dealInvitationUsecase.GetPendingInvitations(ctx, req.MemberId, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +319,7 @@ func (h *DealInvitationHandler) GetPendingInvitations(ctx context.Context, req *
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetInvitationsByDealResponse "Thành công"
 // @Router /deal/{deal_id}/invitations [get]
-func (h *DealInvitationHandler) GetInvitationsByDeal(ctx context.Context, req *organizationpb.GetInvitationsByDealRequest) (*organizationpb.GetInvitationsByDealResponse, error) {
+func (h *DealInvitationHandler) GetDealInvitationsByDeal(ctx context.Context, req *organizationpb.GetDealInvitationsByDealRequest) (*organizationpb.GetDealInvitationsByDealResponse, error) {
 	if err := h.dealInvitationValidator.ValidateGetInvitationsByDealRequest(req); err != nil {
 		return nil, err
 	}

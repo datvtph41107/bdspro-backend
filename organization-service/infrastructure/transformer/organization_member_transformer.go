@@ -1,7 +1,6 @@
 package transformer
 
 import (
-	_utils "common/utils"
 	organizationpb "pb/types/organization"
 
 	"organization/internal/domain/entity"
@@ -102,11 +101,11 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 			membersResponse[i].Profile = profile
 		}
 		if member.OrganizationMember.DealMember != nil {
-			membersResponse[i].DealMember = &organizationpb.DealInvitationMember{
-				UserId:   member.OrganizationMember.DealMember.InviteeID,
-				RoleId:   member.OrganizationMember.DealMember.RoleId,
-				JoinedAt: _utils.FormatTimeToString(&member.OrganizationMember.DealMember.CreatedAt),
-				Status:   uint32(member.OrganizationMember.DealMember.Status),
+			membersResponse[i].DealMember = &organizationpb.DealMember{
+				MemberId: member.OrganizationMember.DealMember.MemberID,
+				RoleId:   &member.OrganizationMember.DealMember.RoleID,
+				// RespondedAt: _utils.FormatTimeToString(&member.OrganizationMember.DealMember.CreatedAt),
+				Status: uint32(member.OrganizationMember.DealMember.Status),
 			}
 		}
 	}

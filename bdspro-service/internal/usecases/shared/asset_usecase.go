@@ -26,12 +26,14 @@ type IAssetUsecase interface {
 }
 
 type AssetUsecase struct {
-	AssetRepo          repo.AssetRepo
-	ProductUserRepo    repo.ProductRepo
-	NotificationClient iusecase.INotificationClient
-	AssetLegalRepo     repo.AssetLegalRepo
-	AssetUsecase       IAssetUsecase
-	RequestUsecase     *RequestUsecase
+	AssetRepo             repo.AssetRepo
+	ProductUserRepo       repo.ProductRepo
+	NotificationClient    iusecase.INotificationClient
+	AssetLegalRepo        repo.AssetLegalRepo
+	AssetOrganizationRepo repo.AssetOrganizationRepo
+	AssetUserRepo         repo.AssetUserRepo
+	AssetUsecase          IAssetUsecase
+	RequestUsecase        *RequestUsecase
 }
 
 func NewSharedAssetUsecase(
@@ -39,14 +41,18 @@ func NewSharedAssetUsecase(
 	ProductRepo repo.ProductRepo,
 	notificationClient iusecase.INotificationClient,
 	AssetLegalRepo repo.AssetLegalRepo,
+	AssetOrganizationRepo repo.AssetOrganizationRepo,
+	AssetUserRepo repo.AssetUserRepo,
 	requestUsecase *RequestUsecase,
 ) *AssetUsecase {
 	return &AssetUsecase{
-		AssetRepo:          assetRepo,
-		ProductUserRepo:    ProductRepo,
-		NotificationClient: notificationClient,
-		AssetLegalRepo:     AssetLegalRepo,
-		RequestUsecase:     requestUsecase,
+		AssetRepo:             assetRepo,
+		ProductUserRepo:       ProductRepo,
+		NotificationClient:    notificationClient,
+		AssetLegalRepo:        AssetLegalRepo,
+		AssetOrganizationRepo: AssetOrganizationRepo,
+		AssetUserRepo:         AssetUserRepo,
+		RequestUsecase:        requestUsecase,
 		// ProductUc:       ProductUc,
 	}
 }
@@ -196,6 +202,13 @@ func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*
 
 	if len(legalItems) > 0 {
 		uc.AssetLegalRepo.UpdateLegalItems(ctx, asset.ID, legalItems)
+	}
+
+	if asset.RequestOrganizationID != nil {
+		uc.AssetOrganizationRepo.CreateOwner(ctx, asset.ID, *asset.RequestOrganizationID)
+	} else {
+		profileId := _utils.GetProfileIdWithContext(ctx)
+		uc.AssetUserRepo.CreateOwner(ctx, asset.ID, profileId)
 	}
 
 	go func() {
@@ -682,4 +695,35 @@ func (uc *AssetUsecase) GetPublish(ctx context.Context, profileId uint64) ([]dom
 
 func (s *AssetUsecase) SearchByAssetShare(c context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.AssetRepo.SearchByAssetShare(c, targetID, targetType, dto)
+}
+
+// CreateAssetOrganization tạo tài sản cho tổ chức
+func (s *AssetUsecase) CreateOrganizationAsset(c context.Context, asset *domain.Asset) (*domain.Asset, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+
+	asset.RequestOrganizationID = &organizationId
+	return s.CreateAsset(c, asset)
+}
+
+func (s *AssetUsecase) GetAssetOfCurrentUser(c context.Context, dto *dto.AssetSearchRequest) ([]domain.Asset, int64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	dto.RequestUserId = &profileId
+	return s.searchAsset(c, dto)
+}
+
+func (s *AssetUsecase) GetAssetOfCurrentOrganization(c context.Context, dto *dto.AssetSearchRequest) ([]domain.Asset, int64, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(c)
+	dto.RequestOrganizationId = &organizationId
+	return s.searchAsset(c, dto)
+}
+
+func (s *AssetUsecase) searchAsset(c context.Context, dto *dto.AssetSearchRequest) ([]domain.Asset, int64, error) {
+	results, total, err := s.AssetRepo.ListAssets(c, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	// for i := 0; i < len(results); i++ {
+	// 	s.MapAssetStatus(c, &results[i])
+	// }
+	return results, total, nil
 }

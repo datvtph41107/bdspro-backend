@@ -11,10 +11,10 @@ import (
 
 type InternalOrganizationHandler struct {
 	organizationpb.UnimplementedInternalOrganizationServiceServer
-	organizationRepo       repository.OrganizationRepository
-	groupRepo              repository.GroupRepository
-	mapper                 *transformer.InternalOrganizationMapper
-	dealInvitationRepo     repository.DealInvitationRepository
+	organizationRepo repository.OrganizationRepository
+	groupRepo        repository.GroupRepository
+	mapper           *transformer.InternalOrganizationMapper
+	// dealInvitationRepo     repository.DealMemberRepository
 	groupMemberRepo        repository.GroupMemberRepository
 	organizationMemberRepo repository.OrganizationMemberRepository
 	dealRepo               repository.GroupDealRepository
@@ -27,7 +27,7 @@ type InternalOrganizationHandler struct {
 func NewInternalOrganizationHandler(
 	organizationRepo repository.OrganizationRepository,
 	groupRepo repository.GroupRepository,
-	dealInvitationRepo repository.DealInvitationRepository,
+	// dealInvitationRepo repository.DealMemberRepository,
 	groupMemberRepo repository.GroupMemberRepository,
 	organizationMemberRepo repository.OrganizationMemberRepository,
 	dealRepo repository.GroupDealRepository,
@@ -37,9 +37,9 @@ func NewInternalOrganizationHandler(
 	branchMemberRepo repository.OrganizationBranchMemberRepository,
 	mapper *transformer.InternalOrganizationMapper) *InternalOrganizationHandler {
 	return &InternalOrganizationHandler{
-		organizationRepo:       organizationRepo,
-		groupRepo:              groupRepo,
-		dealInvitationRepo:     dealInvitationRepo,
+		organizationRepo: organizationRepo,
+		groupRepo:        groupRepo,
+		// dealInvitationRepo:     dealInvitationRepo,
 		mapper:                 mapper,
 		groupMemberRepo:        groupMemberRepo,
 		organizationMemberRepo: organizationMemberRepo,

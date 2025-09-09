@@ -247,7 +247,7 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 
 	dealSelect := ""
 	if dealId != nil {
-		dealSelect = ", row_to_json(di) as deal_member "
+		dealSelect = ", json_build_object('id', di.id,'role_id', di.role_id,'status', di.status) as deal_member "
 	}
 	query := r.db.WithContext(ctx).
 		Debug().
@@ -269,8 +269,8 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 
 	groupBy := "om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name"
 	if dealId != nil {
-		query = query.Joins("left join deal_invitations di on om.user_id = di.invitee_id and di.deal_id = ?", dealId)
-		groupBy += ", di.id"
+		query = query.Joins("left join deal_members di on om.user_id = di.member_id and di.deal_id = ?", dealId)
+		groupBy += ", di.id, di.role_id, di.status"
 	}
 
 	query = query.
@@ -319,7 +319,7 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 		}
 
 		if result.DealMember != nil {
-			dealMember := &entity.DealInvitation{}
+			dealMember := &entity.DealMember{}
 			err := json.Unmarshal(result.DealMember, dealMember)
 			if err != nil {
 				return nil, 0, err

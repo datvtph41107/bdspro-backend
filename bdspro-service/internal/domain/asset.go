@@ -50,6 +50,8 @@ type Asset struct {
 	OwnerType        enums.EOwnerOf     `json:"ownerType"`
 	// OwnerUserID      *uint64            `json:"ownerUserId"`
 	// OwnerOrgID       *uint64            `json:"ownerOrgId"`
+
+	RequestOrganizationID *uint64 `gorm:"-" json:"-"`
 }
 
 type AssetList struct {

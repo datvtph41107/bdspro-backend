@@ -64,6 +64,19 @@ service PostService {
   // rpc GetMarketing(GetMarketingRequest) returns (Post);
   // rpc GetUpVip(GetUpVipRequest) returns (Post);
   // rpc GetExport(GetExportRequest) returns (Post);
+  
+  // Post Management APIs for Organizations
+  rpc CreatePostOrganization (PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/post/organization"
+      body: "*"
+    };
+  };
+  rpc CurrentOrganizationPosts (PostSearchRequest) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/organization"
+    };
+  };
 }
 
 message OwnerPostRequest {

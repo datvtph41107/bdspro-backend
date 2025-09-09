@@ -125,7 +125,7 @@ message OrganizationMember {
     string roleName = 5 [json_name = "roleName"];
     uint32 status = 6 [json_name = "status"];
     sharepb.ProfileItem profile = 7 [json_name = "profile"];
-    optional DealInvitationMember dealMember = 8 [json_name = "dealMember"];
+    optional DealMember dealMember = 8 [json_name = "dealMember"];
 }
 
 message GetOrganizationMembersResponse {

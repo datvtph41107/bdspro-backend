@@ -6,7 +6,7 @@
   },
   "tags": [
     {
-      "name": "DealInvitationService"
+      "name": "DealMemberService"
     }
   ],
   "consumes": [
@@ -18,12 +18,13 @@
   "paths": {
     "/v2/org/deal-invitation": {
       "post": {
-        "operationId": "DealInvitationService_SendInvitation",
+        "summary": "API lấy danh sách thành viên của deal",
+        "operationId": "DealMemberService_SendDealInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationResponse"
+              "$ref": "#/definitions/organizationpbSendDealInvitationResponse"
             }
           },
           "default": {
@@ -39,23 +40,23 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbSendInvitationRequest"
+              "$ref": "#/definitions/organizationpbSendDealInvitationRequest"
             }
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/accept": {
       "post": {
-        "operationId": "DealInvitationService_AcceptInvitation",
+        "operationId": "DealMemberService_AcceptDealInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationResponse"
+              "$ref": "#/definitions/organizationpbAcceptDealInvitationResponse"
             }
           },
           "default": {
@@ -71,18 +72,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbAcceptInvitationRequest"
+              "$ref": "#/definitions/organizationpbAcceptDealInvitationRequest"
             }
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/confirm-withdrawal": {
       "post": {
-        "operationId": "DealInvitationService_ConfirmWithdrawal",
+        "operationId": "DealMemberService_ConfirmWithdrawal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -108,18 +109,18 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/list/{dealId}": {
       "get": {
-        "operationId": "DealInvitationService_GetInvitationsByDeal",
+        "operationId": "DealMemberService_GetDealInvitationsByDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbGetInvitationsByDealResponse"
+              "$ref": "#/definitions/organizationpbGetDealInvitationsByDealResponse"
             }
           },
           "default": {
@@ -153,13 +154,13 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/pending": {
       "get": {
-        "operationId": "DealInvitationService_GetPendingInvitations",
+        "operationId": "DealMemberService_GetPendingInvitations",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -176,7 +177,7 @@
         },
         "parameters": [
           {
-            "name": "inviteeId",
+            "name": "memberId",
             "in": "query",
             "required": false,
             "type": "string",
@@ -198,18 +199,18 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/reject": {
       "post": {
-        "operationId": "DealInvitationService_RejectInvitation",
+        "operationId": "DealMemberService_RejectDealInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationResponse"
+              "$ref": "#/definitions/organizationpbRejectDealInvitationResponse"
             }
           },
           "default": {
@@ -225,18 +226,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbRejectInvitationRequest"
+              "$ref": "#/definitions/organizationpbRejectDealInvitationRequest"
             }
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/remove": {
       "post": {
-        "operationId": "DealInvitationService_RemoveFromDeal",
+        "operationId": "DealMemberService_RemoveFromDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -262,18 +263,18 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/resend": {
       "post": {
-        "operationId": "DealInvitationService_ResendInvitation",
+        "operationId": "DealMemberService_ResendDealInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationResponse"
+              "$ref": "#/definitions/organizationpbResendDealInvitationResponse"
             }
           },
           "default": {
@@ -289,18 +290,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/organizationpbResendInvitationRequest"
+              "$ref": "#/definitions/organizationpbResendDealInvitationRequest"
             }
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/withdraw": {
       "post": {
-        "operationId": "DealInvitationService_WithdrawFromDeal",
+        "operationId": "DealMemberService_WithdrawFromDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -326,13 +327,13 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/{dealId}/accepted-members": {
       "get": {
-        "operationId": "DealInvitationService_GetAcceptedMembers",
+        "operationId": "DealMemberService_GetAcceptedMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -357,18 +358,18 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/{dealId}/search-members": {
       "get": {
-        "operationId": "DealInvitationService_SearchMembers",
+        "operationId": "DealMemberService_SearchMembers",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbSearchMembersResponse"
+              "$ref": "#/definitions/organizationpbSearchDealMembersResponse"
             }
           },
           "default": {
@@ -408,18 +409,18 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     },
     "/v2/org/deal-invitation/{id}": {
       "get": {
-        "operationId": "DealInvitationService_GetInvitation",
+        "operationId": "DealMemberService_GetDealInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/organizationpbGetInvitationResponse"
+              "$ref": "#/definitions/organizationpbGetDealInvitationResponse"
             }
           },
           "default": {
@@ -439,13 +440,13 @@
           }
         ],
         "tags": [
-          "DealInvitationService"
+          "DealMemberService"
         ]
       }
     }
   },
   "definitions": {
-    "organizationpbAcceptInvitationRequest": {
+    "organizationpbAcceptDealInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -454,7 +455,7 @@
         }
       }
     },
-    "organizationpbAcceptInvitationResponse": {
+    "organizationpbAcceptDealInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -525,7 +526,7 @@
         }
       }
     },
-    "organizationpbDealInvitation": {
+    "organizationpbDealMember": {
       "type": "object",
       "properties": {
         "id": {
@@ -540,7 +541,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "inviteeId": {
+        "memberId": {
           "type": "string",
           "format": "uint64"
         },
@@ -568,34 +569,51 @@
         },
         "color": {
           "$ref": "#/definitions/organizationpbColor"
-        }
-      }
-    },
-    "organizationpbDealInvitationMember": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
         },
         "roleId": {
           "type": "string",
           "format": "uint64"
         },
-        "joinedAt": {
-          "type": "string"
+        "invitedAt": {
+          "type": "string",
+          "title": "Thời gian mời"
         },
-        "status": {
+        "respondedAt": {
+          "type": "string",
+          "title": "Thời gian phản hồi"
+        },
+        "withdrawnAt": {
+          "type": "string",
+          "title": "Thời gian rút khỏi"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "isOwner": {
+          "type": "boolean",
+          "title": "Đánh dấu là chủ thương vụ"
         }
-      }
+      },
+      "title": "Message định nghĩa DealMember"
     },
     "organizationpbGetAcceptedMembersResponse": {
       "type": "object",
@@ -604,27 +622,27 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitationMember"
+            "$ref": "#/definitions/organizationpbDealMember"
           }
         }
       }
     },
-    "organizationpbGetInvitationResponse": {
+    "organizationpbGetDealInvitationResponse": {
       "type": "object",
       "properties": {
-        "invitation": {
-          "$ref": "#/definitions/organizationpbDealInvitation"
+        "member": {
+          "$ref": "#/definitions/organizationpbDealMember"
         }
       }
     },
-    "organizationpbGetInvitationsByDealResponse": {
+    "organizationpbGetDealInvitationsByDealResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitation"
+            "$ref": "#/definitions/organizationpbDealMember"
           }
         },
         "total": {
@@ -640,7 +658,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitation"
+            "$ref": "#/definitions/organizationpbDealMember"
           }
         },
         "total": {
@@ -671,7 +689,7 @@
         }
       }
     },
-    "organizationpbRejectInvitationRequest": {
+    "organizationpbRejectDealInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -683,7 +701,7 @@
         }
       }
     },
-    "organizationpbRejectInvitationResponse": {
+    "organizationpbRejectDealInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -719,7 +737,7 @@
         }
       }
     },
-    "organizationpbResendInvitationRequest": {
+    "organizationpbResendDealInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -728,7 +746,7 @@
         }
       }
     },
-    "organizationpbResendInvitationResponse": {
+    "organizationpbResendDealInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {
@@ -775,14 +793,14 @@
         }
       }
     },
-    "organizationpbSearchMembersResponse": {
+    "organizationpbSearchDealMembersResponse": {
       "type": "object",
       "properties": {
         "members": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/organizationpbDealInvitationMember"
+            "$ref": "#/definitions/organizationpbDealMember"
           }
         },
         "total": {
@@ -791,7 +809,7 @@
         }
       }
     },
-    "organizationpbSendInvitationRequest": {
+    "organizationpbSendDealInvitationRequest": {
       "type": "object",
       "properties": {
         "dealId": {
@@ -802,7 +820,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "inviteeId": {
+        "memberId": {
           "type": "string",
           "format": "uint64"
         },
@@ -817,9 +835,10 @@
           "type": "integer",
           "format": "int64"
         }
-      }
+      },
+      "title": "Messages cho Deal Invitation APIs"
     },
-    "organizationpbSendInvitationResponse": {
+    "organizationpbSendDealInvitationResponse": {
       "type": "object",
       "properties": {
         "invitationId": {

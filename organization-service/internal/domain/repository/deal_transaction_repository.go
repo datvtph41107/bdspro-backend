@@ -15,7 +15,7 @@ type DealTransactionRepository interface {
 	GetByIds(ctx context.Context, ids []uint64) ([]*entity.DealTransaction, error)
 	GetByDealID(ctx context.Context, dealID uint64, transactionType *enums.TransactionType, page, limit int) ([]*entity.DealTransaction, int64, error)
 	Approve(ctx context.Context, id uint64, approvedBy uint64, status enums.ApprovedStatus, rejectReason string) error
-	GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*entity.DealTransaction, int64, error)
+	GetListByDealID(ctx context.Context, dealID uint64, req dto.DealSearchRequest) ([]*entity.DealTransaction, int64, error)
 
 	// Statistics methods
 	GetFinancialSummary(ctx context.Context, dealID uint64) (*dto.DealFinancialSummary, error)

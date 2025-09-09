@@ -9,5 +9,5 @@ import (
 type OrganizationMemberWithProfile struct {
 	OrganizationMember *entity.OrganizationMember
 	Profile            *sharepb.ProfileItem
-	DealMember         *entity.DealInvitation
+	DealMember         *entity.DealMember
 }

@@ -3,7 +3,6 @@ package repository
 import (
 	_db "common/db"
 
-	"organization/infrastructure/repository/postgres"
 	"organization/internal/domain/entity"
 )
 
@@ -20,11 +19,11 @@ func AutoMigrate() {
 		// &postgres.GroupMemberModel{},
 		// &postgres.GroupSettingModel{},
 		// &postgres.GroupModel{},
-		&postgres.OrganizationBranchMemberModel{},
+		// &postgres.OrganizationBranchMemberModel{},
 		// &postgres.OrganizationBranchModel{},
 		// &postgres.OrganizationPermissionModel{},
 		// &postgres.OrganizationRoleModel{},
-		&postgres.OrganizationMemberModel{},
+		// &postgres.OrganizationMemberModel{},
 		// &postgres.BusinessDomainModel{},
 		// &postgres.OrganizationBusinessDomainModel{},
 		// &postgres.OrganizationModel{}, &entity.Deal{},
@@ -41,8 +40,8 @@ func AutoMigrate() {
 		// &entity.DealCost{},
 		// &entity.CostType{},
 		// &entity.DealAction{},
-		&entity.Deal{},
-		&entity.GroupMember{},
+		// &entity.Deal{},
+		// &entity.GroupMember{},
 		&entity.DealMember{},
 	)
 	if err != nil {

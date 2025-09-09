@@ -13,4 +13,11 @@ var OwnerTypeNames = map[EOwnerOf]string{
 	EOwnerOfMember:      "Thành viên",
 	EOwnerOfGroup:       "Nhóm",
 	EOwnerOfOrgnization: "Tổ chức",
+	EOwnerOfUser:        "Người dùng",
+}
+var OwnerTypeMap = map[EOwnerOf]string{
+	EOwnerOfMember:      "Thành viên",
+	EOwnerOfGroup:       "Nhóm",
+	EOwnerOfOrgnization: "Tổ chức",
+	EOwnerOfUser:        "Người dùng",
 }

@@ -716,14 +716,40 @@ func (s *ProductService) GetGroupProducts(ctx context.Context, req *pb_bdspro.Gr
 	}
 
 	// Convert domain products to protobuf response
-	var productResponses []*pb_bdspro.ProductResponse
-	for _, product := range products {
-		productResponse := s.ProductMapper.MapProductPb(&product)
-		productResponses = append(productResponses, productResponse)
-	}
+	productResponses := s.ProductMapper.MapProductPbList(products)
 
 	return &pb_bdspro.SearchResponse{
 		Data:          productResponses,
 		TotalElements: total,
+	}, nil
+}
+
+func (s *ProductService) CurrentOrganizationProducts(ctx context.Context, req *pb_bdspro.ProductSearch) (*pb_bdspro.SearchResponse, error) {
+	dto := s.ProductMapper.PbSearchRequestToDTO(req)
+	products, total, err := s.UC.GetProductOfCurrentOrganization(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	productResponses := s.ProductMapper.MapProductPbList(products)
+	return &pb_bdspro.SearchResponse{
+		Data:          productResponses,
+		TotalElements: total,
+	}, nil
+}
+
+func (s *ProductService) CreateOrganizationProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
+	dto := s.ProductMapper.ProductSavePbToDTO(req)
+	result, err := s.UC.CreateOrganizationProduct(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+	id := uint64(0)
+	if result.Product != nil {
+		id = result.Product.ID
+	}
+	return &pb_bdspro.Response{
+		Id:      id,
+		Message: "success",
 	}, nil
 }

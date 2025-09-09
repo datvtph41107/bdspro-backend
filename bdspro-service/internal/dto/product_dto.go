@@ -56,6 +56,8 @@ type ProductSaveRequest struct {
 	// SaleVisibility  enums.ProductVisibility `json:"saleVisibility"`
 	// RentStatus      uint                    `json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	// RentVisibility  uint                    `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+
+	RequestOrganizationID *uint64 `json:"-"`
 }
 
 type ProductSaveDetect struct {

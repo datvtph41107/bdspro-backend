@@ -45,6 +45,10 @@ type ProductSearchRequest struct {
 	ParentID         *uint64    `form:"parentId"`
 	Text             string     `form:"text"`
 	Archived         *bool      `form:"archived"`
+
+	RequestOrganizationId *uint64 `form:"-"`
+	RequestUserId         *uint64 `form:"-"`
+	RequestGroupId        *uint64 `form:"-"`
 	// IsParent         *bool      `form:"isParent"`
 }
 

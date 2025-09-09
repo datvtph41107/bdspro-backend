@@ -26,6 +26,9 @@ type PostSearchRequest struct {
 	PackageVisibles []uint64   `form:"packageVisibles"`
 	ProductID       *uint64    `form:"productId"`
 	IsPublished     bool       `form:"isPublished"`
+
+	RequestUserId         *uint64 `form:"-"`
+	RequestOrganizationId *uint64 `form:"-"`
 }
 
 type PostDetail struct {
@@ -48,6 +51,8 @@ type PostSaveRequest struct {
 	Hidden          bool                  `json:"hidden"`
 	Medatadatas     []PostMediaItem       `json:"mediaList"`
 	// Status    uint   `json:"status"`
+
+	RequestOrganizationId *uint64 `json:"-"`
 }
 
 type PostSaveWithProduct struct {

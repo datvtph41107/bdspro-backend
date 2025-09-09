@@ -80,7 +80,6 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_repository_postgres.NewDealCostRepository,
 	organization_infrastructure_validator.NewDealCostValidator,
 	organization_infrastructure_handler.NewDealInvitationHandler,
-	organization_infrastructure_repository_postgres.NewDealInvitationPostgresRepository,
 	organization_infrastructure_transformer.NewDealInvitationTransformer,
 	organization_internal_usecase.NewDealInvitationUsecase,
 	organization_infrastructure_validator.NewDealInvitationValidator,

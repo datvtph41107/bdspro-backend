@@ -569,3 +569,125 @@ func (r *PostgreAsset) SearchByAssetShare(ctx context.Context, targetID *uint64,
 	}
 	return products, int64(len(products)), nil
 }
+
+// ListAssets lấy danh sách assets với filtering và pagination
+func (r *PostgreAsset) ListAssets(ctx context.Context, dto *dto.AssetSearchRequest) ([]domain.Asset, int64, error) {
+	var results []domain.Asset
+
+	query := r.DB.
+		WithContext(ctx).
+		Model(domain.Asset{}).
+		Where("deleted_at IS NULL")
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy assets của tổ chức
+	if dto.RequestOrganizationId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM asset_organization ao 
+			WHERE ao.asset_id = assets.id 
+			AND ao.organization_id = ? 
+			AND ao.deleted_at IS NULL
+		)`, *dto.RequestOrganizationId)
+	}
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy assets của user
+	if dto.RequestUserId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM asset_user au 
+			WHERE au.asset_id = assets.id 
+			AND au.profile_id = ? 
+			AND au.deleted_at IS NULL
+		)`, *dto.RequestUserId)
+	}
+
+	// Preload relationships
+	query = query.
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("LegalItems", "deleted_at IS NULL")
+
+	// Apply other filters
+	query = r.applyListAssetsFilters(query, dto)
+
+	// Execute query with pagination
+	err := query.
+		Order("updated_at desc").
+		Limit(dto.GetLimit()).
+		Offset(dto.GetOffset()).
+		Find(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Count total records
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}
+
+// applyListAssetsFilters áp dụng các filter cho ListAssets
+func (r *PostgreAsset) applyListAssetsFilters(query *gorm.DB, dto *dto.AssetSearchRequest) *gorm.DB {
+	// Filter by province
+	if dto.ProvinceID != nil {
+		query = query.Where("province_id = ?", *dto.ProvinceID)
+	}
+
+	// Filter by district
+	if dto.DistrictID != nil {
+		query = query.Where("district_id = ?", *dto.DistrictID)
+	}
+
+	// Filter by ward
+	if dto.WardID != nil {
+		query = query.Where("ward_id = ?", *dto.WardID)
+	}
+
+	// Filter by text search (name, description, address)
+	if dto.Text != "" {
+		searchText := "%" + dto.Text + "%"
+		query = query.Where("(name ILIKE ? OR description ILIKE ? OR address ILIKE ?)",
+			searchText, searchText, searchText)
+	}
+
+	// Filter by keyword (alternative text search)
+	if dto.Keyword != "" {
+		searchText := "%" + dto.Keyword + "%"
+		query = query.Where("(name ILIKE ? OR description ILIKE ? OR address ILIKE ?)",
+			searchText, searchText, searchText)
+	}
+
+	// Filter by property type IDs
+	if len(dto.PropertyTypeIds) > 0 {
+		query = query.Where("property_type_id IN ?", dto.PropertyTypeIds)
+	}
+
+	// Filter by rent status
+	if len(dto.RentStatus) > 0 {
+		query = query.Where("rent_status IN ?", dto.RentStatus)
+	}
+
+	// Filter by archived status
+	if dto.Archived != nil {
+		query = query.Where("archived = ?", *dto.Archived)
+	}
+
+	// Filter by parent asset (only parent assets)
+	if dto.OnlyParent != nil && *dto.OnlyParent {
+		query = query.Where("parent_asset_id IS NULL")
+	}
+
+	// Filter by specific parent asset
+	if dto.ParentID != nil {
+		query = query.Where("parent_asset_id = ?", *dto.ParentID)
+	}
+
+	// Filter by type
+	if dto.Type > 0 {
+		query = query.Where("owner_type = ?", dto.Type)
+	}
+
+	return query
+}

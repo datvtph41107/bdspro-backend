@@ -325,12 +325,15 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 
 	if product.District != nil {
 		result.DistrictName = product.District.Name
+		result.DistrictId = &product.District.ID
 	}
 	if product.Province != nil {
 		result.ProvinceName = product.Province.Name
+		result.ProvinceId = &product.Province.ID
 	}
 	if product.Ward != nil {
 		result.WardName = product.Ward.Name
+		result.WardId = &product.Ward.ID
 	}
 
 	if len(product.MediaList) > 0 {
@@ -788,3 +791,12 @@ func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *doma
 // 			"-f", "hls",
 // 			filepath.Join(outputDir, "index.m3u8"),
 // 		)
+
+func (m *ProductMapper) PbSearchRequestToDTO(req *pb_bdspro.ProductSearch) *dto.ProductSearchRequest {
+	return &dto.ProductSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+	}
+}

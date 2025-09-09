@@ -41,6 +41,7 @@ type ProductRepo interface {
 	UpdateProductAmenityIds(ctx context.Context, productID uint64, amenityIDs []uint64) error
 
 	// Tìm kiếm sản phẩm theo chủ sở hữu
+	// deprecated
 	SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	// Tìm kiếm sản phẩm để export excel
@@ -78,4 +79,6 @@ type ProductRepo interface {
 	GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error)
 	SyncData(ctx context.Context) error
 	GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error)
+
+	GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 }

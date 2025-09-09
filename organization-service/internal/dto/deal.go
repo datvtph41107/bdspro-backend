@@ -61,8 +61,13 @@ type SummaryResponse struct {
 	TotalPayment    float64 `json:"total_payment"`
 }
 
-type DealSearch struct {
+type DealSearchRequest struct {
 	_dto.Pagable
+	Text           string
+	OrganizationID *uint64
+	GroupID        *uint64
+	OwnerID        *uint64
+	OwnerType      enums.OwnerType
 }
 
 // DTO cho DealProcess
@@ -72,6 +77,8 @@ type DealProcessItem struct {
 	Code          string `json:"code"`
 	TransactionId string `json:"transaction_id"`
 	Color         string `json:"color"`
+	BgColor       string `json:"bgColor"`
+	BorderColor   string `json:"borderColor"`
 }
 
 type DealProcessResponse struct {

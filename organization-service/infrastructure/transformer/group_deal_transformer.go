@@ -21,7 +21,9 @@ type GroupDealTransformer interface {
 	EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal
 	EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse
 	EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse
+	EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse
 	EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response
+	EntityToDealMemberProto(member *entity.DealMember) *organizationpb.DealMember
 }
 
 type groupDealTransformer struct {
@@ -283,6 +285,20 @@ func (t *groupDealTransformer) EntityToGetOrganizationDealsResponse(deals []*ent
 	return response
 }
 
+func (t *groupDealTransformer) EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse {
+
+	response := &organizationpb.GetDealsResponse{
+		Total: total,
+		Data:  make([]*organizationpb.GroupDeal, len(deals)),
+	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
+}
+
 func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response {
 	response := &organizationpb.GetGroupDealsV2Response{
 		Total: total,
@@ -294,4 +310,43 @@ func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.D
 	}
 
 	return response
+}
+
+func (t *groupDealTransformer) EntityToDealMemberProto(member *entity.DealMember) *organizationpb.DealMember {
+	if member == nil {
+		return nil
+	}
+
+	proto := &organizationpb.DealMember{
+		DealId:   member.DealID,
+		MemberId: member.MemberID,
+		// MemberType:      uint32(member.MemberType),
+		AmountCommit:    member.AmountCommit,
+		CommissionValue: member.CommissionValue,
+		CommissionType:  uint32(member.CommissionType),
+		Note:            member.Note,
+		RoleId:          &member.RoleID,
+		Status:          uint32(member.Status),
+		Message:         member.Message,
+		InvitedAt:       _utils.FormatTimeToString(&member.InvitedAt),
+		InviterId:       member.InviterID,
+		// colorId:         &member.ColorId,
+		// IsUnilateral:    member.IsUnilateral,
+		DoneInvestment: member.DoneInvestment,
+		IsOwner:        member.IsOwner,
+	}
+
+	// Set responded_at if not nil
+	if member.RespondedAt != nil {
+		respondedAt := _utils.FormatTimeToString(member.RespondedAt)
+		proto.RespondedAt = respondedAt
+	}
+
+	// Set withdrawn_at if not nil
+	if member.WithdrawnAt != nil {
+		withdrawnAt := _utils.FormatTimeToString(member.WithdrawnAt)
+		proto.WithdrawnAt = withdrawnAt
+	}
+
+	return proto
 }

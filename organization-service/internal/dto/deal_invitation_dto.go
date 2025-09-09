@@ -6,16 +6,16 @@ import (
 )
 
 type DealInvitationWithProfile struct {
-	*entity.DealInvitation
+	*entity.DealMember
 	Inviter *sharepb.ProfileItem
 	Invitee *sharepb.ProfileItem
 }
 
 type CreateDealInvitationRequest struct {
-	DealID       uint64  `json:"deal_id" validate:"required"`
-	InviteeID    uint64  `json:"invitee_id" validate:"required"`
-	MemberType   uint32  `json:"member_type" validate:"required"`
-	Message      string  `json:"message"`
+	DealID       uint64   `json:"deal_id" validate:"required"`
+	InviteeID    uint64   `json:"invitee_id" validate:"required"`
+	MemberType   uint32   `json:"member_type" validate:"required"`
+	Message      string   `json:"message"`
 	AmountCommit *float64 `json:"amount_commit"`
 }
 
@@ -51,4 +51,4 @@ type SearchMembersRequest struct {
 	Keyword string `json:"keyword"`
 	Page    int    `json:"page"`
 	Size    int    `json:"size"`
-} 
+}

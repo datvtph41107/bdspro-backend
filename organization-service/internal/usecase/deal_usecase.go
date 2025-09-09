@@ -23,8 +23,9 @@ type DealUsecase interface {
 	UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	DeleteGroupDeal(ctx context.Context, id uint64) error
 	GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error)
-	GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error)
-	GetOrganizationDealsByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error)
+	// GetGroupDealsByGroupID(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error)
+	GetOrganizationDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error)
+	GetDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error)
 	GetBranchDealsByBranchID(ctx context.Context, branchID uint64, page, size int) ([]*entity.Deal, uint32, error)
 	UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error
 	UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error
@@ -144,8 +145,8 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			members := make([]entity.DealMember, len(deal.MemberIds))
 			for i, memberID := range deal.MemberIds {
 				members[i] = entity.DealMember{
-					MemberID:   memberID,
-					MemberType: enums.DealMemberTypeMember,
+					MemberID: memberID,
+					// MemberType: enums.DealMemberTypeMember,
 				}
 			}
 			deal.Members = members
@@ -155,8 +156,8 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			customers := make([]entity.DealMember, len(deal.CustomerIds))
 			for i, customerID := range deal.CustomerIds {
 				customers[i] = entity.DealMember{
-					MemberID:   customerID,
-					MemberType: enums.DealMemberTypeCustomer,
+					MemberID: customerID,
+					// MemberType: enums.DealMemberTypeCustomer,
 				}
 			}
 			deal.Customers = customers
@@ -166,8 +167,8 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			partners := make([]entity.DealMember, len(deal.PartnerIds))
 			for i, partnerID := range deal.PartnerIds {
 				partners[i] = entity.DealMember{
-					MemberID:   partnerID,
-					MemberType: enums.DealMemberTypePartner,
+					MemberID: partnerID,
+					// MemberType: enums.DealMemberTypePartner,
 				}
 			}
 			deal.Partners = partners
@@ -200,8 +201,38 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			return err
 		}
 
+		if deal.ChargePersonID != nil {
+			_, err = u.dealMemberRepository.CreateMember(ctx, &entity.DealMember{
+				DealID:   deal.ID,
+				MemberID: *deal.ChargePersonID,
+				// MemberType:   enums.DealMemberTypeMember,
+				RoleID:       0,
+				AmountCommit: 0,
+				Status:       entity.DealMemberStatusAccepted,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = u.dealMemberRepository.CreateMember(ctx, &entity.DealMember{
+			DealID:   deal.ID,
+			MemberID: currentUserId,
+			// MemberType:   enums.DealMemberTypeMember,
+			RoleID:       0,
+			AmountCommit: 0,
+			Status:       entity.DealMemberStatusAccepted,
+		})
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	u.logWorker.Push(LogEvent{
 		GroupId: uint32(createdDeal.OwnerId),
@@ -273,8 +304,8 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 			members := make([]entity.DealMember, len(deal.MemberIds))
 			for i, memberID := range deal.MemberIds {
 				members[i] = entity.DealMember{
-					MemberID:   memberID,
-					MemberType: enums.DealMemberTypeMember,
+					MemberID: memberID,
+					// MemberType: enums.DealMemberTypeMember,
 				}
 			}
 			deal.Members = members
@@ -284,8 +315,8 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 			customers := make([]entity.DealMember, len(deal.CustomerIds))
 			for i, customerID := range deal.CustomerIds {
 				customers[i] = entity.DealMember{
-					MemberID:   customerID,
-					MemberType: enums.DealMemberTypeCustomer,
+					MemberID: customerID,
+					// MemberType: enums.DealMemberTypeCustomer,
 				}
 			}
 			deal.Customers = customers
@@ -295,8 +326,8 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 			partners := make([]entity.DealMember, len(deal.PartnerIds))
 			for i, partnerID := range deal.PartnerIds {
 				partners[i] = entity.DealMember{
-					MemberID:   partnerID,
-					MemberType: enums.DealMemberTypePartner,
+					MemberID: partnerID,
+					// MemberType: enums.DealMemberTypePartner,
 				}
 			}
 			deal.Partners = partners
@@ -433,12 +464,21 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 	return deal, nil
 }
 
-func (u *groupDealUsecase) GetGroupDealsByGroupID(ctx context.Context, groupID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	return u.groupDealRepository.GetByGroupID(ctx, groupID, page, size)
+// func (u *groupDealUsecase) GetGroupDealsByGroupID(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+// 	userID := _utils.GetProfileIdWithContext(ctx)
+// 	return u.groupDealRepository.GetDeals(ctx, userID, searchRequest)
+// }
+
+func (u *groupDealUsecase) GetOrganizationDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	searchRequest.OrganizationID = &organizationId
+	return u.groupDealRepository.GetDeals(ctx, userID, searchRequest)
 }
 
-func (u *groupDealUsecase) GetOrganizationDealsByOrganizationID(ctx context.Context, organizationID uint64, page, size int) ([]*entity.Deal, uint32, error) {
-	return u.groupDealRepository.GetByOrganizationID(ctx, organizationID, page, size)
+func (u *groupDealUsecase) GetDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	return u.groupDealRepository.GetDeals(ctx, userID, searchRequest)
 }
 
 func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error {

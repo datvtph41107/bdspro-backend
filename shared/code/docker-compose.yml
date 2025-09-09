@@ -164,7 +164,7 @@ services:
       - ${PWD}/config:/app/config
     environment:
       - CONFIG_FILE=/app/config/docker_config.yaml 
-    command: ["./main", "grpc-server"]
+    command: ["./main", "grpc"]
     networks:
       - internal
 

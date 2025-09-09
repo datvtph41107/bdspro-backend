@@ -29,7 +29,7 @@ func NewDealActionUseCase(
 	}
 }
 
-func (uc *DealActionUseCase) GetDealContractByDealID(ctx context.Context, dealID uint64, req dto.DealSearch) ([]*entity.DealTransaction, int64, error) {
+func (uc *DealActionUseCase) GetDealContractByDealID(ctx context.Context, dealID uint64, req dto.DealSearchRequest) ([]*entity.DealTransaction, int64, error) {
 	dealTransaction, total, err := uc.dealTransactionRepo.GetListByDealID(ctx, dealID, req)
 	if err != nil {
 		return nil, 0, err

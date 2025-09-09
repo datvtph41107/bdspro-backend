@@ -51,11 +51,11 @@ func (u *InvestmentUsecase) IsMemberDeal(ctx context.Context, dealID, memberID u
 
 func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
-	if err != nil {
-		return nil, err
-	}
+	// currentUserId := _utils.GetProfileIdWithContext(ctx)
+	// err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Validate deal member exists
 	deal, err := u.dealRepository.GetByID(ctx, req.DealID)
@@ -103,11 +103,11 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 
 func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
-	if err != nil {
-		return nil, err
-	}
+	// currentUserId := _utils.GetProfileIdWithContext(ctx)
+	// err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Get current investment
 	current, err := u.investmentRepository.GetByID(ctx, req.ID)

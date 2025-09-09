@@ -51,19 +51,19 @@ func (m *InternalOrganizationMapper) GroupsToPb(groups []*entity.Group) []*organ
 	return pbGroups
 }
 
-func (m *InternalOrganizationMapper) DealInvitationsToPb(dealInvitations []*entity.DealInvitation) []*organizationpb.DealInvitationMember {
-	pbDealInvitations := make([]*organizationpb.DealInvitationMember, len(dealInvitations))
+func (m *InternalOrganizationMapper) DealInvitationsToPb(dealInvitations []*entity.DealMember) []*organizationpb.DealMember {
+	pbDealInvitations := make([]*organizationpb.DealMember, len(dealInvitations))
 	for i, dealInvitation := range dealInvitations {
 		pbDealInvitations[i] = m.DealInvitationToPb(dealInvitation)
 	}
 	return pbDealInvitations
 }
 
-func (m *InternalOrganizationMapper) DealInvitationToPb(dealInvitation *entity.DealInvitation) *organizationpb.DealInvitationMember {
-	return &organizationpb.DealInvitationMember{
-		UserId: uint64(dealInvitation.InviteeID),
-		Status: uint32(dealInvitation.Status),
-		RoleId: dealInvitation.RoleId,
+func (m *InternalOrganizationMapper) DealInvitationToPb(dealInvitation *entity.DealMember) *organizationpb.DealMember {
+	return &organizationpb.DealMember{
+		MemberId: uint64(dealInvitation.MemberID),
+		Status:   uint32(dealInvitation.Status),
+		RoleId:   &dealInvitation.RoleID,
 		// JoinedAt: dealInvitation.RespondedAt,
 	}
 }
@@ -150,10 +150,10 @@ func (m *InternalOrganizationMapper) DealMembersToPb(dealMembers []*entity.DealM
 
 func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMember) *organizationpb.DealMember {
 	return &organizationpb.DealMember{
-		DealId:     uint64(dealMember.DealID),
-		MemberId:   uint64(dealMember.MemberID),
-		MemberType: uint32(dealMember.MemberType),
-		RoleId:     &dealMember.RoleID,
+		DealId:   uint64(dealMember.DealID),
+		MemberId: uint64(dealMember.MemberID),
+		// MemberType: uint32(dealMember.MemberType),
+		RoleId: &dealMember.RoleID,
 	}
 }
 
