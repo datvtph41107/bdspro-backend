@@ -16,20 +16,22 @@ import (
 
 type InvestmentUsecase struct {
 	investmentRepository repository.InvestmentRepository
-	dealRepository       repository.GroupDealRepository
+	dealRepository       repository.DealRepository
 	groupAuthUsecase     GroupAuthUsecase
 	notiClient           iusecase.INotiClient
 	dealMemberRepo       repository.DealMemberRepository
 	transaction          iusecase.ITransaction
+	historyUsecase       *EventHistoryUsecase
 }
 
 func NewInvestmentUsecase(
 	investmentRepository repository.InvestmentRepository,
-	dealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	notiClient iusecase.INotiClient,
 	dealMemberRepo repository.DealMemberRepository,
 	transaction iusecase.ITransaction,
+	historyUsecase *EventHistoryUsecase,
 ) *InvestmentUsecase {
 	return &InvestmentUsecase{
 		investmentRepository: investmentRepository,
@@ -38,6 +40,7 @@ func NewInvestmentUsecase(
 		notiClient:           notiClient,
 		dealMemberRepo:       dealMemberRepo,
 		transaction:          transaction,
+		historyUsecase:       historyUsecase,
 	}
 }
 
@@ -120,6 +123,7 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 			UserId:     &deal.OwnerId,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
+		u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventAddInvestment, fmt.Sprintf("Investment created: %d", investment.ID), nil)
 	}()
 
 	return &investment.ID, nil
@@ -177,6 +181,16 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 		return nil, err
 	}
 
+	// Ghi lại lịch sử cập nhật đầu tư
+	u.historyUsecase.LogDealHistory(ctx, investment.DealID, enums.DealHistoryEventUpdateInvestment,
+		fmt.Sprintf("Cập nhật đầu tư ID %d với số tiền %.2f", investment.ID, investment.Amount),
+		map[string]interface{}{
+			"deal_id":       investment.DealID,
+			"investment_id": investment.ID,
+			"amount":        investment.Amount,
+			"status":        investment.Status,
+		})
+
 	return &investment.ID, nil
 }
 
@@ -197,7 +211,22 @@ func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) er
 		return errors.New("permission denied")
 	}
 
-	return u.investmentRepository.DeleteInvestment(ctx, *id)
+	err = u.investmentRepository.DeleteInvestment(ctx, *id)
+	if err != nil {
+		return err
+	}
+
+	// Ghi lại lịch sử xóa đầu tư
+	u.historyUsecase.LogDealHistory(ctx, current.DealID, enums.DealHistoryEventRemoveInvestment,
+		fmt.Sprintf("Xóa đầu tư ID %d với số tiền %.2f", current.ID, current.Amount),
+		map[string]interface{}{
+			"deal_id":       current.DealID,
+			"investment_id": current.ID,
+			"amount":        current.Amount,
+			"status":        current.Status,
+		})
+
+	return nil
 }
 
 func (u *InvestmentUsecase) GetInvestment(ctx context.Context, id uint64) (*entity.Investment, error) {
@@ -302,6 +331,7 @@ func (u *InvestmentUsecase) ApproveInvestment(ctx context.Context, id uint64) (u
 			UserId:     &investment.MemberID,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
+		u.historyUsecase.LogDealHistory(ctx, investment.DealID, enums.DealHistoryEventApproveInvestment, fmt.Sprintf("Investment approved: %d", investment.ID), nil)
 	}()
 
 	return investmentID, nil
@@ -339,6 +369,7 @@ func (u *InvestmentUsecase) RejectInvestment(ctx context.Context, id uint64) (ui
 			UserId:     &investment.MemberID,
 		}
 		u.notiClient.SendNotification(notiCtx, notification)
+		u.historyUsecase.LogDealHistory(ctx, investment.DealID, enums.DealHistoryEventRejectInvestment, fmt.Sprintf("Investment rejected: %d", investment.ID), nil)
 	}()
 
 	return investmentID, nil

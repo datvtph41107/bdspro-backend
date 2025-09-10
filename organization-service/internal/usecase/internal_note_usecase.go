@@ -17,14 +17,14 @@ type InternalNoteUsecase interface {
 
 type internalNoteUsecase struct {
 	internalNoteRepository repository.InternalNoteRepository
-	dealRepository         repository.GroupDealRepository
+	dealRepository         repository.DealRepository
 	groupAuthUsecase       GroupAuthUsecase
 	logWorker              *LogWorker
 }
 
 func NewInternalNoteUsecase(
 	internalNoteRepository repository.InternalNoteRepository,
-	dealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 ) InternalNoteUsecase {
@@ -95,4 +95,4 @@ func (u *internalNoteUsecase) GetDealHistory(ctx context.Context, dealID uint64,
 	}
 
 	return notes, total, nil
-} 
+}

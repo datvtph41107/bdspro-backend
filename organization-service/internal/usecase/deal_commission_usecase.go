@@ -25,14 +25,14 @@ type DealCommissionUsecase interface {
 
 type dealCommissionUsecase struct {
 	dealMemberRepository repository.DealMemberRepository
-	dealRepository       repository.GroupDealRepository
+	dealRepository       repository.DealRepository
 	groupAuthUsecase     GroupAuthUsecase
 	logWorker            *LogWorker
 }
 
 func NewDealCommissionUsecase(
 	dealMemberRepository repository.DealMemberRepository,
-	dealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 ) DealCommissionUsecase {
@@ -345,4 +345,4 @@ func (u *dealCommissionUsecase) CalculateCommissionAmount(ctx context.Context, d
 	}
 
 	return commissionAmount, nil
-} 
+}

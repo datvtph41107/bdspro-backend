@@ -19,14 +19,14 @@ type DealMilestoneUsecase interface {
 
 type dealMilestoneUsecase struct {
 	milestoneRepository repository.DealMilestoneRepository
-	dealRepository      repository.GroupDealRepository
+	dealRepository      repository.DealRepository
 	groupAuthUsecase    GroupAuthUsecase
-	logWorker          *LogWorker
+	logWorker           *LogWorker
 }
 
 func NewDealMilestoneUsecase(
 	milestoneRepository repository.DealMilestoneRepository,
-	dealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 ) DealMilestoneUsecase {
@@ -34,7 +34,7 @@ func NewDealMilestoneUsecase(
 		milestoneRepository: milestoneRepository,
 		dealRepository:      dealRepository,
 		groupAuthUsecase:    groupAuthUsecase,
-		logWorker:          logWorker,
+		logWorker:           logWorker,
 	}
 }
 
@@ -178,4 +178,4 @@ func (u *dealMilestoneUsecase) UpdateMilestoneOrder(ctx context.Context, dealID 
 
 	// Update order
 	return u.milestoneRepository.UpdateOrder(ctx, milestoneIDs)
-} 
+}

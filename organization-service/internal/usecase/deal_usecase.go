@@ -4,6 +4,7 @@ import (
 	_dto "common/dto"
 	_utils "common/utils"
 	"context"
+	"fmt"
 
 	"organization/env"
 	"organization/internal/custom_error"
@@ -46,27 +47,29 @@ type DealUsecase interface {
 	GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error)
 }
 
-type groupDealUsecase struct {
-	groupDealRepository     repository.GroupDealRepository
+type dealUsecase struct {
+	dealRepository          repository.DealRepository
 	investmentRepository    repository.InvestmentRepository
 	bankAccountRepository   repository.BankAccountRepository
 	documentRepository      repository.DocumentRepository
+	dealMemberRepository    repository.DealMemberRepository
+	historyUsecase          *EventHistoryUsecase
 	groupAuthUsecase        GroupAuthUsecase
 	logWorker               *LogWorker
 	transaction             iusecase.ITransaction
 	notiClient              iusecase.INotiClient
 	transactionClient       iusecase.TransactionClient
-	dealMemberRepository    repository.DealMemberRepository
 	userClient              iusecase.IUserClient
 	organizationAuthUsecase OrganizationAuthUsecase
 	dealOfBranchRepo        repository.DealOfBranchRepo
 }
 
 func NewGroupDealUsecase(
-	groupDealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
 	investmentRepository repository.InvestmentRepository,
 	bankAccountRepository repository.BankAccountRepository,
 	documentRepository repository.DocumentRepository,
+	historyUsecase *EventHistoryUsecase,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 	transaction iusecase.ITransaction,
@@ -77,11 +80,12 @@ func NewGroupDealUsecase(
 	transactionClient iusecase.TransactionClient,
 	dealOfBranchRepo repository.DealOfBranchRepo,
 ) DealUsecase {
-	return &groupDealUsecase{
-		groupDealRepository:     groupDealRepository,
+	return &dealUsecase{
+		dealRepository:          dealRepository,
 		investmentRepository:    investmentRepository,
 		bankAccountRepository:   bankAccountRepository,
 		documentRepository:      documentRepository,
+		historyUsecase:          historyUsecase,
 		groupAuthUsecase:        groupAuthUsecase,
 		logWorker:               logWorker,
 		transaction:             transaction,
@@ -94,7 +98,7 @@ func NewGroupDealUsecase(
 	}
 }
 
-func (u *groupDealUsecase) IsMemberDeal(ctx context.Context, dealID, memberID uint64) error {
+func (u *dealUsecase) IsMemberDeal(ctx context.Context, dealID, memberID uint64) error {
 	isMember, err := u.dealMemberRepository.IsMemberDeal(ctx, dealID, memberID)
 	if err != nil {
 		return err
@@ -105,7 +109,7 @@ func (u *groupDealUsecase) IsMemberDeal(ctx context.Context, dealID, memberID ui
 	return nil
 }
 
-func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
+func (u *dealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
 	var createdDeal *entity.Deal
@@ -199,7 +203,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 		deal.OwnerId = ownerId
 		// deal.OwnerType = deal.OwnerType
 		// tạo deal
-		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
+		createdDeal, err = u.dealRepository.Create(ctx, deal)
 		if err != nil {
 			return err
 		}
@@ -251,10 +255,20 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 		u.SendNotification(cloneCtx, createdDeal, enums.NotiDealCreate)
 	}()
 
+	// Ghi lại lịch sử tạo thương vụ
+	u.historyUsecase.LogDealHistory(ctx, createdDeal.ID, enums.DealHistoryEventCreate,
+		fmt.Sprintf("Tạo thương vụ '%s' với mục tiêu lợi nhuận %.2f", createdDeal.Name, createdDeal.TargetProfit),
+		map[string]interface{}{
+			"deal_name":     createdDeal.Name,
+			"target_profit": createdDeal.TargetProfit,
+			"deal_type":     createdDeal.DealType,
+			"owner_type":    createdDeal.OwnerType,
+		})
+
 	return createdDeal, nil
 }
 
-func (u *groupDealUsecase) CreateOrganizationDeal(ctx context.Context, organizationId uint64, deal *entity.Deal) (*entity.Deal, error) {
+func (u *dealUsecase) CreateOrganizationDeal(ctx context.Context, organizationId uint64, deal *entity.Deal) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
 	// Kiểm tra quyền - chỉ admin hoặc leader của tổ chức mới được tạo thương vụ
@@ -270,7 +284,7 @@ func (u *groupDealUsecase) CreateOrganizationDeal(ctx context.Context, organizat
 	return u.createDealInternal(ctx, deal, "CREATE_ORGANIZATION_DEAL")
 }
 
-func (u *groupDealUsecase) CreateGroupDeal(ctx context.Context, groupId uint64, deal *entity.Deal) (*entity.Deal, error) {
+func (u *dealUsecase) CreateGroupDeal(ctx context.Context, groupId uint64, deal *entity.Deal) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 
 	// Kiểm tra quyền - chỉ leader của nhóm mới được tạo thương vụ
@@ -286,7 +300,7 @@ func (u *groupDealUsecase) CreateGroupDeal(ctx context.Context, groupId uint64, 
 	return u.createDealInternal(ctx, deal, "CREATE_GROUP_DEAL")
 }
 
-func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.Deal, logType string) (*entity.Deal, error) {
+func (u *dealUsecase) createDealInternal(ctx context.Context, deal *entity.Deal, logType string) (*entity.Deal, error) {
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
 	var createdDeal *entity.Deal
 	var err error
@@ -358,7 +372,7 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 		}
 
 		// tạo deal
-		createdDeal, err = u.groupDealRepository.Create(ctx, deal)
+		createdDeal, err = u.dealRepository.Create(ctx, deal)
 		if err != nil {
 			return err
 		}
@@ -386,8 +400,8 @@ func (u *groupDealUsecase) createDealInternal(ctx context.Context, deal *entity.
 	return createdDeal, nil
 }
 
-func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
-	existedDeal, err := u.groupDealRepository.GetByID(ctx, deal.ID)
+func (u *dealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Deal) (*entity.Deal, error) {
+	existedDeal, err := u.dealRepository.GetByID(ctx, deal.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +413,7 @@ func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Dea
 	}
 	// deal.UpdatedBy = currentUserId
 
-	updatedDeal, err := u.groupDealRepository.Update(ctx, deal)
+	updatedDeal, err := u.dealRepository.Update(ctx, deal)
 	if err != nil {
 		return nil, err
 	}
@@ -417,11 +431,20 @@ func (u *groupDealUsecase) UpdateGroupDeal(ctx context.Context, deal *entity.Dea
 		// u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
 
+	// Ghi lại lịch sử cập nhật thương vụ
+	u.historyUsecase.LogDealHistory(ctx, updatedDeal.ID, enums.DealHistoryEventUpdate,
+		fmt.Sprintf("Cập nhật thông tin thương vụ '%s'", updatedDeal.Name),
+		map[string]interface{}{
+			"deal_name":     updatedDeal.Name,
+			"target_profit": updatedDeal.TargetProfit,
+			"deal_type":     updatedDeal.DealType,
+		})
+
 	return updatedDeal, nil
 }
 
-func (u *groupDealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
+func (u *dealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error {
+	deal, err := u.dealRepository.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -436,7 +459,7 @@ func (u *groupDealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error
 		return custom_error.Forbidden("you are not allowed to delete deal")
 	}
 
-	err = u.groupDealRepository.Delete(ctx, id)
+	err = u.dealRepository.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -448,10 +471,18 @@ func (u *groupDealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error
 		LogData: "Deleted deal",
 	})
 
+	// Ghi lại lịch sử xóa thương vụ
+	u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventDelete,
+		fmt.Sprintf("Xóa thương vụ '%s'", deal.Name),
+		map[string]interface{}{
+			"deal_name":     deal.Name,
+			"target_profit": deal.TargetProfit,
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error) {
+func (u *dealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*entity.Deal, error) {
 	// deal, err := u.groupDealRepository.GetByID(ctx, id)
 	// if err != nil {
 	// 	return nil, err
@@ -461,7 +492,7 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 	// 	return nil, custom_error.RecordNotFound("deal not found")
 	// }
 
-	deal, err := u.groupDealRepository.DetailByID(ctx, id)
+	deal, err := u.dealRepository.DetailByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -469,20 +500,20 @@ func (u *groupDealUsecase) GetGroupDealByID(ctx context.Context, id uint64) (*en
 	return deal, nil
 }
 
-func (u *groupDealUsecase) GetOrganizationDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+func (u *dealUsecase) GetOrganizationDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	searchRequest.OrganizationID = &organizationId
-	return u.groupDealRepository.GetDeals(ctx, userID, searchRequest)
+	return u.dealRepository.GetDeals(ctx, userID, searchRequest)
 }
 
-func (u *groupDealUsecase) GetDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+func (u *dealUsecase) GetDeals(ctx context.Context, searchRequest *dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
-	return u.groupDealRepository.GetDeals(ctx, userID, searchRequest)
+	return u.dealRepository.GetDeals(ctx, userID, searchRequest)
 }
 
-func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
-	deal, err := u.groupDealRepository.DetailByID(ctx, id)
+func (u *dealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64, status enums.DealStatus) error {
+	deal, err := u.dealRepository.DetailByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -497,7 +528,7 @@ func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64,
 		return custom_error.Forbidden("you are not allowed to update deal status")
 	}
 
-	err = u.groupDealRepository.UpdateStatus(ctx, id, status)
+	err = u.dealRepository.UpdateStatus(ctx, id, status)
 	if err != nil {
 		return err
 	}
@@ -515,11 +546,22 @@ func (u *groupDealUsecase) UpdateGroupDealStatus(ctx context.Context, id uint64,
 		deal.Status = status
 		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
+
+	// Ghi lại lịch sử cập nhật trạng thái thương vụ
+	u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventStatusChange,
+		fmt.Sprintf("Cập nhật trạng thái thương vụ '%s' thành %s", deal.Name, enums.DealStatusMap[enums.DealStatus(status)]),
+		map[string]interface{}{
+			"deal_name":   deal.Name,
+			"old_status":  deal.Status,
+			"new_status":  status,
+			"status_name": enums.DealStatusMap[enums.DealStatus(status)],
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, dealId)
+func (u *dealUsecase) UpdateOrganizationDealStatus(ctx context.Context, organizationId uint64, dealId uint64, status enums.DealStatus) error {
+	deal, err := u.dealRepository.GetByID(ctx, dealId)
 	if err != nil {
 		return err
 	}
@@ -534,7 +576,7 @@ func (u *groupDealUsecase) UpdateOrganizationDealStatus(ctx context.Context, org
 		return custom_error.Forbidden("you are not allowed to update deal status for this organization")
 	}
 
-	err = u.groupDealRepository.UpdateStatus(ctx, dealId, status)
+	err = u.dealRepository.UpdateStatus(ctx, dealId, status)
 	if err != nil {
 		return err
 	}
@@ -551,11 +593,23 @@ func (u *groupDealUsecase) UpdateOrganizationDealStatus(ctx context.Context, org
 		deal.Status = status
 		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
+
+	// Ghi lại lịch sử cập nhật trạng thái thương vụ
+	u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventStatusChange,
+		fmt.Sprintf("Cập nhật trạng thái thương vụ '%s' thành %s", deal.Name, enums.DealStatusMap[enums.DealStatus(status)]),
+		map[string]interface{}{
+			"deal_name":       deal.Name,
+			"old_status":      deal.Status,
+			"new_status":      status,
+			"status_name":     enums.DealStatusMap[enums.DealStatus(status)],
+			"organization_id": organizationId,
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, dealId)
+func (u *dealUsecase) UpdateGroupDealStatusV2(ctx context.Context, groupId uint64, dealId uint64, status enums.DealStatus) error {
+	deal, err := u.dealRepository.GetByID(ctx, dealId)
 	if err != nil {
 		return err
 	}
@@ -570,7 +624,7 @@ func (u *groupDealUsecase) UpdateGroupDealStatusV2(ctx context.Context, groupId 
 		return custom_error.Forbidden("you are not allowed to update deal status for this group")
 	}
 
-	err = u.groupDealRepository.UpdateStatus(ctx, dealId, status)
+	err = u.dealRepository.UpdateStatus(ctx, dealId, status)
 	if err != nil {
 		return err
 	}
@@ -587,11 +641,23 @@ func (u *groupDealUsecase) UpdateGroupDealStatusV2(ctx context.Context, groupId 
 		deal.Status = status
 		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
+
+	// Ghi lại lịch sử cập nhật trạng thái thương vụ
+	u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventStatusChange,
+		fmt.Sprintf("Cập nhật trạng thái thương vụ '%s' thành %s", deal.Name, enums.DealStatusMap[enums.DealStatus(status)]),
+		map[string]interface{}{
+			"deal_name":   deal.Name,
+			"old_status":  deal.Status,
+			"new_status":  status,
+			"status_name": enums.DealStatusMap[enums.DealStatus(status)],
+			"group_id":    groupId,
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) CancelDeal(ctx context.Context, id uint64, reason string) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
+func (u *dealUsecase) CancelDeal(ctx context.Context, id uint64, reason string) error {
+	deal, err := u.dealRepository.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -606,7 +672,7 @@ func (u *groupDealUsecase) CancelDeal(ctx context.Context, id uint64, reason str
 		return custom_error.Forbidden("you are not allowed to cancel deal")
 	}
 
-	err = u.groupDealRepository.UpdateStatusAndCancelReason(ctx, id, enums.DealStatusCanceled, reason)
+	err = u.dealRepository.UpdateStatusAndCancelReason(ctx, id, enums.DealStatusCanceled, reason)
 	if err != nil {
 		return err
 	}
@@ -624,11 +690,21 @@ func (u *groupDealUsecase) CancelDeal(ctx context.Context, id uint64, reason str
 		deal.Status = enums.DealStatusCanceled
 		u.SendNotification(cloneCtx, deal, enums.NotiDealUpdateStatus)
 	}()
+
+	// Ghi lại lịch sử hủy thương vụ
+	u.historyUsecase.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventCancel,
+		fmt.Sprintf("Hủy thương vụ '%s' với lý do: %s", deal.Name, reason),
+		map[string]interface{}{
+			"deal_name": deal.Name,
+			"reason":    reason,
+			"status":    enums.DealStatusCanceled,
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error) {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
+func (u *dealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.InfoInvestmentDTO, error) {
+	deal, err := u.dealRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -665,7 +741,7 @@ func (u *groupDealUsecase) InfoInvestment(ctx context.Context, id uint64) (*dto.
 	}, nil
 }
 
-func (u *groupDealUsecase) SendNotification(ctx context.Context, deal *entity.Deal, typeNoti enums.NotificationType) error {
+func (u *dealUsecase) SendNotification(ctx context.Context, deal *entity.Deal, typeNoti enums.NotificationType) error {
 	notifications := make([]*dto.NotificationDTO, 0)
 
 	typeMember := typeNoti
@@ -715,8 +791,8 @@ func (u *groupDealUsecase) SendNotification(ctx context.Context, deal *entity.De
 	return nil
 }
 
-func (u *groupDealUsecase) AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error) {
-	deal, err := u.groupDealRepository.GetByID(ctx, id)
+func (u *dealUsecase) AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error) {
+	deal, err := u.dealRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -743,8 +819,8 @@ func (u *groupDealUsecase) AccountInvestment(ctx context.Context, id uint64) (*e
 	return bankAccount, nil
 }
 
-func (u *groupDealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error {
-	deal, err := u.groupDealRepository.GetByID(ctx, dealID)
+func (u *dealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error {
+	deal, err := u.dealRepository.GetByID(ctx, dealID)
 	if err != nil {
 		return err
 	}
@@ -772,15 +848,38 @@ func (u *groupDealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, m
 		return err
 	}
 
+	// Ghi lại lịch sử thêm thành viên vào thương vụ
+	u.historyUsecase.LogDealHistory(ctx, dealID, enums.DealHistoryEventAddMember,
+		fmt.Sprintf("Thêm thành viên %s vào thương vụ '%s'", user.Profiles[0].FullName, deal.Name),
+		map[string]interface{}{
+			"deal_id":     dealID,
+			"member_id":   memberID,
+			"member_name": user.Profiles[0].FullName,
+			"deal_name":   deal.Name,
+		})
+
 	return nil
 }
 
-func (u *groupDealUsecase) UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error {
-	return u.groupDealRepository.UpdateSetting(ctx, dealID, setting)
+func (u *dealUsecase) UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error {
+	err := u.dealRepository.UpdateSetting(ctx, dealID, setting)
+	if err != nil {
+		return err
+	}
+
+	// Ghi lại lịch sử cập nhật cài đặt thương vụ
+	u.historyUsecase.LogDealHistory(ctx, dealID, enums.DealHistoryEventUpdateSetting,
+		"Cập nhật cài đặt thương vụ",
+		map[string]interface{}{
+			"deal_id": dealID,
+			"setting": setting,
+		})
+
+	return nil
 }
 
-func (u *groupDealUsecase) BeforeAccess(ctx context.Context, dealID uint64) error {
-	deal, err := u.groupDealRepository.DetailByID(ctx, dealID)
+func (u *dealUsecase) BeforeAccess(ctx context.Context, dealID uint64) error {
+	deal, err := u.dealRepository.DetailByID(ctx, dealID)
 	if err != nil {
 		return err
 	}
@@ -794,7 +893,7 @@ func (u *groupDealUsecase) BeforeAccess(ctx context.Context, dealID uint64) erro
 	return nil
 }
 
-func (u *groupDealUsecase) GetDealMembers(ctx context.Context, payload dto.SearchMembersRequest) ([]*entity.DealMember, error) {
+func (u *dealUsecase) GetDealMembers(ctx context.Context, payload dto.SearchMembersRequest) ([]*entity.DealMember, error) {
 	err := u.BeforeAccess(ctx, payload.DealID)
 	if err != nil {
 		return nil, err
@@ -803,7 +902,7 @@ func (u *groupDealUsecase) GetDealMembers(ctx context.Context, payload dto.Searc
 	return u.dealMemberRepository.GetDealMembers(ctx, payload)
 }
 
-func (u *groupDealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error) {
+func (u *dealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error) {
 	err := u.BeforeAccess(ctx, dealID)
 	if err != nil {
 		return nil, err
@@ -816,20 +915,20 @@ func (u *groupDealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, p
 			ProductID: productID,
 		}
 	}
-	return u.groupDealRepository.CreateDealProduct(ctx, dealProducts)
+	return u.dealRepository.CreateDealProduct(ctx, dealProducts)
 }
 
-func (u *groupDealUsecase) GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error) {
+func (u *dealUsecase) GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error) {
 	err := u.BeforeAccess(ctx, dealID)
 	if err != nil {
 		return nil, err
 	}
 
-	return u.groupDealRepository.GetDealProducts(ctx, dealID, pagable)
+	return u.dealRepository.GetDealProducts(ctx, dealID, pagable)
 }
 
-func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest) (*dto.SummaryResponse, error) {
-	deal, err := u.groupDealRepository.GetByID(ctx, req.DealId)
+func (u *dealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest) (*dto.SummaryResponse, error) {
+	deal, err := u.dealRepository.GetByID(ctx, req.DealId)
 	if err != nil {
 		return nil, err
 	}
@@ -873,23 +972,36 @@ func (u *groupDealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest)
 		// TotalPayment:    totalAmount.TotalPayment,
 	}, nil
 }
-func (u *groupDealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
-	return u.groupDealRepository.UpdateAllowManualInput(ctx, dealID, allowManualInput)
+func (u *dealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
+	err := u.dealRepository.UpdateAllowManualInput(ctx, dealID, allowManualInput)
+	if err != nil {
+		return err
+	}
+
+	// Ghi lại lịch sử cập nhật cho phép nhập tay
+	u.historyUsecase.LogDealHistory(ctx, dealID, enums.DealHistoryEventUpdateAllowManualInput,
+		fmt.Sprintf("Cập nhật cho phép nhập tay: %t", allowManualInput),
+		map[string]interface{}{
+			"deal_id":            dealID,
+			"allow_manual_input": allowManualInput,
+		})
+
+	return nil
 }
 
 // GetDealProcess lấy thông tin process của deal
-func (u *groupDealUsecase) GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error) {
+func (u *dealUsecase) GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error) {
 	err := u.BeforeAccess(ctx, dealID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Gọi repository để lấy thông tin process
-	return u.groupDealRepository.GetDealProcess(ctx, dealID, organizationID)
+	return u.dealRepository.GetDealProcess(ctx, dealID, organizationID)
 }
 
 // GetBranchDealsByBranchID lấy danh sách thương vụ theo chi nhánh
-func (u *groupDealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchID uint64, page, size int) ([]*entity.Deal, uint32, error) {
+func (u *dealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchID uint64, page, size int) ([]*entity.Deal, uint32, error) {
 	// Lấy danh sách deal IDs từ deal_of_branch
 	dealOfBranches, total, err := u.dealOfBranchRepo.GetByBranchID(ctx, branchID, page, size)
 	if err != nil {
@@ -909,7 +1021,7 @@ func (u *groupDealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchI
 	// Lấy thông tin chi tiết các deals
 	deals := make([]*entity.Deal, 0, len(dealIDs))
 	for _, dealID := range dealIDs {
-		deal, err := u.groupDealRepository.GetByID(ctx, dealID)
+		deal, err := u.dealRepository.GetByID(ctx, dealID)
 		if err != nil {
 			continue // Bỏ qua deal không tìm thấy
 		}
@@ -920,15 +1032,15 @@ func (u *groupDealUsecase) GetBranchDealsByBranchID(ctx context.Context, branchI
 }
 
 // GetOrganizationDealOverview lấy thống kê tổng quan thương vụ theo tổ chức
-func (u *groupDealUsecase) GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error) {
+func (u *dealUsecase) GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error) {
 	// Lấy thống kê cơ bản từ repository
-	overview, err := u.groupDealRepository.GetDealOverviewByOrganization(ctx, organizationID)
+	overview, err := u.dealRepository.GetDealOverviewByOrganization(ctx, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Lấy danh sách deal IDs để tính lợi nhuận ước tính
-	dealIDs, err := u.groupDealRepository.GetIdsByOrganizationID(ctx, organizationID) // Lấy tối đa 1000 deals
+	dealIDs, err := u.dealRepository.GetIdsByOrganizationID(ctx, organizationID) // Lấy tối đa 1000 deals
 	if err != nil {
 		// Nếu không lấy được danh sách deals, vẫn trả về thống kê cơ bản
 		return overview, nil
@@ -952,15 +1064,15 @@ func (u *groupDealUsecase) GetOrganizationDealOverview(ctx context.Context, orga
 }
 
 // GetGroupDealOverview lấy thống kê tổng quan thương vụ theo nhóm
-func (u *groupDealUsecase) GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error) {
+func (u *dealUsecase) GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error) {
 	// Lấy thống kê cơ bản từ repository
-	overview, err := u.groupDealRepository.GetDealOverviewByGroup(ctx, groupID)
+	overview, err := u.dealRepository.GetDealOverviewByGroup(ctx, groupID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Lấy danh sách deal IDs để tính lợi nhuận ước tính
-	dealIDs, err := u.groupDealRepository.GetIdsByGroupID(ctx, groupID) // Lấy tối đa 1000 deals
+	dealIDs, _ := u.dealRepository.GetIdsByGroupID(ctx, groupID) // Lấy tối đa 1000 deals
 
 	// Lấy lợi nhuận ước tính từ transaction service
 	if len(dealIDs) > 0 {

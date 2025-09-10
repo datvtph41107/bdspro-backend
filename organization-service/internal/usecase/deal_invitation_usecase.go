@@ -55,7 +55,8 @@ type DealInvitationUsecase interface {
 type dealInvitationUsecase struct {
 	// dealMemberRepository repository.DealInvitationRepository
 	dealMemberRepository repository.DealMemberRepository
-	dealRepository       repository.GroupDealRepository
+	dealRepository       repository.DealRepository
+	historyUsecase       *EventHistoryUsecase
 	groupAuthUsecase     GroupAuthUsecase
 	logWorker            *LogWorker
 	transaction          iusecase.ITransaction
@@ -66,7 +67,8 @@ type dealInvitationUsecase struct {
 func NewDealInvitationUsecase(
 	// dealMemberRepository repository.DealInvitationRepository,
 	dealMemberRepository repository.DealMemberRepository,
-	dealRepository repository.GroupDealRepository,
+	dealRepository repository.DealRepository,
+	historyUsecase *EventHistoryUsecase,
 	groupAuthUsecase GroupAuthUsecase,
 	logWorker *LogWorker,
 	transaction iusecase.ITransaction,
@@ -77,6 +79,7 @@ func NewDealInvitationUsecase(
 		// dealMemberRepository: dealMemberRepository,
 		dealMemberRepository: dealMemberRepository,
 		dealRepository:       dealRepository,
+		historyUsecase:       historyUsecase,
 		groupAuthUsecase:     groupAuthUsecase,
 		logWorker:            logWorker,
 		transaction:          transaction,
@@ -149,6 +152,16 @@ func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *
 		cloneCtx := _utils.CloneContext(ctx)
 		u.sendInvitationNotification(cloneCtx, createdInvitation, deal)
 	}()
+
+	// Ghi lại lịch sử gửi lời mời
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventSendInvitation,
+		fmt.Sprintf("Gửi lời mời tham gia thương vụ '%s' cho %d", deal.Name, invitation.MemberID),
+		map[string]interface{}{
+			"deal_id":    invitation.DealID,
+			"deal_name":  deal.Name,
+			"member_id":  invitation.MemberID,
+			"inviter_id": currentUserId,
+		})
 
 	return createdInvitation, nil
 }
@@ -241,6 +254,16 @@ func (u *dealInvitationUsecase) AcceptInvitation(ctx context.Context, invitation
 		u.sendAcceptanceNotification(cloneCtx, invitation, deal)
 	}()
 
+	// Ghi lại lịch sử chấp nhận lời mời
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventAcceptInvitation,
+		fmt.Sprintf("Chấp nhận lời mời tham gia thương vụ '%s'", deal.Name),
+		map[string]interface{}{
+			"deal_id":       invitation.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     currentUserId,
+			"invitation_id": invitationID,
+		})
+
 	return nil
 }
 
@@ -304,6 +327,17 @@ func (u *dealInvitationUsecase) RejectInvitation(ctx context.Context, invitation
 		cloneCtx := _utils.CloneContext(ctx)
 		u.sendRejectionNotification(cloneCtx, invitation, deal)
 	}()
+
+	// Ghi lại lịch sử từ chối lời mời
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventRejectInvitation,
+		fmt.Sprintf("Từ chối lời mời tham gia thương vụ '%s' với lý do: %s", deal.Name, reason),
+		map[string]interface{}{
+			"deal_id":       invitation.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     currentUserId,
+			"invitation_id": invitationID,
+			"reason":        reason,
+		})
 
 	return nil
 }
@@ -471,6 +505,17 @@ func (u *dealInvitationUsecase) WithdrawFromDeal(ctx context.Context, invitation
 		u.sendWithdrawalNotification(cloneCtx, invitation, deal)
 	}()
 
+	// Ghi lại lịch sử rút khỏi thương vụ
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventWithdrawFromDeal,
+		fmt.Sprintf("Rút khỏi thương vụ '%s' với lý do: %s", deal.Name, reason),
+		map[string]interface{}{
+			"deal_id":       invitation.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     currentUserId,
+			"invitation_id": invitationID,
+			"reason":        reason,
+		})
+
 	return nil
 }
 
@@ -546,6 +591,18 @@ func (u *dealInvitationUsecase) RemoveFromDeal(ctx context.Context, invitationID
 		u.sendRemovalNotification(cloneCtx, invitation, deal)
 	}()
 
+	// Ghi lại lịch sử gỡ khỏi thương vụ
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventRemoveFromDeal,
+		fmt.Sprintf("Gỡ user %d khỏi thương vụ '%s' với lý do: %s", invitation.MemberID, deal.Name, reason),
+		map[string]interface{}{
+			"deal_id":       invitation.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     invitation.MemberID,
+			"removed_by":    currentUserId,
+			"invitation_id": invitationID,
+			"reason":        reason,
+		})
+
 	return nil
 }
 
@@ -597,6 +654,17 @@ func (u *dealInvitationUsecase) ConfirmWithdrawal(ctx context.Context, invitatio
 		LogType: "CONFIRM_WITHDRAWAL",
 		LogData: fmt.Sprintf("Confirmed withdrawal of user %d from deal %d", invitation.MemberID, invitation.DealID),
 	})
+
+	// Ghi lại lịch sử xác nhận rút khỏi thương vụ
+	u.historyUsecase.LogDealHistory(ctx, invitation.DealID, enums.DealHistoryEventConfirmWithdrawal,
+		fmt.Sprintf("Xác nhận rút khỏi thương vụ '%s'", deal.Name),
+		map[string]interface{}{
+			"deal_id":       invitation.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     invitation.MemberID,
+			"confirm_by":    currentUserId,
+			"invitation_id": invitationID,
+		})
 
 	return nil
 }

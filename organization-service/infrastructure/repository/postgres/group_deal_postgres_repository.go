@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: organization/internal/domain/repository.GroupDealRepository
+// @bind: organization/internal/domain/repository.DealRepository
 type GroupDealPostgresRepository struct {
 	db              *gorm.DB
 	bankAccountRepo repository.BankAccountRepository

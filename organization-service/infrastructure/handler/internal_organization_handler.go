@@ -17,7 +17,7 @@ type InternalOrganizationHandler struct {
 	// dealInvitationRepo     repository.DealMemberRepository
 	groupMemberRepo        repository.GroupMemberRepository
 	organizationMemberRepo repository.OrganizationMemberRepository
-	dealRepo               repository.GroupDealRepository
+	dealRepo               repository.DealRepository
 	dealMemberRepo         repository.DealMemberRepository
 	dealUsecase            usecase.DealUsecase
 	branchMemberRepo       repository.OrganizationBranchMemberRepository
@@ -29,7 +29,7 @@ func NewInternalOrganizationHandler(
 	// dealInvitationRepo repository.DealMemberRepository,
 	groupMemberRepo repository.GroupMemberRepository,
 	organizationMemberRepo repository.OrganizationMemberRepository,
-	dealRepo repository.GroupDealRepository,
+	dealRepo repository.DealRepository,
 	dealMemberRepo repository.DealMemberRepository,
 	dealUsecase usecase.DealUsecase,
 	branchMemberRepo repository.OrganizationBranchMemberRepository,

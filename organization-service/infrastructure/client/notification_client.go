@@ -46,3 +46,8 @@ func (c *NotificationClient) SendBatchNotification(ctx context.Context, notifica
 	return c.client.SendBatch(ctx, notiRequests)
 }
 
+func (c *NotificationClient) HistoryDeal(ctx context.Context, history *dto.DealHistoryDTO) error {
+	// TODO: Implement call to notification service for deal history
+	// This will be implemented when notification service supports deal history
+	return nil
+}

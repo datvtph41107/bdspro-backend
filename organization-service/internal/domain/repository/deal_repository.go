@@ -9,7 +9,7 @@ import (
 	"organization/internal/enums"
 )
 
-type GroupDealRepository interface {
+type DealRepository interface {
 	Create(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	Update(ctx context.Context, deal *entity.Deal) (*entity.Deal, error)
 	Delete(ctx context.Context, id uint64) error
