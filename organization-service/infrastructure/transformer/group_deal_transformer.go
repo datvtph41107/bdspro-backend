@@ -20,11 +20,10 @@ type GroupDealTransformer interface {
 	EntityToUpdateGroupDealResponse(deal *entity.Deal) *organizationpb.UpdateGroupDealResponse
 	EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal
 	EntityToDealDetailResponse(deal *entity.Deal) *organizationpb.GroupDeal
-	EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse
 	EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse
 	EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse
-	EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response
 	EntityToDealMemberProto(member *entity.DealMember) *organizationpb.DealMember
+	EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response
 }
 
 type groupDealTransformer struct {
@@ -56,7 +55,7 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *organizat
 		MemberIds:      request.MemberIds,
 		ProductIds:     request.ProductIds,
 		OwnerId:        request.OwnerId,
-		OwnerType:      enums.OwnerType(request.OwnerType),
+		OwnerType:      enums.OwnerOf(request.OwnerType),
 		ChargePersonID: &request.ChargePersonId,
 		IsUnilateral:   request.IsUnilateral,
 		IsManual:       request.IsManual,
@@ -294,19 +293,6 @@ func (t *groupDealTransformer) EntityToDealDetailResponse(deal *entity.Deal) *or
 	return response
 }
 
-func (t *groupDealTransformer) EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse {
-	response := &organizationpb.GetGroupDealsResponse{
-		Total: total,
-		Data:  make([]*organizationpb.GroupDeal, len(deals)),
-	}
-
-	for i, deal := range deals {
-		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
-	}
-
-	return response
-}
-
 func (t *groupDealTransformer) EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse {
 	response := &organizationpb.GetOrganizationDealsResponse{
 		Total: total,
@@ -323,19 +309,6 @@ func (t *groupDealTransformer) EntityToGetOrganizationDealsResponse(deals []*ent
 func (t *groupDealTransformer) EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse {
 
 	response := &organizationpb.GetDealsResponse{
-		Total: total,
-		Data:  make([]*organizationpb.GroupDeal, len(deals)),
-	}
-
-	for i, deal := range deals {
-		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
-	}
-
-	return response
-}
-
-func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response {
-	response := &organizationpb.GetGroupDealsV2Response{
 		Total: total,
 		Data:  make([]*organizationpb.GroupDeal, len(deals)),
 	}
@@ -384,4 +357,17 @@ func (t *groupDealTransformer) EntityToDealMemberProto(member *entity.DealMember
 	}
 
 	return proto
+}
+
+func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response {
+	response := &organizationpb.GetGroupDealsV2Response{
+		Total: total,
+		Data:  make([]*organizationpb.GroupDeal, len(deals)),
+	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
 }

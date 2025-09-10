@@ -120,7 +120,7 @@ func (r *GroupDealPostgresRepository) GetIdsByGroupID(ctx context.Context, group
 		AND d.owner_type = ? 
 		AND d.deleted_at IS NULL
 	`
-	if err := GetDB(ctx, r.db).Raw(countQuery, groupID, enums.OwnerTypeGroup).Pluck("id", &deals).Error; err != nil {
+	if err := GetDB(ctx, r.db).Raw(countQuery, groupID, enums.OwnerOfGroup).Pluck("id", &deals).Error; err != nil {
 		return nil, err
 	}
 
@@ -137,7 +137,7 @@ func (r *GroupDealPostgresRepository) GetIdsByOrganizationID(ctx context.Context
 		AND d.owner_type = ? 
 		AND d.deleted_at IS NULL
 	`
-	if err := GetDB(ctx, r.db).Raw(countQuery, organizationID, enums.OwnerTypeOrganization).Pluck("id", &deals).Error; err != nil {
+	if err := GetDB(ctx, r.db).Raw(countQuery, organizationID, enums.OwnerOfOrganization).Pluck("id", &deals).Error; err != nil {
 		return nil, err
 	}
 
@@ -174,13 +174,13 @@ func (r *GroupDealPostgresRepository) GetDeals(ctx context.Context, userID uint6
 	// Add organization filter if provided
 	if searchRequest.OrganizationID != nil {
 		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
-		args = append(args, *searchRequest.OrganizationID, enums.OwnerTypeOrganization)
+		args = append(args, *searchRequest.OrganizationID, enums.OwnerOfOrganization)
 	}
 
 	// Add group filter if provided
 	if searchRequest.GroupID != nil {
 		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
-		args = append(args, *searchRequest.GroupID, enums.OwnerTypeGroup)
+		args = append(args, *searchRequest.GroupID, enums.OwnerOfGroup)
 	}
 
 	// Add text search if provided
@@ -345,7 +345,7 @@ func (r *GroupDealPostgresRepository) GetDealOverviewByOrganization(ctx context.
 			SUM(CASE WHEN status = 20 THEN 1 ELSE 0 END) as total_deal_completed,
 			SUM(CASE WHEN status = 30 THEN 1 ELSE 0 END) as total_deal_canceled
 		`).
-		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", organizationID, enums.OwnerTypeOrganization).
+		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", organizationID, enums.OwnerOfOrganization).
 		Scan(&result).Error
 
 	if err != nil {
@@ -374,7 +374,7 @@ func (r *GroupDealPostgresRepository) GetDealOverviewByGroup(ctx context.Context
 			SUM(CASE WHEN status = 20 THEN 1 ELSE 0 END) as total_deal_completed,
 			SUM(CASE WHEN status = 30 THEN 1 ELSE 0 END) as total_deal_canceled
 		`).
-		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", groupID, enums.OwnerTypeGroup).
+		Where("owner_id = ? AND owner_type = ? AND deleted_at IS NULL", groupID, enums.OwnerOfGroup).
 		Scan(&result).Error
 
 	if err != nil {

@@ -144,39 +144,6 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 	return response, nil
 }
 
-// @Summary Lấy danh sách thương vụ
-// @Description Lấy danh sách thương vụ
-// @Tags Thương vụ
-// @Accept json
-// @Produce json
-// @Param request query organizationpb.GetGroupDealsRequest true "Thông tin lấy danh sách thương vụ"
-// @Security BearerAuth
-// @Success 200 {object} organizationpb.GetGroupDealsResponse "Thành công"
-// @Router /deal [get]
-// deprecated
-func (h *GroupDealHandler) GetGroupDeals(ctx context.Context, req *organizationpb.GetGroupDealsRequest) (*organizationpb.GetGroupDealsResponse, error) {
-	// if err := h.GroupDealValidator.ValidateGetGroupDealsRequest(req); err != nil {
-	// 	return nil, err
-	// }
-
-	// page := 0
-	// size := 10
-	// if req.Page != nil {
-	// 	page = int(*req.Page)
-	// }
-	// if req.Size != nil {
-	// 	size = int(*req.Size)
-	// }
-	// deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, uint64(req.GroupId), page, size)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// response := h.GroupDealTransformer.EntityToGetGroupDealsResponse(deals, total)
-	// h.UserClient.MapMemberToDealPb(ctx, response.Data)
-	return nil, nil
-}
-
 // @Summary Cập nhật trạng thái thương vụ
 // @Description Cập nhật trạng thái thương vụ
 // @Tags Thương vụ
@@ -417,7 +384,7 @@ func (h *GroupDealHandler) GetDealsUser(ctx context.Context, req *organizationpb
 		OwnerID:        req.OwnerId,
 	}
 	if req.OwnerOf != nil {
-		searchRequest.OwnerType = enums.OwnerType(*req.OwnerOf)
+		searchRequest.OwnerType = enums.OwnerOf(*req.OwnerOf)
 	}
 
 	deals, total, err := h.DealUsecase.GetDeals(ctx, searchRequest)
@@ -458,53 +425,6 @@ func (h *GroupDealHandler) GetDealsOrganization(ctx context.Context, req *organi
 	response := h.GroupDealTransformer.EntityToGetDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
-}
-
-// @Summary Lấy danh sách thương vụ của nhóm
-// @Description Lấy danh sách thương vụ của nhóm
-// @Tags Thương vụ
-// @Accept json
-// @Produce json
-// @Param groupId path uint64 true "ID nhóm"
-// @Param page query uint32 false "Trang" default(1)
-// @Param size query uint32 false "Kích thước" default(10)
-// @Security BearerAuth
-// @Success 200 {object} organizationpb.GetGroupDealsV2Response "Thành công"
-// @Router /group/{groupId}/deals [get]
-// deprecated
-func (h *GroupDealHandler) GetGroupDealsV2(ctx context.Context, req *organizationpb.GetGroupDealsV2Request) (*organizationpb.GetGroupDealsV2Response, error) {
-	// groupId := req.GroupId
-	// page := uint32(0)
-	// size := uint32(10)
-	// if req.Page != nil {
-	// 	page = *req.Page
-	// }
-	// if req.Size != nil {
-	// 	size = *req.Size
-	// }
-
-	// if page <= 0 {
-	// 	page = 1
-	// }
-	// if size <= 0 {
-	// 	size = 10
-	// }
-
-	// searchRequest := &dto.DealSearchRequest{
-	// 	Pagable: _dto.Pagable{
-	// 		Page: page,
-	// 		Size: size,
-	// 	},
-	// 	GroupID: &groupId,
-	// }
-
-	// deals, total, err := h.DealUsecase.GetGroupDealsByGroupID(ctx, searchRequest)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
-	return nil, nil
 }
 
 // @Summary Cập nhật trạng thái thương vụ cho tổ chức

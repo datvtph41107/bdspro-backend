@@ -1,20 +1,31 @@
 package enums
 
-// DealMemberRoleKey enum cho role trong deal member
-type DealMemberRoleKey uint32
+// RoleKey enum cho role trong deal member
+type RoleKey uint32
 
 const (
-	DealMemberRoleKeyOwner    DealMemberRoleKey = 410 // Chủ thương vụ
-	DealMemberRoleKeyAdmin    DealMemberRoleKey = 420 // Quản trị viên
-	DealMemberRoleKeyMember   DealMemberRoleKey = 430 // Thành viên
-	DealMemberRoleKeyPartner  DealMemberRoleKey = 440 // Đối tác
-	DealMemberRoleKeyCustomer DealMemberRoleKey = 450 // Khách hàng
+
+	// thương vụ
+	RoleKeyDealOwner    RoleKey = 410 // Chủ thương vụ
+	RoleKeyDealAdmin    RoleKey = 420 // Quản trị viên
+	RoleKeyDealMember   RoleKey = 430 // Thành viên
+	RoleKeyDealPartner  RoleKey = 440 // Đối tác
+	RoleKeyDealCustomer RoleKey = 450 // Khách hàng
+
+	// tổ chức
+	RoleKeyOrganizationOwner  RoleKey = 510 // Chủ sở hữu
+	RoleKeyOrganizationAdmin  RoleKey = 520 // Quản trị viên
+	RoleKeyOrganizationMember RoleKey = 530 // Thành viên
 )
 
-var DealMemberRoleKeyMap = map[DealMemberRoleKey]string{
-	DealMemberRoleKeyOwner:    "Chủ sở hữu",
-	DealMemberRoleKeyAdmin:    "Quản lý",
-	DealMemberRoleKeyMember:   "Thành viên",
-	DealMemberRoleKeyCustomer: "Đối tác",
-	DealMemberRoleKeyPartner:  "Khách hàng",
+var RoleKeyMap = map[RoleKey]string{
+	RoleKeyDealOwner:    "Chủ sở hữu",
+	RoleKeyDealAdmin:    "Quản lý",
+	RoleKeyDealMember:   "Thành viên",
+	RoleKeyDealCustomer: "Đối tác",
+	RoleKeyDealPartner:  "Khách hàng",
+
+	RoleKeyOrganizationOwner:  "Chủ sở hữu",
+	RoleKeyOrganizationAdmin:  "Quản lý",
+	RoleKeyOrganizationMember: "Thành viên",
 }

@@ -42,10 +42,8 @@ type GRPCServer struct {
 	internalOrganizationHandler    *handler.InternalOrganizationHandler
 	dealInvitationHandler          *handler.DealInvitationHandler
 	dealCommissionHandler          *handler.DealCommissionHandler
-	dealTransactionHandler         *handler.DealTransactionHandler
 	colorHandler                   *handler.ColorHandler
 	internalNoteHandler            *handler.InternalNoteHandler
-	dealContractHandler            *handler.ContractDealHandler
 	logger                         *flogging.FabricLogger
 }
 
@@ -71,10 +69,8 @@ func NewGRPCServer(
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
-	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
-	dealContractHandler *handler.ContractDealHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		organizationHandler:           organizationHandler,
@@ -99,11 +95,9 @@ func NewGRPCServer(
 		internalOrganizationHandler:    internalOrganizationHandler,
 		dealInvitationHandler:          dealInvitationHandler,
 		dealCommissionHandler:          dealCommissionHandler,
-		dealTransactionHandler:         dealTransactionHandler,
 		colorHandler:                   colorHandler,
 		logger:                         flogging.MustGetLogger(env.SERVICE_NAME),
 		internalNoteHandler:            internalNoteHandler,
-		dealContractHandler:            dealContractHandler,
 	}
 }
 
@@ -130,10 +124,8 @@ func (s *GRPCServer) Start() {
 		s.internalOrganizationHandler,
 		s.dealInvitationHandler,
 		s.dealCommissionHandler,
-		s.dealTransactionHandler,
 		s.colorHandler,
 		s.internalNoteHandler,
-		s.dealContractHandler,
 	)
 
 	g.Add(start, stop)
@@ -168,10 +160,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	internalOrganizationHandler *handler.InternalOrganizationHandler,
 	dealInvitationHandler *handler.DealInvitationHandler,
 	dealCommissionHandler *handler.DealCommissionHandler,
-	dealTransactionHandler *handler.DealTransactionHandler,
 	colorHandler *handler.ColorHandler,
 	internalNoteHandler *handler.InternalNoteHandler,
-	dealContractHandler *handler.ContractDealHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
@@ -205,7 +195,6 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
 			organizationpb.RegisterDealMemberServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
-			// organizationpb.RegisterDealTransactionServiceServer(s, dealTransactionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)
 			organizationpb.RegisterInternalNoteServiceServer(s, internalNoteHandler)
 			// organizationpb.RegisterDealCostServiceServer(s, dealCostHandler)

@@ -11,7 +11,7 @@ type Deal struct {
 	_models.BaseEntity
 
 	OwnerId   uint64
-	OwnerType enums.OwnerType
+	OwnerType enums.OwnerOf
 
 	// GroupId        uint64
 	Name           string

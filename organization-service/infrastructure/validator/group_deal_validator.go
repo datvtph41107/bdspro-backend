@@ -13,7 +13,6 @@ type GroupDealValidator interface {
 	ValidateUpdateGroupDealRequest(request *organizationpb.UpdateGroupDealRequest) error
 	ValidateDeleteGroupDealRequest(request *organizationpb.DeleteGroupDealRequest) error
 	ValidateGetGroupDealRequest(request *organizationpb.GetGroupDealRequest) error
-	ValidateGetGroupDealsRequest(request *organizationpb.GetGroupDealsRequest) error
 	ValidateUpdateGroupDealStatusRequest(request *organizationpb.UpdateGroupDealStatusRequest) error
 	ValidateAddMemberToDealRequest(request *organizationpb.AddMemberToDealRequest) error
 	ValidateGetBranchDealsRequest(request *organizationpb.GetBranchDealsRequest) error
@@ -149,24 +148,6 @@ func (v *groupDealValidator) ValidateGetGroupDealRequest(request *organizationpb
 				{
 					Field:       "id",
 					Description: "id is required",
-				},
-			},
-		})
-	}
-	if len(details) > 0 {
-		return custom_error.InvalidRequest(details...)
-	}
-	return nil
-}
-
-func (v *groupDealValidator) ValidateGetGroupDealsRequest(request *organizationpb.GetGroupDealsRequest) error {
-	details := []protoadapt.MessageV1{}
-	if request.GroupId == 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "group_id",
-					Description: "group_id is required",
 				},
 			},
 		})

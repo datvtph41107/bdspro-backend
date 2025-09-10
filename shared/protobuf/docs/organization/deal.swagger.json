@@ -23,49 +23,6 @@
   ],
   "paths": {
     "/v2/org/deal": {
-      "get": {
-        "operationId": "GroupDealService_GetGroupDeals",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupDealsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "GroupDealService"
-        ]
-      },
       "post": {
         "operationId": "GroupDealService_CreateGroupDeal",
         "responses": {
@@ -1319,52 +1276,6 @@
             "schema": {
               "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusV2Body"
             }
-          }
-        ],
-        "tags": [
-          "GroupDealService"
-        ]
-      }
-    },
-    "/v2/org/group/{groupId}/deals": {
-      "get": {
-        "summary": "API lấy danh sách thương vụ theo nhóm",
-        "operationId": "GroupDealService_GetGroupDealsV2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetGroupDealsV2Response"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
           }
         ],
         "tags": [
@@ -2699,22 +2610,6 @@
           "type": "integer",
           "format": "int64",
           "title": "Hoàn tất (theo status)"
-        }
-      }
-    },
-    "organizationpbGetGroupDealsResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/organizationpbGroupDeal"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },

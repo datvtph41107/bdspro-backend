@@ -68,7 +68,7 @@ type DealSearchRequest struct {
 	OrganizationID *uint64
 	GroupID        *uint64
 	OwnerID        *uint64
-	OwnerType      enums.OwnerType
+	OwnerType      enums.OwnerOf
 }
 
 // DTO cho DealProcess
