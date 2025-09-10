@@ -30,7 +30,7 @@ type GRPCServer struct {
 	groupDocumentHandler *handler.GroupDocumentHandler
 
 	groupHandler             *handler.GroupHandler
-	groupDealHandler         *handler.GroupDealHandler
+	groupDealHandler         *handler.DealHandler
 	dealMilestoneHandler     *handler.DealMilestoneHandler
 	groupLogActivityHandler  *handler.GroupLogActivityHandler
 	groupNotificationHandler *handler.GroupNotificationHandler
@@ -57,7 +57,7 @@ func NewGRPCServer(
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
-	groupDealHandler *handler.GroupDealHandler,
+	groupDealHandler *handler.DealHandler,
 	dealMilestoneHandler *handler.DealMilestoneHandler,
 	groupLogActivityHandler *handler.GroupLogActivityHandler,
 	groupNotificationHandler *handler.GroupNotificationHandler,
@@ -148,7 +148,7 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 
 	groupDocumentHandler *handler.GroupDocumentHandler,
 	groupHandler *handler.GroupHandler,
-	groupDealHandler *handler.GroupDealHandler,
+	dealHandler *handler.DealHandler,
 	dealMilestoneHandler *handler.DealMilestoneHandler,
 	groupLogActivityHandler *handler.GroupLogActivityHandler,
 	groupNotificationHandler *handler.GroupNotificationHandler,
@@ -184,7 +184,6 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 
 			organizationpb.RegisterGroupDocumentServiceServer(s, groupDocumentHandler)
 			organizationpb.RegisterGroupServiceServer(s, groupHandler)
-			organizationpb.RegisterGroupDealServiceServer(s, groupDealHandler)
 			organizationpb.RegisterDealMilestoneServiceServer(s, dealMilestoneHandler)
 			organizationpb.RegisterGroupLogActivityServiceServer(s, groupLogActivityHandler)
 			organizationpb.RegisterGroupNotificationServiceServer(s, groupNotificationHandler)
@@ -193,6 +192,8 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 			organizationpb.RegisterOrganizationLogActivityServiceServer(s, organizationLogActivityHandler)
 			organizationpb.RegisterInvestmentServiceServer(s, investmentHandler)
 			organizationpb.RegisterInternalOrganizationServiceServer(s, internalOrganizationHandler)
+
+			organizationpb.RegisterDealServiceServer(s, dealHandler)
 			organizationpb.RegisterDealMemberServiceServer(s, dealInvitationHandler)
 			organizationpb.RegisterDealCommissionServiceServer(s, dealCommissionHandler)
 			organizationpb.RegisterColorServiceServer(s, colorHandler)

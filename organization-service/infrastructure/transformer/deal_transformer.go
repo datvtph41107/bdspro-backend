@@ -9,7 +9,7 @@ import (
 	"organization/internal/enums"
 )
 
-type GroupDealTransformer interface {
+type DealTransformer interface {
 	CreateGroupDealRequestToEntity(request *organizationpb.CreateGroupDealRequest) *entity.Deal
 	CreateOrganizationDealRequestToEntity(request *organizationpb.CreateOrganizationDealRequest) *entity.Deal
 	CreateGroupDealV2RequestToEntity(request *organizationpb.CreateGroupDealV2Request) *entity.Deal
@@ -34,7 +34,7 @@ type groupDealTransformer struct {
 func NewGroupDealTransformer(
 	documentMapper *DocumentMapper,
 	bankAccountMapper *BankAccountMapper,
-) GroupDealTransformer {
+) DealTransformer {
 	return &groupDealTransformer{
 		DocumentMapper:    documentMapper,
 		BankAccountMapper: bankAccountMapper,

@@ -6,7 +6,7 @@
   },
   "tags": [
     {
-      "name": "GroupDealService"
+      "name": "DealService"
     },
     {
       "name": "DealCommissionService"
@@ -24,7 +24,7 @@
   "paths": {
     "/v2/org/deal": {
       "post": {
-        "operationId": "GroupDealService_CreateGroupDeal",
+        "operationId": "DealService_CreateGroupDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -50,13 +50,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/add-member": {
       "post": {
-        "operationId": "GroupDealService_AddMemberToDeal",
+        "operationId": "DealService_AddMemberToDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -82,14 +82,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/group/{groupId}/overview": {
       "get": {
         "summary": "API tổng quan thương vụ cho nhóm",
-        "operationId": "GroupDealService_GetGroupDealOverview",
+        "operationId": "DealService_GetGroupDealOverview",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -114,14 +114,47 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
+        ]
+      }
+    },
+    "/v2/org/deal/member/role": {
+      "put": {
+        "summary": "API cập nhật vai trò thành viên thương vụ",
+        "operationId": "DealService_UpdateDealMemberRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateDealMemberRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/organizationpbUpdateDealMemberRoleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/organization/{organizationId}/overview": {
       "get": {
         "summary": "API tổng quan thương vụ cho tổ chức",
-        "operationId": "GroupDealService_GetOrganizationDealOverview",
+        "operationId": "DealService_GetOrganizationDealOverview",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -146,14 +179,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/process/{dealId}": {
       "get": {
         "summary": "API lấy thông tin process của deal",
-        "operationId": "GroupDealService_GetDealProcess",
+        "operationId": "DealService_GetDealProcess",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -178,13 +211,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{dealId}/allow-manual-input": {
       "put": {
-        "operationId": "GroupDealService_UpdateAllowManualInput",
+        "operationId": "DealService_UpdateAllowManualInput",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -212,12 +245,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateAllowManualInputBody"
+              "$ref": "#/definitions/DealServiceUpdateAllowManualInputBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
@@ -449,7 +482,7 @@
     },
     "/v2/org/deal/{dealId}/members": {
       "get": {
-        "operationId": "GroupDealService_Members",
+        "operationId": "DealService_Members",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -500,7 +533,7 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
@@ -546,7 +579,7 @@
     },
     "/v2/org/deal/{dealId}/products": {
       "post": {
-        "operationId": "GroupDealService_SaveDealProduct",
+        "operationId": "DealService_SaveDealProduct",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -574,19 +607,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceSaveDealProductBody"
+              "$ref": "#/definitions/DealServiceSaveDealProductBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{dealId}/setting": {
       "put": {
         "summary": "API cập nhật cài đặt thương vụ",
-        "operationId": "GroupDealService_UpdateDealSetting",
+        "operationId": "DealService_UpdateDealSetting",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -614,18 +647,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateDealSettingBody"
+              "$ref": "#/definitions/DealServiceUpdateDealSettingBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{dealId}/summary": {
       "get": {
-        "operationId": "GroupDealService_Summary",
+        "operationId": "DealService_Summary",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -740,13 +773,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}": {
       "get": {
-        "operationId": "GroupDealService_GetGroupDeal",
+        "operationId": "DealService_GetGroupDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -771,11 +804,11 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       },
       "delete": {
-        "operationId": "GroupDealService_DeleteGroupDeal",
+        "operationId": "DealService_DeleteGroupDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -800,11 +833,11 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       },
       "put": {
-        "operationId": "GroupDealService_UpdateGroupDeal",
+        "operationId": "DealService_UpdateGroupDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -832,18 +865,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealBody"
+              "$ref": "#/definitions/DealServiceUpdateGroupDealBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}/bank-account": {
       "get": {
-        "operationId": "GroupDealService_AccountInvestment",
+        "operationId": "DealService_AccountInvestment",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -868,14 +901,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}/cancel": {
       "put": {
         "summary": "API hủy thương vụ với lý do",
-        "operationId": "GroupDealService_CancelDeal",
+        "operationId": "DealService_CancelDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -903,18 +936,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceCancelDealBody"
+              "$ref": "#/definitions/DealServiceCancelDealBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}/investment": {
       "get": {
-        "operationId": "GroupDealService_InfoInvestment",
+        "operationId": "DealService_InfoInvestment",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -939,13 +972,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}/products": {
       "get": {
-        "operationId": "GroupDealService_GetDealProducts",
+        "operationId": "DealService_GetDealProducts",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1007,13 +1040,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deal/{id}/status": {
       "put": {
-        "operationId": "GroupDealService_UpdateGroupDealStatus",
+        "operationId": "DealService_UpdateGroupDealStatus",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1041,19 +1074,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusBody"
+              "$ref": "#/definitions/DealServiceUpdateGroupDealStatusBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deals/user": {
       "get": {
         "summary": "API tìm kiếm deals chung",
-        "operationId": "GroupDealService_GetDealsUser",
+        "operationId": "DealService_GetDealsUser",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1119,14 +1152,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/deals/user/organization": {
       "get": {
         "summary": "API tìm kiếm deals chung",
-        "operationId": "GroupDealService_GetDealsOrganization",
+        "operationId": "DealService_GetDealsOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1192,14 +1225,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/group/{groupId}/deal": {
       "post": {
         "summary": "API tạo thương vụ cho nhóm",
-        "operationId": "GroupDealService_CreateGroupDealV2",
+        "operationId": "DealService_CreateGroupDealV2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1227,19 +1260,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceCreateGroupDealV2Body"
+              "$ref": "#/definitions/DealServiceCreateGroupDealV2Body"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/group/{groupId}/deal/{dealId}/status": {
       "put": {
         "summary": "API cập nhật trạng thái thương vụ cho nhóm",
-        "operationId": "GroupDealService_UpdateGroupDealStatusV2",
+        "operationId": "DealService_UpdateGroupDealStatusV2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1274,19 +1307,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateGroupDealStatusV2Body"
+              "$ref": "#/definitions/DealServiceUpdateGroupDealStatusV2Body"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/organization/branch/{branchId}/deals": {
       "get": {
         "summary": "API lấy danh sách thương vụ theo chi nhánh",
-        "operationId": "GroupDealService_GetBranchDeals",
+        "operationId": "DealService_GetBranchDeals",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1325,13 +1358,13 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/organization/deals/current": {
       "get": {
-        "operationId": "GroupDealService_GetOrganizationDealsCurrent",
+        "operationId": "DealService_GetOrganizationDealsCurrent",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1393,14 +1426,14 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/organization/{organizationId}/deal": {
       "post": {
         "summary": "API tạo thương vụ cho tổ chức",
-        "operationId": "GroupDealService_CreateOrganizationDeal",
+        "operationId": "DealService_CreateOrganizationDeal",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1428,19 +1461,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceCreateOrganizationDealBody"
+              "$ref": "#/definitions/DealServiceCreateOrganizationDealBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/organization/{organizationId}/deal/{dealId}/status": {
       "put": {
         "summary": "API cập nhật trạng thái thương vụ cho tổ chức",
-        "operationId": "GroupDealService_UpdateOrganizationDealStatus",
+        "operationId": "DealService_UpdateOrganizationDealStatus",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1475,19 +1508,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupDealServiceUpdateOrganizationDealStatusBody"
+              "$ref": "#/definitions/DealServiceUpdateOrganizationDealStatusBody"
             }
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     },
     "/v2/org/organization/{organizationId}/deals": {
       "get": {
         "summary": "API lấy danh sách thương vụ theo tổ chức",
-        "operationId": "GroupDealService_GetOrganizationDeals",
+        "operationId": "DealService_GetOrganizationDeals",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1526,7 +1559,7 @@
           }
         ],
         "tags": [
-          "GroupDealService"
+          "DealService"
         ]
       }
     }
@@ -1571,7 +1604,7 @@
         }
       }
     },
-    "GroupDealServiceCancelDealBody": {
+    "DealServiceCancelDealBody": {
       "type": "object",
       "properties": {
         "reason": {
@@ -1579,7 +1612,7 @@
         }
       }
     },
-    "GroupDealServiceCreateGroupDealV2Body": {
+    "DealServiceCreateGroupDealV2Body": {
       "type": "object",
       "properties": {
         "name": {
@@ -1653,7 +1686,7 @@
       },
       "title": "API cho nhóm"
     },
-    "GroupDealServiceCreateOrganizationDealBody": {
+    "DealServiceCreateOrganizationDealBody": {
       "type": "object",
       "properties": {
         "name": {
@@ -1727,7 +1760,7 @@
       },
       "title": "API cho tổ chức"
     },
-    "GroupDealServiceSaveDealProductBody": {
+    "DealServiceSaveDealProductBody": {
       "type": "object",
       "properties": {
         "productIds": {
@@ -1739,7 +1772,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateAllowManualInputBody": {
+    "DealServiceUpdateAllowManualInputBody": {
       "type": "object",
       "properties": {
         "allowManualInput": {
@@ -1747,7 +1780,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateDealSettingBody": {
+    "DealServiceUpdateDealSettingBody": {
       "type": "object",
       "properties": {
         "fromDate": {
@@ -1801,7 +1834,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateGroupDealBody": {
+    "DealServiceUpdateGroupDealBody": {
       "type": "object",
       "properties": {
         "name": {
@@ -1817,7 +1850,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateGroupDealStatusBody": {
+    "DealServiceUpdateGroupDealStatusBody": {
       "type": "object",
       "properties": {
         "status": {
@@ -1826,7 +1859,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateGroupDealStatusV2Body": {
+    "DealServiceUpdateGroupDealStatusV2Body": {
       "type": "object",
       "properties": {
         "status": {
@@ -1835,7 +1868,7 @@
         }
       }
     },
-    "GroupDealServiceUpdateOrganizationDealStatusBody": {
+    "DealServiceUpdateOrganizationDealStatusBody": {
       "type": "object",
       "properties": {
         "status": {
@@ -2930,6 +2963,10 @@
         },
         "color": {
           "$ref": "#/definitions/organizationpbColor"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -3057,6 +3094,55 @@
         },
         "note": {
           "type": "string"
+        }
+      }
+    },
+    "organizationpbUpdateDealMemberRoleRequest": {
+      "type": "object",
+      "properties": {
+        "dealId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID thương vụ"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID thành viên"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Vai trò mới (RoleKey enum)"
+        }
+      },
+      "title": "API cập nhật vai trò thành viên thương vụ"
+    },
+    "organizationpbUpdateDealMemberRoleResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "title": "Trạng thái thành công"
+        },
+        "message": {
+          "type": "string",
+          "title": "Thông báo"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID thương vụ"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID thành viên"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Vai trò đã cập nhật"
         }
       }
     },

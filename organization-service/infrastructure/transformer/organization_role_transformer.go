@@ -82,6 +82,7 @@ func (t *organizationRoleTransformer) EntityToGetRolesResponse(roles []*entity.O
 			Permissions: permissions,
 			IsDefault:   role.IsDefault,
 			DomainType:  uint32(role.DomainType),
+			RoleKey:     role.RoleKey,
 		}
 		if role.Color != nil {
 			roleResponse.Color = &organizationpb.Color{

@@ -37,9 +37,9 @@ func NewDealInvitationHandler(
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request body organizationpb.SendInvitationRequest true "Thông tin lời mời"
+// @Param request body organizationpb.SendDealInvitationRequest true "Thông tin lời mời"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.SendInvitationResponse "Thành công"
+// @Success 200 {object} organizationpb.SendDealInvitationResponse "Thành công"
 // @Router /deal-invitation [post]
 func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *organizationpb.SendDealInvitationRequest) (*organizationpb.SendDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateSendInvitationRequest(req); err != nil {
@@ -61,9 +61,9 @@ func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *org
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request body organizationpb.AcceptInvitationRequest true "Thông tin xác nhận"
+// @Param request body organizationpb.AcceptDealInvitationRequest true "Thông tin xác nhận"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.AcceptInvitationResponse "Thành công"
+// @Success 200 {object} organizationpb.AcceptDealInvitationResponse "Thành công"
 // @Router /deal-invitation/accept [post]
 func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organizationpb.AcceptDealInvitationRequest) (*organizationpb.AcceptDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateAcceptInvitationRequest(req); err != nil {
@@ -86,9 +86,9 @@ func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organ
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request body organizationpb.RejectInvitationRequest true "Thông tin từ chối"
+// @Param request body organizationpb.RejectDealInvitationRequest true "Thông tin từ chối"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.RejectInvitationResponse "Thành công"
+// @Success 200 {object} organizationpb.RejectDealInvitationResponse "Thành công"
 // @Router /deal-invitation/reject [post]
 func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organizationpb.RejectDealInvitationRequest) (*organizationpb.RejectDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateRejectInvitationRequest(req); err != nil {
@@ -111,9 +111,9 @@ func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organ
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request body organizationpb.ResendInvitationRequest true "Thông tin gửi lại"
+// @Param request body organizationpb.ResendDealInvitationRequest true "Thông tin gửi lại"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.ResendInvitationResponse "Thành công"
+// @Success 200 {object} organizationpb.ResendDealInvitationResponse "Thành công"
 // @Router /deal-invitation/resend [post]
 func (h *DealInvitationHandler) ResendInvitation(ctx context.Context, req *organizationpb.ResendDealInvitationRequest) (*organizationpb.ResendDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateResendInvitationRequest(req); err != nil {
@@ -230,9 +230,9 @@ func (h *DealInvitationHandler) ConfirmWithdrawal(ctx context.Context, req *orga
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request query organizationpb.SearchMembersRequest true "Thông tin tìm kiếm"
+// @Param request query organizationpb.SearchDealMembersRequest true "Thông tin tìm kiếm"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.SearchMembersResponse "Thành công"
+// @Success 200 {object} organizationpb.SearchDealMembersResponse "Thành công"
 // @Router /deal-invitation/search [get]
 func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *organizationpb.SearchDealMembersRequest) (*organizationpb.SearchDealMembersResponse, error) {
 	if err := h.dealInvitationValidator.ValidateSearchMembersRequest(req); err != nil {
@@ -263,7 +263,7 @@ func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *organiza
 // @Produce json
 // @Param id path int true "ID của lời mời"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.GetInvitationResponse "Thành công"
+// @Success 200 {object} organizationpb.GetDealInvitationResponse "Thành công"
 // @Router /deal-invitation/{id} [get]
 func (h *DealInvitationHandler) GetInvitation(ctx context.Context, req *organizationpb.GetDealInvitationRequest) (*organizationpb.GetDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateGetInvitationRequest(req); err != nil {
@@ -315,9 +315,9 @@ func (h *DealInvitationHandler) GetPendingInvitations(ctx context.Context, req *
 // @Tags Lời mời thương vụ
 // @Accept json
 // @Produce json
-// @Param request query organizationpb.GetInvitationsByDealRequest true "Thông tin lấy danh sách"
+// @Param request query organizationpb.GetDealInvitationsByDealRequest true "Thông tin lấy danh sách"
 // @Security BearerAuth
-// @Success 200 {object} organizationpb.GetInvitationsByDealResponse "Thành công"
+// @Success 200 {object} organizationpb.GetDealInvitationsByDealResponse "Thành công"
 // @Router /deal/{deal_id}/invitations [get]
 func (h *DealInvitationHandler) GetDealInvitationsByDeal(ctx context.Context, req *organizationpb.GetDealInvitationsByDealRequest) (*organizationpb.GetDealInvitationsByDealResponse, error) {
 	if err := h.dealInvitationValidator.ValidateGetInvitationsByDealRequest(req); err != nil {

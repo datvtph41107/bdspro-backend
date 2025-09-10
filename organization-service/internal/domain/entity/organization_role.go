@@ -13,4 +13,5 @@ type OrganizationRole struct {
 	DomainType     enums.DomainType
 	ColorId        *uint32
 	Color          *Color
+	RoleKey        uint32
 }

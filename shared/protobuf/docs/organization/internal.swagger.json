@@ -762,6 +762,10 @@
         },
         "color": {
           "$ref": "#/definitions/organizationpbColor"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

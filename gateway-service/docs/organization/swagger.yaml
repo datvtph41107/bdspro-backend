@@ -1,5 +1,100 @@
 basePath: /v2/org
 definitions:
+  authpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      colorKey:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      hexCode:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  authpb.Permission:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      permissionType:
+        type: string
+      priority:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.Role:
+    properties:
+      autoAssign:
+        type: boolean
+      color:
+        $ref: '#/definitions/authpb.Color'
+      colorId:
+        type: integer
+      createdAt:
+        type: string
+      domainType:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      permissions:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleGroupName:
+        type: string
+      roleName:
+        type: string
+      systemKey:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   entity.AttachDocument:
     properties:
       createdAt:
@@ -103,12 +198,12 @@ definitions:
     - DocOwnerDeal
     - DocOwnerGroup
     - DocOwnerInvest
-  organizationpb.AcceptInvitationRequest:
+  organizationpb.AcceptDealInvitationRequest:
     properties:
       invitationId:
         type: integer
     type: object
-  organizationpb.AcceptInvitationResponse:
+  organizationpb.AcceptDealInvitationResponse:
     properties:
       invitationId:
         type: integer
@@ -581,78 +676,63 @@ definitions:
       id:
         type: integer
     type: object
-  organizationpb.DealInvitation:
-    properties:
-      color:
-        $ref: '#/definitions/organizationpb.Color'
-      createdAt:
-        type: string
-      dealId:
-        type: integer
-      id:
-        type: integer
-      inviteeId:
-        type: integer
-      inviterId:
-        type: integer
-      message:
-        type: string
-      profile:
-        $ref: '#/definitions/sharepb.ProfileItem'
-      reason:
-        type: string
-      role:
-        $ref: '#/definitions/organizationpb.Role'
-      status:
-        type: integer
-      updatedAt:
-        type: string
-    type: object
-  organizationpb.DealInvitationMember:
-    properties:
-      email:
-        type: string
-      joinedAt:
-        type: string
-      name:
-        type: string
-      roleId:
-        type: integer
-      status:
-        type: integer
-      userId:
-        type: integer
-    type: object
   organizationpb.DealMember:
     properties:
       amountCommit:
         type: number
+      color:
+        $ref: '#/definitions/organizationpb.Color'
       commissionType:
         description: 'Loại hoa hồng (10: %, 20: VND)'
         type: integer
       commissionValue:
         description: Giá trị hoa hồng
         type: number
+      createdAt:
+        type: string
       dealId:
         type: integer
-      memberAvatar:
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      id:
+        type: integer
+      invitedAt:
+        description: Thời gian mời
         type: string
+      inviterId:
+        type: integer
+      isOwner:
+        description: Đánh dấu là chủ thương vụ
+        type: boolean
       memberId:
         type: integer
-      memberName:
-        description: profile
+      message:
         type: string
-      memberPhone:
-        type: string
-      memberType:
-        type: integer
-      memberVerified:
-        type: boolean
       note:
         description: Ghi chú
         type: string
+      profile:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      reason:
+        type: string
+      respondedAt:
+        description: Thời gian phản hồi
+        type: string
+      role:
+        $ref: '#/definitions/organizationpb.Role'
       roleId:
         type: integer
+      roleKey:
+        description: 'Role key (400: Owner, 420: Admin, 430: Member)'
+        type: integer
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      withdrawnAt:
+        description: Thời gian rút khỏi
+        type: string
     type: object
   organizationpb.DealMemberCommissionUpdate:
     properties:
@@ -667,6 +747,10 @@ definitions:
     type: object
   organizationpb.DealProcessItem:
     properties:
+      bgColor:
+        type: string
+      borderColor:
+        type: string
       code:
         type: string
       color:
@@ -676,6 +760,23 @@ definitions:
       timestamp:
         type: string
       transactionId:
+        type: string
+    type: object
+  organizationpb.DealSearchRequest:
+    properties:
+      groupId:
+        type: integer
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+      text:
         type: string
     type: object
   organizationpb.DeleteGroupDealResponse:
@@ -708,7 +809,7 @@ definitions:
     properties:
       members:
         items:
-          $ref: '#/definitions/organizationpb.DealInvitationMember'
+          $ref: '#/definitions/organizationpb.DealMember'
         type: array
     type: object
   organizationpb.GetAllOrganizationsWithMembersForAdminRequest:
@@ -748,6 +849,20 @@ definitions:
         description: Tổng số item
         type: integer
     type: object
+  organizationpb.GetDealInvitationResponse:
+    properties:
+      member:
+        $ref: '#/definitions/organizationpb.DealMember'
+    type: object
+  organizationpb.GetDealInvitationsByDealResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
   organizationpb.GetDealMembersResponse:
     properties:
       data:
@@ -773,42 +888,30 @@ definitions:
           $ref: '#/definitions/pb_bdspro.ProductAttachment'
         type: array
     type: object
+  organizationpb.GetDealsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.GroupDeal'
+        type: array
+      total:
+        type: integer
+    type: object
   organizationpb.GetGroupDealResponse:
     properties:
       deal:
         $ref: '#/definitions/organizationpb.GroupDeal'
     type: object
-  organizationpb.GetGroupDealsResponse:
+  organizationpb.GetInvestmentHistoriesResponse:
     properties:
       data:
+        description: Danh sách lịch sử đầu tư
         items:
-          $ref: '#/definitions/organizationpb.GroupDeal'
+          $ref: '#/definitions/organizationpb.ApprovedInvestmentItem'
         type: array
-      total:
-        type: integer
-    type: object
-  organizationpb.GetGroupDealsV2Response:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/organizationpb.GroupDeal'
-        type: array
-      total:
-        type: integer
-    type: object
-  organizationpb.GetInvitationResponse:
-    properties:
-      invitation:
-        $ref: '#/definitions/organizationpb.DealInvitation'
-    type: object
-  organizationpb.GetInvitationsByDealResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/organizationpb.DealInvitation'
-        type: array
-      total:
-        type: integer
+      totalInvestment:
+        description: Tổng số tiền các lần đã góp và được duyệt
+        type: number
     type: object
   organizationpb.GetOrganizationDealsResponse:
     properties:
@@ -832,7 +935,7 @@ definitions:
     properties:
       data:
         items:
-          $ref: '#/definitions/organizationpb.DealInvitation'
+          $ref: '#/definitions/organizationpb.DealMember'
         type: array
       total:
         type: integer
@@ -907,6 +1010,8 @@ definitions:
         type: array
       profitAmount:
         type: number
+      role:
+        $ref: '#/definitions/authpb.Role'
       status:
         type: integer
       statusName:
@@ -1015,14 +1120,14 @@ definitions:
       name:
         type: string
     type: object
-  organizationpb.RejectInvitationRequest:
+  organizationpb.RejectDealInvitationRequest:
     properties:
       invitationId:
         type: integer
       reason:
         type: string
     type: object
-  organizationpb.RejectInvitationResponse:
+  organizationpb.RejectDealInvitationResponse:
     properties:
       invitationId:
         type: integer
@@ -1050,12 +1155,12 @@ definitions:
       userId:
         type: integer
     type: object
-  organizationpb.ResendInvitationRequest:
+  organizationpb.ResendDealInvitationRequest:
     properties:
       invitationId:
         type: integer
     type: object
-  organizationpb.ResendInvitationResponse:
+  organizationpb.ResendDealInvitationResponse:
     properties:
       invitationId:
         type: integer
@@ -1088,31 +1193,31 @@ definitions:
       status:
         type: integer
     type: object
-  organizationpb.SearchMembersResponse:
+  organizationpb.SearchDealMembersResponse:
     properties:
       members:
         items:
-          $ref: '#/definitions/organizationpb.DealInvitationMember'
+          $ref: '#/definitions/organizationpb.DealMember'
         type: array
       total:
         type: integer
     type: object
-  organizationpb.SendInvitationRequest:
+  organizationpb.SendDealInvitationRequest:
     properties:
       colorId:
         type: integer
       dealId:
         type: integer
-      inviteeId:
-        type: integer
       inviterId:
+        type: integer
+      memberId:
         type: integer
       message:
         type: string
       roleId:
         type: integer
     type: object
-  organizationpb.SendInvitationResponse:
+  organizationpb.SendDealInvitationResponse:
     properties:
       invitationId:
         type: integer
@@ -1147,6 +1252,8 @@ definitions:
         type: string
       proxyUserId:
         description: For proxy investments
+        type: integer
+      status:
         type: integer
       transferProofImage:
         description: URL to transfer proof image
@@ -1261,6 +1368,18 @@ definitions:
       note:
         type: string
     type: object
+  organizationpb.UpdateDealMemberRoleRequest:
+    properties:
+      dealId:
+        description: ID thương vụ
+        type: integer
+      memberId:
+        description: ID thành viên
+        type: integer
+      roleKey:
+        description: Vai trò mới (RoleKey enum)
+        type: integer
+    type: object
   organizationpb.UpdateDealMembersCommissionRequest:
     properties:
       dealId:
@@ -1301,12 +1420,16 @@ definitions:
         type: string
       memberCanAddTransaction:
         type: boolean
+      name:
+        type: string
       onlyOwnerGetCommission:
         type: boolean
       ownerId:
         type: integer
       status:
         type: integer
+      targetProfit:
+        type: number
       toDate:
         type: string
     type: object
@@ -1674,32 +1797,6 @@ paths:
       tags:
       - Lĩnh vực hoạt động
   /deal:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách thương vụ
-      parameters:
-      - in: query
-        name: groupId
-        type: integer
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Thành công
-          schema:
-            $ref: '#/definitions/organizationpb.GetGroupDealsResponse'
-      security:
-      - BearerAuth: []
-      summary: Lấy danh sách thương vụ
-      tags:
-      - Thương vụ
     post:
       consumes:
       - application/json
@@ -1734,14 +1831,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/organizationpb.SendInvitationRequest'
+          $ref: '#/definitions/organizationpb.SendDealInvitationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.SendInvitationResponse'
+            $ref: '#/definitions/organizationpb.SendDealInvitationResponse'
       security:
       - BearerAuth: []
       summary: Gửi lời mời tham gia thương vụ
@@ -1764,7 +1861,7 @@ paths:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.GetInvitationResponse'
+            $ref: '#/definitions/organizationpb.GetDealInvitationResponse'
       security:
       - BearerAuth: []
       summary: Lấy lời mời theo ID
@@ -1781,14 +1878,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/organizationpb.AcceptInvitationRequest'
+          $ref: '#/definitions/organizationpb.AcceptDealInvitationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.AcceptInvitationResponse'
+            $ref: '#/definitions/organizationpb.AcceptDealInvitationResponse'
       security:
       - BearerAuth: []
       summary: Xác nhận lời mời
@@ -1825,7 +1922,7 @@ paths:
       description: Lấy danh sách lời mời đang chờ xác nhận
       parameters:
       - in: query
-        name: inviteeId
+        name: memberId
         type: integer
       - in: query
         name: page
@@ -1856,14 +1953,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/organizationpb.RejectInvitationRequest'
+          $ref: '#/definitions/organizationpb.RejectDealInvitationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.RejectInvitationResponse'
+            $ref: '#/definitions/organizationpb.RejectDealInvitationResponse'
       security:
       - BearerAuth: []
       summary: Từ chối lời mời
@@ -1904,14 +2001,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/organizationpb.ResendInvitationRequest'
+          $ref: '#/definitions/organizationpb.ResendDealInvitationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.ResendInvitationResponse'
+            $ref: '#/definitions/organizationpb.ResendDealInvitationResponse'
       security:
       - BearerAuth: []
       summary: Gửi lại lời mời
@@ -1927,6 +2024,9 @@ paths:
         name: dealId
         type: integer
       - in: query
+        name: doneInvestment
+        type: boolean
+      - in: query
         name: keyword
         type: string
       - in: query
@@ -1941,7 +2041,7 @@ paths:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.SearchMembersResponse'
+            $ref: '#/definitions/organizationpb.SearchDealMembersResponse'
       security:
       - BearerAuth: []
       summary: Tìm kiếm thành viên
@@ -2015,7 +2115,7 @@ paths:
         "200":
           description: Thành công
           schema:
-            $ref: '#/definitions/organizationpb.GetInvitationsByDealResponse'
+            $ref: '#/definitions/organizationpb.GetDealInvitationsByDealResponse'
       security:
       - BearerAuth: []
       summary: Lấy danh sách lời mời theo thương vụ
@@ -2613,6 +2713,26 @@ paths:
       summary: Cập nhật trạng thái thương vụ
       tags:
       - Thương vụ
+  /deal/member/role:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật vai trò thành viên thương vụ
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealMemberRoleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật vai trò thành viên thương vụ
+      tags:
+      - Thương vụ
   /group:
     get:
       consumes:
@@ -2852,37 +2972,23 @@ paths:
       summary: Cập nhật trạng thái thương vụ cho nhóm
       tags:
       - Thương vụ
-  /group/{groupId}/deals:
+  /group/{groupId}/deals/overview:
     get:
       consumes:
       - application/json
-      description: Lấy danh sách thương vụ của nhóm
+      description: Lấy thống kê tổng quan thương vụ theo nhóm
       parameters:
       - description: ID nhóm
         in: path
         name: groupId
         required: true
         type: integer
-      - default: 1
-        description: Trang
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Kích thước
-        in: query
-        name: size
-        type: integer
       produces:
       - application/json
-      responses:
-        "200":
-          description: Thành công
-          schema:
-            $ref: '#/definitions/organizationpb.GetGroupDealsV2Response'
+      responses: {}
       security:
       - BearerAuth: []
-      summary: Lấy danh sách thương vụ của nhóm
+      summary: Lấy tổng quan thương vụ theo nhóm
       tags:
       - Thương vụ
   /group/{id}:
@@ -3286,6 +3392,29 @@ paths:
       summary: unconfirm form khai báo góp vốn
       tags:
       - Investment
+  /investment/histories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get investment histories
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.GetInvestmentHistoriesResponse'
+      security:
+      - BearerAuth: []
+      summary: get investment histories
+      tags:
+      - Investment
   /investments/{dealId}:
     get:
       consumes:
@@ -3423,6 +3552,25 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy danh sách thương vụ của tổ chức
+      tags:
+      - Thương vụ
+  /organization/{organizationId}/deals/overview:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê tổng quan thương vụ theo tổ chức
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: organizationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổng quan thương vụ theo tổ chức
       tags:
       - Thương vụ
   /organization/admin/all-with-members:
@@ -4131,6 +4279,56 @@ paths:
       summary: Lấy danh sách vai trò của tổ chức hiện tại user đang request
       tags:
       - Vai trò
+  /v2/org/deals/user:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId
+        và text
+      parameters:
+      - description: Thông tin tìm kiếm deals
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm deals chung
+      tags:
+      - Thương vụ
+  /v2/org/deals/user/organization:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId
+        và text
+      parameters:
+      - description: Thông tin tìm kiếm deals
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm deals chung
+      tags:
+      - Thương vụ
 securityDefinitions:
   BearerAuth:
     in: header

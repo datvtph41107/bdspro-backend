@@ -25,6 +25,7 @@ type OrganizationRoleModel struct {
 	IsDeleted      bool                           `gorm:"default:false"`
 	Color          *entity.Color                  `gorm:"foreignKey:ColorId"`
 	ColorId        *uint32                        ``
+	RoleKey        uint32                         `gorm:"default:0;index"`
 }
 
 func (OrganizationRoleModel) TableName() string {
@@ -46,6 +47,7 @@ func RoleModelToEntity(model *OrganizationRoleModel) *entity.OrganizationRole {
 		DomainType:     enums.DomainType(model.DomainType),
 		ColorId:        model.ColorId,
 		Color:          model.Color,
+		RoleKey:        model.RoleKey,
 	}
 }
 

@@ -183,49 +183,6 @@ const docTemplate = `{
             }
         },
         "/deal": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách thương vụ",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Thương vụ"
-                ],
-                "summary": "Lấy danh sách thương vụ",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "groupId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thành công",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.GetGroupDealsResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -289,7 +246,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.SendInvitationRequest"
+                            "$ref": "#/definitions/organizationpb.SendDealInvitationRequest"
                         }
                     }
                 ],
@@ -297,7 +254,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.SendInvitationResponse"
+                            "$ref": "#/definitions/organizationpb.SendDealInvitationResponse"
                         }
                     }
                 }
@@ -328,7 +285,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.AcceptInvitationRequest"
+                            "$ref": "#/definitions/organizationpb.AcceptDealInvitationRequest"
                         }
                     }
                 ],
@@ -336,7 +293,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.AcceptInvitationResponse"
+                            "$ref": "#/definitions/organizationpb.AcceptDealInvitationResponse"
                         }
                     }
                 }
@@ -402,7 +359,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "name": "inviteeId",
+                        "name": "memberId",
                         "in": "query"
                     },
                     {
@@ -451,7 +408,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.RejectInvitationRequest"
+                            "$ref": "#/definitions/organizationpb.RejectDealInvitationRequest"
                         }
                     }
                 ],
@@ -459,7 +416,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.RejectInvitationResponse"
+                            "$ref": "#/definitions/organizationpb.RejectDealInvitationResponse"
                         }
                     }
                 }
@@ -529,7 +486,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.ResendInvitationRequest"
+                            "$ref": "#/definitions/organizationpb.ResendDealInvitationRequest"
                         }
                     }
                 ],
@@ -537,7 +494,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.ResendInvitationResponse"
+                            "$ref": "#/definitions/organizationpb.ResendDealInvitationResponse"
                         }
                     }
                 }
@@ -568,6 +525,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "boolean",
+                        "name": "doneInvestment",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "keyword",
                         "in": "query"
@@ -587,7 +549,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.SearchMembersResponse"
+                            "$ref": "#/definitions/organizationpb.SearchDealMembersResponse"
                         }
                     }
                 }
@@ -663,10 +625,42 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.GetInvitationResponse"
+                            "$ref": "#/definitions/organizationpb.GetDealInvitationResponse"
                         }
                     }
                 }
+            }
+        },
+        "/deal/member/role": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật vai trò thành viên thương vụ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Cập nhật vai trò thành viên thương vụ",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.UpdateDealMemberRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/deal/{dealId}/commission/stats": {
@@ -1279,7 +1273,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/organizationpb.GetInvitationsByDealResponse"
+                            "$ref": "#/definitions/organizationpb.GetDealInvitationsByDealResponse"
                         }
                     }
                 }
@@ -2349,14 +2343,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/group/{groupId}/deals": {
+        "/group/{groupId}/deals/overview": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy danh sách thương vụ của nhóm",
+                "description": "Lấy thống kê tổng quan thương vụ theo nhóm",
                 "consumes": [
                     "application/json"
                 ],
@@ -2366,7 +2360,7 @@ const docTemplate = `{
                 "tags": [
                     "Thương vụ"
                 ],
-                "summary": "Lấy danh sách thương vụ của nhóm",
+                "summary": "Lấy tổng quan thương vụ theo nhóm",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2374,30 +2368,9 @@ const docTemplate = `{
                         "name": "groupId",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Trang",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Kích thước",
-                        "name": "size",
-                        "in": "query"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "Thành công",
-                        "schema": {
-                            "$ref": "#/definitions/organizationpb.GetGroupDealsV2Response"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/group/{id}": {
@@ -2494,6 +2467,43 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "/investment/histories/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "get investment histories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Investment"
+                ],
+                "summary": "get investment histories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetInvestmentHistoriesResponse"
                         }
                     }
                 }
@@ -4087,9 +4097,261 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/organization/{organizationId}/deals/overview": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thống kê tổng quan thương vụ theo tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Lấy tổng quan thương vụ theo tổ chức",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tổ chức",
+                        "name": "organizationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/org/deals/user": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId và text",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Tìm kiếm deals chung",
+                "parameters": [
+                    {
+                        "description": "Thông tin tìm kiếm deals",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DealSearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetDealsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/org/deals/user/organization": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId và text",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Thương vụ"
+                ],
+                "summary": "Tìm kiếm deals chung",
+                "parameters": [
+                    {
+                        "description": "Thông tin tìm kiếm deals",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.DealSearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/organizationpb.GetDealsResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "authpb.Color": {
+            "type": "object",
+            "properties": {
+                "backgroundColor": {
+                    "type": "string"
+                },
+                "colorKey": {
+                    "type": "string"
+                },
+                "contentColor": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "hexCode": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.Permission": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.Permission"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "module": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "permissionType": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "authpb.Role": {
+            "type": "object",
+            "properties": {
+                "autoAssign": {
+                    "type": "boolean"
+                },
+                "color": {
+                    "$ref": "#/definitions/authpb.Color"
+                },
+                "colorId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "domainType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.Permission"
+                    }
+                },
+                "roleDescription": {
+                    "type": "string"
+                },
+                "roleGroupId": {
+                    "type": "integer"
+                },
+                "roleGroupName": {
+                    "type": "string"
+                },
+                "roleName": {
+                    "type": "string"
+                },
+                "systemKey": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "entity.AttachDocument": {
             "type": "object",
             "properties": {
@@ -4236,7 +4498,7 @@ const docTemplate = `{
                 "DocOwnerInvest"
             ]
         },
-        "organizationpb.AcceptInvitationRequest": {
+        "organizationpb.AcceptDealInvitationRequest": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -4244,7 +4506,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.AcceptInvitationResponse": {
+        "organizationpb.AcceptDealInvitationResponse": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -4961,75 +5223,14 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.DealInvitation": {
-            "type": "object",
-            "properties": {
-                "color": {
-                    "$ref": "#/definitions/organizationpb.Color"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "dealId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "inviteeId": {
-                    "type": "integer"
-                },
-                "inviterId": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "profile": {
-                    "$ref": "#/definitions/sharepb.ProfileItem"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/organizationpb.Role"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "organizationpb.DealInvitationMember": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "joinedAt": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "roleId": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "userId": {
-                    "type": "integer"
-                }
-            }
-        },
         "organizationpb.DealMember": {
             "type": "object",
             "properties": {
                 "amountCommit": {
                     "type": "number"
+                },
+                "color": {
+                    "$ref": "#/definitions/organizationpb.Color"
                 },
                 "commissionType": {
                     "description": "Loại hoa hồng (10: %, 20: VND)",
@@ -5039,34 +5240,69 @@ const docTemplate = `{
                     "description": "Giá trị hoa hồng",
                     "type": "number"
                 },
+                "createdAt": {
+                    "type": "string"
+                },
                 "dealId": {
                     "type": "integer"
                 },
-                "memberAvatar": {
+                "doneInvestment": {
+                    "description": "Đánh dấu đã đủ vốn góp",
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "invitedAt": {
+                    "description": "Thời gian mời",
                     "type": "string"
+                },
+                "inviterId": {
+                    "type": "integer"
+                },
+                "isOwner": {
+                    "description": "Đánh dấu là chủ thương vụ",
+                    "type": "boolean"
                 },
                 "memberId": {
                     "type": "integer"
                 },
-                "memberName": {
-                    "description": "profile",
+                "message": {
                     "type": "string"
-                },
-                "memberPhone": {
-                    "type": "string"
-                },
-                "memberType": {
-                    "type": "integer"
-                },
-                "memberVerified": {
-                    "type": "boolean"
                 },
                 "note": {
                     "description": "Ghi chú",
                     "type": "string"
                 },
+                "profile": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "respondedAt": {
+                    "description": "Thời gian phản hồi",
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/organizationpb.Role"
+                },
                 "roleId": {
                     "type": "integer"
+                },
+                "roleKey": {
+                    "description": "Role key (400: Owner, 420: Admin, 430: Member)",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "withdrawnAt": {
+                    "description": "Thời gian rút khỏi",
+                    "type": "string"
                 }
             }
         },
@@ -5090,6 +5326,12 @@ const docTemplate = `{
         "organizationpb.DealProcessItem": {
             "type": "object",
             "properties": {
+                "bgColor": {
+                    "type": "string"
+                },
+                "borderColor": {
+                    "type": "string"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -5103,6 +5345,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionId": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.DealSearchRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerOf": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "text": {
                     "type": "string"
                 }
             }
@@ -5154,7 +5422,7 @@ const docTemplate = `{
                 "members": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/organizationpb.DealInvitationMember"
+                        "$ref": "#/definitions/organizationpb.DealMember"
                     }
                 }
             }
@@ -5213,6 +5481,28 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.GetDealInvitationResponse": {
+            "type": "object",
+            "properties": {
+                "member": {
+                    "$ref": "#/definitions/organizationpb.DealMember"
+                }
+            }
+        },
+        "organizationpb.GetDealInvitationsByDealResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealMember"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.GetDealMembersResponse": {
             "type": "object",
             "properties": {
@@ -5252,6 +5542,20 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.GetDealsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.GroupDeal"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.GetGroupDealResponse": {
             "type": "object",
             "properties": {
@@ -5260,53 +5564,19 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.GetGroupDealsResponse": {
+        "organizationpb.GetInvestmentHistoriesResponse": {
             "type": "object",
             "properties": {
                 "data": {
+                    "description": "Danh sách lịch sử đầu tư",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/organizationpb.GroupDeal"
+                        "$ref": "#/definitions/organizationpb.ApprovedInvestmentItem"
                     }
                 },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.GetGroupDealsV2Response": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.GroupDeal"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.GetInvitationResponse": {
-            "type": "object",
-            "properties": {
-                "invitation": {
-                    "$ref": "#/definitions/organizationpb.DealInvitation"
-                }
-            }
-        },
-        "organizationpb.GetInvitationsByDealResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.DealInvitation"
-                    }
-                },
-                "total": {
-                    "type": "integer"
+                "totalInvestment": {
+                    "description": "Tổng số tiền các lần đã góp và được duyệt",
+                    "type": "number"
                 }
             }
         },
@@ -5344,7 +5614,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/organizationpb.DealInvitation"
+                        "$ref": "#/definitions/organizationpb.DealMember"
                     }
                 },
                 "total": {
@@ -5455,6 +5725,9 @@ const docTemplate = `{
                 },
                 "profitAmount": {
                     "type": "number"
+                },
+                "role": {
+                    "$ref": "#/definitions/authpb.Role"
                 },
                 "status": {
                     "type": "integer"
@@ -5619,7 +5892,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.RejectInvitationRequest": {
+        "organizationpb.RejectDealInvitationRequest": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -5630,7 +5903,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.RejectInvitationResponse": {
+        "organizationpb.RejectDealInvitationResponse": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -5674,7 +5947,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.ResendInvitationRequest": {
+        "organizationpb.ResendDealInvitationRequest": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -5682,7 +5955,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.ResendInvitationResponse": {
+        "organizationpb.ResendDealInvitationResponse": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -5733,13 +6006,13 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.SearchMembersResponse": {
+        "organizationpb.SearchDealMembersResponse": {
             "type": "object",
             "properties": {
                 "members": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/organizationpb.DealInvitationMember"
+                        "$ref": "#/definitions/organizationpb.DealMember"
                     }
                 },
                 "total": {
@@ -5747,7 +6020,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.SendInvitationRequest": {
+        "organizationpb.SendDealInvitationRequest": {
             "type": "object",
             "properties": {
                 "colorId": {
@@ -5756,10 +6029,10 @@ const docTemplate = `{
                 "dealId": {
                     "type": "integer"
                 },
-                "inviteeId": {
+                "inviterId": {
                     "type": "integer"
                 },
-                "inviterId": {
+                "memberId": {
                     "type": "integer"
                 },
                 "message": {
@@ -5770,7 +6043,7 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.SendInvitationResponse": {
+        "organizationpb.SendDealInvitationResponse": {
             "type": "object",
             "properties": {
                 "invitationId": {
@@ -5821,6 +6094,9 @@ const docTemplate = `{
                 },
                 "proxyUserId": {
                     "description": "For proxy investments",
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 },
                 "transferProofImage": {
@@ -5995,6 +6271,23 @@ const docTemplate = `{
                 }
             }
         },
+        "organizationpb.UpdateDealMemberRoleRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "description": "ID thương vụ",
+                    "type": "integer"
+                },
+                "memberId": {
+                    "description": "ID thành viên",
+                    "type": "integer"
+                },
+                "roleKey": {
+                    "description": "Vai trò mới (RoleKey enum)",
+                    "type": "integer"
+                }
+            }
+        },
         "organizationpb.UpdateDealMembersCommissionRequest": {
             "type": "object",
             "properties": {
@@ -6056,6 +6349,9 @@ const docTemplate = `{
                 "memberCanAddTransaction": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "onlyOwnerGetCommission": {
                     "type": "boolean"
                 },
@@ -6064,6 +6360,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
                 },
                 "toDate": {
                     "type": "string"

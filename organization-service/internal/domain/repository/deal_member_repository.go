@@ -22,6 +22,7 @@ type DealMemberRepository interface {
 	GetDealMembersByUserIds(ctx context.Context, dealID uint64, userIds []uint64) ([]*entity.DealMember, error)
 	IsMemberDeal(ctx context.Context, dealID, memberID uint64) (bool, error)
 	UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error
+	UpdateRole(ctx context.Context, dealID, memberID uint64, roleKey enums.RoleKey) error
 
 	Create(ctx context.Context, invitation *entity.DealMember) (*entity.DealMember, error)
 	Update(ctx context.Context, invitation *entity.DealMember) (*entity.DealMember, error)

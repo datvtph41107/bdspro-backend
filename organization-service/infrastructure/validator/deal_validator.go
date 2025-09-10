@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/protoadapt"
 )
 
-type GroupDealValidator interface {
+type DealValidator interface {
 	ValidateCreateGroupDealRequest(request *organizationpb.CreateGroupDealRequest) error
 	ValidateUpdateGroupDealRequest(request *organizationpb.UpdateGroupDealRequest) error
 	ValidateDeleteGroupDealRequest(request *organizationpb.DeleteGroupDealRequest) error
@@ -20,7 +20,7 @@ type GroupDealValidator interface {
 
 type groupDealValidator struct{}
 
-func NewGroupDealValidator() GroupDealValidator {
+func NewGroupDealValidator() DealValidator {
 	return &groupDealValidator{}
 }
 

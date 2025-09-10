@@ -127,6 +127,7 @@ message Role {
     bool isDefault = 5 [json_name = "isDefault"];
     uint32 domainType = 6 [json_name = "domainType"];
     optional Color color = 7 [json_name = "color"];
+    uint32 roleKey = 8 [json_name = "roleKey"];
 }
 
 message GetRolesResponse {

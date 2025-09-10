@@ -41,6 +41,7 @@ type DealUsecase interface {
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 	GetDealProcess(ctx context.Context, dealID uint64, organizationID uint64) ([]*dto.DealProcessItem, error)
+	UpdateDealMemberRole(ctx context.Context, req *dto.UpdateDealMemberRoleRequest) (*dto.UpdateDealMemberRoleResponse, error)
 
 	// Thống kê tổng quan thương vụ
 	GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error)
@@ -1083,4 +1084,12 @@ func (u *dealUsecase) GetGroupDealOverview(ctx context.Context, groupID uint64) 
 	}
 
 	return overview, nil
+}
+
+func (u *dealUsecase) UpdateDealMemberRole(ctx context.Context, req *dto.UpdateDealMemberRoleRequest) (*dto.UpdateDealMemberRoleResponse, error) {
+	err := u.dealMemberRepository.UpdateRole(ctx, req.DealID, req.MemberID, enums.RoleKey(req.RoleKey))
+	if err != nil {
+		return nil, err
+	}
+	return &dto.UpdateDealMemberRoleResponse{Success: true, Message: "Update deal member role successfully"}, nil
 }

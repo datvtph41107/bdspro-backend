@@ -16,31 +16,31 @@ import (
 	"organization/internal/usecase"
 )
 
-type GroupDealHandler struct {
-	organizationpb.UnimplementedGroupDealServiceServer
-	DealUsecase          usecase.DealUsecase
-	GroupDealTransformer transformer.GroupDealTransformer
-	GroupDealValidator   validator.GroupDealValidator
-	BdsproClient         *client.BdsproClient
-	UserClient           *client.UserClient
-	PaymentClient        *client.PaymentClient
+type DealHandler struct {
+	organizationpb.UnimplementedDealServiceServer
+	DealUsecase     usecase.DealUsecase
+	DealTransformer transformer.DealTransformer
+	DealValidator   validator.DealValidator
+	BdsproClient    *client.BdsproClient
+	UserClient      *client.UserClient
+	PaymentClient   *client.PaymentClient
 }
 
-func NewGroupDealHandler(
-	groupDealUsecase usecase.DealUsecase,
-	groupDealTransformer transformer.GroupDealTransformer,
-	groupDealValidator validator.GroupDealValidator,
+func NewDealHandler(
+	dealUsecase usecase.DealUsecase,
+	dealTransformer transformer.DealTransformer,
+	dealValidator validator.DealValidator,
 	bdsproClient *client.BdsproClient,
 	userClient *client.UserClient,
 	paymentClient *client.PaymentClient,
-) *GroupDealHandler {
-	return &GroupDealHandler{
-		DealUsecase:          groupDealUsecase,
-		GroupDealTransformer: groupDealTransformer,
-		GroupDealValidator:   groupDealValidator,
-		BdsproClient:         bdsproClient,
-		UserClient:           userClient,
-		PaymentClient:        paymentClient,
+) *DealHandler {
+	return &DealHandler{
+		DealUsecase:     dealUsecase,
+		DealTransformer: dealTransformer,
+		DealValidator:   dealValidator,
+		BdsproClient:    bdsproClient,
+		UserClient:      userClient,
+		PaymentClient:   paymentClient,
 	}
 }
 
@@ -53,19 +53,19 @@ func NewGroupDealHandler(
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.CreateGroupDealResponse "Thành công"
 // @Router /deal [post]
-func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *organizationpb.CreateGroupDealRequest) (*organizationpb.CreateGroupDealResponse, error) {
-	if err := h.GroupDealValidator.ValidateCreateGroupDealRequest(req); err != nil {
+func (h *DealHandler) CreateGroupDeal(ctx context.Context, req *organizationpb.CreateGroupDealRequest) (*organizationpb.CreateGroupDealResponse, error) {
+	if err := h.DealValidator.ValidateCreateGroupDealRequest(req); err != nil {
 		return nil, err
 	}
 
-	deal := h.GroupDealTransformer.CreateGroupDealRequestToEntity(req)
+	deal := h.DealTransformer.CreateGroupDealRequestToEntity(req)
 
 	deal, err := h.DealUsecase.CreateDeal(ctx, deal)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToCreateGroupDealResponse(deal), nil
+	return h.DealTransformer.EntityToCreateGroupDealResponse(deal), nil
 }
 
 // @Summary Cập nhật thương vụ
@@ -77,19 +77,19 @@ func (h *GroupDealHandler) CreateGroupDeal(ctx context.Context, req *organizatio
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateGroupDealResponse "Thành công"
 // @Router /deal/{id} [put]
-func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *organizationpb.UpdateGroupDealRequest) (*organizationpb.UpdateGroupDealResponse, error) {
-	if err := h.GroupDealValidator.ValidateUpdateGroupDealRequest(req); err != nil {
+func (h *DealHandler) UpdateGroupDeal(ctx context.Context, req *organizationpb.UpdateGroupDealRequest) (*organizationpb.UpdateGroupDealResponse, error) {
+	if err := h.DealValidator.ValidateUpdateGroupDealRequest(req); err != nil {
 		return nil, err
 	}
 
-	deal := h.GroupDealTransformer.UpdateGroupDealRequestToEntity(req)
+	deal := h.DealTransformer.UpdateGroupDealRequestToEntity(req)
 
 	deal, err := h.DealUsecase.UpdateGroupDeal(ctx, deal)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToUpdateGroupDealResponse(deal), nil
+	return h.DealTransformer.EntityToUpdateGroupDealResponse(deal), nil
 }
 
 // @Summary Xóa thương vụ
@@ -101,8 +101,8 @@ func (h *GroupDealHandler) UpdateGroupDeal(ctx context.Context, req *organizatio
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.DeleteGroupDealResponse "Thành công"
 // @Router /deal/{id} [delete]
-func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *organizationpb.DeleteGroupDealRequest) (*organizationpb.DeleteGroupDealResponse, error) {
-	if err := h.GroupDealValidator.ValidateDeleteGroupDealRequest(req); err != nil {
+func (h *DealHandler) DeleteGroupDeal(ctx context.Context, req *organizationpb.DeleteGroupDealRequest) (*organizationpb.DeleteGroupDealResponse, error) {
+	if err := h.DealValidator.ValidateDeleteGroupDealRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -123,8 +123,8 @@ func (h *GroupDealHandler) DeleteGroupDeal(ctx context.Context, req *organizatio
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetGroupDealResponse "Thành công"
 // @Router /deal/{id} [get]
-func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb.GetGroupDealRequest) (*organizationpb.GroupDeal, error) {
-	if err := h.GroupDealValidator.ValidateGetGroupDealRequest(req); err != nil {
+func (h *DealHandler) GetGroupDeal(ctx context.Context, req *organizationpb.GetGroupDealRequest) (*organizationpb.GroupDeal, error) {
+	if err := h.DealValidator.ValidateGetGroupDealRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 		return nil, err
 	}
 
-	response := h.GroupDealTransformer.EntityToDealDetailResponse(deal)
+	response := h.DealTransformer.EntityToDealDetailResponse(deal)
 	h.BdsproClient.MapProductToDealPb(ctx, []*organizationpb.GroupDeal{response})
 	h.UserClient.MapMemberToDealPb(ctx, []*organizationpb.GroupDeal{response})
 	if response.BankAccount != nil {
@@ -154,8 +154,8 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateGroupDealStatusResponse "Thành công"
 // @Router /deal/{id}/status [put]
-func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *organizationpb.UpdateGroupDealStatusRequest) (*organizationpb.UpdateGroupDealStatusResponse, error) {
-	if err := h.GroupDealValidator.ValidateUpdateGroupDealStatusRequest(req); err != nil {
+func (h *DealHandler) UpdateGroupDealStatus(ctx context.Context, req *organizationpb.UpdateGroupDealStatusRequest) (*organizationpb.UpdateGroupDealStatusResponse, error) {
+	if err := h.DealValidator.ValidateUpdateGroupDealStatusRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -176,7 +176,7 @@ func (h *GroupDealHandler) UpdateGroupDealStatus(ctx context.Context, req *organ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.InfoInvestmentResponse "Thành công"
 // @Router /deal/{id}/investment [get]
-func (h *GroupDealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.InfoInvestmentResponse, error) {
+func (h *DealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.InfoInvestmentResponse, error) {
 	info, err := h.DealUsecase.InfoInvestment(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (h *GroupDealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDT
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.BankAccountItem "Thành công"
 // @Router /deal/{id}/bank-account [get]
-func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.BankAccountItem, error) {
+func (h *DealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.BankAccountItem, error) {
 	account, err := h.DealUsecase.AccountInvestment(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -228,8 +228,8 @@ func (h *GroupDealHandler) AccountInvestment(ctx context.Context, req *sharepb.I
 	return result, nil
 }
 
-func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizationpb.AddMemberToDealRequest) (*organizationpb.AddMemberToDealResponse, error) {
-	if err := h.GroupDealValidator.ValidateAddMemberToDealRequest(req); err != nil {
+func (h *DealHandler) AddMemberToDeal(ctx context.Context, req *organizationpb.AddMemberToDealRequest) (*organizationpb.AddMemberToDealResponse, error) {
+	if err := h.DealValidator.ValidateAddMemberToDealRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -254,18 +254,18 @@ func (h *GroupDealHandler) AddMemberToDeal(ctx context.Context, req *organizatio
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.CreateOrganizationDealResponse "Thành công"
 // @Router /organization/{organizationId}/deal [post]
-func (h *GroupDealHandler) CreateOrganizationDeal(ctx context.Context, req *organizationpb.CreateOrganizationDealRequest) (*organizationpb.CreateOrganizationDealResponse, error) {
+func (h *DealHandler) CreateOrganizationDeal(ctx context.Context, req *organizationpb.CreateOrganizationDealRequest) (*organizationpb.CreateOrganizationDealResponse, error) {
 	// Lấy organizationId từ path parameter
 	organizationId := getOrganizationIdFromContext(ctx)
 
-	deal := h.GroupDealTransformer.CreateOrganizationDealRequestToEntity(req)
+	deal := h.DealTransformer.CreateOrganizationDealRequestToEntity(req)
 
 	createdDeal, err := h.DealUsecase.CreateOrganizationDeal(ctx, organizationId, deal)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToCreateOrganizationDealResponse(createdDeal), nil
+	return h.DealTransformer.EntityToCreateOrganizationDealResponse(createdDeal), nil
 }
 
 // @Summary Tạo thương vụ cho nhóm
@@ -278,18 +278,18 @@ func (h *GroupDealHandler) CreateOrganizationDeal(ctx context.Context, req *orga
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.CreateGroupDealV2Response "Thành công"
 // @Router /group/{groupId}/deal [post]
-func (h *GroupDealHandler) CreateGroupDealV2(ctx context.Context, req *organizationpb.CreateGroupDealV2Request) (*organizationpb.CreateGroupDealV2Response, error) {
+func (h *DealHandler) CreateGroupDealV2(ctx context.Context, req *organizationpb.CreateGroupDealV2Request) (*organizationpb.CreateGroupDealV2Response, error) {
 	// Lấy groupId từ path parameter
 	groupId := getGroupIdFromContext(ctx)
 
-	deal := h.GroupDealTransformer.CreateGroupDealV2RequestToEntity(req)
+	deal := h.DealTransformer.CreateGroupDealV2RequestToEntity(req)
 
 	createdDeal, err := h.DealUsecase.CreateGroupDeal(ctx, groupId, deal)
 	if err != nil {
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToCreateGroupDealV2Response(createdDeal), nil
+	return h.DealTransformer.EntityToCreateGroupDealV2Response(createdDeal), nil
 }
 
 // @Summary Lấy danh sách thương vụ của tổ chức
@@ -303,7 +303,7 @@ func (h *GroupDealHandler) CreateGroupDealV2(ctx context.Context, req *organizat
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetOrganizationDealsResponse "Thành công"
 // @Router /organization/{organizationId}/deals [get]
-func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organizationpb.GetOrganizationDealsRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
+func (h *DealHandler) GetOrganizationDeals(ctx context.Context, req *organizationpb.GetOrganizationDealsRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
 	organizationId := req.OrganizationId
 	page := uint32(0)
 	size := uint32(10)
@@ -327,7 +327,7 @@ func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organi
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total), nil
+	return h.DealTransformer.EntityToGetOrganizationDealsResponse(deals, total), nil
 }
 
 // @Summary Lấy danh sách thương vụ của tổ chức hiện tại mà người dùng request đến
@@ -339,7 +339,7 @@ func (h *GroupDealHandler) GetOrganizationDeals(ctx context.Context, req *organi
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetOrganizationDealsResponse "Thành công"
 // @Router /organization/deals/current [get]
-func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
+func (h *DealHandler) GetOrganizationDealsCurrent(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetOrganizationDealsResponse, error) {
 	organizationId := getOrganizationIdFromContext(ctx)
 	if organizationId == 0 {
 		return nil, errors.New("organizationId is required")
@@ -358,7 +358,7 @@ func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req 
 		return nil, err
 	}
 
-	response := h.GroupDealTransformer.EntityToGetOrganizationDealsResponse(deals, total)
+	response := h.DealTransformer.EntityToGetOrganizationDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
 }
@@ -372,7 +372,7 @@ func (h *GroupDealHandler) GetOrganizationDealsCurrent(ctx context.Context, req 
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealsResponse "Thành công"
 // @Router /v2/org/deals/user [get]
-func (h *GroupDealHandler) GetDealsUser(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
+func (h *DealHandler) GetDealsUser(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
 	searchRequest := &dto.DealSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.GetPage(),
@@ -392,7 +392,7 @@ func (h *GroupDealHandler) GetDealsUser(ctx context.Context, req *organizationpb
 		return nil, err
 	}
 
-	response := h.GroupDealTransformer.EntityToGetDealsResponse(deals, total)
+	response := h.DealTransformer.EntityToGetDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
 }
@@ -406,7 +406,7 @@ func (h *GroupDealHandler) GetDealsUser(ctx context.Context, req *organizationpb
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealsResponse "Thành công"
 // @Router /v2/org/deals/user/organization [get]
-func (h *GroupDealHandler) GetDealsOrganization(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
+func (h *DealHandler) GetDealsOrganization(ctx context.Context, req *organizationpb.DealSearchRequest) (*organizationpb.GetDealsResponse, error) {
 	searchRequest := &dto.DealSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.GetPage(),
@@ -422,7 +422,7 @@ func (h *GroupDealHandler) GetDealsOrganization(ctx context.Context, req *organi
 		return nil, err
 	}
 
-	response := h.GroupDealTransformer.EntityToGetDealsResponse(deals, total)
+	response := h.DealTransformer.EntityToGetDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
 }
@@ -438,7 +438,7 @@ func (h *GroupDealHandler) GetDealsOrganization(ctx context.Context, req *organi
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateOrganizationDealStatusResponse "Thành công"
 // @Router /organization/{organizationId}/deal/{dealId}/status [put]
-func (h *GroupDealHandler) UpdateOrganizationDealStatus(ctx context.Context, req *organizationpb.UpdateOrganizationDealStatusRequest) (*organizationpb.UpdateOrganizationDealStatusResponse, error) {
+func (h *DealHandler) UpdateOrganizationDealStatus(ctx context.Context, req *organizationpb.UpdateOrganizationDealStatusRequest) (*organizationpb.UpdateOrganizationDealStatusResponse, error) {
 	err := h.DealUsecase.UpdateOrganizationDealStatus(ctx, req.OrganizationId, req.DealId, enums.DealStatus(req.Status))
 	if err != nil {
 		return nil, err
@@ -458,7 +458,7 @@ func (h *GroupDealHandler) UpdateOrganizationDealStatus(ctx context.Context, req
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateGroupDealStatusV2Response "Thành công"
 // @Router /group/{groupId}/deal/{dealId}/status [put]
-func (h *GroupDealHandler) UpdateGroupDealStatusV2(ctx context.Context, req *organizationpb.UpdateGroupDealStatusV2Request) (*organizationpb.UpdateGroupDealStatusV2Response, error) {
+func (h *DealHandler) UpdateGroupDealStatusV2(ctx context.Context, req *organizationpb.UpdateGroupDealStatusV2Request) (*organizationpb.UpdateGroupDealStatusV2Response, error) {
 	err := h.DealUsecase.UpdateGroupDealStatusV2(ctx, req.GroupId, req.DealId, enums.DealStatus(req.Status))
 	if err != nil {
 		return nil, err
@@ -477,7 +477,7 @@ func (h *GroupDealHandler) UpdateGroupDealStatusV2(ctx context.Context, req *org
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.CancelDealResponse "Thành công"
 // @Router /deal/{id}/cancel [put]
-func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.CancelDealRequest) (*organizationpb.CancelDealResponse, error) {
+func (h *DealHandler) CancelDeal(ctx context.Context, req *organizationpb.CancelDealRequest) (*organizationpb.CancelDealResponse, error) {
 	err := h.DealUsecase.CancelDeal(ctx, uint64(req.Id), req.Reason)
 	if err != nil {
 		return nil, err
@@ -496,7 +496,7 @@ func (h *GroupDealHandler) CancelDeal(ctx context.Context, req *organizationpb.C
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateDealSettingResponse "Thành công"
 // @Router /deal/{id}/setting [put]
-func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
+func (h *DealHandler) UpdateDealSetting(ctx context.Context, req *organizationpb.UpdateDealSettingRequest) (*organizationpb.UpdateDealSettingResponse, error) {
 	dto := &dto.DealSetting{
 		FromDate:                _utils.ParseStringToTime(req.FromDate),
 		ToDate:                  _utils.ParseStringToTime(req.ToDate),
@@ -531,7 +531,7 @@ func (h *GroupDealHandler) UpdateDealSetting(ctx context.Context, req *organizat
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.UpdateAllowManualInputResponse "Thành công"
 // @Router /deal/{id}/allow-manual-input [put]
-func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *organizationpb.UpdateAllowManualInputRequest) (*organizationpb.UpdateAllowManualInputResponse, error) {
+func (h *DealHandler) UpdateAllowManualInput(ctx context.Context, req *organizationpb.UpdateAllowManualInputRequest) (*organizationpb.UpdateAllowManualInputResponse, error) {
 	err := h.DealUsecase.UpdateAllowManualInput(ctx, req.DealId, req.AllowManualInput)
 	if err != nil {
 		return nil, err
@@ -549,7 +549,7 @@ func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *orga
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealMembersResponse "Thành công"
 // @Router /deal/{id}/members [get]
-func (h *GroupDealHandler) Members(ctx context.Context, req *organizationpb.SearchDealMembersRequest) (*organizationpb.GetDealMembersResponse, error) {
+func (h *DealHandler) Members(ctx context.Context, req *organizationpb.SearchDealMembersRequest) (*organizationpb.GetDealMembersResponse, error) {
 	members, err := h.DealUsecase.GetDealMembers(ctx, dto.SearchMembersRequest{
 		DealID:         req.DealId,
 		Keyword:        req.Keyword,
@@ -590,7 +590,7 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *organizationpb.Sear
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.SaveDealProductResponse "Thành công"
 // @Router /deal/{dealId}/products [post]
-func (h *GroupDealHandler) SaveDealProduct(ctx context.Context, req *organizationpb.SaveDealProductRequest) (*organizationpb.SaveDealProductResponse, error) {
+func (h *DealHandler) SaveDealProduct(ctx context.Context, req *organizationpb.SaveDealProductRequest) (*organizationpb.SaveDealProductResponse, error) {
 	_, err := h.DealUsecase.SaveDealProduct(ctx, req.DealId, req.ProductIds)
 	if err != nil {
 		return nil, err
@@ -607,7 +607,7 @@ func (h *GroupDealHandler) SaveDealProduct(ctx context.Context, req *organizatio
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealProductsResponse "Thành công"
 // @Router /deal/{dealId}/products [get]
-func (h *GroupDealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetDealProductsResponse, error) {
+func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.GetDealProductsResponse, error) {
 	pagable := _dto.Pagable{
 		Page: req.GetPage(),
 		Size: req.GetSize(),
@@ -639,7 +639,7 @@ func (h *GroupDealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdR
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.SummaryResponse "Thành công"
 // @Router /deal/{dealId}/summary [get]
-func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.SummaryRequest) (*organizationpb.SummaryResponse, error) {
+func (h *DealHandler) Summary(ctx context.Context, req *organizationpb.SummaryRequest) (*organizationpb.SummaryResponse, error) {
 	summary, err := h.DealUsecase.Summary(ctx, &dto.SummaryRequest{
 		DealId:          req.DealId,
 		AmountPending:   req.AmountPending,
@@ -691,7 +691,7 @@ func (h *GroupDealHandler) Summary(ctx context.Context, req *organizationpb.Summ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealProcessResponse "Thành công"
 // @Router /deal/{dealId}/process [get]
-func (h *GroupDealHandler) GetDealProcess(ctx context.Context, req *organizationpb.GetDealProcessRequest) (*organizationpb.GetDealProcessResponse, error) {
+func (h *DealHandler) GetDealProcess(ctx context.Context, req *organizationpb.GetDealProcessRequest) (*organizationpb.GetDealProcessResponse, error) {
 	// Lấy profileId từ context
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
@@ -741,8 +741,8 @@ func (h *GroupDealHandler) GetDealProcess(ctx context.Context, req *organization
 // @Param size query uint32 false "Kích thước" default(10)
 // @Security BearerAuth
 // @Router /organization/branch/{branchId}/deals [get]
-func (h *GroupDealHandler) GetBranchDeals(ctx context.Context, req *organizationpb.GetBranchDealsRequest) (*organizationpb.GetGroupDealsV2Response, error) {
-	if err := h.GroupDealValidator.ValidateGetBranchDealsRequest(req); err != nil {
+func (h *DealHandler) GetBranchDeals(ctx context.Context, req *organizationpb.GetBranchDealsRequest) (*organizationpb.GetGroupDealsV2Response, error) {
+	if err := h.DealValidator.ValidateGetBranchDealsRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -761,7 +761,7 @@ func (h *GroupDealHandler) GetBranchDeals(ctx context.Context, req *organization
 		return nil, err
 	}
 
-	return h.GroupDealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
+	return h.DealTransformer.EntityToGetGroupDealsV2Response(deals, total), nil
 }
 
 // Helper functions để lấy ID từ context
@@ -783,7 +783,7 @@ func getGroupIdFromContext(ctx context.Context) uint64 {
 // @Param organizationId path uint64 true "ID tổ chức"
 // @Security BearerAuth
 // @Router /organization/{organizationId}/deals/overview [get]
-func (h *GroupDealHandler) GetOrganizationDealOverview(ctx context.Context, req *organizationpb.GetOrganizationDealOverviewRequest) (*organizationpb.GetOrganizationDealOverviewResponse, error) {
+func (h *DealHandler) GetOrganizationDealOverview(ctx context.Context, req *organizationpb.GetOrganizationDealOverviewRequest) (*organizationpb.GetOrganizationDealOverviewResponse, error) {
 	organizationID := req.OrganizationId
 
 	// Lấy thống kê từ usecase
@@ -816,7 +816,7 @@ func (h *GroupDealHandler) GetOrganizationDealOverview(ctx context.Context, req 
 // @Param groupId path uint64 true "ID nhóm"
 // @Security BearerAuth
 // @Router /group/{groupId}/deals/overview [get]
-func (h *GroupDealHandler) GetGroupDealOverview(ctx context.Context, req *organizationpb.GetGroupDealOverviewRequest) (*organizationpb.GetGroupDealOverviewResponse, error) {
+func (h *DealHandler) GetGroupDealOverview(ctx context.Context, req *organizationpb.GetGroupDealOverviewRequest) (*organizationpb.GetGroupDealOverviewResponse, error) {
 	groupID := req.GroupId
 
 	// Lấy thống kê từ usecase
@@ -838,4 +838,27 @@ func (h *GroupDealHandler) GetGroupDealOverview(ctx context.Context, req *organi
 	}
 
 	return response, nil
+}
+
+// @Summary Cập nhật vai trò thành viên thương vụ
+// @Description Cập nhật vai trò thành viên thương vụ
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Param request body organizationpb.UpdateDealMemberRoleRequest true "Thông tin cập nhật"
+// @Security BearerAuth
+// @Router /deal/member/role [put]
+func (h *DealHandler) UpdateDealMemberRole(ctx context.Context, req *organizationpb.UpdateDealMemberRoleRequest) (*organizationpb.UpdateDealMemberRoleResponse, error) {
+	_, err := h.DealUsecase.UpdateDealMemberRole(ctx, &dto.UpdateDealMemberRoleRequest{
+		DealID:   req.DealId,
+		MemberID: req.MemberId,
+		RoleKey:  req.RoleKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.UpdateDealMemberRoleResponse{
+		Success: true,
+		Message: "Update deal member role successfully",
+	}, nil
 }

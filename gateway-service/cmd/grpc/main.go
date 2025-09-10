@@ -7,7 +7,6 @@ import (
 	"gateway/config"
 	"log"
 	"net/http"
-	notificationpb "pb/types/notification"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +16,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -53,8 +51,8 @@ var GrpcCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.LoadConfig()
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
-		url := viper.GetString("service.domain")
-		notificationEndpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
+		// url := viper.GetString("service.domain")
+		// notificationEndpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
 
 		r := gin.Default()
 
@@ -68,13 +66,13 @@ var GrpcCmd = &cobra.Command{
 			}),
 		)
 
-		ctx := context.Background()
-		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+		// ctx := context.Background()
+		// opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 		// Đăng ký notification service
-		if err := notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationEndpoint, opts); err != nil {
-			log.Printf("Failed to register notification service: %v", err)
-		}
+		// if err := notificationpb.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationEndpoint, opts); err != nil {
+		// 	log.Printf("Failed to register notification service: %v", err)
+		// }
 
 		// Routes
 		r.Any("/v2/*any", gin.WrapH(mux))

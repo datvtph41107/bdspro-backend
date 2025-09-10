@@ -282,3 +282,9 @@ func (r *DealMemberPostgresRepository) UpdateDoneInvestment(ctx context.Context,
 		Where("deal_id = ? AND member_id = ?", dealID, memberID).
 		Update("done_investment", true).Error
 }
+
+func (r *DealMemberPostgresRepository) UpdateRole(ctx context.Context, dealID, memberID uint64, roleKey enums.RoleKey) error {
+	return GetDB(ctx, r.db).Model(&entity.DealMember{}).
+		Where("deal_id = ? AND member_id = ?", dealID, memberID).
+		Update("role_key", roleKey).Error
+}
