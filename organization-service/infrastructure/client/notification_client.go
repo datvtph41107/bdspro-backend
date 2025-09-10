@@ -5,23 +5,27 @@ import (
 	"fmt"
 	"organization/env"
 	"organization/internal/dto"
+	"organization/internal/enums"
 	clients "pb/clients"
+	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // @bind: organization/internal/interface.INotiClient
 type NotificationClient struct {
-	client *clients.NotificationClient
+	*clients.NotificationClient
 }
 
 func NewNotificationClient() *NotificationClient {
 	return &NotificationClient{
-		client: clients.MakeNotificationClient(env.ENV_RUNTIME),
+		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
 	}
 }
 
 func (c *NotificationClient) SendNotification(ctx context.Context, notification *dto.NotificationDTO) error {
-	return c.client.NotifyToUser(ctx,
+	return c.NotifyToUser(ctx,
 		int32(notification.Type),
 		notification.UserId,
 		notification.AttachData,
@@ -43,11 +47,41 @@ func (c *NotificationClient) SendBatchNotification(ctx context.Context, notifica
 			Link:       fmt.Sprintf("/news-feed/%d", notification.TargetID),
 		})
 	}
-	return c.client.SendBatch(ctx, notiRequests)
+	response, err := c.Client.SendBatch(ctx, &notificationpb.NotiBatchRequest{
+		Datas: notiRequests,
+	})
+	if err != nil {
+		return err
+	}
+	if response.Success {
+		return nil
+	}
+	return nil
 }
 
 func (c *NotificationClient) HistoryDeal(ctx context.Context, history *dto.DealHistoryDTO) error {
-	// TODO: Implement call to notification service for deal history
-	// This will be implemented when notification service supports deal history
+
+	pbStruct, err := structpb.NewStruct(history.Metadata)
+	if err != nil {
+		return err
+	}
+
+	domainReq := &notificationpb.CreateDealHistoryRequest{
+		DealId:      history.DealID,
+		ActorId:     history.ActorID,
+		ActorName:   history.ActorName,
+		ActorAvatar: history.ActorAvatar,
+		ActionType:  enums.DealHistoryEventNameMap[history.ActionType],
+		ActionName:  history.ActionName,
+		Content:     history.Content,
+		Metadata:    pbStruct,
+	}
+	result, err := c.Client.CreateDealHistory(ctx, domainReq)
+	if err != nil {
+		return err
+	}
+	if result.Success {
+		return nil
+	}
 	return nil
 }

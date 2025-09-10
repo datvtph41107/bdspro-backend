@@ -1,51 +1,22 @@
 package client
 
 import (
-	_middleware "common/middleware"
 	"context"
 	"fmt"
-	"log"
-	notificationpbfication "pb/types/notification"
+	clients "pb/clients"
 	sharepb "pb/types/shared"
 	"social/env"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 // @bind: social/internal/interface.NotiClient
 type NotificationClient struct {
-	client notificationpbfication.NotificationServiceClient
+	*clients.NotificationClient
 }
 
 func NewNotificationClient() *NotificationClient {
-	notiClient := &NotificationClient{client: nil}
-	go func() {
-		url := "localhost"
-		name := "notification"
-		if env.ENV_RUNTIME == "release" {
-			url = name
-		}
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8204", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := notificationpbfication.NewNotificationServiceClient(conn)
-		notiClient.client = client
-	}()
-
-	return notiClient
+	return &NotificationClient{
+		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
+	}
 }
 
 func (s *NotificationClient) NotifyToUser(
@@ -56,7 +27,7 @@ func (s *NotificationClient) NotifyToUser(
 	targetID uint64,
 	isMerge bool,
 ) error {
-	_, err := s.client.Create(ctx, &sharepb.NotificationRequest{
+	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
 		AttachData: attachData,
 		Link:       fmt.Sprintf("/news-feed/%d", targetID),
 		Type:       typeNoti,

@@ -100,10 +100,7 @@ func convertStructToMap(s *structpb.Struct) map[string]interface{} {
 	if s == nil {
 		return make(map[string]interface{})
 	}
-
-	// Convert structpb.Struct to map
-	// This is a simplified conversion - you might need more sophisticated handling
-	return make(map[string]interface{})
+	return s.AsMap()
 }
 
 func convertTimeToTimestamp(t time.Time) *timestamppb.Timestamp {

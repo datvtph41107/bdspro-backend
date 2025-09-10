@@ -188,7 +188,7 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 			"deal_id":       investment.DealID,
 			"investment_id": investment.ID,
 			"amount":        investment.Amount,
-			"status":        investment.Status,
+			"status":        uint32(investment.Status),
 		})
 
 	return &investment.ID, nil
@@ -223,7 +223,7 @@ func (u *InvestmentUsecase) DeleteInvestment(ctx context.Context, id *uint64) er
 			"deal_id":       current.DealID,
 			"investment_id": current.ID,
 			"amount":        current.Amount,
-			"status":        current.Status,
+			"status":        uint32(current.Status),
 		})
 
 	return nil

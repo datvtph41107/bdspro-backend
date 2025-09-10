@@ -16,7 +16,7 @@ import (
 )
 
 type NotificationClient struct {
-	client        notificationpb.NotificationServiceClient
+	Client        notificationpb.InternalNotificationServiceClient
 	historyClient notificationpb.HistoryServiceClient
 }
 
@@ -43,9 +43,9 @@ func MakeNotificationClient(env_runtime string) *NotificationClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := notificationpb.NewNotificationServiceClient(conn)
+		client := notificationpb.NewInternalNotificationServiceClient(conn)
 		historyClient := notificationpb.NewHistoryServiceClient(conn)
-		notificationClient.client = client
+		notificationClient.Client = client
 		notificationClient.historyClient = historyClient
 	}()
 	return notificationClient
@@ -59,7 +59,7 @@ func (s *NotificationClient) NotifyToUser(
 	targetID uint64,
 	isMerge bool,
 ) error {
-	_, err := s.client.Create(ctx, &sharepb.NotificationRequest{
+	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
 		AttachData: attachData,
 		Link:       fmt.Sprintf("/news-feed/%d", targetID),
 		Type:       typeNoti,
@@ -75,7 +75,7 @@ func (s *NotificationClient) SendBatch(
 	ctx context.Context,
 	notifications []*sharepb.NotificationRequest,
 ) error {
-	_, err := s.client.SendBatch(ctx, &notificationpb.NotiBatchRequest{
+	_, err := s.Client.SendBatch(ctx, &notificationpb.NotiBatchRequest{
 		Datas:        notifications,
 		SendToDevice: false,
 	})
@@ -111,7 +111,7 @@ func (s *NotificationClient) CreateAdminHistory(ctx context.Context,
 ) error {
 	log.Printf("Creating admin history: adminID=%d, targetID=%d, actionType=%d, title=%s", adminID, targetID, actionType, title)
 
-	response, err := s.client.CreateAdminHistory(ctx, &notificationpb.AdminHistoryCreateRequest{
+	response, err := s.Client.CreateAdminHistory(ctx, &notificationpb.AdminHistoryCreateRequest{
 		TargetId:   targetID,
 		TargetType: targetType,
 		ActionType: actionType,
@@ -138,7 +138,7 @@ func (s *NotificationClient) CreateAdminHistory(ctx context.Context,
 
 // CreateAdminHistoryBatch tạo hàng loạt lịch sử admin
 func (s *NotificationClient) CreateAdminHistoryBatch(ctx context.Context, requests []*notificationpb.AdminHistoryCreateRequest) error {
-	_, err := s.client.CreateAdminHistoryBatch(ctx, &notificationpb.AdminHistoryBatchRequest{
+	_, err := s.Client.CreateAdminHistoryBatch(ctx, &notificationpb.AdminHistoryBatchRequest{
 		Datas: requests,
 	})
 	return err
