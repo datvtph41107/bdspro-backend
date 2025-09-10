@@ -19,6 +19,7 @@ type GroupDealTransformer interface {
 	EntityToCreateGroupDealV2Response(deal *entity.Deal) *organizationpb.CreateGroupDealV2Response
 	EntityToUpdateGroupDealResponse(deal *entity.Deal) *organizationpb.UpdateGroupDealResponse
 	EntityToGetGroupDealResponse(deal *entity.Deal) *organizationpb.GroupDeal
+	EntityToDealDetailResponse(deal *entity.Deal) *organizationpb.GroupDeal
 	EntityToGetGroupDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsResponse
 	EntityToGetOrganizationDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetOrganizationDealsResponse
 	EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse
@@ -245,6 +246,40 @@ func (t *groupDealTransformer) EntityToGetGroupDealResponse(deal *entity.Deal) *
 		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,
 		InternalNote:            deal.InternalNote,
 		Code:                    utils.GenerateDealCode(deal.ID),
+	}
+
+	if deal.ChargePersonID != nil {
+		response.ChargePersonId = *deal.ChargePersonID
+	}
+
+	if deal.BankAccount != nil {
+		response.BankAccount = t.BankAccountMapper.EntityToPb(deal.BankAccount)
+	}
+
+	// Add other fields as needed
+	return response
+}
+
+func (t *groupDealTransformer) EntityToDealDetailResponse(deal *entity.Deal) *organizationpb.GroupDeal {
+	response := &organizationpb.GroupDeal{
+		Id:                      uint32(deal.ID),
+		Name:                    deal.Name,
+		TargetProfit:            deal.TargetProfit,
+		Status:                  uint32(deal.Status),
+		StatusName:              enums.DealStatusMap[deal.Status],
+		DealType:                uint32(deal.DealType),
+		OwnerId:                 uint32(deal.OwnerId),
+		OwnerType:               uint32(deal.OwnerType),
+		Note:                    deal.Note,
+		CancelReason:            deal.CancelReason,
+		FromDate:                _utils.FormatTimeToString(deal.FromDate),
+		ToDate:                  _utils.FormatTimeToString(deal.ToDate),
+		AllowSharing:            deal.AllowSharing,
+		MemberCanAddTransaction: deal.MemberCanAddTransaction,
+		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,
+		InternalNote:            deal.InternalNote,
+		Code:                    utils.GenerateDealCode(deal.ID),
+		CreatedAt:               _utils.FormatTimeToString(deal.CreatedAt),
 	}
 
 	if deal.ChargePersonID != nil {

@@ -52,10 +52,7 @@ func (r *DealCostPostgreRepo) ListByDealID(ctx context.Context, search *dto.Deal
 		Preload("CostType").
 		Where("deal_id = ?", search.DealId)
 
-	if search.Page > 0 && search.Size > 0 {
-		offset := (search.Page - 1) * search.Size
-		query = query.Offset(int(offset)).Limit(int(search.Size))
-	}
+	query = query.Offset(search.GetOffset()).Limit(search.GetLimit())
 
 	err := query.Find(&costs).Error
 	if err != nil {

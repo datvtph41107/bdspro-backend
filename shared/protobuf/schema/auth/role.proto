@@ -22,8 +22,10 @@ message Role {
   optional Color color = 11;
   optional uint64 roleGroupId = 12;
   optional string roleGroupName = 13;
-  string createdAt = 14;
-  string updatedAt = 15;
+  bool autoAssign = 14;
+  uint32 systemKey = 15;
+  string createdAt = 16;
+  string updatedAt = 17;
 }
 
 // Permission message
@@ -54,6 +56,8 @@ message RoleRequest {
   string domainType = 8;
   optional uint64 colorId = 9;
   optional uint64 roleGroupId = 10;
+  bool autoAssign = 11;
+  uint32 systemKey = 12;
 }
 
 message RoleListResponse {
@@ -168,4 +172,5 @@ service PermissionService {
 
 message PermissionKeysResponse {
   repeated string keys = 1;
+  optional Role role = 2;
 }

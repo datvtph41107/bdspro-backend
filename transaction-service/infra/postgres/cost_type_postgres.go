@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"tx/internal/domain/entity"
@@ -54,6 +55,15 @@ func (r *CostTypePostgreRepo) List(ctx context.Context, search *dto.CostTypeSear
 
 func (r *CostTypePostgreRepo) GetByID(ctx context.Context, id uint64) (*entity.CostType, error) {
 	var costType entity.CostType
-	err := r.db.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&costType).Error
+	err := GetDB(ctx, r.db).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&costType).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
 	return &costType, err
 }

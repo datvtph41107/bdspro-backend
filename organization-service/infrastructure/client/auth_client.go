@@ -3,8 +3,10 @@ package client
 import (
 	"context"
 	"organization/env"
+	"organization/internal/custom_error"
 	"organization/internal/dto"
 	"pb/clients"
+	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 )
 
@@ -43,4 +45,19 @@ func (c *AuthClient) MapRoleToGroups(ctx context.Context, groups []*dto.GroupWit
 			groups[i].UserRole = "Thành viên"
 		}
 	}
+}
+
+// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
+func (c *AuthClient) GetRoleBySystemKey(ctx context.Context, systemKey uint32) (*authpb.Role, error) {
+	// Gọi sang auth service để lấy admin role
+	response, err := c.AuthGrpcClient.GetRolesBySystemKeys(ctx, &authpb.GetRolesBySystemKeysRequest{
+		SystemKeys: []uint32{systemKey},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(response.Data) == 0 {
+		return nil, custom_error.RecordNotFound("Role not found")
+	}
+	return response.Data[0], nil
 }

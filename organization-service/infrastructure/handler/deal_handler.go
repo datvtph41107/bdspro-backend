@@ -133,7 +133,7 @@ func (h *GroupDealHandler) GetGroupDeal(ctx context.Context, req *organizationpb
 		return nil, err
 	}
 
-	response := h.GroupDealTransformer.EntityToGetGroupDealResponse(deal)
+	response := h.GroupDealTransformer.EntityToDealDetailResponse(deal)
 	h.BdsproClient.MapProductToDealPb(ctx, []*organizationpb.GroupDeal{response})
 	h.UserClient.MapMemberToDealPb(ctx, []*organizationpb.GroupDeal{response})
 	if response.BankAccount != nil {
@@ -629,8 +629,14 @@ func (h *GroupDealHandler) UpdateAllowManualInput(ctx context.Context, req *orga
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.GetDealMembersResponse "Thành công"
 // @Router /deal/{id}/members [get]
-func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*organizationpb.GetDealMembersResponse, error) {
-	members, err := h.DealUsecase.GetDealMembers(ctx, req.Id)
+func (h *GroupDealHandler) Members(ctx context.Context, req *organizationpb.SearchDealMembersRequest) (*organizationpb.GetDealMembersResponse, error) {
+	members, err := h.DealUsecase.GetDealMembers(ctx, dto.SearchMembersRequest{
+		DealID:         req.DealId,
+		Keyword:        req.Keyword,
+		Page:           int(req.Page),
+		Size:           int(req.Size),
+		DoneInvestment: req.DoneInvestment,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -647,6 +653,7 @@ func (h *GroupDealHandler) Members(ctx context.Context, req *sharepb.IdDTO) (*or
 			Note:            member.Note,
 			RoleId:          &member.RoleID,
 			IsOwner:         member.IsOwner,
+			DoneInvestment:  member.DoneInvestment,
 		}
 	}
 	h.UserClient.MapProfileToDealMember(ctx, response)

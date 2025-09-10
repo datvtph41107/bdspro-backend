@@ -7,6 +7,7 @@ import "bdspro/common.proto";
 import "shared/common.proto";
 import "payment/bank.proto";
 import "organization/deal_invitation.proto";
+import "auth/role.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -142,9 +143,9 @@ service GroupDealService {
         };
     }
 
-    rpc Members(sharepb.IdDTO) returns (GetDealMembersResponse) {
+    rpc Members(SearchDealMembersRequest) returns (GetDealMembersResponse) {
         option (google.api.http) = {
-            get: "/v2/org/deal/{id}/members"
+            get: "/v2/org/deal/{dealId}/members"
         };
     }
 
@@ -402,6 +403,7 @@ message GroupDeal {
     string internalNote = 32;
     optional sharepb.ProfileItem chargePerson = 33;
     string code = 34;
+    optional authpb.Role role = 35;
 }
 
 message DocumentItem {

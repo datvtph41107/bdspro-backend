@@ -13,10 +13,12 @@ type RoleRepository interface {
 	FindByOrganizationId(ctx context.Context, organizationId uint64) ([]*domain.Role, error)
 	FindByOrganizationIdAndKey(ctx context.Context, organizationId uint64, key string) (*domain.Role, error)
 	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint64, page, size int) ([]*domain.Role, uint64, error)
+	FindBySystemKeys(ctx context.Context, systemKeys []uint32) ([]domain.Role, error)
 	AddPermissionToRole(ctx context.Context, roleID uint64, permissionID uint64) error
 	GetRoleIdsByProfileId(ctx context.Context, profileId uint64) ([]uint64, error)
 	GetPermissionIdsByRoleIds(ctx context.Context, roleIds []uint64) (map[uint64][]uint64, error)
 	GetPermissionKeysByIds(ctx context.Context, permIds []uint64) ([]string, error)
 	GetPermissionKeysByUserId(ctx context.Context, userId uint64) ([]string, error)
 	GetPermissionKeysByRoleId(ctx context.Context, roleId uint64) ([]string, error)
+	GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*domain.Role, error)
 }

@@ -224,3 +224,23 @@ func (h *InvestmentHandler) UnconfirmInvestment(ctx context.Context, req *sharep
 		Id: id,
 	}, nil
 }
+
+// @Summary get investment histories
+// @Description get investment histories
+// @Tags Investment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID"
+// @Success 200 {object} organizationpb.GetInvestmentHistoriesResponse
+// @Router /investment/histories/{id} [get]
+func (h *InvestmentHandler) GetInvestmentHistories(ctx context.Context, req *organizationpb.GetInvestmentHistoriesRequest) (*organizationpb.GetInvestmentHistoriesResponse, error) {
+	histories, total, err := h.InvestmentUsecase.GetInvestmentHistories(ctx, req.DealId, req.MemberId)
+	if err != nil {
+		return nil, err
+	}
+	return &organizationpb.GetInvestmentHistoriesResponse{
+		Data:            h.InvestmentMapper.EntityToPbWithHistories(histories),
+		TotalInvestment: total,
+	}, nil
+}

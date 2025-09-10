@@ -190,27 +190,32 @@ func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) (
 	return permissions, nil
 }
 
-func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, error) {
+func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, *domain.Role, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	dealMember, err := uc.organizationProvider.GetDealMember(ctx, dealId, profileId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if dealMember == nil {
-		return []string{}, nil
+		return []string{}, nil, nil
 	}
 
 	if dealMember.RoleId == nil {
-		return []string{}, nil
+		return []string{}, nil, nil
 	}
 
 	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *dealMember.RoleId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return permissions, nil
+	role, err := uc.roleRepo.GetDetail(ctx, *dealMember.RoleId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return permissions, role, nil
 }
 
 func (uc *PermissionUsecase) GetByBranchId(ctx context.Context, branchId uint64) ([]string, error) {

@@ -225,6 +225,12 @@
         "backgroundColor": {
           "type": "string"
         },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
         "description": {
           "type": "string"
         },

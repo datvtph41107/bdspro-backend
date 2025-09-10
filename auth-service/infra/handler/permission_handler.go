@@ -175,13 +175,14 @@ func (h *PermissionHandler) GetPermissionByGroupId(ctx context.Context, req *sha
 // @Success 200 {object} authpb.PermissionKeysResponse
 // @Router /permission/deal/{id} [get]
 func (h *PermissionHandler) GetPermissionByDealId(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionKeysResponse, error) {
-	permissions, err := h.permissionUsecase.GetByDealId(ctx, req.Id)
+	permissions, role, err := h.permissionUsecase.GetByDealId(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &authpb.PermissionKeysResponse{
 		Keys: permissions,
+		Role: h.roleMapper.MapRoleToPb(role),
 	}, nil
 }
 

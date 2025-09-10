@@ -240,6 +240,10 @@ func (r *GroupDealPostgresRepository) UpdateSetting(ctx context.Context, id uint
 			return err
 		}
 
+		if !setting.Status.IsValid() {
+			setting.Status = model.Status
+		}
+
 		err = GetDB(ctx, r.db).
 			Model(&entity.Deal{}).
 			Where("id = ? AND is_deleted = ?", id, false).

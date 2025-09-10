@@ -51,9 +51,7 @@ func (r *InvestmentPostgres) UpdateInvestment(ctx context.Context, investment *e
 		investment.Status = enums.ApprovedStatusPending
 	}
 
-	if investment.Status != enums.ApprovedStatusPending &&
-		investment.Status != enums.ApprovedStatusRejected &&
-		investment.Status != enums.ApprovedStatusApproved {
+	if investment.Status.IsValid() {
 		investment.Status = current.Status
 	}
 
@@ -137,8 +135,8 @@ func (r *InvestmentPostgres) GetInvestments(ctx context.Context, req *dto.Invest
 	var investments []entity.Investment
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&entity.Investment{}).
-		Where("deal_id = ? and deleted_at is null", req.DealID)
+	query := GetDB(ctx, r.db).Model(&entity.Investment{}).
+		Where("deal_id = ? and deleted_at is null and deleted_at is null", req.DealID)
 
 	// Filter by member ID if provided
 	if req.MemberID > 0 {
@@ -152,7 +150,9 @@ func (r *InvestmentPostgres) GetInvestments(ctx context.Context, req *dto.Invest
 
 	err = query.
 		// Preload("AttachDocument", "doc_owner = ?", enums.DocOwnerInvest).
-		Find(&investments).Error
+		Order("updated_at DESC").
+		Find(&investments).
+		Error
 	if err != nil {
 		return nil, 0, err
 	}

@@ -38,6 +38,8 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *authpb.Role {
 		DomainType:      role.DomainType,
 		ColorId:         role.ColorID,
 		RoleGroupId:     role.RoleGroupID,
+		AutoAssign:      role.AutoAssign,
+		SystemKey:       role.SystemKey,
 		CreatedAt:       _utils.FormatTimeToString(role.CreatedAt),
 		UpdatedAt:       _utils.FormatTimeToString(role.UpdatedAt),
 	}
@@ -56,6 +58,8 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *authpb.Role {
 			Name:            role.Color.Name,
 			ContentColor:    role.Color.ContentColor,
 			BackgroundColor: role.Color.BackgroundColor,
+			ColorKey:        role.Color.ColorKey,
+			HexCode:         role.Color.HexCode,
 			CreatedAt:       _utils.FormatTimeToString(role.Color.CreatedAt),
 			UpdatedAt:       _utils.FormatTimeToString(role.Color.UpdatedAt),
 		}

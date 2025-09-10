@@ -36,7 +36,7 @@ type DealUsecase interface {
 	AccountInvestment(ctx context.Context, id uint64) (*entity.BankAccount, error)
 	AddMemberToDeal(ctx context.Context, dealID uint64, memberID uint64) error
 	UpdateDealSetting(ctx context.Context, dealID uint64, setting *dto.DealSetting) error
-	GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error)
+	GetDealMembers(ctx context.Context, payload dto.SearchMembersRequest) ([]*entity.DealMember, error)
 	SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*entity.DealProduct, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
@@ -150,7 +150,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			for i, memberID := range deal.MemberIds {
 				members[i] = entity.DealMember{
 					MemberID: memberID,
-					// MemberType: enums.DealMemberTypeMember,
+					RoleKey:  enums.DealMemberRoleKeyMember,
 				}
 			}
 			deal.Members = members
@@ -161,7 +161,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			for i, customerID := range deal.CustomerIds {
 				customers[i] = entity.DealMember{
 					MemberID: customerID,
-					// MemberType: enums.DealMemberTypeCustomer,
+					RoleKey:  enums.DealMemberRoleKeyCustomer,
 				}
 			}
 			deal.Customers = customers
@@ -172,7 +172,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			for i, partnerID := range deal.PartnerIds {
 				partners[i] = entity.DealMember{
 					MemberID: partnerID,
-					// MemberType: enums.DealMemberTypePartner,
+					RoleKey:  enums.DealMemberRoleKeyPartner,
 				}
 			}
 			deal.Partners = partners
@@ -211,6 +211,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 				MemberID: *deal.ChargePersonID,
 				// MemberType:   enums.DealMemberTypeMember,
 				RoleID:       0,
+				RoleKey:      enums.DealMemberRoleKeyAdmin,
 				AmountCommit: 0,
 				Status:       entity.DealMemberStatusAccepted,
 			})
@@ -224,6 +225,7 @@ func (u *groupDealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*
 			MemberID: currentUserId,
 			// MemberType:   enums.DealMemberTypeMember,
 			RoleID:       0,
+			RoleKey:      enums.DealMemberRoleKeyOwner,
 			AmountCommit: 0,
 			Status:       entity.DealMemberStatusAccepted,
 		})
@@ -798,13 +800,13 @@ func (u *groupDealUsecase) BeforeAccess(ctx context.Context, dealID uint64) erro
 	return nil
 }
 
-func (u *groupDealUsecase) GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error) {
-	err := u.BeforeAccess(ctx, dealID)
+func (u *groupDealUsecase) GetDealMembers(ctx context.Context, payload dto.SearchMembersRequest) ([]*entity.DealMember, error) {
+	err := u.BeforeAccess(ctx, payload.DealID)
 	if err != nil {
 		return nil, err
 	}
 
-	return u.dealMemberRepository.GetDealMembers(ctx, dealID)
+	return u.dealMemberRepository.GetDealMembers(ctx, payload)
 }
 
 func (u *groupDealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, productIDs []uint64) ([]*entity.DealProduct, error) {

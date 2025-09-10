@@ -179,3 +179,30 @@ func (h *InternalHandler) GetRolesByIds(ctx context.Context, req *sharepb.IdRequ
 		Data: result,
 	}, nil
 }
+
+func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+	role, err := h.roleRepo.GetAdminRoleIdByGroupKey(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var pbRole *authpb.Role
+	if role != nil {
+		pbRole = h.roleMapper.MapRoleToPb(role)
+	}
+
+	return pbRole, nil
+}
+
+// @bind: internal/usecase/role_usecase
+func (h *InternalHandler) GetRolesBySystemKeys(ctx context.Context, req *authpb.GetRolesBySystemKeysRequest) (*authpb.RoleListResponse, error) {
+	roles, err := h.roleRepo.FindBySystemKeys(ctx, req.SystemKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	result := h.roleMapper.MapRoleListToPb(roles)
+	return &authpb.RoleListResponse{
+		Data: result,
+	}, nil
+}

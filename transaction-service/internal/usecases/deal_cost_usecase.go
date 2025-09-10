@@ -30,12 +30,12 @@ func (u *dealCostUsecase) Create(ctx context.Context, dealCost *entity.DealCost)
 	if err != nil {
 		return err
 	}
-	dealCost.Status = enums.ApprovedStatusApproved
-	if costType.CostType == enums.ECostTypeExpense {
+	if costType != nil && costType.CostType == enums.ECostTypeExpense {
 		dealCost.Status = enums.ApprovedStatusApproved
 	} else {
 		dealCost.Status = enums.ApprovedStatusPending
 	}
+
 	return u.repo.Create(ctx, dealCost)
 }
 

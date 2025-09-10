@@ -55,6 +55,11 @@ service InvestmentService {
             post: "/v2/org/investment/{id}/unconfirm"
         };
     };
+    rpc GetInvestmentHistories(GetInvestmentHistoriesRequest) returns (GetInvestmentHistoriesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/investment/member-histories/{dealId}/{memberId}"
+        };
+    };
 }
 
 message SubmitInvestRequest {
@@ -69,6 +74,7 @@ message SubmitInvestRequest {
     repeated DocumentItem documents = 9;
     optional uint64 proxyUserId = 10;  // For proxy investments
     bool doneInvestment = 11;  // Đánh dấu đã đủ vốn góp
+    uint32 status = 12;
 }
 
 message ListInvestment {
@@ -116,4 +122,14 @@ message InvestmentListRequest {
     string note = 5;
     repeated DocumentItem documents = 6;
     optional uint64 memberId = 7;  // Filter by member ID
+}
+
+message GetInvestmentHistoriesRequest {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
+}
+// Response trả về lịch sử đầu tư
+message GetInvestmentHistoriesResponse {
+    repeated ApprovedInvestmentItem data = 1;  // Danh sách lịch sử đầu tư
+    double totalInvestment = 2;  // Tổng số tiền các lần đã góp và được duyệt
 }

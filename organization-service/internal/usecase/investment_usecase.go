@@ -20,6 +20,7 @@ type InvestmentUsecase struct {
 	groupAuthUsecase     GroupAuthUsecase
 	notiClient           iusecase.INotiClient
 	dealMemberRepo       repository.DealMemberRepository
+	transaction          iusecase.ITransaction
 }
 
 func NewInvestmentUsecase(
@@ -28,6 +29,7 @@ func NewInvestmentUsecase(
 	groupAuthUsecase GroupAuthUsecase,
 	notiClient iusecase.INotiClient,
 	dealMemberRepo repository.DealMemberRepository,
+	transaction iusecase.ITransaction,
 ) *InvestmentUsecase {
 	return &InvestmentUsecase{
 		investmentRepository: investmentRepository,
@@ -35,6 +37,7 @@ func NewInvestmentUsecase(
 		groupAuthUsecase:     groupAuthUsecase,
 		notiClient:           notiClient,
 		dealMemberRepo:       dealMemberRepo,
+		transaction:          transaction,
 	}
 }
 
@@ -51,11 +54,11 @@ func (u *InvestmentUsecase) IsMemberDeal(ctx context.Context, dealID, memberID u
 
 func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	// currentUserId := _utils.GetProfileIdWithContext(ctx)
-	// err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	if err != nil {
+		return nil, err
+	}
 
 	// Validate deal member exists
 	deal, err := u.dealRepository.GetByID(ctx, req.DealID)
@@ -64,7 +67,10 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 	}
 
 	// Set default status to pending
-	req.Status = enums.ApprovedStatusPending
+	// req.Status = enums.ApprovedStatusPending
+	if req.Status == enums.ApprovedStatusRejected {
+		req.Status = enums.ApprovedStatusPending
+	}
 
 	// Set document owner type
 	if len(req.AttachDocument) > 0 {
@@ -77,7 +83,25 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 		req.MemberID = _utils.GetProfileIdWithContext(ctx)
 	}
 
-	investment, err := u.investmentRepository.CreateInvestment(ctx, req)
+	var investment *entity.Investment
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		// Tạo investment
+		var err error
+		investment, err = u.investmentRepository.CreateInvestment(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		// Nếu req có doneInvestment = true, cập nhật DealMember
+		if req.DoneInvestment {
+			err = u.dealMemberRepo.UpdateDoneInvestment(ctx, req.DealID, req.MemberID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +127,11 @@ func (u *InvestmentUsecase) CreateInvestment(ctx context.Context, req *entity.In
 
 func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.Investment) (*uint64, error) {
 	// Check if user has permission
-	// currentUserId := _utils.GetProfileIdWithContext(ctx)
-	// err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	err := u.IsMemberDeal(ctx, req.DealID, currentUserId)
+	if err != nil {
+		return nil, err
+	}
 
 	// Get current investment
 	current, err := u.investmentRepository.GetByID(ctx, req.ID)
@@ -130,16 +154,27 @@ func (u *InvestmentUsecase) UpdateInvestment(ctx context.Context, req *entity.In
 		req.Status = enums.ApprovedStatusPending
 	}
 
-	investment, err := u.investmentRepository.UpdateInvestment(ctx, req)
+	var investment *entity.Investment
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		// Cập nhật investment
+		var err error
+		investment, err = u.investmentRepository.UpdateInvestment(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		// Nếu req có doneInvestment = true, cập nhật DealMember
+		if req.DoneInvestment {
+			err = u.dealMemberRepo.UpdateDoneInvestment(ctx, req.DealID, req.MemberID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	if req.DoneInvestment {
-		err = u.dealMemberRepo.UpdateDoneInvestment(ctx, req.DealID, req.MemberID)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return &investment.ID, nil
@@ -193,18 +228,32 @@ func (u *InvestmentUsecase) GetInvestmentWithConfirmedHistory(ctx context.Contex
 	}
 
 	// Get confirmed investments for this deal
-	confirmedInvestments, err := u.investmentRepository.GetConfirmedInvestmentsByDealId(ctx, investment.DealID, investment.MemberID)
+	confirmedInvestments, totalInvestment, err := u.GetInvestmentHistories(ctx, investment.DealID, investment.MemberID)
 	if err != nil {
 		return nil, nil, 0, err
 	}
 
-	// Calculate total investment amount
+	return investment, confirmedInvestments, totalInvestment, nil
+}
+
+func (u *InvestmentUsecase) GetInvestmentHistories(ctx context.Context, dealId, memberId uint64) ([]entity.Investment, float64, error) {
+	// Only users with MANAGE_INVESTMENT permission can view investment details
+	if !u.groupAuthUsecase.HasPermission(ctx, enums.PermissionManageInvestment) {
+		return nil, 0, errors.New("permission denied - only managers can view investment details")
+	}
+
+	// Get investment
+	investments, err := u.investmentRepository.GetConfirmedInvestmentsByDealId(ctx, dealId, memberId)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	totalInvestment := 0.0
-	for _, inv := range confirmedInvestments {
+	for _, inv := range investments {
 		totalInvestment += inv.Amount
 	}
 
-	return investment, confirmedInvestments, totalInvestment, nil
+	return investments, totalInvestment, nil
 }
 
 func (u *InvestmentUsecase) GetInvestments(ctx context.Context, req *dto.InvestmentDTO) ([]entity.Investment, int64, error) {

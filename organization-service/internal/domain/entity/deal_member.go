@@ -36,6 +36,8 @@ type DealMember struct {
 	IsUnilateral    bool                 `gorm:"default:false"` // Đánh dấu gỡ khỏi thương vụ một cách đơn phương
 	DoneInvestment  bool                 `gorm:"default:false"` // Đánh dấu đã đủ vốn góp
 
+	RoleKey enums.DealMemberRoleKey `gorm:"column:role_key;not null;default:430" json:"role_key"`
+
 	// Thêm các trường từ DealInvitation
 	Status      DealMemberStatus `gorm:"not null;default:10"` // Trạng thái
 	Message     string           `gorm:"type:text"`           // Lời nhắn khi gửi lời mời

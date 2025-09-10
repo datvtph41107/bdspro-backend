@@ -13,3 +13,7 @@ var ApprovedStatusMap = map[ApprovedStatus]string{
 	ApprovedStatusApproved: "Đã xác nhận",
 	ApprovedStatusRejected: "Từ chối",
 }
+
+func (t ApprovedStatus) IsValid() bool {
+	return t == ApprovedStatusPending || t == ApprovedStatusApproved || t == ApprovedStatusRejected
+}

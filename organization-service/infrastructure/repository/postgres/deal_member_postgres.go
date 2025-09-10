@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"organization/internal/domain/entity"
+	"organization/internal/dto"
 	"organization/internal/enums"
 
 	"gorm.io/gorm"
@@ -58,6 +59,7 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 		MemberID: dealMember.MemberID,
 		// MemberType:      dealMember.MemberType,
 		RoleID:          dealMember.RoleID,
+		RoleKey:         dealMember.RoleKey,
 		AmountCommit:    dealMember.AmountCommit,
 		CommissionValue: dealMember.CommissionValue,
 		CommissionType:  dealMember.CommissionType,
@@ -95,6 +97,7 @@ func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Contex
 		MemberID: model.MemberID,
 		// MemberType:      model.MemberType,
 		RoleID:          model.RoleID,
+		RoleKey:         model.RoleKey,
 		AmountCommit:    model.AmountCommit,
 		CommissionValue: model.CommissionValue,
 		CommissionType:  model.CommissionType,
@@ -147,6 +150,7 @@ func (r *DealMemberPostgresRepository) UpdateMembersCommission(ctx context.Conte
 					"commission_type":  member.CommissionType,
 					"note":             member.Note,
 					"is_unilateral":    member.IsUnilateral,
+					"role_key":         member.RoleKey,
 				}).Error
 			if err != nil {
 				return err
@@ -156,35 +160,25 @@ func (r *DealMemberPostgresRepository) UpdateMembersCommission(ctx context.Conte
 	})
 }
 
-func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, dealID uint64) ([]*entity.DealMember, error) {
+func (r *DealMemberPostgresRepository) GetDealMembers(ctx context.Context, payload dto.SearchMembersRequest) ([]*entity.DealMember, error) {
 	var models []*entity.DealMember
-	if err := GetDB(ctx, r.db).Where("deal_id = ? and status = ?", dealID, entity.DealMemberStatusAccepted).Find(&models).Error; err != nil {
-		return nil, err
+	query := GetDB(ctx, r.db).
+		Debug().
+		Where("deal_id = ? and status = ?", payload.DealID, entity.DealMemberStatusAccepted)
+
+	// if payload.Keyword != "" {
+	// 	query = query.Where("member_id = ?", payload.Keyword)
+	// }
+
+	if payload.DoneInvestment != nil {
+		query = query.Where("done_investment = ?", payload.DoneInvestment)
 	}
 
-	// members := make([]*entity.DealMember, len(models))
-	// for i, model := range models {
-	// 	members[i] = &entity.DealMember{
-	// 		// ID:              model.ID,
-	// 		DealID:   model.DealID,
-	// 		MemberID: model.MemberID,
-	// 		// MemberType:      model.MemberType,
-	// 		RoleID:          model.RoleID,
-	// 		AmountCommit:    model.AmountCommit,
-	// 		CommissionValue: model.CommissionValue,
-	// 		CommissionType:  model.CommissionType,
-	// 		Note:            model.Note,
-	// 		IsUnilateral:    model.IsUnilateral,
-	// 		DoneInvestment:  model.DoneInvestment,
-	// 		Status:          entity.DealMemberStatus(model.Status),
-	// 		Message:         model.Message,
-	// 		InvitedAt:       model.InvitedAt,
-	// 		RespondedAt:     model.RespondedAt,
-	// 		WithdrawnAt:     model.WithdrawnAt,
-	// 		InviterID:       model.InviterID,
-	// 		ColorId:         model.ColorId,
-	// 	}
-	// }
+	if err := query.
+		Find(&models).
+		Error; err != nil {
+		return nil, err
+	}
 
 	return models, nil
 }
@@ -284,7 +278,7 @@ func (r *DealMemberPostgresRepository) IsMemberDeal(ctx context.Context, dealID,
 }
 
 func (r *DealMemberPostgresRepository) UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error {
-	return r.db.WithContext(ctx).Model(&entity.DealMember{}).
+	return GetDB(ctx, r.db).Model(&entity.DealMember{}).
 		Where("deal_id = ? AND member_id = ?", dealID, memberID).
 		Update("done_investment", true).Error
 }

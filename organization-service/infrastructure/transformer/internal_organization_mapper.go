@@ -64,6 +64,7 @@ func (m *InternalOrganizationMapper) DealInvitationToPb(dealInvitation *entity.D
 		MemberId: uint64(dealInvitation.MemberID),
 		Status:   uint32(dealInvitation.Status),
 		RoleId:   &dealInvitation.RoleID,
+		RoleKey:  uint32(dealInvitation.RoleKey),
 		// JoinedAt: dealInvitation.RespondedAt,
 	}
 }
@@ -153,7 +154,8 @@ func (m *InternalOrganizationMapper) DealMemberToPb(dealMember *entity.DealMembe
 		DealId:   uint64(dealMember.DealID),
 		MemberId: uint64(dealMember.MemberID),
 		// MemberType: uint32(dealMember.MemberType),
-		RoleId: &dealMember.RoleID,
+		RoleId:  &dealMember.RoleID,
+		RoleKey: uint32(dealMember.RoleKey),
 	}
 }
 

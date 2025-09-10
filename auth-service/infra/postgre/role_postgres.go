@@ -90,6 +90,12 @@ func (r *RoleRepo) FindByOrganizationIdWithPagination(ctx context.Context, organ
 	return roles, uint64(total), nil
 }
 
+func (r *RoleRepo) FindBySystemKeys(ctx context.Context, systemKeys []uint32) ([]domain.Role, error) {
+	var roles []domain.Role
+	err := r.GetDB(ctx).Where("system_key IN (?)", systemKeys).Find(&roles).Error
+	return roles, err
+}
+
 func (r *RoleRepo) AddPermissionToRole(ctx context.Context, roleID uint64, permissionID uint64) error {
 	// Implementation for adding permission to role
 	// This might involve a junction table or updating the role's permission list
@@ -103,7 +109,7 @@ func (r *RoleRepo) AfterSave(ctx context.Context, id *uint64, role *domain.Role)
 func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*domain.Role, error) {
 	var role domain.Role
 	err := r.GetDB(ctx).
-		Preload("Permissions").
+		Preload("Color").
 		Where("id = ? AND deleted_at IS NULL", id).First(&role).Error
 	if err != nil {
 		return nil, err
@@ -252,4 +258,29 @@ func (r *RoleRepo) GetPermissionKeysByUserId(ctx context.Context, userId uint64)
 	}
 
 	return permissionKeys, nil
+}
+
+// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
+func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*domain.Role, error) {
+	var roles []domain.Role
+
+	// Query để lấy 2 role thuộc group key, ưu tiên auto_assign = true
+	err := r.GetDB(ctx).
+		Debug().
+		Joins("JOIN role_groups ON roles.role_group_id = role_groups.id").
+		Where("role_groups.key = ?", groupKey).
+		Order("roles.auto_assign DESC, roles.id ASC").
+		Limit(2).
+		Find(&roles).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(roles) == 0 {
+		return nil, nil
+	}
+
+	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
+	return &roles[0], nil
 }

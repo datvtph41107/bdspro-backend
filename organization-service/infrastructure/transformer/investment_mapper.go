@@ -29,6 +29,8 @@ func (m *InvestmentMapper) SubmitInvestRequestToEntity(req *organizationpb.Submi
 		TransferTime:       _utils.ParseStringToTime(req.TransferTime),
 		Note:               req.Note,
 		TransferProofImage: req.TransferProofImage,
+		DoneInvestment:     req.DoneInvestment,
+		Status:             enums.ApprovedStatus(req.Status),
 	}
 
 	// Handle nullable proxy user ID
@@ -84,9 +86,18 @@ func (m *InvestmentMapper) EntityToPbWithConfirmedHistory(investment *entity.Inv
 	result := m.EntityToPb(investment)
 
 	// Map confirmed investments
-	result.Histories = make([]*organizationpb.ApprovedInvestmentItem, len(confirmedInvestments))
-	for i, inv := range confirmedInvestments {
-		result.Histories[i] = &organizationpb.ApprovedInvestmentItem{
+	result.Histories = m.EntityToPbWithHistories(confirmedInvestments)
+
+	// Set total investment
+	result.TotalInvestment = totalInvestment
+
+	return result
+}
+
+func (m *InvestmentMapper) EntityToPbWithHistories(histories []entity.Investment) []*organizationpb.ApprovedInvestmentItem {
+	result := make([]*organizationpb.ApprovedInvestmentItem, len(histories))
+	for i, inv := range histories {
+		result[i] = &organizationpb.ApprovedInvestmentItem{
 			Id:           inv.ID,
 			Amount:       inv.Amount,
 			TransferTime: _utils.FormatTimeToString(inv.TransferTime),
@@ -95,9 +106,6 @@ func (m *InvestmentMapper) EntityToPbWithConfirmedHistory(investment *entity.Inv
 			Confirmed:    inv.Confirmed,
 		}
 	}
-
-	// Set total investment
-	result.TotalInvestment = totalInvestment
 
 	return result
 }

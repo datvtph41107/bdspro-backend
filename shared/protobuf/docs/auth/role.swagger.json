@@ -867,6 +867,13 @@
         "roleGroupId": {
           "type": "string",
           "format": "uint64"
+        },
+        "autoAssign": {
+          "type": "boolean"
+        },
+        "systemKey": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "title": "Role request/response messages"
@@ -885,6 +892,12 @@
           "type": "string"
         },
         "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
           "type": "string"
         },
         "description": {
@@ -963,6 +976,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
         }
       }
     },
@@ -1036,6 +1052,13 @@
         "roleGroupName": {
           "type": "string"
         },
+        "autoAssign": {
+          "type": "boolean"
+        },
+        "systemKey": {
+          "type": "integer",
+          "format": "int64"
+        },
         "createdAt": {
           "type": "string"
         },
@@ -1102,6 +1125,13 @@
         "roleGroupId": {
           "type": "string",
           "format": "uint64"
+        },
+        "autoAssign": {
+          "type": "boolean"
+        },
+        "systemKey": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "title": "Role request/response messages"

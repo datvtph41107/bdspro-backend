@@ -33,6 +33,12 @@
         "backgroundColor": {
           "type": "string"
         },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
         "description": {
           "type": "string"
         },
@@ -176,6 +182,13 @@
         },
         "roleGroupName": {
           "type": "string"
+        },
+        "autoAssign": {
+          "type": "boolean"
+        },
+        "systemKey": {
+          "type": "integer",
+          "format": "int64"
         },
         "createdAt": {
           "type": "string"

@@ -17,3 +17,13 @@ var DealStatusMap = map[DealStatus]string{
 	// DealStatusDealing:   "Đang thương lượng",
 	// DealStatusDeposit:   "Đặt cọc",
 }
+
+func (s DealStatus) IsValid() bool {
+	switch s {
+	case DealStatusProcessing,
+		DealStatusCompleted,
+		DealStatusCanceled:
+		return true
+	}
+	return false
+}

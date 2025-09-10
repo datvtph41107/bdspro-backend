@@ -180,6 +180,7 @@ message SearchDealMembersRequest {
     string keyword = 2;
     int32 page = 3;
     int32 size = 4;
+    optional bool doneInvestment = 5;
 }
 
 message SearchDealMembersResponse {
@@ -242,4 +243,6 @@ message DealMember {
   string note = 20;             // Ghi chú
   bool doneInvestment = 21;    // Đánh dấu đã đủ vốn góp
   bool isOwner = 22;           // Đánh dấu là chủ thương vụ
+  uint32 roleKey = 23;         // Role key (400: Owner, 420: Admin, 430: Member)
+  
 }

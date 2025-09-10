@@ -208,6 +208,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 		MemberId:  invitation.MemberID,
 		Status:    uint32(invitation.Status),
 		Message:   invitation.Message,
+		RoleKey:   uint32(invitation.RoleKey),
 		// Role:      role,
 		Reason: "", // DealInvitation entity doesn't have Reason field
 		// CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
@@ -263,6 +264,7 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 			// Name:     member.Invitee.FullName,
 			// Email:    "", // ProfileItem doesn't have email field
 			RoleId:      &member.DealMember.RoleID,
+			RoleKey:     uint32(member.DealMember.RoleKey),
 			RespondedAt: _utils.FormatTimeToString(member.DealMember.RespondedAt),
 		}
 	}
@@ -294,6 +296,7 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 			// Name:     member.Invitee.FullName,
 			// Email:    "", // ProfileItem doesn't have email field
 			RoleId:      &member.DealMember.RoleID,
+			RoleKey:     uint32(member.DealMember.RoleKey),
 			RespondedAt: _utils.FormatTimeToString(member.DealMember.RespondedAt),
 		}
 	}
@@ -327,6 +330,7 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 			MemberId:  invitation.DealMember.MemberID,
 			Status:    uint32(invitation.DealMember.Status),
 			Message:   invitation.DealMember.Message,
+			RoleKey:   uint32(invitation.DealMember.RoleKey),
 			// Role:      role,
 			Reason: "", // DealInvitation entity doesn't have Reason field
 			// CreatedAt: _utils.FormatTimeToString(&invitation.Create),
@@ -375,6 +379,7 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 			MemberId:  invitation.DealMember.MemberID,
 			Status:    uint32(invitation.DealMember.Status),
 			Message:   invitation.DealMember.Message,
+			RoleKey:   uint32(invitation.DealMember.RoleKey),
 			Reason:    "", // DealInvitation entity doesn't have Reason field
 			IsOwner:   invitation.DealMember.IsOwner,
 			// CreatedAt: _utils.FormatTimeToString(&invitation.DealMember.CreatedAt),

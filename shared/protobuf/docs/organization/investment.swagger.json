@@ -48,6 +48,44 @@
         ]
       }
     },
+    "/v2/org/investment/member-histories/{dealId}/{memberId}": {
+      "get": {
+        "operationId": "InvestmentService_GetInvestmentHistories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetInvestmentHistoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "InvestmentService"
+        ]
+      }
+    },
     "/v2/org/investment/{id}": {
       "get": {
         "operationId": "InvestmentService_DetailInvestment",
@@ -381,6 +419,10 @@
         "doneInvestment": {
           "type": "boolean",
           "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -426,6 +468,25 @@
           "format": "int64"
         }
       }
+    },
+    "organizationpbGetInvestmentHistoriesResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbApprovedInvestmentItem"
+          },
+          "title": "Danh sách lịch sử đầu tư"
+        },
+        "totalInvestment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng số tiền các lần đã góp và được duyệt"
+        }
+      },
+      "title": "Response trả về lịch sử đầu tư"
     },
     "organizationpbInvestment": {
       "type": "object",
@@ -581,6 +642,10 @@
         "doneInvestment": {
           "type": "boolean",
           "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

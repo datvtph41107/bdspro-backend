@@ -51,4 +51,6 @@ type SearchMembersRequest struct {
 	Keyword string `json:"keyword"`
 	Page    int    `json:"page"`
 	Size    int    `json:"size"`
+
+	DoneInvestment *bool `json:"done_investment"`
 }

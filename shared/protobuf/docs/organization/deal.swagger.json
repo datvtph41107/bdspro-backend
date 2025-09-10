@@ -490,6 +490,63 @@
         ]
       }
     },
+    "/v2/org/deal/{dealId}/members": {
+      "get": {
+        "operationId": "GroupDealService_Members",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetDealMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "doneInvestment",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GroupDealService"
+        ]
+      }
+    },
     "/v2/org/deal/{dealId}/members/commission": {
       "put": {
         "summary": "API cập nhật lợi nhuận cho nhiều deal members",
@@ -906,37 +963,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/organizationpbInfoInvestmentResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "GroupDealService"
-        ]
-      }
-    },
-    "/v2/org/deal/{id}/members": {
-      "get": {
-        "operationId": "GroupDealService_Members",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/organizationpbGetDealMembersResponse"
             }
           },
           "default": {
@@ -1921,6 +1947,166 @@
         }
       }
     },
+    "authpbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "authpbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/authpbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "autoAssign": {
+          "type": "boolean"
+        },
+        "systemKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
+    },
     "organizationpbAddInternalNoteResponse": {
       "type": "object",
       "properties": {
@@ -2289,6 +2475,11 @@
         "isOwner": {
           "type": "boolean",
           "title": "Đánh dấu là chủ thương vụ"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Role key (400: Owner, 420: Admin, 430: Member)"
         }
       },
       "title": "Message định nghĩa DealMember"
@@ -2734,6 +2925,9 @@
         },
         "code": {
           "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
         }
       }
     },

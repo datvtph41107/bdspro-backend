@@ -13,3 +13,7 @@ var DealMemberTypeMap = map[DealMemberType]string{
 	DealMemberTypePartner:  "Đối tác",
 	DealMemberTypeMember:   "Thành viên",
 }
+
+func (t DealMemberType) IsValid() bool {
+	return t == DealMemberTypeCustomer || t == DealMemberTypePartner || t == DealMemberTypeMember
+}

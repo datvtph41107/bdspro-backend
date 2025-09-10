@@ -126,7 +126,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	groupMemberValidator := validator.NewGroupMemberValidator()
 	groupMemberTransformer := transformer.NewGroupMemberTransformer()
 	groupMemberHandler := handler.NewGroupMemberHandler(groupMemberUsecase, groupMemberValidator, groupMemberTransformer)
-	investmentUsecase := usecase.NewInvestmentUsecase(investmentPostgres, groupDealPostgresRepository, groupAuthUsecase, notificationClient, dealMemberPostgresRepository)
+	investmentUsecase := usecase.NewInvestmentUsecase(investmentPostgres, groupDealPostgresRepository, groupAuthUsecase, notificationClient, dealMemberPostgresRepository, postgresTransaction)
 	investmentValidator := validator.NewInvestmentValidator()
 	investmentMapper := transformer.NewInvestmentMapper(documentMapper)
 	investmentHandler := handler.NewInvestmentHandler(investmentUsecase, investmentValidator, investmentMapper, userClient)
