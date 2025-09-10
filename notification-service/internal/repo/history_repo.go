@@ -2,8 +2,8 @@ package repo
 
 import (
 	"context"
-	"noti/internal/domain"
-	"noti/internal/dto"
+	"notification/internal/domain"
+	"notification/internal/dto"
 	shared_enum "pb/enums"
 	"time"
 )

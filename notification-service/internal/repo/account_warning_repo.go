@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"noti/internal/domain"
+	"notification/internal/domain"
 )
 
 type AccountWarningRepository interface {

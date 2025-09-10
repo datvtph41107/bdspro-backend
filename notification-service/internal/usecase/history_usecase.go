@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"context"
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/repo"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/repo"
 	shared_dto "pb/dto"
 	shared_enum "pb/enums"
 )

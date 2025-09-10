@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	"noti/internal/domain"
+	"notification/internal/domain"
 	notipb "pb/types/notification"
 )
 

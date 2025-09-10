@@ -2,7 +2,7 @@ package domain
 
 import (
 	_models "common/models"
-	"noti/internal/enums"
+	"notification/internal/enums"
 	"time"
 
 	"github.com/lib/pq"

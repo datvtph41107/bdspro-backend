@@ -5,9 +5,9 @@ import (
 	shared_enum "pb/enums"
 	"time"
 
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/repo"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/repo"
 )
 
 type AdminHistoryUsecase struct {

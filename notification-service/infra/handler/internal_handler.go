@@ -1,4 +1,4 @@
-package service
+package handler
 
 import (
 	"context"
@@ -7,35 +7,38 @@ import (
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 
-	"noti/infra/mapper"
-	"noti/internal/dto"
-	"noti/internal/enums"
-	"noti/internal/usecase"
+	"notification/infra/mapper"
+	"notification/internal/dto"
+	"notification/internal/enums"
+	"notification/internal/usecase"
 )
 
-type InternalNotiService struct {
+type InternalHandler struct {
+	notificationpb.UnimplementedInternalNotificationServiceServer
 	Usecase             *usecase.NotificationUsecase
 	Mapper              *mapper.NotificationMapper
 	AdminHistoryUsecase *usecase.AdminHistoryUsecase
 	AdminHistoryMapper  *mapper.AdminHistoryMapper
-	notificationpb.UnimplementedNotificationServiceServer
+	DealHistoryUsecase  usecase.DealHistoryUsecase
 }
 
-func NewInternalNotiService(
+func NewInternalHandler(
 	uc *usecase.NotificationUsecase,
 	mapper *mapper.NotificationMapper,
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
-) *InternalNotiService {
-	return &InternalNotiService{
+	dealHistoryUsecase usecase.DealHistoryUsecase,
+) *InternalHandler {
+	return &InternalHandler{
 		Usecase:             uc,
 		Mapper:              mapper,
 		AdminHistoryUsecase: adminHistoryUsecase,
 		AdminHistoryMapper:  adminHistoryMapper,
+		DealHistoryUsecase:  dealHistoryUsecase,
 	}
 }
 
-func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
+func (s *InternalHandler) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:        req.Title,
 		Message:      []string{req.Message},
@@ -58,7 +61,7 @@ func (s *InternalNotiService) Create(ctx context.Context, req *sharepb.Notificat
 	return response, nil
 }
 
-func (s *InternalNotiService) SendBatch(ctx context.Context, req *notificationpb.NotiBatchRequest) (*notificationpb.BatchResponse, error) {
+func (s *InternalHandler) SendBatch(ctx context.Context, req *notificationpb.NotiBatchRequest) (*notificationpb.BatchResponse, error) {
 	notifications := make([]*dto.NotiNewRequest, 0)
 	for _, noti := range req.Datas {
 		notifications = append(notifications, &dto.NotiNewRequest{
@@ -82,16 +85,16 @@ func (s *InternalNotiService) SendBatch(ctx context.Context, req *notificationpb
 	}, nil
 }
 
-func (s *InternalNotiService) PushByToken(ctx context.Context, req *notificationpb.PushTokenRequest) (*notificationpb.PushResponse, error) {
+func (s *InternalHandler) PushByToken(ctx context.Context, req *notificationpb.PushTokenRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
 }
 
-func (s *InternalNotiService) PushByTopic(ctx context.Context, req *notificationpb.PushTopicRequest) (*notificationpb.PushResponse, error) {
+func (s *InternalHandler) PushByTopic(ctx context.Context, req *notificationpb.PushTopicRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
 }
 
 // CreateAdminHistory tạo lịch sử admin (internal)
-func (s *InternalNotiService) CreateAdminHistory(c context.Context, request *notificationpb.AdminHistoryCreateRequest) (*notificationpb.AdminHistoryDTO, error) {
+func (s *InternalHandler) CreateAdminHistory(c context.Context, request *notificationpb.AdminHistoryCreateRequest) (*notificationpb.AdminHistoryDTO, error) {
 	// Convert protobuf request to DTO
 	dto := &dto.AdminHistoryCreateDTO{
 		TargetID:   request.TargetId,
@@ -120,7 +123,7 @@ func (s *InternalNotiService) CreateAdminHistory(c context.Context, request *not
 }
 
 // CreateAdminHistoryBatch tạo hàng loạt lịch sử admin (internal)
-func (s *InternalNotiService) CreateAdminHistoryBatch(c context.Context, request *notificationpb.AdminHistoryBatchRequest) (*notificationpb.BatchResponse, error) {
+func (s *InternalHandler) CreateAdminHistoryBatch(c context.Context, request *notificationpb.AdminHistoryBatchRequest) (*notificationpb.BatchResponse, error) {
 	// Convert protobuf requests to DTOs
 	dtos := make([]*dto.AdminHistoryCreateDTO, len(request.Datas))
 	for i, data := range request.Datas {
@@ -153,7 +156,7 @@ func (s *InternalNotiService) CreateAdminHistoryBatch(c context.Context, request
 }
 
 // convertToPbDTO chuyển đổi AdminHistoryDTO thành protobuf AdminHistoryDTO
-func (s *InternalNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notificationpb.AdminHistoryDTO {
+func (s *InternalHandler) convertToPbDTO(dto *dto.AdminHistoryDTO) *notificationpb.AdminHistoryDTO {
 	return &notificationpb.AdminHistoryDTO{
 		Id:         dto.ID,
 		TargetId:   dto.TargetId,
@@ -173,4 +176,23 @@ func (s *InternalNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notifica
 		CreatedAt:  dto.CreatedAt,
 		UpdatedAt:  dto.UpdatedAt,
 	}
+}
+
+func (s *InternalHandler) CreateDealHistory(ctx context.Context, req *notificationpb.CreateDealHistoryRequest) (*notificationpb.CreateDealHistoryResponse, error) {
+	domainReq := mapper.RequestToDealHistoryRequest(req)
+
+	// Create deal history
+	response, err := s.DealHistoryUsecase.CreateDealHistory(ctx, domainReq)
+	if err != nil {
+		return &notificationpb.CreateDealHistoryResponse{
+			Success: false,
+			Message: err.Error(),
+		}, err
+	}
+
+	return &notificationpb.CreateDealHistoryResponse{
+		Success: true,
+		Message: "Deal history created successfully",
+		Id:      response.ID,
+	}, nil
 }

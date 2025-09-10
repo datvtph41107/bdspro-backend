@@ -5,8 +5,8 @@ import (
 	shared_enum "pb/enums"
 	"time"
 
-	"noti/internal/domain"
-	"noti/internal/dto"
+	"notification/internal/domain"
+	"notification/internal/dto"
 )
 
 type AdminHistoryRepo interface {

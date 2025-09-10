@@ -9,16 +9,15 @@ package wire
 import (
 	"common/db"
 	"github.com/google/wire"
-	"noti/config"
-	"noti/infra/firebase"
-	"noti/infra/mapper"
-	"noti/infra/postgres"
-	"noti/infra/service"
-	"noti/initial"
-	"noti/internal/dto"
-	"noti/internal/interface/repo"
-	repo2 "noti/internal/repo"
-	"noti/internal/usecase"
+	"notification/config"
+	"notification/infra/firebase"
+	"notification/infra/handler"
+	"notification/infra/mapper"
+	"notification/infra/postgres"
+	"notification/initial"
+	"notification/internal/dto"
+	"notification/internal/repo"
+	"notification/internal/usecase"
 )
 
 // Injectors from wire.go:
@@ -34,19 +33,22 @@ func InitializeApp() (*initial.InitialApp, error) {
 	adminHistoryPostgres := postgres.NewAdminHistoryPostgres(db)
 	adminHistoryUsecase := usecase.NewAdminHistoryUsecase(adminHistoryPostgres)
 	adminHistoryMapper := mapper.NewAdminHistoryMapper()
-	internalNotiService := service.NewInternalNotiService(notificationUsecase, notificationMapper, adminHistoryUsecase, adminHistoryMapper)
+	dealHistoryRepository := postgres.NewDealHistoryPostgres(db)
+	dealHistoryUsecase := usecase.NewDealHistoryUsecase(dealHistoryRepository)
+	internalHandler := handler.NewInternalHandler(notificationUsecase, notificationMapper, adminHistoryUsecase, adminHistoryMapper, dealHistoryUsecase)
 	accountWarningPostgresRepo := postgres.NewAccountWarningPostgresRepo()
 	accountWarningUsecase := usecase.NewAccountWarningUsecase(accountWarningPostgresRepo)
-	gatewayNotiService := service.NewGatewayNotiService(notificationUsecase, adminHistoryUsecase, adminHistoryMapper, accountWarningUsecase)
+	notificationHandler := handler.NewNotificationHandler(notificationUsecase, adminHistoryUsecase, adminHistoryMapper, accountWarningUsecase)
 	historyRepo := postgres.NewHistoryRepo(db)
 	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
 	historyMapper := mapper.NewHistoryMapper()
-	historyService := service.NewHistoryService(historyUsecase, historyMapper)
-	initialApp := initial.NewInitialApp(internalNotiService, gatewayNotiService, historyService)
+	historyHandler := handler.NewHistoryHandler(historyUsecase, historyMapper)
+	dealHistoryHandler := handler.NewDealHistoryHandler(dealHistoryUsecase)
+	initialApp := initial.NewInitialApp(internalHandler, notificationHandler, historyHandler, dealHistoryHandler)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo2.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo2.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo2.NotificationRepo), new(*postgres.PostgreNotification)), postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, service.NewGatewayNotiService, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, service.NewHistoryService, usecase.NewHistoryUsecase, initial.NewInitialApp, service.NewInternalNotiService, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, handler.NewDealHistoryHandler, postgres.NewDealHistoryPostgres, usecase.NewDealHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, handler.NewHistoryHandler, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, usecase.NewHistoryUsecase, initial.NewInitialApp, handler.NewInternalHandler, handler.NewNotificationHandler, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse)

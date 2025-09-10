@@ -3,7 +3,7 @@ package db
 import (
 	_db "common/db"
 
-	"noti/internal/domain"
+	"notification/internal/domain"
 )
 
 func AutoMigrate() {

@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package notificationpb;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/notification;notificationpb";
+
+// DealHistoryService định nghĩa các HTTP API cho deal history
+service DealHistoryService {
+  // Lấy danh sách deal history theo deal ID
+  rpc GetDealHistory(GetDealHistoryRequest) returns (GetDealHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/deal-history"
+    };
+  };
+  
+  // Lấy deal history theo ID
+  rpc GetDealHistoryByID(GetDealHistoryByIDRequest) returns (GetDealHistoryByIDResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/deal-history/{id}"
+    };
+  };
+}
+
+// GetDealHistoryRequest request để lấy danh sách deal history
+message GetDealHistoryRequest {
+  uint64 deal_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+// GetDealHistoryResponse response danh sách deal history
+message GetDealHistoryResponse {
+  repeated DealHistoryItem data = 1;
+  uint32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+// GetDealHistoryByIDRequest request để lấy deal history theo ID
+message GetDealHistoryByIDRequest {
+  uint64 id = 1;
+}
+
+// GetDealHistoryByIDResponse response deal history theo ID
+message GetDealHistoryByIDResponse {
+  DealHistoryItem data = 1;
+}
+
+// DealHistoryItem định nghĩa item deal history
+message DealHistoryItem {
+  uint64 id = 1;
+  uint64 deal_id = 2;
+  uint64 actor_id = 3;
+  string actor_name = 4;
+  string actor_avatar = 5;
+  string action_type = 6;
+  string action_name = 7;
+  string content = 8;
+  google.protobuf.Struct metadata = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}

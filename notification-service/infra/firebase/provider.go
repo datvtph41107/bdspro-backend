@@ -5,9 +5,9 @@ import (
 	"context"
 	"log"
 
-	"noti/config"
-	"noti/internal/domain"
-	"noti/internal/dto"
+	"notification/config"
+	"notification/internal/domain"
+	"notification/internal/dto"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"

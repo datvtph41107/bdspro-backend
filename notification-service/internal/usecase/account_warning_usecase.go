@@ -7,9 +7,9 @@ import (
 	"time"
 
 	_middleware "common/middleware"
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/interface/repo"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/repo"
 )
 
 type AccountWarningUsecase struct {

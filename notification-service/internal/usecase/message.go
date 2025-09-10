@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"noti/internal/enums"
+	"notification/internal/enums"
 )
 
 func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.TypeEnum, attachData []string) []string {

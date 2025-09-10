@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
-	"noti/cmd"
-	_ "noti/docs"
+	"notification/cmd"
+	_ "notification/docs"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,10 +29,10 @@ func init() {
 }
 
 func main() {
-	go func() {
-		log.Println("run go-routine")
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	// go func() {
+	// 	log.Println("run go-routine")
+	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

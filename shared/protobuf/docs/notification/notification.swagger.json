@@ -6,9 +6,6 @@
   },
   "tags": [
     {
-      "name": "NotificationService"
-    },
-    {
       "name": "GatewayNotificationService"
     }
   ],
@@ -750,62 +747,6 @@
         }
       }
     },
-    "notificationpbAdminHistoryCreateRequest": {
-      "type": "object",
-      "properties": {
-        "targetId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "targetType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "actionType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "title": {
-          "type": "string"
-        },
-        "note": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "preStage": {
-          "type": "string"
-        },
-        "afterStage": {
-          "type": "string"
-        },
-        "adminId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "ownerId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "ownerType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "isInternal": {
-          "type": "boolean"
-        },
-        "adminRole": {
-          "type": "string"
-        },
-        "ipAddress": {
-          "type": "string"
-        },
-        "userAgent": {
-          "type": "string"
-        }
-      }
-    },
     "notificationpbAdminHistoryDTO": {
       "type": "object",
       "properties": {
@@ -889,22 +830,14 @@
         }
       }
     },
-    "notificationpbBatchResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        }
-      }
-    },
     "notificationpbCountResponse": {
       "type": "object",
       "properties": {
         "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "unread": {
           "type": "integer",
           "format": "int32"
         }
@@ -1295,7 +1228,7 @@
     "notificationpbStatusResponse": {
       "type": "object",
       "properties": {
-        "status": {
+        "success": {
           "type": "boolean"
         },
         "message": {
@@ -1408,52 +1341,6 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "sharepbNotificationRequest": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "type": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "targetId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "targetType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "visibleAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "sendToDevice": {
-          "type": "boolean"
-        },
-        "attachData": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "isMerge": {
-          "type": "boolean"
-        },
-        "ownerId": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     }

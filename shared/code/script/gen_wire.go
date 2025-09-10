@@ -40,9 +40,9 @@ func main() {
 	// log.Println("binds: ", binds)
 
 	moduleName := rootPackage
-	if moduleName == "notification" {
-		moduleName = "noti"
-	}
+	// if moduleName == "notification" {
+	// 	moduleName = "noti"
+	// }
 	if moduleName == "transaction" {
 		moduleName = "tx"
 	}

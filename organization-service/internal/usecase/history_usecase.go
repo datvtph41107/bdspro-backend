@@ -39,7 +39,7 @@ func (u *EventHistoryUsecase) LogDealHistory(ctx context.Context, dealID uint64,
 		Metadata:    metadata,
 	}
 
-	// Gọi notification client để lưu lịch sử
+	// Gọi deal history client để lưu lịch sử
 	go func() {
 		cloneCtx := _utils.CloneContext(ctx)
 		if err := u.notiClient.HistoryDeal(cloneCtx, history); err != nil {

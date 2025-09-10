@@ -1,4 +1,4 @@
-package service
+package handler
 
 import (
 	_dto "common/dto"
@@ -8,17 +8,17 @@ import (
 	notipb "pb/types/notification"
 	"time"
 
-	"noti/infra/mapper"
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/enums"
-	"noti/internal/usecase"
+	"notification/infra/mapper"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/enums"
+	"notification/internal/usecase"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type GatewayNotiService struct {
+type NotificationHandler struct {
 	Usecase               *usecase.NotificationUsecase
 	AdminHistoryUsecase   *usecase.AdminHistoryUsecase
 	AdminHistoryMapper    *mapper.AdminHistoryMapper
@@ -26,13 +26,13 @@ type GatewayNotiService struct {
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
-func NewGatewayNotiService(
+func NewNotificationHandler(
 	usecase *usecase.NotificationUsecase,
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
 	accountWarningUsecase *usecase.AccountWarningUsecase,
-) *GatewayNotiService {
-	return &GatewayNotiService{
+) *NotificationHandler {
+	return &NotificationHandler{
 		Usecase:               usecase,
 		AdminHistoryUsecase:   adminHistoryUsecase,
 		AdminHistoryMapper:    adminHistoryMapper,
@@ -50,7 +50,7 @@ func NewGatewayNotiService(
 // @Success 200 {object} map[string]string "message"
 // @Failure 500 {object} map[string]string "error"
 // @Router /new [post]
-func (s *GatewayNotiService) Create(ctx context.Context, req *notipb.GatewayNotiNewRequest) (*notipb.NotificationDTO, error) {
+func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNotiNewRequest) (*notipb.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:   req.Title,
 		Message: []string{req.Message},
@@ -75,7 +75,7 @@ func (s *GatewayNotiService) Create(ctx context.Context, req *notipb.GatewayNoti
 // @Success 200 {object} map[string]int "count"
 // @Failure 500 {object} map[string]string "error"
 // @Router /count [get]
-func (s *GatewayNotiService) Count(ctx context.Context, req *notipb.EmptyRequest) (*notipb.CountResponse, error) {
+func (s *NotificationHandler) Count(ctx context.Context, req *notipb.EmptyRequest) (*notipb.CountResponse, error) {
 	count := s.Usecase.Count(ctx)
 	return &notipb.CountResponse{
 		Count: count,
@@ -92,13 +92,13 @@ func (s *GatewayNotiService) Count(ctx context.Context, req *notipb.EmptyRequest
 // @Success 200 {object} map[string]string "message"
 // @Failure 500 {object} map[string]string "error"
 // @Router /read/{id} [put]
-func (s *GatewayNotiService) Read(ctx context.Context, req *notipb.IdRequest) (*notipb.StatusResponse, error) {
+func (s *NotificationHandler) Read(ctx context.Context, req *notipb.IdRequest) (*notipb.StatusResponse, error) {
 	_, err := s.Usecase.Read(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method Read not implemented")
 	}
 	return &notipb.StatusResponse{
-		Status:  true,
+		Success: true,
 		Message: "Thông báo đã được đánh dấu là đã đọc",
 	}, nil
 }
@@ -112,13 +112,13 @@ func (s *GatewayNotiService) Read(ctx context.Context, req *notipb.IdRequest) (*
 // @Success 200 {object} map[string]string "message"
 // @Failure 500 {object} map[string]string "error"
 // @Router /read-all [put]
-func (s *GatewayNotiService) ReadAll(ctx context.Context, req *notipb.EmptyRequest) (*notipb.StatusResponse, error) {
+func (s *NotificationHandler) ReadAll(ctx context.Context, req *notipb.EmptyRequest) (*notipb.StatusResponse, error) {
 	_, err := s.Usecase.ReadAll(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method ReadAll not implemented")
 	}
 	return &notipb.StatusResponse{
-		Status:  true,
+		Success: true,
 		Message: "Thông báo đã được đánh dấu là đã đọc",
 	}, nil
 }
@@ -131,13 +131,13 @@ func (s *GatewayNotiService) ReadAll(ctx context.Context, req *notipb.EmptyReque
 // @Security BearerAuth
 // @Param id path int true "ID của thông báo"
 // @Router /remove/{id} [delete]
-func (s *GatewayNotiService) Remove(ctx context.Context, req *notipb.IdRequest) (*notipb.StatusResponse, error) {
+func (s *NotificationHandler) Remove(ctx context.Context, req *notipb.IdRequest) (*notipb.StatusResponse, error) {
 	_, err := s.Usecase.Remove(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method Remove not implemented")
 	}
 	return &notipb.StatusResponse{
-		Status:  true,
+		Success: true,
 		Message: "Thông báo đã được xóa",
 	}, nil
 }
@@ -153,7 +153,7 @@ func (s *GatewayNotiService) Remove(ctx context.Context, req *notipb.IdRequest) 
 // @Success 200 {object} []notipb.NotificationDTO "Danh sách thông báo"
 // @Failure 500 {object} map[string]string "error"
 // @Router /list [get]
-func (s *GatewayNotiService) List(ctx context.Context, req *notipb.ListRequest) (*notipb.ListResponse, error) {
+func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest) (*notipb.ListResponse, error) {
 	query := dto.SearchNotiRequest{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -174,11 +174,11 @@ func (s *GatewayNotiService) List(ctx context.Context, req *notipb.ListRequest) 
 }
 
 // todo: implement
-func (s *GatewayNotiService) PushByToken(ctx context.Context, req *notipb.PushTokenRequest) (*notipb.PushResponse, error) {
+func (s *NotificationHandler) PushByToken(ctx context.Context, req *notipb.PushTokenRequest) (*notipb.PushResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushByToken not implemented")
 }
 
-func (s *GatewayNotiService) PushByTopic(ctx context.Context, req *notipb.PushTopicRequest) (*notipb.PushResponse, error) {
+func (s *NotificationHandler) PushByTopic(ctx context.Context, req *notipb.PushTopicRequest) (*notipb.PushResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushByTopic not implemented")
 }
 
@@ -203,7 +203,7 @@ func (s *GatewayNotiService) PushByTopic(ctx context.Context, req *notipb.PushTo
 // @Success 200 {object} notipb.AdminHistoryListResponse "Danh sách lịch sử admin"
 // @Failure 500 {object} map[string]string "error"
 // @Router /admin-history/search [get]
-func (s *GatewayNotiService) SearchAdminHistory(ctx context.Context, request *notipb.AdminHistorySearchRequest) (*notipb.AdminHistoryListResponse, error) {
+func (s *NotificationHandler) SearchAdminHistory(ctx context.Context, request *notipb.AdminHistorySearchRequest) (*notipb.AdminHistoryListResponse, error) {
 	// Convert protobuf request to DTO
 	searchDTO := &dto.AdminHistorySearchDTO{
 		Pagable: _dto.Pagable{
@@ -270,7 +270,7 @@ func (s *GatewayNotiService) SearchAdminHistory(ctx context.Context, request *no
 }
 
 // convertToPbDTO chuyển đổi AdminHistoryDTO thành protobuf AdminHistoryDTO
-func (s *GatewayNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.AdminHistoryDTO {
+func (s *NotificationHandler) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.AdminHistoryDTO {
 	pbDTO := &notipb.AdminHistoryDTO{
 		Id:         dto.ID,
 		TargetId:   dto.TargetId,
@@ -297,7 +297,7 @@ func (s *GatewayNotiService) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.Ad
 }
 
 // -- mapping ---
-func (s *GatewayNotiService) mapToPB(noti *domain.NotificationEntity) *notipb.NotificationDTO {
+func (s *NotificationHandler) mapToPB(noti *domain.NotificationEntity) *notipb.NotificationDTO {
 	return &notipb.NotificationDTO{
 		Id:        noti.ID,
 		UserId:    noti.OwnerID,
@@ -322,7 +322,7 @@ func (s *GatewayNotiService) mapToPB(noti *domain.NotificationEntity) *notipb.No
 // @Failure 401 {object} notificationpb.SendAccountWarningResponse
 // @Failure 500 {object} notificationpb.SendAccountWarningResponse
 // @Router /account-warning/send [post]
-func (s *GatewayNotiService) SendAccountWarning(ctx context.Context, req *notipb.SendAccountWarningRequest) (*notipb.SendAccountWarningResponse, error) {
+func (s *NotificationHandler) SendAccountWarning(ctx context.Context, req *notipb.SendAccountWarningRequest) (*notipb.SendAccountWarningResponse, error) {
 	// Convert proto request to DTO
 	var expiresAt *time.Time
 	if req.ExpiresAt != nil {
@@ -385,7 +385,7 @@ func (s *GatewayNotiService) SendAccountWarning(ctx context.Context, req *notipb
 // @Failure 401 {object} notificationpb.GetAccountWarningListResponse
 // @Failure 500 {object} notificationpb.GetAccountWarningListResponse
 // @Router /account-warning/list [get]
-func (s *GatewayNotiService) GetAccountWarningList(ctx context.Context, req *notipb.GetAccountWarningListRequest) (*notipb.GetAccountWarningListResponse, error) {
+func (s *NotificationHandler) GetAccountWarningList(ctx context.Context, req *notipb.GetAccountWarningListRequest) (*notipb.GetAccountWarningListResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.GetAccountWarningListRequest{
 		Page:        int(req.Page),
@@ -468,7 +468,7 @@ func (s *GatewayNotiService) GetAccountWarningList(ctx context.Context, req *not
 // @Failure 404 {object} notificationpb.MarkWarningAsReadResponse
 // @Failure 500 {object} notificationpb.MarkWarningAsReadResponse
 // @Router /account-warning/read [put]
-func (s *GatewayNotiService) MarkWarningAsRead(ctx context.Context, req *notipb.MarkWarningAsReadRequest) (*notipb.MarkWarningAsReadResponse, error) {
+func (s *NotificationHandler) MarkWarningAsRead(ctx context.Context, req *notipb.MarkWarningAsReadRequest) (*notipb.MarkWarningAsReadResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.MarkWarningAsReadRequest{
 		WarningID: req.WarningId,
@@ -500,7 +500,7 @@ func (s *GatewayNotiService) MarkWarningAsRead(ctx context.Context, req *notipb.
 // @Failure 404 {object} notificationpb.MarkWarningAsAcknowledgedResponse
 // @Failure 500 {object} notificationpb.MarkWarningAsAcknowledgedResponse
 // @Router /account-warning/acknowledge [put]
-func (s *GatewayNotiService) MarkWarningAsAcknowledged(ctx context.Context, req *notipb.MarkWarningAsAcknowledgedRequest) (*notipb.MarkWarningAsAcknowledgedResponse, error) {
+func (s *NotificationHandler) MarkWarningAsAcknowledged(ctx context.Context, req *notipb.MarkWarningAsAcknowledgedRequest) (*notipb.MarkWarningAsAcknowledgedResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.MarkWarningAsAcknowledgedRequest{
 		WarningID: req.WarningId,
@@ -530,7 +530,7 @@ func (s *GatewayNotiService) MarkWarningAsAcknowledged(ctx context.Context, req 
 // @Failure 401 {object} notificationpb.CreateWarningTemplateResponse
 // @Failure 500 {object} notificationpb.CreateWarningTemplateResponse
 // @Router /account-warning/template [post]
-func (s *GatewayNotiService) CreateWarningTemplate(ctx context.Context, req *notipb.CreateWarningTemplateRequest) (*notipb.CreateWarningTemplateResponse, error) {
+func (s *NotificationHandler) CreateWarningTemplate(ctx context.Context, req *notipb.CreateWarningTemplateRequest) (*notipb.CreateWarningTemplateResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.CreateWarningTemplateRequest{
 		Name:        req.Name,
@@ -575,7 +575,7 @@ func (s *GatewayNotiService) CreateWarningTemplate(ctx context.Context, req *not
 // @Failure 401 {object} notificationpb.GetWarningTemplateListResponse
 // @Failure 500 {object} notificationpb.GetWarningTemplateListResponse
 // @Router /account-warning/template/list [get]
-func (s *GatewayNotiService) GetWarningTemplateList(ctx context.Context, req *notipb.GetWarningTemplateListRequest) (*notipb.GetWarningTemplateListResponse, error) {
+func (s *NotificationHandler) GetWarningTemplateList(ctx context.Context, req *notipb.GetWarningTemplateListRequest) (*notipb.GetWarningTemplateListResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.GetWarningTemplateListRequest{
 		Page:        int(req.Page),
@@ -628,7 +628,7 @@ func (s *GatewayNotiService) GetWarningTemplateList(ctx context.Context, req *no
 // @Failure 401 {object} notificationpb.GetWarningLogListResponse
 // @Failure 500 {object} notificationpb.GetWarningLogListResponse
 // @Router /account-warning/log/list [get]
-func (s *GatewayNotiService) GetWarningLogList(ctx context.Context, req *notipb.GetWarningLogListRequest) (*notipb.GetWarningLogListResponse, error) {
+func (s *NotificationHandler) GetWarningLogList(ctx context.Context, req *notipb.GetWarningLogListRequest) (*notipb.GetWarningLogListResponse, error) {
 	// Convert proto request to DTO
 	dto := &dto.GetWarningLogListRequest{
 		Page:      int(req.Page),

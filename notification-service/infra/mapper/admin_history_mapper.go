@@ -4,8 +4,8 @@ import (
 	shared_dto "pb/dto"
 	"time"
 
-	"noti/internal/domain"
-	"noti/internal/dto"
+	"notification/internal/domain"
+	"notification/internal/dto"
 )
 
 type AdminHistoryMapper struct{}

@@ -1,19 +1,11 @@
 syntax = "proto3";
 
 package notificationpb;
-option go_package = "types/notificationpb";
+option go_package = "pb/types/notification;notificationpb";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 
-service NotificationService {
-  rpc Create (sharepb.NotificationRequest) returns (NotificationDTO);
-  rpc SendBatch (NotiBatchRequest) returns (BatchResponse);
-  rpc PushByToken (PushTokenRequest) returns (PushResponse);
-  rpc PushByTopic (PushTopicRequest) returns (PushResponse);
-  rpc CreateAdminHistory (AdminHistoryCreateRequest) returns (AdminHistoryDTO);
-  rpc CreateAdminHistoryBatch (AdminHistoryBatchRequest) returns (BatchResponse);
-}
 service GatewayNotificationService {
   rpc Create (GatewayNotiNewRequest) returns (NotificationDTO) {
     option (google.api.http) = {
@@ -112,14 +104,6 @@ service GatewayNotificationService {
   }
 }
 
-message NotiBatchRequest {
-    repeated sharepb.NotificationRequest datas = 1;
-    bool sendToDevice = 2;
-}
-
-message BatchResponse {
-    repeated uint64 data = 1;
-}
 
 message PushTopicRequest {
     string topic = 1;
@@ -168,8 +152,8 @@ message EmptyResponse {}
 
 message CountResponse {
     int32 count = 1;
+    int32 unread = 2;
 }
-
 
 message GatewayNotiNewRequest {
     string title = 1;
@@ -180,7 +164,7 @@ message GatewayNotiNewRequest {
 }
 
 message StatusResponse {
-    bool status = 1;
+    bool success = 1;
     string message = 2;
 }
 
@@ -210,14 +194,6 @@ message AdminHistoryListResponse {
     int32 total = 2;
 }
 
-message AdminActionStatsResponse {
-    uint64 adminId = 1;
-    int64 totalActions = 2;
-    map<string, int64> actionCounts = 3;
-    string fromDate = 4;
-    string toDate = 5;
-}
-
 message AdminHistorySearchRequest {
     int32 page = 1;
     int32 size = 2;
@@ -231,27 +207,6 @@ message AdminHistorySearchRequest {
     optional string fromDate = 10;
     optional string toDate = 11;
     optional bool isInternal = 12;
-}
-
-message AdminHistoryCreateRequest {
-    uint64 targetId = 1;
-    int32 targetType = 2;
-    int32 actionType = 3;
-    string title = 4;
-    repeated string note = 5;
-    string preStage = 6;
-    string afterStage = 7;
-    uint64 adminId = 8;
-    optional uint64 ownerId = 9;
-    int32 ownerType = 10;
-    bool isInternal = 11;
-    string adminRole = 12;
-    string ipAddress = 13;
-    string userAgent = 14;
-}
-
-message AdminHistoryBatchRequest {
-    repeated AdminHistoryCreateRequest datas = 1;
 }
 
 // Account Warning Messages
@@ -420,4 +375,3 @@ message WarningLogItem {
     string ipAddress = 9;
     string userAgent = 10;
 }
-

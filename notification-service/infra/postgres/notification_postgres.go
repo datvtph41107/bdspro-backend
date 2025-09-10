@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/enums"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/enums"
 	"time"
 
 	"gorm.io/gorm"

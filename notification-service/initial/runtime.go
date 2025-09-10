@@ -1,21 +1,24 @@
 package initial
 
-import "noti/infra/service"
+import service "notification/infra/handler"
 
 type InitialApp struct {
-	InternalNotiService *service.InternalNotiService
-	ServerHttp          *service.GatewayNotiService
-	HistoryService      *service.HistoryService
+	InternalHandler     *service.InternalHandler
+	NotificationHandler *service.NotificationHandler
+	HistoryHandler      *service.HistoryHandler
+	DealHistoryHandler  *service.DealHistoryHandler
 }
 
 func NewInitialApp(
-	router *service.InternalNotiService,
-	ServerHttp *service.GatewayNotiService,
-	historyService *service.HistoryService,
+	internalHandler *service.InternalHandler,
+	notificationHandler *service.NotificationHandler,
+	historyHandler *service.HistoryHandler,
+	dealHistoryHandler *service.DealHistoryHandler,
 ) *InitialApp {
 	return &InitialApp{
-		InternalNotiService: router,
-		ServerHttp:          ServerHttp,
-		HistoryService:      historyService,
+		InternalHandler:     internalHandler,
+		NotificationHandler: notificationHandler,
+		HistoryHandler:      historyHandler,
+		DealHistoryHandler:  dealHistoryHandler,
 	}
 }

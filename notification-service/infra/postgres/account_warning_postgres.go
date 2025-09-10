@@ -5,10 +5,10 @@ import (
 	"context"
 	"time"
 
-	"noti/internal/domain"
+	"notification/internal/domain"
 )
 
-// @bind: noti/internal/interface/repo.AccountWarningRepository
+// @bind: notification/internal/repo.AccountWarningRepository
 type AccountWarningPostgresRepo struct{}
 
 func NewAccountWarningPostgresRepo() *AccountWarningPostgresRepo {

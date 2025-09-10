@@ -1,26 +1,26 @@
-package service
+package handler
 
 import (
 	_dto "common/dto"
 	"context"
 
-	"noti/infra/mapper"
-	"noti/internal/dto"
-	"noti/internal/usecase"
+	"notification/infra/mapper"
+	"notification/internal/dto"
+	"notification/internal/usecase"
 
 	shared_dto "pb/dto"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
 )
 
-type HistoryService struct {
+type HistoryHandler struct {
 	notificationpb.UnimplementedHistoryServiceServer
 	UC     *usecase.HistoryUsecase
 	Mapper *mapper.HistoryMapper
 }
 
-func NewHistoryService(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper) *HistoryService {
-	return &HistoryService{UC: uc, Mapper: mapper}
+func NewHistoryHandler(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper) *HistoryHandler {
+	return &HistoryHandler{UC: uc, Mapper: mapper}
 }
 
 // @Summary Lấy lịch sử của người dùng
@@ -33,7 +33,7 @@ func NewHistoryService(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper)
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/list/{ownerId}/{ownerType} [get]
-func (s *HistoryService) Search(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) Search(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.Search(ctx, req.OwnerId, shared_enum.EOwnerType(req.OwnerType), dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -65,7 +65,7 @@ func (s *HistoryService) Search(ctx context.Context, req *notificationpb.History
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/crm/{crmId} [get]
-func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) CrmHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.CrmHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -91,7 +91,7 @@ func (s *HistoryService) CrmHistory(ctx context.Context, req *notificationpb.His
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/contact/{contactId} [get]
-func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) ContactHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ContactHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -110,7 +110,7 @@ func (s *HistoryService) ContactHistory(ctx context.Context, req *notificationpb
 	}, nil
 }
 
-func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) AssetHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.AssetHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -129,7 +129,7 @@ func (s *HistoryService) AssetHistory(ctx context.Context, req *notificationpb.H
 	}, nil
 }
 
-func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) ProductHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ProductHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -157,7 +157,7 @@ func (s *HistoryService) ProductHistory(ctx context.Context, req *notificationpb
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/product/child/{productId} [get]
-func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) ProductChildHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.ProductChildHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -185,7 +185,7 @@ func (s *HistoryService) ProductChildHistory(ctx context.Context, req *notificat
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/rule-event/{ruleEventId} [get]
-func (s *HistoryService) RuleEventHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) RuleEventHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.RuleEventHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -202,7 +202,7 @@ func (s *HistoryService) RuleEventHistory(ctx context.Context, req *notification
 	}, nil
 }
 
-func (s *HistoryService) Create(ctx context.Context, req *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error) {
+func (s *HistoryHandler) Create(ctx context.Context, req *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error) {
 	history, err := s.UC.Create(ctx, &shared_dto.HistoryDTO{
 		ActionType: shared_enum.EHistory(req.ActionType),
 		TargetId:   req.TargetId,
@@ -216,7 +216,7 @@ func (s *HistoryService) Create(ctx context.Context, req *notificationpb.History
 	return s.Mapper.HistoryDomainToPb(history), nil
 }
 
-func (s *HistoryService) CreateInternal(ctx context.Context, req *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error) {
+func (s *HistoryHandler) CreateInternal(ctx context.Context, req *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error) {
 	history, err := s.UC.CreateInternal(ctx, &shared_dto.HistoryDTO{
 		ActionType: shared_enum.EHistory(req.ActionType),
 		TargetId:   req.TargetId,
@@ -230,7 +230,7 @@ func (s *HistoryService) CreateInternal(ctx context.Context, req *notificationpb
 	return s.Mapper.HistoryDomainToPb(history), nil
 }
 
-func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) SearchInternal(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.SearchInternal(ctx, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -256,7 +256,7 @@ func (s *HistoryService) SearchInternal(ctx context.Context, req *notificationpb
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/campaign/{campaignId} [get]
-func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) CampaignHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.CampaignHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -282,7 +282,7 @@ func (s *HistoryService) CampaignHistory(ctx context.Context, req *notificationp
 // @Param page query notificationpb.HistorySearchRequest false "Trang"
 // @Security BearerAuth
 // @Router /history/package/{packageId} [get]
-func (s *HistoryService) PackageHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
+func (s *HistoryHandler) PackageHistory(ctx context.Context, req *notificationpb.HistorySearchRequest) (*notificationpb.HistoryListDTO, error) {
 	histories, total, err := s.UC.PackageHistory(ctx, req.Id, dto.HistorySearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),

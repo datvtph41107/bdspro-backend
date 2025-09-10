@@ -1,4 +1,4 @@
-module noti
+module notification
 
 go 1.24.1
 
@@ -18,6 +18,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	google.golang.org/api v0.215.0
 	google.golang.org/grpc v1.72.0
+	google.golang.org/protobuf v1.36.6
 	gorm.io/gorm v1.25.12
 	pb v0.0.0-00010101000000-000000000000
 )
@@ -125,7 +126,6 @@ require (
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.11 // indirect
 )

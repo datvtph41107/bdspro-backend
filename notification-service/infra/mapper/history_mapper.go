@@ -2,7 +2,7 @@ package mapper
 
 import (
 	_utils "common/utils"
-	"noti/internal/domain"
+	"notification/internal/domain"
 	notipb "pb/types/notification"
 )
 

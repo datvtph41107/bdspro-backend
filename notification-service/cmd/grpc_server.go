@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"noti/config"
-	"noti/db"
-	"noti/wire"
+	"notification/config"
+	"notification/db"
+	"notification/wire"
 	notificationpb "pb/types/notification"
 
 	_middleware "common/middleware"
@@ -40,11 +40,10 @@ func startGRPCServer() {
 
 	db.AutoMigrate()
 
-	notificationpb.RegisterGatewayNotificationServiceServer(s, app.ServerHttp)
-	notificationpb.RegisterNotificationServiceServer(s, app.InternalNotiService)
-	notificationpb.RegisterHistoryServiceServer(s, app.HistoryService)
-	// Enable reflection for debugging
-	// reflection.Register(s)
+	notificationpb.RegisterGatewayNotificationServiceServer(s, app.NotificationHandler)
+	notificationpb.RegisterInternalNotificationServiceServer(s, app.InternalHandler)
+	notificationpb.RegisterHistoryServiceServer(s, app.HistoryHandler)
+	notificationpb.RegisterDealHistoryServiceServer(s, app.DealHistoryHandler)
 
 	log.Printf("gRPC server listening on %s", port)
 	if err := s.Serve(lis); err != nil {

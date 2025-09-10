@@ -6,25 +6,25 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"noti/initial"
-	crm_internal_repo "noti/internal/repo"
-	noti_internal_interface_repo "noti/internal/interface/repo"
-	noti_internal_repo "noti/internal/repo"
-	notification_config "noti/config"
-	notification_infra_firebase "noti/infra/firebase"
-	notification_infra_mapper "noti/infra/mapper"
-	notification_infra_postgres "noti/infra/postgres"
-	notification_infra_service "noti/infra/service"
-	notification_initial "noti/initial"
-	notification_internal_dto "noti/internal/dto"
-	notification_internal_usecase "noti/internal/usecase"
+	"notification/initial"
+	crm_internal_repo "notification/internal/repo"
+	noti_internal_repo "notification/internal/repo"
+	notification_config "notification/config"
+	notification_infra_firebase "notification/infra/firebase"
+	notification_infra_handler "notification/infra/handler"
+	notification_infra_mapper "notification/infra/mapper"
+	notification_infra_postgres "notification/infra/postgres"
+	notification_initial "notification/initial"
+	notification_internal_dto "notification/internal/dto"
+	notification_internal_repo "notification/internal/repo"
+	notification_internal_usecase "notification/internal/usecase"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
-	wire.Bind(new(noti_internal_interface_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
+	wire.Bind(new(notification_internal_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
 	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
 	wire.Bind(new(crm_internal_repo.HistoryRepo), new(*notification_infra_postgres.HistoryRepo)),
 	wire.Bind(new(noti_internal_repo.NotificationRepo), new(*notification_infra_postgres.PostgreNotification)),
@@ -33,16 +33,19 @@ var wireSet = wire.NewSet(
 	notification_infra_mapper.NewAdminHistoryMapper,
 	notification_infra_postgres.NewAdminHistoryPostgres,
 	notification_internal_usecase.NewAdminHistoryUsecase,
+	notification_infra_handler.NewDealHistoryHandler,
+	notification_infra_postgres.NewDealHistoryPostgres,
+	notification_internal_usecase.NewDealHistoryUsecase,
 	notification_config.NewFirebaseConfig,
 	notification_infra_firebase.NewFirebaseService,
-	notification_infra_service.NewGatewayNotiService,
+	notification_infra_handler.NewHistoryHandler,
 	notification_infra_mapper.NewHistoryMapper,
 	notification_infra_postgres.NewHistoryRepo,
 	notification_infra_postgres.NewHistoryRepository,
-	notification_infra_service.NewHistoryService,
 	notification_internal_usecase.NewHistoryUsecase,
 	notification_initial.NewInitialApp,
-	notification_infra_service.NewInternalNotiService,
+	notification_infra_handler.NewInternalHandler,
+	notification_infra_handler.NewNotificationHandler,
 	notification_infra_mapper.NewNotificationMapper,
 	notification_internal_usecase.NewNotificationService,
 	notification_infra_postgres.NewPostgreNotification,

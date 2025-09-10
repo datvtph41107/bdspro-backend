@@ -4,8 +4,8 @@ import (
 	shared_enum "pb/enums"
 	"time"
 
-	"noti/internal/domain"
-	"noti/internal/enums"
+	"notification/internal/domain"
+	"notification/internal/enums"
 )
 
 // NotificationResponse dùng để trả về thông tin thông báo

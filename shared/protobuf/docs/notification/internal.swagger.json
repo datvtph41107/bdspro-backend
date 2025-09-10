@@ -1,0 +1,307 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "notification/internal.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "InternalNotificationService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "notificationpbAdminHistoryCreateRequest": {
+      "type": "object",
+      "properties": {
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "actionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preStage": {
+          "type": "string"
+        },
+        "afterStage": {
+          "type": "string"
+        },
+        "adminId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isInternal": {
+          "type": "boolean"
+        },
+        "adminRole": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "notificationpbAdminHistoryDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "actionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preStage": {
+          "type": "string"
+        },
+        "afterStage": {
+          "type": "string"
+        },
+        "adminId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isInternal": {
+          "type": "boolean"
+        },
+        "adminRole": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Admin History Messages"
+    },
+    "notificationpbBatchResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "notificationpbCreateDealHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "CreateDealHistoryResponse response khi tạo deal history"
+    },
+    "notificationpbNotificationDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "link": {
+          "type": "string"
+        },
+        "message": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isRead": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "notificationpbPushResponse": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbNotificationRequest": {
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "visibleAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sendToDevice": {
+          "type": "boolean"
+        },
+        "attachData": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isMerge": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    }
+  }
+}

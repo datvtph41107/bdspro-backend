@@ -2,9 +2,9 @@ package repo
 
 import (
 	"context"
-	"noti/internal/domain"
-	"noti/internal/dto"
-	"noti/internal/enums"
+	"notification/internal/domain"
+	"notification/internal/dto"
+	"notification/internal/enums"
 )
 
 type NotificationRepo interface {

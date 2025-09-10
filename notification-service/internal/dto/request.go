@@ -2,7 +2,7 @@ package dto
 
 import (
 	"errors"
-	"noti/internal/enums"
+	"notification/internal/enums"
 	"time"
 
 	_dto "common/dto"
